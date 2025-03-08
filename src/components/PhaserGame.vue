@@ -8,165 +8,180 @@
 import { defineComponent, onMounted, onUnmounted } from 'vue';
 import Phaser from 'phaser';
 
-interface TouchControls {
-  left: boolean;
-  right: boolean;
-  up: boolean;
+enum CellState {
+  EMPTY = 0,
+  DOT = 1,
+  QUEEN = 2,
 }
 
-class MainScene extends Phaser.Scene {
-  private player!: Phaser.Physics.Arcade.Sprite;
-  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+class AntGridScene extends Phaser.Scene {
+  private gridSize: number = 6;
+  private cellSize: number = 80;
+  private gridCells: Phaser.GameObjects.Rectangle[][] = [];
+  private cellStates: CellState[][] = [];
+  private gameObjects: (Phaser.GameObjects.GameObject | null)[][] = [];
   private score: number = 0;
   private scoreText!: Phaser.GameObjects.Text;
-  private stars!: Phaser.Physics.Arcade.Group;
-  private touchControls: TouchControls = { left: false, right: false, up: false };
 
   constructor() {
-    super({ key: 'MainScene' });
+    super({ key: 'AntGridScene' });
   }
 
   preload(): void {
-    this.load.spritesheet('character', 
-      'https://examples.phaser.io/assets/sprites/dude.png',
-      { frameWidth: 32, frameHeight: 48 }
-    );
-    this.load.image('ground', 'https://examples.phaser.io/assets/sprites/platform.png');
-    this.load.image('star', 'https://examples.phaser.io/assets/sprites/star.png');
-    this.load.image('sky', 'https://examples.phaser.io/assets/skies/space3.png');
+    // Load assets for dots and queens
+    this.load.image('dot', 'https://examples.phaser.io/assets/sprites/yellow_ball.png');
+    this.load.image('queen', 'https://examples.phaser.io/assets/sprites/phaser-dude.png');
+    this.load.image('background', 'https://examples.phaser.io/assets/skies/sky3.png');
   }
 
   create(): void {
     // Add background
-    this.add.image(400, 300, 'sky');
+    this.add.image(400, 300, 'background');
 
-    // Create platforms
-    const platforms = this.physics.add.staticGroup();
-    platforms.create(400, 568, 'ground').setScale(2).refreshBody();
-    platforms.create(600, 400, 'ground');
-    platforms.create(50, 250, 'ground');
-    platforms.create(750, 220, 'ground');
+    // Calculate grid dimensions
+    const gridWidth = this.gridSize * this.cellSize;
+    const gridHeight = this.gridSize * this.cellSize;
+    const startX = (this.cameras.main.width - gridWidth) / 2;
+    const startY = (this.cameras.main.height - gridHeight) / 2;
 
-    // Player
-    this.player = this.physics.add.sprite(100, 450, 'character');
-    this.player.setBounce(0.2);
-    this.player.setCollideWorldBounds(true);
+    // Initialize cell states array
+    this.cellStates = Array(this.gridSize)
+      .fill(0)
+      .map(() => Array(this.gridSize).fill(CellState.EMPTY));
+    this.gameObjects = Array(this.gridSize)
+      .fill(0)
+      .map(() => Array(this.gridSize).fill(null));
 
-    // Player animations
-    this.anims.create({
-      key: 'left',
-      frames: this.anims.generateFrameNumbers('character', { start: 0, end: 3 }),
-      frameRate: 10,
-      repeat: -1
-    });
-    this.anims.create({
-      key: 'turn',
-      frames: [{ key: 'character', frame: 4 }],
-      frameRate: 20
-    });
-    this.anims.create({
-      key: 'right',
-      frames: this.anims.generateFrameNumbers('character', { start: 5, end: 8 }),
-      frameRate: 10,
-      repeat: -1
-    });
+    // Create grid of cells
+    for (let row = 0; row < this.gridSize; row++) {
+      this.gridCells[row] = [];
+      for (let col = 0; col < this.gridSize; col++) {
+        // Create cell rectangle
+        const cellX = startX + col * this.cellSize + this.cellSize / 2;
+        const cellY = startY + row * this.cellSize + this.cellSize / 2;
 
-    // Stars
-    this.stars = this.physics.add.group({
-      key: 'star',
-      repeat: 11,
-      setXY: { x: 12, y: 0, stepX: 70 }
-    });
+        const cell = this.add.rectangle(
+          cellX,
+          cellY,
+          this.cellSize - 4,
+          this.cellSize - 4,
+          0xf5f5dc, // Beige color for soil
+          1
+        );
 
-    this.stars.children.iterate((child) => {
-      const c = child as Phaser.Physics.Arcade.Image;
-      c.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-      return true;
-    });
+        // Add border
+        cell.setStrokeStyle(2, 0x663300); // Brown border
 
-    // Collisions
-    this.physics.add.collider(this.player, platforms);
-    this.physics.add.collider(this.stars, platforms);
-    this.physics.add.overlap(this.player, this.stars, this.collectStar, undefined, this);
+        // Make cell interactive
+        cell.setInteractive();
 
-    // Score text
-    this.scoreText = this.add.text(16, 16, 'Score: 0', { 
-      fontSize: '32px', 
-      color: '#fff'
+        // Add click event
+        cell.on('pointerdown', () => this.handleCellClick(row, col));
+
+        this.gridCells[row][col] = cell;
+      }
+    }
+
+    // Create score text
+    this.scoreText = this.add.text(16, 16, 'Colony Score: 0', {
+      fontSize: '24px',
+      color: '#fff',
+      stroke: '#000',
+      strokeThickness: 4,
     });
 
-    // Cursors
-    this.cursors = this.input.keyboard.createCursorKeys();
-
-    // Touch controls
-    this.setupTouchControls();
-
-    // Emit event
+    // Emit game started event
     if (window.gameEvents) {
       window.gameEvents.emit('gameStarted');
     }
   }
 
-  setupTouchControls(): void {
-    // Left zone
-    const leftZone = this.add.zone(200, 500, 200, 200).setInteractive();
-    leftZone.on('pointerdown', () => { this.touchControls.left = true; });
-    leftZone.on('pointerup', () => { this.touchControls.left = false; });
-    leftZone.on('pointerout', () => { this.touchControls.left = false; });
+  handleCellClick(row: number, col: number): void {
+    // Toggle cell state: EMPTY -> DOT -> QUEEN -> EMPTY
+    const currentState = this.cellStates[row][col];
+    let newState: CellState;
 
-    // Right zone
-    const rightZone = this.add.zone(600, 500, 200, 200).setInteractive();
-    rightZone.on('pointerdown', () => { this.touchControls.right = true; });
-    rightZone.on('pointerup', () => { this.touchControls.right = false; });
-    rightZone.on('pointerout', () => { this.touchControls.right = false; });
+    if (currentState === CellState.EMPTY) {
+      newState = CellState.DOT;
+      this.addDot(row, col);
+    } else if (currentState === CellState.DOT) {
+      newState = CellState.QUEEN;
+      this.removeDot(row, col);
+      this.addQueen(row, col);
+    } else {
+      newState = CellState.EMPTY;
+      this.removeQueen(row, col);
+    }
 
-    // Jump zone
-    const jumpZone = this.add.zone(400, 300, 800, 300).setInteractive();
-    jumpZone.on('pointerdown', () => { this.touchControls.up = true; });
-    jumpZone.on('pointerup', () => { this.touchControls.up = false; });
-    jumpZone.on('pointerout', () => { this.touchControls.up = false; });
+    this.cellStates[row][col] = newState;
+    this.updateScore();
   }
 
-  collectStar(player: Phaser.GameObjects.GameObject, star: Phaser.GameObjects.GameObject): void {
-    const s = star as Phaser.Physics.Arcade.Image;
-    s.disableBody(true, true);
-    
-    // Update score
-    this.score += 10;
-    this.scoreText.setText('Score: ' + this.score);
-    
-    // Emit score change event
+  addDot(row: number, col: number): void {
+    const cellX = this.gridCells[row][col].x;
+    const cellY = this.gridCells[row][col].y;
+
+    const dot = this.add.image(cellX, cellY, 'dot');
+    dot.setScale(0.5); // Make dot smaller
+
+    // Store reference to the dot
+    this.gameObjects[row][col] = dot;
+  }
+
+  removeDot(row: number, col: number): void {
+    if (this.gameObjects[row][col]) {
+      this.gameObjects[row][col].destroy();
+      this.gameObjects[row][col] = null;
+    }
+  }
+
+  addQueen(row: number, col: number): void {
+    const cellX = this.gridCells[row][col].x;
+    const cellY = this.gridCells[row][col].y;
+
+    const queen = this.add.image(cellX, cellY, 'queen');
+    queen.setScale(0.8); // Scale queen to fit cell
+
+    // Add a tween animation to show it's a queen
+    this.tweens.add({
+      targets: queen,
+      y: { value: queen.y - 5, yoyo: true, duration: 500 },
+      repeat: -1,
+    });
+
+    // Store reference to the queen
+    this.gameObjects[row][col] = queen;
+  }
+
+  removeQueen(row: number, col: number): void {
+    if (this.gameObjects[row][col]) {
+      this.gameObjects[row][col].destroy();
+      this.gameObjects[row][col] = null;
+    }
+  }
+
+  updateScore(): void {
+    // Count dots and queens
+    let dots = 0;
+    let queens = 0;
+
+    for (let row = 0; row < this.gridSize; row++) {
+      for (let col = 0; col < this.gridSize; col++) {
+        if (this.cellStates[row][col] === CellState.DOT) {
+          dots++;
+        } else if (this.cellStates[row][col] === CellState.QUEEN) {
+          queens++;
+        }
+      }
+    }
+
+    // Calculate score: queens are worth more than dots
+    this.score = dots * 10 + queens * 50;
+    this.scoreText.setText(`Colony Score: ${this.score}`);
+
+    // Emit score changed event
     if (window.gameEvents) {
       window.gameEvents.emit('scoreChanged', this.score);
-    }
-    
-    // Respawn stars when all collected
-    if (this.stars.countActive(true) === 0) {
-      this.stars.children.iterate((child) => {
-        const c = child as Phaser.Physics.Arcade.Image;
-        c.enableBody(true, c.x, 0, true, true);
-        return true;
-      });
-    }
-  }
-
-  update(): void {
-    // Movement
-    if (this.cursors.left.isDown || this.touchControls.left) {
-      this.player.setVelocityX(-160);
-      this.player.anims.play('left', true);
-    } else if (this.cursors.right.isDown || this.touchControls.right) {
-      this.player.setVelocityX(160);
-      this.player.anims.play('right', true);
-    } else {
-      this.player.setVelocityX(0);
-      this.player.anims.play('turn');
-    }
-
-    // Jump
-    if ((this.cursors.up.isDown || this.touchControls.up) && this.player.body.touching.down) {
-      this.player.setVelocityY(-330);
-      this.touchControls.up = false; // Reset to prevent continuous jumps
     }
   }
 }
@@ -187,12 +202,12 @@ export default defineComponent({
     onMounted(() => {
       // Create event emitter for communication
       window.gameEvents = new Phaser.Events.EventEmitter();
-      
+
       // Setup event listeners
       window.gameEvents.on('scoreChanged', (score: number) => {
         emit('score-changed', score);
       });
-      
+
       window.gameEvents.on('gameStarted', () => {
         emit('game-started');
       });
@@ -200,21 +215,15 @@ export default defineComponent({
       // Game config
       const config: Phaser.Types.Core.GameConfig = {
         type: Phaser.AUTO,
-        width: 800,
+        width: 600,
         height: 600,
         parent: 'phaser-game',
-        physics: {
-          default: 'arcade',
-          arcade: {
-            gravity: { y: 300 },
-            debug: false
-          }
-        },
-        scene: MainScene,
+        backgroundColor: '#87CEEB', // Sky blue background
+        scene: AntGridScene,
         scale: {
           mode: Phaser.Scale.FIT,
-          autoCenter: Phaser.Scale.CENTER_BOTH
-        }
+          autoCenter: Phaser.Scale.CENTER_BOTH,
+        },
       };
 
       // Initialize Phaser game
@@ -227,7 +236,7 @@ export default defineComponent({
         game.destroy(true);
         game = null;
       }
-      
+
       if (window.gameEvents) {
         window.gameEvents.removeAllListeners();
         window.gameEvents = undefined;
@@ -235,16 +244,22 @@ export default defineComponent({
     });
 
     return {};
-  }
+  },
 });
 </script>
 
-<style scoped>
+<style>
 .game-container {
-  @apply flex justify-center items-center w-full h-full bg-black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
 }
 
 #phaser-game {
-  @apply max-w-full max-h-full;
+  max-width: 100%;
+  max-height: 100%;
 }
 </style>
