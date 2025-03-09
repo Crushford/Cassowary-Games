@@ -1,8 +1,8 @@
-// src/components/AntGridScene.ts
+// At the top of your AntGridScene.ts file
 import Phaser from 'phaser';
-import { AntGameUI } from './AntGameUI';
-import { AntBoard } from './AntBoard';
-import { QueenRules } from './QueenRules';
+import { AntBoard } from './AntBoard'; // Make sure the path is correct
+import { QueenRules } from './QueenRules'; // Make sure the path is correct
+import { AntGameUI } from './AntGameUI'; // Make sure the path is correct
 
 export enum CellState {
   EMPTY = 0,
@@ -72,6 +72,11 @@ export class AntGridScene extends Phaser.Scene {
       case CellState.FLAG:
         this.board.removeFlag(row, col);
         this.tryPlaceQueen(row, col);
+
+        // Check for no more valid moves after queen placement
+        if (!this.gameOver && this.board.getQueensPlaced > 0) {
+          this.checkForNoValidMoves();
+        }
         break;
       case CellState.QUEEN:
         this.board.removeQueen(row, col);
@@ -79,11 +84,6 @@ export class AntGridScene extends Phaser.Scene {
         this.board.clearAllFlags();
         this.updateAllThreatenedPositions();
         break;
-    }
-
-    // Check if there are no more valid moves
-    if (!this.gameOver && this.board.getQueensPlaced > 0) {
-      this.checkForNoValidMoves();
     }
   }
 
