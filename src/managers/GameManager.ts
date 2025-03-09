@@ -13,7 +13,6 @@ export enum GameState {
 }
 
 export class GameManager {
-  private scene: Phaser.Scene;
   private board: Board;
   private rules: RulesManager;
   private gameState: GameState = GameState.READY;
@@ -23,6 +22,7 @@ export class GameManager {
     acres: GAME_CONSTANTS.OWNED_ACRES,
     plots: GAME_CONSTANTS.PLOTS,
   };
+  public scene: Phaser.Scene;
   public events: Phaser.Events.EventEmitter;
 
   constructor(scene: Phaser.Scene, board: Board) {

@@ -199,3 +199,12 @@ export function shake(
 
   return tween;
 }
+
+export default {
+  fadeIn,
+  fadeOut,
+  pulse,
+  bounce,
+  hover,
+  shake,
+};
