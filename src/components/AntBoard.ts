@@ -12,6 +12,7 @@ export class AntBoard {
   private queensPlaced: number = 0;
   private onQueenPlacedCallback: (count: number) => void;
   private onCellClickCallback: (row: number, col: number) => void;
+  private boardContainer!: Phaser.GameObjects.Container;
 
   constructor(
     scene: Phaser.Scene,
@@ -25,6 +26,10 @@ export class AntBoard {
   }
 
   private initializeBoard(): void {
+    // Create a container for the board elements
+    this.boardContainer = this.scene.add.container(0, 0);
+    this.boardContainer.setDepth(10); // Above background, below UI
+
     // Calculate grid dimensions
     const gridWidth = this.gridSize * this.cellSize;
     const gridHeight = this.gridSize * this.cellSize;
@@ -68,6 +73,7 @@ export class AntBoard {
         });
 
         this.gridCells[row][col] = cell;
+        this.boardContainer.add(cell);
       }
     }
   }
@@ -76,16 +82,14 @@ export class AntBoard {
     return this.cellStates[row][col];
   }
 
-  // In AntBoard.ts, modify the placeFlag method
   public placeFlag(row: number, col: number): void {
     if (this.cellStates[row][col] !== CellState.EMPTY) return;
 
     const cellX = this.gridCells[row][col].x;
     const cellY = this.gridCells[row][col].y;
 
-    // Use a proper flag image instead of a red ball
     const flag = this.scene.add.image(cellX, cellY, 'flag');
-    flag.setScale(0.4); // Adjust scale as needed
+    flag.setScale(0.4); // Make flag smaller
     flag.setDepth(20); // Above grid cells, below queens
 
     // Store reference to the flag
@@ -109,6 +113,7 @@ export class AntBoard {
 
     const queen = this.scene.add.image(cellX, cellY, 'queen');
     queen.setScale(0.8); // Scale queen to fit cell
+    queen.setDepth(30); // Above flags and grid cells
 
     // Add a tween animation
     this.scene.tweens.add({
@@ -126,8 +131,8 @@ export class AntBoard {
     this.onQueenPlacedCallback(this.queensPlaced);
   }
 
-  public removeQueen(row: number, col: number): void {
-    if (this.cellStates[row][col] !== CellState.QUEEN) return;
+  public removeQueen(row: number, col: number): boolean {
+    if (this.cellStates[row][col] !== CellState.QUEEN) return false;
 
     if (this.gameObjects[row][col]) {
       this.gameObjects[row][col]?.destroy();
@@ -138,6 +143,8 @@ export class AntBoard {
 
     // Notify about queen removal
     this.onQueenPlacedCallback(this.queensPlaced);
+
+    return true; // Signal successful removal
   }
 
   public clearAllFlags(): void {

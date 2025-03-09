@@ -1,5 +1,6 @@
 // src/components/AntGameUI.ts
 import Phaser from 'phaser';
+import { GameResources } from './GameResources';
 
 export class AntGameUI {
   private scene: Phaser.Scene;
@@ -10,13 +11,30 @@ export class AntGameUI {
   private scoreBackground!: Phaser.GameObjects.Rectangle;
   private statusBackground!: Phaser.GameObjects.Rectangle;
   private gameOverPanel!: Phaser.GameObjects.Rectangle;
+  private resourcesPanel!: Phaser.GameObjects.Rectangle;
+  private resourcesText!: Phaser.GameObjects.Text;
+  private resources: GameResources;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, resources: GameResources) {
     this.scene = scene;
+    this.resources = resources;
     this.createUI();
   }
 
   private createUI(): void {
+    // Create resources panel background
+    this.resourcesPanel = this.scene.add.rectangle(120, 100, 240, 110, 0x000000, 0.7);
+    this.resourcesPanel.setDepth(90);
+
+    // Create resources text
+    this.resourcesText = this.scene.add.text(16, 80, this.formatResourcesText(), {
+      fontSize: '16px',
+      color: '#fff',
+      stroke: '#000',
+      strokeThickness: 1,
+    });
+    this.resourcesText.setDepth(100);
+
     // Create background for score text
     this.scoreBackground = this.scene.add.rectangle(
       110, // Positioned to encompass the text
@@ -112,6 +130,23 @@ export class AntGameUI {
 
   public updateScore(score: number): void {
     this.scoreText.setText(`Queens Placed: ${score}`);
+  }
+
+  public updateStatusText(message: string): void {
+    this.statusText.setText(message);
+  }
+
+  public formatResourcesText(): string {
+    return (
+      `Plots Owned: ${this.resources.getPlots()}\n` +
+      `Acres: ${this.resources.getOwnedAcres()}/${this.resources.getTotalAcres()}\n` +
+      `Queens Available: ${this.resources.getQueens()}\n` +
+      `Gold: ${this.resources.getGold()}`
+    );
+  }
+
+  public updateResources(): void {
+    this.resourcesText.setText(this.formatResourcesText());
   }
 
   public showGameOver(success: boolean, score: number): void {
