@@ -76,14 +76,17 @@ export class AntBoard {
     return this.cellStates[row][col];
   }
 
+  // In AntBoard.ts, modify the placeFlag method
   public placeFlag(row: number, col: number): void {
     if (this.cellStates[row][col] !== CellState.EMPTY) return;
 
     const cellX = this.gridCells[row][col].x;
     const cellY = this.gridCells[row][col].y;
 
+    // Use a proper flag image instead of a red ball
     const flag = this.scene.add.image(cellX, cellY, 'flag');
-    flag.setScale(0.5); // Make flag smaller
+    flag.setScale(0.4); // Adjust scale as needed
+    flag.setDepth(20); // Above grid cells, below queens
 
     // Store reference to the flag
     this.gameObjects[row][col] = flag;

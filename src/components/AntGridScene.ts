@@ -21,10 +21,24 @@ export class AntGridScene extends Phaser.Scene {
   }
 
   preload(): void {
-    // Load assets for flags and queens
-    this.load.image('flag', 'https://examples.phaser.io/assets/sprites/red_ball.png');
-    this.load.image('queen', 'https://examples.phaser.io/assets/sprites/phaser-dude.png');
-    this.load.image('background', 'https://examples.phaser.io/assets/skies/sky3.png');
+    // Use the official Phaser 3 Labs examples repository
+    this.load.image('flag', 'https://labs.phaser.io/assets/sprites/flag-red.png');
+    this.load.image('queen', 'https://labs.phaser.io/assets/sprites/phaser-dude.png');
+    this.load.image('background', 'https://labs.phaser.io/assets/skies/sky3.png');
+
+    // Fallback options if the above URLs don't work
+    this.load.image(
+      'flag-alt',
+      'https://raw.githubusercontent.com/photonstorm/phaser3-examples/master/public/assets/sprites/flag-red.png'
+    );
+    this.load.image(
+      'queen-alt',
+      'https://raw.githubusercontent.com/photonstorm/phaser3-examples/master/public/assets/sprites/phaser-dude.png'
+    );
+    this.load.image(
+      'background-alt',
+      'https://raw.githubusercontent.com/photonstorm/phaser3-examples/master/public/assets/skies/sky3.png'
+    );
   }
 
   create(): void {
