@@ -57,12 +57,12 @@ export class AntBoard {
           cellY,
           this.cellSize - 4,
           this.cellSize - 4,
-          0xf5f5dc, // Beige color for soil
+          0x3d1c00, // Dark rich soil color
           1
         );
 
         // Add border
-        cell.setStrokeStyle(2, 0x663300); // Brown border
+        cell.setStrokeStyle(2, 0x006400); // Dark green border for forest feel
 
         // Make cell interactive
         cell.setInteractive();
@@ -74,6 +74,17 @@ export class AntBoard {
 
         this.gridCells[row][col] = cell;
         this.boardContainer.add(cell);
+
+        // Add some plant decoration to random cells to enhance rainforest feel
+        if (Math.random() > 0.7) {
+          const plantDecoration = this.scene.add.circle(
+            cellX + (Math.random() * 30 - 15),
+            cellY + (Math.random() * 30 - 15),
+            5,
+            0x32cd32 // Lime green for plants
+          );
+          this.boardContainer.add(plantDecoration);
+        }
       }
     }
   }
@@ -88,8 +99,8 @@ export class AntBoard {
     const cellX = this.gridCells[row][col].x;
     const cellY = this.gridCells[row][col].y;
 
-    const flag = this.scene.add.image(cellX, cellY, 'flag');
-    flag.setScale(0.4); // Make flag smaller
+    const flag = this.scene.add.image(cellX, cellY, 'soldier-ant');
+    flag.setScale(0.4); // Make soldier ant smaller
     flag.setDepth(20); // Above grid cells, below queens
 
     // Store reference to the flag
@@ -111,14 +122,15 @@ export class AntBoard {
     const cellX = this.gridCells[row][col].x;
     const cellY = this.gridCells[row][col].y;
 
-    const queen = this.scene.add.image(cellX, cellY, 'queen');
+    const queen = this.scene.add.image(cellX, cellY, 'honey-queen');
     queen.setScale(0.8); // Scale queen to fit cell
     queen.setDepth(30); // Above flags and grid cells
 
-    // Add a tween animation
+    // Add a tween animation to simulate honey pot ant swaying
     this.scene.tweens.add({
       targets: queen,
-      y: { value: queen.y - 5, yoyo: true, duration: 500 },
+      y: { value: queen.y - 5, yoyo: true, duration: 800 },
+      angle: { value: 5, yoyo: true, duration: 1200 },
       repeat: -1,
     });
 
@@ -172,9 +184,6 @@ export class AntBoard {
     this.queensPlaced = 0;
     this.onQueenPlacedCallback(this.queensPlaced);
   }
-
-  // Rest of board methods...
-  // You can further extract the queen validation logic if needed
 
   public get getGridSize(): number {
     return this.gridSize;

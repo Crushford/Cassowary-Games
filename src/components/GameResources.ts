@@ -1,10 +1,10 @@
 // src/components/GameResources.ts
 export class GameResources {
   private plots: number = 5;
-  private totalAcres: number = 36; // 6x6 grid
+  private totalAcres: number = 36; // 6x6 grid of 1m² each
   private ownedAcres: number = 5;
   private queens: number = 30;
-  private gold: number = 30;
+  private gold: number = 30; // Gold coins (1g each)
 
   constructor() {}
 

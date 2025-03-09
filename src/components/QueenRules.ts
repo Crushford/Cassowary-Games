@@ -55,14 +55,14 @@ export class QueenRules {
   ): { row: number; col: number }[] {
     const threatened: { row: number; col: number }[] = [];
 
-    // Row threats
+    // Row threats - soldier ants patrol the entire row
     for (let c = 0; c < this.gridSize; c++) {
       if (c !== queenCol && cellStates[queenRow][c] === CellState.EMPTY) {
         threatened.push({ row: queenRow, col: c });
       }
     }
 
-    // Column threats
+    // Column threats - soldier ants patrol the entire column
     for (let r = 0; r < this.gridSize; r++) {
       if (r !== queenRow && cellStates[r][queenCol] === CellState.EMPTY) {
         threatened.push({ row: r, col: queenCol });
