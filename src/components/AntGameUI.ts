@@ -15,6 +15,7 @@ export class AntGameUI {
   private resourcesText!: Phaser.GameObjects.Text;
   private resources: GameResources;
   private titleText!: Phaser.GameObjects.Text;
+  private statusClearTimer: Phaser.Time.TimerEvent | null = null;
 
   constructor(scene: Phaser.Scene, resources: GameResources) {
     this.scene = scene;
@@ -25,7 +26,7 @@ export class AntGameUI {
   private createUI(): void {
     // Create title text
     this.titleText = this.scene.add
-      .text(this.scene.cameras.main.width / 2, 10, 'HONEY POT ANT COLONY', {
+      .text(this.scene.cameras.main.width / 2, 15, 'HONEY POT ANT COLONY', {
         fontSize: '28px',
         fontFamily: 'Georgia',
         color: '#FFD700', // Gold color
@@ -36,13 +37,42 @@ export class AntGameUI {
       .setOrigin(0.5, 0)
       .setDepth(100);
 
-    // Create resources panel background with rainforest styling
-    this.resourcesPanel = this.scene.add.rectangle(120, 100, 240, 130, 0x006400, 0.8); // Dark green bg
+    // Create status text with more space below the title
+    this.statusBackground = this.scene.add.rectangle(
+      this.scene.cameras.main.width / 2,
+      70,
+      600,
+      34,
+      0x006400, // Dark green
+      0.9
+    );
+    this.statusBackground.setStrokeStyle(2, 0xffd700); // Gold border
+    this.statusBackground.setDepth(90);
+
+    this.statusText = this.scene.add
+      .text(
+        this.scene.cameras.main.width / 2,
+        70,
+        'Place honey pot queens strategically to build your colony!',
+        {
+          fontSize: '16px',
+          fontFamily: 'Georgia',
+          color: '#FFD700', // Gold text
+          stroke: '#000',
+          strokeThickness: 1,
+          align: 'center',
+        }
+      )
+      .setOrigin(0.5, 0.5)
+      .setDepth(100);
+
+    // Create resources panel background with rainforest styling - moved to the left
+    this.resourcesPanel = this.scene.add.rectangle(130, 160, 250, 130, 0x006400, 0.9);
     this.resourcesPanel.setStrokeStyle(3, 0xffd700); // Gold border
     this.resourcesPanel.setDepth(90);
 
-    // Create resources text
-    this.resourcesText = this.scene.add.text(16, 80, this.formatResourcesText(), {
+    // Create resources text moved to match the panel
+    this.resourcesText = this.scene.add.text(20, 110, this.formatResourcesText(), {
       fontSize: '16px',
       fontFamily: 'Georgia',
       color: '#FFD700', // Gold text
@@ -51,54 +81,28 @@ export class AntGameUI {
     });
     this.resourcesText.setDepth(100);
 
-    // Create background for score text with rainforest styling
+    // Create score display near the top-right
     this.scoreBackground = this.scene.add.rectangle(
-      110,
-      46,
-      220,
-      50,
+      this.scene.cameras.main.width - 110,
+      70,
+      200,
+      34,
       0x006400, // Dark green
-      0.8
+      0.9
     );
     this.scoreBackground.setStrokeStyle(2, 0xffd700); // Gold border
     this.scoreBackground.setDepth(90);
 
-    // Create score text
-    this.scoreText = this.scene.add.text(16, 36, 'Queens Placed: 0', {
-      fontSize: '24px',
-      fontFamily: 'Georgia',
-      color: '#FFD700', // Gold text
-      stroke: '#000',
-      strokeThickness: 2,
-    });
-    this.scoreText.setDepth(100);
-
-    // Create background for status text
-    this.statusBackground = this.scene.add.rectangle(
-      290,
-      50,
-      580,
-      30,
-      0x006400, // Dark green
-      0.8
-    );
-    this.statusBackground.setStrokeStyle(2, 0xffd700); // Gold border
-    this.statusBackground.setDepth(90);
-
-    // Create status text
-    this.statusText = this.scene.add.text(
-      16,
-      42,
-      'Place honey pot queens - soldiers will attack any queen in their path!',
-      {
-        fontSize: '16px',
+    this.scoreText = this.scene.add
+      .text(this.scene.cameras.main.width - 110, 70, 'Queens: 0', {
+        fontSize: '18px',
         fontFamily: 'Georgia',
         color: '#FFD700', // Gold text
         stroke: '#000',
         strokeThickness: 1,
-      }
-    );
-    this.statusText.setDepth(100);
+      })
+      .setOrigin(0.5, 0.5)
+      .setDepth(100);
 
     // Create panel for game over content with rainforest styling
     this.gameOverPanel = this.scene.add.rectangle(
@@ -163,11 +167,25 @@ export class AntGameUI {
   }
 
   public updateScore(score: number): void {
-    this.scoreText.setText(`Queens Placed: ${score}`);
+    this.scoreText.setText(`Queens: ${score}`);
   }
 
-  public updateStatusText(message: string): void {
+  public updateStatusText(message: string, autoHide: boolean = false): void {
     this.statusText.setText(message);
+
+    // Clear any existing timer
+    if (this.statusClearTimer) {
+      this.statusClearTimer.destroy();
+      this.statusClearTimer = null;
+    }
+
+    // Auto-hide status text after a delay if requested
+    if (autoHide) {
+      this.statusClearTimer = this.scene.time.delayedCall(3000, () => {
+        this.statusText.setText('Place honey pot queens strategically to build your colony!');
+        this.statusClearTimer = null;
+      });
+    }
   }
 
   public formatResourcesText(): string {
@@ -203,8 +221,6 @@ export class AntGameUI {
     this.gameOverPanel.setVisible(false);
     this.gameOverText.setVisible(false);
     this.restartButton.setVisible(false);
-    this.statusText.setText(
-      'Place honey pot queens - soldiers will attack any queen in their path!'
-    );
+    this.statusText.setText('Place honey pot queens strategically to build your colony!');
   }
 }
