@@ -2,14 +2,16 @@
 import { BaseScene } from './BaseScene';
 import { GAME_CONSTANTS } from '../config/constants';
 import { GameState } from '../managers/GameManager';
+import { Panel } from '../components/ui/Panel';
+import { Button } from '../components/ui/Button';
+import { StatusBar } from '../components/ui/StatusBar';
 
 export class UIScene extends BaseScene {
   private scoreText!: Phaser.GameObjects.Text;
-  private statusText!: Phaser.GameObjects.Text;
-  private gameOverPanel!: Phaser.GameObjects.Container;
-  private resourcesPanel!: Phaser.GameObjects.Container;
+  private statusBar!: StatusBar;
+  private gameOverPanel!: Panel;
+  private resourcesPanel!: Panel;
   private resourcesText!: Phaser.GameObjects.Text;
-  private statusClearTimer: Phaser.Time.TimerEvent | null = null;
 
   constructor() {
     super('UIScene');
@@ -27,10 +29,18 @@ export class UIScene extends BaseScene {
   }
 
   private createHeader(): void {
+    // Create title panel
+    const titlePanel = new Panel(this, this.cameras.main.width / 2, 15, {
+      width: this.cameras.main.width,
+      height: 40,
+      backgroundColor: GAME_CONSTANTS.COLORS.DARK_GREEN,
+      alpha: 0.9,
+    });
+
     // Create title text
     const titleText = this.createText(
-      this.cameras.main.width / 2,
-      15,
+      0,
+      0,
       'HONEY POT ANT COLONY',
       '28px',
       '#FFD700',
@@ -38,77 +48,45 @@ export class UIScene extends BaseScene {
       4
     );
     titleText.setShadow(2, 2, '#000000', 5, true);
-    titleText.setDepth(100);
+    titlePanel.addContent(titleText);
 
-    // Create score display in top right
-    const scoreBackground = this.add.rectangle(
-      this.cameras.main.width - 110,
-      70,
-      200,
-      34,
-      GAME_CONSTANTS.COLORS.DARK_GREEN,
-      0.9
-    );
-    scoreBackground.setStrokeStyle(2, GAME_CONSTANTS.COLORS.GOLD);
-    scoreBackground.setDepth(90);
+    // Create score panel
+    const scorePanel = new Panel(this, this.cameras.main.width - 110, 70, {
+      width: 200,
+      height: 34,
+      backgroundColor: GAME_CONSTANTS.COLORS.DARK_GREEN,
+      alpha: 0.9,
+    });
 
-    this.scoreText = this.createText(
-      this.cameras.main.width - 110,
-      70,
-      'Queens: 0',
-      '18px',
-      '#FFD700',
-      '#000000',
-      1
-    );
-    this.scoreText.setDepth(100);
+    // Create score text
+    this.scoreText = this.createText(0, 0, 'Queens: 0', '18px', '#FFD700', '#000000', 1);
+    scorePanel.addContent(this.scoreText);
   }
 
   private createStatusBar(): void {
-    // Create status text with more space below the title
-    const statusBackground = this.add.rectangle(
-      this.cameras.main.width / 2,
-      70,
-      600,
-      34,
-      GAME_CONSTANTS.COLORS.DARK_GREEN,
-      0.9
-    );
-    statusBackground.setStrokeStyle(2, GAME_CONSTANTS.COLORS.GOLD);
-    statusBackground.setDepth(90);
+    this.statusBar = new StatusBar(this, this.cameras.main.width / 2, 70, {
+      width: 600,
+      height: 34,
+      fontSize: '16px',
+      textColor: '#FFD700',
+      backgroundColor: GAME_CONSTANTS.COLORS.DARK_GREEN,
+    });
 
-    this.statusText = this.createText(
-      this.cameras.main.width / 2,
-      70,
-      'Place honey pot queens strategically to build your colony!',
-      '16px',
-      '#FFD700',
-      '#000000',
-      1
-    );
-    this.statusText.setDepth(100);
+    this.statusBar.setDefaultMessage('Place honey pot queens strategically to build your colony!');
   }
 
   private createResourcesPanel(): void {
-    // Create resources panel container
-    this.resourcesPanel = this.add.container(0, 0);
-    this.resourcesPanel.setDepth(90);
-
-    // Create resources panel background
-    const background = this.add.rectangle(
-      130,
-      160,
-      250,
-      130,
-      GAME_CONSTANTS.COLORS.DARK_GREEN,
-      0.9
-    );
-    background.setStrokeStyle(3, GAME_CONSTANTS.COLORS.GOLD);
+    this.resourcesPanel = new Panel(this, 130, 160, {
+      width: 250,
+      height: 130,
+      backgroundColor: GAME_CONSTANTS.COLORS.DARK_GREEN,
+      alpha: 0.9,
+    });
 
     // Create resources text
     this.resourcesText = this.createText(
-      20,
-      110,
+      0,
+      0,
       this.formatResourcesText({
         queens: GAME_CONSTANTS.INITIAL_QUEENS,
         gold: GAME_CONSTANTS.INITIAL_GOLD,
@@ -120,59 +98,52 @@ export class UIScene extends BaseScene {
       '#000000',
       1
     );
-    this.resourcesText.setOrigin(0, 0);
-    this.resourcesText.setDepth(100);
 
-    // Add elements to panel
-    this.resourcesPanel.add([background, this.resourcesText]);
+    this.resourcesPanel.addContent(this.resourcesText);
   }
 
   private createGameOverPanel(): void {
-    // Create panel for game over content
-    this.gameOverPanel = this.add.container(
+    // Create main panel
+    this.gameOverPanel = new Panel(
+      this,
       this.cameras.main.width / 2,
-      this.cameras.main.height / 2
+      this.cameras.main.height / 2,
+      {
+        width: 500,
+        height: 250,
+        backgroundColor: GAME_CONSTANTS.COLORS.DARK_GREEN,
+        alpha: 0.9,
+      }
     );
-    this.gameOverPanel.setDepth(200);
-
-    // Create panel background
-    const panel = this.add.rectangle(0, 0, 500, 250, GAME_CONSTANTS.COLORS.DARK_GREEN, 0.9);
-    panel.setStrokeStyle(6, GAME_CONSTANTS.COLORS.GOLD);
 
     // Create game over text
     const gameOverText = this.createText(0, -30, '', '36px', '#FFD700', '#000000', 4);
 
     // Create restart button
-    const restartButton = this.add.container(0, 60);
-
-    const buttonBg = this.add.rectangle(0, 0, 200, 50, GAME_CONSTANTS.COLORS.FOREST_GREEN);
-    buttonBg.setStrokeStyle(2, GAME_CONSTANTS.COLORS.GOLD);
-    buttonBg.setInteractive({ useHandCursor: true });
-
-    const buttonText = this.createText(0, 0, 'New Colony', '24px', '#FFD700', '#000000', 1);
-
-    // Add hover effect
-    buttonBg.on('pointerover', () => {
-      buttonBg.fillColor = GAME_CONSTANTS.COLORS.LIGHT_GREEN;
-    });
-
-    buttonBg.on('pointerout', () => {
-      buttonBg.fillColor = GAME_CONSTANTS.COLORS.FOREST_GREEN;
-    });
-
-    // Restart game on click
-    buttonBg.on('pointerdown', () => {
-      if (window.gameEvents) {
-        window.gameEvents.emit('restart-game');
+    const restartButton = new Button(
+      this,
+      0,
+      60,
+      'New Colony',
+      () => {
+        if (window.gameEvents) {
+          window.gameEvents.emit('restart-game');
+        }
+      },
+      {
+        width: 200,
+        height: 50,
+        fontSize: '24px',
+        backgroundColor: GAME_CONSTANTS.COLORS.FOREST_GREEN,
+        textColor: '#FFD700',
+        strokeColor: GAME_CONSTANTS.COLORS.GOLD,
       }
-    });
-
-    restartButton.add([buttonBg, buttonText]);
+    );
 
     // Add elements to panel
-    this.gameOverPanel.add([panel, gameOverText, restartButton]);
+    this.gameOverPanel.addContent([gameOverText, restartButton]);
 
-    // Store references for later access
+    // Store reference for later access
     this.gameOverPanel.setData('gameOverText', gameOverText);
 
     // Hide initially
@@ -180,13 +151,10 @@ export class UIScene extends BaseScene {
   }
 
   private setupEventListeners(): void {
-    // Get references to game scene and manager
-    const gameScene = this.scene.get('GameScene');
-
-    if (gameScene && window.gameEvents) {
+    if (window.gameEvents) {
       // Status message updates
       window.gameEvents.on('status-message', (message: string, autoHide: boolean = false) => {
-        this.updateStatusText(message, autoHide);
+        this.statusBar.showMessage(message, autoHide);
       });
 
       // Queen count updates
@@ -215,31 +183,8 @@ export class UIScene extends BaseScene {
     }
   }
 
-  private updateStatusText(message: string, autoHide: boolean = false): void {
-    this.statusText.setText(message);
-
-    // Clear any existing timer
-    if (this.statusClearTimer) {
-      this.statusClearTimer.destroy();
-      this.statusClearTimer = null;
-    }
-
-    // Auto-hide status text after a delay if requested
-    if (autoHide) {
-      this.statusClearTimer = this.time.delayedCall(3000, () => {
-        this.statusText.setText('Place honey pot queens strategically to build your colony!');
-        this.statusClearTimer = null;
-      });
-    }
-  }
-
   private updateScore(count: number): void {
     this.scoreText.setText(`Queens: ${count}`);
-
-    // Also broadcast to main app
-    if (window.gameEvents) {
-      window.gameEvents.emit('queen-placed', count);
-    }
   }
 
   private formatResourcesText(resources: any): string {

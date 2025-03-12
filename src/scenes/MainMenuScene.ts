@@ -1,6 +1,8 @@
 // src/scenes/MainMenuScene.ts
 import { BaseScene } from './BaseScene';
 import { GAME_CONSTANTS } from '../config/constants';
+import { Button } from '../components/ui/Button';
+import { Panel } from '../components/ui/Panel';
 
 export class MainMenuScene extends BaseScene {
   constructor() {
@@ -19,20 +21,21 @@ export class MainMenuScene extends BaseScene {
       bg.setTint(0x88aa88);
     }
 
-    // Create title
-    const title = this.createText(
-      this.cameras.main.width / 2,
-      120,
-      'HONEY POT ANT COLONY',
-      '48px',
-      '#FFD700',
-      '#006400',
-      4
-    );
+    // Create title panel
+    const titlePanel = new Panel(this, this.cameras.main.width / 2, 120, {
+      width: 600,
+      height: 100,
+      backgroundColor: GAME_CONSTANTS.COLORS.DARK_GREEN,
+      alpha: 0.8,
+    });
+
+    // Add title text
+    const title = this.createText(0, 0, 'HONEY POT ANT COLONY', '48px', '#FFD700', '#006400', 4);
     title.setShadow(2, 2, '#000000', 5, true);
+    titlePanel.addContent(title);
 
     // Create subtitle
-    this.createText(
+    const subtitle = this.createText(
       this.cameras.main.width / 2,
       190,
       'Strategic Queen Placement',
@@ -43,34 +46,35 @@ export class MainMenuScene extends BaseScene {
     );
 
     // Create start button
-    const startButton = this.add.container(this.cameras.main.width / 2, 300);
-
-    const buttonBg = this.add.rectangle(0, 0, 220, 60, GAME_CONSTANTS.COLORS.FOREST_GREEN);
-    buttonBg.setStrokeStyle(3, GAME_CONSTANTS.COLORS.GOLD);
-    buttonBg.setInteractive({ useHandCursor: true });
-
-    const buttonText = this.createText(0, 0, 'Start Game', '24px', '#FFD700');
-
-    startButton.add([buttonBg, buttonText]);
-
-    // Button hover effects
-    buttonBg.on('pointerover', () => {
-      buttonBg.fillColor = GAME_CONSTANTS.COLORS.LIGHT_GREEN;
-    });
-
-    buttonBg.on('pointerout', () => {
-      buttonBg.fillColor = GAME_CONSTANTS.COLORS.FOREST_GREEN;
-    });
-
-    // Start game on click
-    buttonBg.on('pointerdown', () => {
-      this.startGame();
-    });
-
-    // Create how to play section
-    this.createText(
+    const startButton = new Button(
+      this,
       this.cameras.main.width / 2,
-      400,
+      300,
+      'Start Game',
+      () => this.startGame(),
+      {
+        width: 220,
+        height: 60,
+        fontSize: '24px',
+        backgroundColor: GAME_CONSTANTS.COLORS.FOREST_GREEN,
+        textColor: '#FFD700',
+        strokeColor: GAME_CONSTANTS.COLORS.GOLD,
+        strokeWidth: 3,
+      }
+    );
+
+    // Create instructions panel
+    const instructionsPanel = new Panel(this, this.cameras.main.width / 2, 500, {
+      width: 500,
+      height: 200,
+      backgroundColor: GAME_CONSTANTS.COLORS.DARK_GREEN,
+      alpha: 0.8,
+    });
+
+    // Add instructions title
+    const instructionsTitle = this.createText(
+      0,
+      -70,
       'How to Play:',
       '28px',
       '#FFFFFF',
@@ -85,19 +89,15 @@ export class MainMenuScene extends BaseScene {
       'Invalid placement will end your colony',
     ];
 
-    instructions.forEach((text, index) => {
-      this.createText(
-        this.cameras.main.width / 2,
-        450 + index * 32,
-        text,
-        '18px',
-        '#FFFFFF',
-        '#000000',
-        1
-      );
-    });
+    // Create instruction text objects
+    const instructionTexts = instructions.map((text, index) =>
+      this.createText(0, -30 + index * 32, text, '18px', '#FFFFFF', '#000000', 1)
+    );
 
-    // Create decorative ants
+    // Add all instruction elements to panel
+    instructionsPanel.addContent([instructionsTitle, ...instructionTexts]);
+
+    // Create decorative elements
     this.createDecorativeElements();
   }
 
@@ -124,7 +124,7 @@ export class MainMenuScene extends BaseScene {
       });
     }
 
-    // Add a decorative queen ant
+    // Add decorative ants
     const queen = this.add.image(150, 520, 'honey-queen');
     queen.setScale(1.2);
 
@@ -137,7 +137,6 @@ export class MainMenuScene extends BaseScene {
       ease: 'Sine.easeInOut',
     });
 
-    // Add a decorative soldier ant
     const soldier = this.add.image(this.cameras.main.width - 150, 520, 'soldier-ant');
     soldier.setScale(0.8);
 

@@ -4,15 +4,16 @@ import { BootScene } from '../scenes/BootScene';
 import { MainMenuScene } from '../scenes/MainMenuScene';
 import { GameScene } from '../scenes/GameScene';
 import { UIScene } from '../scenes/UIScene';
-
-// Import constants for configuration
 import { GAME_CONSTANTS } from './constants';
+
+const width = GAME_CONSTANTS.GRID_SIZE * GAME_CONSTANTS.CELL_SIZE;
+const height = GAME_CONSTANTS.GRID_SIZE * GAME_CONSTANTS.CELL_SIZE;
 
 export const GameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: 800,
-  height: 600,
-  backgroundColor: '#87CEEB',
+  width,
+  height,
+  backgroundColor: GAME_CONSTANTS.COLORS.LIGHT_GREEN,
   physics: {
     default: 'arcade',
     arcade: {
@@ -23,15 +24,10 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 800,
-    height: 600,
+    width,
+    height,
   },
-  scene: [
-    BootScene, // Asset loading
-    MainMenuScene, // Title screen
-    GameScene, // Main gameplay
-    UIScene, // User interface overlay
-  ],
+  scene: [BootScene, MainMenuScene, GameScene, UIScene],
   pixelArt: false,
   roundPixels: true,
   antialias: true,
@@ -45,12 +41,13 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
     pixelArt: false,
   },
   callbacks: {
-    postBoot: (game) => {
+    postBoot: (game: Phaser.Game) => {
       // Create global event emitter if it doesn't exist yet
       if (!window.gameEvents) {
         window.gameEvents = new Phaser.Events.EventEmitter();
       }
 
+      // eslint-disable-next-line no-console
       console.log('Honey Pot Ant Colony game initialized!');
     },
   },
