@@ -47,9 +47,6 @@ export class Cell extends Phaser.GameObjects.Container {
     this.add(this.background);
     this.add(this.highlight);
 
-    // Add random soil decoration
-    this.addSoilDecoration();
-
     // Setup interaction events
     this.setupInteraction();
 
@@ -57,35 +54,9 @@ export class Cell extends Phaser.GameObjects.Container {
     scene.add.existing(this);
   }
 
-  // Add random soil decorations (roots, pebbles, etc)
+  // Empty method that does nothing - keeping it for compatibility
   private addSoilDecoration(): void {
-    // Remove existing decoration if any
-    if (this.decoration) {
-      this.remove(this.decoration, true);
-      this.decoration = null;
-    }
-
-    const decorationChance = Math.random();
-
-    if (decorationChance > 0.7) {
-      // Green plant roots
-      this.decoration = this.scene.add.circle(
-        Math.random() * (this.size / 2) - this.size / 4,
-        Math.random() * (this.size / 2) - this.size / 4,
-        3 + Math.random() * 3,
-        GAME_CONSTANTS.COLORS.LIGHT_GREEN
-      );
-      this.add(this.decoration);
-    } else if (decorationChance > 0.5) {
-      // Small pebble
-      this.decoration = this.scene.add.circle(
-        Math.random() * (this.size / 2) - this.size / 4,
-        Math.random() * (this.size / 2) - this.size / 4,
-        2 + Math.random() * 2,
-        GAME_CONSTANTS.COLORS.PEBBLE_GRAY || 0x888888
-      );
-      this.add(this.decoration);
-    }
+    // Method intentionally left empty to remove decorative elements
   }
 
   // Setup interaction events
@@ -126,21 +97,12 @@ export class Cell extends Phaser.GameObjects.Container {
       this._cellState = CellState.THREATENED;
       this.background.setStrokeStyle(2, GAME_CONSTANTS.COLORS.DANGER_RED);
 
-      // Add subtle pulsing effect
-      if (!this.scene.tweens.isTweening(this.background)) {
-        this.scene.tweens.add({
-          targets: this.background,
-          alpha: 0.8,
-          duration: 600,
-          yoyo: true,
-          repeat: -1,
-        });
-      }
+      // Remove pulsing effect
+      this.background.setAlpha(0.8); // Just use a static alpha instead
     } else {
       // Remove threatened state
       this._cellState = CellState.EMPTY;
       this.background.setStrokeStyle(2, GAME_CONSTANTS.COLORS.DARK_GREEN);
-      this.scene.tweens.killTweensOf(this.background);
       this.background.setAlpha(1);
     }
   }
@@ -196,36 +158,19 @@ export class Cell extends Phaser.GameObjects.Container {
 
   // Flash the cell to indicate an action
   flash(color: number = GAME_CONSTANTS.COLORS.HIGHLIGHT_YELLOW): void {
-    const flashRect = this.scene.add
-      .rectangle(0, 0, this.size - 8, this.size - 8, color)
-      .setAlpha(0.7);
+    // Simplified version - just change the background color briefly
+    const originalColor = this.background.fillColor;
+    this.background.fillColor = color;
 
-    this.add(flashRect);
-
-    this.scene.tweens.add({
-      targets: flashRect,
-      alpha: 0,
-      duration: 300,
-      onComplete: () => {
-        this.remove(flashRect, true);
-      },
-    });
+    // Use a simple timeout instead of a tween
+    setTimeout(() => {
+      this.background.fillColor = originalColor;
+    }, 300);
   }
 
   // Shake the cell (for invalid moves)
   shake(): void {
-    if (this.scene.tweens.isTweening(this)) return;
-
-    this.scene.tweens.add({
-      targets: this,
-      x: { from: this.x - 5, to: this.x },
-      duration: 50,
-      repeat: 3,
-      yoyo: true,
-      ease: 'Bounce.easeInOut',
-      onComplete: () => {
-        this.x = this.x;
-      },
-    });
+    // Simplified version - just flash red instead of shaking
+    this.flash(GAME_CONSTANTS.COLORS.DANGER_RED);
   }
 }
