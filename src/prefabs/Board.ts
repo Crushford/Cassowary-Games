@@ -2,6 +2,12 @@
 import Phaser from 'phaser';
 import { Cell, CellState } from './Cell';
 import { GAME_CONSTANTS } from '../config/constants';
+import { ThreatenedPositionCalculator } from '../core/ThreatenedPositionCalculator';
+
+export interface Position {
+  row: number;
+  col: number;
+}
 
 export class Board extends Phaser.GameObjects.Container {
   private cells: Cell[][] = [];
@@ -9,6 +15,7 @@ export class Board extends Phaser.GameObjects.Container {
   private cellSize: number;
   private queensPlaced: number = 0;
   private clickHandler: ((cell: Cell) => void) | null = null;
+  private threatCalculator: ThreatenedPositionCalculator;
 
   constructor(
     scene: Phaser.Scene,
@@ -24,6 +31,7 @@ export class Board extends Phaser.GameObjects.Container {
     super(scene, x, y);
     this.gridSize = gridSize;
     this.cellSize = cellSize;
+    this.threatCalculator = new ThreatenedPositionCalculator(gridSize);
 
     // Create the grid of cells
     this.createGrid();
@@ -104,9 +112,26 @@ export class Board extends Phaser.GameObjects.Container {
     const cell = this.getCell(row, col);
     if (cell && cell.placeQueen()) {
       this.queensPlaced++;
+
+      // Mark threatened positions with flags
+      this.markThreatenedPositions(row, col);
+
       return true;
     }
     return false;
+  }
+
+  // Mark threatened positions when a queen is placed
+  private markThreatenedPositions(queenRow: number, queenCol: number): void {
+    const cellStates = this.getCellStates();
+    const threatened = this.threatCalculator.getThreatenedPositions(queenRow, queenCol, cellStates);
+
+    for (const pos of threatened) {
+      const cell = this.getCell(pos.row, pos.col);
+      if (cell && cell.cellState === CellState.EMPTY) {
+        cell.placeFlag();
+      }
+    }
   }
 
   // Place flag
