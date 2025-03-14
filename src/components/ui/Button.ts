@@ -28,6 +28,7 @@ export class Button {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container;
   private background: Phaser.GameObjects.Graphics;
+  private hitZone: Phaser.GameObjects.Rectangle;
   private textObject: Phaser.GameObjects.Text;
   private options: ButtonOptions;
   private isHovering: boolean = false;
@@ -76,22 +77,28 @@ export class Button {
     // Draw the button
     this.drawButton();
 
-    // Make the container interactive
-    this.container.setSize(this.options.width, this.options.height);
-    this.container.setInteractive(
-      new Phaser.Geom.Rectangle(
-        -this.options.width / 2,
-        -this.options.height / 2,
-        this.options.width,
-        this.options.height
-      ),
-      Phaser.Geom.Rectangle.Contains
-    );
+    // Handle auto-sizing and ensure defaults
+    const finalWidth = this.options.width || GAME_CONSTANTS.UI.BUTTON.DEFAULT_WIDTH;
+    const finalHeight = this.options.height || GAME_CONSTANTS.UI.BUTTON.DEFAULT_HEIGHT;
 
-    // Add event listeners
-    this.container.on('pointerover', this.onPointerOver, this);
-    this.container.on('pointerout', this.onPointerOut, this);
-    this.container.on('pointerdown', onClick);
+    // Create a rectangle to serve as a hit zone
+    this.hitZone = scene.add.rectangle(0, 0, finalWidth, finalHeight, 0xffffff, 0);
+    this.hitZone.setOrigin(0.5, 0.5);
+    this.hitZone.setInteractive();
+    this.container.add(this.hitZone);
+
+    // Make sure the hit zone is on top to catch all pointer events
+    this.hitZone.setDepth(1);
+
+    // Set cursor style to indicate clickable element
+    if (this.hitZone.input) {
+      this.hitZone.input.cursor = 'pointer';
+    }
+
+    // Add event listeners to the hit zone
+    this.hitZone.on('pointerover', this.onPointerOver, this);
+    this.hitZone.on('pointerout', this.onPointerOut, this);
+    this.hitZone.on('pointerdown', onClick);
   }
 
   /**
@@ -172,8 +179,11 @@ export class Button {
    * Clean up resources
    */
   public destroy(): void {
-    this.container.off('pointerover', this.onPointerOver, this);
-    this.container.off('pointerout', this.onPointerOut, this);
+    if (this.hitZone) {
+      this.hitZone.off('pointerover', this.onPointerOver, this);
+      this.hitZone.off('pointerout', this.onPointerOut, this);
+      this.hitZone.destroy();
+    }
     this.container.destroy();
   }
 }
