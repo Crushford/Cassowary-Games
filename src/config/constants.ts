@@ -14,10 +14,13 @@ export const GAME_CONSTANTS = {
   // UI settings
   COLORS: {
     GOLD: 0xffd700,
-    DARK_GREEN: 0x006400,
-    FOREST_GREEN: 0x228b22,
-    LIGHT_GREEN: 0x32cd32,
-    SOIL_BROWN: 0x3d1c00,
+    DARK_GREEN: 0x1a472a,
+    FOREST_GREEN: 0x2d5a27,
+    LIGHT_GREEN: 0x90ee90,
+    SOIL_BROWN: 0x8b4513,
+    HIGHLIGHT_YELLOW: 0xffff00,
+    PEBBLE_GRAY: 0x808080,
+    DANGER_RED: 0xff0000,
   },
 
   // Game rules

@@ -149,18 +149,18 @@ export class Cell extends Phaser.GameObjects.Container {
   placeFlag(): boolean {
     if (this._cellState !== CellState.EMPTY) return false;
 
-    this.contents = this.scene.add.sprite(0, 0, 'soldier-ant').setScale(0.4);
+    this.contents = this.scene.add.sprite(0, 0, 'flag').setScale(0.4);
     this.add(this.contents);
     this._cellState = CellState.FLAGGED;
 
-    // Add soldier ant animation
+    // Add flag animation
     TweenHelper.popIn(this.scene, this.contents);
 
-    // Add guarding animation
+    // Add waving animation
     this.scene.tweens.add({
       targets: this.contents,
-      angle: { from: -5, to: 5 },
-      duration: 1200,
+      angle: { from: -10, to: 10 },
+      duration: 1500,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut',
@@ -173,8 +173,8 @@ export class Cell extends Phaser.GameObjects.Container {
   placeQueen(): boolean {
     if (this._cellState !== CellState.EMPTY) return false;
 
-    // Honey pot queen sprite with animations
-    this.contents = this.scene.add.sprite(0, 0, 'honey-queen').setScale(0.8);
+    // Queen sprite with animations
+    this.contents = this.scene.add.sprite(0, 0, 'queen').setScale(0.8);
     this.add(this.contents);
     this._cellState = CellState.QUEEN;
 
@@ -203,21 +203,23 @@ export class Cell extends Phaser.GameObjects.Container {
 
   // Emit particles when queen is placed
   private emitPlacementParticles(): void {
-    if (!this.scene.particles) return;
-
-    const particles = this.scene.add.particles(0, 0, 'particle', {
-      speed: { min: 20, max: 50 },
-      scale: { start: 0.2, end: 0 },
-      lifespan: 800,
+    const particles = this.scene.add.particles(0, 0, 'raindrop', {
+      speed: { min: 20, max: 100 },
+      angle: { min: 0, max: 360 },
+      scale: { start: 0.4, end: 0.1 },
       blendMode: 'ADD',
+      lifespan: 800,
       quantity: 15,
     });
 
     this.add(particles);
 
-    // Auto-destroy particles after emission completes
-    this.scene.time.delayedCall(1000, () => {
-      particles.destroy();
+    // Stop emitting after a short time and then destroy
+    this.scene.time.delayedCall(300, () => {
+      particles.stop();
+      this.scene.time.delayedCall(800, () => {
+        particles.destroy();
+      });
     });
   }
 

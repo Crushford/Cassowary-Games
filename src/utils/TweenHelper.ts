@@ -200,6 +200,42 @@ export function shake(
   return tween;
 }
 
+/**
+ * Create a pop-in effect for a game object
+ */
+export function popIn(
+  scene: Phaser.Scene,
+  target: Phaser.GameObjects.GameObject | Phaser.GameObjects.GameObject[],
+  options: {
+    scale?: { from: number; to: number };
+    duration?: number;
+    delay?: number;
+    onComplete?: () => void;
+  } = {}
+): Phaser.Tweens.Tween {
+  const { scale = { from: 0.5, to: 1 }, duration = 500, delay = 0, onComplete } = options;
+
+  const targets = Array.isArray(target) ? target : [target];
+  targets.forEach((obj) => {
+    if ('scale' in obj) {
+      obj.scale = scale.from;
+    }
+    if ('alpha' in obj) {
+      obj.alpha = 0;
+    }
+  });
+
+  return scene.tweens.add({
+    targets: target,
+    scale: scale.to,
+    alpha: 1,
+    duration: duration,
+    delay: delay,
+    ease: 'Back.easeOut',
+    onComplete: onComplete,
+  });
+}
+
 export default {
   fadeIn,
   fadeOut,
@@ -207,4 +243,5 @@ export default {
   bounce,
   hover,
   shake,
+  popIn,
 };

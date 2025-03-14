@@ -30,29 +30,36 @@ export class BootScene extends BaseScene {
   }
 
   create(): void {
-    // Wait briefly then start the game
+    // Wait briefly then start both game and UI scenes
     this.time.delayedCall(1000, () => {
       this.scene.start('GameScene');
+      this.scene.launch('UIScene'); // Launch UI scene in parallel
     });
   }
 
   private loadGameAssets(): void {
     // Load image assets
     this.load.image('rainforest', 'assets/images/rainforest.png');
-    this.load.image('honey-queen', 'assets/images/honey-queen.png');
-    this.load.image('soldier-ant', 'assets/images/soldier-ant.png');
+    this.load.image(
+      'flag',
+      'https://raw.githubusercontent.com/photonstorm/phaser3-examples/master/public/assets/sprites/flag.png'
+    );
+    this.load.image(
+      'queen',
+      'https://raw.githubusercontent.com/photonstorm/phaser3-examples/master/public/assets/sprites/queen.png'
+    );
     this.load.image('leaf', 'assets/images/leaf.png');
     this.load.image('raindrop', 'assets/images/raindrop.png');
     this.load.image('gold-coin', 'assets/images/gold-coin.png');
 
     // Load fallbacks using absolute URLs (can be replaced with your own hosted assets)
     this.load.image(
-      'soldier-ant-alt',
-      'https://raw.githubusercontent.com/photonstorm/phaser3-examples/master/public/assets/sprites/bullets/bullet6.png'
+      'flag-alt',
+      'https://raw.githubusercontent.com/photonstorm/phaser3-examples/master/public/assets/sprites/flag.png'
     );
     this.load.image(
-      'honey-queen-alt',
-      'https://raw.githubusercontent.com/photonstorm/phaser3-examples/master/public/assets/sprites/ufo.png'
+      'queen-alt',
+      'https://raw.githubusercontent.com/photonstorm/phaser3-examples/master/public/assets/sprites/queen.png'
     );
     this.load.image(
       'rainforest-alt',

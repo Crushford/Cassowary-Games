@@ -52,9 +52,33 @@ export class GameManager {
 
     switch (cell.cellState) {
       case CellState.EMPTY:
-        // Place a flag (threatened position)
+        // First click always places a flag
         this.board.placeFlag(row, col);
-        this.events.emit('status-message', 'Soldier ants will attack any queen placed here!', true);
+
+        // Check if position is threatened by existing queens
+        const cellStates = this.board.getCellStates();
+        const queens = this.board.getCellsInState(CellState.QUEEN);
+        let isThreatened = false;
+
+        for (const queen of queens) {
+          const { row: qRow, col: qCol } = queen.gridPosition;
+          const threatened = this.rules.getThreatenedPositions(qRow, qCol, cellStates);
+          if (threatened.some((pos) => pos.row === row && pos.col === col)) {
+            isThreatened = true;
+            break;
+          }
+        }
+
+        // Show appropriate message based on whether position is threatened
+        if (isThreatened) {
+          this.events.emit(
+            'status-message',
+            'Soldier ants will attack any queen placed here!',
+            true
+          );
+        } else {
+          this.events.emit('status-message', 'Click again to place a honey pot queen here.', true);
+        }
         break;
 
       case CellState.FLAGGED:
