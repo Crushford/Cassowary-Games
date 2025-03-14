@@ -102,52 +102,12 @@ export class MainMenuScene extends BaseScene {
   }
 
   private createDecorativeElements(): void {
-    // Add some animated leaves falling
-    for (let i = 0; i < 5; i++) {
-      const leaf = this.add.image(
-        Phaser.Math.Between(100, this.cameras.main.width - 100),
-        Phaser.Math.Between(-100, -300),
-        'leaf'
-      );
-      leaf.setScale(0.3);
-      leaf.setAlpha(0.8);
-
-      this.tweens.add({
-        targets: leaf,
-        y: this.cameras.main.height + 100,
-        x: leaf.x + Phaser.Math.Between(-150, 150),
-        angle: Phaser.Math.Between(180, 360),
-        duration: Phaser.Math.Between(6000, 10000),
-        ease: 'Sine.easeInOut',
-        repeat: -1,
-        delay: Phaser.Math.Between(0, 3000),
-      });
-    }
-
-    // Add decorative ants
+    // Add static decorative elements
     const queen = this.add.image(150, 520, 'honey-queen');
     queen.setScale(1.2);
 
-    this.tweens.add({
-      targets: queen,
-      y: queen.y - 10,
-      duration: 1500,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
-
     const soldier = this.add.image(this.cameras.main.width - 150, 520, 'soldier-ant');
     soldier.setScale(0.8);
-
-    this.tweens.add({
-      targets: soldier,
-      angle: 15,
-      duration: 1000,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
   }
 
   private startGame(): void {

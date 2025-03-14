@@ -153,19 +153,6 @@ export class Cell extends Phaser.GameObjects.Container {
     this.add(this.contents);
     this._cellState = CellState.FLAGGED;
 
-    // Add flag animation
-    TweenHelper.popIn(this.scene, this.contents);
-
-    // Add waving animation
-    this.scene.tweens.add({
-      targets: this.contents,
-      angle: { from: -10, to: 10 },
-      duration: 1500,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
-
     return true;
   }
 
@@ -173,77 +160,22 @@ export class Cell extends Phaser.GameObjects.Container {
   placeQueen(): boolean {
     if (this._cellState !== CellState.EMPTY) return false;
 
-    // Queen sprite with animations
     this.contents = this.scene.add.sprite(0, 0, 'queen').setScale(0.8);
     this.add(this.contents);
     this._cellState = CellState.QUEEN;
 
-    // Entrance animation
-    TweenHelper.popIn(this.scene, this.contents, {
-      scale: { from: 0.4, to: 0.8 },
-      duration: 500,
-    });
-
-    // Idle animation
-    this.scene.tweens.add({
-      targets: this.contents,
-      y: -3,
-      duration: 1500,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-      delay: 500,
-    });
-
-    // Emit particles for celebrated placement
-    this.emitPlacementParticles();
-
     return true;
-  }
-
-  // Emit particles when queen is placed
-  private emitPlacementParticles(): void {
-    const particles = this.scene.add.particles(0, 0, 'raindrop', {
-      speed: { min: 20, max: 100 },
-      angle: { min: 0, max: 360 },
-      scale: { start: 0.4, end: 0.1 },
-      blendMode: 'ADD',
-      lifespan: 800,
-      quantity: 15,
-    });
-
-    this.add(particles);
-
-    // Stop emitting after a short time and then destroy
-    this.scene.time.delayedCall(300, () => {
-      particles.stop();
-      this.scene.time.delayedCall(800, () => {
-        particles.destroy();
-      });
-    });
   }
 
   // Clear cell contents
   clear(): boolean {
     if (this.contents) {
-      // Fade out animation before removal
-      this.scene.tweens.add({
-        targets: this.contents,
-        alpha: 0,
-        scale: 0.5,
-        duration: 200,
-        onComplete: () => {
-          if (this.contents) {
-            this.remove(this.contents, true);
-            this.contents = null;
-          }
-        },
-      });
+      this.remove(this.contents, true);
+      this.contents = null;
     }
 
-    // Reset border and tween states
+    // Reset border
     this.background.setStrokeStyle(2, GAME_CONSTANTS.COLORS.DARK_GREEN);
-    this.scene.tweens.killTweensOf(this.background);
     this.background.setAlpha(1);
 
     this._cellState = CellState.EMPTY;
