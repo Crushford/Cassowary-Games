@@ -30,9 +30,9 @@ export class Button extends UIComponent {
       width = 200,
       height = 50,
       fontSize = '24px',
-      backgroundColor = GAME_CONSTANTS.COLORS.FOREST_GREEN,
-      textColor = '#FFD700',
-      strokeColor = GAME_CONSTANTS.COLORS.GOLD,
+      backgroundColor = 0xffffff, // White background
+      textColor = '#000000', // Black text
+      strokeColor = 0x000000, // Black border
       strokeWidth = 2,
     } = config;
 
@@ -51,7 +51,7 @@ export class Button extends UIComponent {
 
     // Add hover effects
     this.buttonBackground.on('pointerover', () => {
-      this.buttonBackground.fillColor = GAME_CONSTANTS.COLORS.LIGHT_GREEN;
+      this.buttonBackground.fillColor = 0xeeeeee; // Light gray on hover
     });
 
     this.buttonBackground.on('pointerout', () => {

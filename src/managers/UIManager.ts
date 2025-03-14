@@ -80,16 +80,16 @@ export class UIManager {
     button.setDepth(depth);
 
     // Create background
-    const bg = this.scene.add.rectangle(0, 0, width, height, GAME_CONSTANTS.COLORS.FOREST_GREEN);
-    bg.setStrokeStyle(2, GAME_CONSTANTS.COLORS.GOLD);
+    const bg = this.scene.add.rectangle(0, 0, width, height, 0xffffff); // White background
+    bg.setStrokeStyle(2, 0x000000); // Black border
     bg.setInteractive({ useHandCursor: true });
 
     // Create text
     const buttonText = this.scene.add
       .text(0, 0, text, {
-        fontFamily: 'Georgia',
+        fontFamily: 'Arial',
         fontSize: fontSize,
-        color: '#FFD700',
+        color: '#000000', // Black text
         stroke: '#000000',
         strokeThickness: 1,
         align: 'center',
@@ -98,11 +98,11 @@ export class UIManager {
 
     // Add hover effects
     bg.on('pointerover', () => {
-      bg.fillColor = GAME_CONSTANTS.COLORS.LIGHT_GREEN;
+      bg.fillColor = 0xeeeeee; // Light gray on hover
     });
 
     bg.on('pointerout', () => {
-      bg.fillColor = GAME_CONSTANTS.COLORS.FOREST_GREEN;
+      bg.fillColor = 0xffffff; // White background
     });
 
     // Add click handler

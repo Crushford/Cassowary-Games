@@ -20,9 +20,9 @@ export class Panel extends UIComponent {
     const {
       width,
       height,
-      backgroundColor = GAME_CONSTANTS.COLORS.DARK_GREEN,
-      alpha = 0.9,
-      strokeColor = GAME_CONSTANTS.COLORS.GOLD,
+      backgroundColor = 0xffffff, // White background
+      alpha = 1.0,
+      strokeColor = 0x000000, // Black border
       strokeWidth = 2,
     } = config;
 

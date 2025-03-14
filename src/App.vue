@@ -1,12 +1,10 @@
 <template>
   <div class="app flex flex-col h-screen">
-    <header class="bg-gray-800 text-white p-4 text-center">
-      <h1 class="text-3xl font-bold text-amber-600">Honey Pot Ant Colony</h1>
+    <header class="bg-white text-black p-4 text-center border-b border-black">
+      <h1 class="text-3xl font-bold">Honey Pot Ant Colony</h1>
     </header>
 
-    <main
-      class="flex-1 min-h-0 overflow-hidden flex justify-center items-center bg-gradient-to-b from-gray-900 to-gray-700"
-    >
+    <main class="flex-1 min-h-0 overflow-hidden flex justify-center items-center bg-white">
       <div id="game-container" class="w-full h-full"></div>
     </main>
   </div>
@@ -61,6 +59,8 @@ body {
   overflow: hidden;
   width: 100%;
   height: 100%;
+  background-color: white;
+  color: black;
 }
 
 canvas {

@@ -14,12 +14,12 @@ export class UIComponent extends Phaser.GameObjects.Container {
     y: number,
     text: string,
     fontSize: string = '16px',
-    color: string = '#fff',
-    stroke: string = '#000',
+    color: string = '#000000',
+    stroke: string = '#000000',
     strokeWidth: number = 1
   ): Phaser.GameObjects.Text {
     const textObject = this.scene.add.text(x, y, text, {
-      fontFamily: 'Georgia',
+      fontFamily: 'Arial',
       fontSize: fontSize,
       color: color,
       stroke: stroke,

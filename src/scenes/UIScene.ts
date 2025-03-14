@@ -33,8 +33,8 @@ export class UIScene extends BaseScene {
     const titlePanel = new Panel(this, this.cameras.main.width / 2, 15, {
       width: this.cameras.main.width,
       height: 40,
-      backgroundColor: GAME_CONSTANTS.COLORS.DARK_GREEN,
-      alpha: 0.9,
+      backgroundColor: 0xffffff,
+      alpha: 1.0,
     });
 
     // Create title text
@@ -43,23 +43,22 @@ export class UIScene extends BaseScene {
       0,
       'HONEY POT ANT COLONY',
       '28px',
-      '#FFD700',
-      '#006400',
-      4
+      '#000000',
+      '#000000',
+      1
     );
-    titleText.setShadow(2, 2, '#000000', 5, true);
     titlePanel.addContent(titleText);
 
     // Create score panel
     const scorePanel = new Panel(this, this.cameras.main.width - 110, 70, {
       width: 200,
       height: 34,
-      backgroundColor: GAME_CONSTANTS.COLORS.DARK_GREEN,
-      alpha: 0.9,
+      backgroundColor: 0xffffff,
+      alpha: 1.0,
     });
 
     // Create score text
-    this.scoreText = this.createText(0, 0, 'Queens: 0', '18px', '#FFD700', '#000000', 1);
+    this.scoreText = this.createText(0, 0, 'Queens: 0', '18px', '#000000', '#000000', 1);
     scorePanel.addContent(this.scoreText);
   }
 
@@ -68,8 +67,8 @@ export class UIScene extends BaseScene {
       width: 600,
       height: 34,
       fontSize: '16px',
-      textColor: '#FFD700',
-      backgroundColor: GAME_CONSTANTS.COLORS.DARK_GREEN,
+      textColor: '#000000',
+      backgroundColor: 0xffffff,
     });
 
     this.statusBar.setDefaultMessage('Place honey pot queens strategically to build your colony!');

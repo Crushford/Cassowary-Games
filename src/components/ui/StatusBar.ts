@@ -23,8 +23,8 @@ export class StatusBar extends UIComponent {
       width = 600,
       height = 34,
       fontSize = '16px',
-      textColor = '#FFD700',
-      backgroundColor = GAME_CONSTANTS.COLORS.DARK_GREEN,
+      textColor = '#000000',
+      backgroundColor = 0xffffff,
     } = config;
 
     // Create panel
@@ -32,7 +32,7 @@ export class StatusBar extends UIComponent {
       width,
       height,
       backgroundColor,
-      alpha: 0.9,
+      alpha: 1.0,
     });
 
     // Create status text

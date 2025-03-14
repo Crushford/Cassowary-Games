@@ -13,7 +13,7 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   width,
   height,
-  backgroundColor: GAME_CONSTANTS.COLORS.LIGHT_GREEN,
+  backgroundColor: 0xffffff,
   physics: {
     default: 'arcade',
     arcade: {
@@ -52,8 +52,8 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
     },
   },
   audio: {
-    disableWebAudio: false,
-    noAudio: false,
+    disableWebAudio: true,
+    noAudio: true,
   },
   autoFocus: true,
   title: 'Honey Pot Ant Colony',
