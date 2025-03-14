@@ -10,6 +10,8 @@ export interface ResourceDisplayOptions {
   backgroundColor?: number;
   borderColor?: number;
   spacing?: number;
+  borderRadius?: number;
+  horizontalLayout?: boolean;
 }
 
 /**
@@ -30,6 +32,8 @@ export class ResourceDisplay {
       backgroundColor: GAME_CONSTANTS.COLORS.BG_SECONDARY,
       borderColor: GAME_CONSTANTS.COLORS.BORDER,
       spacing: 8,
+      borderRadius: 8,
+      horizontalLayout: true,
       ...options,
     };
 
@@ -45,52 +49,64 @@ export class ResourceDisplay {
    * Create the background panel
    */
   private createBackground(): void {
-    const { width, padding, backgroundColor, borderColor } = this.options;
+    const { width, padding, backgroundColor, borderColor, borderRadius } = this.options;
 
     // Clear any previous graphics
     this.background.clear();
 
-    // Calculate the height based on the number of resources
-    const height =
-      this.resourceTexts.size * (20 + this.options.spacing!) + this.options.padding! * 2;
-
-    // Draw background
+    // Draw the background panel
     this.background.fillStyle(backgroundColor!, 1);
-    this.background.fillRect(0, 0, width!, height);
 
-    // Draw border
-    this.background.lineStyle(1, borderColor!, 1);
-    this.background.strokeRect(0, 0, width!, height);
+    // Use rounded rectangle for mobile style if borderRadius is set
+    if (borderRadius) {
+      this.background.fillRoundedRect(0, 0, width!, 40, borderRadius);
+    } else {
+      this.background.fillRect(0, 0, width!, 40);
+    }
   }
 
   /**
-   * Update or create a resource display
+   * Update a single resource display
    */
   public updateResource(key: string, value: string | number, index: number): void {
-    const formattedKey = this.formatLabel(key);
-    const text = `${formattedKey}: ${value}`;
-    const { padding, width, spacing } = this.options;
+    const { padding, spacing, width, horizontalLayout } = this.options;
+    const formattedLabel = this.formatLabel(key);
 
-    if (this.resourceTexts.has(key)) {
-      // Update existing text
-      this.resourceTexts.get(key)!.setText(text);
+    // Calculate position based on layout type
+    let xPos, yPos;
+    if (horizontalLayout) {
+      // For horizontal layout, space items evenly across the width
+      const itemWidth = width! / 4; // Assuming up to 4 resources
+      xPos = index * itemWidth + itemWidth / 2;
+      yPos = 20; // Center vertically in the bar
     } else {
-      // Create label and value
-      const y = padding! + index * (20 + spacing!);
-      const resourceText = TextDisplay.createText(
-        this.scene,
-        padding!,
-        y,
-        text,
-        TextStyleType.BODY
-      );
-
-      this.resourceTexts.set(key, resourceText);
-      this.container.add(resourceText);
+      // For vertical layout, stack items
+      xPos = width! / 2;
+      yPos = padding! + index * (spacing! + 20);
     }
 
-    // Redraw background to fit content
-    this.createBackground();
+    let text = this.resourceTexts.get(key);
+
+    if (text) {
+      // Update existing text
+      text.setText(`${formattedLabel}: ${value}`);
+      text.setPosition(xPos, yPos);
+    } else {
+      // Create new text
+      text = TextDisplay.createText(
+        this.scene,
+        xPos,
+        yPos,
+        `${formattedLabel}: ${value}`,
+        TextStyleType.RESOURCE
+      );
+
+      // Set origin to center for horizontal layout, or center-top for vertical
+      text.setOrigin(horizontalLayout ? 0.5 : 0.5, 0.5);
+
+      this.container.add(text);
+      this.resourceTexts.set(key, text);
+    }
   }
 
   /**

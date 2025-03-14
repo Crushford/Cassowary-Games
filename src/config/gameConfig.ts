@@ -6,8 +6,19 @@ import { GameScene } from '../scenes/GameScene';
 import { UIScene } from '../scenes/UIScene';
 import { GAME_CONSTANTS } from './constants';
 
-const width = GAME_CONSTANTS.GRID_SIZE * GAME_CONSTANTS.CELL_SIZE;
-const height = GAME_CONSTANTS.GRID_SIZE * GAME_CONSTANTS.CELL_SIZE;
+// Calculate grid dimensions
+const gridWidth = GAME_CONSTANTS.GRID_SIZE * GAME_CONSTANTS.CELL_SIZE;
+const gridHeight = GAME_CONSTANTS.GRID_SIZE * GAME_CONSTANTS.CELL_SIZE;
+
+// For portrait mobile layout, use fixed width-to-height ratio
+// with extra space for top and bottom UI bars
+const TOP_BAR_HEIGHT = 100; // Height for the top information bar
+const BOTTOM_BAR_HEIGHT = 80; // Height for the bottom status bar
+const PADDING = 20; // Side padding
+
+// Set game dimensions for portrait mode
+const width = gridWidth + PADDING * 2; // Grid width plus padding
+const height = gridHeight + TOP_BAR_HEIGHT + BOTTOM_BAR_HEIGHT; // Grid height plus UI areas
 
 export const GameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,

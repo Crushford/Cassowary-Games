@@ -2,7 +2,7 @@
 export const GAME_CONSTANTS = {
   // Board settings
   GRID_SIZE: 6,
-  CELL_SIZE: 80,
+  CELL_SIZE: 75,
 
   // Game resources
   INITIAL_QUEENS: 30,
@@ -41,6 +41,12 @@ export const GAME_CONSTANTS = {
     },
     RESOURCE: {
       DEFAULT_WIDTH: 180,
+    },
+    // Mobile portrait layout dimensions
+    LAYOUT: {
+      TOP_BAR_HEIGHT: 100,
+      BOTTOM_BAR_HEIGHT: 80,
+      SIDE_PADDING: 20,
     },
   },
 

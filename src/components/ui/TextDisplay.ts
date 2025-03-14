@@ -9,6 +9,7 @@ export enum TextStyleType {
   BODY,
   BUTTON,
   STATUS,
+  RESOURCE,
 }
 
 /**
@@ -42,6 +43,13 @@ export const TEXT_STYLES = {
     fontFamily: 'Arial',
     fontSize: '18px',
     color: '#000000',
+    align: 'center',
+  },
+  [TextStyleType.RESOURCE]: {
+    fontFamily: 'Arial',
+    fontSize: '14px',
+    color: '#000000',
+    fontStyle: 'bold',
     align: 'center',
   },
 };

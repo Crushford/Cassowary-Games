@@ -15,11 +15,11 @@ export class Board extends Phaser.GameObjects.Container {
     gridSize: number = GAME_CONSTANTS.GRID_SIZE,
     cellSize: number = GAME_CONSTANTS.CELL_SIZE
   ) {
-    // Position board in center of screen
+    // Position board below the top bar, centered horizontally
     const gridWidth = gridSize * cellSize;
     const gridHeight = gridSize * cellSize;
     const x = (scene.cameras.main.width - gridWidth) / 2;
-    const y = (scene.cameras.main.height - gridHeight) / 2;
+    const y = GAME_CONSTANTS.UI.LAYOUT.TOP_BAR_HEIGHT;
 
     super(scene, x, y);
     this.gridSize = gridSize;

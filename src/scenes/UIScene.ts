@@ -12,6 +12,7 @@ export class UIScene extends BaseScene {
   private statusMessage!: StatusMessage;
   private restartButton!: Button;
   private resourceDisplay!: ResourceDisplay;
+  private topBar!: Phaser.GameObjects.Graphics;
 
   constructor() {
     super('UIScene');
@@ -20,6 +21,7 @@ export class UIScene extends BaseScene {
 
   create(): void {
     // Create UI elements using our new components
+    this.createTopBar();
     this.createResourceDisplay();
     this.createStatusMessage();
     this.createRestartButton();
@@ -28,12 +30,30 @@ export class UIScene extends BaseScene {
     this.setupEventListeners();
   }
 
+  private createTopBar(): void {
+    // Create top bar for game information
+    this.topBar = this.add.graphics();
+    this.topBar.fillStyle(GAME_CONSTANTS.COLORS.BG_SECONDARY, 1);
+    this.topBar.fillRect(0, 0, this.cameras.main.width, GAME_CONSTANTS.UI.LAYOUT.TOP_BAR_HEIGHT);
+
+    // Add a thin border at the bottom of the top bar
+    this.topBar.lineStyle(2, GAME_CONSTANTS.COLORS.BORDER, 1);
+    this.topBar.lineBetween(
+      0,
+      GAME_CONSTANTS.UI.LAYOUT.TOP_BAR_HEIGHT,
+      this.cameras.main.width,
+      GAME_CONSTANTS.UI.LAYOUT.TOP_BAR_HEIGHT
+    );
+  }
+
   private createResourceDisplay(): void {
-    // Create resource display in the top-left corner
+    // Create resource display in the top bar, centered
     this.resourceDisplay = new ResourceDisplay(this, {
       x: 20,
-      y: 20,
-      width: GAME_CONSTANTS.UI.RESOURCE.DEFAULT_WIDTH,
+      y: 30, // Position in the middle of the top bar
+      width: this.cameras.main.width - 140, // Leave space for restart button
+      horizontalLayout: true, // Use horizontal layout for mobile
+      borderRadius: 8, // Rounded corners for mobile style
     });
 
     // Initial resource values
@@ -42,11 +62,15 @@ export class UIScene extends BaseScene {
 
   private createStatusMessage(): void {
     // Create the status message at the bottom of the screen
+    const bottomPosition =
+      this.cameras.main.height - GAME_CONSTANTS.UI.LAYOUT.BOTTOM_BAR_HEIGHT + 15;
+
     this.statusMessage = new StatusMessage(this, {
       x: (this.cameras.main.width - GAME_CONSTANTS.UI.STATUS.DEFAULT_WIDTH) / 2,
-      y: this.cameras.main.height - 70,
+      y: bottomPosition,
       width: GAME_CONSTANTS.UI.STATUS.DEFAULT_WIDTH,
       height: GAME_CONSTANTS.UI.STATUS.DEFAULT_HEIGHT,
+      backgroundColor: GAME_CONSTANTS.COLORS.BG_SECONDARY,
     });
 
     // Set initial text if exists
@@ -54,15 +78,37 @@ export class UIScene extends BaseScene {
     if (initialMessage) {
       this.statusMessage.setMessage(initialMessage);
     }
+
+    // Add a background bar for the bottom section
+    const bottomBar = this.add.graphics();
+    bottomBar.fillStyle(GAME_CONSTANTS.COLORS.BG_SECONDARY, 1);
+    bottomBar.fillRect(
+      0,
+      this.cameras.main.height - GAME_CONSTANTS.UI.LAYOUT.BOTTOM_BAR_HEIGHT,
+      this.cameras.main.width,
+      GAME_CONSTANTS.UI.LAYOUT.BOTTOM_BAR_HEIGHT
+    );
+
+    // Add a thin border at the top of the bottom bar
+    bottomBar.lineStyle(2, GAME_CONSTANTS.COLORS.BORDER, 1);
+    bottomBar.lineBetween(
+      0,
+      this.cameras.main.height - GAME_CONSTANTS.UI.LAYOUT.BOTTOM_BAR_HEIGHT,
+      this.cameras.main.width,
+      this.cameras.main.height - GAME_CONSTANTS.UI.LAYOUT.BOTTOM_BAR_HEIGHT
+    );
+
+    // Move the status message to be above the bottom bar graphics so it's visible
+    this.statusMessage.getContainer().setDepth(1);
   }
 
   private createRestartButton(): void {
-    // Create the restart button
+    // Create the restart button in the top bar
     this.restartButton = new Button(
       this,
       {
-        x: this.cameras.main.width - 100,
-        y: 30,
+        x: this.cameras.main.width - 80,
+        y: GAME_CONSTANTS.UI.LAYOUT.TOP_BAR_HEIGHT / 2,
         text: 'RESTART',
         width: 100,
         height: 36,

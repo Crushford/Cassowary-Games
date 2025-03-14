@@ -12,6 +12,7 @@ export interface StatusMessageOptions {
   borderColor?: number;
   borderWidth?: number;
   errorColor?: number;
+  borderRadius?: number;
 }
 
 /**
@@ -35,6 +36,7 @@ export class StatusMessage {
       borderColor: GAME_CONSTANTS.COLORS.SECONDARY,
       borderWidth: 4,
       errorColor: GAME_CONSTANTS.COLORS.SECONDARY,
+      borderRadius: 8,
       ...options,
     };
 
@@ -60,13 +62,21 @@ export class StatusMessage {
    * Draw the status message background
    */
   private drawBackground(): void {
-    const { width, height, backgroundColor, borderColor, borderWidth } = this.options;
+    const { width, height, backgroundColor, borderColor, borderWidth, borderRadius } = this.options;
 
     this.background.clear();
 
-    // Draw background
-    this.background.fillStyle(backgroundColor!, 1);
-    this.background.fillRect(0, 0, width!, height!);
+    // Draw rounded rectangle background for mobile look
+    if (borderRadius) {
+      // Create rounded rectangle path
+      const path = new Phaser.Geom.Rectangle(0, 0, width!, height!);
+      this.background.fillStyle(backgroundColor!, 1);
+      this.background.fillRoundedRect(path.x, path.y, path.width, path.height, borderRadius);
+    } else {
+      // Draw standard background if no border radius
+      this.background.fillStyle(backgroundColor!, 1);
+      this.background.fillRect(0, 0, width!, height!);
+    }
 
     // Draw left border (indicator)
     const borderLeft = this.isError ? this.options.errorColor! : borderColor!;
