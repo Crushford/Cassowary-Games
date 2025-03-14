@@ -13,14 +13,35 @@ export const GAME_CONSTANTS = {
 
   // UI settings
   COLORS: {
-    GOLD: 0x000000, // Black
-    DARK_GREEN: 0xffffff, // White
-    FOREST_GREEN: 0xffffff, // White
-    LIGHT_GREEN: 0xffffff, // White
-    SOIL_BROWN: 0x000000, // Black
-    HIGHLIGHT_YELLOW: 0x000000, // Black
-    PEBBLE_GRAY: 0x000000, // Black
-    DANGER_RED: 0x000000, // Black
+    // Simplified black, white, and gray color scheme
+    PRIMARY: 0x000000, // Black - for text and important elements
+    SECONDARY: 0x505050, // Dark gray - for less important elements
+    BACKGROUND: 0xffffff, // White - for backgrounds
+    BG_SECONDARY: 0xf0f0f0, // Light gray - for secondary backgrounds
+    BORDER: 0xd1d1d1, // Light gray - for borders
+    HIGHLIGHT: 0xe0e0e0, // Medium gray - for highlights
+  },
+
+  // UI component default sizes
+  UI: {
+    BUTTON: {
+      DEFAULT_WIDTH: 120,
+      DEFAULT_HEIGHT: 40,
+      PADDING_X: 16,
+      PADDING_Y: 8,
+    },
+    DIALOG: {
+      DEFAULT_WIDTH: 400,
+      DEFAULT_HEIGHT: 250,
+      BORDER_RADIUS: 4,
+    },
+    STATUS: {
+      DEFAULT_WIDTH: 400,
+      DEFAULT_HEIGHT: 50,
+    },
+    RESOURCE: {
+      DEFAULT_WIDTH: 180,
+    },
   },
 
   // Game rules

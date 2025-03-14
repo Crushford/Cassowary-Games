@@ -1,7 +1,7 @@
 <template>
   <div class="app flex flex-col h-screen">
-    <header class="bg-white text-black p-4 text-center border-b border-black">
-      <h1 class="text-3xl font-bold">Honey Pot Ant Colony</h1>
+    <header class="bg-white text-black p-4 text-center border-b border-gray-300">
+      <h1 class="text-2xl font-bold">Honey Pot Ant Colony</h1>
     </header>
 
     <main class="flex-1 min-h-0 overflow-hidden flex justify-center items-center bg-white">
@@ -65,5 +65,14 @@ body {
 
 canvas {
   display: block;
+}
+
+/* Simplified colors for consistent UI */
+:root {
+  --color-text: #000000;
+  --color-background: #ffffff;
+  --color-border: #d1d1d1;
+  --color-accent: #505050;
+  --color-error: #505050;
 }
 </style>

@@ -1,11 +1,17 @@
 // src/scenes/UIScene.ts
 import { BaseScene } from './BaseScene';
-import { StateManager, GameState } from '../state/StateManager';
+import { StateManager, GameState, GameResources } from '../state/StateManager';
+import { Button } from '../components/ui/Button';
+import { StatusMessage } from '../components/ui/StatusMessage';
+import { ResourceDisplay } from '../components/ui/ResourceDisplay';
+import { Dialog } from '../components/ui/Dialog';
+import { GAME_CONSTANTS } from '../config/constants';
 
 export class UIScene extends BaseScene {
   private stateManager: StateManager;
-  private statusText!: Phaser.GameObjects.Text;
-  private restartButton!: Phaser.GameObjects.Text;
+  private statusMessage!: StatusMessage;
+  private restartButton!: Button;
+  private resourceDisplay!: ResourceDisplay;
 
   constructor() {
     super('UIScene');
@@ -13,67 +19,88 @@ export class UIScene extends BaseScene {
   }
 
   create(): void {
-    // Create UI elements
-    this.createStatusText();
+    // Create UI elements using our new components
+    this.createResourceDisplay();
+    this.createStatusMessage();
     this.createRestartButton();
 
     // Setup event listeners
     this.setupEventListeners();
   }
 
-  private createStatusText(): void {
-    // Create the status text at the bottom of the screen
-    this.statusText = this.add
-      .text(this.cameras.main.width / 2, this.cameras.main.height - 50, '', {
-        fontFamily: 'Arial',
-        fontSize: '18px',
-        color: '#000000',
-        align: 'center',
-      })
-      .setOrigin(0.5);
+  private createResourceDisplay(): void {
+    // Create resource display in the top-left corner
+    this.resourceDisplay = new ResourceDisplay(this, {
+      x: 20,
+      y: 20,
+      width: GAME_CONSTANTS.UI.RESOURCE.DEFAULT_WIDTH,
+    });
 
-    // Set initial text
-    this.updateStatusText(this.stateManager.getState().statusMessage || '', false);
+    // Initial resource values
+    this.updateResourceDisplay(this.stateManager.getState().resources);
+  }
+
+  private createStatusMessage(): void {
+    // Create the status message at the bottom of the screen
+    this.statusMessage = new StatusMessage(this, {
+      x: (this.cameras.main.width - GAME_CONSTANTS.UI.STATUS.DEFAULT_WIDTH) / 2,
+      y: this.cameras.main.height - 70,
+      width: GAME_CONSTANTS.UI.STATUS.DEFAULT_WIDTH,
+      height: GAME_CONSTANTS.UI.STATUS.DEFAULT_HEIGHT,
+    });
+
+    // Set initial text if exists
+    const initialMessage = this.stateManager.getState().statusMessage;
+    if (initialMessage) {
+      this.statusMessage.setMessage(initialMessage);
+    }
   }
 
   private createRestartButton(): void {
     // Create the restart button
-    this.restartButton = this.add
-      .text(this.cameras.main.width - 100, 30, 'RESTART', {
-        fontFamily: 'Arial',
-        fontSize: '16px',
-        color: '#000000',
-        backgroundColor: '#ffffff',
-        padding: { left: 10, right: 10, top: 5, bottom: 5 },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => {
+    this.restartButton = new Button(
+      this,
+      {
+        x: this.cameras.main.width - 100,
+        y: 30,
+        text: 'RESTART',
+        width: 100,
+        height: 36,
+      },
+      () => {
         window.gameEvents.emit('restart-game');
-      })
-      .on('pointerover', () => {
-        this.restartButton.setStyle({ color: '#ff0000' });
-      })
-      .on('pointerout', () => {
-        this.restartButton.setStyle({ color: '#000000' });
-      });
+      }
+    );
   }
 
   private setupEventListeners(): void {
     // Listen for status message updates
-    this.stateManager.events.on('status-message', this.updateStatusText, this);
+    this.stateManager.events.on('status-message', this.updateStatusMessage, this);
 
     // Listen for game state changes
     this.stateManager.events.on('state-changed', this.onGameStateChanged, this);
+
+    // Listen for resource updates
+    this.stateManager.events.on('resources-updated', this.updateResourceDisplay, this);
   }
 
-  private updateStatusText(message: string, isError: boolean = false): void {
-    if (!this.statusText) return;
+  private updateStatusMessage(message: string, isError: boolean = false): void {
+    if (!this.statusMessage) return;
+    this.statusMessage.setMessage(message, isError);
+  }
 
-    this.statusText.setText(message);
-    this.statusText.setStyle({
-      color: isError ? '#ff0000' : '#000000',
-    });
+  private updateResourceDisplay(resources: GameResources): void {
+    if (!this.resourceDisplay) return;
+
+    // Format resources for display
+    const resourceData: Record<string, string | number> = {
+      Queens: resources.queens,
+      Gold: resources.gold,
+      Acres: `${resources.acres}/${GAME_CONSTANTS.TOTAL_ACRES}`,
+      Plots: resources.plots,
+    };
+
+    this.resourceDisplay.setResources(resourceData);
   }
 
   private onGameStateChanged(newState: GameState, oldState: GameState): void {
@@ -85,62 +112,26 @@ export class UIScene extends BaseScene {
     }
   }
 
-  private showGameOverDialog(title: string, message: string, isVictory: boolean): void {
-    // Create the dialog background
-    const graphics = this.add.graphics();
-    graphics.fillStyle(0x000000, 0.7);
-    graphics.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+  private showGameOverDialog(title: string, message: string, isSuccess: boolean): void {
+    // Create a dialog directly
+    const dialog = new Dialog(this, {
+      borderColor: GAME_CONSTANTS.COLORS.SECONDARY,
+    });
 
-    // Create the dialog box
-    const dialogWidth = 400;
-    const dialogHeight = 250;
-    const dialogX = (this.cameras.main.width - dialogWidth) / 2;
-    const dialogY = (this.cameras.main.height - dialogHeight) / 2;
-
-    graphics.fillStyle(0xffffff, 1);
-    graphics.fillRoundedRect(dialogX, dialogY, dialogWidth, dialogHeight, 16);
-    graphics.lineStyle(4, isVictory ? 0x00ff00 : 0xff0000);
-    graphics.strokeRoundedRect(dialogX, dialogY, dialogWidth, dialogHeight, 16);
-
-    // Create the title text
-    this.add
-      .text(this.cameras.main.width / 2, dialogY + 50, title, {
-        fontFamily: 'Arial',
-        fontSize: '32px',
-        fontStyle: 'bold',
-        color: isVictory ? '#00ff00' : '#ff0000',
-      })
-      .setOrigin(0.5);
-
-    // Create the message text
-    this.add
-      .text(this.cameras.main.width / 2, dialogY + 100, message, {
-        fontFamily: 'Arial',
-        fontSize: '20px',
-        color: '#000000',
-      })
-      .setOrigin(0.5);
-
-    // Create the restart button
-    this.add
-      .text(this.cameras.main.width / 2, dialogY + 170, 'PLAY AGAIN', {
-        fontFamily: 'Arial',
-        fontSize: '24px',
-        color: '#ffffff',
-        backgroundColor: '#000000',
-        padding: { left: 20, right: 20, top: 10, bottom: 10 },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => {
-        window.gameEvents.emit('restart-game');
-        graphics.destroy();
-      });
+    dialog.showMessageDialog(title, message, 'PLAY AGAIN', () => {
+      window.gameEvents.emit('restart-game');
+    });
   }
 
   shutdown(): void {
+    // Clean up components
+    this.resourceDisplay.destroy();
+    this.statusMessage.destroy();
+    this.restartButton.destroy();
+
     // Remove event listeners
-    this.stateManager.events.off('status-message', this.updateStatusText, this);
+    this.stateManager.events.off('status-message', this.updateStatusMessage, this);
     this.stateManager.events.off('state-changed', this.onGameStateChanged, this);
+    this.stateManager.events.off('resources-updated', this.updateResourceDisplay, this);
   }
 }
