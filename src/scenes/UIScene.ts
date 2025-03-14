@@ -78,8 +78,8 @@ export class UIScene extends BaseScene {
     this.resourcesPanel = new Panel(this, 130, 160, {
       width: 250,
       height: 130,
-      backgroundColor: GAME_CONSTANTS.COLORS.DARK_GREEN,
-      alpha: 0.9,
+      backgroundColor: 0xffffff,
+      alpha: 1.0,
     });
 
     // Create resources text
@@ -93,7 +93,7 @@ export class UIScene extends BaseScene {
         plots: GAME_CONSTANTS.PLOTS,
       }),
       '16px',
-      '#FFD700',
+      '#000000',
       '#000000',
       1
     );
@@ -110,13 +110,13 @@ export class UIScene extends BaseScene {
       {
         width: 500,
         height: 250,
-        backgroundColor: GAME_CONSTANTS.COLORS.DARK_GREEN,
-        alpha: 0.9,
+        backgroundColor: 0xffffff,
+        alpha: 1.0,
       }
     );
 
     // Create game over text
-    const gameOverText = this.createText(0, -30, '', '36px', '#FFD700', '#000000', 4);
+    const gameOverText = this.createText(0, -30, '', '36px', '#000000', '#000000', 1);
 
     // Create restart button
     const restartButton = new Button(
@@ -133,9 +133,9 @@ export class UIScene extends BaseScene {
         width: 200,
         height: 50,
         fontSize: '24px',
-        backgroundColor: GAME_CONSTANTS.COLORS.FOREST_GREEN,
-        textColor: '#FFD700',
-        strokeColor: GAME_CONSTANTS.COLORS.GOLD,
+        backgroundColor: 0xffffff,
+        textColor: '#000000',
+        strokeColor: 0x000000,
       }
     );
 
@@ -204,12 +204,12 @@ export class UIScene extends BaseScene {
 
     if (success) {
       gameOverText.setText(`Colony Thriving!\nYou placed ${score} queens`);
-      gameOverText.setColor('#FFD700');
+      gameOverText.setColor('#000000');
     } else {
       gameOverText.setText(
         `Colony Failed!\nQueens attacked by soldier ants\nHarvested Honey: ${score * 3}ml`
       );
-      gameOverText.setColor('#FF6347');
+      gameOverText.setColor('#000000');
     }
 
     this.gameOverPanel.setVisible(true);

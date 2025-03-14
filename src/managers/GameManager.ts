@@ -175,7 +175,6 @@ export class GameManager {
 
     if (success) {
       this.events.emit('status-message', 'Amazing! Your honey pot ant colony is thriving!');
-      this.events.emit('success-effect');
     } else {
       this.events.emit('status-message', 'Oh no! The soldier ants attacked your queens!');
     }

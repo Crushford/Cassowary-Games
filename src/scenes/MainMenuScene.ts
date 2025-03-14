@@ -10,28 +10,19 @@ export class MainMenuScene extends BaseScene {
   }
 
   create(): void {
-    // Create rainforest background
-    this.createBackground('rainforest');
-
-    // Apply a dark green tint to background for more atmosphere
-    const bg = this.children
-      .getAll()
-      .find((child) => child.type === 'Image') as Phaser.GameObjects.Image;
-    if (bg) {
-      bg.setTint(0x88aa88);
-    }
+    // Create white background
+    this.cameras.main.setBackgroundColor(0xffffff);
 
     // Create title panel
     const titlePanel = new Panel(this, this.cameras.main.width / 2, 120, {
       width: 600,
       height: 100,
-      backgroundColor: GAME_CONSTANTS.COLORS.DARK_GREEN,
-      alpha: 0.8,
+      backgroundColor: 0xffffff,
+      alpha: 1.0,
     });
 
     // Add title text
-    const title = this.createText(0, 0, 'HONEY POT ANT COLONY', '48px', '#FFD700', '#006400', 4);
-    title.setShadow(2, 2, '#000000', 5, true);
+    const title = this.createText(0, 0, 'HONEY POT ANT COLONY', '48px', '#000000', '#000000', 1);
     titlePanel.addContent(title);
 
     // Create subtitle
@@ -40,9 +31,9 @@ export class MainMenuScene extends BaseScene {
       190,
       'Strategic Queen Placement',
       '24px',
-      '#FFFFFF',
       '#000000',
-      2
+      '#000000',
+      1
     );
 
     // Create start button
@@ -56,10 +47,10 @@ export class MainMenuScene extends BaseScene {
         width: 220,
         height: 60,
         fontSize: '24px',
-        backgroundColor: GAME_CONSTANTS.COLORS.FOREST_GREEN,
-        textColor: '#FFD700',
-        strokeColor: GAME_CONSTANTS.COLORS.GOLD,
-        strokeWidth: 3,
+        backgroundColor: 0xffffff,
+        textColor: '#000000',
+        strokeColor: 0x000000,
+        strokeWidth: 2,
       }
     );
 
@@ -67,8 +58,8 @@ export class MainMenuScene extends BaseScene {
     const instructionsPanel = new Panel(this, this.cameras.main.width / 2, 500, {
       width: 500,
       height: 200,
-      backgroundColor: GAME_CONSTANTS.COLORS.DARK_GREEN,
-      alpha: 0.8,
+      backgroundColor: 0xffffff,
+      alpha: 1.0,
     });
 
     // Add instructions title
@@ -77,37 +68,24 @@ export class MainMenuScene extends BaseScene {
       -70,
       'How to Play:',
       '28px',
-      '#FFFFFF',
       '#000000',
-      2
+      '#000000',
+      1
     );
 
-    const instructions = [
-      'Place queens strategically to claim territory',
-      'Queens cannot threaten each other',
-      'Fill the grid with queens to succeed',
-      'Invalid placement will end your colony',
-    ];
-
-    // Create instruction text objects
-    const instructionTexts = instructions.map((text, index) =>
-      this.createText(0, -30 + index * 32, text, '18px', '#FFFFFF', '#000000', 1)
+    // Add instructions text
+    const instructions = this.createText(
+      0,
+      0,
+      'Place honey pot queens on the board to expand your colony.\nQueens cannot threaten each other.\nFill the board with as many queens as possible!',
+      '18px',
+      '#000000',
+      '#000000',
+      1
     );
 
-    // Add all instruction elements to panel
-    instructionsPanel.addContent([instructionsTitle, ...instructionTexts]);
-
-    // Create decorative elements
-    this.createDecorativeElements();
-  }
-
-  private createDecorativeElements(): void {
-    // Add static decorative elements
-    const queen = this.add.image(150, 520, 'honey-queen');
-    queen.setScale(1.2);
-
-    const soldier = this.add.image(this.cameras.main.width - 150, 520, 'soldier-ant');
-    soldier.setScale(0.8);
+    // Add elements to panel
+    instructionsPanel.addContent([instructionsTitle, instructions]);
   }
 
   private startGame(): void {

@@ -51,10 +51,6 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
       console.log('Honey Pot Ant Colony game initialized!');
     },
   },
-  audio: {
-    disableWebAudio: true,
-    noAudio: true,
-  },
   autoFocus: true,
   title: 'Honey Pot Ant Colony',
   version: '1.0.0',
