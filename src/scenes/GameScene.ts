@@ -1,12 +1,9 @@
 // src/scenes/GameScene.ts
 import { BaseScene } from './BaseScene';
-import { Board } from '../prefabs/Board';
-import { GameManager, GameState } from '../managers/GameManager';
-import { Cell } from '../prefabs/Cell';
+import { GameController } from '../core/GameController';
 
 export class GameScene extends BaseScene {
-  private board!: Board;
-  private gameManager!: GameManager;
+  private gameController!: GameController;
 
   constructor() {
     super('GameScene');
@@ -16,42 +13,15 @@ export class GameScene extends BaseScene {
     // Create simple white background
     this.cameras.main.setBackgroundColor(0xffffff);
 
-    // Initialize game board
-    this.board = new Board(this);
-
-    // Initialize game manager
-    this.gameManager = new GameManager(this, this.board);
-
-    // Set up event listeners
-    this.setupEventListeners();
-  }
-
-  private setupEventListeners(): void {
-    if (window.gameEvents) {
-      // Listen for restart from UI buttons
-      window.gameEvents.on('restart-game', () => {
-        if (this.gameManager) {
-          this.gameManager.restartGame();
-        }
-      });
-    }
-  }
-
-  private getWorldPosition(cell: Cell): { x: number; y: number } {
-    // Convert cell container position to world position
-    const worldX = this.board.x + cell.x;
-    const worldY = this.board.y + cell.y;
-    return { x: worldX, y: worldY };
+    // Initialize game controller
+    this.gameController = new GameController(this);
+    this.gameController.init();
   }
 
   shutdown(): void {
-    // Clean up event listeners
-    if (window.gameEvents) {
-      window.gameEvents.off('restart-game');
-    }
-
-    if (this.gameManager) {
-      this.gameManager.events.removeAllListeners();
+    // Clean up controller
+    if (this.gameController) {
+      this.gameController.destroy();
     }
   }
 }

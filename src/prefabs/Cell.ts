@@ -21,6 +21,9 @@ export class Cell extends Phaser.GameObjects.Container {
   private size: number;
   private isHovered: boolean = false;
 
+  // Click handler callback
+  public onCellClick: (() => void) | null = null;
+
   constructor(scene: Phaser.Scene, row: number, col: number, size: number, x: number, y: number) {
     super(scene, x, y);
     this.row = row;
@@ -79,12 +82,22 @@ export class Cell extends Phaser.GameObjects.Container {
           alpha: 0,
           duration: 100,
         });
+      })
+      .on('pointerdown', () => {
+        if (this.onCellClick) {
+          this.onCellClick();
+        }
       });
   }
 
   // Getters and setters
   get cellState(): CellState {
     return this._cellState;
+  }
+
+  // Get grid position
+  get gridPosition(): { row: number; col: number } {
+    return { row: this.row, col: this.col };
   }
 
   // Mark cell as threatened by a queen
@@ -96,64 +109,80 @@ export class Cell extends Phaser.GameObjects.Container {
     if (threatened) {
       this._cellState = CellState.THREATENED;
       this.background.setStrokeStyle(2, GAME_CONSTANTS.COLORS.DANGER_RED);
-
-      // Remove pulsing effect
-      this.background.setAlpha(0.8); // Just use a static alpha instead
     } else {
-      // Remove threatened state
       this._cellState = CellState.EMPTY;
       this.background.setStrokeStyle(2, GAME_CONSTANTS.COLORS.DARK_GREEN);
-      this.background.setAlpha(1);
     }
   }
 
-  // Place soldier ant flag
+  // Place a flag on the cell
   placeFlag(): boolean {
-    if (this._cellState !== CellState.EMPTY) return false;
+    if (this._cellState !== CellState.EMPTY && this._cellState !== CellState.THREATENED) {
+      return false;
+    }
 
-    this.contents = this.scene.add.sprite(0, 0, 'flag').setScale(0.4);
-    this.add(this.contents);
     this._cellState = CellState.FLAGGED;
-
+    this.updateCellAppearance();
     return true;
   }
 
-  // Place queen ant
+  // Place a queen on the cell
   placeQueen(): boolean {
-    if (this._cellState !== CellState.EMPTY) return false;
+    if (this._cellState !== CellState.EMPTY && this._cellState !== CellState.FLAGGED) {
+      return false;
+    }
 
-    this.contents = this.scene.add.sprite(0, 0, 'queen').setScale(0.8);
-    this.add(this.contents);
     this._cellState = CellState.QUEEN;
-
+    this.updateCellAppearance();
     return true;
   }
 
   // Clear cell contents
   clear(): boolean {
+    const previousState = this._cellState;
+    this._cellState = CellState.EMPTY;
+    this.updateCellAppearance();
+    return previousState !== CellState.EMPTY;
+  }
+
+  // Update the visual appearance based on cell state
+  private updateCellAppearance(): void {
+    // Remove previous contents
     if (this.contents) {
-      this.remove(this.contents, true);
+      this.contents.destroy();
       this.contents = null;
     }
 
-    // Reset border
+    // Remove previous decorations
+    if (this.decoration) {
+      this.decoration.destroy();
+      this.decoration = null;
+    }
+
+    // Reset styles
     this.background.setStrokeStyle(2, GAME_CONSTANTS.COLORS.DARK_GREEN);
-    this.background.setAlpha(1);
 
-    this._cellState = CellState.EMPTY;
-    return true;
-  }
+    // Add new contents based on state
+    switch (this._cellState) {
+      case CellState.EMPTY:
+        break;
 
-  // Get cell grid position
-  get gridPosition(): { row: number; col: number } {
-    return { row: this.row, col: this.col };
-  }
+      case CellState.THREATENED:
+        this.background.setStrokeStyle(2, GAME_CONSTANTS.COLORS.DANGER_RED);
+        break;
 
-  // Setup click handler
-  setClickHandler(handler: (cell: Cell) => void): void {
-    this.background.on('pointerdown', () => {
-      handler(this);
-    });
+      case CellState.FLAGGED:
+        // Create a flag sprite
+        this.contents = this.scene.add.sprite(0, 0, 'flag').setScale(0.4);
+        this.add(this.contents);
+        break;
+
+      case CellState.QUEEN:
+        // Create a queen sprite
+        this.contents = this.scene.add.sprite(0, 0, 'queen').setScale(0.5);
+        this.add(this.contents);
+        break;
+    }
   }
 
   // Flash the cell to indicate an action

@@ -1,221 +1,146 @@
 // src/scenes/UIScene.ts
 import { BaseScene } from './BaseScene';
-import { GAME_CONSTANTS } from '../config/constants';
-import { GameState } from '../managers/GameManager';
-import { Panel } from '../components/ui/Panel';
-import { Button } from '../components/ui/Button';
-import { StatusBar } from '../components/ui/StatusBar';
+import { StateManager, GameState } from '../state/StateManager';
 
 export class UIScene extends BaseScene {
-  private scoreText!: Phaser.GameObjects.Text;
-  private statusBar!: StatusBar;
-  private gameOverPanel!: Panel;
-  private resourcesPanel!: Panel;
-  private resourcesText!: Phaser.GameObjects.Text;
+  private stateManager: StateManager;
+  private statusText!: Phaser.GameObjects.Text;
+  private restartButton!: Phaser.GameObjects.Text;
 
   constructor() {
     super('UIScene');
+    this.stateManager = StateManager.getInstance();
   }
 
   create(): void {
     // Create UI elements
-    this.createHeader();
-    this.createStatusBar();
-    this.createResourcesPanel();
-    this.createGameOverPanel();
+    this.createStatusText();
+    this.createRestartButton();
 
-    // Set up event listeners
+    // Setup event listeners
     this.setupEventListeners();
   }
 
-  private createHeader(): void {
-    // Create title panel
-    const titlePanel = new Panel(this, this.cameras.main.width / 2, 15, {
-      width: this.cameras.main.width,
-      height: 40,
-      backgroundColor: 0xffffff,
-      alpha: 1.0,
-    });
+  private createStatusText(): void {
+    // Create the status text at the bottom of the screen
+    this.statusText = this.add
+      .text(this.cameras.main.width / 2, this.cameras.main.height - 50, '', {
+        fontFamily: 'Arial',
+        fontSize: '18px',
+        color: '#000000',
+        align: 'center',
+      })
+      .setOrigin(0.5);
 
-    // Create title text
-    const titleText = this.createText(
-      0,
-      0,
-      'HONEY POT ANT COLONY',
-      '28px',
-      '#000000',
-      '#000000',
-      1
-    );
-    titlePanel.addContent(titleText);
-
-    // Create score panel
-    const scorePanel = new Panel(this, this.cameras.main.width - 110, 70, {
-      width: 200,
-      height: 34,
-      backgroundColor: 0xffffff,
-      alpha: 1.0,
-    });
-
-    // Create score text
-    this.scoreText = this.createText(0, 0, 'Queens: 0', '18px', '#000000', '#000000', 1);
-    scorePanel.addContent(this.scoreText);
+    // Set initial text
+    this.updateStatusText(this.stateManager.getState().statusMessage || '', false);
   }
 
-  private createStatusBar(): void {
-    this.statusBar = new StatusBar(this, this.cameras.main.width / 2, 70, {
-      width: 600,
-      height: 34,
-      fontSize: '16px',
-      textColor: '#000000',
-      backgroundColor: 0xffffff,
-    });
-
-    this.statusBar.setDefaultMessage('Place honey pot queens strategically to build your colony!');
-  }
-
-  private createResourcesPanel(): void {
-    this.resourcesPanel = new Panel(this, 130, 160, {
-      width: 250,
-      height: 130,
-      backgroundColor: 0xffffff,
-      alpha: 1.0,
-    });
-
-    // Create resources text
-    this.resourcesText = this.createText(
-      0,
-      0,
-      this.formatResourcesText({
-        queens: GAME_CONSTANTS.INITIAL_QUEENS,
-        gold: GAME_CONSTANTS.INITIAL_GOLD,
-        acres: GAME_CONSTANTS.OWNED_ACRES,
-        plots: GAME_CONSTANTS.PLOTS,
-      }),
-      '16px',
-      '#000000',
-      '#000000',
-      1
-    );
-
-    this.resourcesPanel.addContent(this.resourcesText);
-  }
-
-  private createGameOverPanel(): void {
-    // Create main panel
-    this.gameOverPanel = new Panel(
-      this,
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2,
-      {
-        width: 500,
-        height: 250,
-        backgroundColor: 0xffffff,
-        alpha: 1.0,
-      }
-    );
-
-    // Create game over text
-    const gameOverText = this.createText(0, -30, '', '36px', '#000000', '#000000', 1);
-
-    // Create restart button
-    const restartButton = new Button(
-      this,
-      0,
-      60,
-      'New Colony',
-      () => {
-        if (window.gameEvents) {
-          window.gameEvents.emit('restart-game');
-        }
-      },
-      {
-        width: 200,
-        height: 50,
-        fontSize: '24px',
-        backgroundColor: 0xffffff,
-        textColor: '#000000',
-        strokeColor: 0x000000,
-      }
-    );
-
-    // Add elements to panel
-    this.gameOverPanel.addContent([gameOverText, restartButton]);
-
-    // Store reference for later access
-    this.gameOverPanel.setData('gameOverText', gameOverText);
-
-    // Hide initially
-    this.gameOverPanel.setVisible(false);
+  private createRestartButton(): void {
+    // Create the restart button
+    this.restartButton = this.add
+      .text(this.cameras.main.width - 100, 30, 'RESTART', {
+        fontFamily: 'Arial',
+        fontSize: '16px',
+        color: '#000000',
+        backgroundColor: '#ffffff',
+        padding: { left: 10, right: 10, top: 5, bottom: 5 },
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => {
+        window.gameEvents.emit('restart-game');
+      })
+      .on('pointerover', () => {
+        this.restartButton.setStyle({ color: '#ff0000' });
+      })
+      .on('pointerout', () => {
+        this.restartButton.setStyle({ color: '#000000' });
+      });
   }
 
   private setupEventListeners(): void {
-    if (window.gameEvents) {
-      // Status message updates
-      window.gameEvents.on('status-message', (message: string, autoHide: boolean = false) => {
-        this.statusBar.showMessage(message, autoHide);
-      });
+    // Listen for status message updates
+    this.stateManager.events.on('status-message', this.updateStatusText, this);
 
-      // Queen count updates
-      window.gameEvents.on('queen-placed', (count: number) => {
-        this.updateScore(count);
-      });
+    // Listen for game state changes
+    this.stateManager.events.on('state-changed', this.onGameStateChanged, this);
+  }
 
-      // Resource updates
-      window.gameEvents.on('resources-updated', (resources: any) => {
-        this.updateResources(resources);
-      });
+  private updateStatusText(message: string, isError: boolean = false): void {
+    if (!this.statusText) return;
 
-      // Game state changes
-      window.gameEvents.on('state-changed', (state: GameState) => {
-        if (state === GameState.GAME_OVER_SUCCESS || state === GameState.GAME_OVER_FAILURE) {
-          this.scene.get('GameScene').events.once('game-over', (data: any) => {
-            this.showGameOver(state === GameState.GAME_OVER_SUCCESS, data.score);
-          });
-        }
-      });
+    this.statusText.setText(message);
+    this.statusText.setStyle({
+      color: isError ? '#ff0000' : '#000000',
+    });
+  }
 
-      // Game restart
-      window.gameEvents.on('game-restarted', () => {
-        this.hideGameOver();
-      });
+  private onGameStateChanged(newState: GameState, oldState: GameState): void {
+    // Show game over dialog if needed
+    if (newState === GameState.GAME_OVER_SUCCESS) {
+      this.showGameOverDialog('Victory!', 'Your honey pot ant colony thrives!', true);
+    } else if (newState === GameState.GAME_OVER_FAILURE) {
+      this.showGameOverDialog('Game Over', 'Your colony has failed!', false);
     }
   }
 
-  private updateScore(count: number): void {
-    this.scoreText.setText(`Queens: ${count}`);
+  private showGameOverDialog(title: string, message: string, isVictory: boolean): void {
+    // Create the dialog background
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0x000000, 0.7);
+    graphics.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+
+    // Create the dialog box
+    const dialogWidth = 400;
+    const dialogHeight = 250;
+    const dialogX = (this.cameras.main.width - dialogWidth) / 2;
+    const dialogY = (this.cameras.main.height - dialogHeight) / 2;
+
+    graphics.fillStyle(0xffffff, 1);
+    graphics.fillRoundedRect(dialogX, dialogY, dialogWidth, dialogHeight, 16);
+    graphics.lineStyle(4, isVictory ? 0x00ff00 : 0xff0000);
+    graphics.strokeRoundedRect(dialogX, dialogY, dialogWidth, dialogHeight, 16);
+
+    // Create the title text
+    this.add
+      .text(this.cameras.main.width / 2, dialogY + 50, title, {
+        fontFamily: 'Arial',
+        fontSize: '32px',
+        fontStyle: 'bold',
+        color: isVictory ? '#00ff00' : '#ff0000',
+      })
+      .setOrigin(0.5);
+
+    // Create the message text
+    this.add
+      .text(this.cameras.main.width / 2, dialogY + 100, message, {
+        fontFamily: 'Arial',
+        fontSize: '20px',
+        color: '#000000',
+      })
+      .setOrigin(0.5);
+
+    // Create the restart button
+    this.add
+      .text(this.cameras.main.width / 2, dialogY + 170, 'PLAY AGAIN', {
+        fontFamily: 'Arial',
+        fontSize: '24px',
+        color: '#ffffff',
+        backgroundColor: '#000000',
+        padding: { left: 20, right: 20, top: 10, bottom: 10 },
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => {
+        window.gameEvents.emit('restart-game');
+        graphics.destroy();
+      });
   }
 
-  private formatResourcesText(resources: any): string {
-    return (
-      `Plots: ${resources.plots}\n` +
-      `Land Area: ${resources.acres}/${GAME_CONSTANTS.TOTAL_ACRES} m²\n` +
-      `Honey Pot Queens: ${resources.queens}\n` +
-      `Gold Coins: ${resources.gold}`
-    );
-  }
-
-  private updateResources(resources: any): void {
-    this.resourcesText.setText(this.formatResourcesText(resources));
-  }
-
-  private showGameOver(success: boolean, score: number): void {
-    const gameOverText = this.gameOverPanel.getData('gameOverText') as Phaser.GameObjects.Text;
-
-    if (success) {
-      gameOverText.setText(`Colony Thriving!\nYou placed ${score} queens`);
-      gameOverText.setColor('#000000');
-    } else {
-      gameOverText.setText(
-        `Colony Failed!\nQueens attacked by soldier ants\nHarvested Honey: ${score * 3}ml`
-      );
-      gameOverText.setColor('#000000');
-    }
-
-    this.gameOverPanel.setVisible(true);
-  }
-
-  private hideGameOver(): void {
-    this.gameOverPanel.setVisible(false);
+  shutdown(): void {
+    // Remove event listeners
+    this.stateManager.events.off('status-message', this.updateStatusText, this);
+    this.stateManager.events.off('state-changed', this.onGameStateChanged, this);
   }
 }

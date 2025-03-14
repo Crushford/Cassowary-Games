@@ -8,6 +8,7 @@ export class Board extends Phaser.GameObjects.Container {
   private gridSize: number;
   private cellSize: number;
   private queensPlaced: number = 0;
+  private clickHandler: ((cell: Cell) => void) | null = null;
 
   constructor(
     scene: Phaser.Scene,
@@ -40,14 +41,26 @@ export class Board extends Phaser.GameObjects.Container {
 
         const cell = new Cell(this.scene, row, col, this.cellSize, cellX, cellY);
 
+        // Add click handler for cell
+        cell.onCellClick = () => {
+          if (this.clickHandler) {
+            this.clickHandler(cell);
+          }
+        };
+
         this.cells[row][col] = cell;
         this.add(cell);
       }
     }
   }
 
+  // Set click handler for cells
+  public setClickHandler(handler: (cell: Cell) => void): void {
+    this.clickHandler = handler;
+  }
+
   // Get cell at position
-  getCell(row: number, col: number): Cell | null {
+  public getCell(row: number, col: number): Cell | null {
     if (row < 0 || row >= this.gridSize || col < 0 || col >= this.gridSize) {
       return null;
     }
@@ -55,13 +68,25 @@ export class Board extends Phaser.GameObjects.Container {
   }
 
   // Get cell state
-  getCellState(row: number, col: number): CellState {
+  public getCellState(row: number, col: number): CellState {
     const cell = this.getCell(row, col);
     return cell ? cell.cellState : CellState.EMPTY;
   }
 
+  // Get all cell states in a 2D array
+  public getCellStates(): CellState[][] {
+    const states: CellState[][] = [];
+    for (let row = 0; row < this.gridSize; row++) {
+      states[row] = [];
+      for (let col = 0; col < this.gridSize; col++) {
+        states[row][col] = this.getCellState(row, col);
+      }
+    }
+    return states;
+  }
+
   // Get all cells in a particular state
-  getCellsInState(state: CellState): Cell[] {
+  public getCellsInState(state: CellState): Cell[] {
     const result: Cell[] = [];
     for (let row = 0; row < this.gridSize; row++) {
       for (let col = 0; col < this.gridSize; col++) {
@@ -75,7 +100,7 @@ export class Board extends Phaser.GameObjects.Container {
   }
 
   // Place queen
-  placeQueen(row: number, col: number): boolean {
+  public placeQueen(row: number, col: number): boolean {
     const cell = this.getCell(row, col);
     if (cell && cell.placeQueen()) {
       this.queensPlaced++;
@@ -85,13 +110,19 @@ export class Board extends Phaser.GameObjects.Container {
   }
 
   // Place flag
-  placeFlag(row: number, col: number): boolean {
+  public placeFlag(row: number, col: number): boolean {
     const cell = this.getCell(row, col);
     return cell ? cell.placeFlag() : false;
   }
 
+  // Remove flag
+  public removeFlag(row: number, col: number): boolean {
+    const cell = this.getCell(row, col);
+    return cell ? cell.clear() : false;
+  }
+
   // Remove queen
-  removeQueen(row: number, col: number): boolean {
+  public removeQueen(row: number, col: number): boolean {
     const cell = this.getCell(row, col);
     if (cell && cell.cellState === CellState.QUEEN && cell.clear()) {
       this.queensPlaced--;
@@ -100,55 +131,36 @@ export class Board extends Phaser.GameObjects.Container {
     return false;
   }
 
-  // Remove flag
-  removeFlag(row: number, col: number): boolean {
-    const cell = this.getCell(row, col);
-    return cell && cell.cellState === CellState.FLAGGED ? cell.clear() : false;
-  }
-
-  // Clear all flags
-  clearAllFlags(): void {
+  // Clear all threatened cells
+  public clearThreatenedCells(): void {
     for (let row = 0; row < this.gridSize; row++) {
       for (let col = 0; col < this.gridSize; col++) {
         const cell = this.cells[row][col];
-        if (cell.cellState === CellState.FLAGGED) {
-          cell.clear();
+        if (cell.cellState === CellState.THREATENED) {
+          cell.markThreatened(false);
         }
       }
     }
   }
 
-  // Reset the board
-  resetBoard(): void {
+  // Reset the board to initial state
+  public reset(): void {
     for (let row = 0; row < this.gridSize; row++) {
       for (let col = 0; col < this.gridSize; col++) {
-        this.cells[row][col].clear();
+        const cell = this.cells[row][col];
+        cell.clear();
       }
     }
     this.queensPlaced = 0;
   }
 
-  // Set click handler for all cells
-  setClickHandler(handler: (cell: Cell) => void): void {
-    for (let row = 0; row < this.gridSize; row++) {
-      for (let col = 0; col < this.gridSize; col++) {
-        this.cells[row][col].setClickHandler(handler);
-      }
-    }
-  }
-
-  // Get all cell states as a 2D array
-  getCellStates(): CellState[][] {
-    return this.cells.map((row) => row.map((cell) => cell.cellState));
-  }
-
-  // Get count of queens placed
-  get queenCount(): number {
-    return this.queensPlaced;
-  }
-
-  // Get grid size
-  get size(): number {
+  // Get the size of the grid
+  public get size(): number {
     return this.gridSize;
+  }
+
+  // Get the number of queens placed
+  public get placedQueens(): number {
+    return this.queensPlaced;
   }
 }
