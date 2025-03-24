@@ -26,12 +26,6 @@
       >
         Restart
       </button>
-      <button
-        class="rounded-lg bg-accent px-4 py-2 text-white hover:bg-accent-hover"
-        @click="handlePlaceRandomQueen"
-      >
-        Place Random Queen
-      </button>
     </div>
   </div>
 </template>
@@ -58,10 +52,6 @@ defineEmits<{
   (e: 'undo'): void;
   (e: 'restart'): void;
 }>();
-
-const handlePlaceRandomQueen = () => {
-  gameStore.placeRandomQueen();
-};
 
 defineOptions({
   name: 'GameGrid',
