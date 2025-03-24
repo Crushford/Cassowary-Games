@@ -42,12 +42,45 @@ export const useGameStore = defineStore('game', {
 
     isValidMove: (state) => (row: number, col: number) => {
       const square = state.grid[row][col];
-      if (square.state !== 'empty') return false;
 
       // Check if there's a queen in the same row or column
       for (let i = 0; i < state.gridSize; i++) {
         if (state.grid[row][i].state === 'queen' || state.grid[i][col].state === 'queen') {
           return false;
+        }
+      }
+
+      // Check diagonally adjacent squares (one square away)
+      const diagonalPositions = [
+        { r: row - 1, c: col - 1 }, // top-left
+        { r: row - 1, c: col + 1 }, // top-right
+        { r: row + 1, c: col - 1 }, // bottom-left
+        { r: row + 1, c: col + 1 }, // bottom-right
+      ];
+
+      for (const pos of diagonalPositions) {
+        if (
+          pos.r >= 0 &&
+          pos.r < state.gridSize &&
+          pos.c >= 0 &&
+          pos.c < state.gridSize &&
+          state.grid[pos.r][pos.c].state === 'queen'
+        ) {
+          return false;
+        }
+      }
+
+      // Check color group (if the square has a group color)
+      if (square.groupColor) {
+        for (let r = 0; r < state.gridSize; r++) {
+          for (let c = 0; c < state.gridSize; c++) {
+            if (
+              state.grid[r][c].state === 'queen' &&
+              state.grid[r][c].groupColor === square.groupColor
+            ) {
+              return false;
+            }
+          }
         }
       }
 
@@ -85,6 +118,42 @@ export const useGameStore = defineStore('game', {
             return true;
           }
         }
+
+        // Check diagonally adjacent squares (one square away)
+        const diagonalPositions = [
+          { r: row - 1, c: col - 1 }, // top-left
+          { r: row - 1, c: col + 1 }, // top-right
+          { r: row + 1, c: col - 1 }, // bottom-left
+          { r: row + 1, c: col + 1 }, // bottom-right
+        ];
+
+        for (const pos of diagonalPositions) {
+          if (
+            pos.r >= 0 &&
+            pos.r < state.gridSize &&
+            pos.c >= 0 &&
+            pos.c < state.gridSize &&
+            state.grid[pos.r][pos.c].state === 'queen'
+          ) {
+            return true;
+          }
+        }
+
+        // Check color group (if the square has a group color)
+        const square = state.grid[row][col];
+        if (square.groupColor) {
+          for (let r = 0; r < state.gridSize; r++) {
+            for (let c = 0; c < state.gridSize; c++) {
+              if (
+                state.grid[r][c].state === 'queen' &&
+                state.grid[r][c].groupColor === square.groupColor
+              ) {
+                return true;
+              }
+            }
+          }
+        }
+
         return false;
       },
   },
@@ -107,7 +176,7 @@ export const useGameStore = defineStore('game', {
       this.availableMoves = [];
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state === 'empty' && !this.hasQueenInRowOrColumn(row, col)) {
+          if (this.grid[row][col].state === 'empty' && this.isValidMove(row, col)) {
             this.availableMoves.push({ row, col });
           }
         }
