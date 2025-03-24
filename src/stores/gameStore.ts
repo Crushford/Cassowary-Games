@@ -131,9 +131,24 @@ export const useGameStore = defineStore('game', {
 
       this.saveToHistory();
       this.grid[row][col].state = 'queen';
+      this.updateBlockedMoves();
       this.updateAvailableMoves();
       this.checkCompletion();
       return true;
+    },
+
+    updateBlockedMoves() {
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].state !== 'queen') {
+            if (!this.isValidMove(row, col)) {
+              this.grid[row][col].state = 'flag';
+            } else {
+              this.grid[row][col].state = 'empty';
+            }
+          }
+        }
+      }
     },
 
     saveToHistory() {
