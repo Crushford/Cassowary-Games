@@ -62,6 +62,32 @@ export function isUnderAttack(index: number, state: PuzzleState): boolean {
   return false;
 }
 
+export function wouldBlockLastPosition(index: number, state: PuzzleState): boolean {
+  const row = Math.floor(index / state.gridSize);
+  const col = index % state.gridSize;
+
+  // Check row
+  let availableInRow = 0;
+  for (let c = 0; c < state.gridSize; c++) {
+    const squareIndex = row * state.gridSize + c;
+    if (state.grid[squareIndex].state === 'empty' && !isUnderAttack(squareIndex, state)) {
+      availableInRow++;
+    }
+  }
+
+  // Check column
+  let availableInColumn = 0;
+  for (let r = 0; r < state.gridSize; r++) {
+    const squareIndex = r * state.gridSize + col;
+    if (state.grid[squareIndex].state === 'empty' && !isUnderAttack(squareIndex, state)) {
+      availableInColumn++;
+    }
+  }
+
+  // If this is the last available position in either row or column, it would block
+  return availableInRow <= 1 || availableInColumn <= 1;
+}
+
 export function updateAttackedPositions(state: PuzzleState): PuzzleState {
   const newState = {
     ...state,
@@ -104,7 +130,11 @@ export function placeNextQueen(state: PuzzleState): PuzzleUpdateResult {
 
   // Try each empty position
   for (let i = 0; i < state.grid.length; i++) {
-    if (state.grid[i].state === 'empty' && !isUnderAttack(i, state)) {
+    if (
+      state.grid[i].state === 'empty' &&
+      !isUnderAttack(i, state) &&
+      !wouldBlockLastPosition(i, state)
+    ) {
       // Count how many new squares would be attacked from this position
       const attackedSquares = getAttackedSquares(i, state.gridSize);
       const newAttackedSquares = attackedSquares.filter(
