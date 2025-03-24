@@ -20,7 +20,7 @@
       </div>
 
       <GameGrid
-        :grid="grid"
+        :grid="puzzleState.grid"
         :grid-size="gridSize"
         @square-click="handleSquareClick"
         @undo="handleUndo"
@@ -40,6 +40,12 @@
         >
           Test Level
         </button>
+        <button
+          class="rounded-lg bg-accent px-4 py-2 text-white hover:bg-accent-hover"
+          @click="handlePlaceNextQueen"
+        >
+          Place Next Queen
+        </button>
       </div>
     </div>
   </div>
@@ -49,39 +55,48 @@
 import { ref, computed, watch } from 'vue';
 import GameGrid from '../components/GameGrid.vue';
 import type { GridSquare } from '../components/GameGrid.vue';
+import {
+  type PuzzleState,
+  initializePuzzleState,
+  placeNextQueen,
+  updateAttackedPositions,
+} from '../utils/puzzleLogic';
 
 const gridSize = ref(6);
-const grid = ref<GridSquare[]>([]);
+const puzzleState = ref<PuzzleState>(initializePuzzleState(gridSize.value));
 const moveHistory = ref<{ index: number; state: GridSquare['state'] }[]>([]);
 
 // Initialize grid
 const initializeGrid = () => {
-  grid.value = Array(gridSize.value * gridSize.value)
-    .fill(null)
-    .map(() => ({
-      state: 'empty',
-    }));
+  puzzleState.value = initializePuzzleState(gridSize.value);
+  moveHistory.value = [];
 };
 
 // Watch for grid size changes
 watch(gridSize, () => {
   initializeGrid();
-  moveHistory.value = [];
 });
 
 // Handle square click
 const handleSquareClick = (index: number) => {
-  const currentState = grid.value[index].state;
+  const currentState = puzzleState.value.grid[index].state;
   let newState: GridSquare['state'] = 'empty';
 
   if (currentState === 'empty') {
     newState = 'flag';
   } else if (currentState === 'flag') {
     newState = 'queen';
+    // When placing a queen, add it to the queens array and update attacked positions
+    puzzleState.value.queens.push(index);
   }
 
   moveHistory.value.push({ index, state: currentState });
-  grid.value[index].state = newState;
+  puzzleState.value.grid[index].state = newState;
+
+  // Update attacked positions after placing a queen
+  if (newState === 'queen') {
+    puzzleState.value = updateAttackedPositions(puzzleState.value);
+  }
 };
 
 // Handle undo
@@ -89,7 +104,14 @@ const handleUndo = () => {
   if (moveHistory.value.length > 0) {
     const lastMove = moveHistory.value.pop();
     if (lastMove) {
-      grid.value[lastMove.index].state = lastMove.state;
+      const index = lastMove.index;
+      puzzleState.value.grid[index].state = lastMove.state;
+
+      // If we're removing a queen, remove it from the queens array and update attacked positions
+      if (lastMove.state === 'queen') {
+        puzzleState.value.queens = puzzleState.value.queens.filter((q) => q !== index);
+        puzzleState.value = updateAttackedPositions(puzzleState.value);
+      }
     }
   }
 };
@@ -97,19 +119,29 @@ const handleUndo = () => {
 // Handle restart
 const handleRestart = () => {
   initializeGrid();
-  moveHistory.value = [];
+};
+
+// Handle place next queen
+const handlePlaceNextQueen = () => {
+  const result = placeNextQueen(puzzleState.value);
+  if (result.success && result.state) {
+    puzzleState.value = result.state;
+  } else {
+    // You might want to show this error to the user in the UI
+    console.error(result.error);
+  }
 };
 
 // Handle save
 const handleSave = () => {
   // TODO: Implement save functionality
-  console.log('Saving level:', grid.value);
+  console.log('Saving level:', puzzleState.value);
 };
 
 // Handle test
 const handleTest = () => {
   // TODO: Implement test functionality
-  console.log('Testing level:', grid.value);
+  console.log('Testing level:', puzzleState.value);
 };
 
 // Initialize grid when component is mounted
