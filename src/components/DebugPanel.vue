@@ -6,9 +6,15 @@
     <div class="mb-6">
       <h3 class="text-lg font-semibold text-text mb-2">Game State</h3>
       <div class="bg-background p-3 rounded">
-        <pre class="text-sm text-text whitespace-pre-wrap">{{
+        <pre class="text-sm text-text whitespace-pre-wrap mb-4">{{
           JSON.stringify(gameState, null, 2)
         }}</pre>
+
+        <!-- Visual Grid -->
+        <div class="mt-4">
+          <h4 class="text-md font-semibold text-text mb-2">Visual Grid</h4>
+          <DebugGrid :grid="grid" />
+        </div>
       </div>
     </div>
 
@@ -40,26 +46,7 @@
       <div class="space-y-4">
         <div v-for="(move, index) in lastThreeMoves" :key="index" class="bg-background p-3 rounded">
           <div class="text-sm text-text mb-2">Move {{ moveHistory.length - index }}</div>
-          <div
-            class="grid gap-1"
-            :style="{ gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))` }"
-          >
-            <template v-for="(row, rowIndex) in move.grid" :key="rowIndex">
-              <div
-                v-for="(square, colIndex) in row"
-                :key="`${rowIndex}-${colIndex}`"
-                class="aspect-square w-full rounded border border-surface flex items-center justify-center"
-                :class="{
-                  'bg-primary': square.state === 'queen',
-                  'bg-secondary': square.state === 'flag',
-                  'bg-surface': square.state === 'empty',
-                }"
-              >
-                <span v-if="square.state === 'queen'">👑</span>
-                <span v-else-if="square.state === 'flag'">🚩</span>
-              </div>
-            </template>
-          </div>
+          <DebugGrid :grid="move.grid" />
         </div>
       </div>
     </div>
@@ -69,6 +56,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { GridSquare } from './GameGrid.vue';
+import DebugGrid from './DebugGrid.vue';
 
 interface Props {
   grid: GridSquare[][];
@@ -88,7 +76,6 @@ const gameState = computed(() => {
     }
   }
   return {
-    grid: props.grid,
     gridSize: props.gridSize,
     queens,
   };
