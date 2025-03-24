@@ -11,7 +11,7 @@
         :key="index"
         :square-state="square.state"
         :group-color="square.groupColor"
-        @click="$emit('square-click', index)"
+        @click="handleSquareClick(index)"
       />
     </div>
     <div class="mt-4 flex justify-center gap-2">
@@ -27,29 +27,47 @@
       >
         Restart
       </button>
+      <button
+        class="rounded-lg bg-accent px-4 py-2 text-white hover:bg-accent-hover"
+        @click="handlePlaceRandomQueen"
+      >
+        Place Random Queen
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useGameStore } from '../stores/gameStore';
 import Square from './Square.vue';
+import { storeToRefs } from 'pinia';
 
 export interface GridSquare {
   state: 'empty' | 'flag' | 'queen' | 'invalid';
-  groupColor?: string;
+  groupColor?: 'red' | 'blue' | 'green' | 'yellow' | 'purple' | 'pink';
 }
 
-interface Props {
-  grid: GridSquare[];
-  gridSize: number;
-}
+const gameStore = useGameStore();
+const { grid, gridSize } = storeToRefs(gameStore);
 
-const props = defineProps<Props>();
 defineEmits<{
-  (e: 'square-click', index: number): void;
   (e: 'undo'): void;
   (e: 'restart'): void;
 }>();
+
+const handleSquareClick = (index: number) => {
+  const currentState = grid.value[index].state;
+
+  if (currentState === 'empty') {
+    gameStore.placeFlag(index);
+  } else if (currentState === 'flag') {
+    gameStore.placeQueen(index);
+  }
+};
+
+const handlePlaceRandomQueen = () => {
+  gameStore.placeRandomQueen();
+};
 
 defineOptions({
   name: 'GameGrid',

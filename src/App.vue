@@ -33,10 +33,10 @@
       <!-- Global Debug Panel -->
       <div class="w-96 bg-surface shadow-lg">
         <DebugPanel
-          :grid="gameState.grid"
-          :grid-size="gameState.gridSize"
-          :move-history="gameState.moveHistory"
-          @make-move="handleDebugMove"
+          :grid="gameStore.grid"
+          :grid-size="gameStore.gridSize"
+          :move-history="gameStore.moveHistory"
+          @make-move="gameStore.handleDebugMove"
         />
       </div>
     </div>
@@ -44,28 +44,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, provide } from 'vue';
 import { useRoute } from 'vue-router';
 import DebugPanel from './components/DebugPanel.vue';
-import type { GridSquare } from './components/GameGrid.vue';
+import { useGameStore } from './stores/gameStore';
 
 const route = useRoute();
-
-// Game state management
-const gameState = ref({
-  grid: [] as GridSquare[],
-  gridSize: 6,
-  moveHistory: [] as { grid: GridSquare[] }[],
-});
-
-// Provide game state to child components
-provide('gameState', gameState);
-
-// Handle debug panel moves
-const handleDebugMove = (index: number) => {
-  // Emit a custom event that child components can listen to
-  window.dispatchEvent(new CustomEvent('debug-move', { detail: { index } }));
-};
+const gameStore = useGameStore();
 </script>
 
 <style>
