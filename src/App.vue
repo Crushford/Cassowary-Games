@@ -1,78 +1,39 @@
 <template>
-  <div class="app flex flex-col h-screen">
-    <header class="bg-white text-black p-4 text-center border-b border-gray-300">
-      <h1 class="text-2xl font-bold">Honey Pot Ant Colony</h1>
-    </header>
+  <div class="min-h-screen bg-background">
+    <nav class="bg-surface shadow-md">
+      <div class="max-w-4xl mx-auto px-4 py-3">
+        <div class="flex justify-between items-center">
+          <h1 class="text-xl font-bold text-text">Honey Pot Ant Farming</h1>
+          <div class="flex gap-4">
+            <router-link
+              to="/"
+              class="text-text hover:text-primary-hover"
+              :class="{ 'font-bold': route.path === '/' }"
+            >
+              Game Mode
+            </router-link>
+            <router-link
+              to="/builder"
+              class="text-text hover:text-primary-hover"
+              :class="{ 'font-bold': route.path === '/builder' }"
+            >
+              Level Builder
+            </router-link>
+          </div>
+        </div>
+      </div>
+    </nav>
 
-    <main class="flex-1 min-h-0 overflow-hidden flex justify-center items-center bg-white">
-      <div id="game-container" class="w-full h-full"></div>
-    </main>
+    <router-view></router-view>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, onMounted, onUnmounted } from 'vue';
-import Phaser from 'phaser';
-import { GameConfig } from './config/gameConfig';
+<script setup lang="ts">
+import { useRoute } from 'vue-router';
 
-// Add global type definitions
-declare global {
-  interface Window {
-    gameEvents: Phaser.Events.EventEmitter;
-  }
-}
-
-export default defineComponent({
-  name: 'App',
-  setup() {
-    let game: Phaser.Game | null = null;
-
-    // Initialize the game
-    onMounted(() => {
-      // Create global event emitter for cross-scene communication
-      window.gameEvents = new Phaser.Events.EventEmitter();
-
-      // Initialize the Phaser game
-      game = new Phaser.Game({
-        ...GameConfig,
-        parent: 'game-container',
-      });
-    });
-
-    // Clean up
-    onUnmounted(() => {
-      if (game) {
-        game.destroy(true);
-      }
-    });
-
-    return {};
-  },
-});
+const route = useRoute();
 </script>
 
 <style>
-html,
-body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  width: 100%;
-  height: 100%;
-  background-color: white;
-  color: black;
-}
-
-canvas {
-  display: block;
-}
-
-/* Simplified colors for consistent UI */
-:root {
-  --color-text: #000000;
-  --color-background: #ffffff;
-  --color-border: #d1d1d1;
-  --color-accent: #505050;
-  --color-error: #505050;
-}
+/* Add any global styles here */
 </style>
