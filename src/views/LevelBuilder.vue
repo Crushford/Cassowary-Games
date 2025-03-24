@@ -27,8 +27,8 @@
         @restart="handleRestart"
       />
 
-      <div v-if="errorMessage" class="mt-4 p-4 bg-red-100 text-red-700 rounded-lg">
-        {{ errorMessage }}
+      <div v-if="gameStore.errorMessage" class="mt-4 p-4 bg-red-100 text-red-700 rounded-lg">
+        {{ gameStore.errorMessage }}
       </div>
 
       <div class="mt-6 flex justify-center gap-4">
@@ -50,7 +50,6 @@ import { useGameStore } from '../stores/gameStore';
 
 const gameStore = useGameStore();
 const gridSize = ref(gameStore.gridSize);
-const errorMessage = ref<string | null>(null);
 
 // Handle grid size changes
 const handleGridSizeChange = () => {
@@ -60,21 +59,15 @@ const handleGridSizeChange = () => {
 // Handle undo
 const handleUndo = () => {
   gameStore.handleUndo();
-  errorMessage.value = null;
 };
 
 // Handle restart
 const handleRestart = () => {
   gameStore.handleRestart();
-  errorMessage.value = null;
 };
 
 // Handle place random queen
 const handlePlaceRandomQueen = () => {
-  const success = gameStore.placeRandomQueen();
-  if (!success) {
-    errorMessage.value = 'No valid moves available';
-  }
-  errorMessage.value = null;
+  gameStore.placeRandomQueen();
 };
 </script>

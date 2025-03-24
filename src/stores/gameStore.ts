@@ -8,6 +8,7 @@ interface GameState {
   currentLevel: number;
   availableMoves: { row: number; col: number }[];
   isComplete: boolean;
+  errorMessage: string | null;
 }
 
 export const useGameStore = defineStore('game', {
@@ -24,6 +25,7 @@ export const useGameStore = defineStore('game', {
     currentLevel: 1,
     availableMoves: [],
     isComplete: false,
+    errorMessage: null,
   }),
 
   getters: {
@@ -177,10 +179,13 @@ export const useGameStore = defineStore('game', {
     },
 
     placeRandomQueen() {
-      if (this.availableMoves.length === 0) return false;
-
+      if (this.availableMoves.length === 0) {
+        this.setError('No valid moves available');
+        return false;
+      }
       const randomIndex = Math.floor(Math.random() * this.availableMoves.length);
       const { row, col } = this.availableMoves[randomIndex];
+      this.setError(null);
       return this.placeQueen(row, col);
     },
 
@@ -190,9 +195,18 @@ export const useGameStore = defineStore('game', {
       this.isComplete = this.queenPositions.length === requiredQueens;
     },
 
+    setError(message: string | null) {
+      this.errorMessage = message;
+    },
+
     setGridSize(size: number) {
+      if (size < 4 || size > 8) {
+        this.setError('Grid size must be between 4 and 8');
+        return;
+      }
       this.gridSize = size;
       this.initializeGrid();
+      this.setError(null);
     },
   },
 });
