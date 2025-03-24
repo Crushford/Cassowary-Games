@@ -1,12 +1,12 @@
 <template>
   <div class="min-h-screen bg-background p-4">
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-7xl mx-auto">
       <h1 class="text-3xl font-bold text-text mb-6">Game Mode</h1>
 
       <div class="mb-6 flex justify-between items-center">
         <div class="flex items-center gap-4">
           <div class="text-text">Level: {{ currentLevel }}</div>
-          <div class="text-text">Grid: {{ gridSize }} × {{ gridSize }}</div>
+          <div class="text-text">Grid: {{ gameState.gridSize }} × {{ gameState.gridSize }}</div>
         </div>
         <div class="flex gap-4">
           <button
@@ -24,55 +24,74 @@
         </div>
       </div>
 
-      <GameGrid
-        :grid="grid"
-        :grid-size="gridSize"
-        @square-click="handleSquareClick"
-        @undo="handleUndo"
-        @restart="handleRestart"
-      />
+      <div class="flex gap-6">
+        <!-- Game Section -->
+        <div class="flex-1">
+          <GameGrid
+            :grid="gameState.grid"
+            :grid-size="gameState.gridSize"
+            @square-click="handleSquareClick"
+            @undo="handleUndo"
+            @restart="handleRestart"
+          />
 
-      <div class="mt-6 flex justify-center">
-        <button
-          class="rounded-lg bg-secondary px-4 py-2 text-white hover:bg-secondary-hover"
-          @click="handleCheckSolution"
-        >
-          Check Solution
-        </button>
+          <div class="mt-6 flex justify-center">
+            <button
+              class="rounded-lg bg-secondary px-4 py-2 text-white hover:bg-secondary-hover"
+              @click="handleCheckSolution"
+            >
+              Check Solution
+            </button>
+          </div>
+        </div>
+
+        <!-- Debug Panel -->
+        <DebugPanel
+          :grid="gameState.grid"
+          :grid-size="gameState.gridSize"
+          :move-history="gameState.moveHistory"
+          @make-move="handleSquareClick"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, inject, onMounted, onUnmounted } from 'vue';
 import GameGrid from '../components/GameGrid.vue';
+import DebugPanel from '../components/DebugPanel.vue';
 import type { GridSquare } from '../components/GameGrid.vue';
 
 const currentLevel = ref(1);
-const gridSize = ref(6);
-const grid = ref<GridSquare[]>([]);
-const moveHistory = ref<{ index: number; state: GridSquare['state'] }[]>([]);
+const gameState = inject('gameState') as {
+  grid: GridSquare[];
+  gridSize: number;
+  moveHistory: { grid: GridSquare[] }[];
+};
 
 // Initialize grid
 const initializeGrid = () => {
   // TODO: Load level data from storage
-  grid.value = Array(gridSize.value * gridSize.value)
+  gameState.grid = Array(gameState.gridSize * gameState.gridSize)
     .fill(null)
     .map(() => ({
       state: 'empty',
     }));
+  gameState.moveHistory = [];
 };
 
 // Watch for grid size changes
-watch(gridSize, () => {
-  initializeGrid();
-  moveHistory.value = [];
-});
+watch(
+  () => gameState.gridSize,
+  () => {
+    initializeGrid();
+  }
+);
 
 // Handle square click
 const handleSquareClick = (index: number) => {
-  const currentState = grid.value[index].state;
+  const currentState = gameState.grid[index].state;
   let newState: GridSquare['state'] = 'empty';
 
   if (currentState === 'empty') {
@@ -81,16 +100,20 @@ const handleSquareClick = (index: number) => {
     newState = 'queen';
   }
 
-  moveHistory.value.push({ index, state: currentState });
-  grid.value[index].state = newState;
+  // Save current state to history before making changes
+  gameState.moveHistory.push({
+    grid: JSON.parse(JSON.stringify(gameState.grid)),
+  });
+
+  gameState.grid[index].state = newState;
 };
 
 // Handle undo
 const handleUndo = () => {
-  if (moveHistory.value.length > 0) {
-    const lastMove = moveHistory.value.pop();
-    if (lastMove) {
-      grid.value[lastMove.index].state = lastMove.state;
+  if (gameState.moveHistory.length > 0) {
+    const lastState = gameState.moveHistory.pop();
+    if (lastState) {
+      gameState.grid = lastState.grid;
     }
   }
 };
@@ -98,13 +121,12 @@ const handleUndo = () => {
 // Handle restart
 const handleRestart = () => {
   initializeGrid();
-  moveHistory.value = [];
 };
 
 // Handle check solution
 const handleCheckSolution = () => {
   // TODO: Implement solution checking
-  console.log('Checking solution:', grid.value);
+  console.log('Checking solution:', gameState.grid);
 };
 
 // Handle level navigation
@@ -119,6 +141,20 @@ const handleNextLevel = () => {
   currentLevel.value++;
   initializeGrid();
 };
+
+// Handle debug panel moves
+const handleDebugMove = (event: CustomEvent) => {
+  handleSquareClick(event.detail.index);
+};
+
+// Set up event listeners
+onMounted(() => {
+  window.addEventListener('debug-move', handleDebugMove as EventListener);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('debug-move', handleDebugMove as EventListener);
+});
 
 // Initialize grid when component is mounted
 initializeGrid();

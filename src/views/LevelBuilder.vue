@@ -69,19 +69,13 @@ import {
 
 const gridSize = ref(6);
 const puzzleState = ref<PuzzleState>(initializePuzzleState(gridSize.value));
-const moveHistory = ref<
-  {
-    index: number;
-    state: GridSquare['state'];
-    affectedSquares?: { index: number; state: GridSquare['state'] }[];
-  }[]
->([]);
+const stateHistory = ref<PuzzleState[]>([]);
 const errorMessage = ref<string | null>(null);
 
 // Initialize grid
 const initializeGrid = () => {
   puzzleState.value = initializePuzzleState(gridSize.value);
-  moveHistory.value = [];
+  stateHistory.value = [];
   errorMessage.value = null;
 };
 
@@ -105,52 +99,28 @@ const handleSquareClick = (index: number) => {
       return;
     }
     newState = 'queen';
-    // When placing a queen, add it to the queens array and update attacked positions
-    puzzleState.value.queens.push(index);
   }
 
   errorMessage.value = null;
-  moveHistory.value.push({ index, state: currentState });
+
+  // Store current state in history before making any changes
+  stateHistory.value.push({ ...puzzleState.value });
+
+  // Update the clicked square
   puzzleState.value.grid[index].state = newState;
 
-  // Update attacked positions after placing a queen
+  // If placing a queen, update the queens array and attacked positions
   if (newState === 'queen') {
-    const oldState = { ...puzzleState.value };
+    puzzleState.value.queens.push(index);
     puzzleState.value = updateAttackedPositions(puzzleState.value);
-
-    // Record all squares that were changed to flags
-    const affectedSquares = puzzleState.value.grid
-      .map((square, i) => ({
-        index: i,
-        state: square.state,
-      }))
-      .filter((square, i) => square.state === 'flag' && oldState.grid[i].state === 'empty');
-
-    // Add the affected squares to the last move in history
-    moveHistory.value[moveHistory.value.length - 1].affectedSquares = affectedSquares;
   }
 };
 
 // Handle undo
 const handleUndo = () => {
-  if (moveHistory.value.length > 0) {
-    const lastMove = moveHistory.value.pop();
-    if (lastMove) {
-      const index = lastMove.index;
-      puzzleState.value.grid[index].state = lastMove.state;
-
-      // If we're removing a queen, remove it from the queens array
-      if (lastMove.state === 'queen') {
-        puzzleState.value.queens = puzzleState.value.queens.filter((q) => q !== index);
-
-        // Restore all squares that were changed to flags
-        if (lastMove.affectedSquares) {
-          lastMove.affectedSquares.forEach((square) => {
-            puzzleState.value.grid[square.index].state = 'empty';
-          });
-        }
-      }
-    }
+  if (stateHistory.value.length > 0) {
+    // Restore the previous state
+    puzzleState.value = stateHistory.value.pop()!;
   }
   errorMessage.value = null;
 };
@@ -164,34 +134,11 @@ const handleRestart = () => {
 const handlePlaceNextQueen = () => {
   const result = placeNextQueen(puzzleState.value);
   if (result.success && result.state) {
-    // Find the index where the queen was placed by comparing the queens arrays
-    const newQueenIndex = result.state.queens.find((q) => !puzzleState.value.queens.includes(q));
+    // Store current state in history before updating
+    stateHistory.value.push({ ...puzzleState.value });
 
-    if (newQueenIndex !== undefined) {
-      // Store the old state before updating
-      const oldState = { ...puzzleState.value };
-
-      // Add the move to history before updating the state
-      moveHistory.value.push({
-        index: newQueenIndex,
-        state: 'empty',
-      });
-
-      // Update the state
-      puzzleState.value = result.state;
-
-      // Record all squares that were changed to flags
-      const affectedSquares = puzzleState.value.grid
-        .map((square, i) => ({
-          index: i,
-          state: square.state,
-        }))
-        .filter((square, i) => square.state === 'flag' && oldState.grid[i].state === 'empty');
-
-      // Add the affected squares to the last move in history
-      moveHistory.value[moveHistory.value.length - 1].affectedSquares = affectedSquares;
-    }
-
+    // Update to the new state
+    puzzleState.value = result.state;
     errorMessage.value = null;
   } else {
     errorMessage.value = result.error || 'Failed to place next queen';
