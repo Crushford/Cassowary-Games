@@ -36,7 +36,7 @@
           :grid="gameStore.grid"
           :grid-size="gameStore.gridSize"
           :move-history="gameStore.moveHistory"
-          @make-move="gameStore.handleDebugMove"
+          @make-move="gameStore.handleSquareClick"
         />
       </div>
     </div>

@@ -16,16 +16,17 @@
     <div class="mb-6">
       <h3 class="text-lg font-semibold text-text mb-2">Available Moves</h3>
       <div class="space-y-2">
-        <div v-for="move in availableMoves" :key="move.index" class="flex items-center gap-2">
-          <input
-            type="number"
-            v-model="move.index"
-            class="w-20 rounded bg-background border border-surface px-2 py-1 text-text"
-            readonly
-          />
+        <div
+          v-for="move in availableMoves"
+          :key="`${move.row}-${move.col}`"
+          class="flex items-center gap-2"
+        >
+          <div class="w-20 rounded bg-background border border-surface px-2 py-1 text-text">
+            {{ move.row }},{{ move.col }}
+          </div>
           <button
             class="rounded bg-primary px-3 py-1 text-white hover:bg-primary-hover"
-            @click="$emit('make-move', move.index)"
+            @click="$emit('make-move', move.row, move.col)"
           >
             Make Move
           </button>
@@ -43,19 +44,21 @@
             class="grid gap-1"
             :style="{ gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))` }"
           >
-            <div
-              v-for="(square, squareIndex) in move.grid"
-              :key="squareIndex"
-              class="aspect-square w-full rounded border border-surface flex items-center justify-center"
-              :class="{
-                'bg-primary': square.state === 'queen',
-                'bg-secondary': square.state === 'flag',
-                'bg-surface': square.state === 'empty',
-              }"
-            >
-              <span v-if="square.state === 'queen'">👑</span>
-              <span v-else-if="square.state === 'flag'">🚩</span>
-            </div>
+            <template v-for="(row, rowIndex) in move.grid" :key="rowIndex">
+              <div
+                v-for="(square, colIndex) in row"
+                :key="`${rowIndex}-${colIndex}`"
+                class="aspect-square w-full rounded border border-surface flex items-center justify-center"
+                :class="{
+                  'bg-primary': square.state === 'queen',
+                  'bg-secondary': square.state === 'flag',
+                  'bg-surface': square.state === 'empty',
+                }"
+              >
+                <span v-if="square.state === 'queen'">👑</span>
+                <span v-else-if="square.state === 'flag'">🚩</span>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -68,27 +71,39 @@ import { computed } from 'vue';
 import type { GridSquare } from './GameGrid.vue';
 
 interface Props {
-  grid: GridSquare[];
+  grid: GridSquare[][];
   gridSize: number;
-  moveHistory: { grid: GridSquare[] }[];
+  moveHistory: { grid: GridSquare[][] }[];
 }
 
 const props = defineProps<Props>();
 
-const gameState = computed(() => ({
-  grid: props.grid,
-  gridSize: props.gridSize,
-  queens: props.grid.reduce((acc, square, index) => {
-    if (square.state === 'queen') acc.push(index);
-    return acc;
-  }, [] as number[]),
-}));
+const gameState = computed(() => {
+  const queens: { row: number; col: number }[] = [];
+  for (let row = 0; row < props.gridSize; row++) {
+    for (let col = 0; col < props.gridSize; col++) {
+      if (props.grid[row][col].state === 'queen') {
+        queens.push({ row, col });
+      }
+    }
+  }
+  return {
+    grid: props.grid,
+    gridSize: props.gridSize,
+    queens,
+  };
+});
 
 const availableMoves = computed(() => {
-  return props.grid
-    .map((square, index) => ({ square, index }))
-    .filter(({ square }) => square.state === 'empty')
-    .map(({ index }) => ({ index }));
+  const moves: { row: number; col: number }[] = [];
+  for (let row = 0; row < props.gridSize; row++) {
+    for (let col = 0; col < props.gridSize; col++) {
+      if (props.grid[row][col].state === 'empty') {
+        moves.push({ row, col });
+      }
+    }
+  }
+  return moves;
 });
 
 const lastThreeMoves = computed(() => {
@@ -96,6 +111,6 @@ const lastThreeMoves = computed(() => {
 });
 
 defineEmits<{
-  (e: 'make-move', index: number): void;
+  (e: 'make-move', row: number, col: number): void;
 }>();
 </script>

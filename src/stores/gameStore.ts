@@ -2,19 +2,23 @@ import { defineStore } from 'pinia';
 import type { GridSquare } from '../components/GameGrid.vue';
 
 interface GameState {
-  grid: GridSquare[];
+  grid: GridSquare[][];
   gridSize: number;
-  moveHistory: { grid: GridSquare[] }[];
+  moveHistory: { grid: GridSquare[][] }[];
   currentLevel: number;
-  availableMoves: number[];
+  availableMoves: { row: number; col: number }[];
   isComplete: boolean;
 }
 
 export const useGameStore = defineStore('game', {
   state: (): GameState => ({
-    grid: Array(6 * 6)
+    grid: Array(6)
       .fill(null)
-      .map(() => ({ state: 'empty' })),
+      .map(() =>
+        Array(6)
+          .fill(null)
+          .map(() => ({ state: 'empty' }))
+      ),
     gridSize: 6,
     moveHistory: [],
     currentLevel: 1,
@@ -24,29 +28,26 @@ export const useGameStore = defineStore('game', {
 
   getters: {
     // Get all positions where queens are placed
-    queenPositions: (state): number[] => {
-      return state.grid
-        .map((square, index) => ({ square, index }))
-        .filter(({ square }) => square.state === 'queen')
-        .map(({ index }) => index);
+    queenPositions: (state): { row: number; col: number }[] => {
+      const positions: { row: number; col: number }[] = [];
+      for (let row = 0; row < state.gridSize; row++) {
+        for (let col = 0; col < state.gridSize; col++) {
+          if (state.grid[row][col].state === 'queen') {
+            positions.push({ row, col });
+          }
+        }
+      }
+      return positions;
     },
 
-    isValidMove: (state) => (index: number) => {
-      const square = state.grid[index];
+    isValidMove: (state) => (row: number, col: number) => {
+      const square = state.grid[row][col];
       if (square.state !== 'empty') return false;
 
-      const row = Math.floor(index / state.gridSize);
-      const col = index % state.gridSize;
-
       // Check if there's a queen in the same row or column
-      for (let i = 0; i < state.grid.length; i++) {
-        if (state.grid[i].state === 'queen') {
-          const queenRow = Math.floor(i / state.gridSize);
-          const queenCol = i % state.gridSize;
-
-          if (row === queenRow || col === queenCol) {
-            return false;
-          }
+      for (let i = 0; i < state.gridSize; i++) {
+        if (state.grid[row][i].state === 'queen' || state.grid[i][col].state === 'queen') {
+          return false;
         }
       }
 
@@ -55,22 +56,20 @@ export const useGameStore = defineStore('game', {
 
     getBlockedSquaresInRowAndColumn:
       (state) =>
-      (index: number): number[] => {
-        const row = Math.floor(index / state.gridSize);
-        const col = index % state.gridSize;
-        const blockedSquares: number[] = [];
+      (row: number, col: number): { row: number; col: number }[] => {
+        const blockedSquares: { row: number; col: number }[] = [];
 
         // Add all squares in the same row
         for (let c = 0; c < state.gridSize; c++) {
           if (c !== col) {
-            blockedSquares.push(row * state.gridSize + c);
+            blockedSquares.push({ row, col: c });
           }
         }
 
         // Add all squares in the same column
         for (let r = 0; r < state.gridSize; r++) {
           if (r !== row) {
-            blockedSquares.push(r * state.gridSize + col);
+            blockedSquares.push({ row: r, col });
           }
         }
 
@@ -79,19 +78,11 @@ export const useGameStore = defineStore('game', {
 
     hasQueenInRowOrColumn:
       (state) =>
-      (index: number): boolean => {
-        const row = Math.floor(index / state.gridSize);
-        const col = index % state.gridSize;
-
-        for (let i = 0; i < state.grid.length; i++) {
-          if (state.grid[i].state === 'queen') {
-            const queenRow = Math.floor(i / state.gridSize);
-            const queenCol = i % state.gridSize;
-
-            // Check if in same row or column
-            if (row === queenRow || col === queenCol) {
-              return true;
-            }
+      (row: number, col: number): boolean => {
+        // Check row and column
+        for (let i = 0; i < state.gridSize; i++) {
+          if (state.grid[row][i].state === 'queen' || state.grid[i][col].state === 'queen') {
+            return true;
           }
         }
         return false;
@@ -100,39 +91,45 @@ export const useGameStore = defineStore('game', {
 
   actions: {
     initializeGrid() {
-      this.grid = Array(this.gridSize * this.gridSize)
+      this.grid = Array(this.gridSize)
         .fill(null)
-        .map(() => ({ state: 'empty' }));
+        .map(() =>
+          Array(this.gridSize)
+            .fill(null)
+            .map(() => ({ state: 'empty' }))
+        );
       this.moveHistory = [];
       this.isComplete = false;
       this.updateAvailableMoves();
     },
 
     updateAvailableMoves() {
-      this.availableMoves = this.grid
-        .map((square, index) => ({ square, index }))
-        .filter(
-          ({ square, index }) => square.state === 'empty' && !this.hasQueenInRowOrColumn(index)
-        )
-        .map(({ index }) => index);
+      this.availableMoves = [];
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].state === 'empty' && !this.hasQueenInRowOrColumn(row, col)) {
+            this.availableMoves.push({ row, col });
+          }
+        }
+      }
     },
 
-    placeFlag(index: number) {
-      if (this.grid[index].state !== 'empty') return false;
+    placeFlag(row: number, col: number) {
+      if (this.grid[row][col].state !== 'empty') return false;
 
       this.saveToHistory();
-      this.grid[index].state = 'flag';
+      this.grid[row][col].state = 'flag';
       return true;
     },
 
-    placeQueen(index: number) {
-      if (!this.isValidMove(index)) {
-        this.grid[index].state = 'invalid';
+    placeQueen(row: number, col: number) {
+      if (!this.isValidMove(row, col)) {
+        this.grid[row][col].state = 'invalid';
         return false;
       }
 
       this.saveToHistory();
-      this.grid[index].state = 'queen';
+      this.grid[row][col].state = 'queen';
       this.updateAvailableMoves();
       this.checkCompletion();
       return true;
@@ -171,12 +168,12 @@ export const useGameStore = defineStore('game', {
       this.initializeGrid();
     },
 
-    handleDebugMove(index: number) {
-      const currentState = this.grid[index].state;
+    handleSquareClick(row: number, col: number) {
+      const currentState = this.grid[row][col].state;
       if (currentState === 'empty') {
-        this.placeFlag(index);
+        this.placeFlag(row, col);
       } else if (currentState === 'flag') {
-        this.placeQueen(index);
+        this.placeQueen(row, col);
       }
     },
 
@@ -184,8 +181,8 @@ export const useGameStore = defineStore('game', {
       if (this.availableMoves.length === 0) return false;
 
       const randomIndex = Math.floor(Math.random() * this.availableMoves.length);
-      const moveIndex = this.availableMoves[randomIndex];
-      return this.placeQueen(moveIndex);
+      const { row, col } = this.availableMoves[randomIndex];
+      return this.placeQueen(row, col);
     },
 
     checkCompletion() {

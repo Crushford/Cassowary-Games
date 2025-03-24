@@ -7,11 +7,10 @@
       }"
     >
       <Square
-        v-for="(square, index) in grid"
-        :key="index"
-        :square-state="square.state"
-        :group-color="square.groupColor"
-        @click="handleSquareClick(index)"
+        v-for="index in totalSquares"
+        :key="index - 1"
+        :row="Math.floor((index - 1) / gridSize)"
+        :col="(index - 1) % gridSize"
       />
     </div>
     <div class="mt-4 flex justify-center gap-2">
@@ -41,6 +40,7 @@
 import { useGameStore } from '../stores/gameStore';
 import Square from './Square.vue';
 import { storeToRefs } from 'pinia';
+import { computed } from 'vue';
 
 export interface GridSquare {
   state: 'empty' | 'flag' | 'queen' | 'invalid';
@@ -50,20 +50,14 @@ export interface GridSquare {
 const gameStore = useGameStore();
 const { grid, gridSize } = storeToRefs(gameStore);
 
+const totalSquares = computed(() => {
+  return gridSize.value * gridSize.value;
+});
+
 defineEmits<{
   (e: 'undo'): void;
   (e: 'restart'): void;
 }>();
-
-const handleSquareClick = (index: number) => {
-  const currentState = grid.value[index].state;
-
-  if (currentState === 'empty') {
-    gameStore.placeFlag(index);
-  } else if (currentState === 'flag') {
-    gameStore.placeQueen(index);
-  }
-};
 
 const handlePlaceRandomQueen = () => {
   gameStore.placeRandomQueen();

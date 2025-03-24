@@ -2,30 +2,43 @@
   <div
     class="aspect-square w-full cursor-pointer rounded-lg border-2 transition-colors duration-200"
     :class="[
-      props.squareState === 'empty' && 'border-surface',
-      props.squareState === 'flag' && 'border-primary',
-      props.squareState === 'queen' && 'border-secondary',
-      props.squareState === 'invalid' && 'border-secondary',
-      props.groupColor && `bg-group-${props.groupColor}-900`,
+      squareState === 'empty' && 'border-surface',
+      squareState === 'flag' && 'border-primary',
+      squareState === 'queen' && 'border-secondary',
+      squareState === 'invalid' && 'border-secondary',
+      groupColor && `bg-group-${groupColor}-900`,
     ]"
-    @click="$emit('click')"
+    @click="handleClick"
   >
     <div class="flex h-full items-center justify-center text-2xl">
-      <span v-if="props.squareState === 'flag'">🚩</span>
-      <span v-else-if="props.squareState === 'queen'">👑</span>
-      <span v-else-if="props.squareState === 'invalid'">❌</span>
+      <span v-if="squareState === 'flag'">🚩</span>
+      <span v-else-if="squareState === 'queen'">👑</span>
+      <span v-else-if="squareState === 'invalid'">❌</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useGameStore } from '../stores/gameStore';
+import { computed } from 'vue';
+
 interface SquareProps {
-  squareState: 'empty' | 'flag' | 'queen' | 'invalid';
-  groupColor?: 'red' | 'blue' | 'green' | 'yellow' | 'purple' | 'pink';
+  row: number;
+  col: number;
 }
 
 const props = defineProps<SquareProps>();
-defineEmits<{
-  (e: 'click'): void;
-}>();
+const gameStore = useGameStore();
+
+const squareState = computed(() => {
+  return gameStore.grid[props.row][props.col].state;
+});
+
+const groupColor = computed(() => {
+  return gameStore.grid[props.row][props.col].groupColor;
+});
+
+const handleClick = () => {
+  gameStore.handleSquareClick(props.row, props.col);
+};
 </script>
