@@ -1,5 +1,5 @@
 <template>
-  <div class="w-96 bg-surface p-4 rounded-lg shadow-lg">
+  <div class="h-full bg-surface p-4 rounded-lg shadow-lg overflow-y-auto">
     <h2 class="text-xl font-bold text-text mb-4">Debug Panel</h2>
 
     <!-- Game State -->
@@ -15,7 +15,7 @@
     <!-- Available Moves -->
     <div class="mb-6">
       <h3 class="text-lg font-semibold text-text mb-2">Available Moves</h3>
-      <div class="space-y-2">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div
           v-for="move in availableMoves"
           :key="`${move.row}-${move.col}`"

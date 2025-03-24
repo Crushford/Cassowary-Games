@@ -26,12 +26,12 @@
 
     <div class="flex">
       <!-- Main Content -->
-      <div class="flex-1">
+      <div class="w-96">
         <router-view></router-view>
       </div>
 
       <!-- Global Debug Panel -->
-      <div class="w-96 bg-surface shadow-lg">
+      <div class="flex-1 bg-surface shadow-lg">
         <DebugPanel
           :grid="gameStore.grid"
           :grid-size="gameStore.gridSize"
