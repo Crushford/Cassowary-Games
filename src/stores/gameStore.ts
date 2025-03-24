@@ -38,17 +38,13 @@ export const useGameStore = defineStore('game', {
       const row = Math.floor(index / state.gridSize);
       const col = index % state.gridSize;
 
-      // Check if there's a queen in the same row, column, or diagonal
+      // Check if there's a queen in the same row or column
       for (let i = 0; i < state.grid.length; i++) {
         if (state.grid[i].state === 'queen') {
           const queenRow = Math.floor(i / state.gridSize);
           const queenCol = i % state.gridSize;
 
-          if (
-            row === queenRow ||
-            col === queenCol ||
-            Math.abs(row - queenRow) === Math.abs(col - queenCol)
-          ) {
+          if (row === queenRow || col === queenCol) {
             return false;
           }
         }
@@ -57,49 +53,31 @@ export const useGameStore = defineStore('game', {
       return true;
     },
 
-    getAttackedSquares:
+    getBlockedSquaresInRowAndColumn:
       (state) =>
       (index: number): number[] => {
         const row = Math.floor(index / state.gridSize);
         const col = index % state.gridSize;
-        const attackedSquares: number[] = [];
+        const blockedSquares: number[] = [];
 
         // Add all squares in the same row
         for (let c = 0; c < state.gridSize; c++) {
           if (c !== col) {
-            attackedSquares.push(row * state.gridSize + c);
+            blockedSquares.push(row * state.gridSize + c);
           }
         }
 
         // Add all squares in the same column
         for (let r = 0; r < state.gridSize; r++) {
           if (r !== row) {
-            attackedSquares.push(r * state.gridSize + col);
+            blockedSquares.push(r * state.gridSize + col);
           }
         }
 
-        // Add all squares in the diagonals
-        // Diagonal going up-right
-        for (let r = row - 1, c = col + 1; r >= 0 && c < state.gridSize; r--, c++) {
-          attackedSquares.push(r * state.gridSize + c);
-        }
-        // Diagonal going down-right
-        for (let r = row + 1, c = col + 1; r < state.gridSize && c < state.gridSize; r++, c++) {
-          attackedSquares.push(r * state.gridSize + c);
-        }
-        // Diagonal going down-left
-        for (let r = row + 1, c = col - 1; r < state.gridSize && c >= 0; r++, c--) {
-          attackedSquares.push(r * state.gridSize + c);
-        }
-        // Diagonal going up-left
-        for (let r = row - 1, c = col - 1; r >= 0 && c >= 0; r--, c--) {
-          attackedSquares.push(r * state.gridSize + c);
-        }
-
-        return attackedSquares;
+        return blockedSquares;
       },
 
-    isUnderAttack:
+    hasQueenInRowOrColumn:
       (state) =>
       (index: number): boolean => {
         const row = Math.floor(index / state.gridSize);
@@ -110,12 +88,8 @@ export const useGameStore = defineStore('game', {
             const queenRow = Math.floor(i / state.gridSize);
             const queenCol = i % state.gridSize;
 
-            // Check if in same row, column, or diagonal
-            if (
-              row === queenRow ||
-              col === queenCol ||
-              Math.abs(row - queenRow) === Math.abs(col - queenCol)
-            ) {
+            // Check if in same row or column
+            if (row === queenRow || col === queenCol) {
               return true;
             }
           }
@@ -137,7 +111,9 @@ export const useGameStore = defineStore('game', {
     updateAvailableMoves() {
       this.availableMoves = this.grid
         .map((square, index) => ({ square, index }))
-        .filter(({ square, index }) => square.state === 'empty' && !this.isUnderAttack(index))
+        .filter(
+          ({ square, index }) => square.state === 'empty' && !this.hasQueenInRowOrColumn(index)
+        )
         .map(({ index }) => index);
     },
 
