@@ -33,18 +33,6 @@
 
       <div class="mt-6 flex justify-center gap-4">
         <button
-          class="rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary-hover"
-          @click="handleSave"
-        >
-          Save Level
-        </button>
-        <button
-          class="rounded-lg bg-secondary px-4 py-2 text-white hover:bg-secondary-hover"
-          @click="handleTest"
-        >
-          Test Level
-        </button>
-        <button
           class="rounded-lg bg-accent px-4 py-2 text-white hover:bg-accent-hover"
           @click="handlePlaceNextQueen"
         >
@@ -143,18 +131,6 @@ const handlePlaceNextQueen = () => {
   } else {
     errorMessage.value = result.error || 'Failed to place next queen';
   }
-};
-
-// Handle save
-const handleSave = () => {
-  // TODO: Implement save functionality
-  console.log('Saving level:', puzzleState.value);
-};
-
-// Handle test
-const handleTest = () => {
-  // TODO: Implement test functionality
-  console.log('Testing level:', puzzleState.value);
 };
 
 // Initialize grid when component is mounted
