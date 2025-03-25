@@ -2,9 +2,9 @@
   <div
     class="aspect-square w-full cursor-pointer rounded-lg border-2 transition-colors duration-200"
     :class="[
-      squareState === 'empty' && 'border-surface',
+      squareState === 'empty' && !groupColor && 'border-surface',
       squareState === 'flag' && 'border-primary',
-      squareState === 'queen' && 'border-secondary',
+      squareState === 'queen' && !groupColor && 'border-secondary',
       squareState === 'invalid' && 'border-secondary',
       groupColor && squareState === 'queen' && `bg-group-${groupColor}-900`,
       groupColor && squareState !== 'queen' && `bg-group-${groupColor}-700`,

@@ -271,15 +271,15 @@ export const useGameStore = defineStore('game', {
       queens.forEach((queen, index) => {
         const color = this.grid[queen.row][queen.col].groupColor;
 
-        // Strategy: Add diagonal squares to the color group
+        // Strategy: Add horizontal and vertical squares to the color group
         // This creates constraints that force the queen's position
 
-        // Add some squares in diagonal directions
+        // Add squares in horizontal and vertical directions
         const directions = [
-          { dr: 1, dc: 1 }, // down-right
-          { dr: 1, dc: -1 }, // down-left
-          { dr: -1, dc: 1 }, // up-right
-          { dr: -1, dc: -1 }, // up-left
+          { dr: 1, dc: 0 }, // down
+          { dr: -1, dc: 0 }, // up
+          { dr: 0, dc: 1 }, // right
+          { dr: 0, dc: -1 }, // left
         ];
 
         // For each direction, add 1-2 squares to this color group
@@ -296,51 +296,60 @@ export const useGameStore = defineStore('game', {
             this.grid[r][c].groupColor = color;
           }
 
-          // Second square in direction (sometimes)
-          if (Math.random() > 0.5) {
-            r += dir.dr;
-            c += dir.dc;
-            if (
-              this.isValidPosition(r, c) &&
-              this.grid[r][c].state !== 'queen' &&
-              !this.grid[r][c].groupColor
-            ) {
-              this.grid[r][c].groupColor = color;
-            }
+          // Second square in direction
+          r += dir.dr;
+          c += dir.dc;
+          if (
+            this.isValidPosition(r, c) &&
+            this.grid[r][c].state !== 'queen' &&
+            !this.grid[r][c].groupColor
+          ) {
+            this.grid[r][c].groupColor = color;
           }
         });
       });
 
-      // Check if we've created a unique solution and refine if needed
-      this.refineColorGroups(queens, colorPalette);
+      // Ensure all squares have a color
+      this.assignRemainingSquares(colorPalette);
     },
 
-    // Helper to refine color groups if needed for uniqueness
-    refineColorGroups(queens: { row: number; col: number }[], colorPalette: string[]) {
-      // We can add more complex refinement logic here if needed
-      // For now, ensure every color group has at least 3 squares for constraint
+    // Helper to assign colors to any remaining squares
+    assignRemainingSquares(colorPalette: string[]) {
+      // First pass: Assign colors to squares adjacent to existing color groups
+      let anyAssigned = true;
+      while (anyAssigned) {
+        anyAssigned = false;
+        for (let row = 0; row < this.gridSize; row++) {
+          for (let col = 0; col < this.gridSize; col++) {
+            if (!this.grid[row][col].groupColor) {
+              // Check adjacent squares (horizontal and vertical)
+              const directions = [
+                { dr: 1, dc: 0 }, // down
+                { dr: -1, dc: 0 }, // up
+                { dr: 0, dc: 1 }, // right
+                { dr: 0, dc: -1 }, // left
+              ];
 
-      for (let i = 0; i < this.gridSize; i++) {
-        const color = colorPalette[i % colorPalette.length];
-        let squaresInGroup = 0;
-
-        // Count squares in this color group
-        for (let r = 0; r < this.gridSize; r++) {
-          for (let c = 0; c < this.gridSize; c++) {
-            if (this.grid[r][c].groupColor === color) {
-              squaresInGroup++;
+              for (const dir of directions) {
+                const r = row + dir.dr;
+                const c = col + dir.dc;
+                if (this.isValidPosition(r, c) && this.grid[r][c].groupColor) {
+                  this.grid[row][col].groupColor = this.grid[r][c].groupColor;
+                  anyAssigned = true;
+                  break;
+                }
+              }
             }
           }
         }
+      }
 
-        // If fewer than 3 squares, add more randomly
-        while (squaresInGroup < 3) {
-          const r = Math.floor(Math.random() * this.gridSize);
-          const c = Math.floor(Math.random() * this.gridSize);
-
-          if (!this.grid[r][c].groupColor && this.grid[r][c].state !== 'queen') {
-            this.grid[r][c].groupColor = color;
-            squaresInGroup++;
+      // Second pass: Assign any remaining squares randomly
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (!this.grid[row][col].groupColor) {
+            const colorIndex = Math.floor(Math.random() * colorPalette.length);
+            this.grid[row][col].groupColor = colorPalette[colorIndex];
           }
         }
       }

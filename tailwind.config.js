@@ -1,6 +1,21 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
+  safelist: [
+    // Add color groups to safelist to ensure dynamic classes are preserved
+    'bg-group-red-700',
+    'bg-group-red-900',
+    'bg-group-blue-700',
+    'bg-group-blue-900',
+    'bg-group-green-700',
+    'bg-group-green-900',
+    'bg-group-yellow-700',
+    'bg-group-yellow-900',
+    'bg-group-purple-700',
+    'bg-group-purple-900',
+    'bg-group-pink-700',
+    'bg-group-pink-900',
+  ],
   theme: {
     extend: {
       colors: {
