@@ -1,14 +1,7 @@
 <template>
   <div
     class="aspect-square w-full cursor-pointer rounded-lg border-2 transition-colors duration-200"
-    :class="[
-      squareState === 'empty' && !groupColor && 'border-surface',
-      squareState === 'flag' && 'border-primary',
-      squareState === 'queen' && !groupColor && 'border-secondary',
-      squareState === 'invalid' && 'border-secondary',
-      groupColor && squareState === 'queen' && `bg-group-${groupColor}-900`,
-      groupColor && squareState !== 'queen' && `bg-group-${groupColor}-700`,
-    ]"
+    :class="squareClasses"
     @click="handleClick"
   >
     <div class="flex h-full items-center justify-center text-2xl">
@@ -37,6 +30,24 @@ const squareState = computed(() => {
 
 const groupColor = computed(() => {
   return gameStore.grid[props.row][props.col].groupColor;
+});
+
+const squareClasses = computed(() => {
+  const hasGroupColor = !!groupColor.value;
+  const state = squareState.value;
+
+  // Apply background color based on group
+  if (hasGroupColor) {
+    return {
+      [`bg-group-${groupColor.value}-700`]: true,
+    };
+  }
+
+  // Apply border colors based on state
+  return {
+    'border-primary': state === 'flag',
+    'border-secondary': state === 'queen' || state === 'invalid',
+  };
 });
 
 const handleClick = () => {
