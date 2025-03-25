@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import type { GridSquare } from '../components/GameGrid.vue';
 
-interface GameState {
+export interface GameState {
   grid: GridSquare[][];
   gridSize: number;
   moveHistory: { grid: GridSquare[][] }[];

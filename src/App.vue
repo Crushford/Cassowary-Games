@@ -32,12 +32,7 @@
 
       <!-- Global Debug Panel -->
       <div class="flex-1 bg-surface shadow-lg">
-        <DebugPanel
-          :grid="gameStore.grid"
-          :grid-size="gameStore.gridSize"
-          :move-history="gameStore.moveHistory"
-          @make-move="gameStore.handleSquareClick"
-        />
+        <DebugPanel />
       </div>
     </div>
   </div>
