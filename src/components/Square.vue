@@ -6,7 +6,8 @@
       squareState === 'flag' && 'border-primary',
       squareState === 'queen' && 'border-secondary',
       squareState === 'invalid' && 'border-secondary',
-      groupColor && `bg-group-${groupColor}-900`,
+      groupColor && squareState === 'queen' && `bg-group-${groupColor}-900`,
+      groupColor && squareState !== 'queen' && `bg-group-${groupColor}-700`,
     ]"
     @click="handleClick"
   >

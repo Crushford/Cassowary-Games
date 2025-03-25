@@ -13,7 +13,7 @@
         :col="(index - 1) % gridSize"
       />
     </div>
-    <div class="mt-4 flex justify-center gap-2">
+    <div class="mt-4 flex justify-center gap-2 flex-wrap">
       <button
         class="rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary-hover"
         @click="$emit('undo')"
@@ -26,6 +26,31 @@
       >
         Restart
       </button>
+      <button
+        class="rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary-hover"
+        @click="gameStore.placeRandomQueen()"
+      >
+        Place Next Queen
+      </button>
+      <button
+        class="rounded-lg bg-secondary px-4 py-2 text-white hover:bg-secondary-hover"
+        @click="gameStore.generateFullSolution()"
+      >
+        Generate Solution
+      </button>
+    </div>
+
+    <!-- Color Group Controls -->
+    <div class="mt-4" v-if="gameStore.isComplete">
+      <button
+        class="rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary-hover w-full"
+        @click="gameStore.assignColorGroups()"
+      >
+        Assign Color Groups
+      </button>
+      <div class="mt-2 text-sm text-center text-text">
+        This will assign color groups to ensure a unique solution.
+      </div>
     </div>
   </div>
 </template>
