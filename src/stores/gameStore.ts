@@ -256,107 +256,297 @@ export const useGameStore = defineStore('game', {
         }
       }
 
-      // Step 2: Find all queen positions
+      // Step 2: Get all queen positions
       const queens = this.queenPositions;
+      const numQueens = queens.length;
 
-      // Step 3: Assign a unique color to each queen's square
+      // Make sure we have enough colors
+      if (numQueens > colorPalette.length) {
+        this.setError(`Not enough colors (${colorPalette.length}) for all queens (${numQueens})`);
+        return;
+      }
+
+      // Step 3: Assign a unique color to each queen
       queens.forEach((queen, index) => {
-        const colorIndex = index % colorPalette.length;
-        this.grid[queen.row][queen.col].groupColor = colorPalette[colorIndex];
+        this.grid[queen.row][queen.col].groupColor = colorPalette[index];
       });
 
-      // Step 4: Expand color groups to create a unique solution
-      this.expandColorGroups(queens, colorPalette);
-    },
+      // Define the four adjacent directions
+      const directions = [
+        { dr: 1, dc: 0 }, // down
+        { dr: -1, dc: 0 }, // up
+        { dr: 0, dc: 1 }, // right
+        { dr: 0, dc: -1 }, // left
+      ];
 
-    // Helper function to expand color groups to ensure uniqueness
-    expandColorGroups(queens: { row: number; col: number }[], colorPalette: string[]) {
-      // For each queen, expand its color group strategically
+      // Step 4: Grow connected regions from each queen using flood fill
+      const visited = new Set<string>();
+
+      // Mark all queens as visited
+      queens.forEach((queen) => {
+        visited.add(`${queen.row},${queen.col}`);
+      });
+
+      // Calculate target size for each color region
+      const totalCells = this.gridSize * this.gridSize;
+      const targetRegionSize = Math.ceil(totalCells / numQueens);
+
+      // Step 5: Grow regions evenly from all queens at once
+      // Use a multi-source BFS approach to ensure balanced growth
+      let activeQueues: { queue: [number, number][]; color: string; size: number }[] = [];
+
+      // Initialize a queue for each queen
       queens.forEach((queen, index) => {
-        const color = this.grid[queen.row][queen.col].groupColor;
-
-        // Strategy: Add horizontal and vertical squares to the color group
-        // This creates constraints that force the queen's position
-
-        // Add squares in horizontal and vertical directions
-        const directions = [
-          { dr: 1, dc: 0 }, // down
-          { dr: -1, dc: 0 }, // up
-          { dr: 0, dc: 1 }, // right
-          { dr: 0, dc: -1 }, // left
-        ];
-
-        // For each direction, add 1-2 squares to this color group
-        directions.forEach((dir) => {
-          let r = queen.row + dir.dr;
-          let c = queen.col + dir.dc;
-
-          // First square in direction
-          if (
-            this.isValidPosition(r, c) &&
-            this.grid[r][c].state !== 'queen' &&
-            !this.grid[r][c].groupColor
-          ) {
-            this.grid[r][c].groupColor = color;
-          }
-
-          // Second square in direction
-          r += dir.dr;
-          c += dir.dc;
-          if (
-            this.isValidPosition(r, c) &&
-            this.grid[r][c].state !== 'queen' &&
-            !this.grid[r][c].groupColor
-          ) {
-            this.grid[r][c].groupColor = color;
-          }
+        const color = colorPalette[index];
+        activeQueues.push({
+          queue: [[queen.row, queen.col]],
+          color: color,
+          size: 1, // Start with one cell (the queen)
         });
       });
 
-      // Ensure all squares have a color
-      this.assignRemainingSquares(colorPalette);
-    },
+      // Grow all regions simultaneously until all cells are visited
+      while (visited.size < totalCells && activeQueues.some((q) => q.queue.length > 0)) {
+        // Process one cell from each active queue
+        for (let i = 0; i < activeQueues.length; i++) {
+          const { queue, color, size } = activeQueues[i];
 
-    // Helper to assign colors to any remaining squares
-    assignRemainingSquares(colorPalette: string[]) {
-      // First pass: Assign colors to squares adjacent to existing color groups
-      let anyAssigned = true;
-      while (anyAssigned) {
-        anyAssigned = false;
+          if (queue.length === 0) continue;
+
+          // Take the next cell from this color's queue
+          const [r, c] = queue.shift()!;
+
+          // Skip if already processed
+          if (visited.has(`${r},${c}`)) continue;
+
+          // Randomly shuffle directions for more natural growth
+          const shuffledDirs = [...directions].sort(() => Math.random() - 0.5);
+
+          // Check each direction
+          for (const dir of shuffledDirs) {
+            const newR = r + dir.dr;
+            const newC = c + dir.dc;
+            const newKey = `${newR},${newC}`;
+
+            // If this is a valid, unvisited cell, add to queue
+            if (
+              this.isValidPosition(newR, newC) &&
+              !visited.has(newKey) &&
+              this.grid[newR][newC].state !== 'queen' // Don't color other queens
+            ) {
+              // Add this cell to the current region
+              this.grid[newR][newC].groupColor = color;
+              visited.add(newKey);
+
+              // Add to the queue for further expansion
+              queue.push([newR, newC]);
+
+              // Update the region size
+              activeQueues[i].size++;
+            }
+          }
+        }
+
+        // Limit region sizes to be somewhat balanced
+        activeQueues = activeQueues.filter((queueInfo) => {
+          // If a region has reached its target size, stop growing it further
+          return queueInfo.queue.length > 0 && queueInfo.size < targetRegionSize;
+        });
+      }
+
+      // Step 6: If any cells remain uncolored, assign them to the nearest colored cell
+      if (visited.size < totalCells) {
+        // Create a queue with all colored cells as starting points
+        const borderQueue: [number, number, string][] = [];
+
+        // Add all colored cells to the queue
         for (let row = 0; row < this.gridSize; row++) {
           for (let col = 0; col < this.gridSize; col++) {
-            if (!this.grid[row][col].groupColor) {
-              // Check adjacent squares (horizontal and vertical)
-              const directions = [
-                { dr: 1, dc: 0 }, // down
-                { dr: -1, dc: 0 }, // up
-                { dr: 0, dc: 1 }, // right
-                { dr: 0, dc: -1 }, // left
-              ];
+            const color = this.grid[row][col].groupColor;
+            if (color) {
+              borderQueue.push([row, col, color]);
+            }
+          }
+        }
 
-              for (const dir of directions) {
-                const r = row + dir.dr;
-                const c = col + dir.dc;
-                if (this.isValidPosition(r, c) && this.grid[r][c].groupColor) {
-                  this.grid[row][col].groupColor = this.grid[r][c].groupColor;
-                  anyAssigned = true;
-                  break;
-                }
+        // Use BFS to fill in uncolored cells
+        while (borderQueue.length > 0) {
+          const [r, c, color] = borderQueue.shift()!;
+
+          // Check all four directions
+          for (const dir of directions) {
+            const newR = r + dir.dr;
+            const newC = c + dir.dc;
+            const newKey = `${newR},${newC}`;
+
+            if (
+              this.isValidPosition(newR, newC) &&
+              !this.grid[newR][newC].groupColor &&
+              this.grid[newR][newC].state !== 'queen' // Don't color other queens
+            ) {
+              // Assign this cell the same color
+              this.grid[newR][newC].groupColor = color;
+              visited.add(newKey);
+
+              // Add to queue to continue expanding
+              borderQueue.push([newR, newC, color]);
+            }
+          }
+        }
+      }
+
+      // Step 7: Final check - ensure all queens have different colors and all cells are colored
+      const colorToQueenMap = new Map<string, number>();
+
+      // Count queens per color
+      for (const queen of queens) {
+        const color = this.grid[queen.row][queen.col].groupColor;
+        if (color) {
+          colorToQueenMap.set(color, (colorToQueenMap.get(color) || 0) + 1);
+        }
+      }
+
+      // Verify each color has exactly one queen
+      let colorIssue = false;
+      colorToQueenMap.forEach((count, color) => {
+        if (count !== 1) {
+          colorIssue = true;
+          this.setError(`Color ${color} has ${count} queens, should have exactly 1`);
+        }
+      });
+
+      // If there's an issue, try a different approach
+      if (colorIssue) {
+        // Reset and use a simpler algorithm
+        this.assignColorGroupsFallback();
+      }
+    },
+
+    // Fallback method if the main algorithm fails
+    assignColorGroupsFallback() {
+      // Reset all color groups
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          this.grid[row][col].groupColor = undefined;
+        }
+      }
+
+      const colorPalette: ('red' | 'blue' | 'green' | 'yellow' | 'purple' | 'pink')[] = [
+        'red',
+        'blue',
+        'green',
+        'yellow',
+        'purple',
+        'pink',
+      ];
+
+      // Get queen positions
+      const queens = this.queenPositions;
+
+      // Assign each queen a unique color
+      queens.forEach((queen, index) => {
+        const color = colorPalette[index % colorPalette.length];
+        this.grid[queen.row][queen.col].groupColor = color;
+      });
+
+      // Simple flood fill approach
+      const directions = [
+        { dr: 1, dc: 0 }, // down
+        { dr: -1, dc: 0 }, // up
+        { dr: 0, dc: 1 }, // right
+        { dr: 0, dc: -1 }, // left
+      ];
+
+      // For each queen, flood fill until we hit another queen's territory
+      let unassignedCells = true;
+
+      while (unassignedCells) {
+        unassignedCells = false;
+
+        // Find cells adjacent to colored cells
+        for (let row = 0; row < this.gridSize; row++) {
+          for (let col = 0; col < this.gridSize; col++) {
+            // Skip cells that already have a color
+            if (this.grid[row][col].groupColor) continue;
+
+            // Check if this cell is adjacent to a colored cell
+            for (const dir of directions) {
+              const adjRow = row + dir.dr;
+              const adjCol = col + dir.dc;
+
+              if (this.isValidPosition(adjRow, adjCol) && this.grid[adjRow][adjCol].groupColor) {
+                // Assign the same color
+                this.grid[row][col].groupColor = this.grid[adjRow][adjCol].groupColor;
+                unassignedCells = true;
+                break;
               }
             }
           }
         }
       }
 
-      // Second pass: Assign any remaining squares randomly
+      // Check for any unassigned cells (if some cells are isolated)
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
           if (!this.grid[row][col].groupColor) {
-            const colorIndex = Math.floor(Math.random() * colorPalette.length);
-            this.grid[row][col].groupColor = colorPalette[colorIndex];
+            // Assign a random color
+            const randomIndex = Math.floor(Math.random() * colorPalette.length);
+            this.grid[row][col].groupColor = colorPalette[randomIndex];
           }
         }
       }
+    },
+
+    // Function to check if a color forms a connected group and return color information
+    isColorConnected(targetColor: string): boolean {
+      if (!targetColor) return false;
+
+      // Find all cells with this color
+      const colorCells: [number, number][] = [];
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].groupColor === targetColor) {
+            colorCells.push([row, col]);
+          }
+        }
+      }
+
+      if (colorCells.length === 0) return true; // No cells, trivially connected
+
+      // Perform a flood fill from the first cell to see if we can reach all others
+      const visited = new Set<string>();
+      const queue: [number, number][] = [colorCells[0]];
+      const directions = [
+        { dr: 1, dc: 0 }, // down
+        { dr: -1, dc: 0 }, // up
+        { dr: 0, dc: 1 }, // right
+        { dr: 0, dc: -1 }, // left
+      ];
+
+      while (queue.length > 0) {
+        const [r, c] = queue.shift()!;
+        const key = `${r},${c}`;
+
+        if (visited.has(key)) continue;
+        visited.add(key);
+
+        // Check all four directions
+        for (const dir of directions) {
+          const newR = r + dir.dr;
+          const newC = c + dir.dc;
+
+          if (
+            this.isValidPosition(newR, newC) &&
+            this.grid[newR][newC].groupColor === targetColor &&
+            !visited.has(`${newR},${newC}`)
+          ) {
+            queue.push([newR, newC]);
+          }
+        }
+      }
+
+      // Check if we visited all cells of this color
+      return visited.size === colorCells.length;
     },
 
     // Helper to check if a position is valid
@@ -471,6 +661,88 @@ export const useGameStore = defineStore('game', {
         return true;
       }
       return false;
+    },
+
+    // Function to export the current game state as text
+    exportGameState(): string {
+      // Color symbols for display
+      const colorSymbols: Record<string, string> = {
+        red: 'R',
+        blue: 'B',
+        green: 'G',
+        yellow: 'Y',
+        purple: 'P',
+        pink: 'K',
+        undefined: '.',
+      };
+
+      const queenSymbol = 'Q';
+      const emptySymbol = '.';
+
+      let output = 'Game State:\n';
+      output += `Grid Size: ${this.gridSize}x${this.gridSize}\n\n`;
+
+      // Add column numbers
+      output += '  ';
+      for (let col = 0; col < this.gridSize; col++) {
+        output += ` ${col}`;
+      }
+      output += '\n';
+
+      // Add rows with colors and queens
+      for (let row = 0; row < this.gridSize; row++) {
+        // Row number
+        output += `${row} `;
+
+        // Row content with colors
+        for (let col = 0; col < this.gridSize; col++) {
+          const square = this.grid[row][col];
+          const colorSymbol = colorSymbols[square.groupColor as keyof typeof colorSymbols];
+          output += ` ${colorSymbol}`;
+        }
+        output += '\n';
+      }
+
+      // Add a separate grid for queens
+      output += '\nQueens:\n  ';
+      for (let col = 0; col < this.gridSize; col++) {
+        output += ` ${col}`;
+      }
+      output += '\n';
+
+      for (let row = 0; row < this.gridSize; row++) {
+        // Row number
+        output += `${row} `;
+
+        // Row content with queens
+        for (let col = 0; col < this.gridSize; col++) {
+          const square = this.grid[row][col];
+          const symbol = square.state === 'queen' ? queenSymbol : emptySymbol;
+          output += ` ${symbol}`;
+        }
+        output += '\n';
+      }
+
+      // Add color count information
+      const colorCounts: Record<string, number> = {};
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          const color = this.grid[row][col].groupColor;
+          if (color) {
+            colorCounts[color] = (colorCounts[color] || 0) + 1;
+          }
+        }
+      }
+
+      // Check if all colors form connected groups
+      output += '\nColor Groups:\n';
+      for (const [color, count] of Object.entries(colorCounts)) {
+        const isConnected = this.isColorConnected(color);
+        const status = isConnected ? 'connected' : 'NOT CONNECTED';
+        output += `${color} (${colorSymbols[color]}): ${count} squares - ${status}\n`;
+      }
+
+      return output;
     },
   },
 });
