@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import GameGrid from '../components/GameGrid.vue';
 import { useGameStore } from '../stores/gameStore';
 

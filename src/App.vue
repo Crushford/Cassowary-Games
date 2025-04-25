@@ -24,9 +24,9 @@
       </div>
     </nav>
 
-    <div class="flex">
+    <div class="flex flex-col lg:flex-row">
       <!-- Main Content -->
-      <div class="w-96">
+      <div class="w-full lg:w-2/3 p-4">
         <router-view></router-view>
       </div>
 
@@ -42,9 +42,15 @@
 import { useRoute } from 'vue-router';
 import DebugPanel from './components/DebugPanel.vue';
 import { useGameStore } from './stores/gameStore';
+import { onMounted } from 'vue';
 
 const route = useRoute();
 const gameStore = useGameStore();
+
+onMounted(() => {
+  // Load saved puzzles when the app starts
+  gameStore.loadPuzzlesFromLocalStorage();
+});
 </script>
 
 <style>

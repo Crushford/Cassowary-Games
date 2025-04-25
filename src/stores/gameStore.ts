@@ -9,6 +9,8 @@ export interface GameState {
   availableMoves: { row: number; col: number }[];
   isComplete: boolean;
   errorMessage: string | null;
+  savedPuzzles: { name: string; grid: GridSquare[][]; gridSize: number }[];
+  currentPuzzle: string | null;
 }
 
 export const useGameStore = defineStore('game', {
@@ -26,6 +28,8 @@ export const useGameStore = defineStore('game', {
     availableMoves: [],
     isComplete: false,
     errorMessage: null,
+    savedPuzzles: [],
+    currentPuzzle: null,
   }),
 
   getters: {
@@ -377,6 +381,96 @@ export const useGameStore = defineStore('game', {
         }
         attempts++;
       }
+    },
+
+    savePuzzleToLocalStorage() {
+      if (!this.isComplete) {
+        this.setError('You need a complete solution with color groups before saving');
+        return false;
+      }
+
+      const timestamp = new Date().toISOString();
+      const puzzleName = `Puzzle ${this.gridSize}x${this.gridSize} - ${timestamp}`;
+
+      // Create a copy of the current grid with only queen positions and color groups
+      const puzzleGrid = Array(this.gridSize)
+        .fill(null)
+        .map(() =>
+          Array(this.gridSize)
+            .fill(null)
+            .map(() => ({ state: 'empty' }) as GridSquare)
+        );
+
+      // Copy only the queens and their color groups
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].state === 'queen') {
+            puzzleGrid[row][col] = {
+              state: 'queen',
+              groupColor: this.grid[row][col].groupColor,
+            } as GridSquare;
+          } else if (this.grid[row][col].groupColor) {
+            puzzleGrid[row][col] = {
+              state: 'empty',
+              groupColor: this.grid[row][col].groupColor,
+            } as GridSquare;
+          }
+        }
+      }
+
+      // Add to saved puzzles list
+      this.savedPuzzles.push({
+        name: puzzleName,
+        grid: puzzleGrid,
+        gridSize: this.gridSize,
+      });
+
+      // Save to local storage
+      localStorage.setItem('savedPuzzles', JSON.stringify(this.savedPuzzles));
+      this.setError(null);
+      return puzzleName;
+    },
+
+    loadPuzzlesFromLocalStorage() {
+      const savedPuzzles = localStorage.getItem('savedPuzzles');
+      if (savedPuzzles) {
+        this.savedPuzzles = JSON.parse(savedPuzzles);
+      }
+    },
+
+    loadPuzzle(puzzleName: string) {
+      const puzzle = this.savedPuzzles.find((p) => p.name === puzzleName);
+      if (!puzzle) {
+        this.setError('Puzzle not found');
+        return false;
+      }
+
+      // Set grid size and initialize an empty grid
+      this.setGridSize(puzzle.gridSize);
+
+      // Apply the puzzle grid (with color groups but no queens)
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (puzzle.grid[row][col].groupColor) {
+            this.grid[row][col].groupColor = puzzle.grid[row][col].groupColor;
+          }
+        }
+      }
+
+      this.currentPuzzle = puzzleName;
+      this.updateAvailableMoves();
+      this.setError(null);
+      return true;
+    },
+
+    deletePuzzle(puzzleName: string) {
+      const index = this.savedPuzzles.findIndex((p) => p.name === puzzleName);
+      if (index !== -1) {
+        this.savedPuzzles.splice(index, 1);
+        localStorage.setItem('savedPuzzles', JSON.stringify(this.savedPuzzles));
+        return true;
+      }
+      return false;
     },
   },
 });
