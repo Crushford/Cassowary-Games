@@ -44,6 +44,34 @@
         >
           Generate Solution
         </button>
+        <button
+          class="rounded-lg bg-yellow-600 px-4 py-2 text-white hover:bg-yellow-700"
+          @click="handleTestStep1"
+        >
+          Step 1: Place Last Free Queens
+        </button>
+        <button
+          class="rounded-lg bg-yellow-700 px-4 py-2 text-white hover:bg-yellow-800"
+          @click="handleTestStep2"
+        >
+          Step 2: Flag Blocking Squares
+        </button>
+        <button
+          class="rounded-lg bg-green-700 px-4 py-2 text-white hover:bg-green-800"
+          @click="handleTestAllSteps"
+        >
+          Run All Steps
+        </button>
+      </div>
+
+      <div
+        v-if="gameStore.testLogs && gameStore.testLogs.length"
+        class="mt-4 bg-gray-100 p-4 rounded-lg"
+      >
+        <h3 class="font-bold mb-2">Test Logs</h3>
+        <ul class="list-disc pl-5">
+          <li v-for="(log, idx) in gameStore.testLogs" :key="idx">{{ log }}</li>
+        </ul>
       </div>
 
       <!-- Color Group Controls -->
@@ -138,5 +166,28 @@ const handleGenerateSolution = () => {
 // Handle assign color groups
 const handleAssignColorGroups = () => {
   gameStore.assignColorGroups();
+};
+
+// Handle test unique solution (all steps)
+const handleTestAllSteps = () => {
+  gameStore.testUniqueSolution();
+};
+
+// Handle test step 1 only
+const handleTestStep1 = () => {
+  if (!gameStore.testLogs.length) gameStore.testLogs = [];
+  gameStore.testLogs.push(
+    'Step 1: Place queens in last free squares of color blocks, rows, or columns.'
+  );
+  gameStore.testStep1PlaceLastFreeQueens();
+};
+
+// Handle test step 2 only
+const handleTestStep2 = () => {
+  if (!gameStore.testLogs.length) gameStore.testLogs = [];
+  gameStore.testLogs.push(
+    'Step 2: Place flags where a queen would block all remaining squares in a color.'
+  );
+  gameStore.testStep2FlagBlockingSquares();
 };
 </script>

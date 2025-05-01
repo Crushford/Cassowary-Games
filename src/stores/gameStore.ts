@@ -769,5 +769,161 @@ export const useGameStore = defineStore('game', {
 
       return output;
     },
+
+    // Remove all queens and flags but keep color groups
+    clearQueensAndFlags() {
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (
+            this.grid[row][col].state === 'queen' ||
+            this.grid[row][col].state === 'flag' ||
+            this.grid[row][col].state === 'invalid'
+          ) {
+            this.grid[row][col].state = 'empty';
+          }
+        }
+      }
+      this.isComplete = false;
+      this.updateAvailableMoves();
+    },
+
+    // Log array for test steps
+    testLogs: [] as string[],
+
+    // Helper for step 1: Place queens in last free squares of color blocks, rows, or columns
+    testStep1PlaceLastFreeQueens() {
+      type Pos = { row: number; col: number };
+      let placed;
+      let didSomething = false;
+      do {
+        placed = false;
+        // 1. Check color blocks
+        const colorGroups = new Map<string, Pos[]>();
+        for (let row = 0; row < this.gridSize; row++) {
+          for (let col = 0; col < this.gridSize; col++) {
+            const color = this.grid[row][col].groupColor;
+            if (!color) continue;
+            if (!colorGroups.has(color)) colorGroups.set(color, []);
+            colorGroups.get(color)!.push({ row, col });
+          }
+        }
+        for (const [color, group] of colorGroups.entries()) {
+          const free: Pos[] = group.filter(({ row, col }) => this.grid[row][col].state === 'empty');
+          if (free.length === 1) {
+            const { row, col } = free[0];
+            this.placeQueen(row, col);
+            this.testLogs.push(
+              `Placed queen at (${row},${col}) as last free in color group '${color}'.`
+            );
+            placed = true;
+            didSomething = true;
+            break;
+          }
+        }
+        if (placed) continue;
+        // 2. Check rows
+        for (let row = 0; row < this.gridSize; row++) {
+          const free: Pos[] = [];
+          for (let col = 0; col < this.gridSize; col++) {
+            if (this.grid[row][col].state === 'empty') free.push({ row, col });
+          }
+          if (free.length === 1) {
+            const { row, col } = free[0];
+            this.placeQueen(row, col);
+            this.testLogs.push(`Placed queen at (${row},${col}) as last free in row ${row}.`);
+            placed = true;
+            didSomething = true;
+            break;
+          }
+        }
+        if (placed) continue;
+        // 3. Check columns
+        for (let col = 0; col < this.gridSize; col++) {
+          const free: Pos[] = [];
+          for (let row = 0; row < this.gridSize; row++) {
+            if (this.grid[row][col].state === 'empty') free.push({ row, col });
+          }
+          if (free.length === 1) {
+            const { row, col } = free[0];
+            this.placeQueen(row, col);
+            this.testLogs.push(`Placed queen at (${row},${col}) as last free in column ${col}.`);
+            placed = true;
+            didSomething = true;
+            break;
+          }
+        }
+      } while (placed);
+      return didSomething;
+    },
+
+    // Helper for step 2: Flag squares where a queen would block all remaining in a color
+    testStep2FlagBlockingSquares() {
+      type Pos = { row: number; col: number };
+      let flagCount = 0;
+      let didSomething = false;
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].state !== 'empty') continue;
+          const color = this.grid[row][col].groupColor;
+          if (!color) continue;
+          // Find all empty squares in this color group
+          const groupEmpty: Pos[] = [];
+          for (let r = 0; r < this.gridSize; r++) {
+            for (let c = 0; c < this.gridSize; c++) {
+              if (
+                this.grid[r][c].groupColor === color &&
+                this.grid[r][c].state === 'empty' &&
+                !(r === row && c === col)
+              ) {
+                groupEmpty.push({ row: r, col: c });
+              }
+            }
+          }
+          // Simulate placing a queen at (row, col) and see if all groupEmpty would be blocked
+          let allBlocked = true;
+          for (const { row: r, col: c } of groupEmpty) {
+            if (this.isValidMove(r, c)) {
+              allBlocked = false;
+              break;
+            }
+          }
+          if (allBlocked && groupEmpty.length > 0) {
+            this.placeFlag(row, col);
+            this.testLogs.push(
+              `Flagged (${row},${col}) because a queen here would block all remaining in color '${color}'.`
+            );
+            flagCount++;
+            didSomething = true;
+          }
+        }
+      }
+      this.testLogs.push(`Step 2 complete: Placed ${flagCount} flags.`);
+      return didSomething;
+    },
+
+    // New: Loop through all steps until no changes
+    testAllStepsLoop() {
+      this.testLogs = [];
+      this.clearQueensAndFlags();
+      this.testLogs.push('--- Test started: Unique Solution Check (Loop) ---');
+      let loop = 1;
+      let anyChange;
+      do {
+        this.testLogs.push(`--- Loop ${loop} ---`);
+        let changed1 = this.testStep1PlaceLastFreeQueens();
+        let changed2 = this.testStep2FlagBlockingSquares();
+        anyChange = changed1 || changed2;
+        this.testLogs.push(
+          `Loop ${loop} result: Step1 changed=${changed1}, Step2 changed=${changed2}`
+        );
+        loop++;
+      } while (anyChange);
+      this.testLogs.push('--- Test finished (all steps, looped until no changes) ---');
+    },
+
+    // Test function to try to solve the game and log each step
+    testUniqueSolution() {
+      this.testAllStepsLoop();
+    },
   },
 });
