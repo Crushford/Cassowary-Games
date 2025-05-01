@@ -983,6 +983,62 @@ export const useGameStore = defineStore('game', {
       return didSomething;
     },
 
+    // Step 4: Constrained Column Elimination
+    testConstrainedColumnElimination() {
+      type Pos = { row: number; col: number };
+      const emptyColorGroups = new Map<string, Pos[]>();
+      // Build map of empty squares by color group
+      for (let r = 0; r < this.gridSize; r++) {
+        for (let c = 0; c < this.gridSize; c++) {
+          if (this.grid[r][c].state === 'empty') {
+            const grp = this.grid[r][c].groupColor;
+            if (!grp) continue;
+            if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
+            emptyColorGroups.get(grp)!.push({ row: r, col: c });
+          }
+        }
+      }
+      // Generate all non-empty subsets of columns
+      const cols = Array.from({ length: this.gridSize }, (_, i) => i);
+      const subsets: number[][] = [];
+      function genSubsets(arr: number[], start: number, curr: number[]) {
+        for (let i = start; i < arr.length; i++) {
+          const next = curr.concat(arr[i]);
+          subsets.push(next);
+          genSubsets(arr, i + 1, next);
+        }
+      }
+      genSubsets(cols, 0, []);
+      let flagCount = 0;
+      let didSomething = false;
+      for (const S of subsets) {
+        const uniqueColors = Array.from(emptyColorGroups.entries())
+          .filter(
+            ([, positions]) => positions.length > 0 && positions.every((p) => S.includes(p.col))
+          )
+          .map(([color]) => color);
+        if (uniqueColors.length === S.length && uniqueColors.length > 0) {
+          for (const col of S) {
+            for (let row = 0; row < this.gridSize; row++) {
+              if (this.grid[row][col].state === 'empty') {
+                const grp = this.grid[row][col].groupColor;
+                if (!grp || !uniqueColors.includes(grp)) {
+                  this.placeFlag(row, col);
+                  this.testLogs.push(
+                    `Flagged (${row},${col}) in columns [${S}] since only colors [${uniqueColors}] remain in those columns (Constrained Column Elimination).`
+                  );
+                  flagCount++;
+                  didSomething = true;
+                }
+              }
+            }
+          }
+        }
+      }
+      this.testLogs.push(`Constrained Column Elimination complete: Placed ${flagCount} flags.`);
+      return didSomething;
+    },
+
     // New: Loop through all steps until no changes
     testAllStepsLoop() {
       this.testLogs = [];
@@ -995,9 +1051,10 @@ export const useGameStore = defineStore('game', {
         let changed1 = this.testStep1PlaceLastFreeQueens();
         let changed2 = this.testStep2FlagBlockingSquares();
         let changed3 = this.testConstrainedRowElimination();
-        anyChange = changed1 || changed2 || changed3;
+        let changed4 = this.testConstrainedColumnElimination();
+        anyChange = changed1 || changed2 || changed3 || changed4;
         this.testLogs.push(
-          `Loop ${loop} result: Step1 changed=${changed1}, Step2 changed=${changed2}, Step3 changed=${changed3}`
+          `Loop ${loop} result: Step1 changed=${changed1}, Step2 changed=${changed2}, Step3 changed=${changed3}, Step4 changed=${changed4}`
         );
         loop++;
       } while (anyChange);

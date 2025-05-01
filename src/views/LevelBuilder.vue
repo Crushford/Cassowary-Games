@@ -63,6 +63,12 @@
           Step 3: Constrained Row Elimination
         </button>
         <button
+          class="rounded-lg bg-yellow-900 px-4 py-2 text-white hover:bg-yellow-800"
+          @click="handleTestStep4"
+        >
+          Step 4: Constrained Column Elimination
+        </button>
+        <button
           class="rounded-lg bg-green-700 px-4 py-2 text-white hover:bg-green-800"
           @click="handleTestAllSteps"
         >
@@ -231,6 +237,13 @@ const handleTestStep3 = () => {
   if (!gameStore.testLogs.length) gameStore.testLogs = [];
   gameStore.testLogs.push('Step 3: Constrained Row Elimination');
   gameStore.testConstrainedRowElimination();
+};
+
+// Handle test step 4 only
+const handleTestStep4 = () => {
+  if (!gameStore.testLogs.length) gameStore.testLogs = [];
+  gameStore.testLogs.push('Step 4: Constrained Column Elimination');
+  gameStore.testConstrainedColumnElimination();
 };
 
 // Handle clear queens and flags
