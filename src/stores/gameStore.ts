@@ -249,7 +249,7 @@ export const useGameStore = defineStore('game', {
         'pink',
       ];
 
-      // Step 1: Reset all color groups
+      // Step 1: Reset all color groups (always clear previous assignment)
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
           this.grid[row][col].groupColor = undefined;
@@ -257,8 +257,11 @@ export const useGameStore = defineStore('game', {
       }
 
       // Step 2: Get all queen positions
-      const queens = this.queenPositions;
+      let queens = [...this.queenPositions];
       const numQueens = queens.length;
+
+      // Shuffle the queens array for more randomness
+      queens = queens.sort(() => Math.random() - 0.5);
 
       // Make sure we have enough colors
       if (numQueens > colorPalette.length) {
@@ -266,9 +269,10 @@ export const useGameStore = defineStore('game', {
         return;
       }
 
-      // Step 3: Assign a unique color to each queen
+      // Step 3: Assign a unique color to each queen (shuffle colors each time)
+      const shuffledPalette = [...colorPalette].sort(() => Math.random() - 0.5);
       queens.forEach((queen, index) => {
-        this.grid[queen.row][queen.col].groupColor = colorPalette[index];
+        this.grid[queen.row][queen.col].groupColor = shuffledPalette[index];
       });
 
       // Define the four adjacent directions
@@ -279,79 +283,39 @@ export const useGameStore = defineStore('game', {
         { dr: 0, dc: -1 }, // left
       ];
 
-      // Step 4: Grow connected regions from each queen using flood fill
-      const visited = new Set<string>();
-
-      // Mark all queens as visited
-      queens.forEach((queen) => {
-        visited.add(`${queen.row},${queen.col}`);
-      });
-
-      // Calculate target size for each color region
-      const totalCells = this.gridSize * this.gridSize;
-      const targetRegionSize = Math.ceil(totalCells / numQueens);
-
-      // Step 5: Grow regions evenly from all queens at once
-      // Use a multi-source BFS approach to ensure balanced growth
-      let activeQueues: { queue: [number, number][]; color: string; size: number }[] = [];
-
-      // Initialize a queue for each queen
+      // Step 4: Grow regions randomly from all queens at once
+      let globalQueue: { row: number; col: number; color: string }[] = [];
       queens.forEach((queen, index) => {
-        const color = colorPalette[index];
-        activeQueues.push({
-          queue: [[queen.row, queen.col]],
-          color: color,
-          size: 1, // Start with one cell (the queen)
-        });
+        const color = shuffledPalette[index];
+        globalQueue.push({ row: queen.row, col: queen.col, color });
       });
 
-      // Grow all regions simultaneously until all cells are visited
-      while (visited.size < totalCells && activeQueues.some((q) => q.queue.length > 0)) {
-        // Process one cell from each active queue
-        for (let i = 0; i < activeQueues.length; i++) {
-          const { queue, color, size } = activeQueues[i];
+      const visited = new Set<string>();
+      const totalCells = this.gridSize * this.gridSize;
 
-          if (queue.length === 0) continue;
+      while (visited.size < totalCells && globalQueue.length > 0) {
+        // Randomly pick a cell from the queue
+        const idx = Math.floor(Math.random() * globalQueue.length);
+        const { row, col, color } = globalQueue.splice(idx, 1)[0];
 
-          // Take the next cell from this color's queue
-          const [r, c] = queue.shift()!;
+        // Randomly shuffle directions for more natural growth
+        const shuffledDirs = [...directions].sort(() => Math.random() - 0.5);
 
-          // Skip if already processed
-          if (visited.has(`${r},${c}`)) continue;
+        for (const dir of shuffledDirs) {
+          const newR = row + dir.dr;
+          const newC = col + dir.dc;
+          const newKey = `${newR},${newC}`;
 
-          // Randomly shuffle directions for more natural growth
-          const shuffledDirs = [...directions].sort(() => Math.random() - 0.5);
-
-          // Check each direction
-          for (const dir of shuffledDirs) {
-            const newR = r + dir.dr;
-            const newC = c + dir.dc;
-            const newKey = `${newR},${newC}`;
-
-            // If this is a valid, unvisited cell, add to queue
-            if (
-              this.isValidPosition(newR, newC) &&
-              !visited.has(newKey) &&
-              this.grid[newR][newC].state !== 'queen' // Don't color other queens
-            ) {
-              // Add this cell to the current region
-              this.grid[newR][newC].groupColor = color;
-              visited.add(newKey);
-
-              // Add to the queue for further expansion
-              queue.push([newR, newC]);
-
-              // Update the region size
-              activeQueues[i].size++;
-            }
+          if (
+            this.isValidPosition(newR, newC) &&
+            !visited.has(newKey) &&
+            this.grid[newR][newC].state !== 'queen' // Don't color other queens
+          ) {
+            this.grid[newR][newC].groupColor = color;
+            visited.add(newKey);
+            globalQueue.push({ row: newR, col: newC, color });
           }
         }
-
-        // Limit region sizes to be somewhat balanced
-        activeQueues = activeQueues.filter((queueInfo) => {
-          // If a region has reached its target size, stop growing it further
-          return queueInfo.queue.length > 0 && queueInfo.size < targetRegionSize;
-        });
       }
 
       // Step 6: If any cells remain uncolored, assign them to the nearest colored cell
@@ -419,6 +383,67 @@ export const useGameStore = defineStore('game', {
       if (colorIssue) {
         // Reset and use a simpler algorithm
         this.assignColorGroupsFallback();
+      }
+
+      // Step 7: Break up any 4x4 (or larger) solid color blocks
+      const minBlockSize = 4;
+      for (let blockSize = minBlockSize; blockSize <= this.gridSize; blockSize++) {
+        for (let row = 0; row <= this.gridSize - blockSize; row++) {
+          for (let col = 0; col <= this.gridSize - blockSize; col++) {
+            const color = this.grid[row][col].groupColor;
+            if (!color) continue;
+            let isBlock = true;
+            // Check if all cells in blockSize x blockSize block are the same color
+            for (let dr = 0; dr < blockSize; dr++) {
+              for (let dc = 0; dc < blockSize; dc++) {
+                if (this.grid[row + dr][col + dc].groupColor !== color) {
+                  isBlock = false;
+                  break;
+                }
+              }
+              if (!isBlock) break;
+            }
+            if (isBlock) {
+              // Try to break up the block by changing the color of one cell (bottom right corner)
+              let changed = false;
+              const targetR = row + blockSize - 1;
+              const targetC = col + blockSize - 1;
+              // Try to find a neighboring color
+              const directions = [
+                { dr: 1, dc: 0 },
+                { dr: -1, dc: 0 },
+                { dr: 0, dc: 1 },
+                { dr: 0, dc: -1 },
+              ];
+              let newColor = null;
+              for (const dir of directions) {
+                const nr = targetR + dir.dr;
+                const nc = targetC + dir.dc;
+                if (
+                  this.isValidPosition(nr, nc) &&
+                  this.grid[nr][nc].groupColor &&
+                  this.grid[nr][nc].groupColor !== color
+                ) {
+                  newColor = this.grid[nr][nc].groupColor;
+                  break;
+                }
+              }
+              if (newColor) {
+                this.grid[targetR][targetC].groupColor = newColor;
+                // Optionally, check if both color regions remain connected
+                // If not, revert and try another cell or color
+                if (!this.isColorConnected(color) || !this.isColorConnected(newColor)) {
+                  this.grid[targetR][targetC].groupColor = color; // revert
+                } else {
+                  changed = true;
+                }
+              }
+              // If unable to change, could try other cells in the block
+              // For now, break after first attempt
+              if (changed) break;
+            }
+          }
+        }
       }
     },
 
