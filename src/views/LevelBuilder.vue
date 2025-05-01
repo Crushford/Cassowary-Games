@@ -33,12 +33,6 @@
 
       <div class="mt-6 flex justify-center gap-4 flex-wrap">
         <button
-          class="rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary-hover"
-          @click="handlePlaceRandomQueen"
-        >
-          Place Next Queen
-        </button>
-        <button
           class="rounded-lg bg-secondary px-4 py-2 text-white hover:bg-secondary-hover"
           @click="handleGenerateSolution"
         >
@@ -82,16 +76,6 @@
 
       <!-- Color Group Controls -->
       <div class="mt-4" v-if="gameStore.isComplete">
-        <button
-          class="rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary-hover w-full"
-          @click="handleAssignColorGroups"
-        >
-          Assign Color Groups
-        </button>
-        <div class="mt-2 text-sm text-center text-text">
-          This will assign color groups to ensure a unique solution.
-        </div>
-
         <!-- Save to Local Storage button -->
         <div v-if="hasColorGroups" class="mt-4">
           <button
@@ -159,14 +143,10 @@ const handleRestart = () => {
   gameStore.handleRestart();
 };
 
-// Handle place random queen
-const handlePlaceRandomQueen = () => {
-  gameStore.placeRandomQueen();
-};
-
 // Handle generate solution
 const handleGenerateSolution = () => {
   gameStore.generateFullSolution();
+  gameStore.assignColorGroups();
 };
 
 // Handle assign color groups
