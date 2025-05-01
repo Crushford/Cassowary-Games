@@ -861,39 +861,47 @@ export const useGameStore = defineStore('game', {
       type Pos = { row: number; col: number };
       let flagCount = 0;
       let didSomething = false;
+      // Helper: does a queen at (aRow, aCol) attack (tRow, tCol)?
+      function queenAttacks(aRow: number, aCol: number, tRow: number, tCol: number): boolean {
+        return aRow === tRow || aCol === tCol || Math.abs(aRow - tRow) === Math.abs(aCol - tCol);
+      }
+      // For each color group
+      const colorGroups = new Map<string, Pos[]>();
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state !== 'empty') continue;
           const color = this.grid[row][col].groupColor;
           if (!color) continue;
-          // Find all empty squares in this color group
-          const groupEmpty: Pos[] = [];
-          for (let r = 0; r < this.gridSize; r++) {
-            for (let c = 0; c < this.gridSize; c++) {
-              if (
-                this.grid[r][c].groupColor === color &&
-                this.grid[r][c].state === 'empty' &&
-                !(r === row && c === col)
-              ) {
-                groupEmpty.push({ row: r, col: c });
+          if (!colorGroups.has(color)) colorGroups.set(color, []);
+          colorGroups.get(color)!.push({ row, col });
+        }
+      }
+      for (const [color, group] of colorGroups.entries()) {
+        // Find all empty squares in this color group
+        const groupEmpty: Pos[] = group.filter(
+          ({ row, col }) => this.grid[row][col].state === 'empty'
+        );
+        if (groupEmpty.length === 0) continue;
+        // For every empty square on the board
+        for (let row = 0; row < this.gridSize; row++) {
+          for (let col = 0; col < this.gridSize; col++) {
+            if (this.grid[row][col].state !== 'empty') continue;
+            // For all groupEmpty (except itself), check if queen at (row,col) attacks all
+            let allAttacked = true;
+            for (const { row: r, col: c } of groupEmpty) {
+              if (r === row && c === col) continue;
+              if (!queenAttacks(row, col, r, c)) {
+                allAttacked = false;
+                break;
               }
             }
-          }
-          // Simulate placing a queen at (row, col) and see if all groupEmpty would be blocked
-          let allBlocked = true;
-          for (const { row: r, col: c } of groupEmpty) {
-            if (this.isValidMove(r, c)) {
-              allBlocked = false;
-              break;
+            if (allAttacked && groupEmpty.some((pos) => !(pos.row === row && pos.col === col))) {
+              this.placeFlag(row, col);
+              this.testLogs.push(
+                `Flagged (${row},${col}) because a queen here would attack all remaining in color '${color}'.`
+              );
+              flagCount++;
+              didSomething = true;
             }
-          }
-          if (allBlocked && groupEmpty.length > 0) {
-            this.placeFlag(row, col);
-            this.testLogs.push(
-              `Flagged (${row},${col}) because a queen here would block all remaining in color '${color}'.`
-            );
-            flagCount++;
-            didSomething = true;
           }
         }
       }

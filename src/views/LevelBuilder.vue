@@ -45,6 +45,12 @@
           Generate Solution
         </button>
         <button
+          class="rounded-lg bg-gray-500 px-4 py-2 text-white hover:bg-gray-700"
+          @click="handleClearQueensAndFlags"
+        >
+          Clear Queens & Flags
+        </button>
+        <button
           class="rounded-lg bg-yellow-600 px-4 py-2 text-white hover:bg-yellow-700"
           @click="handleTestStep1"
         >
@@ -189,5 +195,11 @@ const handleTestStep2 = () => {
     'Step 2: Place flags where a queen would block all remaining squares in a color.'
   );
   gameStore.testStep2FlagBlockingSquares();
+};
+
+// Handle clear queens and flags
+const handleClearQueensAndFlags = () => {
+  gameStore.clearQueensAndFlags();
+  gameStore.testLogs = [];
 };
 </script>
