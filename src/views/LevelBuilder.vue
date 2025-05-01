@@ -68,6 +68,12 @@
         >
           Run All Steps
         </button>
+        <button
+          class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          @click="handleCycleSolveSteps"
+        >
+          Cycle Solve Steps
+        </button>
       </div>
 
       <div
@@ -195,6 +201,11 @@ const handleAssignColorGroups = () => {
 // Handle test unique solution (all steps)
 const handleTestAllSteps = () => {
   gameStore.testUniqueSolution();
+};
+
+// Add handler to cycle through each solve step until no more actions
+const handleCycleSolveSteps = () => {
+  gameStore.testAllStepsLoop();
 };
 
 // Handle test step 1 only
