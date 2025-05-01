@@ -1060,10 +1060,5 @@ export const useGameStore = defineStore('game', {
       } while (anyChange);
       this.testLogs.push('--- Test finished (all steps, looped until no changes) ---');
     },
-
-    // Test function to try to solve the game and log each step
-    testUniqueSolution() {
-      this.testAllStepsLoop();
-    },
   },
 });

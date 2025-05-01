@@ -69,12 +69,6 @@
           Step 4: Constrained Column Elimination
         </button>
         <button
-          class="rounded-lg bg-green-700 px-4 py-2 text-white hover:bg-green-800"
-          @click="handleTestAllSteps"
-        >
-          Run All Steps
-        </button>
-        <button
           class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           @click="handleCycleSolveSteps"
         >
@@ -202,11 +196,6 @@ const handleGenerateSolution = () => {
 // Handle assign color groups
 const handleAssignColorGroups = () => {
   gameStore.assignColorGroups();
-};
-
-// Handle test unique solution (all steps)
-const handleTestAllSteps = () => {
-  gameStore.testUniqueSolution();
 };
 
 // Add handler to cycle through each solve step until no more actions
