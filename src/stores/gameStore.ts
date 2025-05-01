@@ -789,6 +789,8 @@ export const useGameStore = defineStore('game', {
 
     // Log array for test steps
     testLogs: [] as string[],
+    // Log array for detailed debug info for step 2
+    testDebugLogs: [] as any[],
 
     // Helper for step 1: Place queens in last free squares of color blocks, rows, or columns
     testStep1PlaceLastFreeQueens() {
@@ -856,7 +858,7 @@ export const useGameStore = defineStore('game', {
       return didSomething;
     },
 
-    // Helper for step 2: Flag squares where a queen would block all remaining in a color
+    // Helper for step 2: Flag squares where a queen would block all remaining squares in other color groups
     testStep2FlagBlockingSquares() {
       type Pos = { row: number; col: number };
       let flagCount = 0;
@@ -865,42 +867,58 @@ export const useGameStore = defineStore('game', {
       function queenAttacks(aRow: number, aCol: number, tRow: number, tCol: number): boolean {
         return aRow === tRow || aCol === tCol || Math.abs(aRow - tRow) === Math.abs(aCol - tCol);
       }
-      // For each color group
-      const colorGroups = new Map<string, Pos[]>();
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          const color = this.grid[row][col].groupColor;
-          if (!color) continue;
-          if (!colorGroups.has(color)) colorGroups.set(color, []);
-          colorGroups.get(color)!.push({ row, col });
+      // Clear debug logs for this step
+      this.testDebugLogs = [];
+      // Build map of empty squares by color group
+      const emptyColorGroups = new Map<string, Pos[]>();
+      for (let r = 0; r < this.gridSize; r++) {
+        for (let c = 0; c < this.gridSize; c++) {
+          if (this.grid[r][c].state === 'empty') {
+            const grp = this.grid[r][c].groupColor;
+            if (!grp) continue;
+            if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
+            emptyColorGroups.get(grp)!.push({ row: r, col: c });
+          }
         }
       }
-      for (const [color, group] of colorGroups.entries()) {
-        // Find all empty squares in this color group
-        const groupEmpty: Pos[] = group.filter(
-          ({ row, col }) => this.grid[row][col].state === 'empty'
-        );
-        if (groupEmpty.length === 0) continue;
-        // For every empty square on the board
-        for (let row = 0; row < this.gridSize; row++) {
-          for (let col = 0; col < this.gridSize; col++) {
-            if (this.grid[row][col].state !== 'empty') continue;
-            // For all groupEmpty (except itself), check if queen at (row,col) attacks all
+      // For each empty square, check all other color groups
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].state !== 'empty') continue;
+          const myColor = this.grid[row][col].groupColor;
+          if (!myColor) continue;
+          for (const [otherColor, groupEmpty] of emptyColorGroups.entries()) {
+            if (otherColor === myColor) continue;
+            if (groupEmpty.length === 0) continue;
             let allAttacked = true;
             for (const { row: r, col: c } of groupEmpty) {
-              if (r === row && c === col) continue;
               if (!queenAttacks(row, col, r, c)) {
                 allAttacked = false;
                 break;
               }
             }
-            if (allAttacked && groupEmpty.some((pos) => !(pos.row === row && pos.col === col))) {
+            if (allAttacked) {
+              // Serialize board before
+              const before = this.exportGameState();
               this.placeFlag(row, col);
+              // Serialize board after
+              const after = this.exportGameState();
+              const reason = `A queen at (${row},${col}) would attack all remaining in color group '${otherColor}'.`;
               this.testLogs.push(
-                `Flagged (${row},${col}) because a queen here would attack all remaining in color '${color}'.`
+                `Flagged (${row},${col}) because a queen here would attack all remaining in color '${otherColor}'.`
               );
+              this.testDebugLogs.push({
+                step: 2,
+                action: 'place_flag',
+                position: { row, col },
+                color: otherColor,
+                reason,
+                before,
+                after,
+              });
               flagCount++;
               didSomething = true;
+              break;
             }
           }
         }

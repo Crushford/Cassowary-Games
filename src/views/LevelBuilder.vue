@@ -74,6 +74,38 @@
         </ul>
       </div>
 
+      <!-- Step 2 Debug Logs -->
+      <div
+        v-if="gameStore.testDebugLogs && gameStore.testDebugLogs.length"
+        class="mt-4 bg-blue-50 p-4 rounded-lg"
+      >
+        <h3 class="font-bold mb-2 text-blue-900">Step 2 Debug Logs</h3>
+        <div v-for="(debug, idx) in gameStore.testDebugLogs" :key="idx" class="mb-4 border-b pb-4">
+          <div class="mb-2 text-sm text-blue-800">
+            <strong>Action:</strong> {{ debug.action }} at ({{ debug.position.row }},{{
+              debug.position.col
+            }}) in color '{{ debug.color }}'<br />
+            <strong>Reason:</strong> {{ debug.reason }}
+          </div>
+          <div class="flex flex-col md:flex-row gap-4">
+            <div class="w-full md:w-1/2">
+              <div class="font-bold text-xs text-blue-700 mb-1">Before:</div>
+              <pre class="bg-white p-2 rounded text-xs overflow-x-auto">{{ debug.before }}</pre>
+            </div>
+            <div class="w-full md:w-1/2">
+              <div class="font-bold text-xs text-blue-700 mb-1">After:</div>
+              <pre class="bg-white p-2 rounded text-xs overflow-x-auto">{{ debug.after }}</pre>
+            </div>
+          </div>
+          <button
+            class="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs"
+            @click="copyDebugLog(debug)"
+          >
+            Copy Debug Info
+          </button>
+        </div>
+      </div>
+
       <!-- Color Group Controls -->
       <div class="mt-4" v-if="gameStore.isComplete">
         <!-- Save to Local Storage button -->
@@ -182,4 +214,10 @@ const handleClearQueensAndFlags = () => {
   gameStore.clearQueensAndFlags();
   gameStore.testLogs = [];
 };
+
+// Copy debug log to clipboard
+function copyDebugLog(debug: any) {
+  const text = `Action: ${debug.action} at (${debug.position.row},${debug.position.col}) in color '${debug.color}'\nReason: ${debug.reason}\n\nBefore:\n${debug.before}\n\nAfter:\n${debug.after}`;
+  navigator.clipboard.writeText(text);
+}
 </script>
