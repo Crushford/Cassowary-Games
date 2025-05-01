@@ -57,6 +57,12 @@
           Step 2: Flag Blocking Squares
         </button>
         <button
+          class="rounded-lg bg-yellow-800 px-4 py-2 text-white hover:bg-yellow-900"
+          @click="handleTestStep3"
+        >
+          Step 3: Constrained Row Elimination
+        </button>
+        <button
           class="rounded-lg bg-green-700 px-4 py-2 text-white hover:bg-green-800"
           @click="handleTestAllSteps"
         >
@@ -207,6 +213,13 @@ const handleTestStep2 = () => {
     'Step 2: Place flags where a queen would block all remaining squares in a color.'
   );
   gameStore.testStep2FlagBlockingSquares();
+};
+
+// Handle test step 3 only
+const handleTestStep3 = () => {
+  if (!gameStore.testLogs.length) gameStore.testLogs = [];
+  gameStore.testLogs.push('Step 3: Constrained Row Elimination');
+  gameStore.testConstrainedRowElimination();
 };
 
 // Handle clear queens and flags
