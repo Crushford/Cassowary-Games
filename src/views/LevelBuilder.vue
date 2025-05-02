@@ -69,6 +69,12 @@
           Step 4: Constrained Column Elimination
         </button>
         <button
+          class="rounded-lg bg-yellow-600 px-4 py-2 text-white hover:bg-yellow-700"
+          @click="handleTestStep5"
+        >
+          Step 5: Flag Row/Column Blocking Squares
+        </button>
+        <button
           class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           @click="handleCycleSolveSteps"
         >
@@ -233,6 +239,15 @@ const handleTestStep4 = () => {
   if (!gameStore.testLogs.length) gameStore.testLogs = [];
   gameStore.testLogs.push('Step 4: Constrained Column Elimination');
   gameStore.testConstrainedColumnElimination();
+};
+
+// Add handler for step 5
+const handleTestStep5 = () => {
+  if (!gameStore.testLogs.length) gameStore.testLogs = [];
+  gameStore.testLogs.push(
+    'Step 5: Flag squares where a queen would block all remaining free squares in any row or column.'
+  );
+  gameStore.testStep5BlockRowsAndColumns();
 };
 
 // Handle clear queens and flags

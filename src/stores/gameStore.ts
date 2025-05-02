@@ -1039,6 +1039,66 @@ export const useGameStore = defineStore('game', {
       return didSomething;
     },
 
+    // Step 5: Flag squares where a queen would block all remaining free squares in any row or column
+    testStep5BlockRowsAndColumns() {
+      type Pos = { row: number; col: number };
+      let flagCount = 0;
+      let didSomething = false;
+      // Helper: does a queen at (aRow,aCol) attack (tRow,tCol)? including diagonals
+      function queenAttacks(aRow: number, aCol: number, tRow: number, tCol: number): boolean {
+        return aRow === tRow || aCol === tCol || Math.abs(aRow - tRow) === Math.abs(aCol - tCol);
+      }
+      // Build lists of empty positions per row and per column
+      const freeRows = new Map<number, Pos[]>();
+      const freeCols = new Map<number, Pos[]>();
+      for (let i = 0; i < this.gridSize; i++) {
+        freeRows.set(i, []);
+        freeCols.set(i, []);
+      }
+      for (let r = 0; r < this.gridSize; r++) {
+        for (let c = 0; c < this.gridSize; c++) {
+          if (this.grid[r][c].state === 'empty') {
+            freeRows.get(r)!.push({ row: r, col: c });
+            freeCols.get(c)!.push({ row: r, col: c });
+          }
+        }
+      }
+      // Try each empty square and flag if it blocks an entire row or column
+      outer: for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].state !== 'empty') continue;
+          // Check other rows
+          for (const [r, positions] of freeRows.entries()) {
+            if (r === row || positions.length === 0) continue;
+            if (positions.every((p) => queenAttacks(row, col, p.row, p.col))) {
+              this.placeFlag(row, col);
+              this.testLogs.push(
+                `Flagged (${row},${col}) because a queen here would attack all remaining free squares in row ${r}.`
+              );
+              flagCount++;
+              didSomething = true;
+              break outer;
+            }
+          }
+          // Check other columns
+          for (const [c, positions] of freeCols.entries()) {
+            if (c === col || positions.length === 0) continue;
+            if (positions.every((p) => queenAttacks(row, col, p.row, p.col))) {
+              this.placeFlag(row, col);
+              this.testLogs.push(
+                `Flagged (${row},${col}) because a queen here would attack all remaining free squares in column ${c}.`
+              );
+              flagCount++;
+              didSomething = true;
+              break outer;
+            }
+          }
+        }
+      }
+      this.testLogs.push(`Step 5 complete: Placed ${flagCount} flags.`);
+      return didSomething;
+    },
+
     // New: Loop through all steps until no changes
     testAllStepsLoop() {
       this.testLogs = [];
@@ -1052,9 +1112,10 @@ export const useGameStore = defineStore('game', {
         let changed2 = this.testStep2FlagBlockingSquares();
         let changed3 = this.testConstrainedRowElimination();
         let changed4 = this.testConstrainedColumnElimination();
-        anyChange = changed1 || changed2 || changed3 || changed4;
+        let changed5 = this.testStep5BlockRowsAndColumns();
+        anyChange = changed1 || changed2 || changed3 || changed4 || changed5;
         this.testLogs.push(
-          `Loop ${loop} result: Step1 changed=${changed1}, Step2 changed=${changed2}, Step3 changed=${changed3}, Step4 changed=${changed4}`
+          `Loop ${loop} result: Step1 changed=${changed1}, Step2 changed=${changed2}, Step3 changed=${changed3}, Step4 changed=${changed4}, Step5 changed=${changed5}`
         );
         loop++;
       } while (anyChange);
