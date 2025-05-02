@@ -1121,5 +1121,58 @@ export const useGameStore = defineStore('game', {
       } while (anyChange);
       this.testLogs.push('--- Test finished (all steps, looped until no changes) ---');
     },
+
+    // Add action to randomly change the color of an empty square to an adjacent neighbor color
+    forceChangeColor() {
+      const empties: { row: number; col: number }[] = [];
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].state === 'empty') {
+            empties.push({ row, col });
+          }
+        }
+      }
+      // Log number of empty squares found
+      this.testLogs.push(`forceChangeColor: found ${empties.length} empty squares`);
+      if (empties.length === 0) {
+        this.testLogs.push('forceChangeColor: no empty squares to change color');
+        this.setError('No empty squares to change color');
+        return false;
+      }
+      const randIdx = Math.floor(Math.random() * empties.length);
+      const { row, col } = empties[randIdx];
+      // Log selected square
+      this.testLogs.push(`forceChangeColor: selected empty square at (${row},${col})`);
+      const directions = [
+        { dr: -1, dc: 0 },
+        { dr: 1, dc: 0 },
+        { dr: 0, dc: -1 },
+        { dr: 0, dc: 1 },
+      ];
+      const neighborColors: string[] = [];
+      for (const { dr, dc } of directions) {
+        const newR = row + dr;
+        const newC = col + dc;
+        if (this.isValidPosition(newR, newC)) {
+          const color = this.grid[newR][newC].groupColor;
+          if (color) {
+            neighborColors.push(color);
+          }
+        }
+      }
+      // Log adjacent neighbor colors
+      this.testLogs.push(`forceChangeColor: neighborColors = [${neighborColors.join(', ')}]`);
+      if (neighborColors.length === 0) {
+        this.testLogs.push(`forceChangeColor: no adjacent colors to adopt at (${row},${col})`);
+        this.setError('No adjacent colors to adopt');
+        return false;
+      }
+      const newColor = neighborColors[Math.floor(Math.random() * neighborColors.length)];
+      // Log applying the color change
+      this.testLogs.push(`forceChangeColor: changing square (${row},${col}) to color ${newColor}`);
+      this.saveToHistory();
+      this.grid[row][col].groupColor = newColor;
+      return true;
+    },
   },
 });

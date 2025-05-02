@@ -80,6 +80,12 @@
         >
           Cycle Solve Steps
         </button>
+        <button
+          class="rounded-lg bg-pink-600 px-4 py-2 text-white hover:bg-pink-700"
+          @click="handleForceChangeColor"
+        >
+          Force Change Color
+        </button>
       </div>
 
       <div
@@ -254,6 +260,11 @@ const handleTestStep5 = () => {
 const handleClearQueensAndFlags = () => {
   gameStore.clearQueensAndFlags();
   gameStore.testLogs = [];
+};
+
+// Add handler for force change color
+const handleForceChangeColor = () => {
+  gameStore.forceChangeColor();
 };
 
 // Copy debug log to clipboard
