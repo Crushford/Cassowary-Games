@@ -889,7 +889,7 @@ export const useGameStore = defineStore('game', {
           if (!myColor) continue;
           for (const [otherColor, groupEmpty] of emptyColorGroups.entries()) {
             if (otherColor === myColor) continue;
-            if (groupEmpty.length === 0) continue;
+            if (groupEmpty.length <= 1) continue;
             let allAttacked = true;
             for (const { row: r, col: c } of groupEmpty) {
               if (!queenAttacks(row, col, r, c)) {
