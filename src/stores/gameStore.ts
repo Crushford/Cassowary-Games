@@ -1110,9 +1110,10 @@ export const useGameStore = defineStore('game', {
 
     // New: Loop through all steps until no changes
     testAllStepsLoop() {
-      this.testLogs = [];
-      this.clearQueensAndFlags();
-      this.testLogs.push('--- Test started: Unique Solution Check (Loop) ---');
+      if (!this.testLogs || this.testLogs.length === 0) {
+        this.testLogs = [];
+      }
+      this.testLogs.push('--- Starting Solver Loop ---');
       let loop = 1;
       let anyChange;
       do {
@@ -1128,7 +1129,7 @@ export const useGameStore = defineStore('game', {
         );
         loop++;
       } while (anyChange);
-      this.testLogs.push('--- Test finished (all steps, looped until no changes) ---');
+      this.testLogs.push('--- Solver finished (no more changes) ---');
     },
 
     // Add helper to ensure no color block has a singleton square
@@ -1220,12 +1221,28 @@ export const useGameStore = defineStore('game', {
       }
       // Log adjacent neighbor colors
       this.testLogs.push(`forceChangeColor: neighborColors = [${neighborColors.join(', ')}]`);
+
+      let newColor;
       if (neighborColors.length === 0) {
-        this.testLogs.push(`forceChangeColor: no adjacent colors to adopt at (${row},${col})`);
-        this.setError('No adjacent colors to adopt');
-        return false;
+        // If no neighbors have colors, assign a random color from the palette
+        const colorPalette: ('red' | 'blue' | 'green' | 'yellow' | 'purple' | 'pink')[] = [
+          'red',
+          'blue',
+          'green',
+          'yellow',
+          'purple',
+          'pink',
+        ];
+        newColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+        this.testLogs.push(
+          `forceChangeColor: no adjacent colors found, using random color "${newColor}"`
+        );
+      } else {
+        // Use an adjacent color
+        newColor = neighborColors[Math.floor(Math.random() * neighborColors.length)];
+        this.testLogs.push(`forceChangeColor: using adjacent color "${newColor}"`);
       }
-      const newColor = neighborColors[Math.floor(Math.random() * neighborColors.length)];
+
       // Log applying the color change
       this.testLogs.push(`forceChangeColor: changing square (${row},${col}) to color ${newColor}`);
       this.saveToHistory();
@@ -1233,6 +1250,99 @@ export const useGameStore = defineStore('game', {
       // Ensure no single-square color blocks after color change
       this.ensureNoSingletonColorBlocks();
       return true;
+    },
+
+    // Helper to validate puzzle meets requirements: exact queen count, all filled, and all color groups >=2
+    validatePuzzle(requiredQueens: number = 7) {
+      const queens = this.queenPositions;
+      const queenCountValid = queens.length === requiredQueens;
+      let allFilled = true;
+      const colorGroupCounts: Record<string, number> = {};
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          const square = this.grid[row][col];
+          if (square.state !== 'queen' && square.state !== 'flag') {
+            allFilled = false;
+          }
+          const color = square.groupColor;
+          if (color) {
+            colorGroupCounts[color] = (colorGroupCounts[color] || 0) + 1;
+          }
+        }
+      }
+      const colorGroupsValid = Object.values(colorGroupCounts).every((c) => c >= 2);
+      return { queenCountValid, allFilled, colorGroupsValid };
+    },
+
+    // Helper for one generation attempt: returns puzzle name or null
+    attemptGeneratePuzzle(attempt: number, requiredQueens: number): string | null {
+      this.testLogs.push(`Attempt ${attempt}: Starting puzzle generation`);
+      this.generateFullSolution(); // build full solution
+
+      // Make sure color groups are assigned before proceeding
+      this.testLogs.push(`Attempt ${attempt}: Assigning color groups to solution`);
+      this.assignColorGroups();
+
+      // Debug info: count colored cells
+      let coloredCells = 0;
+      const colorCounts: Record<string, number> = {};
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          const color = this.grid[row][col].groupColor;
+          if (color) {
+            coloredCells++;
+            colorCounts[color] = (colorCounts[color] || 0) + 1;
+          }
+        }
+      }
+      this.testLogs.push(
+        `Attempt ${attempt}: Color assignment complete - ${coloredCells}/${this.gridSize * this.gridSize} cells colored`
+      );
+      Object.entries(colorCounts).forEach(([color, count]) => {
+        this.testLogs.push(`  - Color ${color}: ${count} cells`);
+      });
+
+      this.clearQueensAndFlags(); // reset markers
+      this.testAllStepsLoop(); // cycle solve steps
+      if (!this.forceChangeColor()) {
+        this.testLogs.push(`Attempt ${attempt}: Color change failed`);
+        return null;
+      }
+      this.testAllStepsLoop(); // re-run solver steps
+      const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle(requiredQueens);
+
+      // Add more detailed validation logs
+      this.testLogs.push(`Attempt ${attempt}: Final validation:`);
+      this.testLogs.push(
+        `  - Queens: ${this.queenPositions.length}/${requiredQueens} (valid: ${queenCountValid})`
+      );
+      this.testLogs.push(`  - All cells filled: ${allFilled}`);
+      this.testLogs.push(`  - Color groups valid: ${colorGroupsValid}`);
+
+      if (!(queenCountValid && allFilled && colorGroupsValid)) {
+        this.testLogs.push(
+          `Attempt ${attempt}: Validation failed. Queens: ${this.queenPositions.length}, Filled: ${allFilled}, Colors OK: ${colorGroupsValid}`
+        );
+        return null;
+      }
+      const name = this.savePuzzleToLocalStorage();
+      if (!name) {
+        this.testLogs.push(`Attempt ${attempt}: Save failed`);
+      }
+      return name;
+    },
+
+    // Generates puzzles until a valid one is found and stored; returns the puzzle name or null
+    generateAndStoreValidPuzzle(requiredQueens = 7, maxAttempts = 100): string | null {
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const name = this.attemptGeneratePuzzle(attempt, requiredQueens);
+        if (name) {
+          this.testLogs.push(`✅ Puzzle saved: ${name}`);
+          return name;
+        }
+      }
+      this.setError(`Failed to generate a valid puzzle after ${maxAttempts} attempts`);
+      return null;
     },
   },
 });

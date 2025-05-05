@@ -86,6 +86,14 @@
         >
           Force Change Color
         </button>
+        <button
+          class="rounded-lg bg-purple-600 px-4 py-2 text-white hover:bg-purple-700"
+          @click="handleGenerateAndStoreValidPuzzle"
+          :disabled="isGenerating"
+          :class="{ 'opacity-50 cursor-not-allowed': isGenerating }"
+        >
+          {{ isGenerating ? 'Generating...' : 'Generate Valid Puzzle' }}
+        </button>
       </div>
 
       <div
@@ -160,6 +168,7 @@ import { useGameStore } from '../stores/gameStore';
 const gameStore = useGameStore();
 const gridSize = ref(gameStore.gridSize);
 const savedMessage = ref('');
+const isGenerating = ref(false);
 
 // Check if grid has color groups assigned
 const hasColorGroups = computed(() => {
@@ -265,6 +274,31 @@ const handleClearQueensAndFlags = () => {
 // Add handler for force change color
 const handleForceChangeColor = () => {
   gameStore.forceChangeColor();
+};
+
+// Add handler for generate and store valid puzzle
+const handleGenerateAndStoreValidPuzzle = () => {
+  if (isGenerating.value) return;
+
+  isGenerating.value = true;
+  savedMessage.value = 'Generating puzzle... This may take a moment.';
+  if (!gameStore.testLogs.length) gameStore.testLogs = [];
+  gameStore.testLogs.push('Starting to generate a valid puzzle...');
+
+  // Clear any previous error
+  gameStore.setError(null);
+
+  const puzzleName = gameStore.generateAndStoreValidPuzzle();
+  if (puzzleName) {
+    savedMessage.value = `Auto-generated puzzle saved as "${puzzleName}"`;
+  } else {
+    savedMessage.value = 'Failed to generate a valid puzzle. Check logs for details.';
+  }
+  setTimeout(() => {
+    savedMessage.value = '';
+  }, 5000);
+
+  isGenerating.value = false;
 };
 
 // Copy debug log to clipboard
