@@ -1,161 +1,174 @@
 <template>
-  <div class="min-h-screen bg-background p-4">
-    <div class="max-w-4xl mx-auto">
-      <h1 class="text-3xl font-bold text-text mb-6">Level Builder</h1>
+  <div class="min-h-screen bg-gray-900 p-6 text-gray-100">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Sidebar Controls -->
+      <aside class="space-y-6 md:col-span-1">
+        <h1 class="text-3xl font-bold">Level Builder</h1>
 
-      <div class="mb-6">
-        <label class="block text-sm font-medium text-text mb-2">
-          Grid Size (squares per row/column)
-        </label>
-        <div class="flex items-center gap-4">
-          <input
-            type="number"
-            v-model="gridSize"
-            min="4"
-            max="8"
-            class="w-32 rounded-lg border border-surface bg-surface px-3 py-2 text-text"
-            @change="handleGridSizeChange"
-          />
-          <span class="text-text">× {{ gridSize }}</span>
-        </div>
-      </div>
-
-      <GameGrid
-        :grid="gameStore.grid"
-        :grid-size="gridSize"
-        @undo="handleUndo"
-        @restart="handleRestart"
-      />
-
-      <div v-if="gameStore.errorMessage" class="mt-4 p-4 bg-red-100 text-red-700 rounded-lg">
-        {{ gameStore.errorMessage }}
-      </div>
-
-      <div class="mt-6 flex justify-center gap-4 flex-wrap">
-        <button
-          class="rounded-lg bg-secondary px-4 py-2 text-white hover:bg-secondary-hover"
-          @click="handleGenerateSolution"
+        <!-- Board Controls -->
+        <section
+          class="flex flex-wrap gap-4 bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg"
         >
-          Generate Solution
-        </button>
-        <button
-          class="rounded-lg bg-gray-500 px-4 py-2 text-white hover:bg-gray-700"
-          @click="handleClearQueensAndFlags"
-        >
-          Clear Queens & Flags
-        </button>
-        <button
-          class="rounded-lg bg-yellow-600 px-4 py-2 text-white hover:bg-yellow-700"
-          @click="handleTestStep1"
-        >
-          Step 1: Place Last Free Queens
-        </button>
-        <button
-          class="rounded-lg bg-yellow-700 px-4 py-2 text-white hover:bg-yellow-800"
-          @click="handleTestStep2"
-        >
-          Step 2: Flag Blocking Squares
-        </button>
-        <button
-          class="rounded-lg bg-yellow-800 px-4 py-2 text-white hover:bg-yellow-900"
-          @click="handleTestStep3"
-        >
-          Step 3: Constrained Row Elimination
-        </button>
-        <button
-          class="rounded-lg bg-yellow-900 px-4 py-2 text-white hover:bg-yellow-800"
-          @click="handleTestStep4"
-        >
-          Step 4: Constrained Column Elimination
-        </button>
-        <button
-          class="rounded-lg bg-yellow-600 px-4 py-2 text-white hover:bg-yellow-700"
-          @click="handleTestStep5"
-        >
-          Step 5: Flag Row/Column Blocking Squares
-        </button>
-        <button
-          class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          @click="handleCycleSolveSteps"
-        >
-          Cycle Solve Steps
-        </button>
-        <button
-          class="rounded-lg bg-pink-600 px-4 py-2 text-white hover:bg-pink-700"
-          @click="handleForceChangeColor"
-        >
-          Force Change Color
-        </button>
-        <button
-          class="rounded-lg bg-purple-600 px-4 py-2 text-white hover:bg-purple-700"
-          @click="handleGenerateAndStoreValidPuzzle"
-          :disabled="isGenerating"
-          :class="{ 'opacity-50 cursor-not-allowed': isGenerating }"
-        >
-          {{ isGenerating ? 'Generating...' : 'Generate Valid Puzzle' }}
-        </button>
-      </div>
-
-      <div
-        v-if="gameStore.testLogs && gameStore.testLogs.length"
-        class="mt-4 bg-gray-100 p-4 rounded-lg"
-      >
-        <h3 class="font-bold mb-2">Test Logs</h3>
-        <ul class="list-disc pl-5">
-          <li v-for="(log, idx) in gameStore.testLogs" :key="idx">{{ log }}</li>
-        </ul>
-      </div>
-
-      <!-- Step 2 Debug Logs -->
-      <div
-        v-if="gameStore.testDebugLogs && gameStore.testDebugLogs.length"
-        class="mt-4 bg-blue-50 p-4 rounded-lg"
-      >
-        <h3 class="font-bold mb-2 text-blue-900">Step 2 Debug Logs</h3>
-        <div v-for="(debug, idx) in gameStore.testDebugLogs" :key="idx" class="mb-4 border-b pb-4">
-          <div class="mb-2 text-sm text-blue-800">
-            <strong>Action:</strong> {{ debug.action }} at ({{ debug.position.row }},{{
-              debug.position.col
-            }}) in color '{{ debug.color }}'<br />
-            <strong>Reason:</strong> {{ debug.reason }}
-          </div>
-          <div class="flex flex-col md:flex-row gap-4">
-            <div class="w-full md:w-1/2">
-              <div class="font-bold text-xs text-blue-700 mb-1">Before:</div>
-              <pre class="bg-white p-2 rounded text-xs overflow-x-auto">{{ debug.before }}</pre>
-            </div>
-            <div class="w-full md:w-1/2">
-              <div class="font-bold text-xs text-blue-700 mb-1">After:</div>
-              <pre class="bg-white p-2 rounded text-xs overflow-x-auto">{{ debug.after }}</pre>
-            </div>
-          </div>
           <button
-            class="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs"
-            @click="copyDebugLog(debug)"
+            v-for="btn in boardControls"
+            :key="btn.label"
+            @click="btn.handler"
+            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-100"
           >
-            Copy Debug Info
+            {{ btn.label }}
           </button>
-        </div>
-      </div>
+          <label class="flex items-center gap-2">
+            <span>Size:</span>
+            <input
+              type="number"
+              v-model="gridSize"
+              min="4"
+              max="8"
+              @change="handleGridSizeChange"
+              class="w-20 bg-gray-700 border border-gray-600 rounded-lg px-2 py-1 text-gray-100"
+            />
+          </label>
+        </section>
 
-      <!-- Color Group Controls -->
-      <div class="mt-4" v-if="gameStore.isComplete">
-        <!-- Save to Local Storage button -->
-        <div v-if="hasColorGroups" class="mt-4">
+        <!-- Solution Controls -->
+        <section
+          class="flex flex-wrap gap-4 bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg"
+        >
           <button
-            class="rounded-lg bg-green-600 hover:bg-green-700 px-4 py-2 text-white w-full"
-            @click="handleSavePuzzle"
+            v-for="btn in solutionControls"
+            :key="btn.label"
+            @click="btn.handler"
+            class="px-4 py-2 bg-blue-500 hover:bg-blue-400 rounded-lg text-gray-100"
           >
-            Save Puzzle to Local Storage
+            {{ btn.label }}
+          </button>
+        </section>
+
+        <!-- Solver Steps -->
+        <section class="bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg">
+          <h2 class="font-semibold mb-4">Solver Steps</h2>
+          <div class="grid grid-cols-2 gap-4">
+            <button
+              v-for="btn in solverSteps"
+              :key="btn.label"
+              @click="btn.handler"
+              class="px-3 py-1 bg-yellow-600 hover:bg-yellow-500 rounded text-gray-100 text-sm"
+            >
+              {{ btn.label }}
+            </button>
+          </div>
+          <div class="mt-4 flex gap-4">
+            <button
+              @click="handleCycleSolveSteps"
+              class="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-100"
+            >
+              Cycle All
+            </button>
+            <button
+              @click="handleForceChangeColor"
+              class="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-100"
+            >
+              Force Color
+            </button>
+          </div>
+        </section>
+
+        <!-- Auto-Puzzle Controls -->
+        <section
+          class="flex flex-col gap-4 bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg"
+        >
+          <button
+            @click="handleGenerateAndStoreValidPuzzle"
+            :disabled="isGenerating"
+            :class="[
+              'w-full px-6 py-3 rounded-lg text-gray-100 font-medium',
+              isGenerating ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-400',
+            ]"
+          >
+            {{ isGenerating ? 'Generating…' : 'Generate Valid Puzzle' }}
+          </button>
+          <button
+            v-if="hasColorGroups"
+            @click="handleSavePuzzle"
+            class="w-full px-6 py-3 bg-green-600 hover:bg-green-500 rounded-lg text-gray-100 font-medium"
+          >
+            Save to Local Storage
           </button>
           <div
             v-if="savedMessage"
-            class="mt-2 p-2 bg-green-100 text-green-700 rounded-lg text-center"
+            class="mt-2 p-2 bg-green-100 text-green-700 rounded text-center text-sm"
           >
             {{ savedMessage }}
           </div>
+        </section>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="space-y-6 md:col-span-2">
+        <GameGrid
+          :grid="gameStore.grid"
+          :grid-size="gridSize"
+          @undo="gameStore.handleUndo"
+          @restart="gameStore.handleRestart"
+        />
+
+        <!-- Status Message -->
+        <div
+          v-if="gameStore.errorMessage"
+          class="p-4 bg-red-500/20 border border-red-500 text-red-300 rounded-lg"
+        >
+          {{ gameStore.errorMessage }}
         </div>
-      </div>
+
+        <!-- Logs -->
+        <section
+          v-if="gameStore.testLogs && gameStore.testLogs.length"
+          class="bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg max-h-64 overflow-auto"
+        >
+          <h3 class="font-semibold mb-4">Logs</h3>
+          <ul class="list-disc list-inside text-sm space-y-2">
+            <li v-for="(log, i) in gameStore.testLogs" :key="i">{{ log }}</li>
+          </ul>
+        </section>
+
+        <!-- Debug Logs -->
+        <section
+          v-if="gameStore.testDebugLogs && gameStore.testDebugLogs.length"
+          class="bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg"
+        >
+          <h3 class="font-semibold mb-4">Debug Logs</h3>
+          <div
+            v-for="(debug, idx) in gameStore.testDebugLogs"
+            :key="idx"
+            class="mb-4 border-b border-gray-700 pb-4"
+          >
+            <div class="mb-2 text-sm">
+              <strong>Action:</strong> {{ debug.action }} at ({{ debug.position.row }},{{
+                debug.position.col
+              }}) in color '{{ debug.color }}'<br />
+              <strong>Reason:</strong> {{ debug.reason }}
+            </div>
+            <div class="flex flex-col md:flex-row gap-4">
+              <div class="w-full md:w-1/2">
+                <div class="font-bold text-xs mb-1">Before:</div>
+                <pre class="bg-gray-950 p-2 rounded text-xs overflow-x-auto">{{
+                  debug.before
+                }}</pre>
+              </div>
+              <div class="w-full md:w-1/2">
+                <div class="font-bold text-xs mb-1">After:</div>
+                <pre class="bg-gray-950 p-2 rounded text-xs overflow-x-auto">{{ debug.after }}</pre>
+              </div>
+            </div>
+            <button
+              class="mt-2 px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded text-xs"
+              @click="copyDebugLog(debug)"
+            >
+              Copy Debug Info
+            </button>
+          </div>
+        </section>
+      </main>
     </div>
   </div>
 </template>
@@ -170,7 +183,80 @@ const gridSize = ref(gameStore.gridSize);
 const savedMessage = ref('');
 const isGenerating = ref(false);
 
-// Check if grid has color groups assigned
+// Button group definitions
+const boardControls = [
+  {
+    label: 'Clear All',
+    handler: () => {
+      gameStore.clearQueensAndFlags();
+      gameStore.testLogs = [];
+    },
+  },
+  { label: 'Undo', handler: () => gameStore.handleUndo() },
+  { label: 'Restart', handler: () => gameStore.handleRestart() },
+];
+
+const solutionControls = [
+  {
+    label: 'Generate Solution',
+    handler: () => {
+      gameStore.generateFullSolution();
+      gameStore.assignColorGroups();
+    },
+  },
+  { label: 'Assign Colors', handler: () => gameStore.assignColorGroups() },
+];
+
+const solverSteps = [
+  {
+    label: 'Step 1',
+    handler: () => {
+      if (!gameStore.testLogs.length) gameStore.testLogs = [];
+      gameStore.testLogs.push(
+        'Step 1: Place queens in last free squares of color blocks, rows, or columns.'
+      );
+      gameStore.testStep1PlaceLastFreeQueens();
+    },
+  },
+  {
+    label: 'Step 2',
+    handler: () => {
+      if (!gameStore.testLogs.length) gameStore.testLogs = [];
+      gameStore.testLogs.push(
+        'Step 2: Place flags where a queen would block all remaining squares in a color.'
+      );
+      gameStore.testStep2FlagBlockingSquares();
+    },
+  },
+  {
+    label: 'Step 3',
+    handler: () => {
+      if (!gameStore.testLogs.length) gameStore.testLogs = [];
+      gameStore.testLogs.push('Step 3: Constrained Row Elimination');
+      gameStore.testConstrainedRowElimination();
+    },
+  },
+  {
+    label: 'Step 4',
+    handler: () => {
+      if (!gameStore.testLogs.length) gameStore.testLogs = [];
+      gameStore.testLogs.push('Step 4: Constrained Column Elimination');
+      gameStore.testConstrainedColumnElimination();
+    },
+  },
+  {
+    label: 'Step 5',
+    handler: () => {
+      if (!gameStore.testLogs.length) gameStore.testLogs = [];
+      gameStore.testLogs.push(
+        'Step 5: Flag squares where a queen would block all remaining free squares in any row or column.'
+      );
+      gameStore.testStep5BlockRowsAndColumns();
+    },
+  },
+];
+
+// Computed flags
 const hasColorGroups = computed(() => {
   for (let row = 0; row < gameStore.gridSize; row++) {
     for (let col = 0; col < gameStore.gridSize; col++) {
@@ -182,102 +268,20 @@ const hasColorGroups = computed(() => {
   return false;
 });
 
-// Save puzzle to local storage
-const handleSavePuzzle = () => {
-  const puzzleName = gameStore.savePuzzleToLocalStorage();
-  if (puzzleName) {
-    savedMessage.value = `Puzzle saved as "${puzzleName}"`;
-    setTimeout(() => {
-      savedMessage.value = '';
-    }, 3000);
-  }
-};
-
-// Handle grid size changes
-const handleGridSizeChange = () => {
+// Handlers
+function handleGridSizeChange() {
   gameStore.setGridSize(gridSize.value);
-};
+}
 
-// Handle undo
-const handleUndo = () => {
-  gameStore.handleUndo();
-};
-
-// Handle restart
-const handleRestart = () => {
-  gameStore.handleRestart();
-};
-
-// Handle generate solution
-const handleGenerateSolution = () => {
-  gameStore.generateFullSolution();
-  gameStore.assignColorGroups();
-};
-
-// Handle assign color groups
-const handleAssignColorGroups = () => {
-  gameStore.assignColorGroups();
-};
-
-// Add handler to cycle through each solve step until no more actions
-const handleCycleSolveSteps = () => {
+function handleCycleSolveSteps() {
   gameStore.testAllStepsLoop();
-};
+}
 
-// Handle test step 1 only
-const handleTestStep1 = () => {
-  if (!gameStore.testLogs.length) gameStore.testLogs = [];
-  gameStore.testLogs.push(
-    'Step 1: Place queens in last free squares of color blocks, rows, or columns.'
-  );
-  gameStore.testStep1PlaceLastFreeQueens();
-};
-
-// Handle test step 2 only
-const handleTestStep2 = () => {
-  if (!gameStore.testLogs.length) gameStore.testLogs = [];
-  gameStore.testLogs.push(
-    'Step 2: Place flags where a queen would block all remaining squares in a color.'
-  );
-  gameStore.testStep2FlagBlockingSquares();
-};
-
-// Handle test step 3 only
-const handleTestStep3 = () => {
-  if (!gameStore.testLogs.length) gameStore.testLogs = [];
-  gameStore.testLogs.push('Step 3: Constrained Row Elimination');
-  gameStore.testConstrainedRowElimination();
-};
-
-// Handle test step 4 only
-const handleTestStep4 = () => {
-  if (!gameStore.testLogs.length) gameStore.testLogs = [];
-  gameStore.testLogs.push('Step 4: Constrained Column Elimination');
-  gameStore.testConstrainedColumnElimination();
-};
-
-// Add handler for step 5
-const handleTestStep5 = () => {
-  if (!gameStore.testLogs.length) gameStore.testLogs = [];
-  gameStore.testLogs.push(
-    'Step 5: Flag squares where a queen would block all remaining free squares in any row or column.'
-  );
-  gameStore.testStep5BlockRowsAndColumns();
-};
-
-// Handle clear queens and flags
-const handleClearQueensAndFlags = () => {
-  gameStore.clearQueensAndFlags();
-  gameStore.testLogs = [];
-};
-
-// Add handler for force change color
-const handleForceChangeColor = () => {
+function handleForceChangeColor() {
   gameStore.forceChangeColor();
-};
+}
 
-// Add handler for generate and store valid puzzle
-const handleGenerateAndStoreValidPuzzle = () => {
+function handleGenerateAndStoreValidPuzzle() {
   if (isGenerating.value) return;
 
   isGenerating.value = true;
@@ -294,12 +298,23 @@ const handleGenerateAndStoreValidPuzzle = () => {
   } else {
     savedMessage.value = 'Failed to generate a valid puzzle. Check logs for details.';
   }
+
   setTimeout(() => {
     savedMessage.value = '';
   }, 5000);
 
   isGenerating.value = false;
-};
+}
+
+function handleSavePuzzle() {
+  const puzzleName = gameStore.savePuzzleToLocalStorage();
+  if (puzzleName) {
+    savedMessage.value = `Puzzle saved as "${puzzleName}"`;
+    setTimeout(() => {
+      savedMessage.value = '';
+    }, 3000);
+  }
+}
 
 // Copy debug log to clipboard
 function copyDebugLog(debug: any) {

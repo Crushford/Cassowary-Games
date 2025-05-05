@@ -1,5 +1,22 @@
 import { defineStore } from 'pinia';
 import type { GridSquare } from '../components/GameGrid.vue';
+// Import utility functions
+import {
+  Pos,
+  createEmptyGrid,
+  getQueenPositions,
+  computeAvailableMoves,
+  clearMarkers,
+  validatePuzzle as validatePuzzleUtil,
+  isValidPosition,
+  cloneGrid,
+  queenAttacks,
+  countEmptyCells,
+  countCellsWithState,
+  getColorGroupPositions,
+  getColorDistribution,
+} from './gamestoreutils';
+import { range, shuffle, deepClone, groupBy } from './utils';
 
 // Define a proper type for puzzle generation attempt results
 interface AttemptResult {
@@ -26,13 +43,8 @@ export interface GameState {
 
 export const useGameStore = defineStore('game', {
   state: (): GameState => ({
-    grid: Array(6)
-      .fill(null)
-      .map(() =>
-        Array(6)
-          .fill(null)
-          .map(() => ({ state: 'empty' }))
-      ),
+    // Use createEmptyGrid utility
+    grid: createEmptyGrid(6),
     gridSize: 6,
     moveHistory: [],
     currentLevel: 1,
@@ -45,17 +57,9 @@ export const useGameStore = defineStore('game', {
   }),
 
   getters: {
-    // Get all positions where queens are placed
+    // Use getQueenPositions utility
     queenPositions: (state): { row: number; col: number }[] => {
-      const positions: { row: number; col: number }[] = [];
-      for (let row = 0; row < state.gridSize; row++) {
-        for (let col = 0; col < state.gridSize; col++) {
-          if (state.grid[row][col].state === 'queen') {
-            positions.push({ row, col });
-          }
-        }
-      }
-      return positions;
+      return getQueenPositions(state.grid);
     },
 
     isValidMove: (state) => (row: number, col: number) => {
@@ -78,10 +82,7 @@ export const useGameStore = defineStore('game', {
 
       for (const pos of diagonalPositions) {
         if (
-          pos.r >= 0 &&
-          pos.r < state.gridSize &&
-          pos.c >= 0 &&
-          pos.c < state.gridSize &&
+          isValidPosition(state.grid, pos.r, pos.c) &&
           state.grid[pos.r][pos.c].state === 'queen'
         ) {
           return false;
@@ -108,27 +109,18 @@ export const useGameStore = defineStore('game', {
 
   actions: {
     initializeGrid() {
-      this.grid = Array(this.gridSize)
-        .fill(null)
-        .map(() =>
-          Array(this.gridSize)
-            .fill(null)
-            .map(() => ({ state: 'empty' }))
-        );
+      // Use createEmptyGrid utility
+      this.grid = createEmptyGrid(this.gridSize);
       this.moveHistory = [];
       this.isComplete = false;
       this.updateAvailableMoves();
     },
 
     updateAvailableMoves() {
-      this.availableMoves = [];
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state === 'empty' && this.isValidMove(row, col)) {
-            this.availableMoves.push({ row, col });
-          }
-        }
-      }
+      // Use computeAvailableMoves utility
+      this.availableMoves = computeAvailableMoves(this.grid, (row, col) =>
+        this.isValidMove(row, col)
+      );
     },
 
     placeFlag(row: number, col: number) {
@@ -166,8 +158,9 @@ export const useGameStore = defineStore('game', {
     },
 
     saveToHistory() {
+      // Use cloneGrid utility
       this.moveHistory.push({
-        grid: JSON.parse(JSON.stringify(this.grid)),
+        grid: cloneGrid(this.grid),
       });
     },
 
@@ -226,9 +219,9 @@ export const useGameStore = defineStore('game', {
     },
 
     checkCompletion() {
-      // Check if we have placed all required queens
-      const requiredQueens = this.gridSize;
-      this.isComplete = this.queenPositions.length === requiredQueens;
+      // Use validatePuzzleUtil utility
+      const { queenCountValid } = validatePuzzleUtil(this.grid, this.gridSize, 2);
+      this.isComplete = queenCountValid;
     },
 
     setError(message: string | null) {
@@ -243,6 +236,33 @@ export const useGameStore = defineStore('game', {
       this.gridSize = size;
       this.initializeGrid();
       this.setError(null);
+    },
+
+    clearQueensAndFlags() {
+      // Use clearMarkers utility
+      clearMarkers(this.grid);
+      this.isComplete = false;
+      this.updateAvailableMoves();
+    },
+
+    // Replace original countFlags with more generic countCellsWithState utility
+    countFlags() {
+      return countCellsWithState(this.grid, 'flag');
+    },
+
+    // Replace original countEmptySquares with utility
+    countEmptySquares() {
+      return countEmptyCells(this.grid);
+    },
+
+    // Use isValidPosition utility to simplify this method
+    isValidPosition(row: number, col: number) {
+      return isValidPosition(this.grid, row, col);
+    },
+
+    // Use validatePuzzleUtil utility for validation
+    validatePuzzle(requiredQueens: number = 7) {
+      return validatePuzzleUtil(this.grid, requiredQueens, 2);
     },
 
     // New function to assign color groups to ensure a unique solution
@@ -591,11 +611,6 @@ export const useGameStore = defineStore('game', {
       return visited.size === colorCells.length;
     },
 
-    // Helper to check if a position is valid
-    isValidPosition(row: number, col: number) {
-      return row >= 0 && row < this.gridSize && col >= 0 && col < this.gridSize;
-    },
-
     // New method to generate a full solution
     generateFullSolution() {
       this.handleRestart();
@@ -789,34 +804,160 @@ export const useGameStore = defineStore('game', {
       return output;
     },
 
-    // Remove all queens and flags but keep color groups
-    clearQueensAndFlags() {
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          if (
-            this.grid[row][col].state === 'queen' ||
-            this.grid[row][col].state === 'flag' ||
-            this.grid[row][col].state === 'invalid'
-          ) {
-            this.grid[row][col].state = 'empty';
-          }
-        }
-      }
-      this.isComplete = false;
-      this.updateAvailableMoves();
-    },
-
     // Log array for test steps
     testLogs: [] as string[],
     // Log array for detailed debug info for step 2
     testDebugLogs: [] as any[],
 
+    // Helper for one generation attempt: returns puzzle name or null
+    attemptGeneratePuzzle(attempt: number, requiredQueens: number): string | null {
+      this.testLogs.push(`Attempt ${attempt}: Starting puzzle generation`);
+      this.generateFullSolution(); // build full solution
+
+      // Make sure color groups are assigned before proceeding
+      this.testLogs.push(`Attempt ${attempt}: Assigning color groups to solution`);
+      this.assignColorGroups();
+
+      // Debug info: get color distribution using utility
+      const { totalColored, totalSquares, colorCounts } = getColorDistribution(this.grid);
+      this.testLogs.push(
+        `Attempt ${attempt}: Color assignment complete - ${totalColored}/${totalSquares} cells colored`
+      );
+      Object.entries(colorCounts).forEach(([color, count]) => {
+        this.testLogs.push(`  - Color ${color}: ${count} cells`);
+      });
+
+      this.clearQueensAndFlags(); // reset markers
+      this.testAllStepsLoop(); // cycle solve steps
+      if (!this.forceChangeColor()) {
+        this.testLogs.push(`Attempt ${attempt}: Color change failed`);
+        return null;
+      }
+      this.testAllStepsLoop(); // re-run solver steps
+      const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle(requiredQueens);
+
+      // Add more detailed validation logs
+      this.testLogs.push(`Attempt ${attempt}: Final validation:`);
+      this.testLogs.push(
+        `  - Queens: ${this.queenPositions.length}/${requiredQueens} (valid: ${queenCountValid})`
+      );
+      this.testLogs.push(`  - All cells filled: ${allFilled}`);
+      this.testLogs.push(`  - Color groups valid: ${colorGroupsValid}`);
+
+      if (!(queenCountValid && allFilled && colorGroupsValid)) {
+        this.testLogs.push(
+          `Attempt ${attempt}: Validation failed. Queens: ${this.queenPositions.length}, Filled: ${allFilled}, Colors OK: ${colorGroupsValid}`
+        );
+        return null;
+      }
+      const name = this.savePuzzleToLocalStorage();
+      if (!name) {
+        this.testLogs.push(`Attempt ${attempt}: Save failed`);
+      }
+      return name;
+    },
+
+    // Generates puzzles until a valid one is found and stored; returns the puzzle name or null
+    generateAndStoreValidPuzzle(requiredQueens = 7, maxAttempts = 100): string | null {
+      this.testLogs = []; // Reset logs for clarity
+      this.testLogs.push(
+        `Starting to generate a valid puzzle for ${this.gridSize}x${this.gridSize} board...`
+      );
+
+      let attemptSummary: AttemptResult[] = [];
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        // Only log every 5th attempt for brevity
+        const shouldLogDetail = attempt % 5 === 1 || attempt === maxAttempts;
+
+        if (shouldLogDetail) {
+          this.testLogs.push(`\nAttempt ${attempt}/${maxAttempts}`);
+        }
+
+        this.generateFullSolution();
+        this.assignColorGroups();
+
+        // More concise color distribution info
+        if (shouldLogDetail) {
+          this.logColorDistribution();
+        }
+
+        this.clearQueensAndFlags();
+        this.testAllStepsLoop();
+
+        // Try to change a color if there are empty squares
+        const emptyCount = this.countEmptySquares();
+        if (emptyCount === 0) {
+          if (shouldLogDetail) {
+            this.testLogs.push('No empty squares to change colors');
+          }
+          continue;
+        }
+
+        this.forceChangeColor();
+        this.testAllStepsLoop();
+
+        // Validate and summarize
+        const { queenCountValid, allFilled, colorGroupsValid } =
+          this.validatePuzzle(requiredQueens);
+        const queenCount = this.queenPositions.length;
+
+        const attemptResult = {
+          attempt,
+          queens: queenCount,
+          requiredQueens,
+          allFilled,
+          colorGroupsValid,
+          success: queenCountValid && allFilled && colorGroupsValid,
+        };
+
+        attemptSummary.push(attemptResult);
+
+        if (shouldLogDetail) {
+          this.testLogs.push(
+            `Queens: ${queenCount}/${requiredQueens}, Filled: ${allFilled}, Valid Groups: ${colorGroupsValid}`
+          );
+        }
+
+        if (attemptResult.success) {
+          const name = this.savePuzzleToLocalStorage();
+          if (name) {
+            this.testLogs.push(`\n✅ SUCCESS: Puzzle saved as "${name}" after ${attempt} attempts`);
+
+            // Add summary statistics
+            this.summarizeAttempts(attemptSummary);
+
+            return name;
+          }
+        }
+      }
+
+      // Generate failure summary with statistics
+      this.testLogs.push(
+        `\n❌ FAILED: Could not generate valid puzzle after ${maxAttempts} attempts`
+      );
+      this.summarizeAttempts(attemptSummary);
+
+      this.setError(`Failed to generate a valid puzzle after ${maxAttempts} attempts`);
+      return null;
+    },
+
+    // Helper to log color distribution more concisely
+    logColorDistribution() {
+      const { totalColored, totalSquares, colorCounts } = getColorDistribution(this.grid);
+      this.testLogs.push(`Colors: ${totalColored}/${totalSquares} cells colored`);
+
+      // Sort colors by frequency
+      const sortedColors = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
+      let colorSummary = sortedColors.map(([color, count]) => `${color}:${count}`).join(', ');
+      this.testLogs.push(`Distribution: ${colorSummary}`);
+    },
+
     // Helper for step 1: Place queens in last free squares of color blocks, rows, or columns
     testStep1PlaceLastFreeQueens() {
-      type Pos = { row: number; col: number };
-      let placed;
       let didSomething = false;
       let queensPlaced = 0;
+      let placed;
 
       do {
         placed = false;
@@ -880,13 +1021,8 @@ export const useGameStore = defineStore('game', {
 
     // Helper for step 2: Flag squares where a queen would block all remaining squares in other color groups
     testStep2FlagBlockingSquares() {
-      type Pos = { row: number; col: number };
       let flagCount = 0;
       let didSomething = false;
-      // Helper: does a queen at (aRow, aCol) attack (tRow, tCol)?
-      function queenAttacks(aRow: number, aCol: number, tRow: number, tCol: number): boolean {
-        return aRow === tRow || aCol === tCol || Math.abs(aRow - tRow) === Math.abs(aCol - tCol);
-      }
 
       // Build map of empty squares by color group
       const emptyColorGroups = new Map<string, Pos[]>();
@@ -1182,19 +1318,6 @@ export const useGameStore = defineStore('game', {
       );
     },
 
-    // Helper to count flags on the board
-    countFlags() {
-      let count = 0;
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state === 'flag') {
-            count++;
-          }
-        }
-      }
-      return count;
-    },
-
     // Add helper to ensure no color block has a singleton square
     ensureNoSingletonColorBlocks() {
       const colorGroups: Record<string, { row: number; col: number }[]> = {};
@@ -1313,208 +1436,6 @@ export const useGameStore = defineStore('game', {
       // Ensure no single-square color blocks after color change
       this.ensureNoSingletonColorBlocks();
       return true;
-    },
-
-    // Helper to validate puzzle meets requirements: exact queen count, all filled, and all color groups >=2
-    validatePuzzle(requiredQueens: number = 7) {
-      const queens = this.queenPositions;
-      const queenCountValid = queens.length === requiredQueens;
-      let allFilled = true;
-      const colorGroupCounts: Record<string, number> = {};
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          const square = this.grid[row][col];
-          if (square.state !== 'queen' && square.state !== 'flag') {
-            allFilled = false;
-          }
-          const color = square.groupColor;
-          if (color) {
-            colorGroupCounts[color] = (colorGroupCounts[color] || 0) + 1;
-          }
-        }
-      }
-      const colorGroupsValid = Object.values(colorGroupCounts).every((c) => c >= 2);
-      return { queenCountValid, allFilled, colorGroupsValid };
-    },
-
-    // Helper for one generation attempt: returns puzzle name or null
-    attemptGeneratePuzzle(attempt: number, requiredQueens: number): string | null {
-      this.testLogs.push(`Attempt ${attempt}: Starting puzzle generation`);
-      this.generateFullSolution(); // build full solution
-
-      // Make sure color groups are assigned before proceeding
-      this.testLogs.push(`Attempt ${attempt}: Assigning color groups to solution`);
-      this.assignColorGroups();
-
-      // Debug info: count colored cells
-      let coloredCells = 0;
-      const colorCounts: Record<string, number> = {};
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          const color = this.grid[row][col].groupColor;
-          if (color) {
-            coloredCells++;
-            colorCounts[color] = (colorCounts[color] || 0) + 1;
-          }
-        }
-      }
-      this.testLogs.push(
-        `Attempt ${attempt}: Color assignment complete - ${coloredCells}/${this.gridSize * this.gridSize} cells colored`
-      );
-      Object.entries(colorCounts).forEach(([color, count]) => {
-        this.testLogs.push(`  - Color ${color}: ${count} cells`);
-      });
-
-      this.clearQueensAndFlags(); // reset markers
-      this.testAllStepsLoop(); // cycle solve steps
-      if (!this.forceChangeColor()) {
-        this.testLogs.push(`Attempt ${attempt}: Color change failed`);
-        return null;
-      }
-      this.testAllStepsLoop(); // re-run solver steps
-      const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle(requiredQueens);
-
-      // Add more detailed validation logs
-      this.testLogs.push(`Attempt ${attempt}: Final validation:`);
-      this.testLogs.push(
-        `  - Queens: ${this.queenPositions.length}/${requiredQueens} (valid: ${queenCountValid})`
-      );
-      this.testLogs.push(`  - All cells filled: ${allFilled}`);
-      this.testLogs.push(`  - Color groups valid: ${colorGroupsValid}`);
-
-      if (!(queenCountValid && allFilled && colorGroupsValid)) {
-        this.testLogs.push(
-          `Attempt ${attempt}: Validation failed. Queens: ${this.queenPositions.length}, Filled: ${allFilled}, Colors OK: ${colorGroupsValid}`
-        );
-        return null;
-      }
-      const name = this.savePuzzleToLocalStorage();
-      if (!name) {
-        this.testLogs.push(`Attempt ${attempt}: Save failed`);
-      }
-      return name;
-    },
-
-    // Generates puzzles until a valid one is found and stored; returns the puzzle name or null
-    generateAndStoreValidPuzzle(requiredQueens = 7, maxAttempts = 100): string | null {
-      this.testLogs = []; // Reset logs for clarity
-      this.testLogs.push(
-        `Starting to generate a valid puzzle for ${this.gridSize}x${this.gridSize} board...`
-      );
-
-      let attemptSummary: AttemptResult[] = [];
-
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        // Only log every 5th attempt for brevity
-        const shouldLogDetail = attempt % 5 === 1 || attempt === maxAttempts;
-
-        if (shouldLogDetail) {
-          this.testLogs.push(`\nAttempt ${attempt}/${maxAttempts}`);
-        }
-
-        this.generateFullSolution();
-        this.assignColorGroups();
-
-        // More concise color distribution info
-        if (shouldLogDetail) {
-          this.logColorDistribution();
-        }
-
-        this.clearQueensAndFlags();
-        this.testAllStepsLoop();
-
-        // Try to change a color if there are empty squares
-        const emptyCount = this.countEmptySquares();
-        if (emptyCount === 0) {
-          if (shouldLogDetail) {
-            this.testLogs.push('No empty squares to change colors');
-          }
-          continue;
-        }
-
-        this.forceChangeColor();
-        this.testAllStepsLoop();
-
-        // Validate and summarize
-        const { queenCountValid, allFilled, colorGroupsValid } =
-          this.validatePuzzle(requiredQueens);
-        const queenCount = this.queenPositions.length;
-
-        const attemptResult = {
-          attempt,
-          queens: queenCount,
-          requiredQueens,
-          allFilled,
-          colorGroupsValid,
-          success: queenCountValid && allFilled && colorGroupsValid,
-        };
-
-        attemptSummary.push(attemptResult);
-
-        if (shouldLogDetail) {
-          this.testLogs.push(
-            `Queens: ${queenCount}/${requiredQueens}, Filled: ${allFilled}, Valid Groups: ${colorGroupsValid}`
-          );
-        }
-
-        if (attemptResult.success) {
-          const name = this.savePuzzleToLocalStorage();
-          if (name) {
-            this.testLogs.push(`\n✅ SUCCESS: Puzzle saved as "${name}" after ${attempt} attempts`);
-
-            // Add summary statistics
-            this.summarizeAttempts(attemptSummary);
-
-            return name;
-          }
-        }
-      }
-
-      // Generate failure summary with statistics
-      this.testLogs.push(
-        `\n❌ FAILED: Could not generate valid puzzle after ${maxAttempts} attempts`
-      );
-      this.summarizeAttempts(attemptSummary);
-
-      this.setError(`Failed to generate a valid puzzle after ${maxAttempts} attempts`);
-      return null;
-    },
-
-    // Helper to log color distribution more concisely
-    logColorDistribution() {
-      const colorCounts: Record<string, number> = {};
-      let totalColored = 0;
-
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          const color = this.grid[row][col].groupColor;
-          if (color) {
-            totalColored++;
-            colorCounts[color] = (colorCounts[color] || 0) + 1;
-          }
-        }
-      }
-
-      const totalSquares = this.gridSize * this.gridSize;
-      this.testLogs.push(`Colors: ${totalColored}/${totalSquares} cells colored`);
-
-      // Sort colors by frequency
-      const sortedColors = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
-      let colorSummary = sortedColors.map(([color, count]) => `${color}:${count}`).join(', ');
-      this.testLogs.push(`Distribution: ${colorSummary}`);
-    },
-
-    // Count empty squares on the board
-    countEmptySquares() {
-      let count = 0;
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state === 'empty') {
-            count++;
-          }
-        }
-      }
-      return count;
     },
 
     // Generate summary statistics from attempts
