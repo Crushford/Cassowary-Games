@@ -1,5 +1,14 @@
 <template>
   <div class="min-h-screen bg-gray-900 p-6 text-gray-100">
+    <!-- Validation Toast Message -->
+    <div
+      v-if="validationMessage"
+      class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg text-white font-semibold shadow-lg"
+      :class="isValid ? 'bg-green-600' : 'bg-red-600'"
+    >
+      {{ validationMessage }}
+    </div>
+
     <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
       <!-- Sidebar Controls -->
       <aside class="space-y-6 md:col-span-1">
@@ -186,16 +195,11 @@ const gameStore = useGameStore();
 const gridSize = ref(gameStore.gridSize);
 const savedMessage = ref('');
 const isGenerating = ref(false);
+const validationMessage = ref('');
+const isValid = ref(false);
 
 // Button group definitions
 const boardControls = [
-  {
-    label: 'Clear All',
-    handler: () => {
-      gameStore.clearQueensAndFlags();
-      gameStore.testLogs = [];
-    },
-  },
   { label: 'Undo', handler: () => gameStore.handleUndo() },
   { label: 'Restart', handler: () => gameStore.handleRestart() },
 ];
@@ -209,9 +213,40 @@ const solutionControls = [
     },
   },
   { label: 'Assign Colors', handler: () => gameStore.assignColorGroups() },
+  {
+    label: 'Validate Puzzle',
+    handler: () => {
+      if (!gameStore.testLogs.length) gameStore.testLogs = [];
+      const validation = gameStore.validatePuzzle();
+      gameStore.testLogs.push('Puzzle Validation Results:');
+      gameStore.testLogs.push(
+        `- Queens: ${gameStore.queenPositions.length}/${gameStore.gridSize} (valid: ${validation.queenCountValid})`
+      );
+      gameStore.testLogs.push(`- All filled: ${validation.allFilled}`);
+      gameStore.testLogs.push(`- Color groups valid: ${validation.colorGroupsValid}`);
+
+      isValid.value =
+        validation.queenCountValid && validation.allFilled && validation.colorGroupsValid;
+      validationMessage.value = isValid.value ? '✅ VALID PUZZLE' : '❌ INVALID PUZZLE';
+      gameStore.testLogs.push(`Overall validation: ${isValid.value ? '✅ VALID' : '❌ INVALID'}`);
+
+      // Clear the validation message after a few seconds
+      setTimeout(() => {
+        validationMessage.value = '';
+      }, 4000);
+    },
+  },
 ];
 
 const solverSteps = [
+  {
+    label: 'Step 0: Clear',
+    handler: () => {
+      if (!gameStore.testLogs.length) gameStore.testLogs = [];
+      gameStore.testLogs.push('Step 0: Clearing all queens and flags');
+      gameStore.clearQueensAndFlags();
+    },
+  },
   {
     label: 'Step 1',
     handler: () => {
@@ -278,6 +313,13 @@ function handleGridSizeChange() {
 }
 
 function handleCycleSolveSteps() {
+  // Start by clearing the board
+  if (!gameStore.testLogs.length) gameStore.testLogs = [];
+  gameStore.testLogs.push('--- Starting Solver Cycle ---');
+  gameStore.testLogs.push('Step 0: Clearing all queens and flags');
+  gameStore.clearQueensAndFlags();
+
+  // Then run the normal cycle
   gameStore.testAllStepsLoop();
 }
 
