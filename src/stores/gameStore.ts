@@ -16,7 +16,6 @@ import {
   getColorGroupPositions,
   getColorDistribution,
 } from './gamestoreutils';
-import { range, shuffle, deepClone, groupBy } from './utils';
 
 // Define a proper type for puzzle generation attempt results
 interface AttemptResult {
@@ -859,98 +858,142 @@ export const useGameStore = defineStore('game', {
 
     // Generates puzzles until a valid one is found and stored; returns the puzzle name or null
     generateAndStoreValidPuzzle(requiredQueens = 7, maxAttempts = 100): string | null {
-      this.testLogs = []; // Reset logs for clarity
-      this.testLogs.push(
-        `Starting to generate a valid puzzle for ${this.gridSize}x${this.gridSize} board...`
-      );
+      try {
+        this.testLogs = []; // Reset logs for clarity
+        this.testLogs.push(
+          `Starting to generate a valid puzzle for ${this.gridSize}x${this.gridSize} board...`
+        );
 
-      let attemptSummary: AttemptResult[] = [];
+        let attemptSummary: AttemptResult[] = [];
 
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        // Only log every 5th attempt for brevity
-        const shouldLogDetail = attempt % 5 === 1 || attempt === maxAttempts;
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          try {
+            // Only log every 5th attempt for brevity
+            const shouldLogDetail = attempt % 5 === 1 || attempt === maxAttempts;
 
-        if (shouldLogDetail) {
-          this.testLogs.push(`\nAttempt ${attempt}/${maxAttempts}`);
-        }
+            if (shouldLogDetail) {
+              this.testLogs.push(`\nAttempt ${attempt}/${maxAttempts}`);
+            }
 
-        this.generateFullSolution();
-        this.assignColorGroups();
+            // Generate solution with queens
+            this.generateFullSolution();
 
-        // More concise color distribution info
-        if (shouldLogDetail) {
-          this.logColorDistribution();
-        }
+            // Skip if solution generation failed
+            if (this.queenPositions.length !== this.gridSize) {
+              this.testLogs.push(
+                `Failed to generate full solution. Got ${this.queenPositions.length}/${this.gridSize} queens.`
+              );
+              continue;
+            }
 
-        this.clearQueensAndFlags();
-        this.testAllStepsLoop();
+            // Assign color groups
+            this.assignColorGroups();
 
-        // Try to change a color if there are empty squares
-        const emptyCount = this.countEmptySquares();
-        if (emptyCount === 0) {
-          if (shouldLogDetail) {
-            this.testLogs.push('No empty squares to change colors');
+            // More concise color distribution info
+            if (shouldLogDetail) {
+              this.logColorDistribution();
+            }
+
+            this.clearQueensAndFlags();
+            this.testAllStepsLoop();
+
+            // Try to change a color if there are empty squares
+            const emptyCount = this.countEmptySquares();
+            if (emptyCount === 0) {
+              if (shouldLogDetail) {
+                this.testLogs.push('No empty squares to change colors');
+              }
+              continue;
+            }
+
+            this.forceChangeColor();
+            this.testAllStepsLoop();
+
+            // Validate and summarize
+            const { queenCountValid, allFilled, colorGroupsValid } =
+              this.validatePuzzle(requiredQueens);
+            const queenCount = this.queenPositions.length;
+
+            const attemptResult = {
+              attempt,
+              queens: queenCount,
+              requiredQueens,
+              allFilled,
+              colorGroupsValid,
+              success: queenCountValid && allFilled && colorGroupsValid,
+            };
+
+            attemptSummary.push(attemptResult);
+
+            if (shouldLogDetail) {
+              this.testLogs.push(
+                `Queens: ${queenCount}/${requiredQueens}, Filled: ${allFilled}, Valid Groups: ${colorGroupsValid}`
+              );
+            }
+
+            if (attemptResult.success) {
+              const name = this.savePuzzleToLocalStorage();
+              if (name) {
+                this.testLogs.push(
+                  `\n✅ SUCCESS: Puzzle saved as "${name}" after ${attempt} attempts`
+                );
+
+                // Add summary statistics
+                this.summarizeAttempts(attemptSummary);
+
+                return name;
+              }
+            }
+          } catch (attemptError) {
+            // Log error for this specific attempt but continue with next
+            console.error(`Error in attempt ${attempt}:`, attemptError);
+            this.testLogs.push(
+              `❌ Error in attempt ${attempt}: ${attemptError.message || 'Unknown error'}`
+            );
           }
-          continue;
         }
 
-        this.forceChangeColor();
-        this.testAllStepsLoop();
+        // Generate failure summary with statistics
+        this.testLogs.push(
+          `\n❌ FAILED: Could not generate valid puzzle after ${maxAttempts} attempts`
+        );
+        this.summarizeAttempts(attemptSummary);
 
-        // Validate and summarize
-        const { queenCountValid, allFilled, colorGroupsValid } =
-          this.validatePuzzle(requiredQueens);
-        const queenCount = this.queenPositions.length;
-
-        const attemptResult = {
-          attempt,
-          queens: queenCount,
-          requiredQueens,
-          allFilled,
-          colorGroupsValid,
-          success: queenCountValid && allFilled && colorGroupsValid,
-        };
-
-        attemptSummary.push(attemptResult);
-
-        if (shouldLogDetail) {
-          this.testLogs.push(
-            `Queens: ${queenCount}/${requiredQueens}, Filled: ${allFilled}, Valid Groups: ${colorGroupsValid}`
-          );
-        }
-
-        if (attemptResult.success) {
-          const name = this.savePuzzleToLocalStorage();
-          if (name) {
-            this.testLogs.push(`\n✅ SUCCESS: Puzzle saved as "${name}" after ${attempt} attempts`);
-
-            // Add summary statistics
-            this.summarizeAttempts(attemptSummary);
-
-            return name;
-          }
-        }
+        this.setError(`Failed to generate a valid puzzle after ${maxAttempts} attempts`);
+        return null;
+      } catch (error) {
+        // Handle any unexpected errors
+        console.error('Critical error in puzzle generation:', error);
+        this.testLogs.push(`❌ CRITICAL ERROR: ${error.message || 'Unknown error'}`);
+        this.setError(`Error generating puzzle: ${error.message || 'Unknown error'}`);
+        return null;
       }
-
-      // Generate failure summary with statistics
-      this.testLogs.push(
-        `\n❌ FAILED: Could not generate valid puzzle after ${maxAttempts} attempts`
-      );
-      this.summarizeAttempts(attemptSummary);
-
-      this.setError(`Failed to generate a valid puzzle after ${maxAttempts} attempts`);
-      return null;
     },
 
     // Helper to log color distribution more concisely
     logColorDistribution() {
-      const { totalColored, totalSquares, colorCounts } = getColorDistribution(this.grid);
-      this.testLogs.push(`Colors: ${totalColored}/${totalSquares} cells colored`);
+      try {
+        const result = getColorDistribution(this.grid);
+        if (!result) {
+          this.testLogs.push('Error: Could not get color distribution');
+          return;
+        }
 
-      // Sort colors by frequency
-      const sortedColors = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
-      let colorSummary = sortedColors.map(([color, count]) => `${color}:${count}`).join(', ');
-      this.testLogs.push(`Distribution: ${colorSummary}`);
+        const { totalColored, totalSquares, colorCounts } = result;
+        this.testLogs.push(`Colors: ${totalColored}/${totalSquares} cells colored`);
+
+        // Sort colors by frequency if we have any colors
+        if (colorCounts && Object.keys(colorCounts).length > 0) {
+          const sortedColors = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
+          let colorSummary = sortedColors.map(([color, count]) => `${color}:${count}`).join(', ');
+          this.testLogs.push(`Distribution: ${colorSummary}`);
+        } else {
+          this.testLogs.push('No colors assigned yet');
+        }
+      } catch (error) {
+        console.error('Error in logColorDistribution:', error);
+        this.testLogs.push(`Error logging color distribution: ${error.message || 'Unknown error'}`);
+      }
     },
 
     // Helper for step 1: Place queens in last free squares of color blocks, rows, or columns
@@ -1440,27 +1483,46 @@ export const useGameStore = defineStore('game', {
 
     // Generate summary statistics from attempts
     summarizeAttempts(attempts: AttemptResult[]) {
-      if (attempts.length === 0) return;
+      try {
+        if (!attempts || attempts.length === 0) {
+          this.testLogs.push('No attempt data to summarize');
+          return;
+        }
 
-      const queensHistogram: Record<number, number> = {};
-      let filledCount = 0;
-      let validGroupsCount = 0;
+        const queensHistogram: Record<number, number> = {};
+        let filledCount = 0;
+        let validGroupsCount = 0;
 
-      attempts.forEach((attempt) => {
-        queensHistogram[attempt.queens] = (queensHistogram[attempt.queens] || 0) + 1;
-        if (attempt.allFilled) filledCount++;
-        if (attempt.colorGroupsValid) validGroupsCount++;
-      });
+        attempts.forEach((attempt) => {
+          queensHistogram[attempt.queens] = (queensHistogram[attempt.queens] || 0) + 1;
+          if (attempt.allFilled) filledCount++;
+          if (attempt.colorGroupsValid) validGroupsCount++;
+        });
 
-      this.testLogs.push(`\n--- Generation Statistics ---`);
-      this.testLogs.push(`Total attempts: ${attempts.length}`);
-      this.testLogs.push(`Queens distribution: ${JSON.stringify(queensHistogram)}`);
-      this.testLogs.push(
-        `Fully filled boards: ${filledCount}/${attempts.length} (${Math.round((filledCount / attempts.length) * 100)}%)`
-      );
-      this.testLogs.push(
-        `Valid color groups: ${validGroupsCount}/${attempts.length} (${Math.round((validGroupsCount / attempts.length) * 100)}%)`
-      );
+        this.testLogs.push(`\n--- Generation Statistics ---`);
+        this.testLogs.push(`Total attempts: ${attempts.length}`);
+
+        if (Object.keys(queensHistogram).length > 0) {
+          this.testLogs.push(`Queens distribution: ${JSON.stringify(queensHistogram)}`);
+        }
+
+        const filledPercent = attempts.length
+          ? Math.round((filledCount / attempts.length) * 100)
+          : 0;
+        const validPercent = attempts.length
+          ? Math.round((validGroupsCount / attempts.length) * 100)
+          : 0;
+
+        this.testLogs.push(
+          `Fully filled boards: ${filledCount}/${attempts.length} (${filledPercent}%)`
+        );
+        this.testLogs.push(
+          `Valid color groups: ${validGroupsCount}/${attempts.length} (${validPercent}%)`
+        );
+      } catch (error) {
+        console.error('Error summarizing attempts:', error);
+        this.testLogs.push(`Error summarizing attempt data: ${error.message || 'Unknown error'}`);
+      }
     },
   },
 });

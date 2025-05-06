@@ -81,10 +81,14 @@
             @click="handleGenerateAndStoreValidPuzzle"
             :disabled="isGenerating"
             :class="[
-              'w-full px-6 py-3 rounded-lg text-gray-100 font-medium',
+              'w-full px-6 py-3 rounded-lg text-gray-100 font-medium flex items-center justify-center',
               isGenerating ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-400',
             ]"
           >
+            <span
+              v-if="isGenerating"
+              class="inline-block w-4 h-4 mr-2 border-2 border-gray-100 border-t-transparent rounded-full animate-spin"
+            ></span>
             {{ isGenerating ? 'Generating…' : 'Generate Valid Puzzle' }}
           </button>
           <button
@@ -282,28 +286,63 @@ function handleForceChangeColor() {
 }
 
 function handleGenerateAndStoreValidPuzzle() {
+  // Don't allow multiple generations
   if (isGenerating.value) return;
 
+  // Set initial UI state
   isGenerating.value = true;
   savedMessage.value = 'Generating puzzle... This may take a moment.';
-  if (!gameStore.testLogs.length) gameStore.testLogs = [];
+
+  // Prepare logs
+  if (!gameStore.testLogs || !gameStore.testLogs.length) gameStore.testLogs = [];
   gameStore.testLogs.push('Starting to generate a valid puzzle...');
 
-  // Clear any previous error
+  // Clear previous errors
   gameStore.setError(null);
 
-  const puzzleName = gameStore.generateAndStoreValidPuzzle();
-  if (puzzleName) {
-    savedMessage.value = `Auto-generated puzzle saved as "${puzzleName}"`;
-  } else {
-    savedMessage.value = 'Failed to generate a valid puzzle. Check logs for details.';
+  // Run a timeout to make sure isGenerating is reset no matter what
+  const resetTimeout = setTimeout(() => {
+    isGenerating.value = false;
+  }, 15000); // Force reset after 15 seconds max
+
+  try {
+    // Generate the puzzle (this is synchronous but can be slow)
+    const puzzleName = gameStore.generateAndStoreValidPuzzle();
+
+    // Clear the force-reset timeout since we're done
+    clearTimeout(resetTimeout);
+
+    // Reset generating state immediately
+    isGenerating.value = false;
+
+    // Show appropriate message
+    if (puzzleName) {
+      savedMessage.value = `Puzzle saved as "${puzzleName}"`;
+      gameStore.testLogs.push(`✅ Generation successful: "${puzzleName}"`);
+    } else {
+      savedMessage.value = 'Failed to generate a valid puzzle';
+      gameStore.testLogs.push('❌ Generation failed');
+    }
+
+    // Clear message after delay
+    setTimeout(() => {
+      savedMessage.value = '';
+    }, 5000);
+  } catch (error) {
+    // Handle any errors
+    console.error('Error generating puzzle:', error);
+    gameStore.testLogs.push(`❌ Error: ${error.message || 'Unknown error'}`);
+    savedMessage.value = 'Error generating puzzle';
+
+    // Clear the timeout and reset state
+    clearTimeout(resetTimeout);
+    isGenerating.value = false;
+
+    // Clear message after delay
+    setTimeout(() => {
+      savedMessage.value = '';
+    }, 5000);
   }
-
-  setTimeout(() => {
-    savedMessage.value = '';
-  }, 5000);
-
-  isGenerating.value = false;
 }
 
 function handleSavePuzzle() {
