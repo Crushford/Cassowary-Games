@@ -261,7 +261,46 @@ export const useGameStore = defineStore('game', {
 
     // Use validatePuzzleUtil utility for validation
     validatePuzzle(requiredQueens: number = 7) {
-      return validatePuzzleUtil(this.grid, requiredQueens, 2);
+      // Count queens
+      const queens = this.queenPositions;
+      const queenCountValid = queens.length === requiredQueens;
+
+      // Check if all squares are filled
+      let allFilled = true;
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].state === 'empty') {
+            allFilled = false;
+            break;
+          }
+        }
+        if (!allFilled) break;
+      }
+
+      // Check color groups - every color should have exactly one queen
+      let colorGroupsValid = true;
+      const queensByColor: Record<string, number> = {};
+
+      for (const queen of queens) {
+        const color = this.grid[queen.row][queen.col].groupColor;
+        if (color) {
+          queensByColor[color] = (queensByColor[color] || 0) + 1;
+        }
+      }
+
+      // Verify each color has exactly one queen
+      for (const color in queensByColor) {
+        if (queensByColor[color] !== 1) {
+          colorGroupsValid = false;
+          break;
+        }
+      }
+
+      return {
+        queenCountValid,
+        allFilled,
+        colorGroupsValid,
+      };
     },
 
     // New function to assign color groups to ensure a unique solution
@@ -332,7 +371,7 @@ export const useGameStore = defineStore('game', {
       }
 
       /* ---------- 4. GAP FILL ---------- */
-      const border = [];
+      const border: Array<[number, number]> = [];
       for (let r = 0; r < this.gridSize; r++) {
         for (let c = 0; c < this.gridSize; c++) {
           if (this.grid[r][c].groupColor) border.push([r, c]);
@@ -358,8 +397,8 @@ export const useGameStore = defineStore('game', {
       // unchanged helper
       this.ensureNoSingletonColorBlocks();
 
-      /* ---------- 6.  NEW → MERGE SMALL COMPONENTS  ---------- */
-      mergeSmallGroups.call(this, 2); // ≤ 2‑square components get merged
+      /* ---------- 6.  NEW → MERGE SMALL COMPONENTS  ---------- */
+      mergeSmallGroups.call(this, 2); // ≤ 2‑square components get merged
 
       /* ---------- helper inside this scope ---------- */
       function mergeSmallGroups(minSize = 2) {
@@ -828,9 +867,14 @@ export const useGameStore = defineStore('game', {
     },
 
     // Generates puzzles until a valid one is found and stored; returns the puzzle name or null
-    generateAndStoreValidPuzzle(requiredQueens = 7, maxAttempts = 100): string | null {
+    generateAndStoreValidPuzzle(maxAttempts = 100): string | null {
       try {
-        this.testLogs = []; // Reset logs for clarity
+        // Reset logs for clarity
+        this.testLogs = [];
+
+        // Use grid size for required queens - they should match
+        const requiredQueens = this.gridSize;
+
         this.testLogs.push(
           `Starting to generate a valid puzzle for ${this.gridSize}x${this.gridSize} board...`
         );
