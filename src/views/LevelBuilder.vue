@@ -217,8 +217,16 @@ const solutionControls = [
     label: 'Validate Puzzle',
     handler: () => {
       if (!gameStore.testLogs.length) gameStore.testLogs = [];
-      const validation = gameStore.validatePuzzle();
       gameStore.testLogs.push('Puzzle Validation Results:');
+
+      // Clear any previous logs to ensure clean validation output
+      gameStore.testLogs = ['Puzzle Validation Results:'];
+
+      // Run validation with minimum group size of 2
+      const validation = gameStore.validatePuzzle(gameStore.gridSize, 2);
+
+      // The color group size details will already be logged by the validatePuzzle method
+
       gameStore.testLogs.push(
         `- Queens: ${gameStore.queenPositions.length}/${gameStore.gridSize} (valid: ${validation.queenCountValid})`
       );
