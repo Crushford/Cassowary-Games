@@ -260,10 +260,10 @@ export const useGameStore = defineStore('game', {
     },
 
     // Use validatePuzzleUtil utility for validation
-    validatePuzzle(requiredQueens: number = 7) {
+    validatePuzzle() {
       // Count queens
       const queens = this.queenPositions;
-      const queenCountValid = queens.length === requiredQueens;
+      const queenCountValid = queens.length === this.gridSize;
 
       // Check if all squares are filled
       let allFilled = true;
