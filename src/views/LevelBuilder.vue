@@ -18,7 +18,46 @@
         <section
           class="flex flex-col gap-4 bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg"
         >
-          <div class="flex flex-wrap gap-4">
+          <!-- Collapsible section header -->
+          <button
+            @click="isBoardControlsExpanded = !isBoardControlsExpanded"
+            class="flex items-center justify-between w-full text-left font-semibold"
+          >
+            <span>Board Controls</span>
+            <span class="text-gray-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 transition-transform duration-200"
+                :class="isBoardControlsExpanded ? 'rotate-180' : ''"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </span>
+          </button>
+
+          <!-- Always visible grid size control -->
+          <label class="flex items-center gap-2 mb-2">
+            <span>Grid Size:</span>
+            <input
+              type="number"
+              v-model="gridSize"
+              min="4"
+              max="8"
+              @change="handleGridSizeChange"
+              class="w-20 bg-gray-700 border border-gray-600 rounded-lg px-2 py-1 text-gray-100"
+            />
+          </label>
+
+          <div
+            v-show="isBoardControlsExpanded"
+            class="flex flex-wrap gap-4 transition-all duration-300 overflow-hidden"
+          >
             <div v-for="btn in boardControls" :key="btn.label" class="flex flex-col">
               <button
                 @click="btn.handler"
@@ -29,31 +68,48 @@
               <span class="text-xs text-gray-400 mt-1">{{ btn.description }}</span>
             </div>
           </div>
-          <label class="flex items-center gap-2">
-            <span>Size:</span>
-            <input
-              type="number"
-              v-model="gridSize"
-              min="4"
-              max="8"
-              @change="handleGridSizeChange"
-              class="w-20 bg-gray-700 border border-gray-600 rounded-lg px-2 py-1 text-gray-100"
-            />
-          </label>
         </section>
 
         <!-- Solution Controls -->
         <section
           class="flex flex-col gap-4 bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg"
         >
-          <div v-for="btn in solutionControls" :key="btn.label" class="flex flex-col">
-            <button
-              @click="btn.handler"
-              class="px-4 py-2 bg-blue-500 hover:bg-blue-400 rounded-lg text-gray-100"
-            >
-              {{ btn.label }}
-            </button>
-            <span class="text-xs text-gray-400 mt-1">{{ btn.description }}</span>
+          <!-- Collapsible section header -->
+          <button
+            @click="isSolutionControlsExpanded = !isSolutionControlsExpanded"
+            class="flex items-center justify-between w-full text-left font-semibold"
+          >
+            <span>Solution Controls</span>
+            <span class="text-gray-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 transition-transform duration-200"
+                :class="isSolutionControlsExpanded ? 'rotate-180' : ''"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </span>
+          </button>
+
+          <div
+            v-show="isSolutionControlsExpanded"
+            class="space-y-3 transition-all duration-300 overflow-hidden"
+          >
+            <div v-for="btn in solutionControls" :key="btn.label" class="flex flex-col">
+              <button
+                @click="btn.handler"
+                class="px-4 py-2 bg-blue-500 hover:bg-blue-400 rounded-lg text-gray-100"
+              >
+                {{ btn.label }}
+              </button>
+              <span class="text-xs text-gray-400 mt-1">{{ btn.description }}</span>
+            </div>
           </div>
         </section>
 
@@ -133,23 +189,35 @@
 
         <!-- Solver Steps -->
         <section class="bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg">
-          <h2 class="font-semibold mb-4">Solver Steps</h2>
-          <div class="space-y-3">
-            <div v-for="btn in solverSteps" :key="btn.label" class="flex flex-col">
-              <button
-                @click="btn.handler"
-                class="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 rounded-lg text-gray-100 text-sm w-full"
+          <!-- Collapsible section header -->
+          <button
+            @click="isSolverStepsExpanded = !isSolverStepsExpanded"
+            class="flex items-center justify-between w-full text-left font-semibold mb-4"
+          >
+            <span>Solver Steps</span>
+            <span class="text-gray-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 transition-transform duration-200"
+                :class="isSolverStepsExpanded ? 'rotate-180' : ''"
+                viewBox="0 0 20 20"
+                fill="currentColor"
               >
-                {{ btn.label }}
-              </button>
-              <span class="text-xs text-gray-400 mt-1">{{ btn.description }}</span>
-            </div>
-          </div>
-          <div class="mt-4 flex flex-col gap-4">
+                <path
+                  fill-rule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </span>
+          </button>
+
+          <!-- Always visible buttons -->
+          <div class="space-y-3 mb-4">
             <div class="flex flex-col">
               <button
                 @click="handleCycleSolveSteps"
-                class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-100"
+                class="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 rounded-lg text-gray-100"
               >
                 Cycle All Steps
               </button>
@@ -160,7 +228,7 @@
             <div class="flex flex-col">
               <button
                 @click="handleForceChangeColor"
-                class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-100"
+                class="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 rounded-lg text-gray-100"
               >
                 Force Color Change
               </button>
@@ -169,49 +237,94 @@
               >
             </div>
           </div>
+
+          <!-- Collapsible detailed steps -->
+          <div
+            v-show="isSolverStepsExpanded"
+            class="space-y-3 transition-all duration-300 overflow-hidden"
+          >
+            <div v-for="btn in solverSteps" :key="btn.label" class="flex flex-col">
+              <button
+                @click="btn.handler"
+                class="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 rounded-lg text-gray-100 text-sm w-full"
+              >
+                {{ btn.label }}
+              </button>
+              <span class="text-xs text-gray-400 mt-1">{{ btn.description }}</span>
+            </div>
+          </div>
         </section>
 
         <!-- Auto-Puzzle Controls -->
         <section
           class="flex flex-col gap-4 bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg"
         >
-          <div class="flex flex-col">
-            <button
-              @click="handleGenerateAndStoreValidPuzzle"
-              :disabled="isGenerating"
-              :class="[
-                'w-full px-6 py-3 rounded-lg text-gray-100 font-medium flex items-center justify-center',
-                isGenerating ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-400',
-              ]"
-            >
-              <span
-                v-if="isGenerating"
-                class="inline-block w-4 h-4 mr-2 border-2 border-gray-100 border-t-transparent rounded-full animate-spin"
-              ></span>
-              {{ isGenerating ? 'Generating…' : 'Generate Valid Puzzle' }}
-            </button>
-            <span class="text-xs text-gray-400 mt-1"
-              >generateAndStoreValidPuzzle() - Automatically generate a complete, valid puzzle</span
-            >
-          </div>
-
-          <div class="flex flex-col" v-if="hasColorGroups">
-            <button
-              @click="handleSavePuzzle"
-              class="w-full px-6 py-3 bg-green-600 hover:bg-green-500 rounded-lg text-gray-100 font-medium"
-            >
-              Save to Local Storage
-            </button>
-            <span class="text-xs text-gray-400 mt-1"
-              >savePuzzleToLocalStorage() - Save current puzzle to browser storage</span
-            >
-          </div>
+          <!-- Collapsible section header -->
+          <button
+            @click="isAutoPuzzleExpanded = !isAutoPuzzleExpanded"
+            class="flex items-center justify-between w-full text-left font-semibold"
+          >
+            <span>Auto-Puzzle Controls</span>
+            <span class="text-gray-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 transition-transform duration-200"
+                :class="isAutoPuzzleExpanded ? 'rotate-180' : ''"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </span>
+          </button>
 
           <div
-            v-if="savedMessage"
-            class="mt-2 p-2 bg-green-100 text-green-700 rounded text-center text-sm"
+            v-show="isAutoPuzzleExpanded"
+            class="space-y-3 transition-all duration-300 overflow-hidden"
           >
-            {{ savedMessage }}
+            <div class="flex flex-col">
+              <button
+                @click="handleGenerateAndStoreValidPuzzle"
+                :disabled="isGenerating"
+                :class="[
+                  'w-full px-6 py-3 rounded-lg text-gray-100 font-medium flex items-center justify-center',
+                  isGenerating ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-400',
+                ]"
+              >
+                <span
+                  v-if="isGenerating"
+                  class="inline-block w-4 h-4 mr-2 border-2 border-gray-100 border-t-transparent rounded-full animate-spin"
+                ></span>
+                {{ isGenerating ? 'Generating…' : 'Generate Valid Puzzle' }}
+              </button>
+              <span class="text-xs text-gray-400 mt-1"
+                >generateAndStoreValidPuzzle() - Automatically generate a complete, valid
+                puzzle</span
+              >
+            </div>
+
+            <div class="flex flex-col" v-if="hasColorGroups">
+              <button
+                @click="handleSavePuzzle"
+                class="w-full px-6 py-3 bg-green-600 hover:bg-green-500 rounded-lg text-gray-100 font-medium"
+              >
+                Save to Local Storage
+              </button>
+              <span class="text-xs text-gray-400 mt-1"
+                >savePuzzleToLocalStorage() - Save current puzzle to browser storage</span
+              >
+            </div>
+
+            <div
+              v-if="savedMessage"
+              class="mt-2 p-2 bg-green-100 text-green-700 rounded text-center text-sm"
+            >
+              {{ savedMessage }}
+            </div>
           </div>
         </section>
       </aside>
@@ -307,6 +420,10 @@ const validationMessage = ref('');
 const isValid = ref(false);
 const logsContainer = ref<HTMLElement | null>(null);
 const isColorAssignmentExpanded = ref(false);
+const isSolutionControlsExpanded = ref(false);
+const isSolverStepsExpanded = ref(false);
+const isAutoPuzzleExpanded = ref(true);
+const isBoardControlsExpanded = ref(true);
 
 // Scroll logs to bottom when they change
 watch(
