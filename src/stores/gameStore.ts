@@ -269,24 +269,23 @@ export const useGameStore = defineStore('game', {
     },
 
     assignColorGroups() {
-      console.log('assignColorGroups');
       /* ---------- 1. RESET ---------- */
       for (let r = 0; r < this.gridSize; r++) {
         for (let c = 0; c < this.gridSize; c++) {
           this.grid[r][c].groupColor = undefined;
         }
       }
-      debugger;
-      /* ---------- 2. COLOUR QUEENS ---------- */
+
+      /* ---------- 2. COLOR QUEENS ---------- */
       const palette = ['red', 'blue', 'green', 'yellow', 'purple', 'pink'];
 
       const queens = [...this.queenPositions];
       if (queens.length > palette.length) {
-        this.setError(`Not enough colours for ${queens.length} queens`);
+        this.setError(`Not enough colors for ${queens.length} queens`);
         return;
       }
       queens.forEach(({ row, col }) => (this.grid[row][col].groupColor = palette.pop()));
-      console.log('2. COLOUR QUEENS');
+
       /* ---------- 3. REGION GROWTH (BFS) ---------- */
       const directions = [
         [0, -1],
@@ -305,18 +304,18 @@ export const useGameStore = defineStore('game', {
         ];
 
         // Group colored squares by color, with full coordinates
-        const byColour: Record<string, { row: number; col: number; square: GridSquare }[]> = {};
+        const byColor: Record<string, { row: number; col: number; square: GridSquare }[]> = {};
 
         for (let row = 0; row < this.grid.length; row++) {
           for (let col = 0; col < this.grid[row].length; col++) {
             const square = this.grid[row][col];
             if (!square.groupColor) continue;
-            (byColour[square.groupColor] ??= []).push({ row, col, square });
+            (byColor[square.groupColor] ??= []).push({ row, col, square });
           }
         }
 
         // For each color group, try to add one neighbor square
-        for (const group of Object.values(byColour)) {
+        for (const group of Object.values(byColor)) {
           const base = group[0]; // pick first square in group
           const shuffled = dirs.slice().sort(() => Math.random() - 0.5);
 
