@@ -103,6 +103,78 @@ export function addOneToEachColorGroup(grid: GridSquare[][]): GridSquare[][] {
   return newGrid;
 }
 
+// Function to add color to a specific row or all rows if no row is specified
+export function addColorToEachRow(
+  grid: GridSquare[][],
+  logsOrNull?: string[] | null,
+  targetRow?: number
+): GridSquare[][] {
+  // Create a safe logs array that's guaranteed to be an array even if null or undefined is passed
+  const logs = Array.isArray(logsOrNull) ? logsOrNull : [];
+
+  // Create a deep copy of the grid to avoid mutating the original
+  const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
+  const gridSize = newGrid.length;
+
+  const dirs: [number, number][] = [
+    [0, -1],
+    [0, 1],
+    [-1, 0],
+    [1, 0],
+  ];
+
+  // If a specific targetRow is provided, only process that row
+  const startRow = targetRow !== undefined ? targetRow : 0;
+  const endRow = targetRow !== undefined ? targetRow + 1 : gridSize;
+
+  for (let row = startRow; row < endRow; row++) {
+    // 1. Collect un-colored squares in this row
+    const uncolored = newGrid[row]
+      .map((square, col) => ({ square, col }))
+      .filter(({ square }) => !square.groupColor);
+
+    // 2. If none, log and continue
+    if (uncolored.length === 0) {
+      logs.push(`Row ${row} is already full`);
+      continue;
+    }
+
+    // 3. Pick one at random
+    const { col } = uncolored[Math.floor(Math.random() * uncolored.length)];
+
+    // 4. Gather neighbor colors
+    const neighborColors: string[] = [];
+    for (const [dr, dc] of dirs) {
+      const r = row + dr,
+        c = col + dc;
+      if (isValidPosition(newGrid, r, c)) {
+        const color = newGrid[r][c].groupColor;
+        if (color) neighborColors.push(color);
+      }
+    }
+
+    // Count occurrences of each color
+    const counts: Record<string, number> = {};
+    neighborColors.forEach((c) => (counts[c] = (counts[c] || 0) + 1));
+
+    // 5. Exclude any color with count ≥ 2
+    const validColors = Object.keys(counts).filter((c) => counts[c] < 2);
+
+    if (validColors.length === 0) {
+      // 6. Nothing valid → skip
+      logs.push(`Skipping row ${row}: no valid neighbor colors`);
+      continue;
+    }
+
+    // 7. Assign a random valid color
+    const chosen = validColors[Math.floor(Math.random() * validColors.length)];
+    newGrid[row][col].groupColor = chosen;
+    logs.push(`Row ${row}, col ${col}: colored "${chosen}"`);
+  }
+
+  return newGrid;
+}
+
 // Function to fill remaining uncolored squares with neighboring colors
 export function fillRemainingSquares(
   grid: GridSquare[][],
@@ -488,76 +560,4 @@ function countColoredSquares(grid: GridSquare[][]): number {
     }
   }
   return count;
-}
-
-// Function to add color to a specific row or all rows if no row is specified
-export function addColorToEachRow(
-  grid: GridSquare[][],
-  logsOrNull?: string[] | null,
-  targetRow?: number
-): GridSquare[][] {
-  // Create a safe logs array that's guaranteed to be an array even if null or undefined is passed
-  const logs = Array.isArray(logsOrNull) ? logsOrNull : [];
-
-  // Create a deep copy of the grid to avoid mutating the original
-  const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
-  const gridSize = newGrid.length;
-
-  const dirs: [number, number][] = [
-    [0, -1],
-    [0, 1],
-    [-1, 0],
-    [1, 0],
-  ];
-
-  // If a specific targetRow is provided, only process that row
-  const startRow = targetRow !== undefined ? targetRow : 0;
-  const endRow = targetRow !== undefined ? targetRow + 1 : gridSize;
-
-  for (let row = startRow; row < endRow; row++) {
-    // 1. Collect un-colored squares in this row
-    const uncolored = newGrid[row]
-      .map((square, col) => ({ square, col }))
-      .filter(({ square }) => !square.groupColor);
-
-    // 2. If none, log and continue
-    if (uncolored.length === 0) {
-      logs.push(`Row ${row} is already full`);
-      continue;
-    }
-
-    // 3. Pick one at random
-    const { col } = uncolored[Math.floor(Math.random() * uncolored.length)];
-
-    // 4. Gather neighbor colors
-    const neighborColors: string[] = [];
-    for (const [dr, dc] of dirs) {
-      const r = row + dr,
-        c = col + dc;
-      if (isValidPosition(newGrid, r, c)) {
-        const color = newGrid[r][c].groupColor;
-        if (color) neighborColors.push(color);
-      }
-    }
-
-    // Count occurrences of each color
-    const counts: Record<string, number> = {};
-    neighborColors.forEach((c) => (counts[c] = (counts[c] || 0) + 1));
-
-    // 5. Exclude any color with count ≥ 2
-    const validColors = Object.keys(counts).filter((c) => counts[c] < 2);
-
-    if (validColors.length === 0) {
-      // 6. Nothing valid → skip
-      logs.push(`Skipping row ${row}: no valid neighbor colors`);
-      continue;
-    }
-
-    // 7. Assign a random valid color
-    const chosen = validColors[Math.floor(Math.random() * validColors.length)];
-    newGrid[row][col].groupColor = chosen;
-    logs.push(`Row ${row}, col ${col}: colored "${chosen}"`);
-  }
-
-  return newGrid;
 }
