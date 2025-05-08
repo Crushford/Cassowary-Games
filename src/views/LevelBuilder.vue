@@ -16,16 +16,19 @@
 
         <!-- Board Controls -->
         <section
-          class="flex flex-wrap gap-4 bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg"
+          class="flex flex-col gap-4 bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg"
         >
-          <button
-            v-for="btn in boardControls"
-            :key="btn.label"
-            @click="btn.handler"
-            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-100"
-          >
-            {{ btn.label }}
-          </button>
+          <div class="flex flex-wrap gap-4">
+            <div v-for="btn in boardControls" :key="btn.label" class="flex flex-col">
+              <button
+                @click="btn.handler"
+                class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-100"
+              >
+                {{ btn.label }}
+              </button>
+              <span class="text-xs text-gray-400 mt-1">{{ btn.description }}</span>
+            </div>
+          </div>
           <label class="flex items-center gap-2">
             <span>Size:</span>
             <input
@@ -41,23 +44,82 @@
 
         <!-- Solution Controls -->
         <section
-          class="flex flex-wrap gap-4 bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg"
+          class="flex flex-col gap-4 bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg"
         >
-          <button
-            v-for="btn in solutionControls"
-            :key="btn.label"
-            @click="btn.handler"
-            class="px-4 py-2 bg-blue-500 hover:bg-blue-400 rounded-lg text-gray-100"
-          >
-            {{ btn.label }}
-          </button>
+          <div v-for="btn in solutionControls" :key="btn.label" class="flex flex-col">
+            <button
+              @click="btn.handler"
+              class="px-4 py-2 bg-blue-500 hover:bg-blue-400 rounded-lg text-gray-100"
+            >
+              {{ btn.label }}
+            </button>
+            <span class="text-xs text-gray-400 mt-1">{{ btn.description }}</span>
+          </div>
         </section>
 
         <!-- Color Assignment Steps -->
         <section class="bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg">
-          <h2 class="font-semibold mb-4">Color Assignment Steps</h2>
-          <div class="space-y-3">
-            <div v-for="btn in colorAssignmentSteps" :key="btn.label" class="flex flex-col">
+          <div class="flex flex-col gap-4">
+            <!-- Always visible commonly used buttons -->
+            <div class="space-y-3">
+              <div class="flex flex-col">
+                <button
+                  @click="colorAssignmentSteps[colorAssignmentSteps.length - 1].handler"
+                  class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-gray-100 text-sm"
+                >
+                  Full Color Assignment
+                </button>
+                <span class="text-xs text-gray-400 mt-1">
+                  assignColors() - Complete color assignment in one click
+                </span>
+              </div>
+
+              <div class="flex flex-col">
+                <button
+                  @click="colorAssignmentSteps[5].handler"
+                  class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-gray-100 text-sm"
+                >
+                  Fill Remaining Squares
+                </button>
+                <span class="text-xs text-gray-400 mt-1">
+                  fillRemainingSingleSquares() - Colors any remaining uncolored squares
+                </span>
+              </div>
+            </div>
+
+            <!-- Collapsible section header -->
+            <button
+              @click="isColorAssignmentExpanded = !isColorAssignmentExpanded"
+              class="flex items-center justify-between w-full text-left font-semibold"
+            >
+              <span>Detailed Color Assignment Steps</span>
+              <span class="text-gray-400">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 transition-transform duration-200"
+                  :class="isColorAssignmentExpanded ? 'rotate-180' : ''"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </span>
+            </button>
+          </div>
+
+          <div
+            v-show="isColorAssignmentExpanded"
+            class="space-y-3 mt-4 transition-all duration-300 overflow-hidden"
+          >
+            <div
+              v-for="(btn, index) in colorAssignmentSteps.slice(0, 5)"
+              :key="btn.label"
+              class="flex flex-col"
+            >
               <button
                 @click="btn.handler"
                 class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-gray-100 text-sm"
@@ -72,29 +134,40 @@
         <!-- Solver Steps -->
         <section class="bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg">
           <h2 class="font-semibold mb-4">Solver Steps</h2>
-          <div class="grid grid-cols-2 gap-4">
-            <button
-              v-for="btn in solverSteps"
-              :key="btn.label"
-              @click="btn.handler"
-              class="px-3 py-1 bg-yellow-600 hover:bg-yellow-500 rounded text-gray-100 text-sm"
-            >
-              {{ btn.label }}
-            </button>
+          <div class="space-y-3">
+            <div v-for="btn in solverSteps" :key="btn.label" class="flex flex-col">
+              <button
+                @click="btn.handler"
+                class="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 rounded-lg text-gray-100 text-sm w-full"
+              >
+                {{ btn.label }}
+              </button>
+              <span class="text-xs text-gray-400 mt-1">{{ btn.description }}</span>
+            </div>
           </div>
-          <div class="mt-4 flex gap-4">
-            <button
-              @click="handleCycleSolveSteps"
-              class="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-100"
-            >
-              Cycle All
-            </button>
-            <button
-              @click="handleForceChangeColor"
-              class="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-100"
-            >
-              Force Color
-            </button>
+          <div class="mt-4 flex flex-col gap-4">
+            <div class="flex flex-col">
+              <button
+                @click="handleCycleSolveSteps"
+                class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-100"
+              >
+                Cycle All Steps
+              </button>
+              <span class="text-xs text-gray-400 mt-1"
+                >testAllStepsLoop() - Run all solver steps in sequence</span
+              >
+            </div>
+            <div class="flex flex-col">
+              <button
+                @click="handleForceChangeColor"
+                class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-100"
+              >
+                Force Color Change
+              </button>
+              <span class="text-xs text-gray-400 mt-1"
+                >forceChangeColor() - Randomly change color of an empty square</span
+              >
+            </div>
           </div>
         </section>
 
@@ -102,27 +175,38 @@
         <section
           class="flex flex-col gap-4 bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg"
         >
-          <button
-            @click="handleGenerateAndStoreValidPuzzle"
-            :disabled="isGenerating"
-            :class="[
-              'w-full px-6 py-3 rounded-lg text-gray-100 font-medium flex items-center justify-center',
-              isGenerating ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-400',
-            ]"
-          >
-            <span
-              v-if="isGenerating"
-              class="inline-block w-4 h-4 mr-2 border-2 border-gray-100 border-t-transparent rounded-full animate-spin"
-            ></span>
-            {{ isGenerating ? 'Generating…' : 'Generate Valid Puzzle' }}
-          </button>
-          <button
-            v-if="hasColorGroups"
-            @click="handleSavePuzzle"
-            class="w-full px-6 py-3 bg-green-600 hover:bg-green-500 rounded-lg text-gray-100 font-medium"
-          >
-            Save to Local Storage
-          </button>
+          <div class="flex flex-col">
+            <button
+              @click="handleGenerateAndStoreValidPuzzle"
+              :disabled="isGenerating"
+              :class="[
+                'w-full px-6 py-3 rounded-lg text-gray-100 font-medium flex items-center justify-center',
+                isGenerating ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-400',
+              ]"
+            >
+              <span
+                v-if="isGenerating"
+                class="inline-block w-4 h-4 mr-2 border-2 border-gray-100 border-t-transparent rounded-full animate-spin"
+              ></span>
+              {{ isGenerating ? 'Generating…' : 'Generate Valid Puzzle' }}
+            </button>
+            <span class="text-xs text-gray-400 mt-1"
+              >generateAndStoreValidPuzzle() - Automatically generate a complete, valid puzzle</span
+            >
+          </div>
+
+          <div class="flex flex-col" v-if="hasColorGroups">
+            <button
+              @click="handleSavePuzzle"
+              class="w-full px-6 py-3 bg-green-600 hover:bg-green-500 rounded-lg text-gray-100 font-medium"
+            >
+              Save to Local Storage
+            </button>
+            <span class="text-xs text-gray-400 mt-1"
+              >savePuzzleToLocalStorage() - Save current puzzle to browser storage</span
+            >
+          </div>
+
           <div
             v-if="savedMessage"
             class="mt-2 p-2 bg-green-100 text-green-700 rounded text-center text-sm"
@@ -148,6 +232,9 @@
         >
           {{ gameStore.errorMessage }}
         </div>
+
+        <!-- Debug Information -->
+        <DebugInformation />
 
         <!-- Logs -->
         <section
@@ -206,6 +293,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import GameGrid from '../components/GameGrid.vue';
+import DebugInformation from '../components/DebugInformation.vue';
 import { useGameStore } from '../stores/gameStore';
 
 const gameStore = useGameStore();
@@ -215,6 +303,7 @@ const isGenerating = ref(false);
 const validationMessage = ref('');
 const isValid = ref(false);
 const logsContainer = ref<HTMLElement | null>(null);
+const isColorAssignmentExpanded = ref(false);
 
 // Scroll logs to bottom when they change
 watch(
@@ -239,8 +328,12 @@ onMounted(() => {
 
 // Button group definitions
 const boardControls = [
-  { label: 'Undo', handler: () => gameStore.handleUndo() },
-  { label: 'Restart', handler: () => gameStore.clearQueensAndFlags() },
+  { label: 'Undo', handler: () => gameStore.handleUndo(), description: 'Clear the last action' },
+  {
+    label: 'Restart',
+    handler: () => gameStore.clearQueensAndFlags(),
+    description: 'Clear all queens and flags',
+  },
 ];
 
 const solutionControls = [
@@ -249,6 +342,7 @@ const solutionControls = [
     handler: () => {
       gameStore.generateFullSolution();
     },
+    description: 'Generate a complete solution for the puzzle',
   },
   {
     label: 'Validate Puzzle',
@@ -298,6 +392,7 @@ const solutionControls = [
         validationMessage.value = '';
       }, 4000);
     },
+    description: 'Validate the current puzzle state',
   },
 ];
 
@@ -400,6 +495,7 @@ const solverSteps = [
       gameStore.testLogs.push('Step 0: Clearing all queens and flags');
       gameStore.clearQueensAndFlags();
     },
+    description: 'Clear all queens and flags from the grid',
   },
   {
     label: 'Step 1',
@@ -410,6 +506,7 @@ const solverSteps = [
       );
       gameStore.testStep1PlaceLastFreeQueens();
     },
+    description: 'Place queens in the last free squares of color blocks, rows, or columns',
   },
   {
     label: 'Step 2',
@@ -420,6 +517,7 @@ const solverSteps = [
       );
       gameStore.testStep2FlagBlockingSquares();
     },
+    description: 'Place flags where a queen would block all remaining squares in a color',
   },
   {
     label: 'Step 3',
@@ -428,6 +526,7 @@ const solverSteps = [
       gameStore.testLogs.push('Step 3: Constrained Row Elimination');
       gameStore.testConstrainedRowElimination();
     },
+    description: 'Eliminate queens from rows based on constraints',
   },
   {
     label: 'Step 4',
@@ -436,6 +535,7 @@ const solverSteps = [
       gameStore.testLogs.push('Step 4: Constrained Column Elimination');
       gameStore.testConstrainedColumnElimination();
     },
+    description: 'Eliminate queens from columns based on constraints',
   },
   {
     label: 'Step 5',
@@ -446,6 +546,8 @@ const solverSteps = [
       );
       gameStore.testStep5BlockRowsAndColumns();
     },
+    description:
+      'Flag squares where a queen would block all remaining free squares in any row or column',
   },
 ];
 
