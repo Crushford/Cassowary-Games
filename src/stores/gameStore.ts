@@ -299,192 +299,198 @@ export const useGameStore = defineStore('game', {
       };
     },
 
-    // New function to assign color groups to ensure a unique solution
     assignColorGroups() {
-      if (!this.isComplete) {
-        this.setError('Need a complete solution before assigning color groups');
-        return;
-      }
-
+      console.log('assignColorGroups');
       /* ---------- 1. RESET ---------- */
       for (let r = 0; r < this.gridSize; r++) {
         for (let c = 0; c < this.gridSize; c++) {
           this.grid[r][c].groupColor = undefined;
         }
       }
-
+      debugger;
       /* ---------- 2. COLOUR QUEENS ---------- */
-      const palette: ('red' | 'blue' | 'green' | 'yellow' | 'purple' | 'pink')[] = [
-        'red',
-        'blue',
-        'green',
-        'yellow',
-        'purple',
-        'pink',
-      ];
+      const palette = ['red', 'blue', 'green', 'yellow', 'purple', 'pink'];
 
-      const queens = [...this.queenPositions].sort(() => Math.random() - 0.5);
+      const queens = [...this.queenPositions];
       if (queens.length > palette.length) {
         this.setError(`Not enough colours for ${queens.length} queens`);
         return;
       }
-      const colours = [...palette].sort(() => Math.random() - 0.5);
-      queens.forEach((q, i) => (this.grid[q.row][q.col].groupColor = colours[i]));
-
+      queens.forEach(({ row, col }) => (this.grid[row][col].groupColor = palette.pop()));
+      console.log('2. COLOUR QUEENS');
       /* ---------- 3. REGION GROWTH (BFS) ---------- */
-      const dirs = [
-        { dr: 1, dc: 0 },
-        { dr: -1, dc: 0 },
-        { dr: 0, dc: 1 },
-        { dr: 0, dc: -1 },
+      const directions = [
+        [0, -1],
+        [0, 1],
+        [-1, 0],
+        [1, 0],
       ];
-      const queue: { row: number; col: number; color: string }[] = queens.map((q, i) => ({
-        row: q.row,
-        col: q.col,
-        color: colours[i],
-      }));
-      const visited = new Set<string>(queue.map(({ row, col }) => `${row},${col}`));
 
-      while (queue.length) {
-        const idx = Math.floor(Math.random() * queue.length);
-        const { row, col, color } = queue.splice(idx, 1)[0];
-
-        /* shuffle directions for organic look */
-        for (const { dr, dc } of dirs.sort(() => Math.random() - 0.5)) {
-          const nr = row + dr,
-            nc = col + dc,
-            key = `${nr},${nc}`;
-          if (
-            this.isValidPosition(nr, nc) &&
-            !visited.has(key) &&
-            this.grid[nr][nc].state !== 'queen'
-          ) {
-            this.grid[nr][nc].groupColor = color;
-            visited.add(key);
-            queue.push({ row: nr, col: nc, color });
-          }
-        }
-      }
-
-      /* ---------- 4. GAP FILL ---------- */
-      const border: Array<[number, number]> = [];
-      for (let r = 0; r < this.gridSize; r++) {
-        for (let c = 0; c < this.gridSize; c++) {
-          if (this.grid[r][c].groupColor) border.push([r, c]);
-        }
-      }
-      while (border.length) {
-        const [r, c] = border.shift()!;
-        for (const { dr, dc } of dirs) {
-          const nr = r + dr,
-            nc = c + dc;
-          if (
-            this.isValidPosition(nr, nc) &&
-            !this.grid[nr][nc].groupColor &&
-            this.grid[nr][nc].state !== 'queen'
-          ) {
-            this.grid[nr][nc].groupColor = this.grid[r][c].groupColor;
-            border.push([nr, nc]);
-          }
-        }
-      }
-
-      /* ---------- 5. ANTI‑BLOCK + SINGLETON CLEANUP ---------- */
-      // unchanged helper
-      this.ensureNoSingletonColorBlocks();
-
-      /* ---------- 6.  NEW → MERGE SMALL COMPONENTS  ---------- */
-      mergeSmallGroups.call(this, 2); // ≤ 2‑square components get merged
-
-      /* ---------- helper inside this scope ---------- */
-      function mergeSmallGroups(minSize = 2) {
-        const dirs = [
-          { dr: 1, dc: 0 },
-          { dr: -1, dc: 0 },
-          { dr: 0, dc: 1 },
-          { dr: 0, dc: -1 },
+      //** Action: add one more square to each existing color group (if possible). */
+      const addOneToEachColorGroup = () => {
+        const dirs: [number, number][] = [
+          [0, -1],
+          [0, 1],
+          [-1, 0],
+          [1, 0],
         ];
-        const visited = new Set<string>();
 
-        // quick lookup of which colours already have a queen
-        const queenColourSet = new Set(
-          this.queenPositions.map(({ row, col }) => this.grid[row][col].groupColor)
-        );
+        // Group colored squares by color, with full coordinates
+        const byColour: Record<string, { row: number; col: number; square: GridSquare }[]> = {};
 
-        for (let r = 0; r < this.gridSize; r++) {
-          for (let c = 0; c < this.gridSize; c++) {
-            const startKey = `${r},${c}`;
-            if (visited.has(startKey)) continue;
+        for (let row = 0; row < this.grid.length; row++) {
+          for (let col = 0; col < this.grid[row].length; col++) {
+            const square = this.grid[row][col];
+            if (!square.groupColor) continue;
+            (byColour[square.groupColor] ??= []).push({ row, col, square });
+          }
+        }
 
-            const colr = this.grid[r][c].groupColor;
-            if (!colr) continue;
+        // For each color group, try to add one neighbor square
+        for (const group of Object.values(byColour)) {
+          const base = group[0]; // pick first square in group
+          const shuffled = dirs.slice().sort(() => Math.random() - 0.5);
 
-            /* ---- collect this connected component ---- */
-            const comp: { row: number; col: number }[] = [];
-            const q: { row: number; col: number }[] = [{ row: r, col: c }];
-            visited.add(startKey);
+          for (const [dr, dc] of shuffled) {
+            const r = base.row + dr;
+            const c = base.col + dc;
 
-            while (q.length) {
-              const cur = q.pop()!;
-              comp.push(cur);
-              for (const { dr, dc } of dirs) {
-                const nr = cur.row + dr,
-                  nc = cur.col + dc,
-                  k = `${nr},${nc}`;
-                if (
-                  this.isValidPosition(nr, nc) &&
-                  !visited.has(k) &&
-                  this.grid[nr][nc].groupColor === colr
-                ) {
-                  visited.add(k);
-                  q.push({ row: nr, col: nc });
-                }
+            if (this.isValidPosition(r, c)) {
+              const neighbor = this.grid[r][c];
+              if (!neighbor.groupColor && neighbor.playerMark !== 'queen') {
+                neighbor.groupColor = base.square.groupColor;
+                break; // only one added per group
               }
-            }
-
-            if (comp.length > minSize) continue; // big enough
-
-            /* ---- find neighbour colour frequency ---- */
-            const neighbours: Record<string, number> = {};
-            let componentHasQueen = false;
-
-            for (const { row: cr, col: cc } of comp) {
-              if (this.grid[cr][cc].state === 'queen') componentHasQueen = true;
-
-              for (const { dr, dc } of dirs) {
-                const nr = cr + dr,
-                  nc = cc + dc;
-                if (this.isValidPosition(nr, nc)) {
-                  const nCol = this.grid[nr][nc].groupColor;
-                  if (nCol && nCol !== colr) {
-                    neighbours[nCol] = (neighbours[nCol] || 0) + 1;
-                  }
-                }
-              }
-            }
-
-            const sorted = Object.entries(neighbours).sort((a, b) => b[1] - a[1]);
-            let target = sorted.length ? sorted[0][0] : null;
-
-            /* ensure queen uniqueness: pick a colour without a queen if we move a queen */
-            if (componentHasQueen && target && queenColourSet.has(target)) {
-              target = sorted.find(([c]) => !queenColourSet.has(c))?.[0] ?? null;
-            }
-            if (!target) continue; // nothing safe to merge into
-
-            /* ---- repaint the component ---- */
-            for (const { row: cr, col: cc } of comp) {
-              this.grid[cr][cc].groupColor = target;
-            }
-
-            /* keep queen colour set up‑to‑date */
-            if (componentHasQueen) {
-              queenColourSet.delete(colr);
-              queenColourSet.add(target);
             }
           }
         }
-      }
+      };
+
+      addOneToEachColorGroup();
+      addOneToEachColorGroup();
+      addOneToEachColorGroup();
+
+      //next we should find a random non colored square and color it with the color of the square in a radnom direction from itself, once it has a color, then we start the loop over with the next random colorlesssquare
+
+      // /* ---------- 4. GAP FILL ---------- */
+      // const border: Array<[number, number]> = [];
+      // for (let r = 0; r < this.gridSize; r++) {
+      //   for (let c = 0; c < this.gridSize; c++) {
+      //     if (this.grid[r][c].groupColor) border.push([r, c]);
+      //   }
+      // }
+      // while (border.length) {
+      //   const [r, c] = border.shift()!;
+      //   for (const { dr, dc } of directions) {
+      //     const nr = r + dr,
+      //       nc = c + dc;
+      //     if (
+      //       this.isValidPosition(nr, nc) &&
+      //       !this.grid[nr][nc].groupColor &&
+      //       this.grid[nr][nc].state !== 'queen'
+      //     ) {
+      //       this.grid[nr][nc].groupColor = this.grid[r][c].groupColor;
+      //       border.push([nr, nc]);
+      //     }
+      //   }
+      // }
+
+      // /* ---------- 5. ANTI‑BLOCK + SINGLETON CLEANUP ---------- */
+      // // unchanged helper
+      // this.ensureNoSingletonColorBlocks();
+
+      // /* ---------- 6.  NEW → MERGE SMALL COMPONENTS  ---------- */
+      // mergeSmallGroups.call(this, 2); // ≤ 2‑square components get merged
+
+      // /* ---------- helper inside this scope ---------- */
+      // function mergeSmallGroups(minSize = 2) {
+      //   const directions = [
+      //     { dr: 1, dc: 0 },
+      //     { dr: -1, dc: 0 },
+      //     { dr: 0, dc: 1 },
+      //     { dr: 0, dc: -1 },
+      //   ];
+      //   const visited = new Set<string>();
+
+      //   // quick lookup of which colours already have a queen
+      //   const queenColourSet = new Set(
+      //     this.queenPositions.map(({ row, col }) => this.grid[row][col].groupColor)
+      //   );
+
+      //   for (let r = 0; r < this.gridSize; r++) {
+      //     for (let c = 0; c < this.gridSize; c++) {
+      //       const startKey = `${r},${c}`;
+      //       if (visited.has(startKey)) continue;
+
+      //       const colr = this.grid[r][c].groupColor;
+      //       if (!colr) continue;
+
+      //       /* ---- collect this connected component ---- */
+      //       const comp: { row: number; col: number }[] = [];
+      //       const q: { row: number; col: number }[] = [{ row: r, col: c }];
+      //       visited.add(startKey);
+
+      //       while (q.length) {
+      //         const cur = q.pop()!;
+      //         comp.push(cur);
+      //         for (const { dr, dc } of directions) {
+      //           const nr = cur.row + dr,
+      //             nc = cur.col + dc,
+      //             k = `${nr},${nc}`;
+      //           if (
+      //             this.isValidPosition(nr, nc) &&
+      //             !visited.has(k) &&
+      //             this.grid[nr][nc].groupColor === colr
+      //           ) {
+      //             visited.add(k);
+      //             q.push({ row: nr, col: nc });
+      //           }
+      //         }
+      //       }
+
+      //       if (comp.length > minSize) continue; // big enough
+
+      //       /* ---- find neighbour colour frequency ---- */
+      //       const neighbours: Record<string, number> = {};
+      //       let componentHasQueen = false;
+
+      //       for (const { row: cr, col: cc } of comp) {
+      //         if (this.grid[cr][cc].state === 'queen') componentHasQueen = true;
+
+      //         for (const { dr, dc } of directions) {
+      //           const nr = cr + dr,
+      //             nc = cc + dc;
+      //           if (this.isValidPosition(nr, nc)) {
+      //             const nCol = this.grid[nr][nc].groupColor;
+      //             if (nCol && nCol !== colr) {
+      //               neighbours[nCol] = (neighbours[nCol] || 0) + 1;
+      //             }
+      //           }
+      //         }
+      //       }
+
+      //       const sorted = Object.entries(neighbours).sort((a, b) => b[1] - a[1]);
+      //       let target = sorted.length ? sorted[0][0] : null;
+
+      //       /* ensure queen uniqueness: pick a colour without a queen if we move a queen */
+      //       if (componentHasQueen && target && queenColourSet.has(target)) {
+      //         target = sorted.find(([c]) => !queenColourSet.has(c))?.[0] ?? null;
+      //       }
+      //       if (!target) continue; // nothing safe to merge into
+
+      //       /* ---- repaint the component ---- */
+      //       for (const { row: cr, col: cc } of comp) {
+      //         this.grid[cr][cc].groupColor = target;
+      //       }
+
+      //       /* keep queen colour set up‑to‑date */
+      //       if (componentHasQueen) {
+      //         queenColourSet.delete(colr);
+      //         queenColourSet.add(target);
+      //       }
+      //     }
+      //   }
+      // }
     },
 
     // Fallback method if the main algorithm fails
