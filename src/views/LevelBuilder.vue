@@ -9,7 +9,7 @@
       {{ validationMessage }}
     </div>
 
-    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6">
       <!-- Sidebar Controls -->
       <aside class="space-y-6 md:col-span-1">
         <h1 class="text-3xl font-bold">Level Builder</h1>
@@ -216,8 +216,9 @@
         </section>
       </aside>
 
-      <!-- Main Content -->
-      <main class="space-y-6 md:col-span-2">
+      <!-- Main Content Area -->
+      <div class="md:col-span-2 space-y-6">
+        <!-- Game Grid -->
         <GameGrid
           :grid="gameStore.grid"
           :grid-size="gridSize"
@@ -232,9 +233,6 @@
         >
           {{ gameStore.errorMessage }}
         </div>
-
-        <!-- Debug Information -->
-        <DebugInformation />
 
         <!-- Logs -->
         <section
@@ -285,7 +283,12 @@
             </button>
           </div>
         </section>
-      </main>
+      </div>
+
+      <!-- Debug Information (Right Side) -->
+      <div class="md:col-span-1">
+        <DebugInformation />
+      </div>
     </div>
   </div>
 </template>

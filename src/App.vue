@@ -24,23 +24,15 @@
       </div>
     </nav>
 
-    <div class="flex flex-col lg:flex-row">
+    <div class="p-4">
       <!-- Main Content -->
-      <div class="w-full lg:w-2/3 p-4">
-        <router-view></router-view>
-      </div>
-
-      <!-- Global Debug Panel -->
-      <div class="flex-1 bg-surface shadow-lg">
-        <DebugPanel />
-      </div>
+      <router-view></router-view>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
-import DebugPanel from './components/DebugPanel.vue';
 import { useGameStore } from './stores/gameStore';
 import { onMounted } from 'vue';
 
