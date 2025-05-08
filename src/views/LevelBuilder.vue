@@ -153,6 +153,7 @@
         <section
           v-if="gameStore.testLogs && gameStore.testLogs.length"
           class="bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg max-h-64 overflow-auto"
+          ref="logsContainer"
         >
           <h3 class="font-semibold mb-4">Logs</h3>
           <ul class="list-disc list-inside text-sm space-y-2">
@@ -203,7 +204,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import GameGrid from '../components/GameGrid.vue';
 import { useGameStore } from '../stores/gameStore';
 
@@ -213,6 +214,28 @@ const savedMessage = ref('');
 const isGenerating = ref(false);
 const validationMessage = ref('');
 const isValid = ref(false);
+const logsContainer = ref<HTMLElement | null>(null);
+
+// Scroll logs to bottom when they change
+watch(
+  () => gameStore.testLogs,
+  () => {
+    // Use nextTick to ensure the DOM has updated
+    nextTick(() => {
+      if (logsContainer.value) {
+        logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
+      }
+    });
+  },
+  { deep: true }
+);
+
+// Also scroll to bottom on mount
+onMounted(() => {
+  if (logsContainer.value && gameStore.testLogs.length > 0) {
+    logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
+  }
+});
 
 // Button group definitions
 const boardControls = [
@@ -348,12 +371,22 @@ const colorAssignmentSteps = [
     },
   },
   {
-    label: '5. Full Color Assignment',
+    label: '5. Fill Remaining Squares',
+    description:
+      'Find any remaining uncolored squares and assign them a color from adjacent squares',
+    handler: () => {
+      if (!gameStore.testLogs.length) gameStore.testLogs = [];
+      gameStore.testLogs.push('Step 5: Filling remaining uncolored squares');
+      gameStore.fillRemainingSingleSquares();
+    },
+  },
+  {
+    label: '6. Full Color Assignment',
     description:
       'Run the complete color assignment process (resets all colors, assigns unique colors to queens, adds one to each color group, then systematically fills rows until all squares are colored)',
     handler: () => {
       if (!gameStore.testLogs.length) gameStore.testLogs = [];
-      gameStore.testLogs.push('Step 5: Running full color assignment');
+      gameStore.testLogs.push('Step 6: Running full color assignment');
       gameStore.assignColorGroups();
     },
   },
