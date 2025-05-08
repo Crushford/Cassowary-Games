@@ -15,7 +15,12 @@ import {
   countCellsWithState,
   getColorDistribution,
 } from './gameStoreUtils';
-import { assignColors, ensureNoSingletonColorBlocks } from '../utils/colorAssignment';
+import {
+  assignColors,
+  ensureNoSingletonColorBlocks,
+  addOneToEachColorGroup,
+  addColorToEachRow,
+} from '../utils/colorAssignment';
 
 // Define a proper type for puzzle generation attempt results
 interface AttemptResult {
@@ -275,6 +280,82 @@ export const useGameStore = defineStore('game', {
 
     assignColorGroups() {
       this.grid = assignColors(this.grid, this.queenPositions, this.testLogs);
+    },
+
+    // New method to add one color to each group
+    addOneColorToEachGroup() {
+      // Save current state to history before making changes
+      this.saveToHistory();
+
+      // Get the current state of the grid
+      const beforeState = this.grid.map((row) => row.map((square) => ({ ...square })));
+
+      // Apply the color growth
+      this.grid = addOneToEachColorGroup(this.grid);
+
+      // Log before and after state to help debug
+      if (!this.testLogs) this.testLogs = [];
+
+      // Count colors before and after
+      const colorsBefore = this.countColoredCells(beforeState);
+      const colorsAfter = this.countColoredCells(this.grid);
+
+      this.testLogs.push(`Adding one square to each color group`);
+      this.testLogs.push(`- Before: ${colorsBefore.total} colored cells`);
+      this.testLogs.push(`- After: ${colorsAfter.total} colored cells`);
+      this.testLogs.push(`- Added: ${colorsAfter.total - colorsBefore.total} new colored cells`);
+
+      // Log detailed color distribution
+      Object.entries(colorsAfter.byColor).forEach(([color, count]) => {
+        const before = colorsBefore.byColor[color] || 0;
+        this.testLogs.push(
+          `  - ${color}: ${before} → ${count as number} (+${(count as number) - before})`
+        );
+      });
+    },
+
+    // Helper method to count colored cells
+    countColoredCells(grid: GridSquare[][]) {
+      const result = {
+        total: 0,
+        byColor: {} as Record<string, number>,
+      };
+
+      for (let row = 0; row < grid.length; row++) {
+        for (let col = 0; col < grid[0].length; col++) {
+          const color = grid[row][col].groupColor;
+          if (color) {
+            result.total++;
+            result.byColor[color] = (result.byColor[color] || 0) + 1;
+          }
+        }
+      }
+
+      return result;
+    },
+
+    // New method to add one color to each row
+    addOneColorToEachRow(targetRow?: number) {
+      // Save current state to history before making changes
+      this.saveToHistory();
+
+      // Get the current state of the grid
+      const beforeState = this.grid.map((row) => row.map((square) => ({ ...square })));
+
+      // Apply the color change
+      this.grid = addColorToEachRow(this.grid, this.testLogs, targetRow);
+
+      // Count colors before and after
+      const colorsBefore = this.countColoredCells(beforeState);
+      const colorsAfter = this.countColoredCells(this.grid);
+
+      if (!this.testLogs) this.testLogs = [];
+
+      const rowDesc = targetRow !== undefined ? `row ${targetRow}` : 'each row';
+      this.testLogs.push(`Adding one color to ${rowDesc}`);
+      this.testLogs.push(`- Before: ${colorsBefore.total} colored cells`);
+      this.testLogs.push(`- After: ${colorsAfter.total} colored cells`);
+      this.testLogs.push(`- Added: ${colorsAfter.total - colorsBefore.total} new colored cells`);
     },
 
     // Fallback method if the main algorithm fails

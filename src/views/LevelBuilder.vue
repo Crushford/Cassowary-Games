@@ -53,6 +53,22 @@
           </button>
         </section>
 
+        <!-- Color Assignment Steps -->
+        <section class="bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg">
+          <h2 class="font-semibold mb-4">Color Assignment Steps</h2>
+          <div class="space-y-3">
+            <div v-for="btn in colorAssignmentSteps" :key="btn.label" class="flex flex-col">
+              <button
+                @click="btn.handler"
+                class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-gray-100 text-sm"
+              >
+                {{ btn.label }}
+              </button>
+              <span class="text-xs text-gray-400 mt-1">{{ btn.description }}</span>
+            </div>
+          </div>
+        </section>
+
         <!-- Solver Steps -->
         <section class="bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg">
           <h2 class="font-semibold mb-4">Solver Steps</h2>
@@ -209,10 +225,8 @@ const solutionControls = [
     label: 'Generate Solution',
     handler: () => {
       gameStore.generateFullSolution();
-      gameStore.assignColorGroups();
     },
   },
-  { label: 'Assign Colors', handler: () => gameStore.assignColorGroups() },
   {
     label: 'Validate Puzzle',
     handler: () => {
@@ -222,19 +236,37 @@ const solutionControls = [
       // Clear any previous logs to ensure clean validation output
       gameStore.testLogs = ['Puzzle Validation Results:'];
 
-      // Run validation with minimum group size of 2
-      const validation = gameStore.validatePuzzle(gameStore.gridSize, 2);
+      // Call validatePuzzle to get the boolean result
+      const isValidPuzzle = gameStore.validatePuzzle();
 
-      // The color group size details will already be logged by the validatePuzzle method
+      // We need to manually check for these conditions since validatePuzzle only returns a boolean
+      const queenCountValid = gameStore.queenPositions.length === gameStore.gridSize;
+      const allFilled = gameStore.countEmptySquares() === 0;
+
+      // Check color groups by looking at each color
+      let colorGroupsValid = true;
+      const colorCounts = new Map();
+
+      // Count queens per color
+      for (const { row, col } of gameStore.queenPositions) {
+        const color = gameStore.grid[row][col].groupColor;
+        if (color) {
+          colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+        }
+      }
+
+      // Verify each color has exactly one queen
+      colorCounts.forEach((count) => {
+        if (count !== 1) colorGroupsValid = false;
+      });
 
       gameStore.testLogs.push(
-        `- Queens: ${gameStore.queenPositions.length}/${gameStore.gridSize} (valid: ${validation.queenCountValid})`
+        `- Queens: ${gameStore.queenPositions.length}/${gameStore.gridSize} (valid: ${queenCountValid})`
       );
-      gameStore.testLogs.push(`- All filled: ${validation.allFilled}`);
-      gameStore.testLogs.push(`- Color groups valid: ${validation.colorGroupsValid}`);
+      gameStore.testLogs.push(`- All filled: ${allFilled}`);
+      gameStore.testLogs.push(`- Color groups valid: ${colorGroupsValid}`);
 
-      isValid.value =
-        validation.queenCountValid && validation.allFilled && validation.colorGroupsValid;
+      isValid.value = queenCountValid && allFilled && colorGroupsValid;
       validationMessage.value = isValid.value ? '✅ VALID PUZZLE' : '❌ INVALID PUZZLE';
       gameStore.testLogs.push(`Overall validation: ${isValid.value ? '✅ VALID' : '❌ INVALID'}`);
 
@@ -242,6 +274,87 @@ const solutionControls = [
       setTimeout(() => {
         validationMessage.value = '';
       }, 4000);
+    },
+  },
+];
+
+// New section for color assignment steps
+const colorAssignmentSteps = [
+  {
+    label: '1. Reset Colors',
+    description: 'Clear all color groups from the grid',
+    handler: () => {
+      if (!gameStore.testLogs.length) gameStore.testLogs = [];
+      gameStore.testLogs.push('Step 1: Resetting all color groups');
+
+      // Create a deep copy of the grid and reset colors
+      const newGrid = gameStore.grid.map((row) =>
+        row.map((square) => ({ ...square, groupColor: undefined }))
+      );
+      gameStore.grid = newGrid;
+    },
+  },
+  {
+    label: '2. Color Queens',
+    description: 'Assign unique colors to each queen',
+    handler: () => {
+      if (!gameStore.testLogs.length) gameStore.testLogs = [];
+      gameStore.testLogs.push('Step 2: Assigning colors to queens');
+
+      // Assign colors to queens (first part of assignColors)
+      const palette = ['red', 'blue', 'green', 'yellow', 'purple', 'pink'];
+      gameStore.queenPositions.forEach(({ row, col }) => {
+        gameStore.grid[row][col].groupColor = palette.pop();
+      });
+    },
+  },
+  {
+    label: '3. Grow Color Groups',
+    description: 'Add one square to each color group',
+    handler: () => {
+      if (!gameStore.testLogs.length) gameStore.testLogs = [];
+      gameStore.testLogs.push('Step 3: Adding one square to each color group');
+      gameStore.addOneColorToEachGroup();
+    },
+  },
+  {
+    label: '4. Fill Rows',
+    description: 'Add one color to each row with uncolored squares',
+    handler: () => {
+      if (!gameStore.testLogs.length) gameStore.testLogs = [];
+      gameStore.testLogs.push('Step 4: Adding one color to each row');
+
+      // Process all rows
+      for (let row = 0; row < gameStore.gridSize; row++) {
+        gameStore.addOneColorToEachRow(row);
+      }
+    },
+  },
+  {
+    label: '4a. Fill Single Row',
+    description: 'Add one color to the first row with uncolored squares',
+    handler: () => {
+      if (!gameStore.testLogs.length) gameStore.testLogs = [];
+
+      // Find first row with uncolored squares
+      for (let row = 0; row < gameStore.gridSize; row++) {
+        const hasUncoloredSquares = gameStore.grid[row].some((square) => !square.groupColor);
+        if (hasUncoloredSquares) {
+          gameStore.testLogs.push(`Adding one color to row ${row}`);
+          gameStore.addOneColorToEachRow(row);
+          break;
+        }
+      }
+    },
+  },
+  {
+    label: '5. Full Color Assignment',
+    description:
+      'Run the complete color assignment process (resets all colors, assigns unique colors to queens, adds one to each color group, then systematically fills rows until all squares are colored)',
+    handler: () => {
+      if (!gameStore.testLogs.length) gameStore.testLogs = [];
+      gameStore.testLogs.push('Step 5: Running full color assignment');
+      gameStore.assignColorGroups();
     },
   },
 ];

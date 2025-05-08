@@ -59,7 +59,7 @@ export function ensureNoSingletonColorBlocks(grid: GridSquare[][]): GridSquare[]
 }
 
 // Helper to add one square to each color group
-function addOneToEachColorGroup(grid: GridSquare[][]): GridSquare[][] {
+export function addOneToEachColorGroup(grid: GridSquare[][]): GridSquare[][] {
   const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
   const gridSize = newGrid.length;
 
@@ -134,25 +134,46 @@ export function assignColors(
     newGrid[row][col].groupColor = palette.pop();
   });
 
-  // 3. Region growth (BFS)
-  // Add one square to each color group three times
-  newGrid = addOneToEachColorGroup(newGrid);
-  newGrid = addOneToEachColorGroup(newGrid);
+  // 3. Add one color to each group once
+  logs.push('Adding one color to each group');
   newGrid = addOneToEachColorGroup(newGrid);
 
-  // 4. Add colors to each row
-  newGrid = addColorToEachRow(newGrid, logs);
+  // 4. Keep adding colors to each row until no uncolored squares remain
+  let allColored = false;
+  let iterations = 0;
+  const maxIterations = gridSize * gridSize; // Safety limit to prevent infinite loops
 
-  // 5. Ensure no singleton color blocks
-  newGrid = ensureNoSingletonColorBlocks(newGrid);
+  while (!allColored && iterations < maxIterations) {
+    allColored = true; // Assume all are colored until we find an uncolored square
+
+    // Add one color to each row that has uncolored squares
+    for (let row = 0; row < gridSize; row++) {
+      // Check if the row has any uncolored squares
+      const hasUncoloredSquares = newGrid[row].some((square) => !square.groupColor);
+
+      if (hasUncoloredSquares) {
+        allColored = false; // We found an uncolored square, so not all are colored
+        newGrid = addColorToEachRow(newGrid, logs, row); // Only process this specific row
+      }
+    }
+
+    iterations++;
+  }
+
+  if (iterations >= maxIterations) {
+    logs.push(`Warning: Reached max iterations (${maxIterations}) while coloring the grid`);
+  } else {
+    logs.push(`Successfully colored grid in ${iterations} iterations`);
+  }
 
   return newGrid;
 }
 
-// Function to add color to each row
+// Function to add color to a specific row or all rows if no row is specified
 export function addColorToEachRow(
   grid: GridSquare[][],
-  logsOrNull?: string[] | null
+  logsOrNull?: string[] | null,
+  targetRow?: number
 ): GridSquare[][] {
   // Create a safe logs array that's guaranteed to be an array even if null or undefined is passed
   const logs = Array.isArray(logsOrNull) ? logsOrNull : [];
@@ -168,7 +189,11 @@ export function addColorToEachRow(
     [1, 0],
   ];
 
-  for (let row = 0; row < gridSize; row++) {
+  // If a specific targetRow is provided, only process that row
+  const startRow = targetRow !== undefined ? targetRow : 0;
+  const endRow = targetRow !== undefined ? targetRow + 1 : gridSize;
+
+  for (let row = startRow; row < endRow; row++) {
     // 1. Collect un-colored squares in this row
     const uncolored = newGrid[row]
       .map((square, col) => ({ square, col }))
