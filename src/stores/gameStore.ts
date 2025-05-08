@@ -174,10 +174,6 @@ export const useGameStore = defineStore('game', {
       }
     },
 
-    handleRestart() {
-      this.initializeGrid();
-    },
-
     handlePreviousLevel() {
       if (this.currentLevel > 1) {
         this.currentLevel--;
@@ -204,7 +200,7 @@ export const useGameStore = defineStore('game', {
         // If we have no valid moves but not all queens are placed,
         // we're in a dead end. Reset the grid instead of showing error.
         if (this.queenPositions.length < this.gridSize) {
-          this.handleRestart();
+          this.clearQueensAndFlags();
           return this.placeRandomQueen(); // Try again with fresh grid
         }
 
@@ -622,7 +618,7 @@ export const useGameStore = defineStore('game', {
 
     // New method to generate a full solution
     generateFullSolution() {
-      this.handleRestart();
+      this.clearQueensAndFlags();
 
       // Keep placing queens until we have a complete solution or no more moves
       let attempts = 0;
@@ -633,7 +629,7 @@ export const useGameStore = defineStore('game', {
         const success = this.placeRandomQueen();
         if (!success) {
           // If we can't place more queens, restart and try again
-          this.handleRestart();
+          this.clearQueensAndFlags();
         }
         attempts++;
       }

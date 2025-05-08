@@ -122,7 +122,7 @@
           :grid="gameStore.grid"
           :grid-size="gridSize"
           @undo="gameStore.handleUndo"
-          @restart="gameStore.handleRestart"
+          @restart="gameStore.clearQueensAndFlags"
         />
 
         <!-- Status Message -->
@@ -201,7 +201,7 @@ const isValid = ref(false);
 // Button group definitions
 const boardControls = [
   { label: 'Undo', handler: () => gameStore.handleUndo() },
-  { label: 'Restart', handler: () => gameStore.handleRestart() },
+  { label: 'Restart', handler: () => gameStore.clearQueensAndFlags() },
 ];
 
 const solutionControls = [

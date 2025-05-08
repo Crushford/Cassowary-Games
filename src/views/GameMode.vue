@@ -59,7 +59,7 @@
         </div>
       </div>
 
-      <GameGrid v-if="!showPuzzleSelect" @undo="handleUndo" @restart="handleRestart" />
+      <GameGrid v-if="!showPuzzleSelect" @undo="handleUndo" @restart="clearQueensAndFlags" />
     </div>
   </div>
 </template>
@@ -82,8 +82,8 @@ const handleUndo = () => {
   gameStore.handleUndo();
 };
 
-const handleRestart = () => {
-  gameStore.handleRestart();
+const clearQueensAndFlags = () => {
+  gameStore.clearQueensAndFlags();
 };
 
 const handlePrevLevel = () => {
