@@ -15,7 +15,7 @@ import {
   countCellsWithState,
   getColorGroupPositions,
   getColorDistribution,
-} from './gamestoreutils';
+} from './gameStoreUtils';
 
 // Define a proper type for puzzle generation attempt results
 interface AttemptResult {
