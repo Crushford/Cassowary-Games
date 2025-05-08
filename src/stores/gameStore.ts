@@ -7,13 +7,12 @@ import {
   getQueenPositions,
   computeAvailableMoves,
   clearMarkers,
-  validatePuzzle as validatePuzzleUtil,
+  validatePuzzleState,
   isValidPosition,
   cloneGrid,
   queenAttacks,
   countEmptyCells,
   countCellsWithState,
-  getColorGroupPositions,
   getColorDistribution,
 } from './gameStoreUtils';
 
@@ -216,9 +215,9 @@ export const useGameStore = defineStore('game', {
     },
 
     checkCompletion() {
-      // Use validatePuzzleUtil utility
-      const { queenCountValid } = validatePuzzleUtil(this.grid, this.gridSize, 2);
-      this.isComplete = queenCountValid;
+      // Use validatePuzzleState utility
+      const { queenCountValid, colorGroupsValid } = validatePuzzleState(this.grid, this.gridSize);
+      this.isComplete = queenCountValid && colorGroupsValid;
     },
 
     setError(message: string | null) {
@@ -263,48 +262,10 @@ export const useGameStore = defineStore('game', {
       return isValidPosition(this.grid, row, col);
     },
 
-    // Use validatePuzzleUtil utility for validation
-    validatePuzzle() {
-      // Count queens
-      const queens = this.queenPositions;
-      const queenCountValid = queens.length === this.gridSize;
-
-      // Check if all squares are filled
-      let allFilled = true;
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state === 'empty') {
-            allFilled = false;
-            break;
-          }
-        }
-        if (!allFilled) break;
-      }
-
-      // Check color groups - every color should have exactly one queen
-      let colorGroupsValid = true;
-      const queensByColor: Record<string, number> = {};
-
-      for (const queen of queens) {
-        const color = this.grid[queen.row][queen.col].groupColor;
-        if (color) {
-          queensByColor[color] = (queensByColor[color] || 0) + 1;
-        }
-      }
-
-      // Verify each color has exactly one queen
-      for (const color in queensByColor) {
-        if (queensByColor[color] !== 1) {
-          colorGroupsValid = false;
-          break;
-        }
-      }
-
-      return {
-        queenCountValid,
-        allFilled,
-        colorGroupsValid,
-      };
+    // Use validatePuzzleState utility for validation
+    validatePuzzle(): boolean {
+      const { queenCountValid, colorGroupsValid } = validatePuzzleState(this.grid, this.gridSize);
+      return queenCountValid && colorGroupsValid;
     },
 
     assignColorGroups() {
@@ -862,7 +823,7 @@ export const useGameStore = defineStore('game', {
         return null;
       }
       this.testAllStepsLoop(); // re-run solver steps
-      const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle(requiredQueens);
+      const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
 
       // Add more detailed validation logs
       this.testLogs.push(`Attempt ${attempt}: Final validation:`);
@@ -944,8 +905,7 @@ export const useGameStore = defineStore('game', {
             this.testAllStepsLoop();
 
             // Validate and summarize
-            const { queenCountValid, allFilled, colorGroupsValid } =
-              this.validatePuzzle(requiredQueens);
+            const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
             const queenCount = this.queenPositions.length;
 
             const attemptResult = {

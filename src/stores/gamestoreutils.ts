@@ -109,19 +109,6 @@ export function countCellsWithState(grid: GridSquare[][], state: string): number
   return count;
 }
 
-// Get all positions of a specific color group
-export function getColorGroupPositions(grid: GridSquare[][], color: string): Pos[] {
-  const positions: Pos[] = [];
-  for (let row = 0; row < grid.length; row++) {
-    for (let col = 0; col < grid[0].length; col++) {
-      if (grid[row][col].groupColor === color) {
-        positions.push({ row, col });
-      }
-    }
-  }
-  return positions;
-}
-
 // Get distribution of colors in the grid
 export function getColorDistribution(grid: GridSquare[][]): Record<string, number> {
   const distribution: Record<string, number> = {};
@@ -138,8 +125,8 @@ export function getColorDistribution(grid: GridSquare[][]): Record<string, numbe
   return distribution;
 }
 
-// Validate a puzzle
-export function validatePuzzle(
+// Validate a puzzle's state (queen count and color groups)
+export function validatePuzzleState(
   grid: GridSquare[][],
   gridSize: number,
   minQueensPerColor = 1
