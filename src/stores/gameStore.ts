@@ -15,6 +15,7 @@ import {
   countCellsWithState,
   getColorDistribution,
 } from './gameStoreUtils';
+import { assignColors, ensureNoSingletonColorBlocks } from '../utils/colorAssignment';
 
 // Define a proper type for puzzle generation attempt results
 interface AttemptResult {
@@ -37,6 +38,8 @@ export interface GameState {
   savedPuzzles: { name: string; grid: GridSquare[][]; gridSize: number }[];
   currentPuzzle: string | null;
   currentSolution: { row: number; col: number }[];
+  testLogs: string[];
+  testDebugLogs: any[];
 }
 
 export const useGameStore = defineStore('game', {
@@ -52,6 +55,8 @@ export const useGameStore = defineStore('game', {
     savedPuzzles: [],
     currentPuzzle: null,
     currentSolution: [],
+    testLogs: [],
+    testDebugLogs: [],
   }),
 
   getters: {
@@ -269,196 +274,7 @@ export const useGameStore = defineStore('game', {
     },
 
     assignColorGroups() {
-      /* ---------- 1. RESET ---------- */
-      for (let r = 0; r < this.gridSize; r++) {
-        for (let c = 0; c < this.gridSize; c++) {
-          this.grid[r][c].groupColor = undefined;
-        }
-      }
-
-      /* ---------- 2. COLOR QUEENS ---------- */
-      const palette = ['red', 'blue', 'green', 'yellow', 'purple', 'pink'];
-
-      const queens = [...this.queenPositions];
-      if (queens.length > palette.length) {
-        this.setError(`Not enough colors for ${queens.length} queens`);
-        return;
-      }
-      queens.forEach(({ row, col }) => (this.grid[row][col].groupColor = palette.pop()));
-
-      /* ---------- 3. REGION GROWTH (BFS) ---------- */
-      const directions = [
-        [0, -1],
-        [0, 1],
-        [-1, 0],
-        [1, 0],
-      ];
-
-      //** Action: add one more square to each existing color group (if possible). */
-      const addOneToEachColorGroup = () => {
-        const dirs: [number, number][] = [
-          [0, -1],
-          [0, 1],
-          [-1, 0],
-          [1, 0],
-        ];
-
-        // Group colored squares by color, with full coordinates
-        const byColor: Record<string, { row: number; col: number; square: GridSquare }[]> = {};
-
-        for (let row = 0; row < this.grid.length; row++) {
-          for (let col = 0; col < this.grid[row].length; col++) {
-            const square = this.grid[row][col];
-            if (!square.groupColor) continue;
-            (byColor[square.groupColor] ??= []).push({ row, col, square });
-          }
-        }
-
-        // For each color group, try to add one neighbor square
-        for (const group of Object.values(byColor)) {
-          const base = group[0]; // pick first square in group
-          const shuffled = dirs.slice().sort(() => Math.random() - 0.5);
-
-          for (const [dr, dc] of shuffled) {
-            const r = base.row + dr;
-            const c = base.col + dc;
-
-            if (this.isValidPosition(r, c)) {
-              const neighbor = this.grid[r][c];
-              if (!neighbor.groupColor && neighbor.playerMark !== 'queen') {
-                neighbor.groupColor = base.square.groupColor;
-                break; // only one added per group
-              }
-            }
-          }
-        }
-      };
-
-      addOneToEachColorGroup();
-      addOneToEachColorGroup();
-      addOneToEachColorGroup();
-
-      //next we should find a random non colored square and color it with the color of the square in a radnom direction from itself, once it has a color, then we start the loop over with the next random colorlesssquare
-
-      // /* ---------- 4. GAP FILL ---------- */
-      // const border: Array<[number, number]> = [];
-      // for (let r = 0; r < this.gridSize; r++) {
-      //   for (let c = 0; c < this.gridSize; c++) {
-      //     if (this.grid[r][c].groupColor) border.push([r, c]);
-      //   }
-      // }
-      // while (border.length) {
-      //   const [r, c] = border.shift()!;
-      //   for (const { dr, dc } of directions) {
-      //     const nr = r + dr,
-      //       nc = c + dc;
-      //     if (
-      //       this.isValidPosition(nr, nc) &&
-      //       !this.grid[nr][nc].groupColor &&
-      //       this.grid[nr][nc].state !== 'queen'
-      //     ) {
-      //       this.grid[nr][nc].groupColor = this.grid[r][c].groupColor;
-      //       border.push([nr, nc]);
-      //     }
-      //   }
-      // }
-
-      // /* ---------- 5. ANTI‑BLOCK + SINGLETON CLEANUP ---------- */
-      // // unchanged helper
-      // this.ensureNoSingletonColorBlocks();
-
-      // /* ---------- 6.  NEW → MERGE SMALL COMPONENTS  ---------- */
-      // mergeSmallGroups.call(this, 2); // ≤ 2‑square components get merged
-
-      // /* ---------- helper inside this scope ---------- */
-      // function mergeSmallGroups(minSize = 2) {
-      //   const directions = [
-      //     { dr: 1, dc: 0 },
-      //     { dr: -1, dc: 0 },
-      //     { dr: 0, dc: 1 },
-      //     { dr: 0, dc: -1 },
-      //   ];
-      //   const visited = new Set<string>();
-
-      //   // quick lookup of which colours already have a queen
-      //   const queenColourSet = new Set(
-      //     this.queenPositions.map(({ row, col }) => this.grid[row][col].groupColor)
-      //   );
-
-      //   for (let r = 0; r < this.gridSize; r++) {
-      //     for (let c = 0; c < this.gridSize; c++) {
-      //       const startKey = `${r},${c}`;
-      //       if (visited.has(startKey)) continue;
-
-      //       const colr = this.grid[r][c].groupColor;
-      //       if (!colr) continue;
-
-      //       /* ---- collect this connected component ---- */
-      //       const comp: { row: number; col: number }[] = [];
-      //       const q: { row: number; col: number }[] = [{ row: r, col: c }];
-      //       visited.add(startKey);
-
-      //       while (q.length) {
-      //         const cur = q.pop()!;
-      //         comp.push(cur);
-      //         for (const { dr, dc } of directions) {
-      //           const nr = cur.row + dr,
-      //             nc = cur.col + dc,
-      //             k = `${nr},${nc}`;
-      //           if (
-      //             this.isValidPosition(nr, nc) &&
-      //             !visited.has(k) &&
-      //             this.grid[nr][nc].groupColor === colr
-      //           ) {
-      //             visited.add(k);
-      //             q.push({ row: nr, col: nc });
-      //           }
-      //         }
-      //       }
-
-      //       if (comp.length > minSize) continue; // big enough
-
-      //       /* ---- find neighbour colour frequency ---- */
-      //       const neighbours: Record<string, number> = {};
-      //       let componentHasQueen = false;
-
-      //       for (const { row: cr, col: cc } of comp) {
-      //         if (this.grid[cr][cc].state === 'queen') componentHasQueen = true;
-
-      //         for (const { dr, dc } of directions) {
-      //           const nr = cr + dr,
-      //             nc = cc + dc;
-      //           if (this.isValidPosition(nr, nc)) {
-      //             const nCol = this.grid[nr][nc].groupColor;
-      //             if (nCol && nCol !== colr) {
-      //               neighbours[nCol] = (neighbours[nCol] || 0) + 1;
-      //             }
-      //           }
-      //         }
-      //       }
-
-      //       const sorted = Object.entries(neighbours).sort((a, b) => b[1] - a[1]);
-      //       let target = sorted.length ? sorted[0][0] : null;
-
-      //       /* ensure queen uniqueness: pick a colour without a queen if we move a queen */
-      //       if (componentHasQueen && target && queenColourSet.has(target)) {
-      //         target = sorted.find(([c]) => !queenColourSet.has(c))?.[0] ?? null;
-      //       }
-      //       if (!target) continue; // nothing safe to merge into
-
-      //       /* ---- repaint the component ---- */
-      //       for (const { row: cr, col: cc } of comp) {
-      //         this.grid[cr][cc].groupColor = target;
-      //       }
-
-      //       /* keep queen colour set up‑to‑date */
-      //       if (componentHasQueen) {
-      //         queenColourSet.delete(colr);
-      //         queenColourSet.add(target);
-      //       }
-      //     }
-      //   }
-      // }
+      this.grid = assignColors(this.grid, this.queenPositions, this.testLogs);
     },
 
     // Fallback method if the main algorithm fails
@@ -534,8 +350,10 @@ export const useGameStore = defineStore('game', {
           }
         }
       }
-      // Ensure no singleton color blocks after fallback assignment
-      this.ensureNoSingletonColorBlocks();
+
+      // The grid is now assigned to a utility function, so we need to create a copy of the grid here
+      // by calling the singleton color blocks function from the color assignment utils
+      this.grid = ensureNoSingletonColorBlocks(this.grid);
     },
 
     // Function to check if a color forms a connected group and return color information
@@ -1414,6 +1232,7 @@ export const useGameStore = defineStore('game', {
         }
       }
       // Log number of empty squares found
+      if (!this.testLogs) this.testLogs = [];
       this.testLogs.push(`forceChangeColor: found ${empties.length} empty squares`);
       if (empties.length === 0) {
         this.testLogs.push('forceChangeColor: no empty squares to change color');
@@ -1469,8 +1288,9 @@ export const useGameStore = defineStore('game', {
       this.testLogs.push(`forceChangeColor: changing square (${row},${col}) to color ${newColor}`);
       this.saveToHistory();
       this.grid[row][col].groupColor = newColor;
-      // Ensure no single-square color blocks after color change
-      this.ensureNoSingletonColorBlocks();
+
+      // Use the imported ensureNoSingletonColorBlocks function
+      this.grid = ensureNoSingletonColorBlocks(this.grid);
       return true;
     },
 
