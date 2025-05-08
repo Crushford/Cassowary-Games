@@ -1,28 +1,61 @@
 <template>
-  <div class="w-full max-w-lg mx-auto p-4">
+  <div class="relative flex flex-col items-center">
+    <!-- Grid Size Controls -->
+    <div class="mb-4 flex gap-2 items-center">
+      <input
+        v-model="localGridSize"
+        type="range"
+        min="4"
+        max="8"
+        step="1"
+        class="w-32 accent-blue-500"
+        @change="updateGridSize"
+      />
+      <span class="text-sm font-semibold text-white">{{ localGridSize }}x{{ localGridSize }}</span>
+    </div>
+
+    <!-- Game Grid -->
     <div
-      class="grid gap-2"
+      class="grid bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg"
       :style="{
         gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+        gap: '2px',
       }"
     >
-      <Square
-        v-for="index in totalSquares"
-        :key="index - 1"
-        :row="Math.floor((index - 1) / gridSize)"
-        :col="(index - 1) % gridSize"
-      />
+      <div v-for="(row, rowIndex) in grid" :key="rowIndex" class="flex">
+        <div
+          v-for="(cell, colIndex) in row"
+          :key="colIndex"
+          class="w-12 h-12 flex items-center justify-center rounded cursor-pointer transition-all duration-200"
+          :class="[
+            cell.groupColor
+              ? `bg-${cell.groupColor}-500/50 hover:bg-${cell.groupColor}-500/70`
+              : 'bg-slate-700 hover:bg-slate-600',
+            { 'ring-2 ring-white ring-opacity-70': cell.state === 'queen' },
+            { 'ring-2 ring-red-500 ring-opacity-70': cell.state === 'invalid' },
+          ]"
+          @click="handleCellClick(rowIndex, colIndex)"
+          @contextmenu.prevent="handleRightClick(rowIndex, colIndex)"
+        >
+          <span v-if="cell.state === 'queen'" class="text-xl text-white">♛</span>
+          <span v-else-if="cell.state === 'flag'" class="text-sm text-yellow-400">🚩</span>
+          <span v-else-if="cell.state === 'invalid'" class="text-xl text-red-500">⚠️</span>
+          <span v-else class="text-transparent">.</span>
+        </div>
+      </div>
     </div>
-    <div class="mt-4 flex justify-center gap-2 flex-wrap">
+
+    <!-- Control Buttons -->
+    <div class="mt-4 flex gap-4">
       <button
-        class="rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary-hover"
         @click="$emit('undo')"
+        class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
       >
         Undo
       </button>
       <button
-        class="rounded-lg bg-secondary px-4 py-2 text-white hover:bg-secondary-hover"
         @click="$emit('restart')"
+        class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
       >
         Restart
       </button>
@@ -31,31 +64,50 @@
 </template>
 
 <script setup lang="ts">
-import { useGameStore } from '../stores/gameStore';
-import Square from './Square.vue';
-import { storeToRefs } from 'pinia';
-import { computed } from 'vue';
+import { ref, watch } from 'vue';
 
-export interface GridSquare {
+interface GridCell {
   position: { row: number; col: number };
   state: 'empty' | 'queen' | 'flag' | 'invalid';
   groupColor?: string;
   playerMark?: 'queen' | 'flag';
 }
 
-const gameStore = useGameStore();
-const { grid, gridSize } = storeToRefs(gameStore);
-
-const totalSquares = computed(() => {
-  return gridSize.value * gridSize.value;
+const props = defineProps({
+  grid: {
+    type: Array as () => GridCell[][],
+    required: true,
+  },
+  gridSize: {
+    type: Number,
+    required: true,
+  },
 });
 
-defineEmits<{
-  (e: 'undo'): void;
-  (e: 'restart'): void;
-}>();
+const emit = defineEmits(['undo', 'restart']);
 
-defineOptions({
-  name: 'GameGrid',
-});
+const localGridSize = ref(props.gridSize);
+
+// Watch for grid size changes from parent
+watch(
+  () => props.gridSize,
+  (newSize) => {
+    localGridSize.value = newSize;
+  }
+);
+
+// Handle cell clicks (place or remove a queen)
+function handleCellClick(row: number, col: number) {
+  // This is handled by the game store via the parent component
+}
+
+// Handle right-clicks (place a flag)
+function handleRightClick(row: number, col: number) {
+  // This is handled by the game store via the parent component
+}
+
+// Update grid size
+function updateGridSize() {
+  // This is handled by the game store via the parent component
+}
 </script>
