@@ -14,35 +14,9 @@
       <aside class="space-y-6 md:col-span-1">
         <h1 class="text-3xl font-bold">Level Builder</h1>
 
-        <!-- Board Controls -->
-        <section
-          class="flex flex-col gap-4 bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg"
-        >
-          <!-- Collapsible section header -->
-          <button
-            @click="isBoardControlsExpanded = !isBoardControlsExpanded"
-            class="flex items-center justify-between w-full text-left font-semibold"
-          >
-            <span>Board Controls</span>
-            <span class="text-gray-400">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4 transition-transform duration-200"
-                :class="isBoardControlsExpanded ? 'rotate-180' : ''"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            </span>
-          </button>
-
-          <!-- Always visible grid size control -->
-          <label class="flex items-center gap-2 mb-2">
+        <!-- Grid Size Control (not in a collapsible section) -->
+        <div class="bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg">
+          <label class="flex items-center gap-2">
             <span>Grid Size:</span>
             <input
               type="number"
@@ -53,280 +27,110 @@
               class="w-20 bg-gray-700 border border-gray-600 rounded-lg px-2 py-1 text-gray-100"
             />
           </label>
+        </div>
 
-          <div
-            v-show="isBoardControlsExpanded"
-            class="flex flex-wrap gap-4 transition-all duration-300 overflow-hidden"
-          >
-            <div v-for="btn in boardControls" :key="btn.label" class="flex flex-col">
-              <button
-                @click="btn.handler"
-                class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-100"
-              >
-                {{ btn.label }}
-              </button>
-              <span class="text-xs text-gray-400 mt-1">{{ btn.description }}</span>
-            </div>
-          </div>
-        </section>
+        <!-- Board Controls using the new component -->
+        <CollapsibleList
+          title="Board Controls"
+          :buttons="boardControls"
+          colorScheme="gray"
+          size="full"
+          :defaultExpanded="isBoardControlsExpanded"
+          buttonSize="text-sm"
+        />
 
-        <!-- Solution Controls -->
-        <section
-          class="flex flex-col gap-4 bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg"
+        <!-- Solution Controls using the new component -->
+        <CollapsibleList
+          title="Solution Controls"
+          :buttons="solutionControls"
+          colorScheme="blue"
+          size="full"
+          :defaultExpanded="isSolutionControlsExpanded"
+          buttonSize="text-sm"
+        />
+
+        <!-- Color Assignment Steps using the new component -->
+        <CollapsibleList
+          title="Color Assignment Steps"
+          :buttons="colorAssignmentSteps.slice(0, 5)"
+          :visibleButtons="[
+            colorAssignmentSteps[colorAssignmentSteps.length - 1],
+            colorAssignmentSteps[5],
+          ]"
+          colorScheme="purple"
+          size="full"
+          :defaultExpanded="isColorAssignmentExpanded"
+          buttonSize="text-xs"
+        />
+
+        <!-- Solver Steps using the new component -->
+        <CollapsibleList
+          title="Solver Steps"
+          :buttons="solverSteps"
+          :visibleButtons="[
+            {
+              label: 'Cycle All Steps',
+              handler: handleCycleSolveSteps,
+              description: 'testAllStepsLoop() - Run all solver steps in sequence',
+            },
+            {
+              label: 'Force Color Change',
+              handler: handleForceChangeColor,
+              description: 'forceChangeColor() - Randomly change color of an empty square',
+            },
+          ]"
+          colorScheme="yellow"
+          size="full"
+          :defaultExpanded="isSolverStepsExpanded"
+          buttonSize="text-xs"
+        />
+
+        <!-- Auto-Puzzle Controls using the new component -->
+        <CollapsibleList
+          title="Auto-Puzzle Controls"
+          colorScheme="blue"
+          size="full"
+          :defaultExpanded="isAutoPuzzleExpanded"
         >
-          <!-- Collapsible section header -->
-          <button
-            @click="isSolutionControlsExpanded = !isSolutionControlsExpanded"
-            class="flex items-center justify-between w-full text-left font-semibold"
-          >
-            <span>Solution Controls</span>
-            <span class="text-gray-400">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4 transition-transform duration-200"
-                :class="isSolutionControlsExpanded ? 'rotate-180' : ''"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            </span>
-          </button>
-
-          <div
-            v-show="isSolutionControlsExpanded"
-            class="space-y-3 transition-all duration-300 overflow-hidden"
-          >
-            <div v-for="btn in solutionControls" :key="btn.label" class="flex flex-col">
-              <button
-                @click="btn.handler"
-                class="px-4 py-2 bg-blue-500 hover:bg-blue-400 rounded-lg text-gray-100"
-              >
-                {{ btn.label }}
-              </button>
-              <span class="text-xs text-gray-400 mt-1">{{ btn.description }}</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- Color Assignment Steps -->
-        <section class="bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg">
-          <div class="flex flex-col gap-4">
-            <!-- Always visible commonly used buttons -->
-            <div class="space-y-3">
-              <div class="flex flex-col">
-                <button
-                  @click="colorAssignmentSteps[colorAssignmentSteps.length - 1].handler"
-                  class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-gray-100 text-sm"
-                >
-                  Full Color Assignment
-                </button>
-                <span class="text-xs text-gray-400 mt-1">
-                  assignColors() - Complete color assignment in one click
-                </span>
-              </div>
-
-              <div class="flex flex-col">
-                <button
-                  @click="colorAssignmentSteps[5].handler"
-                  class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-gray-100 text-sm"
-                >
-                  Fill Remaining Squares
-                </button>
-                <span class="text-xs text-gray-400 mt-1">
-                  fillRemainingSingleSquares() - Colors any remaining uncolored squares
-                </span>
-              </div>
-            </div>
-
-            <!-- Collapsible section header -->
+          <div class="flex flex-col">
             <button
-              @click="isColorAssignmentExpanded = !isColorAssignmentExpanded"
-              class="flex items-center justify-between w-full text-left font-semibold"
+              @click="handleGenerateAndStoreValidPuzzle"
+              :disabled="isGenerating"
+              :class="[
+                'w-full px-6 py-3 rounded-lg text-gray-100 font-medium flex items-center justify-center',
+                isGenerating ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-400',
+              ]"
             >
-              <span>Detailed Color Assignment Steps</span>
-              <span class="text-gray-400">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4 transition-transform duration-200"
-                  :class="isColorAssignmentExpanded ? 'rotate-180' : ''"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-              </span>
+              <span
+                v-if="isGenerating"
+                class="inline-block w-4 h-4 mr-2 border-2 border-gray-100 border-t-transparent rounded-full animate-spin"
+              ></span>
+              {{ isGenerating ? 'Generating…' : 'Generate Valid Puzzle' }}
             </button>
-          </div>
-
-          <div
-            v-show="isColorAssignmentExpanded"
-            class="space-y-3 mt-4 transition-all duration-300 overflow-hidden"
-          >
-            <div
-              v-for="(btn, index) in colorAssignmentSteps.slice(0, 5)"
-              :key="btn.label"
-              class="flex flex-col"
+            <span class="text-xs text-gray-400 mt-1"
+              >generateAndStoreValidPuzzle() - Automatically generate a complete, valid puzzle</span
             >
-              <button
-                @click="btn.handler"
-                class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-gray-100 text-sm"
-              >
-                {{ btn.label }}
-              </button>
-              <span class="text-xs text-gray-400 mt-1">{{ btn.description }}</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- Solver Steps -->
-        <section class="bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg">
-          <!-- Collapsible section header -->
-          <button
-            @click="isSolverStepsExpanded = !isSolverStepsExpanded"
-            class="flex items-center justify-between w-full text-left font-semibold mb-4"
-          >
-            <span>Solver Steps</span>
-            <span class="text-gray-400">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4 transition-transform duration-200"
-                :class="isSolverStepsExpanded ? 'rotate-180' : ''"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            </span>
-          </button>
-
-          <!-- Always visible buttons -->
-          <div class="space-y-3 mb-4">
-            <div class="flex flex-col">
-              <button
-                @click="handleCycleSolveSteps"
-                class="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 rounded-lg text-gray-100"
-              >
-                Cycle All Steps
-              </button>
-              <span class="text-xs text-gray-400 mt-1"
-                >testAllStepsLoop() - Run all solver steps in sequence</span
-              >
-            </div>
-            <div class="flex flex-col">
-              <button
-                @click="handleForceChangeColor"
-                class="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 rounded-lg text-gray-100"
-              >
-                Force Color Change
-              </button>
-              <span class="text-xs text-gray-400 mt-1"
-                >forceChangeColor() - Randomly change color of an empty square</span
-              >
-            </div>
           </div>
 
-          <!-- Collapsible detailed steps -->
-          <div
-            v-show="isSolverStepsExpanded"
-            class="space-y-3 transition-all duration-300 overflow-hidden"
-          >
-            <div v-for="btn in solverSteps" :key="btn.label" class="flex flex-col">
-              <button
-                @click="btn.handler"
-                class="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 rounded-lg text-gray-100 text-sm w-full"
-              >
-                {{ btn.label }}
-              </button>
-              <span class="text-xs text-gray-400 mt-1">{{ btn.description }}</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- Auto-Puzzle Controls -->
-        <section
-          class="flex flex-col gap-4 bg-gray-800 border border-gray-700 shadow-sm p-4 rounded-lg"
-        >
-          <!-- Collapsible section header -->
-          <button
-            @click="isAutoPuzzleExpanded = !isAutoPuzzleExpanded"
-            class="flex items-center justify-between w-full text-left font-semibold"
-          >
-            <span>Auto-Puzzle Controls</span>
-            <span class="text-gray-400">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4 transition-transform duration-200"
-                :class="isAutoPuzzleExpanded ? 'rotate-180' : ''"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            </span>
-          </button>
-
-          <div
-            v-show="isAutoPuzzleExpanded"
-            class="space-y-3 transition-all duration-300 overflow-hidden"
-          >
-            <div class="flex flex-col">
-              <button
-                @click="handleGenerateAndStoreValidPuzzle"
-                :disabled="isGenerating"
-                :class="[
-                  'w-full px-6 py-3 rounded-lg text-gray-100 font-medium flex items-center justify-center',
-                  isGenerating ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-400',
-                ]"
-              >
-                <span
-                  v-if="isGenerating"
-                  class="inline-block w-4 h-4 mr-2 border-2 border-gray-100 border-t-transparent rounded-full animate-spin"
-                ></span>
-                {{ isGenerating ? 'Generating…' : 'Generate Valid Puzzle' }}
-              </button>
-              <span class="text-xs text-gray-400 mt-1"
-                >generateAndStoreValidPuzzle() - Automatically generate a complete, valid
-                puzzle</span
-              >
-            </div>
-
-            <div class="flex flex-col" v-if="hasColorGroups">
-              <button
-                @click="handleSavePuzzle"
-                class="w-full px-6 py-3 bg-green-600 hover:bg-green-500 rounded-lg text-gray-100 font-medium"
-              >
-                Save to Local Storage
-              </button>
-              <span class="text-xs text-gray-400 mt-1"
-                >savePuzzleToLocalStorage() - Save current puzzle to browser storage</span
-              >
-            </div>
-
-            <div
-              v-if="savedMessage"
-              class="mt-2 p-2 bg-green-100 text-green-700 rounded text-center text-sm"
+          <div class="flex flex-col mt-3" v-if="hasColorGroups">
+            <button
+              @click="handleSavePuzzle"
+              class="w-full px-6 py-3 bg-green-600 hover:bg-green-500 rounded-lg text-gray-100 font-medium"
             >
-              {{ savedMessage }}
-            </div>
+              Save to Local Storage
+            </button>
+            <span class="text-xs text-gray-400 mt-1"
+              >savePuzzleToLocalStorage() - Save current puzzle to browser storage</span
+            >
           </div>
-        </section>
+
+          <div
+            v-if="savedMessage"
+            class="mt-3 p-2 bg-green-100 text-green-700 rounded text-center text-sm"
+          >
+            {{ savedMessage }}
+          </div>
+        </CollapsibleList>
       </aside>
 
       <!-- Main Content Area -->
@@ -410,6 +214,7 @@
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import GameGrid from '../components/GameGrid.vue';
 import DebugInformation from '../components/DebugInformation.vue';
+import CollapsibleList from '../components/CollapsibleList.vue';
 import { useGameStore } from '../stores/gameStore';
 
 const gameStore = useGameStore();
@@ -420,7 +225,7 @@ const validationMessage = ref('');
 const isValid = ref(false);
 const logsContainer = ref<HTMLElement | null>(null);
 const isColorAssignmentExpanded = ref(false);
-const isSolutionControlsExpanded = ref(false);
+const isSolutionControlsExpanded = ref(true);
 const isSolverStepsExpanded = ref(false);
 const isAutoPuzzleExpanded = ref(true);
 const isBoardControlsExpanded = ref(true);
@@ -448,7 +253,11 @@ onMounted(() => {
 
 // Button group definitions
 const boardControls = [
-  { label: 'Undo', handler: () => gameStore.handleUndo(), description: 'Clear the last action' },
+  {
+    label: 'Undo',
+    handler: () => gameStore.handleUndo(),
+    description: 'Clear the last action',
+  },
   {
     label: 'Restart',
     handler: () => gameStore.clearQueensAndFlags(),
@@ -586,7 +395,7 @@ const colorAssignmentSteps = [
     },
   },
   {
-    label: '5. Fill Remaining Squares',
+    label: 'Fill Remaining Squares',
     description:
       'Find any remaining uncolored squares and assign them a color from adjacent squares',
     handler: () => {
@@ -596,7 +405,7 @@ const colorAssignmentSteps = [
     },
   },
   {
-    label: '6. Full Color Assignment',
+    label: 'Full Color Assignment',
     description:
       'Run the complete color assignment process (resets all colors, assigns unique colors to queens, adds one to each color group, then systematically fills rows until all squares are colored)',
     handler: () => {
