@@ -13,8 +13,10 @@ export function createEmptyGrid(size: number): GridSquare[][] {
     const gridRow: GridSquare[] = [];
     for (let col = 0; col < size; col++) {
       gridRow.push({
+        position: { row, col },
         state: 'empty',
         groupColor: undefined,
+        playerMark: undefined as 'queen' | 'flag' | undefined,
       });
     }
     grid.push(gridRow);
@@ -24,7 +26,14 @@ export function createEmptyGrid(size: number): GridSquare[][] {
 
 // Clone a grid for history management
 export function cloneGrid(grid: GridSquare[][]): GridSquare[][] {
-  return grid.map((row) => row.map((cell) => ({ ...cell })));
+  return grid.map((row) =>
+    row.map((cell) => ({
+      position: { ...cell.position },
+      state: cell.state,
+      groupColor: cell.groupColor,
+      playerMark: cell.playerMark,
+    }))
+  );
 }
 
 // Check if a position is valid on the grid

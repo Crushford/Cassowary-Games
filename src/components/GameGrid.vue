@@ -37,8 +37,10 @@ import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
 
 export interface GridSquare {
-  state: 'empty' | 'flag' | 'queen' | 'invalid';
-  groupColor?: 'red' | 'blue' | 'green' | 'yellow' | 'purple' | 'pink';
+  position: { row: number; col: number };
+  state: 'empty' | 'queen' | 'flag' | 'invalid';
+  groupColor?: string;
+  playerMark?: 'queen' | 'flag';
 }
 
 const gameStore = useGameStore();

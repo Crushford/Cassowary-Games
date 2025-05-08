@@ -127,6 +127,7 @@ export const useGameStore = defineStore('game', {
 
       this.saveToHistory();
       this.grid[row][col].state = 'flag';
+      this.grid[row][col].playerMark = 'flag';
       return true;
     },
 
@@ -138,6 +139,7 @@ export const useGameStore = defineStore('game', {
 
       this.saveToHistory();
       this.grid[row][col].state = 'queen';
+      this.grid[row][col].playerMark = 'queen';
       this.updateBlockedMoves();
       this.updateAvailableMoves();
       this.checkCompletion();
@@ -236,6 +238,12 @@ export const useGameStore = defineStore('game', {
     clearQueensAndFlags() {
       // Use clearMarkers utility
       clearMarkers(this.grid);
+      // Reset player marks
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          this.grid[row][col].playerMark = undefined;
+        }
+      }
       this.isComplete = false;
       this.updateAvailableMoves();
     },
@@ -655,10 +663,15 @@ export const useGameStore = defineStore('game', {
       // Create a copy of the current grid with only queen positions and color groups
       const puzzleGrid = Array(this.gridSize)
         .fill(null)
-        .map(() =>
+        .map((_, row) =>
           Array(this.gridSize)
             .fill(null)
-            .map(() => ({ state: 'empty' }) as GridSquare)
+            .map((_, col) => ({
+              position: { row, col },
+              state: 'empty',
+              groupColor: undefined,
+              playerMark: undefined as 'queen' | 'flag' | undefined,
+            }))
         );
 
       // Copy only the queens and their color groups
@@ -666,14 +679,18 @@ export const useGameStore = defineStore('game', {
         for (let col = 0; col < this.gridSize; col++) {
           if (this.grid[row][col].state === 'queen') {
             puzzleGrid[row][col] = {
+              position: { row, col },
               state: 'queen',
               groupColor: this.grid[row][col].groupColor,
-            } as GridSquare;
+              playerMark: 'queen' as const,
+            };
           } else if (this.grid[row][col].groupColor) {
             puzzleGrid[row][col] = {
+              position: { row, col },
               state: 'empty',
               groupColor: this.grid[row][col].groupColor,
-            } as GridSquare;
+              playerMark: undefined,
+            };
           }
         }
       }
