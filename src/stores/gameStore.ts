@@ -20,6 +20,7 @@ import {
   ensureNoSingletonColorBlocks,
   addOneToEachColorGroup,
   addColorToEachRow,
+  fillRemainingSquares,
 } from '../utils/colorAssignment';
 
 // Define a proper type for puzzle generation attempt results
@@ -356,6 +357,29 @@ export const useGameStore = defineStore('game', {
       this.testLogs.push(`- Before: ${colorsBefore.total} colored cells`);
       this.testLogs.push(`- After: ${colorsAfter.total} colored cells`);
       this.testLogs.push(`- Added: ${colorsAfter.total - colorsBefore.total} new colored cells`);
+    },
+
+    // Method to fill any remaining uncolored squares with a neighboring color
+    fillRemainingSingleSquares() {
+      // Save current state to history before making changes
+      this.saveToHistory();
+
+      // Get the current state of the grid
+      const beforeState = this.grid.map((row) => row.map((square) => ({ ...square })));
+
+      // Apply the color fill using the imported function
+      this.grid = fillRemainingSquares(this.grid, this.testLogs);
+
+      // Count colors before and after
+      const colorsBefore = this.countColoredCells(beforeState);
+      const colorsAfter = this.countColoredCells(this.grid);
+
+      this.testLogs.push(
+        `- Before: ${colorsBefore.total}/${this.gridSize * this.gridSize} cells colored`
+      );
+      this.testLogs.push(
+        `- After: ${colorsAfter.total}/${this.gridSize * this.gridSize} cells colored`
+      );
     },
 
     // Fallback method if the main algorithm fails
