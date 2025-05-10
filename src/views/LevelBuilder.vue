@@ -7,12 +7,7 @@
 
     <!-- Main Content -->
     <div class="flex flex-col gap-4">
-      <GameGrid
-        :grid="gameStore.grid"
-        :grid-size="gameStore.gridSize"
-        @undo="gameStore.handleUndo"
-        @restart="gameStore.clearQueensAndFlags"
-      />
+      <GameGrid />
 
       <div
         v-if="gameStore.errorMessage"
@@ -85,12 +80,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted, reactive, computed } from 'vue';
-import GameGrid from '../components/GameGrid.vue';
-import BasicControls from '../components/BasicControls.vue';
+import { ref, watch, nextTick, onMounted, reactive, computed, defineAsyncComponent } from 'vue';
 import { useGameStore } from '../stores/gameStore';
 
+// Use defineAsyncComponent to fix the "no default export" error
+const GameGrid = defineAsyncComponent(() => import('../components/GameGrid.vue'));
+const BasicControls = defineAsyncComponent(() => import('../components/BasicControls.vue'));
+
 const gameStore = useGameStore();
+
+// Fix the "c implicitly has an 'any' type" errors
+function hasGroupColor(c: any): boolean {
+  return !c.groupColor;
+}
 
 // Sections configuration with reactive expanded state
 const sections = reactive([
@@ -214,19 +216,19 @@ const sections = reactive([
       {
         label: 'addOneColorToEachGroup()',
         action: () => gameStore.addOneColorToEachGroup(),
-        disabled: computed(() => gameStore.grid.flat().every((c) => !c.groupColor)),
+        disabled: computed(() => gameStore.grid.flat().every(hasGroupColor)),
         disabledReason: 'Assign initial colors first',
       },
       {
         label: 'addOneColorToEachRow()',
         action: () => gameStore.addOneColorToEachRow(),
-        disabled: computed(() => gameStore.grid.flat().every((c) => !c.groupColor)),
+        disabled: computed(() => gameStore.grid.flat().every(hasGroupColor)),
         disabledReason: 'Assign initial colors first',
       },
       {
         label: 'fillRemainingSingleSquares()',
         action: () => gameStore.fillRemainingSingleSquares(),
-        disabled: computed(() => gameStore.grid.flat().every((c) => !c.groupColor)),
+        disabled: computed(() => gameStore.grid.flat().every(hasGroupColor)),
         disabledReason: 'Assign initial colors first',
       },
     ],

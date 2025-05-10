@@ -18,22 +18,16 @@
     <div
       class="grid bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg"
       :style="{
-        gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+        gridTemplateColumns: `repeat(${gameStore.gridSize}, minmax(0, 1fr))`,
         gap: '2px',
       }"
     >
-      <template v-for="(row, rowIndex) in grid" :key="rowIndex">
+      <template v-for="(row, rowIndex) in gameStore.grid" :key="rowIndex">
         <div
           v-for="(cell, colIndex) in row"
           :key="colIndex"
           class="w-12 h-12 flex items-center justify-center rounded cursor-pointer transition-all duration-200"
-          :class="[
-            cell.groupColor
-              ? [getBgClass(cell.groupColor), getColorClasses(cell.groupColor).hoverBg]
-              : 'bg-slate-700 hover:bg-slate-600',
-            { 'ring-2 ring-white ring-opacity-70': cell.state === 'queen' },
-            { 'ring-2 ring-red-500 ring-opacity-70': cell.state === 'invalid' },
-          ]"
+          :class="getCellClasses(cell)"
           @click="handleCellClick(rowIndex, colIndex)"
           @contextmenu.prevent="handleRightClick(rowIndex, colIndex)"
         >
@@ -48,13 +42,13 @@
     <!-- Control Buttons -->
     <div class="mt-4 flex gap-4">
       <button
-        @click="$emit('undo')"
+        @click="gameStore.handleUndo()"
         class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
       >
         Undo
       </button>
       <button
-        @click="$emit('restart')"
+        @click="gameStore.clearQueensAndFlags()"
         class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
       >
         Restart
@@ -64,51 +58,68 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { getBgClass, getColorClasses, ColorName } from '@/utils/colorPalette';
+import { ref, watch, onMounted } from 'vue';
+import { COLOR_BG_HOVER_CLASSES, ColorName } from '@/utils/colorPalette';
+import { useGameStore } from '../stores/gameStore';
 
-interface GridCell {
-  position: { row: number; col: number };
-  state: 'empty' | 'queen' | 'flag' | 'invalid';
-  groupColor?: ColorName;
-  playerMark?: 'queen' | 'flag';
+const gameStore = useGameStore();
+const localGridSize = ref(gameStore.gridSize);
+
+// Default background/hover class for cells
+const defaultBgClass = 'bg-slate-700 hover:bg-slate-600';
+
+// Function to get cell classes
+function getCellClasses(cell: { groupColor?: string; state?: string }) {
+  // Start with an empty array
+  const classes = [];
+
+  // Add background color class
+  if (cell.groupColor) {
+    try {
+      // Try to get the color class - if it fails, we'll use the default
+      classes.push(COLOR_BG_HOVER_CLASSES[cell.groupColor as ColorName]);
+    } catch (e) {
+      classes.push(defaultBgClass);
+    }
+  } else {
+    classes.push(defaultBgClass);
+  }
+
+  // Add rings for special states
+  if (cell.state === 'queen') {
+    classes.push('ring-2 ring-white ring-opacity-70');
+  } else if (cell.state === 'invalid') {
+    classes.push('ring-2 ring-red-500 ring-opacity-70');
+  }
+
+  return classes;
 }
 
-const props = defineProps({
-  grid: {
-    type: Array as () => GridCell[][],
-    required: true,
-  },
-  gridSize: {
-    type: Number,
-    required: true,
-  },
-});
-
-const emit = defineEmits(['undo', 'restart']);
-
-const localGridSize = ref(props.gridSize);
-
-// Watch for grid size changes from parent
+// Watch for grid size changes from the store
 watch(
-  () => props.gridSize,
+  () => gameStore.gridSize,
   (newSize) => {
     localGridSize.value = newSize;
   }
 );
 
-// Handle cell clicks (place or remove a queen)
+// Initialize localGridSize from store on mount
+onMounted(() => {
+  localGridSize.value = gameStore.gridSize;
+});
+
+// Handle cell clicks
 function handleCellClick(row: number, col: number) {
-  // This is handled by the game store via the parent component
+  gameStore.placeQueen(row, col);
 }
 
-// Handle right-clicks (place a flag)
+// Handle right-clicks for flags
 function handleRightClick(row: number, col: number) {
-  // This is handled by the game store via the parent component
+  gameStore.placeFlag(row, col);
 }
 
 // Update grid size
 function updateGridSize() {
-  // This is handled by the game store via the parent component
+  gameStore.setGridSize(localGridSize.value);
 }
 </script>
