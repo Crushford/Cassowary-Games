@@ -22,14 +22,14 @@
         gap: '2px',
       }"
     >
-      <div v-for="(row, rowIndex) in grid" :key="rowIndex" class="flex">
+      <template v-for="(row, rowIndex) in grid" :key="rowIndex">
         <div
           v-for="(cell, colIndex) in row"
           :key="colIndex"
           class="w-12 h-12 flex items-center justify-center rounded cursor-pointer transition-all duration-200"
           :class="[
             cell.groupColor
-              ? `bg-${cell.groupColor}-500/50 hover:bg-${cell.groupColor}-500/70`
+              ? colorClassMap[cell.groupColor] || 'bg-slate-700 hover:bg-slate-600'
               : 'bg-slate-700 hover:bg-slate-600',
             { 'ring-2 ring-white ring-opacity-70': cell.state === 'queen' },
             { 'ring-2 ring-red-500 ring-opacity-70': cell.state === 'invalid' },
@@ -42,7 +42,7 @@
           <span v-else-if="cell.state === 'invalid'" class="text-xl text-red-500">⚠️</span>
           <span v-else class="text-transparent">.</span>
         </div>
-      </div>
+      </template>
     </div>
 
     <!-- Control Buttons -->
@@ -87,6 +87,19 @@ const props = defineProps({
 const emit = defineEmits(['undo', 'restart']);
 
 const localGridSize = ref(props.gridSize);
+
+// Tailwind color class map
+const colorClassMap: Record<string, string> = {
+  red: 'bg-red-500/50 hover:bg-red-500/70',
+  blue: 'bg-blue-500/50 hover:bg-blue-500/70',
+  green: 'bg-green-500/50 hover:bg-green-500/70',
+  yellow: 'bg-yellow-500/50 hover:bg-yellow-500/70',
+  purple: 'bg-purple-500/50 hover:bg-purple-500/70',
+  pink: 'bg-pink-500/50 hover:bg-pink-500/70',
+  orange: 'bg-orange-500/50 hover:bg-orange-500/70',
+  teal: 'bg-teal-500/50 hover:bg-teal-500/70',
+  // Add more as needed
+};
 
 // Watch for grid size changes from parent
 watch(
