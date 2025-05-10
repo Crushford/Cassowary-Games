@@ -124,6 +124,20 @@ export const COLOR_CLASSES: Record<ColorName, ColorClasses> = {
   },
 };
 
+// Mapping for background + hover classes for Tailwind grid coloring
+export const COLOR_BG_HOVER_CLASSES: Record<ColorName, string> = {
+  red: 'bg-red-500/50 hover:bg-red-500/70',
+  blue: 'bg-blue-500/50 hover:bg-blue-500/70',
+  green: 'bg-green-500/50 hover:bg-green-500/70',
+  yellow: 'bg-yellow-500/50 hover:bg-yellow-500/70',
+  purple: 'bg-purple-500/50 hover:bg-purple-500/70',
+  pink: 'bg-pink-500/50 hover:bg-pink-500/70',
+  orange: 'bg-orange-500/50 hover:bg-orange-500/70',
+  teal: 'bg-teal-500/50 hover:bg-teal-500/70',
+  indigo: 'bg-indigo-500/50 hover:bg-indigo-500/70',
+  amber: 'bg-amber-500/50 hover:bg-amber-500/70',
+};
+
 // Get a subset of the main palette with a specific size
 export function getColorPalette(size = 10): ColorName[] {
   if (size > COLOR_PALETTE.length) {
