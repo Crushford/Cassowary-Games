@@ -22,6 +22,14 @@ import {
   addColorToEachRow,
   fillRemainingSquares,
 } from '../utils/colorAssignment';
+import {
+  placeLastFreeQueens,
+  flagBlockingSquares,
+  eliminateConstrainedRows,
+  eliminateConstrainedColumns,
+  blockRowsAndColumns,
+  runAllSolverSteps,
+} from './solver';
 
 // Define a proper type for puzzle generation attempt results
 interface AttemptResult {
@@ -919,366 +927,43 @@ export const useGameStore = defineStore('game', {
 
     // Helper for step 1: Place queens in last free squares of color blocks, rows, or columns
     placeLastFreeQueens() {
-      let didSomething = false;
-      let queensPlaced = 0;
-      let placed;
-
-      do {
-        placed = false;
-        // 1. Check color blocks
-        const colorGroups = new Map<string, Pos[]>();
-        for (let row = 0; row < this.gridSize; row++) {
-          for (let col = 0; col < this.gridSize; col++) {
-            const color = this.grid[row][col].groupColor;
-            if (!color) continue;
-            if (!colorGroups.has(color)) colorGroups.set(color, []);
-            colorGroups.get(color)!.push({ row, col });
-          }
-        }
-        for (const [color, group] of colorGroups.entries()) {
-          const free: Pos[] = group.filter(({ row, col }) => this.grid[row][col].state === 'empty');
-          if (free.length === 1) {
-            const { row, col } = free[0];
-            this.placeQueen(row, col);
-            queensPlaced++;
-            placed = true;
-            didSomething = true;
-            break;
-          }
-        }
-        if (placed) continue;
-        // 2. Check rows
-        for (let row = 0; row < this.gridSize; row++) {
-          const free: Pos[] = [];
-          for (let col = 0; col < this.gridSize; col++) {
-            if (this.grid[row][col].state === 'empty') free.push({ row, col });
-          }
-          if (free.length === 1) {
-            const { row, col } = free[0];
-            this.placeQueen(row, col);
-            queensPlaced++;
-            placed = true;
-            didSomething = true;
-            break;
-          }
-        }
-        if (placed) continue;
-        // 3. Check columns
-        for (let col = 0; col < this.gridSize; col++) {
-          const free: Pos[] = [];
-          for (let row = 0; row < this.gridSize; row++) {
-            if (this.grid[row][col].state === 'empty') free.push({ row, col });
-          }
-          if (free.length === 1) {
-            const { row, col } = free[0];
-            this.placeQueen(row, col);
-            queensPlaced++;
-            placed = true;
-            didSomething = true;
-            break;
-          }
-        }
-      } while (placed);
-
-      return didSomething;
+      return placeLastFreeQueens(this.grid, this.gridSize, (row, col) => this.placeQueen(row, col));
     },
 
     // Helper for step 2: Flag squares where a queen would block all remaining squares in other color groups
     flagBlockingSquares() {
-      let flagCount = 0;
-      let didSomething = false;
-
-      // Build map of empty squares by color group
-      const emptyColorGroups = new Map<string, Pos[]>();
-      for (let r = 0; r < this.gridSize; r++) {
-        for (let c = 0; c < this.gridSize; c++) {
-          if (this.grid[r][c].state === 'empty') {
-            const grp = this.grid[r][c].groupColor;
-            if (!grp) continue;
-            if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
-            emptyColorGroups.get(grp)!.push({ row: r, col: c });
-          }
-        }
-      }
-
-      // For each empty square, check all other color groups
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state !== 'empty') continue;
-          const myColor = this.grid[row][col].groupColor;
-          if (!myColor) continue;
-          for (const [otherColor, groupEmpty] of emptyColorGroups.entries()) {
-            if (otherColor === myColor) continue;
-            if (groupEmpty.length <= 1) continue;
-            let allAttacked = true;
-            for (const { row: r, col: c } of groupEmpty) {
-              if (!queenAttacks(row, col, r, c)) {
-                allAttacked = false;
-                break;
-              }
-            }
-            if (allAttacked) {
-              this.placeFlag(row, col);
-              flagCount++;
-              didSomething = true;
-              break;
-            }
-          }
-        }
-      }
-
-      return didSomething;
+      return flagBlockingSquares(this.grid, this.gridSize, (row, col) => this.placeFlag(row, col));
     },
 
     // Step 3: Constrained Row Elimination
     eliminateConstrainedRows() {
-      type Pos = { row: number; col: number };
-      const emptyColorGroups = new Map<string, Pos[]>();
-      // Build map of empty squares by color group
-      for (let r = 0; r < this.gridSize; r++) {
-        for (let c = 0; c < this.gridSize; c++) {
-          if (this.grid[r][c].state === 'empty') {
-            const grp = this.grid[r][c].groupColor;
-            if (!grp) continue;
-            if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
-            emptyColorGroups.get(grp)!.push({ row: r, col: c });
-          }
-        }
-      }
-      // Generate all non-empty subsets of rows
-      const rows = Array.from({ length: this.gridSize }, (_, i) => i);
-      const subsets: number[][] = [];
-      function genSubsets(arr: number[], start: number, curr: number[]) {
-        for (let i = start; i < arr.length; i++) {
-          const next = curr.concat(arr[i]);
-          subsets.push(next);
-          genSubsets(arr, i + 1, next);
-        }
-      }
-      genSubsets(rows, 0, []);
-      let flagCount = 0;
-      let didSomething = false;
-      for (const S of subsets) {
-        const uniqueColors = Array.from(emptyColorGroups.entries())
-          .filter(
-            ([, positions]) => positions.length > 0 && positions.every((p) => S.includes(p.row))
-          )
-          .map(([color]) => color);
-        if (uniqueColors.length === S.length && uniqueColors.length > 0) {
-          for (const row of S) {
-            for (let col = 0; col < this.gridSize; col++) {
-              if (this.grid[row][col].state === 'empty') {
-                const grp = this.grid[row][col].groupColor;
-                if (!grp || !uniqueColors.includes(grp)) {
-                  this.placeFlag(row, col);
-                  flagCount++;
-                  didSomething = true;
-                }
-              }
-            }
-          }
-        }
-      }
-      return didSomething;
+      return eliminateConstrainedRows(this.grid, this.gridSize, (row, col) =>
+        this.placeFlag(row, col)
+      );
     },
 
     // Step 4: Constrained Column Elimination
     eliminateConstrainedColumns() {
-      type Pos = { row: number; col: number };
-      const emptyColorGroups = new Map<string, Pos[]>();
-      // Build map of empty squares by color group
-      for (let r = 0; r < this.gridSize; r++) {
-        for (let c = 0; c < this.gridSize; c++) {
-          if (this.grid[r][c].state === 'empty') {
-            const grp = this.grid[r][c].groupColor;
-            if (!grp) continue;
-            if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
-            emptyColorGroups.get(grp)!.push({ row: r, col: c });
-          }
-        }
-      }
-      // Generate all non-empty subsets of columns
-      const cols = Array.from({ length: this.gridSize }, (_, i) => i);
-      const subsets: number[][] = [];
-      function genSubsets(arr: number[], start: number, curr: number[]) {
-        for (let i = start; i < arr.length; i++) {
-          const next = curr.concat(arr[i]);
-          subsets.push(next);
-          genSubsets(arr, i + 1, next);
-        }
-      }
-      genSubsets(cols, 0, []);
-      let flagCount = 0;
-      let didSomething = false;
-      for (const S of subsets) {
-        const uniqueColors = Array.from(emptyColorGroups.entries())
-          .filter(
-            ([, positions]) => positions.length > 0 && positions.every((p) => S.includes(p.col))
-          )
-          .map(([color]) => color);
-        if (uniqueColors.length === S.length && uniqueColors.length > 0) {
-          for (const col of S) {
-            for (let row = 0; row < this.gridSize; row++) {
-              if (this.grid[row][col].state === 'empty') {
-                const grp = this.grid[row][col].groupColor;
-                if (!grp || !uniqueColors.includes(grp)) {
-                  this.placeFlag(row, col);
-                  flagCount++;
-                  didSomething = true;
-                }
-              }
-            }
-          }
-        }
-      }
-      return didSomething;
+      return eliminateConstrainedColumns(this.grid, this.gridSize, (row, col) =>
+        this.placeFlag(row, col)
+      );
     },
 
     // Step 5: Flag squares where a queen would block all remaining free squares in any row or column
     blockRowsAndColumns() {
-      type Pos = { row: number; col: number };
-      let flagCount = 0;
-      let didSomething = false;
-      // Helper: does a queen at (aRow,aCol) attack (tRow,tCol)? including diagonals
-      function queenAttacks(aRow: number, aCol: number, tRow: number, tCol: number): boolean {
-        return aRow === tRow || aCol === tCol || Math.abs(aRow - tRow) === Math.abs(aCol - tCol);
-      }
-      // Build lists of empty positions per row and per column
-      const freeRows = new Map<number, Pos[]>();
-      const freeCols = new Map<number, Pos[]>();
-      for (let i = 0; i < this.gridSize; i++) {
-        freeRows.set(i, []);
-        freeCols.set(i, []);
-      }
-      for (let r = 0; r < this.gridSize; r++) {
-        for (let c = 0; c < this.gridSize; c++) {
-          if (this.grid[r][c].state === 'empty') {
-            freeRows.get(r)!.push({ row: r, col: c });
-            freeCols.get(c)!.push({ row: r, col: c });
-          }
-        }
-      }
-      // Try each empty square and flag if it blocks an entire row or column
-      outer: for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state !== 'empty') continue;
-          // Check other rows
-          for (const [r, positions] of freeRows.entries()) {
-            if (r === row || positions.length === 0) continue;
-            if (positions.every((p) => queenAttacks(row, col, p.row, p.col))) {
-              this.placeFlag(row, col);
-              flagCount++;
-              didSomething = true;
-              break outer;
-            }
-          }
-          // Check other columns
-          for (const [c, positions] of freeCols.entries()) {
-            if (c === col || positions.length === 0) continue;
-            if (positions.every((p) => queenAttacks(row, col, p.row, p.col))) {
-              this.placeFlag(row, col);
-              flagCount++;
-              didSomething = true;
-              break outer;
-            }
-          }
-        }
-      }
-      return didSomething;
+      return blockRowsAndColumns(this.grid, this.gridSize, (row, col) => this.placeFlag(row, col));
     },
 
     // New: Loop through all steps until no changes
     runAllSolverSteps() {
-      if (!this.testLogs || this.testLogs.length === 0) {
-        this.testLogs = [];
-      }
-      this.testLogs.push('--- Starting Solver Loop ---');
-
-      // Track statistics instead of verbose logs
-      let stats = {
-        loops: 0,
-        step1Queens: 0,
-        step2Flags: 0,
-        step3Flags: 0,
-        step4Flags: 0,
-        step5Flags: 0,
-      };
-
-      let loop = 1;
-      let anyChange;
-      do {
-        stats.loops++;
-        this.testLogs.push(`--- Loop ${loop} ---`);
-
-        // Save previous state for comparison
-        const prevQueenPositions = this.queenPositions.length;
-
-        // Step 1: Track only number of queens placed
-        let prevFlags = this.countFlags();
-        let changed1 = this.placeLastFreeQueens();
-        let newQueens = this.queenPositions.length - prevQueenPositions;
-        stats.step1Queens += newQueens;
-
-        // Log only if queens were placed
-        if (newQueens > 0) {
-          this.testLogs.push(`Step 1: Placed ${newQueens} queens`);
-        }
-
-        // Step 2: Track only number of flags placed
-        prevFlags = this.countFlags();
-        let changed2 = this.flagBlockingSquares();
-        let newFlags = this.countFlags() - prevFlags;
-        stats.step2Flags += newFlags;
-
-        // Log only if flags were placed
-        if (newFlags > 0) {
-          this.testLogs.push(`Step 2: Placed ${newFlags} flags`);
-        }
-
-        // Step 3: Constrained Row Elimination
-        prevFlags = this.countFlags();
-        let changed3 = this.eliminateConstrainedRows();
-        newFlags = this.countFlags() - prevFlags;
-        stats.step3Flags += newFlags;
-
-        if (newFlags > 0) {
-          this.testLogs.push(`Step 3: Placed ${newFlags} flags`);
-        }
-
-        // Step 4: Constrained Column Elimination
-        prevFlags = this.countFlags();
-        let changed4 = this.eliminateConstrainedColumns();
-        newFlags = this.countFlags() - prevFlags;
-        stats.step4Flags += newFlags;
-
-        if (newFlags > 0) {
-          this.testLogs.push(`Step 4: Placed ${newFlags} flags`);
-        }
-
-        // Step 5: Flag Row/Column Blocking Squares
-        prevFlags = this.countFlags();
-        let changed5 = this.blockRowsAndColumns();
-        newFlags = this.countFlags() - prevFlags;
-        stats.step5Flags += newFlags;
-
-        if (newFlags > 0) {
-          this.testLogs.push(`Step 5: Placed ${newFlags} flags`);
-        }
-
-        anyChange = changed1 || changed2 || changed3 || changed4 || changed5;
-
-        // More concise loop result reporting
-        if (anyChange) {
-          this.testLogs.push(`Loop ${loop}: Made progress`);
-        }
-
-        loop++;
-      } while (anyChange);
-
-      // Summarize the solver results
-      this.testLogs.push(`--- Solver finished after ${stats.loops} loops ---`);
-      this.testLogs.push(
-        `Total placements: ${stats.step1Queens} queens, ${stats.step2Flags + stats.step3Flags + stats.step4Flags + stats.step5Flags} flags`
+      runAllSolverSteps(
+        this.grid,
+        this.gridSize,
+        (row, col) => this.placeQueen(row, col),
+        (row, col) => this.placeFlag(row, col),
+        () => this.countFlags(),
+        () => this.queenPositions,
+        this.testLogs
       );
     },
 
