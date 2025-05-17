@@ -207,7 +207,7 @@ export const useGameStore = defineStore('game', {
       }
     },
 
-    placeRandomQueen() {
+    placeRandomQueen(): boolean {
       if (this.availableMoves.length === 0) {
         // If we have no valid moves but not all queens are placed,
         // we're in a dead end. Reset the grid instead of showing error.
@@ -549,12 +549,15 @@ export const useGameStore = defineStore('game', {
         .map((_, row) =>
           Array(this.gridSize)
             .fill(null)
-            .map((_, col) => ({
-              position: { row, col },
-              state: 'empty',
-              groupColor: undefined,
-              playerMark: undefined as 'queen' | 'flag' | undefined,
-            }))
+            .map(
+              (_, col) =>
+                ({
+                  position: { row, col },
+                  state: 'empty' as const,
+                  groupColor: undefined,
+                  playerMark: undefined,
+                }) as GridSquare
+            )
         );
 
       // Copy only the queens and their color groups
@@ -563,17 +566,17 @@ export const useGameStore = defineStore('game', {
           if (this.grid[row][col].state === 'queen') {
             puzzleGrid[row][col] = {
               position: { row, col },
-              state: 'queen',
+              state: 'queen' as const,
               groupColor: this.grid[row][col].groupColor,
               playerMark: 'queen' as const,
-            };
+            } as GridSquare;
           } else if (this.grid[row][col].groupColor) {
             puzzleGrid[row][col] = {
               position: { row, col },
-              state: 'empty',
+              state: 'empty' as const,
               groupColor: this.grid[row][col].groupColor,
               playerMark: undefined,
-            };
+            } as GridSquare;
           }
         }
       }
