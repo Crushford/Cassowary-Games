@@ -1,8 +1,8 @@
 <template>
   <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr_300px] gap-4">
-    <!-- Basic Controls Sidebar on Left -->
+    <!-- Puzzle Generation Controls Sidebar on Left -->
     <aside class="bg-slate-800 rounded-lg p-4 flex flex-col gap-4">
-      <BasicControls />
+      <PuzzleGenerationControls />
     </aside>
 
     <!-- Main Content -->
@@ -89,7 +89,9 @@ import { useGameStore } from '../stores/gameStore';
 
 // Use defineAsyncComponent to fix the "no default export" error
 const GameGrid = defineAsyncComponent(() => import('../components/GameGrid.vue'));
-const BasicControls = defineAsyncComponent(() => import('../components/BasicControls.vue'));
+const PuzzleGenerationControls = defineAsyncComponent(
+  () => import('../components/PuzzleGenerationControls.vue')
+);
 
 const gameStore = useGameStore();
 
