@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import type { GridSquare } from './GameGrid.vue';
+import type { GridSquare } from '../types/grid';
 import { computed } from 'vue';
 import { useGameStore } from '../stores/gameStore';
 

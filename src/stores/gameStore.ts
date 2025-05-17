@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import type { GridSquare } from '../components/GameGrid.vue';
+import type { GridSquare } from '../types/grid';
 // Import utility functions
 import {
   Pos,

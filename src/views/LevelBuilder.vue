@@ -32,7 +32,11 @@
         class="bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg"
       >
         <h3 class="font-semibold mb-4 text-white">Debug Logs</h3>
-        <!-- Debug details omitted for brevity -->
+        <div class="text-sm text-white">
+          <pre class="whitespace-pre-wrap overflow-auto">{{
+            JSON.stringify(gameStore.testDebugLogs, null, 2)
+          }}</pre>
+        </div>
       </section>
     </div>
 

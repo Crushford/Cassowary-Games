@@ -1,4 +1,4 @@
-import type { GridSquare } from '../components/GameGrid.vue';
+import type { GridSquare } from '../types/grid';
 
 // Position type used in several functions
 export interface Pos {

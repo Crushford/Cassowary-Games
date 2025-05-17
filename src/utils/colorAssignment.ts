@@ -1,4 +1,4 @@
-import type { GridSquare } from '../components/GameGrid.vue';
+import type { GridSquare } from '../types/grid';
 import type { Pos } from '../stores/gameStoreUtils';
 
 // Helper function to check if a position is valid within the grid
