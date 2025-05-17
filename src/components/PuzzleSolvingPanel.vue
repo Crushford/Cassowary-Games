@@ -3,6 +3,11 @@
     <!-- Title -->
     <h2 class="text-2xl font-semibold text-white">Puzzle Solving & Validation</h2>
 
+    <!-- Reset Button at Top -->
+    <BaseButton @click="handleResetBoard" class="bg-red-800 hover:bg-red-700 text-lg font-medium">
+      🔄 Reset Board for Solving
+    </BaseButton>
+
     <!-- Solve Puzzle Button -->
     <BaseButton
       @click="handleRunAllSteps"
@@ -94,11 +99,6 @@
         <pre class="text-sm text-white whitespace-pre-wrap">{{ logs }}</pre>
       </div>
     </div>
-
-    <!-- Optional Reset -->
-    <BaseButton @click="handleResetBoard" class="bg-red-950 hover:bg-red-900">
-      Reset Board for Solving
-    </BaseButton>
   </div>
 </template>
 
@@ -189,7 +189,7 @@ function handleBlockRowsAndColumns() {
 }
 
 function handleResetBoard() {
-  gameStore.initializeGrid();
+  // Only clear queens and flags, preserve colors
   gameStore.clearQueensAndFlags();
 }
 
