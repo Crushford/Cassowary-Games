@@ -18,10 +18,18 @@
       </label>
     </div>
 
-    <!-- Step-by-Step Controls -->
+    <!-- Main Run All Steps Button -->
     <div class="flex flex-col gap-4">
-      <h3 class="text-base font-medium mb-2 text-slate-300">Step-by-Step Controls</h3>
+      <BaseButton
+        @click="handleRunAllSteps"
+        class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
+      >
+        ▶️ Run All Steps (Generate Full Puzzle)
+      </BaseButton>
+    </div>
 
+    <!-- Step-by-Step Controls in Accordion -->
+    <Accordion title="Step-by-Step Controls">
       <!-- Step 1: Reset Board -->
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 1: Reset Board</span>
@@ -104,20 +112,7 @@
           Fill Remaining Squares
         </BaseButton>
       </div>
-    </div>
-
-    <!-- Run All Steps -->
-    <div class="flex flex-col gap-4">
-      <h3 class="text-base font-medium mb-2 text-slate-300">Run All Steps</h3>
-      <BaseButton
-        @click="handleRunAllSteps"
-        :disabled="!canAutoRun"
-        disabledTitle="Board is complete"
-        class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
-      >
-        ▶️ Run All Steps (Generate Full Puzzle)
-      </BaseButton>
-    </div>
+    </Accordion>
 
     <!-- Optional Controls -->
     <div class="flex flex-col gap-4">
@@ -131,12 +126,7 @@
         >
           Undo Last Step
         </BaseButton>
-        <BaseButton
-          @click="handleAutoRun"
-          :disabled="!canAutoRun"
-          disabledTitle="Board is complete"
-          class="bg-slate-800 hover:bg-slate-700"
-        >
+        <BaseButton @click="handleAutoRun" class="bg-slate-800 hover:bg-slate-700">
           Auto Run All Steps
         </BaseButton>
       </div>
@@ -147,6 +137,7 @@
 <script setup lang="ts">
 import { ref, computed, defineAsyncComponent } from 'vue';
 const BaseButton = defineAsyncComponent(() => import('./BaseButton.vue'));
+const Accordion = defineAsyncComponent(() => import('./Accordion.vue'));
 import { useGameStore } from '../stores/gameStore';
 
 const gameStore = useGameStore();
@@ -182,10 +173,6 @@ const hasCompletedGame = computed(() => {
 
 const canPlaceQueens = computed(() => {
   return gameStore.queenPositions.length < gameStore.gridSize;
-});
-
-const canAutoRun = computed(() => {
-  return !hasCompletedGame.value;
 });
 
 // Methods
@@ -231,14 +218,50 @@ function handleAutoRun() {
 }
 
 function handleRunAllSteps() {
-  // Reset the board first
-  handleResetBoard();
+  try {
+    // Clear any existing error messages
+    gameStore.setError(null);
 
-  // Then run all steps in sequence
-  handleGenerateFullSolution();
-  handleAssignInitialColors();
-  handleExpandColors();
-  handleColorOnePerRow();
-  handleFillRemaining();
+    // Reset everything first
+    gameStore.initializeGrid();
+    gameStore.clearQueensAndFlags();
+
+    // Generate a full solution with queens
+    gameStore.generateFullSolution();
+    if (gameStore.queenPositions.length !== gameStore.gridSize) {
+      gameStore.setError('Failed to generate queen positions');
+      return;
+    }
+
+    // Assign initial colors to queens
+    gameStore.assignColorGroups();
+
+    // Expand color groups
+    gameStore.addOneColorToEachGroup();
+
+    // Add one color to each row
+    gameStore.addOneColorToEachRow();
+
+    // Fill remaining squares
+    gameStore.fillRemainingSingleSquares();
+
+    // Validate the final state
+    const { queenCountValid, allFilled, colorGroupsValid } = gameStore.validatePuzzle();
+    if (!(queenCountValid && allFilled && colorGroupsValid)) {
+      gameStore.setError('Generated puzzle is invalid');
+      return;
+    }
+
+    // Save the puzzle if everything is valid
+    const puzzleName = gameStore.savePuzzleToLocalStorage();
+    if (puzzleName) {
+      gameStore.setError(null);
+    } else {
+      gameStore.setError('Failed to save puzzle');
+    }
+  } catch (error) {
+    console.error('Error in handleRunAllSteps:', error);
+    gameStore.setError('An error occurred while generating the puzzle');
+  }
 }
 </script>
