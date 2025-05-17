@@ -274,9 +274,10 @@ export const useGameStore = defineStore('game', {
     },
 
     // Use validatePuzzleState utility for validation
-    validatePuzzle(): boolean {
+    validatePuzzle() {
       const { queenCountValid, colorGroupsValid } = validatePuzzleState(this.grid, this.gridSize);
-      return queenCountValid && colorGroupsValid;
+      const allFilled = this.countEmptySquares() === 0;
+      return { queenCountValid, allFilled, colorGroupsValid };
     },
 
     assignColorGroups() {
@@ -591,7 +592,7 @@ export const useGameStore = defineStore('game', {
       // Save to local storage
       localStorage.setItem('savedPuzzles', JSON.stringify(this.savedPuzzles));
       this.setError(null);
-      return puzzleName;
+      return puzzleName || null;
     },
 
     loadPuzzlesFromLocalStorage() {
@@ -768,7 +769,7 @@ export const useGameStore = defineStore('game', {
       if (!name) {
         this.testLogs.push(`Attempt ${attempt}: Save failed`);
       }
-      return name;
+      return name || null;
     },
 
     // Generates puzzles until a valid one is found and stored; returns the puzzle name or null
@@ -866,9 +867,9 @@ export const useGameStore = defineStore('game', {
           } catch (attemptError) {
             // Log error for this specific attempt but continue with next
             console.error(`Error in attempt ${attempt}:`, attemptError);
-            this.testLogs.push(
-              `❌ Error in attempt ${attempt}: ${attemptError.message || 'Unknown error'}`
-            );
+            const errorMessage =
+              attemptError instanceof Error ? attemptError.message : 'Unknown error';
+            this.testLogs.push(`❌ Error in attempt ${attempt}: ${errorMessage}`);
           }
         }
 
@@ -883,8 +884,9 @@ export const useGameStore = defineStore('game', {
       } catch (error) {
         // Handle any unexpected errors
         console.error('Critical error in puzzle generation:', error);
-        this.testLogs.push(`❌ CRITICAL ERROR: ${error.message || 'Unknown error'}`);
-        this.setError(`Error generating puzzle: ${error.message || 'Unknown error'}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        this.testLogs.push(`❌ CRITICAL ERROR: ${errorMessage}`);
+        this.setError(`Error generating puzzle: ${errorMessage}`);
         return null;
       }
     },
