@@ -1,10 +1,4 @@
-import type { GridSquare } from '../types/grid';
-
-// Position type used in several functions
-export interface Pos {
-  row: number;
-  col: number;
-}
+import type { GridSquare, Pos } from '../types/types';
 
 // Create an empty grid with specified dimensions
 export function createEmptyGrid(size: number): GridSquare[][] {

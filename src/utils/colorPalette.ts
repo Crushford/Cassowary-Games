@@ -1,17 +1,5 @@
 // src/utils/colorPalette.ts
-
-// Define the color types for strong typing support
-export type ColorName =
-  | 'red'
-  | 'blue'
-  | 'green'
-  | 'yellow'
-  | 'purple'
-  | 'pink'
-  | 'orange'
-  | 'teal'
-  | 'indigo'
-  | 'amber';
+import type { ColorName, ColorClasses } from '../types/types';
 
 // Define the main palette (10 colors)
 export const COLOR_PALETTE: ColorName[] = [
@@ -43,14 +31,6 @@ export const COLOR_SYMBOLS: Record<ColorName | 'undefined', string> = {
 };
 
 // Mapping colors to their Tailwind color classes
-interface ColorClasses {
-  bg: string; // Background
-  text: string; // Text color
-  border: string; // Border color
-  hoverBg: string; // Hover background
-  hoverText: string; // Hover text
-}
-
 export const COLOR_CLASSES: Record<ColorName, ColorClasses> = {
   red: {
     bg: 'bg-red-600',

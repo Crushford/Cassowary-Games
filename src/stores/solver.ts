@@ -1,8 +1,5 @@
-import type { GridSquare } from '../types/grid';
+import type { GridSquare, Pos } from '../types/types';
 import { queenAttacks } from './gameStoreUtils';
-
-// Position type used in solver functions
-type Pos = { row: number; col: number };
 
 // Helper for step 1: Place queens in last free squares of color blocks, rows, or columns
 export function placeLastFreeQueens(

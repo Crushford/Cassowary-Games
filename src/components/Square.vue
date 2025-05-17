@@ -15,11 +15,7 @@
 <script setup lang="ts">
 import { useGameStore } from '../stores/gameStore';
 import { computed } from 'vue';
-
-interface SquareProps {
-  row: number;
-  col: number;
-}
+import type { SquareProps } from '../types/types';
 
 const props = defineProps<SquareProps>();
 const gameStore = useGameStore();

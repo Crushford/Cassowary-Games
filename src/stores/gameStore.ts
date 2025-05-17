@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia';
-import type { GridSquare } from '../types/grid';
+import type { GridSquare, Pos, GameState, AttemptResult } from '../types/types';
 // Import utility functions
 import {
-  Pos,
   createEmptyGrid,
   getQueenPositions,
   computeAvailableMoves,
@@ -30,31 +29,6 @@ import {
   blockRowsAndColumns,
   runAllSolverSteps,
 } from './solver';
-
-// Define a proper type for puzzle generation attempt results
-interface AttemptResult {
-  attempt: number;
-  queens: number;
-  requiredQueens: number;
-  allFilled: boolean;
-  colorGroupsValid: boolean;
-  success: boolean;
-}
-
-export interface GameState {
-  grid: GridSquare[][];
-  gridSize: number;
-  moveHistory: { grid: GridSquare[][] }[];
-  currentLevel: number;
-  availableMoves: { row: number; col: number }[];
-  isComplete: boolean;
-  errorMessage: string | null;
-  savedPuzzles: { name: string; grid: GridSquare[][]; gridSize: number }[];
-  currentPuzzle: string | null;
-  currentSolution: { row: number; col: number }[];
-  testLogs: string[];
-  testDebugLogs: any[];
-}
 
 export const useGameStore = defineStore('game', {
   state: (): GameState => ({
