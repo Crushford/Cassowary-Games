@@ -42,8 +42,7 @@ export interface GameState {
   savedPuzzles: { name: string; grid: GridSquare[][]; gridSize: number }[];
   currentPuzzle: string | null;
   currentSolution: Pos[];
-  testLogs: string[];
-  testDebugLogs: any[];
+  debugLogs: string[];
 }
 
 /**

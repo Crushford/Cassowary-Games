@@ -17,26 +17,13 @@
       </div>
 
       <section
-        v-if="gameStore.testLogs.length"
         ref="logsContainer"
         class="bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg max-h-64 overflow-auto"
       >
-        <h3 class="font-semibold mb-4 text-white">Logs</h3>
-        <ul class="list-disc list-inside text-sm space-y-2 text-white">
-          <li v-for="(log, i) in gameStore.testLogs" :key="i">{{ log }}</li>
-        </ul>
-      </section>
-
-      <section
-        v-if="gameStore.testDebugLogs.length"
-        class="bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg"
-      >
         <h3 class="font-semibold mb-4 text-white">Debug Logs</h3>
-        <div class="text-sm text-white">
-          <pre class="whitespace-pre-wrap overflow-auto">{{
-            JSON.stringify(gameStore.testDebugLogs, null, 2)
-          }}</pre>
-        </div>
+        <ul class="list-disc list-inside text-sm space-y-2 text-white">
+          <li v-for="(log, i) in gameStore.debugLogs" :key="i">{{ log }}</li>
+        </ul>
       </section>
     </div>
 
@@ -64,7 +51,7 @@ const gameStore = useGameStore();
 
 const logsContainer = ref<HTMLElement | null>(null);
 watch(
-  () => gameStore.testLogs,
+  () => gameStore.debugLogs,
   () =>
     nextTick(() => {
       if (logsContainer.value) logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
@@ -72,7 +59,7 @@ watch(
   { deep: true }
 );
 onMounted(() => {
-  if (logsContainer.value && gameStore.testLogs.length)
+  if (logsContainer.value && gameStore.debugLogs.length)
     logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
 });
 </script>

@@ -288,7 +288,7 @@ export function runAllSolverSteps(
   placeQueen: (row: number, col: number) => boolean,
   placeFlag: (row: number, col: number) => boolean,
   countFlags: () => number,
-  getQueenPositions: () => { row: number; col: number }[],
+  getQueenPositions: () => Pos[],
   testLogs: string[]
 ): void {
   if (!testLogs || testLogs.length === 0) {

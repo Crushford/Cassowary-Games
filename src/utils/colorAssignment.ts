@@ -1,5 +1,5 @@
 import type { GridSquare } from '../types/grid';
-import type { Pos } from '../stores/gameStoreUtils';
+import type { Pos } from '../types/types';
 
 // Helper function to check if a position is valid within the grid
 function isValidPosition(grid: GridSquare[][], row: number, col: number): boolean {
@@ -11,7 +11,7 @@ export function ensureNoSingletonColorBlocks(grid: GridSquare[][]): GridSquare[]
   const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
   const gridSize = newGrid.length;
 
-  const colorGroups: Record<string, { row: number; col: number }[]> = {};
+  const colorGroups: Record<string, Pos[]> = {};
   // Build map of color groups
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
@@ -190,7 +190,7 @@ export function fillRemainingSquares(
 
   // First, check if there are any uncolored squares
   let uncoloredSquares = 0;
-  let uncoloredPositions: { row: number; col: number }[] = [];
+  let uncoloredPositions: Pos[] = [];
 
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
