@@ -743,12 +743,12 @@ export const useGameStore = defineStore('game', {
       });
 
       this.clearQueensAndFlags(); // reset markers
-      this.testAllStepsLoop(); // cycle solve steps
+      this.runAllSolverSteps(); // cycle solve steps
       if (!this.forceChangeColor()) {
         this.testLogs.push(`Attempt ${attempt}: Color change failed`);
         return null;
       }
-      this.testAllStepsLoop(); // re-run solver steps
+      this.runAllSolverSteps(); // re-run solver steps
       const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
 
       // Add more detailed validation logs
@@ -816,7 +816,7 @@ export const useGameStore = defineStore('game', {
             }
 
             this.clearQueensAndFlags();
-            this.testAllStepsLoop();
+            this.runAllSolverSteps();
 
             // Try to change a color if there are empty squares
             const emptyCount = this.countEmptySquares();
@@ -828,7 +828,7 @@ export const useGameStore = defineStore('game', {
             }
 
             this.forceChangeColor();
-            this.testAllStepsLoop();
+            this.runAllSolverSteps();
 
             // Validate and summarize
             const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
@@ -918,7 +918,7 @@ export const useGameStore = defineStore('game', {
     },
 
     // Helper for step 1: Place queens in last free squares of color blocks, rows, or columns
-    testStep1PlaceLastFreeQueens() {
+    placeLastFreeQueens() {
       let didSomething = false;
       let queensPlaced = 0;
       let placed;
@@ -984,7 +984,7 @@ export const useGameStore = defineStore('game', {
     },
 
     // Helper for step 2: Flag squares where a queen would block all remaining squares in other color groups
-    testStep2FlagBlockingSquares() {
+    flagBlockingSquares() {
       let flagCount = 0;
       let didSomething = false;
 
@@ -1031,7 +1031,7 @@ export const useGameStore = defineStore('game', {
     },
 
     // Step 3: Constrained Row Elimination
-    testConstrainedRowElimination() {
+    eliminateConstrainedRows() {
       type Pos = { row: number; col: number };
       const emptyColorGroups = new Map<string, Pos[]>();
       // Build map of empty squares by color group
@@ -1083,7 +1083,7 @@ export const useGameStore = defineStore('game', {
     },
 
     // Step 4: Constrained Column Elimination
-    testConstrainedColumnElimination() {
+    eliminateConstrainedColumns() {
       type Pos = { row: number; col: number };
       const emptyColorGroups = new Map<string, Pos[]>();
       // Build map of empty squares by color group
@@ -1135,7 +1135,7 @@ export const useGameStore = defineStore('game', {
     },
 
     // Step 5: Flag squares where a queen would block all remaining free squares in any row or column
-    testStep5BlockRowsAndColumns() {
+    blockRowsAndColumns() {
       type Pos = { row: number; col: number };
       let flagCount = 0;
       let didSomething = false;
@@ -1188,7 +1188,7 @@ export const useGameStore = defineStore('game', {
     },
 
     // New: Loop through all steps until no changes
-    testAllStepsLoop() {
+    runAllSolverSteps() {
       if (!this.testLogs || this.testLogs.length === 0) {
         this.testLogs = [];
       }
@@ -1215,7 +1215,7 @@ export const useGameStore = defineStore('game', {
 
         // Step 1: Track only number of queens placed
         let prevFlags = this.countFlags();
-        let changed1 = this.testStep1PlaceLastFreeQueens();
+        let changed1 = this.placeLastFreeQueens();
         let newQueens = this.queenPositions.length - prevQueenPositions;
         stats.step1Queens += newQueens;
 
@@ -1226,7 +1226,7 @@ export const useGameStore = defineStore('game', {
 
         // Step 2: Track only number of flags placed
         prevFlags = this.countFlags();
-        let changed2 = this.testStep2FlagBlockingSquares();
+        let changed2 = this.flagBlockingSquares();
         let newFlags = this.countFlags() - prevFlags;
         stats.step2Flags += newFlags;
 
@@ -1237,7 +1237,7 @@ export const useGameStore = defineStore('game', {
 
         // Step 3: Constrained Row Elimination
         prevFlags = this.countFlags();
-        let changed3 = this.testConstrainedRowElimination();
+        let changed3 = this.eliminateConstrainedRows();
         newFlags = this.countFlags() - prevFlags;
         stats.step3Flags += newFlags;
 
@@ -1247,7 +1247,7 @@ export const useGameStore = defineStore('game', {
 
         // Step 4: Constrained Column Elimination
         prevFlags = this.countFlags();
-        let changed4 = this.testConstrainedColumnElimination();
+        let changed4 = this.eliminateConstrainedColumns();
         newFlags = this.countFlags() - prevFlags;
         stats.step4Flags += newFlags;
 
@@ -1257,7 +1257,7 @@ export const useGameStore = defineStore('game', {
 
         // Step 5: Flag Row/Column Blocking Squares
         prevFlags = this.countFlags();
-        let changed5 = this.testStep5BlockRowsAndColumns();
+        let changed5 = this.blockRowsAndColumns();
         newFlags = this.countFlags() - prevFlags;
         stats.step5Flags += newFlags;
 
