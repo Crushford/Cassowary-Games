@@ -79,6 +79,9 @@
           </button>
         </div>
       </div>
+
+      <!-- Add Puzzle Solving Panel -->
+      <PuzzleSolvingPanel />
     </aside>
   </div>
 </template>
@@ -91,6 +94,9 @@ import { useGameStore } from '../stores/gameStore';
 const GameGrid = defineAsyncComponent(() => import('../components/GameGrid.vue'));
 const PuzzleGenerationControls = defineAsyncComponent(
   () => import('../components/PuzzleGenerationControls.vue')
+);
+const PuzzleSolvingPanel = defineAsyncComponent(
+  () => import('../components/PuzzleSolvingPanel.vue')
 );
 
 const gameStore = useGameStore();
