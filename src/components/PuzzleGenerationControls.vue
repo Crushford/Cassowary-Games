@@ -71,6 +71,9 @@
           class="bg-purple-950 hover:bg-purple-900"
         >
           Assign Initial Colors to Queens
+          <span class="block text-sm text-purple-300"
+            >[TODO: Fix color assignment to queen positions]</span
+          >
         </BaseButton>
       </div>
 
