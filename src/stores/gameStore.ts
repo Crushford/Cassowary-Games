@@ -863,8 +863,7 @@ export const useGameStore = defineStore('game', {
 
         this.setError(`Failed to generate a valid puzzle after ${maxAttempts} attempts`);
         return null;
-      } catch (error) {
-        // Handle any unexpected errors
+      } catch (error: unknown) {
         console.error('Critical error in puzzle generation:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         this.testLogs.push(`❌ CRITICAL ERROR: ${errorMessage}`);
@@ -893,9 +892,11 @@ export const useGameStore = defineStore('game', {
         } else {
           this.testLogs.push('No colors assigned yet');
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error in logColorDistribution:', error);
-        this.testLogs.push(`Error logging color distribution: ${error.message || 'Unknown error'}`);
+        this.testLogs.push(
+          `Error logging color distribution: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     },
 
@@ -1101,9 +1102,11 @@ export const useGameStore = defineStore('game', {
         this.testLogs.push(
           `Valid color groups: ${validGroupsCount}/${attempts.length} (${validPercent}%)`
         );
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error summarizing attempts:', error);
-        this.testLogs.push(`Error summarizing attempt data: ${error.message || 'Unknown error'}`);
+        this.testLogs.push(
+          `Error summarizing attempt data: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     },
   },
