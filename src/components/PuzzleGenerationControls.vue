@@ -18,23 +18,27 @@
       </label>
     </div>
 
-    <!-- Main Generation Controls -->
+    <!-- Step-by-Step Controls -->
     <div class="flex flex-col gap-4">
-      <h3 class="text-base font-medium mb-2 text-slate-300">Generation Steps</h3>
+      <h3 class="text-base font-medium mb-2 text-slate-300">Step-by-Step Controls</h3>
 
-      <!-- Reset Board -->
-      <BaseButton @click="handleResetBoard" class="bg-red-600 hover:bg-red-500">
-        Reset Queens and Colors
-      </BaseButton>
-
-      <!-- Place Queens -->
+      <!-- Step 1: Reset Board -->
       <div class="flex flex-col gap-2">
+        <span class="text-sm text-slate-400">Step 1: Reset Board</span>
+        <BaseButton @click="handleResetBoard" class="bg-red-950 hover:bg-red-900">
+          Clear Queens & Colors
+        </BaseButton>
+      </div>
+
+      <!-- Step 2: Place Queens -->
+      <div class="flex flex-col gap-2">
+        <span class="text-sm text-slate-400">Step 2: Place Queens</span>
         <div class="flex gap-2">
           <BaseButton
             @click="handlePlaceRandomQueen"
             :disabled="!canPlaceQueens"
             disabledTitle="No valid moves"
-            class="bg-blue-600 hover:bg-blue-500 text-sm"
+            class="bg-blue-950 hover:bg-blue-900 text-sm"
           >
             Place Random Queen
           </BaseButton>
@@ -42,82 +46,99 @@
             @click="handleGenerateFullSolution"
             :disabled="!canPlaceQueens"
             disabledTitle="Board is full"
-            class="bg-blue-600 hover:bg-blue-500 text-sm"
+            class="bg-blue-950 hover:bg-blue-900 text-sm"
           >
             Place All Queens
           </BaseButton>
         </div>
       </div>
 
-      <!-- Color Assignment -->
+      <!-- Step 3: Color Each Queen -->
       <div class="flex flex-col gap-2">
+        <span class="text-sm text-slate-400">Step 3: Color Each Queen</span>
         <BaseButton
-          @click="handleAssignColors"
+          @click="handleAssignInitialColors"
           :disabled="!hasQueens"
           disabledTitle="Place queens first"
-          class="bg-purple-600 hover:bg-purple-500"
+          class="bg-purple-950 hover:bg-purple-900"
         >
-          Assign Colors to All Queens
+          Assign Initial Colors to Queens
         </BaseButton>
-        <div class="flex gap-2">
-          <BaseButton
-            @click="handleAssignInitialColors"
-            :disabled="!hasQueens"
-            disabledTitle="Place queens first"
-            class="bg-purple-600 hover:bg-purple-500 text-sm"
-          >
-            Assign Initial Colors to Queens
-          </BaseButton>
-          <BaseButton
-            @click="handleExpandColors"
-            :disabled="!hasAnyColors"
-            disabledTitle="Assign colors first"
-            class="bg-slate-700 hover:bg-slate-600 text-sm"
-          >
-            Expand Color Groups
-          </BaseButton>
-          <BaseButton
-            @click="handleColorOnePerRow"
-            :disabled="!hasAnyColors"
-            disabledTitle="Assign colors first"
-            class="bg-slate-700 hover:bg-slate-600 text-sm"
-          >
-            Color One Per Row
-          </BaseButton>
-        </div>
       </div>
 
-      <!-- Fill Remaining -->
-      <BaseButton
-        @click="handleFillRemaining"
-        :disabled="!hasAnyColors"
-        disabledTitle="Assign colors first"
-        class="bg-green-600 hover:bg-green-500"
-      >
-        Fill Remaining Squares
-      </BaseButton>
+      <!-- Step 4: Expand Color Groups -->
+      <div class="flex flex-col gap-2">
+        <span class="text-sm text-slate-400">Step 4: Expand Color Groups</span>
+        <BaseButton
+          @click="handleExpandColors"
+          :disabled="!hasAnyColors"
+          disabledTitle="Assign colors first"
+          class="bg-teal-950 hover:bg-teal-900"
+        >
+          Expand Color Groups
+        </BaseButton>
+      </div>
 
-      <!-- Optional Controls -->
-      <div class="flex flex-col gap-2 mt-4">
-        <h3 class="text-base font-medium mb-2 text-slate-300">Optional Controls</h3>
-        <div class="flex gap-2">
-          <BaseButton
-            @click="handleUndo"
-            :disabled="!canUndo"
-            disabledTitle="No moves to undo"
-            class="bg-slate-700 hover:bg-slate-600"
-          >
-            Undo Last Step
-          </BaseButton>
-          <BaseButton
-            @click="handleAutoRun"
-            :disabled="!canAutoRun"
-            disabledTitle="Board is complete"
-            class="bg-indigo-600 hover:bg-indigo-500"
-          >
-            Auto Run All Steps
-          </BaseButton>
-        </div>
+      <!-- Step 5: Color One Per Row -->
+      <div class="flex flex-col gap-2">
+        <span class="text-sm text-slate-400">Step 5: Color One Square Per Row</span>
+        <BaseButton
+          @click="handleColorOnePerRow"
+          :disabled="!hasAnyColors"
+          disabledTitle="Assign colors first"
+          class="bg-emerald-950 hover:bg-emerald-900"
+        >
+          Color One Square Per Row
+        </BaseButton>
+      </div>
+
+      <!-- Step 6: Fill Remaining -->
+      <div class="flex flex-col gap-2">
+        <span class="text-sm text-slate-400">Step 6: Fill Remaining</span>
+        <BaseButton
+          @click="handleFillRemaining"
+          :disabled="!hasAnyColors"
+          disabledTitle="Assign colors first"
+          class="bg-cyan-950 hover:bg-cyan-900"
+        >
+          Fill Remaining Squares
+        </BaseButton>
+      </div>
+    </div>
+
+    <!-- Run All Steps -->
+    <div class="flex flex-col gap-4">
+      <h3 class="text-base font-medium mb-2 text-slate-300">Run All Steps</h3>
+      <BaseButton
+        @click="handleRunAllSteps"
+        :disabled="!canAutoRun"
+        disabledTitle="Board is complete"
+        class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
+      >
+        ▶️ Run All Steps (Generate Full Puzzle)
+      </BaseButton>
+    </div>
+
+    <!-- Optional Controls -->
+    <div class="flex flex-col gap-4">
+      <h3 class="text-base font-medium mb-2 text-slate-300">Optional Controls</h3>
+      <div class="flex gap-2">
+        <BaseButton
+          @click="handleUndo"
+          :disabled="!canUndo"
+          disabledTitle="No moves to undo"
+          class="bg-slate-800 hover:bg-slate-700"
+        >
+          Undo Last Step
+        </BaseButton>
+        <BaseButton
+          @click="handleAutoRun"
+          :disabled="!canAutoRun"
+          disabledTitle="Board is complete"
+          class="bg-slate-800 hover:bg-slate-700"
+        >
+          Auto Run All Steps
+        </BaseButton>
       </div>
     </div>
   </div>
@@ -177,12 +198,6 @@ function handleResetBoard() {
   gameStore.clearQueensAndFlags();
 }
 
-function handlePlaceQueens() {
-  // This is a placeholder - in a real implementation, you might want to
-  // enter a mode where clicking squares places queens
-  gameStore.placeRandomQueen();
-}
-
 function handlePlaceRandomQueen() {
   gameStore.placeRandomQueen();
 }
@@ -191,7 +206,7 @@ function handleGenerateFullSolution() {
   gameStore.generateFullSolution();
 }
 
-function handleAssignColors() {
+function handleAssignInitialColors() {
   gameStore.assignColorGroups();
 }
 
@@ -212,19 +227,18 @@ function handleUndo() {
 }
 
 function handleAutoRun() {
+  handleRunAllSteps();
+}
+
+function handleRunAllSteps() {
   // Reset the board first
   handleResetBoard();
 
   // Then run all steps in sequence
   handleGenerateFullSolution();
-  handleAssignColors();
+  handleAssignInitialColors();
   handleExpandColors();
   handleColorOnePerRow();
   handleFillRemaining();
-}
-
-function handleAssignInitialColors() {
-  // This will assign initial colors to each queen without expanding
-  gameStore.assignColorGroups();
 }
 </script>
