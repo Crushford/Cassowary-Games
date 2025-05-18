@@ -88,17 +88,6 @@
     </div>
 
     <!-- Debug Logs -->
-    <div class="flex flex-col gap-2">
-      <div class="flex justify-between items-center">
-        <h3 class="text-lg font-medium text-white">Debug Logs</h3>
-        <BaseButton @click="clearLogs" class="bg-slate-700 hover:bg-slate-600 text-sm">
-          Clear Logs
-        </BaseButton>
-      </div>
-      <div class="bg-slate-900 p-4 rounded-lg max-h-48 overflow-auto">
-        <pre class="text-sm text-white whitespace-pre-wrap">{{ logs }}</pre>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -155,7 +144,7 @@ const canRunSteps = computed(() => {
 
 // Computed property for logs
 const logs = computed(() => {
-  return gameStore.testLogs.join('\n');
+  return gameStore.debugLogs.join('\n');
 });
 
 // Helper function for checkmark styling
@@ -165,6 +154,9 @@ const checkmarkClass = (isValid: boolean) => {
 
 // Methods
 function handleRunAllSteps() {
+  // Add a test log to confirm the log display is working
+  if (!gameStore.debugLogs) gameStore.debugLogs = [];
+  gameStore.debugLogs.push('DEBUG TEST: Running solver steps at ' + new Date().toISOString());
   gameStore.runAllSolverSteps();
 }
 
@@ -194,6 +186,6 @@ function handleResetBoard() {
 }
 
 function clearLogs() {
-  gameStore.testLogs = [];
+  gameStore.debugLogs = [];
 }
 </script>

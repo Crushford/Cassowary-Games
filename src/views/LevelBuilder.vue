@@ -17,6 +17,7 @@
       </div>
 
       <section
+        v-if="gameStore.debugLogs.length > 0"
         ref="logsContainer"
         class="bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg max-h-64 overflow-auto"
       >
@@ -24,6 +25,11 @@
         <ul class="list-disc list-inside text-sm space-y-2 text-white">
           <li v-for="(log, i) in gameStore.debugLogs" :key="i">{{ log }}</li>
         </ul>
+      </section>
+
+      <section v-else class="bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg">
+        <h3 class="font-semibold mb-4 text-white">Debug Logs</h3>
+        <p class="text-white">No logs to display yet.</p>
       </section>
     </div>
 
