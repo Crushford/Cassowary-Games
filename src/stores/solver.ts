@@ -289,12 +289,10 @@ export function runAllSolverSteps(
   placeFlag: (row: number, col: number) => boolean,
   countFlags: () => number,
   getQueenPositions: () => Pos[],
-  testLogs: string[]
+  logFn: (message: string) => void
 ): void {
-  if (!testLogs || testLogs.length === 0) {
-    testLogs = [];
-  }
-  testLogs.push('--- Starting Solver Loop ---');
+  // Log the start of solver
+  logFn('--- Starting Solver Loop ---');
 
   // Track statistics instead of verbose logs
   let stats = {
@@ -310,7 +308,7 @@ export function runAllSolverSteps(
   let anyChange;
   do {
     stats.loops++;
-    testLogs.push(`--- Loop ${loop} ---`);
+    logFn(`--- Loop ${loop} ---`);
 
     // Save previous state for comparison
     const prevQueenPositions = getQueenPositions().length;
@@ -323,7 +321,7 @@ export function runAllSolverSteps(
 
     // Log only if queens were placed
     if (newQueens > 0) {
-      testLogs.push(`Step 1: Placed ${newQueens} queens`);
+      logFn(`Step 1: Placed ${newQueens} queens`);
     }
 
     // Step 2: Track only number of flags placed
@@ -334,7 +332,7 @@ export function runAllSolverSteps(
 
     // Log only if flags were placed
     if (newFlags > 0) {
-      testLogs.push(`Step 2: Placed ${newFlags} flags`);
+      logFn(`Step 2: Placed ${newFlags} flags`);
     }
 
     // Step 3: Constrained Row Elimination
@@ -344,7 +342,7 @@ export function runAllSolverSteps(
     stats.step3Flags += newFlags;
 
     if (newFlags > 0) {
-      testLogs.push(`Step 3: Placed ${newFlags} flags`);
+      logFn(`Step 3: Placed ${newFlags} flags`);
     }
 
     // Step 4: Constrained Column Elimination
@@ -354,7 +352,7 @@ export function runAllSolverSteps(
     stats.step4Flags += newFlags;
 
     if (newFlags > 0) {
-      testLogs.push(`Step 4: Placed ${newFlags} flags`);
+      logFn(`Step 4: Placed ${newFlags} flags`);
     }
 
     // Step 5: Flag Row/Column Blocking Squares
@@ -364,22 +362,22 @@ export function runAllSolverSteps(
     stats.step5Flags += newFlags;
 
     if (newFlags > 0) {
-      testLogs.push(`Step 5: Placed ${newFlags} flags`);
+      logFn(`Step 5: Placed ${newFlags} flags`);
     }
 
     anyChange = changed1 || changed2 || changed3 || changed4 || changed5;
 
     // More concise loop result reporting
     if (anyChange) {
-      testLogs.push(`Loop ${loop}: Made progress`);
+      logFn(`Loop ${loop}: Made progress`);
     }
 
     loop++;
   } while (anyChange);
 
   // Summarize the solver results
-  testLogs.push(`--- Solver finished after ${stats.loops} loops ---`);
-  testLogs.push(
+  logFn(`--- Solver finished after ${stats.loops} loops ---`);
+  logFn(
     `Total placements: ${stats.step1Queens} queens, ${stats.step2Flags + stats.step3Flags + stats.step4Flags + stats.step5Flags} flags`
   );
 }
