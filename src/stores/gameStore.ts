@@ -44,6 +44,8 @@ export const useGameStore = defineStore('game', {
     currentPuzzle: null,
     currentSolution: [],
     debugLogs: [], // Initialize as empty array
+    colorToolActive: false,
+    colorToolSelectedColor: null as string | null,
   }),
 
   getters: {
@@ -1125,6 +1127,16 @@ export const useGameStore = defineStore('game', {
           `Error summarizing attempt data: ${error instanceof Error ? error.message : 'Unknown error'}`
         );
       }
+    },
+
+    setColorToolActive(active: boolean) {
+      this.colorToolActive = active;
+    },
+    setColorToolSelectedColor(color: string | null) {
+      this.colorToolSelectedColor = color;
+    },
+    toggleColorToolActive() {
+      this.colorToolActive = !this.colorToolActive;
     },
   },
 });

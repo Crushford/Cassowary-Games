@@ -4,13 +4,15 @@
 
     <!-- Toggle Button -->
     <button
-      @click="toggleActive"
+      @click="gameStore.toggleColorToolActive()"
       :class="[
         'px-4 py-2 rounded font-medium transition',
-        isActive ? 'bg-green-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
+        gameStore.colorToolActive
+          ? 'bg-green-600 text-white'
+          : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
       ]"
     >
-      {{ isActive ? 'Deactivate Tool' : 'Activate Tool' }}
+      {{ gameStore.colorToolActive ? 'Deactivate Tool' : 'Activate Tool' }}
     </button>
 
     <!-- Color Swatches -->
@@ -21,7 +23,9 @@
         @click="selectColor(color)"
         :class="[
           'w-10 h-10 rounded-full border-2 flex items-center justify-center transition',
-          selectedColor === color ? 'ring-4 ring-yellow-400 border-yellow-400' : 'border-slate-500',
+          gameStore.colorToolSelectedColor === color
+            ? 'ring-4 ring-yellow-400 border-yellow-400'
+            : 'border-slate-500',
           isColorUsed(color) ? 'border-4 border-green-500' : '',
         ]"
         :style="{ backgroundColor: color }"
@@ -34,7 +38,11 @@
     <!-- Selected Color Display -->
     <div class="mt-2 text-white">
       <span class="font-semibold">Selected Color:</span>
-      <span v-if="selectedColor" :style="{ color: selectedColor }">{{ selectedColor }}</span>
+      <span
+        v-if="gameStore.colorToolSelectedColor"
+        :style="{ color: gameStore.colorToolSelectedColor }"
+        >{{ gameStore.colorToolSelectedColor }}</span
+      >
       <span v-else class="text-slate-400">None Selected</span>
     </div>
 
@@ -55,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { useGameStore } from '../stores/gameStore';
 
 const palette = [
@@ -69,10 +77,6 @@ const palette = [
 ];
 
 const gameStore = useGameStore();
-
-// State
-const isActive = ref(false);
-const selectedColor = ref<string | null>(null);
 
 // Used colors on the board
 const usedColors = computed(() => {
@@ -91,22 +95,8 @@ function isColorUsed(color: string) {
 }
 
 function selectColor(color: string) {
-  selectedColor.value = color;
+  gameStore.setColorToolSelectedColor(color);
 }
-
-function toggleActive() {
-  isActive.value = !isActive.value;
-}
-
-// Board interaction: apply color to square if tool is active and color is selected
-function handleBoardSquareClick(row: number, col: number) {
-  if (isActive.value && selectedColor.value) {
-    gameStore.setSquareColor(row, col, selectedColor.value);
-  }
-}
-
-// Optionally, you can expose handleBoardSquareClick for the board/grid component to use
-// export { handleBoardSquareClick };
 </script>
 
 <style scoped>

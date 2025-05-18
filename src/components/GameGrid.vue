@@ -45,7 +45,8 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
-import { COLOR_BG_HOVER_CLASSES, ColorName } from '@/utils/colorPalette';
+import { COLOR_BG_HOVER_CLASSES } from '@/utils/colorPalette';
+import { ColorName } from '../types/types';
 import { useGameStore } from '../stores/gameStore';
 
 const gameStore = useGameStore();
@@ -96,7 +97,13 @@ onMounted(() => {
 
 // Handle cell clicks
 function handleCellClick(row: number, col: number) {
-  gameStore.placeQueen(row, col);
+  // If color tool is active and a color is selected, apply the color
+  if (gameStore.colorToolActive && gameStore.colorToolSelectedColor) {
+    gameStore.setSquareColor(row, col, gameStore.colorToolSelectedColor);
+  } else {
+    // Otherwise perform normal click handling (place a queen)
+    gameStore.placeQueen(row, col);
+  }
 }
 
 // Handle right-clicks for flags

@@ -43,6 +43,8 @@ export interface GameState {
   currentPuzzle: string | null;
   currentSolution: Pos[];
   debugLogs: string[];
+  colorToolActive: boolean;
+  colorToolSelectedColor: string | null;
 }
 
 /**
