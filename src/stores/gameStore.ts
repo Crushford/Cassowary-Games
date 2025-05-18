@@ -104,6 +104,17 @@ export const useGameStore = defineStore('game', {
       this.moveHistory = [];
       this.isComplete = false;
       this.updateAvailableMoves();
+
+      // Add a test debug log
+      this.addDebugLog('Grid initialized with size: ' + this.gridSize);
+    },
+
+    // Helper method to add debug logs
+    addDebugLog(message: string) {
+      // Make sure debugLogs is initialized
+      if (!this.debugLogs) this.debugLogs = [];
+      this.debugLogs.push(message);
+      console.log('Added debug log:', message, 'Current logs:', this.debugLogs);
     },
 
     updateAvailableMoves() {
@@ -470,23 +481,23 @@ export const useGameStore = defineStore('game', {
       ];
 
       while (queue.length > 0) {
-        const { r, c } = queue.shift()!;
-        const key = `${r},${c}`;
+        const { row, col } = queue.shift()!;
+        const key = `${row},${col}`;
 
         if (visited.has(key)) continue;
         visited.add(key);
 
         // Check all four directions
         for (const dir of directions) {
-          const newR = r + dir.dr;
-          const newC = c + dir.dc;
+          const newR = row + dir.dr;
+          const newC = col + dir.dc;
 
           if (
             this.isValidPosition(newR, newC) &&
             this.grid[newR][newC].groupColor === targetColor &&
             !visited.has(`${newR},${newC}`)
           ) {
-            queue.push({ r: newR, c: newC });
+            queue.push({ row: newR, col: newC });
           }
         }
       }
