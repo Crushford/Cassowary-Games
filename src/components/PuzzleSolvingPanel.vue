@@ -142,11 +142,6 @@ const canRunSteps = computed(() => {
   return gameStore.queenPositions.length > 0;
 });
 
-// Computed property for logs
-const logs = computed(() => {
-  return gameStore.debugLogs.join('\n');
-});
-
 // Helper function for checkmark styling
 const checkmarkClass = (isValid: boolean) => {
   return isValid ? 'text-green-500' : 'text-red-500';
@@ -154,9 +149,6 @@ const checkmarkClass = (isValid: boolean) => {
 
 // Methods
 function handleRunAllSteps() {
-  // Add a test log to confirm the log display is working
-  if (!gameStore.debugLogs) gameStore.debugLogs = [];
-  gameStore.debugLogs.push('DEBUG TEST: Running solver steps at ' + new Date().toISOString());
   gameStore.runAllSolverSteps();
 }
 
