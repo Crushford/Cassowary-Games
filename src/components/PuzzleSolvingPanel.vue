@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-6 p-4 bg-slate-800 rounded-lg">
+  <div class="bg-slate-800 p-4 flex flex-col gap-4">
     <!-- Title -->
     <h2 class="text-2xl font-semibold text-white">Puzzle Solving & Validation</h2>
 

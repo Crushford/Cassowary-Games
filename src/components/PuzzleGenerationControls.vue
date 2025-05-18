@@ -1,32 +1,28 @@
 <template>
-  <div class="flex flex-col gap-6">
-    <h2 class="text-2xl font-semibold mb-2 text-white">Puzzle Generation Controls</h2>
+  <div class="bg-slate-800 p-4 flex flex-col gap-4">
+    <h2 class="text-2xl font-semibold text-white">Puzzle Generation Controls</h2>
 
     <!-- Grid Size Control -->
-    <div class="flex flex-col gap-4">
-      <label class="flex items-center gap-4 text-white">
-        <span>Grid Size:</span>
-        <input
-          type="number"
-          v-model="gridSize"
-          min="4"
-          max="8"
-          :disabled="hasCompletedGame"
-          @change="handleGridSizeChange"
-          class="w-16 p-2 border border-slate-600 rounded-lg bg-slate-700 text-white"
-        />
-      </label>
+    <div class="flex items-center gap-4 text-white">
+      <span>Grid Size:</span>
+      <input
+        type="number"
+        v-model="gridSize"
+        min="4"
+        max="8"
+        :disabled="hasCompletedGame"
+        @change="handleGridSizeChange"
+        class="w-16 p-2 border border-slate-600 rounded-lg bg-slate-700 text-white"
+      />
     </div>
 
     <!-- Main Run All Steps Button -->
-    <div class="flex flex-col gap-4">
-      <BaseButton
-        @click="handleRunAllSteps"
-        class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
-      >
-        ▶️ Run All Steps (Generate Full Puzzle)
-      </BaseButton>
-    </div>
+    <BaseButton
+      @click="handleRunAllSteps"
+      class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
+    >
+      ▶️ Run All Steps (Generate Full Puzzle)
+    </BaseButton>
 
     <!-- Step-by-Step Controls in Accordion -->
     <Accordion title="Step-by-Step Controls">
@@ -116,24 +112,6 @@
         </BaseButton>
       </div>
     </Accordion>
-
-    <!-- Optional Controls -->
-    <div class="flex flex-col gap-4">
-      <h3 class="text-base font-medium mb-2 text-slate-300">Optional Controls</h3>
-      <div class="flex gap-2">
-        <BaseButton
-          @click="handleUndo"
-          :disabled="!canUndo"
-          disabledTitle="No moves to undo"
-          class="bg-slate-800 hover:bg-slate-700"
-        >
-          Undo Last Step
-        </BaseButton>
-        <BaseButton @click="handleAutoRun" class="bg-slate-800 hover:bg-slate-700">
-          Auto Run All Steps
-        </BaseButton>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -162,10 +140,6 @@ const hasAnyColors = computed(() => {
     }
   }
   return false;
-});
-
-const canUndo = computed(() => {
-  return gameStore.moveHistory && gameStore.moveHistory.length > 0;
 });
 
 const hasCompletedGame = computed(() => {
@@ -210,14 +184,6 @@ function handleColorOnePerRow() {
 
 function handleFillRemaining() {
   gameStore.fillRemainingSingleSquares();
-}
-
-function handleUndo() {
-  gameStore.handleUndo();
-}
-
-function handleAutoRun() {
-  handleRunAllSteps();
 }
 
 function handleRunAllSteps() {

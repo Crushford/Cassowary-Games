@@ -1,9 +1,7 @@
 <template>
   <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr_300px] gap-4">
     <!-- Puzzle Generation Controls Sidebar on Left -->
-    <aside class="bg-slate-800 rounded-lg p-4 flex flex-col gap-4">
-      <PuzzleGenerationControls />
-    </aside>
+    <PuzzleGenerationControls />
 
     <!-- Main Content -->
     <div class="flex flex-col gap-4">
@@ -34,9 +32,7 @@
     </div>
 
     <!-- Puzzle Solving Panel Sidebar on Right -->
-    <aside class="bg-slate-800 rounded-lg p-4 flex flex-col gap-4">
-      <PuzzleSolvingPanel />
-    </aside>
+    <PuzzleSolvingPanel />
   </div>
 </template>
 
