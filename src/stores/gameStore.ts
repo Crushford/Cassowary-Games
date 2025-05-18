@@ -32,7 +32,7 @@ import {
 
 export const useGameStore = defineStore('game', {
   state: (): GameState => ({
-    // Use createEmptyGrid utility
+    // Legacy grid format
     grid: createEmptyGrid(6),
     gridSize: 6,
     moveHistory: [],
@@ -46,6 +46,24 @@ export const useGameStore = defineStore('game', {
     debugLogs: [], // Initialize as empty array
     colorToolActive: false,
     colorToolSelectedColor: null as string | null,
+    solutionQueens: [],
+
+    // New data model
+    puzzleGrid: {
+      size: 6,
+      colorGroups: new Map<string, string>(),
+      solution: [],
+    },
+    playerGrid: {
+      queens: [],
+      flags: [],
+      invalid: [],
+    },
+    uiState: {
+      showSolution: false,
+      selectedTool: null,
+      selectedColor: null,
+    },
   }),
 
   getters: {
@@ -104,10 +122,20 @@ export const useGameStore = defineStore('game', {
       // Reset debug logs to ensure it's an array
       this.debugLogs = [];
 
-      // Use createEmptyGrid utility
+      // Legacy grid initialization
       this.grid = createEmptyGrid(this.gridSize);
       this.moveHistory = [];
       this.isComplete = false;
+
+      // New model initialization
+      this.puzzleGrid.size = this.gridSize;
+      this.puzzleGrid.colorGroups.clear();
+      this.puzzleGrid.solution = [];
+
+      this.playerGrid.queens = [];
+      this.playerGrid.flags = [];
+      this.playerGrid.invalid = [];
+
       this.updateAvailableMoves();
 
       // Add a test debug log
@@ -136,20 +164,37 @@ export const useGameStore = defineStore('game', {
       if (this.grid[row][col].state !== 'empty') return false;
 
       this.saveToHistory();
+
+      // Update legacy grid
       this.grid[row][col].state = 'flag';
       this.grid[row][col].playerMark = 'flag';
+
+      // Update new model
+      this.playerGrid.flags.push({ row, col });
+
       return true;
     },
 
     placeQueen(row: number, col: number) {
       if (!this.isValidMove(row, col)) {
+        // Update legacy grid
         this.grid[row][col].state = 'invalid';
+
+        // Update new model
+        this.playerGrid.invalid.push({ row, col });
+
         return false;
       }
 
       this.saveToHistory();
+
+      // Update legacy grid
       this.grid[row][col].state = 'queen';
       this.grid[row][col].playerMark = 'queen';
+
+      // Update new model
+      this.playerGrid.queens.push({ row, col });
+
       this.updateBlockedMoves();
       this.updateAvailableMoves();
       this.checkCompletion();
@@ -246,7 +291,18 @@ export const useGameStore = defineStore('game', {
     },
 
     clearQueensAndFlags() {
-      // Use clearMarkers utility
+      // Save current queen positions as the solution if not already set
+      if (this.puzzleGrid.solution.length === 0 && this.queenPositions.length > 0) {
+        this.puzzleGrid.solution = [...this.queenPositions];
+        this.solutionQueens = [...this.queenPositions];
+      }
+
+      // Clear only the player grid
+      this.playerGrid.queens = [];
+      this.playerGrid.flags = [];
+      this.playerGrid.invalid = [];
+
+      // Legacy: Use clearMarkers utility
       clearMarkers(this.grid);
       // Reset player marks
       for (let row = 0; row < this.gridSize; row++) {
@@ -254,6 +310,7 @@ export const useGameStore = defineStore('game', {
           this.grid[row][col].playerMark = undefined;
         }
       }
+
       this.isComplete = false;
       this.updateAvailableMoves();
     },
@@ -519,7 +576,17 @@ export const useGameStore = defineStore('game', {
 
     // New method to generate a full solution
     generateFullSolution() {
-      this.clearQueensAndFlags();
+      // Clear existing solution
+      this.puzzleGrid.solution = [];
+
+      // Clear previous queen positions
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].state === 'queen') {
+            this.grid[row][col].state = 'empty';
+          }
+        }
+      }
 
       // Keep placing queens until we have a complete solution or no more moves
       let attempts = 0;
@@ -534,7 +601,9 @@ export const useGameStore = defineStore('game', {
         }
         attempts++;
       }
-      // Record the final queen placements so we don't override them during color changes
+
+      // Record the final queen placements in our solution data
+      this.puzzleGrid.solution = [...this.queenPositions];
       this.currentSolution = [...this.queenPositions];
     },
 
@@ -1137,6 +1206,112 @@ export const useGameStore = defineStore('game', {
     },
     toggleColorToolActive() {
       this.colorToolActive = !this.colorToolActive;
+    },
+
+    // New model helpers
+    posToKey(pos: Pos): string {
+      return `${pos.row},${pos.col}`;
+    },
+
+    keyToPos(key: string): Pos {
+      const [row, col] = key.split(',').map(Number);
+      return { row, col };
+    },
+
+    getSquareColor(row: number, col: number): string | undefined {
+      return this.puzzleGrid.colorGroups.get(this.posToKey({ row, col }));
+    },
+
+    setSquareColorNew(row: number, col: number, color: string | undefined): void {
+      const key = this.posToKey({ row, col });
+      if (color) {
+        this.puzzleGrid.colorGroups.set(key, color);
+      } else {
+        this.puzzleGrid.colorGroups.delete(key);
+      }
+    },
+
+    isSquareQueen(row: number, col: number): boolean {
+      return this.playerGrid.queens.some((pos) => pos.row === row && pos.col === col);
+    },
+
+    isSquareFlag(row: number, col: number): boolean {
+      return this.playerGrid.flags.some((pos) => pos.row === row && pos.col === col);
+    },
+
+    isSquareInvalid(row: number, col: number): boolean {
+      return this.playerGrid.invalid.some((pos) => pos.row === row && pos.col === col);
+    },
+
+    getSquareState(row: number, col: number): 'empty' | 'queen' | 'flag' | 'invalid' {
+      if (this.isSquareQueen(row, col)) return 'queen';
+      if (this.isSquareFlag(row, col)) return 'flag';
+      if (this.isSquareInvalid(row, col)) return 'invalid';
+      return 'empty';
+    },
+
+    // Method to sync legacy grid with new model (temporary during transition)
+    syncGridWithNewModel(): void {
+      // Update colors in the grid from puzzleGrid
+      for (const [key, color] of this.puzzleGrid.colorGroups.entries()) {
+        const pos = this.keyToPos(key);
+        this.grid[pos.row][pos.col].groupColor = color;
+      }
+
+      // Reset all states in the grid
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          this.grid[row][col].state = 'empty';
+        }
+      }
+
+      // Set queens
+      for (const pos of this.playerGrid.queens) {
+        this.grid[pos.row][pos.col].state = 'queen';
+      }
+
+      // Set flags
+      for (const pos of this.playerGrid.flags) {
+        this.grid[pos.row][pos.col].state = 'flag';
+      }
+
+      // Set invalid
+      for (const pos of this.playerGrid.invalid) {
+        this.grid[pos.row][pos.col].state = 'invalid';
+      }
+    },
+
+    // Method to sync new model with legacy grid (temporary during transition)
+    syncNewModelWithGrid(): void {
+      // Clear new model data
+      this.puzzleGrid.colorGroups.clear();
+      this.playerGrid.queens = [];
+      this.playerGrid.flags = [];
+      this.playerGrid.invalid = [];
+
+      // Update from legacy grid
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          const cell = this.grid[row][col];
+
+          // Set color
+          if (cell.groupColor) {
+            this.setSquareColorNew(row, col, cell.groupColor);
+          }
+
+          // Set state
+          if (cell.state === 'queen') {
+            this.playerGrid.queens.push({ row, col });
+          } else if (cell.state === 'flag') {
+            this.playerGrid.flags.push({ row, col });
+          } else if (cell.state === 'invalid') {
+            this.playerGrid.invalid.push({ row, col });
+          }
+        }
+      }
+
+      // Sync solution
+      this.puzzleGrid.solution = [...this.solutionQueens];
     },
   },
 });

@@ -8,7 +8,29 @@
 
     <!-- Main Content -->
     <div class="flex flex-col gap-4">
-      <GameGrid />
+      <!-- Dual Grid Layout -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Solution Grid -->
+        <div class="flex flex-col items-center">
+          <h3 class="text-lg font-semibold mb-3 text-white">Solution</h3>
+          <GameGrid mode="solution" />
+        </div>
+
+        <!-- Player Grid -->
+        <div class="flex flex-col items-center">
+          <h3 class="text-lg font-semibold mb-3 text-white">Test Your Solution</h3>
+          <GameGrid mode="player" />
+
+          <!-- Reset Button for Player Grid -->
+          <button
+            @click="resetBoardForSolving"
+            class="mt-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors flex items-center gap-2"
+          >
+            <span class="material-icons">refresh</span>
+            Reset Board for Solving
+          </button>
+        </div>
+      </div>
 
       <div
         v-if="gameStore.errorMessage"
@@ -63,6 +85,11 @@ const ColorPaletteTool = defineAsyncComponent(() => import('../components/ColorP
 const GameStateExport = defineAsyncComponent(() => import('../components/GameStateExport.vue'));
 
 const gameStore = useGameStore();
+
+// Function to reset board for solving
+function resetBoardForSolving() {
+  gameStore.clearQueensAndFlags();
+}
 
 const logsContainer = ref<HTMLElement | null>(null);
 watch(
