@@ -1,19 +1,5 @@
 <template>
   <div class="relative flex flex-col items-center">
-    <!-- Grid Size Controls -->
-    <div class="mb-4 flex gap-2 items-center">
-      <input
-        v-model="localGridSize"
-        type="range"
-        min="4"
-        max="8"
-        step="1"
-        class="w-32 accent-blue-500"
-        @change="updateGridSize"
-      />
-      <span class="text-sm font-semibold text-white">{{ localGridSize }}x{{ localGridSize }}</span>
-    </div>
-
     <!-- Game Grid -->
     <div
       class="grid bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg"
