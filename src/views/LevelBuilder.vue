@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr_300px] gap-4">
+  <div class="grid grid-cols-[300px_1fr_300px] gap-4">
     <!-- Puzzle Generation Controls Sidebar on Left -->
     <PuzzleGenerationControls />
 
