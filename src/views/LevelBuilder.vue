@@ -34,8 +34,16 @@
       </section>
     </div>
 
-    <!-- Puzzle Solving Panel Sidebar on Right -->
-    <PuzzleSolvingPanel />
+    <!-- Right Side Column -->
+    <div class="flex flex-col gap-4">
+      <!-- Puzzle Solving Panel Sidebar on Right -->
+      <PuzzleSolvingPanel />
+
+      <!-- Game State Export Component -->
+      <section class="bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg">
+        <GameStateExport />
+      </section>
+    </div>
   </div>
 </template>
 
@@ -52,6 +60,7 @@ const PuzzleSolvingPanel = defineAsyncComponent(
   () => import('../components/PuzzleSolvingPanel.vue')
 );
 const ColorPaletteTool = defineAsyncComponent(() => import('../components/ColorPaletteTool.vue'));
+const GameStateExport = defineAsyncComponent(() => import('../components/GameStateExport.vue'));
 
 const gameStore = useGameStore();
 

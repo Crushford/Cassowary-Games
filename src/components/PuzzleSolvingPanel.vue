@@ -86,8 +86,6 @@
         <span class="text-white">Correct number of queens</span>
       </div>
     </div>
-
-    <!-- Debug Logs -->
   </aside>
 </template>
 
