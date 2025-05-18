@@ -378,6 +378,12 @@ export const useGameStore = defineStore('game', {
       );
     },
 
+    setSquareColor(row: number, col: number, color: string) {
+      this.saveToHistory();
+      this.grid[row][col].groupColor = color;
+      this.addDebugLog(`Set color of square (${row}, ${col}) to ${color}`);
+    },
+
     // Fallback method if the main algorithm fails
     assignColorGroupsFallback() {
       // Reset all color groups

@@ -1,7 +1,10 @@
 <template>
   <div class="grid grid-cols-[300px_1fr_300px] gap-4">
     <!-- Puzzle Generation Controls Sidebar on Left -->
-    <PuzzleGenerationControls />
+    <div class="flex flex-col gap-4">
+      <PuzzleGenerationControls />
+      <ColorPaletteTool />
+    </div>
 
     <!-- Main Content -->
     <div class="flex flex-col gap-4">
@@ -48,6 +51,7 @@ const PuzzleGenerationControls = defineAsyncComponent(
 const PuzzleSolvingPanel = defineAsyncComponent(
   () => import('../components/PuzzleSolvingPanel.vue')
 );
+const ColorPaletteTool = defineAsyncComponent(() => import('../components/ColorPaletteTool.vue'));
 
 const gameStore = useGameStore();
 
