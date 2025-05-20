@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia';
-import type { GridSquare } from '../components/GameGrid.vue';
+import type { GridSquare, Pos, GameState, AttemptResult } from '../types/types';
 // Import utility functions
 import {
-  Pos,
   createEmptyGrid,
   getQueenPositions,
   computeAvailableMoves,
@@ -22,35 +21,18 @@ import {
   addColorToEachRow,
   fillRemainingSquares,
 } from '../utils/colorAssignment';
-
-// Define a proper type for puzzle generation attempt results
-interface AttemptResult {
-  attempt: number;
-  queens: number;
-  requiredQueens: number;
-  allFilled: boolean;
-  colorGroupsValid: boolean;
-  success: boolean;
-}
-
-export interface GameState {
-  grid: GridSquare[][];
-  gridSize: number;
-  moveHistory: { grid: GridSquare[][] }[];
-  currentLevel: number;
-  availableMoves: { row: number; col: number }[];
-  isComplete: boolean;
-  errorMessage: string | null;
-  savedPuzzles: { name: string; grid: GridSquare[][]; gridSize: number }[];
-  currentPuzzle: string | null;
-  currentSolution: { row: number; col: number }[];
-  testLogs: string[];
-  testDebugLogs: any[];
-}
+import {
+  placeLastFreeQueens,
+  flagBlockingSquares,
+  eliminateConstrainedRows,
+  eliminateConstrainedColumns,
+  blockRowsAndColumns,
+  runAllSolverSteps,
+} from './solver';
 
 export const useGameStore = defineStore('game', {
   state: (): GameState => ({
-    // Use createEmptyGrid utility
+    // Legacy grid format
     grid: createEmptyGrid(6),
     gridSize: 6,
     moveHistory: [],
@@ -61,13 +43,33 @@ export const useGameStore = defineStore('game', {
     savedPuzzles: [],
     currentPuzzle: null,
     currentSolution: [],
-    testLogs: [],
-    testDebugLogs: [],
+    debugLogs: [], // Initialize as empty array
+    colorToolActive: false,
+    colorToolSelectedColor: null as string | null,
+    solutionQueens: [],
+    verboseMode: false, // Add verbose mode flag
+
+    // New data model
+    puzzleGrid: {
+      size: 6,
+      colorGroups: new Map<string, string>(),
+      solution: [],
+    },
+    playerGrid: {
+      queens: [],
+      flags: [],
+      invalid: [],
+    },
+    uiState: {
+      showSolution: false,
+      selectedTool: null,
+      selectedColor: null,
+    },
   }),
 
   getters: {
     // Use getQueenPositions utility
-    queenPositions: (state): { row: number; col: number }[] => {
+    queenPositions: (state): Pos[] => {
       return getQueenPositions(state.grid);
     },
 
@@ -118,11 +120,38 @@ export const useGameStore = defineStore('game', {
 
   actions: {
     initializeGrid() {
-      // Use createEmptyGrid utility
+      // Reset debug logs to ensure it's an array
+      this.debugLogs = [];
+
+      // Legacy grid initialization
       this.grid = createEmptyGrid(this.gridSize);
       this.moveHistory = [];
       this.isComplete = false;
+
+      // New model initialization
+      this.puzzleGrid.size = this.gridSize;
+      this.puzzleGrid.colorGroups.clear();
+      this.puzzleGrid.solution = [];
+
+      this.playerGrid.queens = [];
+      this.playerGrid.flags = [];
+      this.playerGrid.invalid = [];
+
       this.updateAvailableMoves();
+
+      // Add a test debug log
+      this.addDebugLog('Grid initialized with size: ' + this.gridSize);
+    },
+
+    // Helper method to add debug logs
+    addDebugLog(message: string) {
+      // More robust check - ensure debugLogs is an array
+      if (!this.debugLogs || !Array.isArray(this.debugLogs)) {
+        console.warn('debugLogs was not an array, resetting it', this.debugLogs);
+        this.debugLogs = [];
+      }
+      this.debugLogs.push(message);
+      console.log('Added debug log:', message);
     },
 
     updateAvailableMoves() {
@@ -136,20 +165,37 @@ export const useGameStore = defineStore('game', {
       if (this.grid[row][col].state !== 'empty') return false;
 
       this.saveToHistory();
+
+      // Update legacy grid
       this.grid[row][col].state = 'flag';
       this.grid[row][col].playerMark = 'flag';
+
+      // Update new model
+      this.playerGrid.flags.push({ row, col });
+
       return true;
     },
 
     placeQueen(row: number, col: number) {
       if (!this.isValidMove(row, col)) {
+        // Update legacy grid
         this.grid[row][col].state = 'invalid';
+
+        // Update new model
+        this.playerGrid.invalid.push({ row, col });
+
         return false;
       }
 
       this.saveToHistory();
+
+      // Update legacy grid
       this.grid[row][col].state = 'queen';
       this.grid[row][col].playerMark = 'queen';
+
+      // Update new model
+      this.playerGrid.queens.push({ row, col });
+
       this.updateBlockedMoves();
       this.updateAvailableMoves();
       this.checkCompletion();
@@ -207,7 +253,7 @@ export const useGameStore = defineStore('game', {
       }
     },
 
-    placeRandomQueen() {
+    placeRandomQueen(): boolean {
       if (this.availableMoves.length === 0) {
         // If we have no valid moves but not all queens are placed,
         // we're in a dead end. Reset the grid instead of showing error.
@@ -246,7 +292,18 @@ export const useGameStore = defineStore('game', {
     },
 
     clearQueensAndFlags() {
-      // Use clearMarkers utility
+      // Save current queen positions as the solution if not already set
+      if (this.puzzleGrid.solution.length === 0 && this.queenPositions.length > 0) {
+        this.puzzleGrid.solution = [...this.queenPositions];
+        this.solutionQueens = [...this.queenPositions];
+      }
+
+      // Clear only the player grid
+      this.playerGrid.queens = [];
+      this.playerGrid.flags = [];
+      this.playerGrid.invalid = [];
+
+      // Legacy: Use clearMarkers utility
       clearMarkers(this.grid);
       // Reset player marks
       for (let row = 0; row < this.gridSize; row++) {
@@ -254,6 +311,7 @@ export const useGameStore = defineStore('game', {
           this.grid[row][col].playerMark = undefined;
         }
       }
+
       this.isComplete = false;
       this.updateAvailableMoves();
     },
@@ -274,13 +332,16 @@ export const useGameStore = defineStore('game', {
     },
 
     // Use validatePuzzleState utility for validation
-    validatePuzzle(): boolean {
+    validatePuzzle() {
       const { queenCountValid, colorGroupsValid } = validatePuzzleState(this.grid, this.gridSize);
-      return queenCountValid && colorGroupsValid;
+      const allFilled = this.countEmptySquares() === 0;
+      return { queenCountValid, allFilled, colorGroupsValid };
     },
 
     assignColorGroups() {
-      this.grid = assignColors(this.grid, this.queenPositions, this.testLogs);
+      this.grid = assignColors(this.grid, this.queenPositions, (message) =>
+        this.addDebugLog(message)
+      );
     },
 
     // New method to add one color to each group
@@ -294,22 +355,19 @@ export const useGameStore = defineStore('game', {
       // Apply the color growth
       this.grid = addOneToEachColorGroup(this.grid);
 
-      // Log before and after state to help debug
-      if (!this.testLogs) this.testLogs = [];
-
       // Count colors before and after
       const colorsBefore = this.countColoredCells(beforeState);
       const colorsAfter = this.countColoredCells(this.grid);
 
-      this.testLogs.push(`Adding one square to each color group`);
-      this.testLogs.push(`- Before: ${colorsBefore.total} colored cells`);
-      this.testLogs.push(`- After: ${colorsAfter.total} colored cells`);
-      this.testLogs.push(`- Added: ${colorsAfter.total - colorsBefore.total} new colored cells`);
+      this.addDebugLog(`Adding one square to each color group`);
+      this.addDebugLog(`- Before: ${colorsBefore.total} colored cells`);
+      this.addDebugLog(`- After: ${colorsAfter.total} colored cells`);
+      this.addDebugLog(`- Added: ${colorsAfter.total - colorsBefore.total} new colored cells`);
 
       // Log detailed color distribution
       Object.entries(colorsAfter.byColor).forEach(([color, count]) => {
         const before = colorsBefore.byColor[color] || 0;
-        this.testLogs.push(
+        this.addDebugLog(
           `  - ${color}: ${before} → ${count as number} (+${(count as number) - before})`
         );
       });
@@ -343,20 +401,18 @@ export const useGameStore = defineStore('game', {
       // Get the current state of the grid
       const beforeState = this.grid.map((row) => row.map((square) => ({ ...square })));
 
-      // Apply the color change
-      this.grid = addColorToEachRow(this.grid, this.testLogs, targetRow);
+      // Apply the color change - pass logging function
+      this.grid = addColorToEachRow(this.grid, (message) => this.addDebugLog(message), targetRow);
 
       // Count colors before and after
       const colorsBefore = this.countColoredCells(beforeState);
       const colorsAfter = this.countColoredCells(this.grid);
 
-      if (!this.testLogs) this.testLogs = [];
-
       const rowDesc = targetRow !== undefined ? `row ${targetRow}` : 'each row';
-      this.testLogs.push(`Adding one color to ${rowDesc}`);
-      this.testLogs.push(`- Before: ${colorsBefore.total} colored cells`);
-      this.testLogs.push(`- After: ${colorsAfter.total} colored cells`);
-      this.testLogs.push(`- Added: ${colorsAfter.total - colorsBefore.total} new colored cells`);
+      this.addDebugLog(`Adding one color to ${rowDesc}`);
+      this.addDebugLog(`- Before: ${colorsBefore.total} colored cells`);
+      this.addDebugLog(`- After: ${colorsAfter.total} colored cells`);
+      this.addDebugLog(`- Added: ${colorsAfter.total - colorsBefore.total} new colored cells`);
     },
 
     // Method to fill any remaining uncolored squares with a neighboring color
@@ -368,18 +424,24 @@ export const useGameStore = defineStore('game', {
       const beforeState = this.grid.map((row) => row.map((square) => ({ ...square })));
 
       // Apply the color fill using the imported function
-      this.grid = fillRemainingSquares(this.grid, this.testLogs);
+      this.grid = fillRemainingSquares(this.grid, (message) => this.addDebugLog(message));
 
       // Count colors before and after
       const colorsBefore = this.countColoredCells(beforeState);
       const colorsAfter = this.countColoredCells(this.grid);
 
-      this.testLogs.push(
+      this.addDebugLog(
         `- Before: ${colorsBefore.total}/${this.gridSize * this.gridSize} cells colored`
       );
-      this.testLogs.push(
+      this.addDebugLog(
         `- After: ${colorsAfter.total}/${this.gridSize * this.gridSize} cells colored`
       );
+    },
+
+    setSquareColor(row: number, col: number, color: string) {
+      this.saveToHistory();
+      this.grid[row][col].groupColor = color;
+      this.addDebugLog(`Set color of square (${row}, ${col}) to ${color}`);
     },
 
     // Fallback method if the main algorithm fails
@@ -466,11 +528,11 @@ export const useGameStore = defineStore('game', {
       if (!targetColor) return false;
 
       // Find all cells with this color
-      const colorCells: [number, number][] = [];
+      const colorCells: Pos[] = [];
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
           if (this.grid[row][col].groupColor === targetColor) {
-            colorCells.push([row, col]);
+            colorCells.push({ row, col });
           }
         }
       }
@@ -479,7 +541,7 @@ export const useGameStore = defineStore('game', {
 
       // Perform a flood fill from the first cell to see if we can reach all others
       const visited = new Set<string>();
-      const queue: [number, number][] = [colorCells[0]];
+      const queue: Pos[] = [colorCells[0]];
       const directions = [
         { dr: 1, dc: 0 }, // down
         { dr: -1, dc: 0 }, // up
@@ -488,23 +550,23 @@ export const useGameStore = defineStore('game', {
       ];
 
       while (queue.length > 0) {
-        const [r, c] = queue.shift()!;
-        const key = `${r},${c}`;
+        const { row, col } = queue.shift()!;
+        const key = `${row},${col}`;
 
         if (visited.has(key)) continue;
         visited.add(key);
 
         // Check all four directions
         for (const dir of directions) {
-          const newR = r + dir.dr;
-          const newC = c + dir.dc;
+          const newR = row + dir.dr;
+          const newC = col + dir.dc;
 
           if (
             this.isValidPosition(newR, newC) &&
             this.grid[newR][newC].groupColor === targetColor &&
             !visited.has(`${newR},${newC}`)
           ) {
-            queue.push([newR, newC]);
+            queue.push({ row: newR, col: newC });
           }
         }
       }
@@ -515,7 +577,17 @@ export const useGameStore = defineStore('game', {
 
     // New method to generate a full solution
     generateFullSolution() {
-      this.clearQueensAndFlags();
+      // Clear existing solution
+      this.puzzleGrid.solution = [];
+
+      // Clear previous queen positions
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].state === 'queen') {
+            this.grid[row][col].state = 'empty';
+          }
+        }
+      }
 
       // Keep placing queens until we have a complete solution or no more moves
       let attempts = 0;
@@ -530,7 +602,9 @@ export const useGameStore = defineStore('game', {
         }
         attempts++;
       }
-      // Record the final queen placements so we don't override them during color changes
+
+      // Record the final queen placements in our solution data
+      this.puzzleGrid.solution = [...this.queenPositions];
       this.currentSolution = [...this.queenPositions];
     },
 
@@ -549,12 +623,15 @@ export const useGameStore = defineStore('game', {
         .map((_, row) =>
           Array(this.gridSize)
             .fill(null)
-            .map((_, col) => ({
-              position: { row, col },
-              state: 'empty',
-              groupColor: undefined,
-              playerMark: undefined as 'queen' | 'flag' | undefined,
-            }))
+            .map(
+              (_, col) =>
+                ({
+                  position: { row, col },
+                  state: 'empty' as const,
+                  groupColor: undefined,
+                  playerMark: undefined,
+                }) as GridSquare
+            )
         );
 
       // Copy only the queens and their color groups
@@ -563,17 +640,17 @@ export const useGameStore = defineStore('game', {
           if (this.grid[row][col].state === 'queen') {
             puzzleGrid[row][col] = {
               position: { row, col },
-              state: 'queen',
+              state: 'queen' as const,
               groupColor: this.grid[row][col].groupColor,
               playerMark: 'queen' as const,
-            };
+            } as GridSquare;
           } else if (this.grid[row][col].groupColor) {
             puzzleGrid[row][col] = {
               position: { row, col },
-              state: 'empty',
+              state: 'empty' as const,
               groupColor: this.grid[row][col].groupColor,
               playerMark: undefined,
-            };
+            } as GridSquare;
           }
         }
       }
@@ -588,7 +665,7 @@ export const useGameStore = defineStore('game', {
       // Save to local storage
       localStorage.setItem('savedPuzzles', JSON.stringify(this.savedPuzzles));
       this.setError(null);
-      return puzzleName;
+      return puzzleName || null;
     },
 
     loadPuzzlesFromLocalStorage() {
@@ -716,69 +793,67 @@ export const useGameStore = defineStore('game', {
     },
 
     // Log array for test steps
-    testLogs: [] as string[],
-    // Log array for detailed debug info for step 2
-    testDebugLogs: [] as any[],
+    debugLogs: [] as string[],
 
     // Helper for one generation attempt: returns puzzle name or null
     attemptGeneratePuzzle(attempt: number, requiredQueens: number): string | null {
-      this.testLogs.push(`Attempt ${attempt}: Starting puzzle generation`);
+      this.addDebugLog(`Attempt ${attempt}: Starting puzzle generation`);
       this.generateFullSolution(); // build full solution
 
       // Make sure color groups are assigned before proceeding
-      this.testLogs.push(`Attempt ${attempt}: Assigning color groups to solution`);
+      this.addDebugLog(`Attempt ${attempt}: Assigning color groups to solution`);
       this.assignColorGroups();
 
       // Debug info: get color distribution using utility
       const { totalColored, totalSquares, colorCounts } = getColorDistribution(this.grid);
-      this.testLogs.push(
+      this.addDebugLog(
         `Attempt ${attempt}: Color assignment complete - ${totalColored}/${totalSquares} cells colored`
       );
       Object.entries(colorCounts).forEach(([color, count]) => {
-        this.testLogs.push(`  - Color ${color}: ${count} cells`);
+        this.addDebugLog(`  - Color ${color}: ${count} cells`);
       });
 
       this.clearQueensAndFlags(); // reset markers
-      this.testAllStepsLoop(); // cycle solve steps
+      this.runAllSolverSteps(); // cycle solve steps
       if (!this.forceChangeColor()) {
-        this.testLogs.push(`Attempt ${attempt}: Color change failed`);
+        this.addDebugLog(`Attempt ${attempt}: Color change failed`);
         return null;
       }
-      this.testAllStepsLoop(); // re-run solver steps
+      this.runAllSolverSteps(); // re-run solver steps
       const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
 
       // Add more detailed validation logs
-      this.testLogs.push(`Attempt ${attempt}: Final validation:`);
-      this.testLogs.push(
+      this.addDebugLog(`Attempt ${attempt}: Final validation:`);
+      this.addDebugLog(
         `  - Queens: ${this.queenPositions.length}/${requiredQueens} (valid: ${queenCountValid})`
       );
-      this.testLogs.push(`  - All cells filled: ${allFilled}`);
-      this.testLogs.push(`  - Color groups valid: ${colorGroupsValid}`);
+      this.addDebugLog(`  - All cells filled: ${allFilled}`);
+      this.addDebugLog(`  - Color groups valid: ${colorGroupsValid}`);
 
       if (!(queenCountValid && allFilled && colorGroupsValid)) {
-        this.testLogs.push(
+        this.addDebugLog(
           `Attempt ${attempt}: Validation failed. Queens: ${this.queenPositions.length}, Filled: ${allFilled}, Colors OK: ${colorGroupsValid}`
         );
         return null;
       }
       const name = this.savePuzzleToLocalStorage();
       if (!name) {
-        this.testLogs.push(`Attempt ${attempt}: Save failed`);
+        this.addDebugLog(`Attempt ${attempt}: Save failed`);
       }
-      return name;
+      return name || null;
     },
 
-    // Generates puzzles until a valid one is found and stored; returns the puzzle name or null
-    generateAndStoreValidPuzzle(maxAttempts = 100): string | null {
+    // New method to generate and validate a puzzle that can be solved with steps
+    generateAndValidatePuzzleWithSteps(maxAttempts = 100): string | null {
       try {
         // Reset logs for clarity
-        this.testLogs = [];
+        this.debugLogs = [];
 
         // Use grid size for required queens - they should match
         const requiredQueens = this.gridSize;
 
-        this.testLogs.push(
-          `Starting to generate a valid puzzle for ${this.gridSize}x${this.gridSize} board...`
+        this.addDebugLog(
+          `Starting to generate a step-solvable puzzle for ${this.gridSize}x${this.gridSize} board...`
         );
 
         let attemptSummary: AttemptResult[] = [];
@@ -789,7 +864,7 @@ export const useGameStore = defineStore('game', {
             const shouldLogDetail = attempt % 5 === 1 || attempt === maxAttempts;
 
             if (shouldLogDetail) {
-              this.testLogs.push(`\nAttempt ${attempt}/${maxAttempts}`);
+              this.addDebugLog(`\nAttempt ${attempt}/${maxAttempts}`);
             }
 
             // Generate solution with queens
@@ -797,7 +872,7 @@ export const useGameStore = defineStore('game', {
 
             // Skip if solution generation failed
             if (this.queenPositions.length !== this.gridSize) {
-              this.testLogs.push(
+              this.addDebugLog(
                 `Failed to generate full solution. Got ${this.queenPositions.length}/${this.gridSize} queens.`
               );
               continue;
@@ -811,22 +886,13 @@ export const useGameStore = defineStore('game', {
               this.logColorDistribution();
             }
 
+            // Clear queens and flags to test step-solving
             this.clearQueensAndFlags();
-            this.testAllStepsLoop();
 
-            // Try to change a color if there are empty squares
-            const emptyCount = this.countEmptySquares();
-            if (emptyCount === 0) {
-              if (shouldLogDetail) {
-                this.testLogs.push('No empty squares to change colors');
-              }
-              continue;
-            }
+            // Run solver steps to verify puzzle is step-solvable
+            this.runAllSolverSteps();
 
-            this.forceChangeColor();
-            this.testAllStepsLoop();
-
-            // Validate and summarize
+            // Validate the puzzle state after solver steps
             const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
             const queenCount = this.queenPositions.length;
 
@@ -842,16 +908,22 @@ export const useGameStore = defineStore('game', {
             attemptSummary.push(attemptResult);
 
             if (shouldLogDetail) {
-              this.testLogs.push(
+              this.addDebugLog(
                 `Queens: ${queenCount}/${requiredQueens}, Filled: ${allFilled}, Valid Groups: ${colorGroupsValid}`
               );
             }
 
             if (attemptResult.success) {
+              // Restore the original solution
+              this.clearQueensAndFlags();
+              for (const pos of this.puzzleGrid.solution) {
+                this.placeQueen(pos.row, pos.col);
+              }
+
               const name = this.savePuzzleToLocalStorage();
               if (name) {
-                this.testLogs.push(
-                  `\n✅ SUCCESS: Puzzle saved as "${name}" after ${attempt} attempts`
+                this.addDebugLog(
+                  `\n✅ SUCCESS: Step-solvable puzzle saved as "${name}" after ${attempt} attempts`
                 );
 
                 // Add summary statistics
@@ -863,25 +935,25 @@ export const useGameStore = defineStore('game', {
           } catch (attemptError) {
             // Log error for this specific attempt but continue with next
             console.error(`Error in attempt ${attempt}:`, attemptError);
-            this.testLogs.push(
-              `❌ Error in attempt ${attempt}: ${attemptError.message || 'Unknown error'}`
-            );
+            const errorMessage =
+              attemptError instanceof Error ? attemptError.message : 'Unknown error';
+            this.addDebugLog(`❌ Error in attempt ${attempt}: ${errorMessage}`);
           }
         }
 
         // Generate failure summary with statistics
-        this.testLogs.push(
-          `\n❌ FAILED: Could not generate valid puzzle after ${maxAttempts} attempts`
+        this.addDebugLog(
+          `\n❌ FAILED: Could not generate step-solvable puzzle after ${maxAttempts} attempts`
         );
         this.summarizeAttempts(attemptSummary);
 
-        this.setError(`Failed to generate a valid puzzle after ${maxAttempts} attempts`);
+        this.setError(`Failed to generate a step-solvable puzzle after ${maxAttempts} attempts`);
         return null;
-      } catch (error) {
-        // Handle any unexpected errors
+      } catch (error: unknown) {
         console.error('Critical error in puzzle generation:', error);
-        this.testLogs.push(`❌ CRITICAL ERROR: ${error.message || 'Unknown error'}`);
-        this.setError(`Error generating puzzle: ${error.message || 'Unknown error'}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        this.addDebugLog(`❌ CRITICAL ERROR: ${errorMessage}`);
+        this.setError(`Error generating puzzle: ${errorMessage}`);
         return null;
       }
     },
@@ -891,395 +963,76 @@ export const useGameStore = defineStore('game', {
       try {
         const result = getColorDistribution(this.grid);
         if (!result) {
-          this.testLogs.push('Error: Could not get color distribution');
+          this.addDebugLog('Error: Could not get color distribution');
           return;
         }
 
         const { totalColored, totalSquares, colorCounts } = result;
-        this.testLogs.push(`Colors: ${totalColored}/${totalSquares} cells colored`);
+        this.addDebugLog(`Colors: ${totalColored}/${totalSquares} cells colored`);
 
         // Sort colors by frequency if we have any colors
         if (colorCounts && Object.keys(colorCounts).length > 0) {
           const sortedColors = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
           let colorSummary = sortedColors.map(([color, count]) => `${color}:${count}`).join(', ');
-          this.testLogs.push(`Distribution: ${colorSummary}`);
+          this.addDebugLog(`Distribution: ${colorSummary}`);
         } else {
-          this.testLogs.push('No colors assigned yet');
+          this.addDebugLog('No colors assigned yet');
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error in logColorDistribution:', error);
-        this.testLogs.push(`Error logging color distribution: ${error.message || 'Unknown error'}`);
+        this.addDebugLog(
+          `Error logging color distribution: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     },
 
     // Helper for step 1: Place queens in last free squares of color blocks, rows, or columns
-    testStep1PlaceLastFreeQueens() {
-      let didSomething = false;
-      let queensPlaced = 0;
-      let placed;
-
-      do {
-        placed = false;
-        // 1. Check color blocks
-        const colorGroups = new Map<string, Pos[]>();
-        for (let row = 0; row < this.gridSize; row++) {
-          for (let col = 0; col < this.gridSize; col++) {
-            const color = this.grid[row][col].groupColor;
-            if (!color) continue;
-            if (!colorGroups.has(color)) colorGroups.set(color, []);
-            colorGroups.get(color)!.push({ row, col });
-          }
-        }
-        for (const [color, group] of colorGroups.entries()) {
-          const free: Pos[] = group.filter(({ row, col }) => this.grid[row][col].state === 'empty');
-          if (free.length === 1) {
-            const { row, col } = free[0];
-            this.placeQueen(row, col);
-            queensPlaced++;
-            placed = true;
-            didSomething = true;
-            break;
-          }
-        }
-        if (placed) continue;
-        // 2. Check rows
-        for (let row = 0; row < this.gridSize; row++) {
-          const free: Pos[] = [];
-          for (let col = 0; col < this.gridSize; col++) {
-            if (this.grid[row][col].state === 'empty') free.push({ row, col });
-          }
-          if (free.length === 1) {
-            const { row, col } = free[0];
-            this.placeQueen(row, col);
-            queensPlaced++;
-            placed = true;
-            didSomething = true;
-            break;
-          }
-        }
-        if (placed) continue;
-        // 3. Check columns
-        for (let col = 0; col < this.gridSize; col++) {
-          const free: Pos[] = [];
-          for (let row = 0; row < this.gridSize; row++) {
-            if (this.grid[row][col].state === 'empty') free.push({ row, col });
-          }
-          if (free.length === 1) {
-            const { row, col } = free[0];
-            this.placeQueen(row, col);
-            queensPlaced++;
-            placed = true;
-            didSomething = true;
-            break;
-          }
-        }
-      } while (placed);
-
-      return didSomething;
+    placeLastFreeQueens() {
+      return placeLastFreeQueens(this.grid, this.gridSize, (row, col) => this.placeQueen(row, col));
     },
 
     // Helper for step 2: Flag squares where a queen would block all remaining squares in other color groups
-    testStep2FlagBlockingSquares() {
-      let flagCount = 0;
-      let didSomething = false;
-
-      // Build map of empty squares by color group
-      const emptyColorGroups = new Map<string, Pos[]>();
-      for (let r = 0; r < this.gridSize; r++) {
-        for (let c = 0; c < this.gridSize; c++) {
-          if (this.grid[r][c].state === 'empty') {
-            const grp = this.grid[r][c].groupColor;
-            if (!grp) continue;
-            if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
-            emptyColorGroups.get(grp)!.push({ row: r, col: c });
-          }
-        }
-      }
-
-      // For each empty square, check all other color groups
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state !== 'empty') continue;
-          const myColor = this.grid[row][col].groupColor;
-          if (!myColor) continue;
-          for (const [otherColor, groupEmpty] of emptyColorGroups.entries()) {
-            if (otherColor === myColor) continue;
-            if (groupEmpty.length <= 1) continue;
-            let allAttacked = true;
-            for (const { row: r, col: c } of groupEmpty) {
-              if (!queenAttacks(row, col, r, c)) {
-                allAttacked = false;
-                break;
-              }
-            }
-            if (allAttacked) {
-              this.placeFlag(row, col);
-              flagCount++;
-              didSomething = true;
-              break;
-            }
-          }
-        }
-      }
-
-      return didSomething;
+    flagBlockingSquares() {
+      return flagBlockingSquares(this.grid, this.gridSize, (row, col) => this.placeFlag(row, col));
     },
 
     // Step 3: Constrained Row Elimination
-    testConstrainedRowElimination() {
-      type Pos = { row: number; col: number };
-      const emptyColorGroups = new Map<string, Pos[]>();
-      // Build map of empty squares by color group
-      for (let r = 0; r < this.gridSize; r++) {
-        for (let c = 0; c < this.gridSize; c++) {
-          if (this.grid[r][c].state === 'empty') {
-            const grp = this.grid[r][c].groupColor;
-            if (!grp) continue;
-            if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
-            emptyColorGroups.get(grp)!.push({ row: r, col: c });
-          }
-        }
-      }
-      // Generate all non-empty subsets of rows
-      const rows = Array.from({ length: this.gridSize }, (_, i) => i);
-      const subsets: number[][] = [];
-      function genSubsets(arr: number[], start: number, curr: number[]) {
-        for (let i = start; i < arr.length; i++) {
-          const next = curr.concat(arr[i]);
-          subsets.push(next);
-          genSubsets(arr, i + 1, next);
-        }
-      }
-      genSubsets(rows, 0, []);
-      let flagCount = 0;
-      let didSomething = false;
-      for (const S of subsets) {
-        const uniqueColors = Array.from(emptyColorGroups.entries())
-          .filter(
-            ([, positions]) => positions.length > 0 && positions.every((p) => S.includes(p.row))
-          )
-          .map(([color]) => color);
-        if (uniqueColors.length === S.length && uniqueColors.length > 0) {
-          for (const row of S) {
-            for (let col = 0; col < this.gridSize; col++) {
-              if (this.grid[row][col].state === 'empty') {
-                const grp = this.grid[row][col].groupColor;
-                if (!grp || !uniqueColors.includes(grp)) {
-                  this.placeFlag(row, col);
-                  flagCount++;
-                  didSomething = true;
-                }
-              }
-            }
-          }
-        }
-      }
-      return didSomething;
+    eliminateConstrainedRows() {
+      return eliminateConstrainedRows(this.grid, this.gridSize, (row, col) =>
+        this.placeFlag(row, col)
+      );
     },
 
     // Step 4: Constrained Column Elimination
-    testConstrainedColumnElimination() {
-      type Pos = { row: number; col: number };
-      const emptyColorGroups = new Map<string, Pos[]>();
-      // Build map of empty squares by color group
-      for (let r = 0; r < this.gridSize; r++) {
-        for (let c = 0; c < this.gridSize; c++) {
-          if (this.grid[r][c].state === 'empty') {
-            const grp = this.grid[r][c].groupColor;
-            if (!grp) continue;
-            if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
-            emptyColorGroups.get(grp)!.push({ row: r, col: c });
-          }
-        }
-      }
-      // Generate all non-empty subsets of columns
-      const cols = Array.from({ length: this.gridSize }, (_, i) => i);
-      const subsets: number[][] = [];
-      function genSubsets(arr: number[], start: number, curr: number[]) {
-        for (let i = start; i < arr.length; i++) {
-          const next = curr.concat(arr[i]);
-          subsets.push(next);
-          genSubsets(arr, i + 1, next);
-        }
-      }
-      genSubsets(cols, 0, []);
-      let flagCount = 0;
-      let didSomething = false;
-      for (const S of subsets) {
-        const uniqueColors = Array.from(emptyColorGroups.entries())
-          .filter(
-            ([, positions]) => positions.length > 0 && positions.every((p) => S.includes(p.col))
-          )
-          .map(([color]) => color);
-        if (uniqueColors.length === S.length && uniqueColors.length > 0) {
-          for (const col of S) {
-            for (let row = 0; row < this.gridSize; row++) {
-              if (this.grid[row][col].state === 'empty') {
-                const grp = this.grid[row][col].groupColor;
-                if (!grp || !uniqueColors.includes(grp)) {
-                  this.placeFlag(row, col);
-                  flagCount++;
-                  didSomething = true;
-                }
-              }
-            }
-          }
-        }
-      }
-      return didSomething;
+    eliminateConstrainedColumns() {
+      return eliminateConstrainedColumns(this.grid, this.gridSize, (row, col) =>
+        this.placeFlag(row, col)
+      );
     },
 
     // Step 5: Flag squares where a queen would block all remaining free squares in any row or column
-    testStep5BlockRowsAndColumns() {
-      type Pos = { row: number; col: number };
-      let flagCount = 0;
-      let didSomething = false;
-      // Helper: does a queen at (aRow,aCol) attack (tRow,tCol)? including diagonals
-      function queenAttacks(aRow: number, aCol: number, tRow: number, tCol: number): boolean {
-        return aRow === tRow || aCol === tCol || Math.abs(aRow - tRow) === Math.abs(aCol - tCol);
-      }
-      // Build lists of empty positions per row and per column
-      const freeRows = new Map<number, Pos[]>();
-      const freeCols = new Map<number, Pos[]>();
-      for (let i = 0; i < this.gridSize; i++) {
-        freeRows.set(i, []);
-        freeCols.set(i, []);
-      }
-      for (let r = 0; r < this.gridSize; r++) {
-        for (let c = 0; c < this.gridSize; c++) {
-          if (this.grid[r][c].state === 'empty') {
-            freeRows.get(r)!.push({ row: r, col: c });
-            freeCols.get(c)!.push({ row: r, col: c });
-          }
-        }
-      }
-      // Try each empty square and flag if it blocks an entire row or column
-      outer: for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state !== 'empty') continue;
-          // Check other rows
-          for (const [r, positions] of freeRows.entries()) {
-            if (r === row || positions.length === 0) continue;
-            if (positions.every((p) => queenAttacks(row, col, p.row, p.col))) {
-              this.placeFlag(row, col);
-              flagCount++;
-              didSomething = true;
-              break outer;
-            }
-          }
-          // Check other columns
-          for (const [c, positions] of freeCols.entries()) {
-            if (c === col || positions.length === 0) continue;
-            if (positions.every((p) => queenAttacks(row, col, p.row, p.col))) {
-              this.placeFlag(row, col);
-              flagCount++;
-              didSomething = true;
-              break outer;
-            }
-          }
-        }
-      }
-      return didSomething;
+    blockRowsAndColumns() {
+      return blockRowsAndColumns(this.grid, this.gridSize, (row, col) => this.placeFlag(row, col));
     },
 
     // New: Loop through all steps until no changes
-    testAllStepsLoop() {
-      if (!this.testLogs || this.testLogs.length === 0) {
-        this.testLogs = [];
-      }
-      this.testLogs.push('--- Starting Solver Loop ---');
-
-      // Track statistics instead of verbose logs
-      let stats = {
-        loops: 0,
-        step1Queens: 0,
-        step2Flags: 0,
-        step3Flags: 0,
-        step4Flags: 0,
-        step5Flags: 0,
-      };
-
-      let loop = 1;
-      let anyChange;
-      do {
-        stats.loops++;
-        this.testLogs.push(`--- Loop ${loop} ---`);
-
-        // Save previous state for comparison
-        const prevQueenPositions = this.queenPositions.length;
-
-        // Step 1: Track only number of queens placed
-        let prevFlags = this.countFlags();
-        let changed1 = this.testStep1PlaceLastFreeQueens();
-        let newQueens = this.queenPositions.length - prevQueenPositions;
-        stats.step1Queens += newQueens;
-
-        // Log only if queens were placed
-        if (newQueens > 0) {
-          this.testLogs.push(`Step 1: Placed ${newQueens} queens`);
-        }
-
-        // Step 2: Track only number of flags placed
-        prevFlags = this.countFlags();
-        let changed2 = this.testStep2FlagBlockingSquares();
-        let newFlags = this.countFlags() - prevFlags;
-        stats.step2Flags += newFlags;
-
-        // Log only if flags were placed
-        if (newFlags > 0) {
-          this.testLogs.push(`Step 2: Placed ${newFlags} flags`);
-        }
-
-        // Step 3: Constrained Row Elimination
-        prevFlags = this.countFlags();
-        let changed3 = this.testConstrainedRowElimination();
-        newFlags = this.countFlags() - prevFlags;
-        stats.step3Flags += newFlags;
-
-        if (newFlags > 0) {
-          this.testLogs.push(`Step 3: Placed ${newFlags} flags`);
-        }
-
-        // Step 4: Constrained Column Elimination
-        prevFlags = this.countFlags();
-        let changed4 = this.testConstrainedColumnElimination();
-        newFlags = this.countFlags() - prevFlags;
-        stats.step4Flags += newFlags;
-
-        if (newFlags > 0) {
-          this.testLogs.push(`Step 4: Placed ${newFlags} flags`);
-        }
-
-        // Step 5: Flag Row/Column Blocking Squares
-        prevFlags = this.countFlags();
-        let changed5 = this.testStep5BlockRowsAndColumns();
-        newFlags = this.countFlags() - prevFlags;
-        stats.step5Flags += newFlags;
-
-        if (newFlags > 0) {
-          this.testLogs.push(`Step 5: Placed ${newFlags} flags`);
-        }
-
-        anyChange = changed1 || changed2 || changed3 || changed4 || changed5;
-
-        // More concise loop result reporting
-        if (anyChange) {
-          this.testLogs.push(`Loop ${loop}: Made progress`);
-        }
-
-        loop++;
-      } while (anyChange);
-
-      // Summarize the solver results
-      this.testLogs.push(`--- Solver finished after ${stats.loops} loops ---`);
-      this.testLogs.push(
-        `Total placements: ${stats.step1Queens} queens, ${stats.step2Flags + stats.step3Flags + stats.step4Flags + stats.step5Flags} flags`
+    runAllSolverSteps() {
+      // Instead of creating a local array, we'll just pass our logging function
+      runAllSolverSteps(
+        this.grid,
+        this.gridSize,
+        (row, col) => this.placeQueen(row, col),
+        (row, col) => this.placeFlag(row, col),
+        () => this.countFlags(),
+        () => this.queenPositions,
+        (message: string) => this.addDebugLog(message),
+        this.verboseMode
       );
     },
 
     // Add helper to ensure no color block has a singleton square
     ensureNoSingletonColorBlocks() {
-      const colorGroups: Record<string, { row: number; col: number }[]> = {};
+      const colorGroups: Record<string, Pos[]> = {};
       // Build map of color groups
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
@@ -1324,7 +1077,7 @@ export const useGameStore = defineStore('game', {
 
     // Add action to randomly change the color of an empty square to an adjacent neighbor color
     forceChangeColor() {
-      const empties: { row: number; col: number }[] = [];
+      const empties: Pos[] = [];
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
           // Skip solution cells so we don't change a square that should have a queen
@@ -1337,17 +1090,16 @@ export const useGameStore = defineStore('game', {
         }
       }
       // Log number of empty squares found
-      if (!this.testLogs) this.testLogs = [];
-      this.testLogs.push(`forceChangeColor: found ${empties.length} empty squares`);
+      this.addDebugLog(`forceChangeColor: found ${empties.length} empty squares`);
       if (empties.length === 0) {
-        this.testLogs.push('forceChangeColor: no empty squares to change color');
+        this.addDebugLog('forceChangeColor: no empty squares to change color');
         this.setError('No empty squares to change color');
         return false;
       }
       const randIdx = Math.floor(Math.random() * empties.length);
       const { row, col } = empties[randIdx];
       // Log selected square
-      this.testLogs.push(`forceChangeColor: selected empty square at (${row},${col})`);
+      this.addDebugLog(`forceChangeColor: selected empty square at (${row},${col})`);
       const directions = [
         { dr: -1, dc: 0 },
         { dr: 1, dc: 0 },
@@ -1366,7 +1118,7 @@ export const useGameStore = defineStore('game', {
         }
       }
       // Log adjacent neighbor colors
-      this.testLogs.push(`forceChangeColor: neighborColors = [${neighborColors.join(', ')}]`);
+      this.addDebugLog(`forceChangeColor: neighborColors = [${neighborColors.join(', ')}]`);
 
       let newColor;
       if (neighborColors.length === 0) {
@@ -1380,17 +1132,17 @@ export const useGameStore = defineStore('game', {
           'pink',
         ];
         newColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
-        this.testLogs.push(
+        this.addDebugLog(
           `forceChangeColor: no adjacent colors found, using random color "${newColor}"`
         );
       } else {
         // Use an adjacent color
         newColor = neighborColors[Math.floor(Math.random() * neighborColors.length)];
-        this.testLogs.push(`forceChangeColor: using adjacent color "${newColor}"`);
+        this.addDebugLog(`forceChangeColor: using adjacent color "${newColor}"`);
       }
 
       // Log applying the color change
-      this.testLogs.push(`forceChangeColor: changing square (${row},${col}) to color ${newColor}`);
+      this.addDebugLog(`forceChangeColor: changing square (${row},${col}) to color ${newColor}`);
       this.saveToHistory();
       this.grid[row][col].groupColor = newColor;
 
@@ -1403,7 +1155,7 @@ export const useGameStore = defineStore('game', {
     summarizeAttempts(attempts: AttemptResult[]) {
       try {
         if (!attempts || attempts.length === 0) {
-          this.testLogs.push('No attempt data to summarize');
+          this.addDebugLog('No attempt data to summarize');
           return;
         }
 
@@ -1417,11 +1169,11 @@ export const useGameStore = defineStore('game', {
           if (attempt.colorGroupsValid) validGroupsCount++;
         });
 
-        this.testLogs.push(`\n--- Generation Statistics ---`);
-        this.testLogs.push(`Total attempts: ${attempts.length}`);
+        this.addDebugLog(`\n--- Generation Statistics ---`);
+        this.addDebugLog(`Total attempts: ${attempts.length}`);
 
         if (Object.keys(queensHistogram).length > 0) {
-          this.testLogs.push(`Queens distribution: ${JSON.stringify(queensHistogram)}`);
+          this.addDebugLog(`Queens distribution: ${JSON.stringify(queensHistogram)}`);
         }
 
         const filledPercent = attempts.length
@@ -1431,16 +1183,163 @@ export const useGameStore = defineStore('game', {
           ? Math.round((validGroupsCount / attempts.length) * 100)
           : 0;
 
-        this.testLogs.push(
+        this.addDebugLog(
           `Fully filled boards: ${filledCount}/${attempts.length} (${filledPercent}%)`
         );
-        this.testLogs.push(
+        this.addDebugLog(
           `Valid color groups: ${validGroupsCount}/${attempts.length} (${validPercent}%)`
         );
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error summarizing attempts:', error);
-        this.testLogs.push(`Error summarizing attempt data: ${error.message || 'Unknown error'}`);
+        this.addDebugLog(
+          `Error summarizing attempt data: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
+    },
+
+    setColorToolActive(active: boolean) {
+      this.colorToolActive = active;
+    },
+    setColorToolSelectedColor(color: string | null) {
+      this.colorToolSelectedColor = color;
+    },
+    toggleColorToolActive() {
+      this.colorToolActive = !this.colorToolActive;
+    },
+
+    // New model helpers
+    posToKey(pos: Pos): string {
+      return `${pos.row},${pos.col}`;
+    },
+
+    keyToPos(key: string): Pos {
+      const [row, col] = key.split(',').map(Number);
+      return { row, col };
+    },
+
+    getSquareColor(row: number, col: number): string | undefined {
+      return this.puzzleGrid.colorGroups.get(this.posToKey({ row, col }));
+    },
+
+    setSquareColorNew(row: number, col: number, color: string | undefined): void {
+      const key = this.posToKey({ row, col });
+      if (color) {
+        this.puzzleGrid.colorGroups.set(key, color);
+      } else {
+        this.puzzleGrid.colorGroups.delete(key);
+      }
+    },
+
+    isSquareQueen(row: number, col: number): boolean {
+      return this.playerGrid.queens.some((pos) => pos.row === row && pos.col === col);
+    },
+
+    isSquareFlag(row: number, col: number): boolean {
+      return this.playerGrid.flags.some((pos) => pos.row === row && pos.col === col);
+    },
+
+    isSquareInvalid(row: number, col: number): boolean {
+      return this.playerGrid.invalid.some((pos) => pos.row === row && pos.col === col);
+    },
+
+    getSquareState(row: number, col: number): 'empty' | 'queen' | 'flag' | 'invalid' {
+      if (this.isSquareQueen(row, col)) return 'queen';
+      if (this.isSquareFlag(row, col)) return 'flag';
+      if (this.isSquareInvalid(row, col)) return 'invalid';
+      return 'empty';
+    },
+
+    // Method to sync legacy grid with new model (temporary during transition)
+    syncGridWithNewModel(): void {
+      // Update colors in the grid from puzzleGrid
+      for (const [key, color] of this.puzzleGrid.colorGroups.entries()) {
+        const pos = this.keyToPos(key);
+        this.grid[pos.row][pos.col].groupColor = color;
+      }
+
+      // Reset all states in the grid
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          this.grid[row][col].state = 'empty';
+        }
+      }
+
+      // Set queens
+      for (const pos of this.playerGrid.queens) {
+        this.grid[pos.row][pos.col].state = 'queen';
+      }
+
+      // Set flags
+      for (const pos of this.playerGrid.flags) {
+        this.grid[pos.row][pos.col].state = 'flag';
+      }
+
+      // Set invalid
+      for (const pos of this.playerGrid.invalid) {
+        this.grid[pos.row][pos.col].state = 'invalid';
+      }
+    },
+
+    // Method to sync new model with legacy grid (temporary during transition)
+    syncNewModelWithGrid(): void {
+      // Clear new model data
+      this.puzzleGrid.colorGroups.clear();
+      this.playerGrid.queens = [];
+      this.playerGrid.flags = [];
+      this.playerGrid.invalid = [];
+
+      // Update from legacy grid
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          const cell = this.grid[row][col];
+
+          // Set color
+          if (cell.groupColor) {
+            this.setSquareColorNew(row, col, cell.groupColor);
+          }
+
+          // Set state
+          if (cell.state === 'queen') {
+            this.playerGrid.queens.push({ row, col });
+          } else if (cell.state === 'flag') {
+            this.playerGrid.flags.push({ row, col });
+          } else if (cell.state === 'invalid') {
+            this.playerGrid.invalid.push({ row, col });
+          }
+        }
+      }
+
+      // Sync solution
+      this.puzzleGrid.solution = [...this.solutionQueens];
+    },
+
+    // Method to check if a puzzle can be solved using solver steps
+    isPuzzleSolvable(): boolean {
+      // Save current state
+      const currentQueens = [...this.queenPositions];
+
+      // Clear the board
+      this.clearQueensAndFlags();
+
+      // Run solver steps
+      this.runAllSolverSteps();
+
+      // Check if we got the correct number of queens
+      const success = this.queenPositions.length === this.gridSize;
+
+      // Restore original state
+      this.clearQueensAndFlags();
+      for (const pos of currentQueens) {
+        this.placeQueen(pos.row, pos.col);
+      }
+
+      return success;
+    },
+
+    // Add toggle for verbose mode
+    toggleVerboseMode() {
+      this.verboseMode = !this.verboseMode;
+      this.addDebugLog(`Verbose mode ${this.verboseMode ? 'enabled' : 'disabled'}`);
     },
   },
 });

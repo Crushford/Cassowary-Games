@@ -1,122 +1,157 @@
 <template>
-  <div class="flex flex-col gap-4 h-full overflow-y-auto">
-    <!-- Validation Toast Message -->
-    <div
-      v-if="validationMessage"
-      class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg text-white font-semibold shadow-lg"
-      :class="isValid ? 'bg-green-600' : 'bg-red-600'"
-    >
-      {{ validationMessage }}
-    </div>
-
-    <!-- Game Grid -->
-    <GameGrid
-      :grid="gameStore.grid"
-      :grid-size="gridSize"
-      @undo="gameStore.handleUndo"
-      @restart="gameStore.clearQueensAndFlags"
-    />
-
-    <!-- Status Message -->
-    <div
-      v-if="gameStore.errorMessage"
-      class="p-4 bg-red-500/20 border border-red-500 text-red-400 rounded-lg"
-    >
-      {{ gameStore.errorMessage }}
-    </div>
-
-    <!-- Debug Information -->
+  <div class="grid grid-cols-[300px_1fr_300px] gap-4">
+    <!-- Puzzle Generation Controls Sidebar on Left -->
     <div class="flex flex-col gap-4">
-      <!-- Logs -->
-      <section
-        v-if="gameStore.testLogs && gameStore.testLogs.length"
-        class="bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg max-h-64 overflow-auto"
-        ref="logsContainer"
+      <PuzzleGenerationControls />
+      <ColorPaletteTool />
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex flex-col gap-4">
+      <!-- Dual Grid Layout -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Solution Grid -->
+        <div class="flex flex-col items-center">
+          <h3 class="text-lg font-semibold mb-3 text-white">Solution</h3>
+          <GameGrid mode="solution" />
+        </div>
+
+        <!-- Player Grid -->
+        <div class="flex flex-col items-center">
+          <h3 class="text-lg font-semibold mb-3 text-white">Test Your Solution</h3>
+          <GameGrid mode="player" />
+        </div>
+      </div>
+
+      <div
+        v-if="gameStore.errorMessage"
+        class="p-4 bg-red-500/20 border border-red-500 text-red-400 rounded-lg"
       >
-        <h3 class="font-semibold mb-4 text-white">Logs</h3>
-        <ul class="list-disc list-inside text-sm space-y-2 text-white">
-          <li v-for="(log, i) in gameStore.testLogs" :key="i">{{ log }}</li>
-        </ul>
+        {{ gameStore.errorMessage }}
+      </div>
+
+      <section
+        v-if="gameStore.debugLogs.length > 0"
+        class="relative bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg"
+      >
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-white">Debug Logs</h3>
+          <div class="flex gap-2">
+            <button
+              @click="gameStore.toggleVerboseMode()"
+              class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+            >
+              {{ gameStore.verboseMode ? '🔊 Verbose Mode On' : '🔇 Verbose Mode Off' }}
+            </button>
+            <button
+              @click="copyLast20Logs"
+              class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+            >
+              Copy Last 20
+            </button>
+            <button
+              @click="copyAllLogs"
+              class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+            >
+              Copy All
+            </button>
+          </div>
+        </div>
+        <div ref="logsContainer" class="max-h-64 overflow-auto">
+          <ul class="list-disc list-inside text-sm space-y-2 text-white">
+            <li v-for="(log, i) in gameStore.debugLogs" :key="i">{{ log }}</li>
+          </ul>
+        </div>
+        <span v-if="copyStatus" class="absolute bottom-2 right-2 text-sm text-green-400">{{
+          copyStatus
+        }}</span>
       </section>
 
-      <!-- Debug Logs -->
-      <section
-        v-if="gameStore.testDebugLogs && gameStore.testDebugLogs.length"
-        class="bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg"
-      >
-        <h3 class="font-semibold mb-4 text-white">Debug Logs</h3>
-        <div
-          v-for="(debug, idx) in gameStore.testDebugLogs"
-          :key="idx"
-          class="mb-4 border-b border-slate-700 pb-4"
-        >
-          <div class="mb-2 text-sm text-white">
-            <strong>Action:</strong> {{ debug.action }} at ({{ debug.position.row }},{{
-              debug.position.col
-            }}) in color '{{ debug.color }}'<br />
-            <strong>Reason:</strong> {{ debug.reason }}
-          </div>
-          <div class="flex flex-col md:flex-row gap-4">
-            <div class="w-full md:w-1/2">
-              <div class="font-bold text-xs mb-1 text-white">Before:</div>
-              <pre class="bg-slate-900 p-2 rounded text-xs overflow-x-auto text-white">{{
-                debug.before
-              }}</pre>
-            </div>
-            <div class="w-full md:w-1/2">
-              <div class="font-bold text-xs mb-1 text-white">After:</div>
-              <pre class="bg-slate-900 p-2 rounded text-xs overflow-x-auto text-white">{{
-                debug.after
-              }}</pre>
-            </div>
-          </div>
+      <section v-else class="bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-white">Debug Logs</h3>
           <button
-            class="mt-2 px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs"
-            @click="copyDebugLog(debug)"
+            @click="gameStore.toggleVerboseMode()"
+            class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
           >
-            Copy Debug Info
+            {{ gameStore.verboseMode ? '🔊 Verbose Mode On' : '🔇 Verbose Mode Off' }}
           </button>
         </div>
+        <p class="text-white">No logs to display yet.</p>
+      </section>
+    </div>
+
+    <!-- Right Side Column -->
+    <div class="flex flex-col gap-4">
+      <!-- Puzzle Solving Panel Sidebar on Right -->
+      <PuzzleSolvingPanel />
+
+      <!-- Game State Export Component -->
+      <section class="bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg">
+        <GameStateExport />
       </section>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted } from 'vue';
-import GameGrid from '../components/GameGrid.vue';
+import { ref, watch, nextTick, onMounted, defineAsyncComponent } from 'vue';
 import { useGameStore } from '../stores/gameStore';
 
-const gameStore = useGameStore();
-const gridSize = ref(gameStore.gridSize);
-const validationMessage = ref('');
-const isValid = ref(false);
-const logsContainer = ref<HTMLElement | null>(null);
+// Use defineAsyncComponent to fix the "no default export" error
+const GameGrid = defineAsyncComponent(() => import('../components/GameGrid.vue'));
+const PuzzleGenerationControls = defineAsyncComponent(
+  () => import('../components/PuzzleGenerationControls.vue')
+);
+const PuzzleSolvingPanel = defineAsyncComponent(
+  () => import('../components/PuzzleSolvingPanel.vue')
+);
+const ColorPaletteTool = defineAsyncComponent(() => import('../components/ColorPaletteTool.vue'));
+const GameStateExport = defineAsyncComponent(() => import('../components/GameStateExport.vue'));
 
-// Scroll logs to bottom when they change
+const gameStore = useGameStore();
+const copyStatus = ref('');
+
+// Copy functions
+async function copyToClipboard(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    copyStatus.value = 'Copied!';
+    setTimeout(() => {
+      copyStatus.value = '';
+    }, 2000);
+  } catch (err) {
+    console.error('Failed to copy text: ', err);
+    copyStatus.value = 'Failed to copy';
+  }
+}
+
+function copyLast20Logs() {
+  const last20Logs = gameStore.debugLogs.slice(-20).join('\n');
+  copyToClipboard(last20Logs);
+}
+
+function copyAllLogs() {
+  const allLogs = gameStore.debugLogs.join('\n');
+  copyToClipboard(allLogs);
+}
+
+// Function to reset board for solving
+function resetBoardForSolving() {
+  gameStore.clearQueensAndFlags();
+}
+
+const logsContainer = ref<HTMLElement | null>(null);
 watch(
-  () => gameStore.testLogs,
-  () => {
-    // Use nextTick to ensure the DOM has updated
+  () => gameStore.debugLogs,
+  () =>
     nextTick(() => {
-      if (logsContainer.value) {
-        logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
-      }
-    });
-  },
+      if (logsContainer.value) logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
+    }),
   { deep: true }
 );
-
-// Also scroll to bottom on mount
 onMounted(() => {
-  if (logsContainer.value && gameStore.testLogs.length > 0) {
+  if (logsContainer.value && gameStore.debugLogs.length)
     logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
-  }
 });
-
-// Copy debug log to clipboard
-function copyDebugLog(debug: any) {
-  const text = `Action: ${debug.action} at (${debug.position.row},${debug.position.col}) in color '${debug.color}'\nReason: ${debug.reason}\n\nBefore:\n${debug.before}\n\nAfter:\n${debug.after}`;
-  navigator.clipboard.writeText(text);
-}
 </script>

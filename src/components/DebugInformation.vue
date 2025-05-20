@@ -100,7 +100,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useGameStore } from '../stores/gameStore';
-import type { GridSquare } from './GameGrid.vue';
+import type { GridSquare } from '../types/grid';
 
 const gameStore = useGameStore();
 

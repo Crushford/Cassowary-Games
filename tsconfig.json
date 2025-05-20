@@ -14,9 +14,9 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src(old/*"]
+      "@/*": ["src/*"]
     }
   },
-  "include": ["src(old/**/*.ts", "src(old/**/*.d.ts", "src(old/**/*.tsx", "src(old/**/*.vue"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

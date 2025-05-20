@@ -7,13 +7,18 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'game',
-      component: GameMode,
+      name: 'home',
+      component: () => import('../views/Home.vue'),
     },
     {
-      path: '/builder',
-      name: 'builder',
+      path: '/level-builder',
+      name: 'level-builder',
       component: LevelBuilder,
+    },
+    {
+      path: '/game',
+      name: 'game',
+      component: GameMode,
     },
   ],
 });

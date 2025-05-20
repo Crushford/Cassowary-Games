@@ -1,17 +1,5 @@
 // src/utils/colorPalette.ts
-
-// Define the color types for strong typing support
-export type ColorName =
-  | 'red'
-  | 'blue'
-  | 'green'
-  | 'yellow'
-  | 'purple'
-  | 'pink'
-  | 'orange'
-  | 'teal'
-  | 'indigo'
-  | 'amber';
+import type { ColorName, ColorClasses } from '../types/types';
 
 // Define the main palette (10 colors)
 export const COLOR_PALETTE: ColorName[] = [
@@ -43,14 +31,6 @@ export const COLOR_SYMBOLS: Record<ColorName | 'undefined', string> = {
 };
 
 // Mapping colors to their Tailwind color classes
-interface ColorClasses {
-  bg: string; // Background
-  text: string; // Text color
-  border: string; // Border color
-  hoverBg: string; // Hover background
-  hoverText: string; // Hover text
-}
-
 export const COLOR_CLASSES: Record<ColorName, ColorClasses> = {
   red: {
     bg: 'bg-red-600',
@@ -122,6 +102,20 @@ export const COLOR_CLASSES: Record<ColorName, ColorClasses> = {
     hoverBg: 'hover:bg-amber-500',
     hoverText: 'hover:text-amber-500',
   },
+};
+
+// Mapping for background + hover classes for Tailwind grid coloring
+export const COLOR_BG_HOVER_CLASSES: Record<ColorName, string> = {
+  red: 'bg-red-500/50 hover:bg-red-500/70',
+  blue: 'bg-blue-500/50 hover:bg-blue-500/70',
+  green: 'bg-green-500/50 hover:bg-green-500/70',
+  yellow: 'bg-yellow-500/50 hover:bg-yellow-500/70',
+  purple: 'bg-purple-500/50 hover:bg-purple-500/70',
+  pink: 'bg-pink-500/50 hover:bg-pink-500/70',
+  orange: 'bg-orange-500/50 hover:bg-orange-500/70',
+  teal: 'bg-teal-500/50 hover:bg-teal-500/70',
+  indigo: 'bg-indigo-500/50 hover:bg-indigo-500/70',
+  amber: 'bg-amber-500/50 hover:bg-amber-500/70',
 };
 
 // Get a subset of the main palette with a specific size

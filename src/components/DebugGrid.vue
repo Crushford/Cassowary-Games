@@ -62,15 +62,11 @@
 </template>
 
 <script setup lang="ts">
-import type { GridSquare } from './GameGrid.vue';
+import type { GridSquare, DebugGridProps } from '../types/types';
 import { computed } from 'vue';
 import { useGameStore } from '../stores/gameStore';
 
-interface Props {
-  grid: GridSquare[][];
-}
-
-const props = defineProps<Props>();
+const props = defineProps<DebugGridProps>();
 const gameStore = useGameStore();
 
 // Get the text representation of the game state

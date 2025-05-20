@@ -1,0 +1,274 @@
+<template>
+  <aside class="bg-slate-800 p-4 rounded-lg flex flex-col gap-4">
+    <h2 class="text-2xl font-semibold text-white">Puzzle Generation Controls</h2>
+
+    <!-- Grid Size Control -->
+    <div class="flex items-center gap-4 text-white">
+      <span>Grid Size:</span>
+      <input
+        type="number"
+        v-model="gridSize"
+        min="4"
+        max="8"
+        :disabled="hasCompletedGame"
+        @change="handleGridSizeChange"
+        class="w-16 p-2 border border-slate-600 rounded-lg bg-slate-700 text-white"
+      />
+    </div>
+
+    <!-- Main Run All Steps Button -->
+    <div class="flex flex-col gap-2">
+      <BaseButton
+        @click="handleRunAllSteps"
+        class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
+      >
+        ▶️ Run All Steps (Generate Full Puzzle)
+      </BaseButton>
+
+      <!-- New Step-Solvable Puzzle Button -->
+      <BaseButton
+        @click="handleGenerateStepSolvablePuzzle"
+        :disabled="isGenerating"
+        class="bg-emerald-600 hover:bg-emerald-500 text-lg font-medium"
+      >
+        <span
+          v-if="isGenerating"
+          class="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"
+        ></span>
+        {{ isGenerating ? 'Generating...' : '🎯 Generate Step-Solvable Puzzle' }}
+      </BaseButton>
+    </div>
+
+    <!-- Step-by-Step Controls in Accordion -->
+    <Accordion title="Step-by-Step Controls">
+      <!-- Step 1: Reset Board -->
+      <div class="flex flex-col gap-2">
+        <span class="text-sm text-slate-400">Step 1: Reset Board</span>
+        <BaseButton @click="handleResetBoard" class="bg-red-950 hover:bg-red-900">
+          Clear Queens & Colors
+        </BaseButton>
+      </div>
+
+      <!-- Step 2: Place Queens -->
+      <div class="flex flex-col gap-2">
+        <span class="text-sm text-slate-400">Step 2: Place Queens</span>
+        <div class="flex gap-2">
+          <BaseButton
+            @click="handlePlaceRandomQueen"
+            :disabled="!canPlaceQueens"
+            disabledTitle="No valid moves"
+            class="bg-blue-950 hover:bg-blue-900 text-sm"
+          >
+            Place Random Queen
+          </BaseButton>
+          <BaseButton
+            @click="handleGenerateFullSolution"
+            :disabled="!canPlaceQueens"
+            disabledTitle="Board is full"
+            class="bg-blue-950 hover:bg-blue-900 text-sm"
+          >
+            Place All Queens
+          </BaseButton>
+        </div>
+      </div>
+
+      <!-- Step 3: Color Each Queen -->
+      <div class="flex flex-col gap-2">
+        <span class="text-sm text-slate-400">Step 3: Color Each Queen</span>
+        <BaseButton
+          @click="handleAssignInitialColors"
+          :disabled="!hasQueens"
+          disabledTitle="Place queens first"
+          class="bg-purple-950 hover:bg-purple-900"
+        >
+          Assign Initial Colors to Queens
+          <span class="block text-sm text-purple-300"
+            >[TODO: Fix color assignment to queen positions]</span
+          >
+        </BaseButton>
+      </div>
+
+      <!-- Step 4: Expand Color Groups -->
+      <div class="flex flex-col gap-2">
+        <span class="text-sm text-slate-400">Step 4: Expand Color Groups</span>
+        <BaseButton
+          @click="handleExpandColors"
+          :disabled="!hasAnyColors"
+          disabledTitle="Assign colors first"
+          class="bg-teal-950 hover:bg-teal-900"
+        >
+          Expand Color Groups
+        </BaseButton>
+      </div>
+
+      <!-- Step 5: Color One Per Row -->
+      <div class="flex flex-col gap-2">
+        <span class="text-sm text-slate-400">Step 5: Color One Square Per Row</span>
+        <BaseButton
+          @click="handleColorOnePerRow"
+          :disabled="!hasAnyColors"
+          disabledTitle="Assign colors first"
+          class="bg-emerald-950 hover:bg-emerald-900"
+        >
+          Color One Square Per Row
+        </BaseButton>
+      </div>
+
+      <!-- Step 6: Fill Remaining -->
+      <div class="flex flex-col gap-2">
+        <span class="text-sm text-slate-400">Step 6: Fill Remaining</span>
+        <BaseButton
+          @click="handleFillRemaining"
+          :disabled="!hasAnyColors"
+          disabledTitle="Assign colors first"
+          class="bg-cyan-950 hover:bg-cyan-900"
+        >
+          Fill Remaining Squares
+        </BaseButton>
+      </div>
+    </Accordion>
+  </aside>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, defineAsyncComponent } from 'vue';
+const BaseButton = defineAsyncComponent(() => import('./BaseButton.vue'));
+const Accordion = defineAsyncComponent(() => import('./Accordion.vue'));
+import { useGameStore } from '../stores/gameStore';
+
+const gameStore = useGameStore();
+
+// Reactive state
+const gridSize = ref(gameStore.gridSize);
+
+// Computed properties
+const hasQueens = computed(() => {
+  return gameStore.queenPositions && gameStore.queenPositions.length > 0;
+});
+
+const hasAnyColors = computed(() => {
+  for (let row = 0; row < gameStore.gridSize; row++) {
+    for (let col = 0; col < gameStore.gridSize; col++) {
+      if (gameStore.grid[row][col].groupColor) {
+        return true;
+      }
+    }
+  }
+  return false;
+});
+
+const hasCompletedGame = computed(() => {
+  return (
+    gameStore.queenPositions.length === gameStore.gridSize && gameStore.countEmptySquares() === 0
+  );
+});
+
+const canPlaceQueens = computed(() => {
+  return gameStore.queenPositions.length < gameStore.gridSize;
+});
+
+// Add new state for generation
+const isGenerating = ref(false);
+
+// Methods
+function handleGridSizeChange() {
+  gameStore.setGridSize(gridSize.value);
+}
+
+function handleResetBoard() {
+  gameStore.initializeGrid();
+  gameStore.clearQueensAndFlags();
+}
+
+function handlePlaceRandomQueen() {
+  gameStore.placeRandomQueen();
+}
+
+function handleGenerateFullSolution() {
+  gameStore.generateFullSolution();
+}
+
+function handleAssignInitialColors() {
+  gameStore.assignColorGroups();
+}
+
+function handleExpandColors() {
+  gameStore.addOneColorToEachGroup();
+}
+
+function handleColorOnePerRow() {
+  gameStore.addOneColorToEachRow();
+}
+
+function handleFillRemaining() {
+  gameStore.fillRemainingSingleSquares();
+}
+
+function handleRunAllSteps() {
+  try {
+    // Clear any existing error messages
+    gameStore.setError(null);
+
+    // Reset everything first
+    gameStore.initializeGrid();
+    gameStore.clearQueensAndFlags();
+
+    // Generate a full solution with queens
+    gameStore.generateFullSolution();
+    if (gameStore.queenPositions.length !== gameStore.gridSize) {
+      gameStore.setError('Failed to generate queen positions');
+      return;
+    }
+
+    // Assign initial colors to queens
+    gameStore.assignColorGroups();
+
+    // Expand color groups
+    gameStore.addOneColorToEachGroup();
+
+    // Add one color to each row
+    gameStore.addOneColorToEachRow();
+
+    // Fill remaining squares
+    gameStore.fillRemainingSingleSquares();
+
+    // Validate the final state
+    const { queenCountValid, allFilled, colorGroupsValid } = gameStore.validatePuzzle();
+    if (!(queenCountValid && allFilled && colorGroupsValid)) {
+      gameStore.setError('Generated puzzle is invalid');
+      return;
+    }
+
+    // Save the puzzle if everything is valid
+    const puzzleName = gameStore.savePuzzleToLocalStorage();
+    if (puzzleName) {
+      gameStore.setError(null);
+    } else {
+      gameStore.setError('Failed to save puzzle');
+    }
+  } catch (error) {
+    console.error('Error in handleRunAllSteps:', error);
+    gameStore.setError('An error occurred while generating the puzzle');
+  }
+}
+
+// Add new handler
+async function handleGenerateStepSolvablePuzzle() {
+  if (isGenerating.value) return;
+
+  isGenerating.value = true;
+  try {
+    const puzzleName = await gameStore.generateAndValidatePuzzleWithSteps();
+    if (puzzleName) {
+      gameStore.setError(null);
+    } else {
+      gameStore.setError('Failed to generate a step-solvable puzzle');
+    }
+  } catch (error) {
+    console.error('Error generating step-solvable puzzle:', error);
+    gameStore.setError('An error occurred while generating the puzzle');
+  } finally {
+    isGenerating.value = false;
+  }
+}
+</script>

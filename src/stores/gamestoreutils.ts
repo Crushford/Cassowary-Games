@@ -1,10 +1,4 @@
-import type { GridSquare } from '../components/GameGrid.vue';
-
-// Position type used in several functions
-export interface Pos {
-  row: number;
-  col: number;
-}
+import type { GridSquare, Pos } from '../types/types';
 
 // Create an empty grid with specified dimensions
 export function createEmptyGrid(size: number): GridSquare[][] {
@@ -42,8 +36,8 @@ export function isValidPosition(grid: GridSquare[][], row: number, col: number):
 }
 
 // Get all queen positions from the grid
-export function getQueenPositions(grid: GridSquare[][]): { row: number; col: number }[] {
-  const positions: { row: number; col: number }[] = [];
+export function getQueenPositions(grid: GridSquare[][]): Pos[] {
+  const positions: Pos[] = [];
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[0].length; col++) {
       if (grid[row][col].state === 'queen') {
@@ -58,8 +52,8 @@ export function getQueenPositions(grid: GridSquare[][]): { row: number; col: num
 export function computeAvailableMoves(
   grid: GridSquare[][],
   isValidMoveFn: (row: number, col: number) => boolean
-): { row: number; col: number }[] {
-  const availableMoves: { row: number; col: number }[] = [];
+): Pos[] {
+  const availableMoves: Pos[] = [];
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[0].length; col++) {
       if (grid[row][col].state === 'empty' && isValidMoveFn(row, col)) {

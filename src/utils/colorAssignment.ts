@@ -1,5 +1,4 @@
-import type { GridSquare } from '../components/GameGrid.vue';
-import type { Pos } from '../stores/gameStoreUtils';
+import type { GridSquare, Pos } from '../types/types';
 
 // Helper function to check if a position is valid within the grid
 function isValidPosition(grid: GridSquare[][], row: number, col: number): boolean {
@@ -11,7 +10,7 @@ export function ensureNoSingletonColorBlocks(grid: GridSquare[][]): GridSquare[]
   const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
   const gridSize = newGrid.length;
 
-  const colorGroups: Record<string, { row: number; col: number }[]> = {};
+  const colorGroups: Record<string, Pos[]> = {};
   // Build map of color groups
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
@@ -106,11 +105,11 @@ export function addOneToEachColorGroup(grid: GridSquare[][]): GridSquare[][] {
 // Function to add color to a specific row or all rows if no row is specified
 export function addColorToEachRow(
   grid: GridSquare[][],
-  logsOrNull?: string[] | null,
+  logFn?: ((message: string) => void) | null,
   targetRow?: number
 ): GridSquare[][] {
-  // Create a safe logs array that's guaranteed to be an array even if null or undefined is passed
-  const logs = Array.isArray(logsOrNull) ? logsOrNull : [];
+  // Create a safe logging function that does nothing if none provided
+  const log = logFn || (() => {});
 
   // Create a deep copy of the grid to avoid mutating the original
   const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
@@ -135,7 +134,7 @@ export function addColorToEachRow(
 
     // 2. If none, log and continue
     if (uncolored.length === 0) {
-      logs.push(`Row ${row} is already full`);
+      log(`Row ${row} is already full`);
       continue;
     }
 
@@ -162,14 +161,14 @@ export function addColorToEachRow(
 
     if (validColors.length === 0) {
       // 6. Nothing valid → skip
-      logs.push(`Skipping row ${row}: no valid neighbor colors`);
+      log(`Skipping row ${row}: no valid neighbor colors`);
       continue;
     }
 
     // 7. Assign a random valid color
     const chosen = validColors[Math.floor(Math.random() * validColors.length)];
     newGrid[row][col].groupColor = chosen;
-    logs.push(`Row ${row}, col ${col}: colored "${chosen}"`);
+    log(`Row ${row}, col ${col}: colored "${chosen}"`);
   }
 
   return newGrid;
@@ -178,11 +177,11 @@ export function addColorToEachRow(
 // Function to fill remaining uncolored squares with neighboring colors
 export function fillRemainingSquares(
   grid: GridSquare[][],
-  logsOrNull?: string[] | null
+  logFn?: ((message: string) => void) | null
 ): GridSquare[][] {
-  // Create a safe logs array
-  const logs = Array.isArray(logsOrNull) ? logsOrNull : [];
-  logs.push('Filling remaining uncolored squares');
+  // Create a safe logging function that does nothing if none provided
+  const log = logFn || (() => {});
+  log('Filling remaining uncolored squares');
 
   // Create a deep copy of the grid
   const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
@@ -190,7 +189,7 @@ export function fillRemainingSquares(
 
   // First, check if there are any uncolored squares
   let uncoloredSquares = 0;
-  let uncoloredPositions: { row: number; col: number }[] = [];
+  let uncoloredPositions: Pos[] = [];
 
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
@@ -202,19 +201,19 @@ export function fillRemainingSquares(
   }
 
   if (uncoloredSquares === 0) {
-    logs.push('No uncolored squares found - all squares already have colors');
+    log('No uncolored squares found - all squares already have colors');
     return newGrid;
   }
 
-  logs.push(`Found ${uncoloredSquares} uncolored squares to process`);
+  log(`Found ${uncoloredSquares} uncolored squares to process`);
 
   // Show the first few uncolored positions for debugging
   const samplesToShow = Math.min(5, uncoloredPositions.length);
   if (samplesToShow > 0) {
-    logs.push(`Sample uncolored positions:`);
+    log(`Sample uncolored positions:`);
     for (let i = 0; i < samplesToShow; i++) {
       const { row, col } = uncoloredPositions[i];
-      logs.push(`  - Position (${row}, ${col}): state=${newGrid[row][col].state}`);
+      log(`  - Position (${row}, ${col}): state=${newGrid[row][col].state}`);
     }
   }
 
@@ -229,7 +228,7 @@ export function fillRemainingSquares(
   let skippedCount = 0;
 
   // First pass: Try to fill squares with neighbor colors
-  logs.push('Pass 1: Filling squares with neighbor colors');
+  log('Pass 1: Filling squares with neighbor colors');
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
       // Skip if already colored
@@ -257,7 +256,7 @@ export function fillRemainingSquares(
         filledCount++;
 
         if (filledCount <= 5) {
-          logs.push(`Filled square at (${row}, ${col}) with color ${randomColor} from neighbors`);
+          log(`Filled square at (${row}, ${col}) with color ${randomColor} from neighbors`);
         }
       } else {
         skippedCount++;
@@ -267,7 +266,7 @@ export function fillRemainingSquares(
 
   // Second pass: For any remaining uncolored squares, look at extended neighbors (2 squares away)
   if (skippedCount > 0) {
-    logs.push(`Pass 2: Checking extended neighbors for ${skippedCount} remaining squares`);
+    log(`Pass 2: Checking extended neighbors for ${skippedCount} remaining squares`);
     let extendedFilledCount = 0;
 
     for (let row = 0; row < gridSize; row++) {
@@ -300,7 +299,7 @@ export function fillRemainingSquares(
           extendedFilledCount++;
 
           if (extendedFilledCount <= 5) {
-            logs.push(
+            log(
               `Filled square at (${row}, ${col}) with color ${randomColor} from extended neighbors`
             );
           }
@@ -310,12 +309,12 @@ export function fillRemainingSquares(
 
     skippedCount -= extendedFilledCount;
     filledCount += extendedFilledCount;
-    logs.push(`Filled ${extendedFilledCount} squares from extended neighbors`);
+    log(`Filled ${extendedFilledCount} squares from extended neighbors`);
   }
 
   // Third pass: Assign colors from the palette for any truly isolated squares
   if (skippedCount > 0) {
-    logs.push(`Pass 3: Using color palette for ${skippedCount} isolated squares`);
+    log(`Pass 3: Using color palette for ${skippedCount} isolated squares`);
     const standardPalette = ['red', 'blue', 'green', 'yellow', 'purple', 'pink'];
     let paletteFilledCount = 0;
 
@@ -349,13 +348,13 @@ export function fillRemainingSquares(
           paletteFilledCount++;
 
           if (paletteFilledCount <= 5) {
-            logs.push(`Assigned color ${chosenColor} to isolated square at (${row}, ${col})`);
+            log(`Assigned color ${chosenColor} to isolated square at (${row}, ${col})`);
           }
         }
       }
     }
 
-    logs.push(`Assigned colors to ${paletteFilledCount} isolated squares`);
+    log(`Assigned colors to ${paletteFilledCount} isolated squares`);
     filledCount += paletteFilledCount;
     skippedCount = 0; // Should be 0 now since we've colored everything
   }
@@ -371,8 +370,8 @@ export function fillRemainingSquares(
   }
 
   if (remainingUncolored > 0) {
-    logs.push(`⚠️ WARNING: Still found ${remainingUncolored} uncolored squares after all passes!`);
-    logs.push('Forcing colors on ALL remaining squares with emergency fallback...');
+    log(`⚠️ WARNING: Still found ${remainingUncolored} uncolored squares after all passes!`);
+    log('Forcing colors on ALL remaining squares with emergency fallback...');
 
     // Emergency fallback - brute force coloring of any remaining squares
     for (let row = 0; row < gridSize; row++) {
@@ -382,12 +381,12 @@ export function fillRemainingSquares(
             Math.floor(Math.random() * 6)
           ];
           newGrid[row][col].groupColor = emergencyColor;
-          logs.push(`EMERGENCY: Forced color ${emergencyColor} on square at (${row}, ${col})`);
+          log(`EMERGENCY: Forced color ${emergencyColor} on square at (${row}, ${col})`);
         }
       }
     }
   } else {
-    logs.push(`✅ Successfully filled all ${filledCount} uncolored squares`);
+    log(`✅ Successfully filled all ${filledCount} uncolored squares`);
   }
 
   return newGrid;
@@ -397,10 +396,10 @@ export function fillRemainingSquares(
 export function assignColors(
   grid: GridSquare[][],
   queenPositions: Pos[],
-  logsOrNull?: string[] | null
+  logFn?: ((message: string) => void) | null
 ): GridSquare[][] {
-  // Create a safe logs array that's guaranteed to be an array even if null or undefined is passed
-  const logs = Array.isArray(logsOrNull) ? logsOrNull : [];
+  // Create a safe logging function that does nothing if none provided
+  const log = logFn || (() => {});
 
   // Create a deep copy of the grid
   let newGrid = grid.map((row) => row.map((square) => ({ ...square })));
@@ -413,14 +412,14 @@ export function assignColors(
       newGrid[r][c].groupColor = undefined;
     }
   }
-  logs.push(
+  log(
     `Starting color assignment process for ${gridSize}x${gridSize} grid (${totalSquares} total squares)`
   );
 
   // 2. Color queens
   const palette = ['red', 'blue', 'green', 'yellow', 'purple', 'pink'];
   if (queenPositions.length > palette.length) {
-    logs.push(`Not enough colors for ${queenPositions.length} queens`);
+    log(`Not enough colors for ${queenPositions.length} queens`);
     return newGrid;
   }
 
@@ -430,23 +429,23 @@ export function assignColors(
 
   // Log progress after coloring queens
   let coloredCount = countColoredSquares(newGrid);
-  logs.push(
+  log(
     `Step 2: Colored ${queenPositions.length} queens (${coloredCount}/${totalSquares} squares colored)`
   );
 
   // 3. Add one color to each group once
-  logs.push('Step 3: Adding one color to each group');
+  log('Step 3: Adding one color to each group');
   newGrid = addOneToEachColorGroup(newGrid);
 
   // Log progress after adding one to each group
   let prevColored = coloredCount;
   coloredCount = countColoredSquares(newGrid);
-  logs.push(
+  log(
     `Step 3: Added ${coloredCount - prevColored} squares (${coloredCount}/${totalSquares} squares colored)`
   );
 
   // 4. Keep adding colors to each row until no uncolored squares remain
-  logs.push('Step 4: Filling rows with colors');
+  log('Step 4: Filling rows with colors');
   let allColored = false;
   let iterations = 0;
   const maxIterations = gridSize * gridSize; // Safety limit to prevent infinite loops
@@ -462,7 +461,7 @@ export function assignColors(
 
       if (hasUncoloredSquares) {
         allColored = false; // We found an uncolored square, so not all are colored
-        newGrid = addColorToEachRow(newGrid, logs, row); // Only process this specific row
+        newGrid = addColorToEachRow(newGrid, log, row); // Only process this specific row
         rowsFilled++;
       }
     }
@@ -472,20 +471,20 @@ export function assignColors(
   }
 
   if (iterations >= maxIterations) {
-    logs.push(`Warning: Reached max iterations (${maxIterations}) while coloring the grid`);
+    log(`Warning: Reached max iterations (${maxIterations}) while coloring the grid`);
   } else {
-    logs.push(`Step 4: Completed row filling in ${iterations} iterations`);
+    log(`Step 4: Completed row filling in ${iterations} iterations`);
   }
 
   // Log progress after row filling
   prevColored = coloredCount;
   coloredCount = countColoredSquares(newGrid);
-  logs.push(
+  log(
     `Step 4: Added ${coloredCount - prevColored} squares (${coloredCount}/${totalSquares} squares colored)`
   );
 
   // 5. Fill any remaining uncolored squares, with retries if needed
-  logs.push('Step 5: Checking for any remaining uncolored squares...');
+  log('Step 5: Checking for any remaining uncolored squares...');
 
   // Count remaining uncolored squares
   let uncoloredCount = totalSquares - coloredCount;
@@ -494,35 +493,35 @@ export function assignColors(
 
   // Keep trying to fill remaining squares until all are colored or we hit max retries
   while (uncoloredCount > 0 && retries < maxRetries) {
-    logs.push(`Remaining uncolored: ${uncoloredCount}/${totalSquares} squares`);
-    logs.push(`Retry #${retries + 1}: Filling remaining uncolored squares...`);
+    log(`Remaining uncolored: ${uncoloredCount}/${totalSquares} squares`);
+    log(`Retry #${retries + 1}: Filling remaining uncolored squares...`);
 
-    newGrid = fillRemainingSquares(newGrid, logs);
+    newGrid = fillRemainingSquares(newGrid, log);
 
     // Recalculate uncolored count
     prevColored = coloredCount;
     coloredCount = countColoredSquares(newGrid);
     uncoloredCount = totalSquares - coloredCount;
 
-    logs.push(
+    log(
       `Retry #${retries + 1}: Added ${coloredCount - prevColored} squares (${coloredCount}/${totalSquares} squares colored)`
     );
-    logs.push(`Retry #${retries + 1}: ${uncoloredCount} squares still remain uncolored`);
+    log(`Retry #${retries + 1}: ${uncoloredCount} squares still remain uncolored`);
 
     retries++;
     if (uncoloredCount === 0) {
-      logs.push(`✅ Successfully colored all squares after ${retries} retries!`);
+      log(`✅ Successfully colored all squares after ${retries} retries!`);
       break;
     }
   }
 
   if (uncoloredCount > 0) {
-    logs.push(
+    log(
       `⚠️ Warning: After ${maxRetries} retries, ${uncoloredCount} squares still remain uncolored.`
     );
 
     // Last resort: Assign random colors to any remaining uncolored squares
-    logs.push('Using last resort method: assigning random colors to remaining squares');
+    log('Using last resort method: assigning random colors to remaining squares');
 
     for (let row = 0; row < gridSize; row++) {
       for (let col = 0; col < gridSize; col++) {
@@ -533,7 +532,7 @@ export function assignColors(
               : ['red', 'blue', 'green', 'yellow', 'purple', 'pink'][Math.floor(Math.random() * 6)];
 
           newGrid[row][col].groupColor = randomColor;
-          logs.push(`Assigned random color ${randomColor} to square at (${row}, ${col})`);
+          log(`Assigned random color ${randomColor} to square at (${row}, ${col})`);
         }
       }
     }
@@ -541,7 +540,7 @@ export function assignColors(
     // Final count
     coloredCount = countColoredSquares(newGrid);
     uncoloredCount = totalSquares - coloredCount;
-    logs.push(
+    log(
       `Final result: ${coloredCount}/${totalSquares} squares colored, ${uncoloredCount} uncolored`
     );
   }

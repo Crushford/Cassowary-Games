@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Yarn 4 state (commit install-state.gz and cache, ignore the rest)
+.yarn/*
+!.yarn/releases
+!.yarn/cache
+!.yarn/install-state.gz

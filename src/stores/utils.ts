@@ -3,7 +3,7 @@
  *
  * General utility functions used throughout the application.
  */
-import type { GridSquare } from '../components/GameGrid.vue';
+import type { GridSquare } from '../types/grid';
 
 /**
  * Position in a grid - row and column coordinates.
