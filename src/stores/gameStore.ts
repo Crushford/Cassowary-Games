@@ -842,8 +842,8 @@ export const useGameStore = defineStore('game', {
       return name || null;
     },
 
-    // Generates puzzles until a valid one is found and stored; returns the puzzle name or null
-    generateAndStoreValidPuzzle(maxAttempts = 100): string | null {
+    // New method to generate and validate a puzzle that can be solved with steps
+    generateAndValidatePuzzleWithSteps(maxAttempts = 100): string | null {
       try {
         // Reset logs for clarity
         this.debugLogs = [];
@@ -852,7 +852,7 @@ export const useGameStore = defineStore('game', {
         const requiredQueens = this.gridSize;
 
         this.addDebugLog(
-          `Starting to generate a valid puzzle for ${this.gridSize}x${this.gridSize} board...`
+          `Starting to generate a step-solvable puzzle for ${this.gridSize}x${this.gridSize} board...`
         );
 
         let attemptSummary: AttemptResult[] = [];
@@ -885,22 +885,13 @@ export const useGameStore = defineStore('game', {
               this.logColorDistribution();
             }
 
+            // Clear queens and flags to test step-solving
             this.clearQueensAndFlags();
+
+            // Run solver steps to verify puzzle is step-solvable
             this.runAllSolverSteps();
 
-            // Try to change a color if there are empty squares
-            const emptyCount = this.countEmptySquares();
-            if (emptyCount === 0) {
-              if (shouldLogDetail) {
-                this.addDebugLog('No empty squares to change colors');
-              }
-              continue;
-            }
-
-            this.forceChangeColor();
-            this.runAllSolverSteps();
-
-            // Validate and summarize
+            // Validate the puzzle state after solver steps
             const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
             const queenCount = this.queenPositions.length;
 
@@ -922,10 +913,16 @@ export const useGameStore = defineStore('game', {
             }
 
             if (attemptResult.success) {
+              // Restore the original solution
+              this.clearQueensAndFlags();
+              for (const pos of this.puzzleGrid.solution) {
+                this.placeQueen(pos.row, pos.col);
+              }
+
               const name = this.savePuzzleToLocalStorage();
               if (name) {
                 this.addDebugLog(
-                  `\n✅ SUCCESS: Puzzle saved as "${name}" after ${attempt} attempts`
+                  `\n✅ SUCCESS: Step-solvable puzzle saved as "${name}" after ${attempt} attempts`
                 );
 
                 // Add summary statistics
@@ -945,11 +942,11 @@ export const useGameStore = defineStore('game', {
 
         // Generate failure summary with statistics
         this.addDebugLog(
-          `\n❌ FAILED: Could not generate valid puzzle after ${maxAttempts} attempts`
+          `\n❌ FAILED: Could not generate step-solvable puzzle after ${maxAttempts} attempts`
         );
         this.summarizeAttempts(attemptSummary);
 
-        this.setError(`Failed to generate a valid puzzle after ${maxAttempts} attempts`);
+        this.setError(`Failed to generate a step-solvable puzzle after ${maxAttempts} attempts`);
         return null;
       } catch (error: unknown) {
         console.error('Critical error in puzzle generation:', error);
@@ -1312,6 +1309,29 @@ export const useGameStore = defineStore('game', {
 
       // Sync solution
       this.puzzleGrid.solution = [...this.solutionQueens];
+    },
+
+    // Method to check if a puzzle can be solved using solver steps
+    isPuzzleSolvable(): boolean {
+      // Save current state
+      const currentQueens = [...this.queenPositions];
+
+      // Clear the board
+      this.clearQueensAndFlags();
+
+      // Run solver steps
+      this.runAllSolverSteps();
+
+      // Check if we got the correct number of queens
+      const success = this.queenPositions.length === this.gridSize;
+
+      // Restore original state
+      this.clearQueensAndFlags();
+      for (const pos of currentQueens) {
+        this.placeQueen(pos.row, pos.col);
+      }
+
+      return success;
     },
   },
 });

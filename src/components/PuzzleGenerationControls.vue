@@ -17,12 +17,27 @@
     </div>
 
     <!-- Main Run All Steps Button -->
-    <BaseButton
-      @click="handleRunAllSteps"
-      class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
-    >
-      ▶️ Run All Steps (Generate Full Puzzle)
-    </BaseButton>
+    <div class="flex flex-col gap-2">
+      <BaseButton
+        @click="handleRunAllSteps"
+        class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
+      >
+        ▶️ Run All Steps (Generate Full Puzzle)
+      </BaseButton>
+
+      <!-- New Step-Solvable Puzzle Button -->
+      <BaseButton
+        @click="handleGenerateStepSolvablePuzzle"
+        :disabled="isGenerating"
+        class="bg-emerald-600 hover:bg-emerald-500 text-lg font-medium"
+      >
+        <span
+          v-if="isGenerating"
+          class="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"
+        ></span>
+        {{ isGenerating ? 'Generating...' : '🎯 Generate Step-Solvable Puzzle' }}
+      </BaseButton>
+    </div>
 
     <!-- Step-by-Step Controls in Accordion -->
     <Accordion title="Step-by-Step Controls">
@@ -152,6 +167,9 @@ const canPlaceQueens = computed(() => {
   return gameStore.queenPositions.length < gameStore.gridSize;
 });
 
+// Add new state for generation
+const isGenerating = ref(false);
+
 // Methods
 function handleGridSizeChange() {
   gameStore.setGridSize(gridSize.value);
@@ -231,6 +249,26 @@ function handleRunAllSteps() {
   } catch (error) {
     console.error('Error in handleRunAllSteps:', error);
     gameStore.setError('An error occurred while generating the puzzle');
+  }
+}
+
+// Add new handler
+async function handleGenerateStepSolvablePuzzle() {
+  if (isGenerating.value) return;
+
+  isGenerating.value = true;
+  try {
+    const puzzleName = await gameStore.generateAndValidatePuzzleWithSteps();
+    if (puzzleName) {
+      gameStore.setError(null);
+    } else {
+      gameStore.setError('Failed to generate a step-solvable puzzle');
+    }
+  } catch (error) {
+    console.error('Error generating step-solvable puzzle:', error);
+    gameStore.setError('An error occurred while generating the puzzle');
+  } finally {
+    isGenerating.value = false;
   }
 }
 </script>
