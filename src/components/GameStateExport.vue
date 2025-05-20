@@ -21,9 +21,66 @@ import { useGameStore } from '../stores/gameStore';
 
 const gameStore = useGameStore();
 
-// Generate export text as a computed property to keep it updated
+// Add new computed property for multiple solutions check
+const hasMultipleSolutions = computed(() => {
+  // This is a placeholder. In a real implementation, you would run a backtracking solver
+  // to count the number of solutions. For now, we'll assume it's false.
+  return false;
+});
+
+// Update the export text to include solver steps
 const exportText = computed(() => {
-  return gameStore.exportGameState();
+  const stateText = gameStore.exportGameState();
+  const originalQueens = gameStore.puzzleGrid.solution.map((q) => `(${q.row},${q.col})`).join(', ');
+  const solvedQueens = gameStore.queenPositions.map((q) => `(${q.row},${q.col})`).join(', ');
+
+  // Get validation state
+  const { queenCountValid, allFilled, colorGroupsValid } = gameStore.validatePuzzle();
+  const isSolvable = gameStore.isPuzzleSolvable();
+
+  // Get color group details
+  const colorGroups = new Map<string, string[]>();
+  const emptySquares: string[] = [];
+
+  for (let row = 0; row < gameStore.gridSize; row++) {
+    for (let col = 0; col < gameStore.gridSize; col++) {
+      const color = gameStore.grid[row][col].groupColor;
+      if (color) {
+        if (!colorGroups.has(color)) {
+          colorGroups.set(color, []);
+        }
+        colorGroups.get(color)!.push(`(${row},${col})`);
+      }
+      if (gameStore.grid[row][col].state === 'empty') {
+        emptySquares.push(`(${row},${col})`);
+      }
+    }
+  }
+
+  // Format color groups
+  const colorGroupDetails = Array.from(colorGroups.entries())
+    .map(([color, squares]) => `${color}: [${squares.join(', ')}]`)
+    .join('\n');
+
+  const additionalInfo = `
+Original Queen Positions: [${originalQueens}]
+Your Solved Queen Positions: [${solvedQueens}]
+
+Current State:
+- Flags placed: ${gameStore.countFlags()}
+- Invalid squares: ${gameStore.playerGrid.invalid.length}
+- Available moves: ${gameStore.availableMoves.length}
+- Empty squares: [${emptySquares.join(', ')}]
+
+Validation State:
+- Queen count valid: ${queenCountValid}
+- All squares filled: ${allFilled}
+- Color groups valid: ${colorGroupsValid}
+- Is solvable: ${isSolvable}
+
+Color Group Details:
+${colorGroupDetails}`;
+  return stateText + additionalInfo;
 });
 
 // Method to copy text to clipboard
