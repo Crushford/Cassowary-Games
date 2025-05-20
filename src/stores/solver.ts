@@ -289,12 +289,20 @@ export function runAllSolverSteps(
   placeFlag: (row: number, col: number) => boolean,
   countFlags: () => number,
   getQueenPositions: () => Pos[],
-  logFn: (message: string) => void
+  logFn: (message: string) => void,
+  verbose: boolean = false
 ): void {
-  // Log the start of solver
-  logFn('--- Starting Solver Loop ---');
+  // Only log if verbose mode is enabled
+  const log = (message: string) => {
+    if (verbose) {
+      logFn(message);
+    }
+  };
 
-  // Track statistics instead of verbose logs
+  // Log the start of solver
+  log('--- Starting Solver ---');
+
+  // Track statistics
   let stats = {
     loops: 0,
     step1Queens: 0,
@@ -308,76 +316,57 @@ export function runAllSolverSteps(
   let anyChange;
   do {
     stats.loops++;
-    logFn(`--- Loop ${loop} ---`);
 
     // Save previous state for comparison
     const prevQueenPositions = getQueenPositions().length;
+    const prevFlags = countFlags();
 
-    // Step 1: Track only number of queens placed
-    let prevFlags = countFlags();
+    // Step 1: Place last free queens
     let changed1 = placeLastFreeQueens(grid, gridSize, placeQueen);
     let newQueens = getQueenPositions().length - prevQueenPositions;
     stats.step1Queens += newQueens;
 
-    // Log only if queens were placed
-    if (newQueens > 0) {
-      logFn(`Step 1: Placed ${newQueens} queens`);
-    }
-
-    // Step 2: Track only number of flags placed
-    prevFlags = countFlags();
+    // Step 2: Flag blocking squares
     let changed2 = flagBlockingSquares(grid, gridSize, placeFlag);
     let newFlags = countFlags() - prevFlags;
     stats.step2Flags += newFlags;
 
-    // Log only if flags were placed
-    if (newFlags > 0) {
-      logFn(`Step 2: Placed ${newFlags} flags`);
-    }
-
     // Step 3: Constrained Row Elimination
-    prevFlags = countFlags();
     let changed3 = eliminateConstrainedRows(grid, gridSize, placeFlag);
     newFlags = countFlags() - prevFlags;
     stats.step3Flags += newFlags;
 
-    if (newFlags > 0) {
-      logFn(`Step 3: Placed ${newFlags} flags`);
-    }
-
     // Step 4: Constrained Column Elimination
-    prevFlags = countFlags();
     let changed4 = eliminateConstrainedColumns(grid, gridSize, placeFlag);
     newFlags = countFlags() - prevFlags;
     stats.step4Flags += newFlags;
 
-    if (newFlags > 0) {
-      logFn(`Step 4: Placed ${newFlags} flags`);
-    }
-
     // Step 5: Flag Row/Column Blocking Squares
-    prevFlags = countFlags();
     let changed5 = blockRowsAndColumns(grid, gridSize, placeFlag);
     newFlags = countFlags() - prevFlags;
     stats.step5Flags += newFlags;
 
-    if (newFlags > 0) {
-      logFn(`Step 5: Placed ${newFlags} flags`);
-    }
-
     anyChange = changed1 || changed2 || changed3 || changed4 || changed5;
 
-    // More concise loop result reporting
+    // Only log if there were changes
     if (anyChange) {
-      logFn(`Loop ${loop}: Made progress`);
+      log(`Loop ${loop}:`);
+      if (newQueens > 0) log(`  - Placed ${newQueens} queens`);
+      if (stats.step2Flags > 0) log(`  - Placed ${stats.step2Flags} blocking flags`);
+      if (stats.step3Flags > 0) log(`  - Placed ${stats.step3Flags} row elimination flags`);
+      if (stats.step4Flags > 0) log(`  - Placed ${stats.step4Flags} column elimination flags`);
+      if (stats.step5Flags > 0) log(`  - Placed ${stats.step5Flags} row/column blocking flags`);
     }
 
     loop++;
   } while (anyChange);
 
-  // Summarize the solver results
-  logFn(`--- Solver finished after ${stats.loops} loops ---`);
-  logFn(
-    `Total placements: ${stats.step1Queens} queens, ${stats.step2Flags + stats.step3Flags + stats.step4Flags + stats.step5Flags} flags`
-  );
+  // Always log the final result, even if verbose is false
+  const success = getQueenPositions().length === gridSize;
+  if (success) {
+    logFn('--- Solver Complete ---');
+    logFn(
+      `Total: ${stats.step1Queens} queens, ${stats.step2Flags + stats.step3Flags + stats.step4Flags + stats.step5Flags} flags in ${stats.loops} loops`
+    );
+  }
 }

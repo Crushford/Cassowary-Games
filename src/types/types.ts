@@ -82,6 +82,7 @@ export interface GameState {
   debugLogs: string[];
   colorToolActive: boolean;
   colorToolSelectedColor: string | null;
+  verboseMode: boolean;
 }
 
 /**

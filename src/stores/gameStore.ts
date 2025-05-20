@@ -47,6 +47,7 @@ export const useGameStore = defineStore('game', {
     colorToolActive: false,
     colorToolSelectedColor: null as string | null,
     solutionQueens: [],
+    verboseMode: false, // Add verbose mode flag
 
     // New data model
     puzzleGrid: {
@@ -1024,7 +1025,8 @@ export const useGameStore = defineStore('game', {
         (row, col) => this.placeFlag(row, col),
         () => this.countFlags(),
         () => this.queenPositions,
-        (message: string) => this.addDebugLog(message)
+        (message: string) => this.addDebugLog(message),
+        this.verboseMode
       );
     },
 
@@ -1332,6 +1334,12 @@ export const useGameStore = defineStore('game', {
       }
 
       return success;
+    },
+
+    // Add toggle for verbose mode
+    toggleVerboseMode() {
+      this.verboseMode = !this.verboseMode;
+      this.addDebugLog(`Verbose mode ${this.verboseMode ? 'enabled' : 'disabled'}`);
     },
   },
 });

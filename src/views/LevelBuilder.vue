@@ -42,16 +42,51 @@
       <section
         v-if="gameStore.debugLogs.length > 0"
         ref="logsContainer"
-        class="bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg max-h-64 overflow-auto"
+        class="relative bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg"
       >
-        <h3 class="font-semibold mb-4 text-white">Debug Logs</h3>
-        <ul class="list-disc list-inside text-sm space-y-2 text-white">
-          <li v-for="(log, i) in gameStore.debugLogs" :key="i">{{ log }}</li>
-        </ul>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-white">Debug Logs</h3>
+          <div class="flex gap-2">
+            <button
+              @click="gameStore.toggleVerboseMode()"
+              class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+            >
+              {{ gameStore.verboseMode ? '🔊 Verbose Mode On' : '🔇 Verbose Mode Off' }}
+            </button>
+            <button
+              @click="copyLast20Logs"
+              class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+            >
+              Copy Last 20
+            </button>
+            <button
+              @click="copyAllLogs"
+              class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+            >
+              Copy All
+            </button>
+          </div>
+        </div>
+        <div class="max-h-64 overflow-auto">
+          <ul class="list-disc list-inside text-sm space-y-2 text-white">
+            <li v-for="(log, i) in gameStore.debugLogs" :key="i">{{ log }}</li>
+          </ul>
+        </div>
+        <span v-if="copyStatus" class="absolute bottom-2 right-2 text-sm text-green-400">{{
+          copyStatus
+        }}</span>
       </section>
 
       <section v-else class="bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg">
-        <h3 class="font-semibold mb-4 text-white">Debug Logs</h3>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-white">Debug Logs</h3>
+          <button
+            @click="gameStore.toggleVerboseMode()"
+            class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+          >
+            {{ gameStore.verboseMode ? '🔊 Verbose Mode On' : '🔇 Verbose Mode Off' }}
+          </button>
+        </div>
         <p class="text-white">No logs to display yet.</p>
       </section>
     </div>
@@ -85,6 +120,31 @@ const ColorPaletteTool = defineAsyncComponent(() => import('../components/ColorP
 const GameStateExport = defineAsyncComponent(() => import('../components/GameStateExport.vue'));
 
 const gameStore = useGameStore();
+const copyStatus = ref('');
+
+// Copy functions
+async function copyToClipboard(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    copyStatus.value = 'Copied!';
+    setTimeout(() => {
+      copyStatus.value = '';
+    }, 2000);
+  } catch (err) {
+    console.error('Failed to copy text: ', err);
+    copyStatus.value = 'Failed to copy';
+  }
+}
+
+function copyLast20Logs() {
+  const last20Logs = gameStore.debugLogs.slice(-20).join('\n');
+  copyToClipboard(last20Logs);
+}
+
+function copyAllLogs() {
+  const allLogs = gameStore.debugLogs.join('\n');
+  copyToClipboard(allLogs);
+}
 
 // Function to reset board for solving
 function resetBoardForSolving() {
