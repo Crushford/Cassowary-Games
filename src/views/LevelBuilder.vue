@@ -20,15 +20,6 @@
         <div class="flex flex-col items-center">
           <h3 class="text-lg font-semibold mb-3 text-white">Test Your Solution</h3>
           <GameGrid mode="player" />
-
-          <!-- Reset Button for Player Grid -->
-          <button
-            @click="resetBoardForSolving"
-            class="mt-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors flex items-center gap-2"
-          >
-            <span class="material-icons">refresh</span>
-            Reset Board for Solving
-          </button>
         </div>
       </div>
 
