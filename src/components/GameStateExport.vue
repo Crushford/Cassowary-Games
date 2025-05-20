@@ -1,17 +1,21 @@
 <template>
-  <div>
-    <h3 class="font-semibold mb-4 text-white">Current Game State</h3>
+  <div class="relative bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-semibold text-white">Current Game State</h3>
+      <button
+        @click="copyToClipboard"
+        class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+      >
+        Copy to Clipboard
+      </button>
+    </div>
     <pre
       class="font-mono whitespace-pre bg-slate-700 p-4 rounded text-sm overflow-x-auto my-2 text-white leading-relaxed"
       >{{ exportText }}</pre
     >
-    <button
-      @click="copyToClipboard"
-      class="px-4 py-2 bg-indigo-600 text-white border-none rounded cursor-pointer font-medium transition hover:bg-indigo-500"
-    >
-      Copy to Clipboard
-    </button>
-    <span v-if="copyStatus" class="ml-2 text-sm text-green-400">{{ copyStatus }}</span>
+    <span v-if="copyStatus" class="absolute bottom-2 right-2 text-sm text-green-400">{{
+      copyStatus
+    }}</span>
   </div>
 </template>
 
@@ -20,6 +24,7 @@ import { computed, ref } from 'vue';
 import { useGameStore } from '../stores/gameStore';
 
 const gameStore = useGameStore();
+const copyStatus = ref('');
 
 // Add new computed property for multiple solutions check
 const hasMultipleSolutions = computed(() => {
@@ -88,7 +93,6 @@ const copyToClipboard = () => {
   navigator.clipboard
     .writeText(exportText.value)
     .then(() => {
-      // Show a success message
       copyStatus.value = 'Copied!';
       setTimeout(() => {
         copyStatus.value = '';
@@ -99,7 +103,4 @@ const copyToClipboard = () => {
       copyStatus.value = 'Failed to copy';
     });
 };
-
-// Status message for copy operation
-const copyStatus = ref('');
 </script>
