@@ -160,8 +160,8 @@ function handleCellClick(row: number, col: number) {
   if (gameStore.colorToolActive && gameStore.colorToolSelectedColor) {
     gameStore.setSquareColor(row, col, gameStore.colorToolSelectedColor);
   } else if (props.mode === 'player') {
-    // Only place queens in player mode
-    gameStore.placeQueen(row, col);
+    // Use handleSquareClick to cycle: empty -> flag -> queen
+    gameStore.handleSquareClick(row, col);
   }
 }
 
