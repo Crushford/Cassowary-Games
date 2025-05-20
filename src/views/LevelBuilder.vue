@@ -41,7 +41,6 @@
 
       <section
         v-if="gameStore.debugLogs.length > 0"
-        ref="logsContainer"
         class="relative bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg"
       >
         <div class="flex justify-between items-center mb-4">
@@ -67,7 +66,7 @@
             </button>
           </div>
         </div>
-        <div class="max-h-64 overflow-auto">
+        <div ref="logsContainer" class="max-h-64 overflow-auto">
           <ul class="list-disc list-inside text-sm space-y-2 text-white">
             <li v-for="(log, i) in gameStore.debugLogs" :key="i">{{ log }}</li>
           </ul>
