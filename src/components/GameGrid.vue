@@ -5,26 +5,39 @@
       class="grid bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg"
       :style="{
         gridTemplateColumns: `repeat(${gameStore.gridSize}, minmax(0, 1fr))`,
-        gap: '2px',
       }"
     >
       <template v-for="(row, rowIndex) in gameStore.grid" :key="rowIndex">
-        <div
-          v-for="(cell, colIndex) in row"
-          :key="colIndex"
-          class="w-12 h-12 flex items-center justify-center rounded cursor-pointer transition-all duration-200"
-          :class="getCellClasses(cell)"
-          @click="handleCellClick(rowIndex, colIndex)"
-          @contextmenu.prevent="handleRightClick(rowIndex, colIndex)"
-        >
-          <span v-if="shouldShowQueen(rowIndex, colIndex)" class="text-xl text-white">♛</span>
-          <span v-else-if="shouldShowFlag(rowIndex, colIndex)" class="text-sm text-yellow-400"
-            >🚩</span
+        <div v-for="(cell, colIndex) in row" :key="colIndex" class="relative">
+          <div
+            class="relative w-12 h-12 flex items-center justify-center cursor-pointer"
+            :class="getCellClasses(cell)"
+            :style="getCellBackgroundStyle(cell)"
+            @click="handleCellClick(rowIndex, colIndex)"
+            @contextmenu.prevent="handleRightClick(rowIndex, colIndex)"
           >
-          <span v-else-if="shouldShowInvalid(rowIndex, colIndex)" class="text-xl text-red-500"
-            >⚠️</span
-          >
-          <span v-else class="text-transparent">.</span>
+            <span v-if="shouldShowQueen(rowIndex, colIndex)" class="text-xl text-white">🍯</span>
+            <span v-else-if="shouldShowFlag(rowIndex, colIndex)" class="text-sm text-yellow-400"
+              >🚧</span
+            >
+            <div
+              v-else-if="shouldShowInvalid(rowIndex, colIndex)"
+              class="grid grid-cols-2 gap-1 text-xs leading-none"
+            >
+              <span>🐜</span>
+              <span>🐜</span>
+              <span>🐜</span>
+              <span>🐜</span>
+              <span>🐜</span>
+              <span>🐜</span>
+            </div>
+            <span v-else class="text-transparent">.</span>
+          </div>
+          <!-- Border overlay -->
+          <div
+            class="absolute inset-0 pointer-events-none z-10"
+            :class="getWrapperBorderClasses(cell, rowIndex, colIndex)"
+          ></div>
         </div>
       </template>
     </div>
@@ -58,7 +71,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, defineComponent } from 'vue';
-import { COLOR_BG_HOVER_CLASSES } from '@/utils/colorPalette';
+import { COLOR_BG_HOVER_CLASSES, COLOR_BG_IMAGES } from '@/utils/colorPalette';
 import { ColorName } from '../types/types';
 import { useGameStore } from '../stores/gameStore';
 
@@ -81,34 +94,33 @@ const props = defineProps({
 const gameStore = useGameStore();
 const localGridSize = ref(gameStore.gridSize);
 
-// Default background/hover class for cells
+// Default background/hover class for cells with dirt texture
 const defaultBgClass = 'bg-slate-700 hover:bg-slate-600';
+const defaultBgStyle =
+  'background-image: url("/assets/cell-background.png"); background-size: cover; background-position: center;';
 
-// Function to get cell classes
+// Function to get cell classes (background and state classes)
 function getCellClasses(cell: { groupColor?: string; state?: string }) {
-  // Start with an empty array
   const classes = [];
 
-  // Add background color class
+  // Add background color class with individual textures
   if (cell.groupColor) {
-    try {
-      // Try to get the color class - if it fails, we'll use the default
-      classes.push(COLOR_BG_HOVER_CLASSES[cell.groupColor as ColorName]);
-    } catch (e) {
-      classes.push(defaultBgClass);
-    }
+    classes.push(COLOR_BG_HOVER_CLASSES[cell.groupColor as ColorName]);
   } else {
     classes.push(defaultBgClass);
   }
 
-  // Add rings for special states
-  if (props.mode === 'player' && cell.state === 'queen') {
-    classes.push('ring-2 ring-white ring-opacity-70');
-  } else if (props.mode === 'player' && cell.state === 'invalid') {
-    classes.push('ring-2 ring-red-500 ring-opacity-70');
-  }
-
   return classes;
+}
+
+// Function to get background style for each cell
+function getCellBackgroundStyle(cell: { groupColor?: string }) {
+  console.log(gameStore.grid);
+  if (cell.groupColor === 'pink') debugger;
+  if (cell.groupColor) {
+    return COLOR_BG_IMAGES[cell.groupColor as ColorName];
+  }
+  return defaultBgStyle;
 }
 
 // Conditional display methods
@@ -176,5 +188,71 @@ function handleRightClick(row: number, col: number) {
 // Update grid size
 function updateGridSize() {
   gameStore.setGridSize(localGridSize.value);
+}
+
+// New function to handle wrapper border classes
+function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col: number) {
+  const classes = [];
+  const grid = gameStore.grid;
+  const maxRow = grid.length - 1;
+  const maxCol = grid[0].length - 1;
+
+  // Check right neighbor
+  if (col < maxCol) {
+    if (grid[row][col + 1].groupColor !== cell.groupColor) {
+      // Different color group - blue border
+      classes.push('border-r-2 border-r-blue-700');
+    } else {
+      // Same color group - green border with opacity
+      classes.push('border-r-2 border-r-green-500/10');
+    }
+  } else {
+    // Edge of puzzle - grey border
+    classes.push('border-r-2 border-r-gray-500');
+  }
+
+  // Check left neighbor
+  if (col > 0) {
+    if (grid[row][col - 1].groupColor !== cell.groupColor) {
+      // Different color group - blue border
+      classes.push('border-l-2 border-l-blue-700');
+    } else {
+      // Same color group - green border with opacity
+      classes.push('border-l-2 border-l-green-500/10');
+    }
+  } else {
+    // Edge of puzzle - grey border
+    classes.push('border-l-2 border-l-gray-500');
+  }
+
+  // Check bottom neighbor
+  if (row < maxRow) {
+    if (grid[row + 1][col].groupColor !== cell.groupColor) {
+      // Different color group - blue border
+      classes.push('border-b-2 border-b-blue-700');
+    } else {
+      // Same color group - green border with opacity
+      classes.push('border-b-2 border-b-green-500/10');
+    }
+  } else {
+    // Edge of puzzle - grey border
+    classes.push('border-b-2 border-b-gray-500');
+  }
+
+  // Check top neighbor
+  if (row > 0) {
+    if (grid[row - 1][col].groupColor !== cell.groupColor) {
+      // Different color group - blue border
+      classes.push('border-t-2 border-t-blue-700');
+    } else {
+      // Same color group - green border with opacity
+      classes.push('border-t-2 border-t-green-500/10');
+    }
+  } else {
+    // Edge of puzzle - grey border
+    classes.push('border-t-2 border-t-gray-500');
+  }
+
+  return classes;
 }
 </script>
