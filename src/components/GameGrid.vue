@@ -16,7 +16,7 @@
           :class="getWrapperBorderClasses(cell, rowIndex, colIndex)"
         >
           <div
-            class="relative w-12 h-12 flex items-center justify-center rounded cursor-pointer transition-all duration-200"
+            class="relative w-12 h-12 flex items-center justify-center rounded cursor-pointer"
             :class="getCellClasses(cell)"
             @click="handleCellClick(rowIndex, colIndex)"
           >
@@ -183,18 +183,60 @@ function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col
   const maxRow = grid.length - 1;
   const maxCol = grid[0].length - 1;
 
-  // Right border (only if neighbor to the right is a different group)
-  if (col < maxCol && grid[row][col + 1].groupColor !== cell.groupColor) {
-    classes.push(
-      'after:absolute after:right-0 after:top-0 after:w-[4px] after:h-full after:bg-blue-500 after:z-10'
-    );
+  // Check right neighbor
+  if (col < maxCol) {
+    if (grid[row][col + 1].groupColor !== cell.groupColor) {
+      // Different color group - blue border
+      classes.push('border-r-4 border-r-blue-500');
+    } else {
+      // Same color group - green border
+      classes.push('border-r-4 border-r-green-500');
+    }
+  } else {
+    // Edge of puzzle - grey border
+    classes.push('border-r-4 border-r-gray-500');
   }
 
-  // Bottom border (only if neighbor below is a different group)
-  if (row < maxRow && grid[row + 1][col].groupColor !== cell.groupColor) {
-    classes.push(
-      'after:absolute after:bottom-0 after:left-0 after:h-[4px] after:w-full after:bg-blue-500 after:z-10'
-    );
+  // Check left neighbor
+  if (col > 0) {
+    if (grid[row][col - 1].groupColor !== cell.groupColor) {
+      // Different color group - blue border
+      classes.push('border-l-4 border-l-blue-500');
+    } else {
+      // Same color group - green border
+      classes.push('border-l-4 border-l-green-500');
+    }
+  } else {
+    // Edge of puzzle - grey border
+    classes.push('border-l-4 border-l-gray-500');
+  }
+
+  // Check bottom neighbor
+  if (row < maxRow) {
+    if (grid[row + 1][col].groupColor !== cell.groupColor) {
+      // Different color group - blue border
+      classes.push('border-b-4 border-b-blue-500');
+    } else {
+      // Same color group - green border
+      classes.push('border-b-4 border-b-green-500');
+    }
+  } else {
+    // Edge of puzzle - grey border
+    classes.push('border-b-4 border-b-gray-500');
+  }
+
+  // Check top neighbor
+  if (row > 0) {
+    if (grid[row - 1][col].groupColor !== cell.groupColor) {
+      // Different color group - blue border
+      classes.push('border-t-4 border-t-blue-500');
+    } else {
+      // Same color group - green border
+      classes.push('border-t-4 border-t-green-500');
+    }
+  } else {
+    // Edge of puzzle - grey border
+    classes.push('border-t-4 border-t-gray-500');
   }
 
   return classes;
