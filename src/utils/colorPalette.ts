@@ -104,18 +104,38 @@ export const COLOR_CLASSES: Record<ColorName, ColorClasses> = {
   },
 };
 
-// Mapping for background + hover classes for Tailwind grid coloring with dirt texture
+// Mapping for background + hover classes for Tailwind grid coloring with individual color textures
 export const COLOR_BG_HOVER_CLASSES: Record<ColorName, string> = {
-  red: 'bg-red-500/30 hover:bg-red-500/50 bg-blend-multiply',
-  blue: 'bg-blue-500/30 hover:bg-blue-500/50 bg-blend-multiply',
-  green: 'bg-green-500/30 hover:bg-green-500/50 bg-blend-multiply',
-  yellow: 'bg-yellow-500/30 hover:bg-yellow-500/50 bg-blend-multiply',
-  purple: 'bg-purple-500/30 hover:bg-purple-500/50 bg-blend-multiply',
-  pink: 'bg-pink-500/30 hover:bg-pink-500/50 bg-blend-multiply',
-  orange: 'bg-orange-500/30 hover:bg-orange-500/50 bg-blend-multiply',
-  teal: 'bg-teal-500/30 hover:bg-teal-500/50 bg-blend-multiply',
-  indigo: 'bg-indigo-500/30 hover:bg-indigo-500/50 bg-blend-multiply',
-  amber: 'bg-amber-500/30 hover:bg-amber-500/50 bg-blend-multiply',
+  red: 'hover:brightness-110',
+  blue: 'hover:brightness-110',
+  green: 'hover:brightness-110',
+  yellow: 'hover:brightness-110',
+  purple: 'hover:brightness-110',
+  pink: 'hover:brightness-110', // Note: using purple.png as fallback since pink.png not found
+  orange: 'hover:brightness-110',
+  teal: 'hover:brightness-110',
+  indigo: 'hover:brightness-110',
+  amber: 'hover:brightness-110',
+};
+
+// Background image styles for each color
+export const COLOR_BG_IMAGES: Record<ColorName, string> = {
+  red: 'background-image: url("/assets/red.png"); background-size: cover; background-position: center;',
+  blue: 'background-image: url("/assets/blue.png"); background-size: cover; background-position: center;',
+  green:
+    'background-image: url("/assets/green.png"); background-size: cover; background-position: center;',
+  yellow:
+    'background-image: url("/assets/yellow.png"); background-size: cover; background-position: center;',
+  purple:
+    'background-image: url("/assets/purple.png"); background-size: cover; background-position: center;',
+  pink: 'background-image: url("/assets/pink.png"); background-size: cover; background-position: center;', // Using purple as fallback
+  orange:
+    'background-image: url("/assets/orange.png"); background-size: cover; background-position: center;',
+  teal: 'background-image: url("/assets/teal.png"); background-size: cover; background-position: center;',
+  indigo:
+    'background-image: url("/assets/indigo.png"); background-size: cover; background-position: center;',
+  amber:
+    'background-image: url("/assets/amber.png"); background-size: cover; background-position: center;',
 };
 
 // Get a subset of the main palette with a specific size

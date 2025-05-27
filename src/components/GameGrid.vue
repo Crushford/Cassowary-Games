@@ -12,7 +12,7 @@
           <div
             class="relative w-12 h-12 flex items-center justify-center cursor-pointer"
             :class="getCellClasses(cell)"
-            :style="dirtBgStyle"
+            :style="getCellBackgroundStyle(cell)"
             @click="handleCellClick(rowIndex, colIndex)"
             @contextmenu.prevent="handleRightClick(rowIndex, colIndex)"
           >
@@ -63,7 +63,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, defineComponent } from 'vue';
-import { COLOR_BG_HOVER_CLASSES } from '@/utils/colorPalette';
+import { COLOR_BG_HOVER_CLASSES, COLOR_BG_IMAGES } from '@/utils/colorPalette';
 import { ColorName } from '../types/types';
 import { useGameStore } from '../stores/gameStore';
 
@@ -88,14 +88,14 @@ const localGridSize = ref(gameStore.gridSize);
 
 // Default background/hover class for cells with dirt texture
 const defaultBgClass = 'bg-slate-700 hover:bg-slate-600';
-const dirtBgStyle =
+const defaultBgStyle =
   'background-image: url("/assets/cell-background.png"); background-size: cover; background-position: center;';
 
 // Function to get cell classes (background and state classes)
 function getCellClasses(cell: { groupColor?: string; state?: string }) {
   const classes = [];
 
-  // Add background color class with dirt texture
+  // Add background color class with individual textures
   if (cell.groupColor) {
     classes.push(COLOR_BG_HOVER_CLASSES[cell.groupColor as ColorName]);
   } else {
@@ -110,6 +110,16 @@ function getCellClasses(cell: { groupColor?: string; state?: string }) {
   }
 
   return classes;
+}
+
+// Function to get background style for each cell
+function getCellBackgroundStyle(cell: { groupColor?: string }) {
+  console.log(gameStore.grid);
+  if (cell.groupColor === 'pink') debugger;
+  if (cell.groupColor) {
+    return COLOR_BG_IMAGES[cell.groupColor as ColorName];
+  }
+  return defaultBgStyle;
 }
 
 // Conditional display methods
