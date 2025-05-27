@@ -5,20 +5,15 @@
       class="grid bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg"
       :style="{
         gridTemplateColumns: `repeat(${gameStore.gridSize}, minmax(0, 1fr))`,
-        gap: '2px',
       }"
     >
       <template v-for="(row, rowIndex) in gameStore.grid" :key="rowIndex">
-        <div
-          v-for="(cell, colIndex) in row"
-          :key="colIndex"
-          class="relative"
-          :class="getWrapperBorderClasses(cell, rowIndex, colIndex)"
-        >
+        <div v-for="(cell, colIndex) in row" :key="colIndex" class="relative">
           <div
-            class="relative w-12 h-12 flex items-center justify-center rounded cursor-pointer"
+            class="relative w-12 h-12 flex items-center justify-center cursor-pointer"
             :class="getCellClasses(cell)"
             @click="handleCellClick(rowIndex, colIndex)"
+            @contextmenu.prevent="handleRightClick(rowIndex, colIndex)"
           >
             <span v-if="shouldShowQueen(rowIndex, colIndex)" class="text-xl text-white">♛</span>
             <span v-else-if="shouldShowFlag(rowIndex, colIndex)" class="text-sm text-yellow-400"
@@ -29,6 +24,11 @@
             >
             <span v-else class="text-transparent">.</span>
           </div>
+          <!-- Border overlay -->
+          <div
+            class="absolute inset-0 pointer-events-none z-10"
+            :class="getWrapperBorderClasses(cell, rowIndex, colIndex)"
+          ></div>
         </div>
       </template>
     </div>
@@ -189,8 +189,8 @@ function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col
       // Different color group - blue border
       classes.push('border-r-4 border-r-blue-500');
     } else {
-      // Same color group - green border
-      classes.push('border-r-4 border-r-green-500');
+      // Same color group - green border with opacity
+      classes.push('border-r-4 border-r-green-500/10');
     }
   } else {
     // Edge of puzzle - grey border
@@ -203,8 +203,8 @@ function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col
       // Different color group - blue border
       classes.push('border-l-4 border-l-blue-500');
     } else {
-      // Same color group - green border
-      classes.push('border-l-4 border-l-green-500');
+      // Same color group - green border with opacity
+      classes.push('border-l-4 border-l-green-500/10');
     }
   } else {
     // Edge of puzzle - grey border
@@ -217,8 +217,8 @@ function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col
       // Different color group - blue border
       classes.push('border-b-4 border-b-blue-500');
     } else {
-      // Same color group - green border
-      classes.push('border-b-4 border-b-green-500');
+      // Same color group - green border with opacity
+      classes.push('border-b-4 border-b-green-500/10');
     }
   } else {
     // Edge of puzzle - grey border
@@ -231,8 +231,8 @@ function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col
       // Different color group - blue border
       classes.push('border-t-4 border-t-blue-500');
     } else {
-      // Same color group - green border
-      classes.push('border-t-4 border-t-green-500');
+      // Same color group - green border with opacity
+      classes.push('border-t-4 border-t-green-500/10');
     }
   } else {
     // Edge of puzzle - grey border
