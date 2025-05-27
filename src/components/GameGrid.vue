@@ -12,19 +12,23 @@
         <div
           v-for="(cell, colIndex) in row"
           :key="colIndex"
-          class="w-12 h-12 flex items-center justify-center rounded cursor-pointer transition-all duration-200"
-          :class="getCellClasses(cell, rowIndex, colIndex)"
-          @click="handleCellClick(rowIndex, colIndex)"
-          @contextmenu.prevent="handleRightClick(rowIndex, colIndex)"
+          class="relative"
+          :class="getWrapperBorderClasses(cell, rowIndex, colIndex)"
         >
-          <span v-if="shouldShowQueen(rowIndex, colIndex)" class="text-xl text-white">♛</span>
-          <span v-else-if="shouldShowFlag(rowIndex, colIndex)" class="text-sm text-yellow-400"
-            >🚩</span
+          <div
+            class="relative w-12 h-12 flex items-center justify-center rounded cursor-pointer transition-all duration-200"
+            :class="getCellClasses(cell)"
+            @click="handleCellClick(rowIndex, colIndex)"
           >
-          <span v-else-if="shouldShowInvalid(rowIndex, colIndex)" class="text-xl text-red-500"
-            >⚠️</span
-          >
-          <span v-else class="text-transparent">.</span>
+            <span v-if="shouldShowQueen(rowIndex, colIndex)" class="text-xl text-white">♛</span>
+            <span v-else-if="shouldShowFlag(rowIndex, colIndex)" class="text-sm text-yellow-400"
+              >🚩</span
+            >
+            <span v-else-if="shouldShowInvalid(rowIndex, colIndex)" class="text-xl text-red-500"
+              >⚠️</span
+            >
+            <span v-else class="text-transparent">.</span>
+          </div>
         </div>
       </template>
     </div>
@@ -84,14 +88,12 @@ const localGridSize = ref(gameStore.gridSize);
 // Default background/hover class for cells
 const defaultBgClass = 'bg-slate-700 hover:bg-slate-600';
 
-// Function to get cell classes
-function getCellClasses(cell: { groupColor?: string; state?: string }, row: number, col: number) {
-  // Start with an empty array
+// Function to get cell classes (background and state classes)
+function getCellClasses(cell: { groupColor?: string; state?: string }) {
   const classes = [];
 
   // Add background color class
   if (cell.groupColor) {
-    // Try to get the color class - if it fails, we'll use the default
     classes.push(COLOR_BG_HOVER_CLASSES[cell.groupColor as ColorName]);
   } else {
     classes.push(defaultBgClass);
@@ -102,31 +104,6 @@ function getCellClasses(cell: { groupColor?: string; state?: string }, row: numb
     classes.push('ring-2 ring-white ring-opacity-70');
   } else if (props.mode === 'player' && cell.state === 'invalid') {
     classes.push('ring-2 ring-red-500 ring-opacity-70');
-  }
-
-  // Check neighbors for different color groups and add borders
-  const grid = gameStore.grid;
-  const maxRow = grid.length - 1;
-  const maxCol = grid[0].length - 1;
-
-  // Check right neighbor
-  if (col < maxCol && grid[row][col + 1].groupColor !== cell.groupColor) {
-    classes.push('border-r-4 border-r-blue-500');
-  }
-
-  // Check left neighbor
-  if (col > 0 && grid[row][col - 1].groupColor !== cell.groupColor) {
-    classes.push('border-l-4 border-l-blue-500');
-  }
-
-  // Check bottom neighbor
-  if (row < maxRow && grid[row + 1][col].groupColor !== cell.groupColor) {
-    classes.push('border-b-4 border-b-blue-500');
-  }
-
-  // Check top neighbor
-  if (row > 0 && grid[row - 1][col].groupColor !== cell.groupColor) {
-    classes.push('border-t-4 border-t-blue-500');
   }
 
   return classes;
@@ -197,5 +174,29 @@ function handleRightClick(row: number, col: number) {
 // Update grid size
 function updateGridSize() {
   gameStore.setGridSize(localGridSize.value);
+}
+
+// New function to handle wrapper border classes
+function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col: number) {
+  const classes = [];
+  const grid = gameStore.grid;
+  const maxRow = grid.length - 1;
+  const maxCol = grid[0].length - 1;
+
+  // Right border (only if neighbor to the right is a different group)
+  if (col < maxCol && grid[row][col + 1].groupColor !== cell.groupColor) {
+    classes.push(
+      'after:absolute after:right-0 after:top-0 after:w-[4px] after:h-full after:bg-blue-500 after:z-10'
+    );
+  }
+
+  // Bottom border (only if neighbor below is a different group)
+  if (row < maxRow && grid[row + 1][col].groupColor !== cell.groupColor) {
+    classes.push(
+      'after:absolute after:bottom-0 after:left-0 after:h-[4px] after:w-full after:bg-blue-500 after:z-10'
+    );
+  }
+
+  return classes;
 }
 </script>
