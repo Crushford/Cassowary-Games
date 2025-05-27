@@ -1,22 +1,20 @@
 <template>
-  <div class="flex flex-col items-center justify-center min-h-screen bg-gray-900">
-    <div class="w-full max-w-4xl mx-auto p-4">
-      <div class="flex justify-between items-center mb-4">
-        <h1 class="text-2xl font-bold text-gray-100">
-          {{ gameStore.currentPuzzle ? gameStore.currentPuzzle : `Level ${currentLevel}` }}
+  <div class="flex flex-col bg-gray-900">
+    <div class="w-full max-w-full mx-auto">
+      <!-- Header -->
+      <div class="flex flex-col justify-between items-center mb-4 gap-3">
+        <h1 class="text-lg font-bold text-gray-100 text-center truncate">
+          {{ gameStore.currentPuzzle || `Level ${currentLevel}` }}
         </h1>
-        <div class="flex gap-2">
-          <button
-            v-if="gameStore.currentPuzzle"
-            class="rounded-lg bg-purple-900 px-4 py-2 text-white hover:bg-purple-700"
-            @click="backToLevelSelect"
-          >
-            Back to Puzzles
-          </button>
-        </div>
+        <button
+          v-if="gameStore.currentPuzzle"
+          class="rounded-lg bg-purple-900 px-4 py-2 text-white hover:bg-purple-700 text-sm"
+          @click="backToLevelSelect"
+        >
+          Back to Puzzles
+        </button>
       </div>
 
-      <!-- Saved Puzzles List -->
       <div v-if="showPuzzleSelect" class="mb-6">
         <h2 class="text-xl font-semibold mb-2 text-gray-100">Select a Saved Puzzle</h2>
 
@@ -46,7 +44,13 @@
         </div>
       </div>
 
-      <GameGrid v-else @undo="handleUndo" @restart="clearQueensAndFlags" />
+      <!-- Game Grid -->
+      <div v-else class="flex flex-col items-center w-full">
+        <!-- responsive square + scroll -->
+        <div class="w-full aspect-square">
+          <GameGrid @undo="handleUndo" @restart="clearQueensAndFlags" />
+        </div>
+      </div>
     </div>
   </div>
 </template>
