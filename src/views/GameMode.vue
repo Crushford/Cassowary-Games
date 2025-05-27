@@ -69,13 +69,15 @@ import { useGameStore } from '../stores/gameStore';
 import GameGrid from '../components/GameGrid.vue';
 import { storeToRefs } from 'pinia';
 import { ref, onMounted } from 'vue';
+import type { StoreGeneric } from 'pinia';
 
 const gameStore = useGameStore();
-const { currentLevel, isComplete } = storeToRefs(gameStore);
-const showPuzzleSelect = ref(true);
+const { currentLevel, isComplete } = storeToRefs(gameStore as StoreGeneric);
+const showPuzzleSelect = ref(false);
 
 onMounted(() => {
   gameStore.loadPuzzlesFromLocalStorage();
+  gameStore.initializeGrid();
 });
 
 const handleUndo = () => {

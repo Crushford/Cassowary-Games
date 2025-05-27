@@ -2,7 +2,7 @@
   <div class="relative flex flex-col items-center">
     <!-- Game Grid -->
     <div
-      class="grid bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg gap-1"
+      class="grid w-full bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg gap-1"
       :style="{
         gridTemplateColumns: `repeat(${gameStore.gridSize}, minmax(0, 1fr))`,
       }"
@@ -46,15 +46,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, defineComponent, defineAsyncComponent } from 'vue';
+import { ref, watch, onMounted, defineComponent } from 'vue';
 import { useGameStore } from '../stores/gameStore';
-
-// Use async component to avoid "no default export" error
-const Square = defineAsyncComponent(() => import('./Square.vue'));
-
-defineComponent({
-  name: 'GameGrid',
-});
+import Square from './Square.vue';
 
 const props = defineProps({
   mode: {
@@ -82,5 +76,11 @@ watch(
 // Initialize localGridSize from store on mount
 onMounted(() => {
   localGridSize.value = gameStore.gridSize;
+});
+</script>
+
+<script lang="ts">
+export default defineComponent({
+  name: 'GameGrid',
 });
 </script>
