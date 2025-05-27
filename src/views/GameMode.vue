@@ -1,30 +1,14 @@
 <template>
-  <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+  <div class="flex flex-col items-center justify-center min-h-screen bg-gray-900">
     <div class="w-full max-w-4xl mx-auto p-4">
       <div class="flex justify-between items-center mb-4">
-        <h1 class="text-2xl font-bold">
+        <h1 class="text-2xl font-bold text-gray-100">
           {{ gameStore.currentPuzzle ? gameStore.currentPuzzle : `Level ${currentLevel}` }}
         </h1>
         <div class="flex gap-2">
           <button
-            v-if="!gameStore.currentPuzzle"
-            class="rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary-hover"
-            @click="handlePrevLevel"
-            :disabled="currentLevel === 1"
-          >
-            Previous Level
-          </button>
-          <button
-            v-if="!gameStore.currentPuzzle"
-            class="rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary-hover"
-            @click="handleNextLevel"
-            :disabled="!isComplete"
-          >
-            Next Level
-          </button>
-          <button
             v-if="gameStore.currentPuzzle"
-            class="rounded-lg bg-secondary px-4 py-2 text-white hover:bg-secondary-hover"
+            class="rounded-lg bg-purple-900 px-4 py-2 text-white hover:bg-purple-700"
             @click="backToLevelSelect"
           >
             Back to Puzzles
@@ -34,9 +18,12 @@
 
       <!-- Saved Puzzles List -->
       <div v-if="showPuzzleSelect" class="mb-6">
-        <h2 class="text-xl font-semibold mb-2">Select a Saved Puzzle</h2>
+        <h2 class="text-xl font-semibold mb-2 text-gray-100">Select a Saved Puzzle</h2>
 
-        <div v-if="!gameStore.savedPuzzles.length" class="p-4 bg-gray-100 rounded-lg text-center">
+        <div
+          v-if="!gameStore.savedPuzzles.length"
+          class="p-4 bg-gray-800 rounded-lg text-center text-gray-300"
+        >
           No puzzles saved yet. Create puzzles in the Level Builder.
         </div>
 
@@ -44,13 +31,13 @@
           <div
             v-for="puzzle in gameStore.savedPuzzles"
             :key="puzzle.name"
-            class="p-4 bg-white rounded-lg shadow hover:shadow-md cursor-pointer border border-gray-200"
+            class="p-4 bg-gray-800 rounded-lg shadow hover:shadow-lg cursor-pointer border border-gray-700 transition-all duration-200"
             @click="loadPuzzle(puzzle.name)"
           >
-            <div class="font-bold">{{ puzzle.name }}</div>
-            <div class="text-sm text-gray-600">{{ puzzle.gridSize }}x{{ puzzle.gridSize }}</div>
+            <div class="font-bold text-gray-100">{{ puzzle.name }}</div>
+            <div class="text-sm text-gray-400">{{ puzzle.gridSize }}x{{ puzzle.gridSize }}</div>
             <button
-              class="mt-2 text-xs text-red-600 hover:text-red-800"
+              class="mt-2 text-xs text-red-400 hover:text-red-300"
               @click.stop="deletePuzzle(puzzle.name)"
             >
               Delete
@@ -59,7 +46,7 @@
         </div>
       </div>
 
-      <GameGrid v-if="!showPuzzleSelect" @undo="handleUndo" @restart="clearQueensAndFlags" />
+      <GameGrid v-else @undo="handleUndo" @restart="clearQueensAndFlags" />
     </div>
   </div>
 </template>
