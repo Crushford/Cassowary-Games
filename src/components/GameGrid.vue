@@ -16,13 +16,21 @@
             @click="handleCellClick(rowIndex, colIndex)"
             @contextmenu.prevent="handleRightClick(rowIndex, colIndex)"
           >
-            <span v-if="shouldShowQueen(rowIndex, colIndex)" class="text-xl text-white">♛</span>
+            <span v-if="shouldShowQueen(rowIndex, colIndex)" class="text-xl text-white">🍯</span>
             <span v-else-if="shouldShowFlag(rowIndex, colIndex)" class="text-sm text-yellow-400"
-              >🚩</span
+              >🚧</span
             >
-            <span v-else-if="shouldShowInvalid(rowIndex, colIndex)" class="text-xl text-red-500"
-              >⚠️</span
+            <div
+              v-else-if="shouldShowInvalid(rowIndex, colIndex)"
+              class="grid grid-cols-2 gap-1 text-xs leading-none"
             >
+              <span>🐜</span>
+              <span>🐜</span>
+              <span>🐜</span>
+              <span>🐜</span>
+              <span>🐜</span>
+              <span>🐜</span>
+            </div>
             <span v-else class="text-transparent">.</span>
           </div>
           <!-- Border overlay -->
@@ -200,56 +208,56 @@ function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col
   if (col < maxCol) {
     if (grid[row][col + 1].groupColor !== cell.groupColor) {
       // Different color group - blue border
-      classes.push('border-r-4 border-r-blue-500');
+      classes.push('border-r-2 border-r-blue-700');
     } else {
       // Same color group - green border with opacity
-      classes.push('border-r-4 border-r-green-500/10');
+      classes.push('border-r-2 border-r-green-500/10');
     }
   } else {
     // Edge of puzzle - grey border
-    classes.push('border-r-4 border-r-gray-500');
+    classes.push('border-r-2 border-r-gray-500');
   }
 
   // Check left neighbor
   if (col > 0) {
     if (grid[row][col - 1].groupColor !== cell.groupColor) {
       // Different color group - blue border
-      classes.push('border-l-4 border-l-blue-500');
+      classes.push('border-l-2 border-l-blue-700');
     } else {
       // Same color group - green border with opacity
-      classes.push('border-l-4 border-l-green-500/10');
+      classes.push('border-l-2 border-l-green-500/10');
     }
   } else {
     // Edge of puzzle - grey border
-    classes.push('border-l-4 border-l-gray-500');
+    classes.push('border-l-2 border-l-gray-500');
   }
 
   // Check bottom neighbor
   if (row < maxRow) {
     if (grid[row + 1][col].groupColor !== cell.groupColor) {
       // Different color group - blue border
-      classes.push('border-b-4 border-b-blue-500');
+      classes.push('border-b-2 border-b-blue-700');
     } else {
       // Same color group - green border with opacity
-      classes.push('border-b-4 border-b-green-500/10');
+      classes.push('border-b-2 border-b-green-500/10');
     }
   } else {
     // Edge of puzzle - grey border
-    classes.push('border-b-4 border-b-gray-500');
+    classes.push('border-b-2 border-b-gray-500');
   }
 
   // Check top neighbor
   if (row > 0) {
     if (grid[row - 1][col].groupColor !== cell.groupColor) {
       // Different color group - blue border
-      classes.push('border-t-4 border-t-blue-500');
+      classes.push('border-t-2 border-t-blue-700');
     } else {
       // Same color group - green border with opacity
-      classes.push('border-t-4 border-t-green-500/10');
+      classes.push('border-t-2 border-t-green-500/10');
     }
   } else {
     // Edge of puzzle - grey border
-    classes.push('border-t-4 border-t-gray-500');
+    classes.push('border-t-2 border-t-gray-500');
   }
 
   return classes;
