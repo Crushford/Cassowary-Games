@@ -12,6 +12,7 @@
           <div
             class="relative w-12 h-12 flex items-center justify-center cursor-pointer"
             :class="getCellClasses(cell)"
+            :style="dirtBgStyle"
             @click="handleCellClick(rowIndex, colIndex)"
             @contextmenu.prevent="handleRightClick(rowIndex, colIndex)"
           >
@@ -85,14 +86,16 @@ const props = defineProps({
 const gameStore = useGameStore();
 const localGridSize = ref(gameStore.gridSize);
 
-// Default background/hover class for cells
+// Default background/hover class for cells with dirt texture
 const defaultBgClass = 'bg-slate-700 hover:bg-slate-600';
+const dirtBgStyle =
+  'background-image: url("/assets/cell-background.png"); background-size: cover; background-position: center;';
 
 // Function to get cell classes (background and state classes)
 function getCellClasses(cell: { groupColor?: string; state?: string }) {
   const classes = [];
 
-  // Add background color class
+  // Add background color class with dirt texture
   if (cell.groupColor) {
     classes.push(COLOR_BG_HOVER_CLASSES[cell.groupColor as ColorName]);
   } else {
