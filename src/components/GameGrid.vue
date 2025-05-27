@@ -110,13 +110,6 @@ function getCellClasses(cell: { groupColor?: string; state?: string }) {
     classes.push(defaultBgClass);
   }
 
-  // Add rings for special states
-  if (props.mode === 'player' && cell.state === 'queen') {
-    classes.push('ring-2 ring-white ring-opacity-70');
-  } else if (props.mode === 'player' && cell.state === 'invalid') {
-    classes.push('ring-2 ring-red-500 ring-opacity-70');
-  }
-
   return classes;
 }
 
