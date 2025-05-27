@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import type { GridSquare, Pos, GameState, AttemptResult } from '../types/types';
+import type { GridSquare, Pos, GameState, AttemptResult, MarkType } from '../types/types';
 // Import utility functions
 import {
   createEmptyGrid,
@@ -33,45 +33,43 @@ import { bruteForceSolver } from './bruteForceSolver';
 
 export const useGameStore = defineStore('game', {
   state: (): GameState => ({
-    // Legacy grid format
+    // Core game state
     grid: createEmptyGrid(6),
     gridSize: 6,
     moveHistory: [],
+    playerMarks: Array.from({ length: 6 }, () => Array(6).fill(null as MarkType)),
+
+    // UI state
+    uiState: {
+      showSolution: false,
+      selectedTool: null,
+      selectedColor: null,
+    },
+
+    // Game progress
     currentLevel: 1,
     availableMoves: [],
     isComplete: false,
     errorMessage: null,
     savedPuzzles: [],
     currentPuzzle: null,
-    currentSolution: [],
-    debugLogs: [], // Initialize as empty array
+    debugLogs: [],
     colorToolActive: false,
-    colorToolSelectedColor: null as string | null,
-    solutionQueens: [],
-    verboseMode: false, // Add verbose mode flag
-
-    // New data model
-    puzzleGrid: {
-      size: 6,
-      colorGroups: new Map<string, string>(),
-      solution: [],
-    },
-    playerGrid: {
-      queens: [],
-      flags: [],
-      invalid: [],
-    },
-    uiState: {
-      showSolution: false,
-      selectedTool: null,
-      selectedColor: null,
-    },
+    colorToolSelectedColor: null,
+    verboseMode: false,
   }),
 
   getters: {
-    // Use getQueenPositions utility
     queenPositions: (state): Pos[] => {
-      return getQueenPositions(state.grid);
+      const positions: Pos[] = [];
+      for (let row = 0; row < state.gridSize; row++) {
+        for (let col = 0; col < state.gridSize; col++) {
+          if (state.playerMarks[row][col] === 'queen') {
+            positions.push({ row, col });
+          }
+        }
+      }
+      return positions;
     },
 
     isValidMove: (state) => (row: number, col: number) => {
@@ -124,27 +122,17 @@ export const useGameStore = defineStore('game', {
 
   actions: {
     initializeGrid() {
-      // Reset debug logs to ensure it's an array
       this.debugLogs = [];
-
-      // Legacy grid initialization
       this.grid = createEmptyGrid(this.gridSize);
       this.moveHistory = [];
       this.isComplete = false;
 
-      // New model initialization
-      this.puzzleGrid.size = this.gridSize;
-      this.puzzleGrid.colorGroups.clear();
-      this.puzzleGrid.solution = [];
-
-      this.playerGrid.queens = [];
-      this.playerGrid.flags = [];
-      this.playerGrid.invalid = [];
+      // Initialize playerMarks matrix
+      this.playerMarks = Array.from({ length: this.gridSize }, () =>
+        Array(this.gridSize).fill(null as MarkType)
+      );
 
       this.updateAvailableMoves();
-
-      // Add a test debug log
-      this.addDebugLog('Grid initialized with size: ' + this.gridSize);
     },
 
     // Helper method to add debug logs
@@ -166,38 +154,21 @@ export const useGameStore = defineStore('game', {
     },
 
     placeFlag(row: number, col: number) {
-      if (this.grid[row][col].playerMark !== 'empty') return false;
+      if (this.playerMarks[row][col] !== null) return false;
 
       this.saveToHistory();
-
-      // Update legacy grid
-      this.grid[row][col].playerMark = 'flag';
-
-      // Update new model
-      this.playerGrid.flags.push({ row, col });
-
+      this.playerMarks[row][col] = 'flag';
       return true;
     },
 
     placeQueen(row: number, col: number) {
       if (!this.isValidMove(row, col)) {
-        // Update legacy grid
-        this.grid[row][col].playerMark = 'invalid';
-
-        // Update new model
-        this.playerGrid.invalid.push({ row, col });
-
+        this.setPlayerMark(row, col, 'invalid');
         return false;
       }
 
       this.saveToHistory();
-
-      // Update legacy grid
-      this.grid[row][col].playerMark = 'queen';
-
-      // Update new model
-      this.playerGrid.queens.push({ row, col });
-
+      this.playerMarks[row][col] = 'queen';
       this.updateBlockedMoves();
       this.updateAvailableMoves();
       this.checkCompletion();
@@ -207,9 +178,9 @@ export const useGameStore = defineStore('game', {
     updateBlockedMoves() {
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].playerMark === 'empty') {
+          if (this.playerMarks[row][col] === null) {
             if (!this.isValidMove(row, col)) {
-              this.grid[row][col].playerMark = 'flag';
+              this.playerMarks[row][col] = 'flag';
             }
           }
         }
@@ -217,9 +188,9 @@ export const useGameStore = defineStore('game', {
     },
 
     saveToHistory() {
-      // Use cloneGrid utility
       this.moveHistory.push({
         grid: cloneGrid(this.grid),
+        playerMarks: this.playerMarks.map((row) => [...row]),
       });
     },
 
@@ -228,6 +199,7 @@ export const useGameStore = defineStore('game', {
         const lastState = this.moveHistory.pop();
         if (lastState) {
           this.grid = lastState.grid;
+          this.playerMarks = lastState.playerMarks;
           this.updateAvailableMoves();
           this.checkCompletion();
         }
@@ -247,18 +219,13 @@ export const useGameStore = defineStore('game', {
     },
 
     handleSquareClick(row: number, col: number) {
-      const currentState = this.grid[row][col].playerMark;
-      if (currentState === 'empty') {
+      const currentState = this.playerMarks[row][col];
+      if (currentState === null) {
         this.placeFlag(row, col);
       } else if (currentState === 'flag') {
         this.placeQueen(row, col);
-      } else if (currentState === 'queen') {
-        // Just clear this specific square
-        this.grid[row][col].playerMark = 'empty';
-        // Remove from player grid
-        this.playerGrid.queens = this.playerGrid.queens.filter(
-          (pos) => !(pos.row === row && pos.col === col)
-        );
+      } else if (currentState === 'queen' || currentState === 'invalid') {
+        this.setPlayerMark(row, col, 'flag');
       }
     },
 
@@ -281,7 +248,6 @@ export const useGameStore = defineStore('game', {
     },
 
     checkCompletion() {
-      // Use validatePuzzleState utility
       const { queenCountValid, colorGroupsValid } = validatePuzzleState(this.grid, this.gridSize);
       this.isComplete = queenCountValid && colorGroupsValid;
     },
@@ -300,28 +266,34 @@ export const useGameStore = defineStore('game', {
       this.setError(null);
     },
 
-    clearQueensAndFlags() {
-      // Save current queen positions as the solution if not already set
-      if (this.puzzleGrid.solution.length === 0 && this.queenPositions.length > 0) {
-        this.puzzleGrid.solution = [...this.queenPositions];
-        this.solutionQueens = [...this.queenPositions];
-      }
-
-      // Clear only the player grid
-      this.playerGrid.queens = [];
-      this.playerGrid.flags = [];
-      this.playerGrid.invalid = [];
-
-      // Legacy: Use clearMarkers utility
-      // Reset player marks
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          this.grid[row][col].playerMark = 'empty';
+    clearQueensAndFlags(): void {
+      // Save current queen positions as the solution
+      if (!this.hasAnySolutionQueens() && this.queenPositions.length > 0) {
+        for (let row = 0; row < this.gridSize; row++) {
+          for (let col = 0; col < this.gridSize; col++) {
+            if (this.playerMarks[row][col] === 'queen') {
+              this.grid[row][col].isSolutionQueen = true;
+            }
+          }
         }
       }
 
+      // Clear all player marks
+      clearMarkers(this.playerMarks);
+
       this.isComplete = false;
       this.updateAvailableMoves();
+    },
+
+    hasAnySolutionQueens(): boolean {
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].isSolutionQueen) {
+            return true;
+          }
+        }
+      }
+      return false;
     },
 
     // Replace original countFlags with more generic countCellsWithState utility
@@ -446,7 +418,7 @@ export const useGameStore = defineStore('game', {
       );
     },
 
-    setSquareColor(row: number, col: number, color: string) {
+    setSquareColor(row: number, col: number, color: string | undefined) {
       this.saveToHistory();
       this.grid[row][col].groupColor = color;
       this.addDebugLog(`Set color of square (${row}, ${col}) to ${color}`);
@@ -586,14 +558,9 @@ export const useGameStore = defineStore('game', {
     // New method to generate a full solution
     generateFullSolution() {
       // Clear existing solution
-      this.puzzleGrid.solution = [];
-
-      // Clear previous queen positions
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].playerMark === 'queen') {
-            this.grid[row][col].playerMark = 'empty';
-          }
+          this.grid[row][col].isSolutionQueen = false;
         }
       }
 
@@ -612,8 +579,13 @@ export const useGameStore = defineStore('game', {
       }
 
       // Record the final queen placements in our solution data
-      this.puzzleGrid.solution = [...this.queenPositions];
-      this.currentSolution = [...this.queenPositions];
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.playerMarks[row][col] === 'queen') {
+            this.grid[row][col].isSolutionQueen = true;
+          }
+        }
+      }
     },
 
     savePuzzleToLocalStorage() {
@@ -645,7 +617,7 @@ export const useGameStore = defineStore('game', {
       // Copy only the queens and their color groups
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].playerMark === 'queen') {
+          if (this.playerMarks[row][col] === 'queen') {
             puzzleGrid[row][col] = {
               position: { row, col },
               state: 'queen' as const,
@@ -924,8 +896,10 @@ export const useGameStore = defineStore('game', {
             if (attemptResult.success) {
               // Restore the original solution
               this.clearQueensAndFlags();
-              for (const pos of this.puzzleGrid.solution) {
-                this.placeQueen(pos.row, pos.col);
+              for (const pos of this.grid) {
+                if (pos.isSolutionQueen) {
+                  this.placeQueen(pos.position.row, pos.position.col);
+                }
               }
 
               const name = this.savePuzzleToLocalStorage();
@@ -1090,8 +1064,8 @@ export const useGameStore = defineStore('game', {
         for (let col = 0; col < this.gridSize; col++) {
           // Skip solution cells so we don't change a square that should have a queen
           if (
-            this.grid[row][col].playerMark === 'empty' &&
-            !this.currentSolution.some((q) => q.row === row && q.col === col)
+            this.grid[row][col].playerMark === null &&
+            !this.grid.some((pos) => pos.isSolutionQueen)
           ) {
             empties.push({ row, col });
           }
@@ -1226,99 +1200,108 @@ export const useGameStore = defineStore('game', {
     },
 
     getSquareColor(row: number, col: number): string | undefined {
-      return this.puzzleGrid.colorGroups.get(this.posToKey({ row, col }));
+      return this.grid[row][col].groupColor;
     },
 
     setSquareColorNew(row: number, col: number, color: string | undefined): void {
       const key = this.posToKey({ row, col });
       if (color) {
-        this.puzzleGrid.colorGroups.set(key, color);
+        this.grid[row][col].groupColor = color;
       } else {
-        this.puzzleGrid.colorGroups.delete(key);
+        this.grid[row][col].groupColor = undefined;
       }
     },
 
     isSquareQueen(row: number, col: number): boolean {
-      return this.playerGrid.queens.some((pos) => pos.row === row && pos.col === col);
+      return this.grid[row][col].playerMark === 'queen';
     },
 
     isSquareFlag(row: number, col: number): boolean {
-      return this.playerGrid.flags.some((pos) => pos.row === row && pos.col === col);
+      return this.grid[row][col].playerMark === 'flag';
     },
 
     isSquareInvalid(row: number, col: number): boolean {
-      return this.playerGrid.invalid.some((pos) => pos.row === row && pos.col === col);
+      return this.grid[row][col].playerMark === 'invalid';
     },
 
-    getSquareState(row: number, col: number): 'empty' | 'queen' | 'flag' | 'invalid' {
-      if (this.isSquareQueen(row, col)) return 'queen';
-      if (this.isSquareFlag(row, col)) return 'flag';
-      if (this.isSquareInvalid(row, col)) return 'invalid';
-      return 'empty';
+    getSquareState(row: number, col: number): MarkType {
+      return this.playerMarks[row][col];
     },
 
     // Method to sync legacy grid with new model (temporary during transition)
     syncGridWithNewModel(): void {
-      // Update colors in the grid from puzzleGrid
-      for (const [key, color] of this.puzzleGrid.colorGroups.entries()) {
-        const pos = this.keyToPos(key);
-        this.grid[pos.row][pos.col].groupColor = color;
+      // Update colors in the grid
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          const cell = this.grid[row][col];
+          if (cell.groupColor) {
+            this.grid[row][col].groupColor = cell.groupColor;
+          }
+        }
       }
 
       // Reset all states in the grid
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          this.grid[row][col].playerMark = 'empty';
+          this.grid[row][col].playerMark = null;
         }
       }
 
       // Set queens
-      for (const pos of this.playerGrid.queens) {
-        this.grid[pos.row][pos.col].playerMark = 'queen';
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.playerMarks[row][col] === 'queen') {
+            this.grid[row][col].playerMark = 'queen';
+          }
+        }
       }
 
       // Set flags
-      for (const pos of this.playerGrid.flags) {
-        this.grid[pos.row][pos.col].playerMark = 'flag';
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.playerMarks[row][col] === 'flag') {
+            this.grid[row][col].playerMark = 'flag';
+          }
+        }
       }
 
       // Set invalid
-      for (const pos of this.playerGrid.invalid) {
-        this.grid[pos.row][pos.col].playerMark = 'invalid';
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.playerMarks[row][col] === 'invalid') {
+            this.grid[row][col].playerMark = 'invalid';
+          }
+        }
       }
     },
 
     // Method to sync new model with legacy grid (temporary during transition)
     syncNewModelWithGrid(): void {
       // Clear new model data
-      this.puzzleGrid.colorGroups.clear();
-      this.playerGrid.queens = [];
-      this.playerGrid.flags = [];
-      this.playerGrid.invalid = [];
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          this.grid[row][col].groupColor = undefined;
+          this.grid[row][col].isSolutionQueen = false;
+          this.playerMarks[row][col] = null;
+        }
+      }
 
       // Update from legacy grid
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
           const cell = this.grid[row][col];
-
-          // Set color
           if (cell.groupColor) {
-            this.setSquareColorNew(row, col, cell.groupColor);
+            this.grid[row][col].groupColor = cell.groupColor;
           }
-
-          // Set state
           if (cell.playerMark === 'queen') {
-            this.playerGrid.queens.push({ row, col });
+            this.playerMarks[row][col] = 'queen';
           } else if (cell.playerMark === 'flag') {
-            this.playerGrid.flags.push({ row, col });
+            this.playerMarks[row][col] = 'flag';
           } else if (cell.playerMark === 'invalid') {
-            this.playerGrid.invalid.push({ row, col });
+            this.playerMarks[row][col] = 'invalid';
           }
         }
       }
-
-      // Sync solution
-      this.puzzleGrid.solution = [...this.solutionQueens];
     },
 
     // Method to check if a puzzle can be solved using solver steps
@@ -1361,6 +1344,31 @@ export const useGameStore = defineStore('game', {
         (msg) => this.addDebugLog(msg),
         maxSolutions
       );
+    },
+
+    // New method to set player marks
+    setPlayerMark(row: number, col: number, mark: Exclude<MarkType, null>): void {
+      this.saveToHistory();
+      const current = this.playerMarks[row][col];
+      // toggle: clear if same mark, otherwise set new mark
+      this.playerMarks[row][col] = current === mark ? null : mark;
+
+      if (mark === 'queen') {
+        this.updateBlockedMoves();
+        this.updateAvailableMoves();
+        this.checkCompletion();
+      }
+    },
+
+    // Helper to get render state
+    getRenderState(row: number, col: number) {
+      const playerMark = this.playerMarks[row][col];
+      const hasSolutionQueen = this.grid[row][col].isSolutionQueen;
+
+      const isCorrect = playerMark === 'queen' && hasSolutionQueen;
+      const isIncorrect = playerMark === 'queen' && !hasSolutionQueen;
+
+      return { playerMark, hasSolutionQueen, isCorrect, isIncorrect };
     },
   },
 });

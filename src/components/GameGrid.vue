@@ -7,12 +7,12 @@
         gridTemplateColumns: `repeat(${gameStore.gridSize}, minmax(0, 1fr))`,
       }"
     >
-      <template v-for="(row, rowIndex) in gameStore.grid" :key="rowIndex">
+      <template v-for="rowIndex in gameStore.gridSize" :key="rowIndex">
         <Square
-          v-for="(cell, colIndex) in row"
+          v-for="colIndex in gameStore.gridSize"
           :key="colIndex"
-          :row="rowIndex"
-          :col="colIndex"
+          :row="rowIndex - 1"
+          :col="colIndex - 1"
           :mode="mode"
         />
       </template>
@@ -32,7 +32,7 @@
         @click="gameStore.clearQueensAndFlags()"
         class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
       >
-        Restart
+        Reset
       </button>
       <button
         v-if="mode === 'solution'"
@@ -46,11 +46,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, defineComponent } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { useGameStore } from '../stores/gameStore';
 import Square from './Square.vue';
 
-const props = defineProps({
+defineProps({
   mode: {
     type: String as () => 'player' | 'solution',
     default: 'player',
@@ -80,7 +80,7 @@ onMounted(() => {
 </script>
 
 <script lang="ts">
-export default defineComponent({
+export default {
   name: 'GameGrid',
-});
+};
 </script>

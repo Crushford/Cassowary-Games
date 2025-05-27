@@ -1,4 +1,4 @@
-import type { GridSquare, Pos } from '../types/types';
+import type { GridSquare, Pos, MarkType } from '../types/types';
 
 // Create an empty grid with specified dimensions
 export function createEmptyGrid(size: number): GridSquare[][] {
@@ -11,7 +11,7 @@ export function createEmptyGrid(size: number): GridSquare[][] {
           (_, col) =>
             ({
               position: { row, col },
-              playerMark: 'empty',
+              playerMark: null,
               groupColor: undefined,
             }) as GridSquare
         )
@@ -55,7 +55,7 @@ export function computeAvailableMoves(
   const availableMoves: Pos[] = [];
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[0].length; col++) {
-      if (grid[row][col].playerMark === 'empty' && isValidMoveFn(row, col)) {
+      if (grid[row][col].playerMark === null && isValidMoveFn(row, col)) {
         availableMoves.push({ row, col });
       }
     }
@@ -63,13 +63,11 @@ export function computeAvailableMoves(
   return availableMoves;
 }
 
-// Clear all markers (queens & flags) from the grid
-export function clearMarkers(grid: GridSquare[][]): void {
-  for (let row = 0; row < grid.length; row++) {
-    for (let col = 0; col < grid[0].length; col++) {
-      if (grid[row][col].playerMark !== 'empty') {
-        grid[row][col].playerMark = 'empty';
-      }
+// Clear all markers from a playerMarks matrix
+export function clearMarkers(playerMarks: MarkType[][]): void {
+  for (let row = 0; row < playerMarks.length; row++) {
+    for (let col = 0; col < playerMarks[0].length; col++) {
+      playerMarks[row][col] = null;
     }
   }
 }
@@ -85,10 +83,7 @@ export function queenAttacks(aRow: number, aCol: number, tRow: number, tCol: num
 }
 
 // Count cells with a specific state
-export function countCellsWithState(
-  grid: GridSquare[][],
-  targetState: 'queen' | 'flag' | 'invalid' | 'empty'
-): number {
+export function countCellsWithState(grid: GridSquare[][], targetState: MarkType): number {
   let count = 0;
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[0].length; col++) {
@@ -102,30 +97,36 @@ export function countCellsWithState(
 
 // Count empty cells in a grid
 export function countEmptyCells(grid: GridSquare[][]): number {
-  return countCellsWithState(grid, 'empty');
+  return countCellsWithState(grid, null);
 }
 
 // Get distribution of colors in the grid
-export function getColorDistribution(grid: GridSquare[][]): Record<string, number> {
-  const distribution: Record<string, number> = {};
+export function getColorDistribution(grid: GridSquare[][]): {
+  totalColored: number;
+  totalSquares: number;
+  colorCounts: Record<string, number>;
+} {
+  const colorCounts: Record<string, number> = {};
+  let totalColored = 0;
+  const totalSquares = grid.length * grid[0].length;
 
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[0].length; col++) {
       const color = grid[row][col].groupColor;
       if (color) {
-        distribution[color] = (distribution[color] || 0) + 1;
+        colorCounts[color] = (colorCounts[color] || 0) + 1;
+        totalColored++;
       }
     }
   }
 
-  return distribution;
+  return { totalColored, totalSquares, colorCounts };
 }
 
 // Validate a puzzle's state (queen count and color groups)
 export function validatePuzzleState(
   grid: GridSquare[][],
-  gridSize: number,
-  minQueensPerColor = 1
+  gridSize: number
 ): {
   queenCountValid: boolean;
   colorGroupsValid: boolean;
