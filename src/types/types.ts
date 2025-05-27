@@ -94,13 +94,6 @@ export interface SquareProps {
 }
 
 /**
- * Props for the DebugGrid component.
- */
-export interface DebugGridProps {
-  grid: GridSquare[][];
-}
-
-/**
  * Available color names in the game.
  */
 export type ColorName =
