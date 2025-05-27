@@ -29,6 +29,7 @@ import {
   blockRowsAndColumns,
   runAllSolverSteps,
 } from './solver';
+import { bruteForceSolver } from './bruteForceSolver';
 
 export const useGameStore = defineStore('game', {
   state: (): GameState => ({
@@ -78,7 +79,10 @@ export const useGameStore = defineStore('game', {
 
       // Check if there's a queen in the same row or column
       for (let i = 0; i < state.gridSize; i++) {
-        if (state.grid[row][i].state === 'queen' || state.grid[i][col].state === 'queen') {
+        if (
+          state.grid[row][i].playerMark === 'queen' ||
+          state.grid[i][col].playerMark === 'queen'
+        ) {
           return false;
         }
       }
@@ -94,7 +98,7 @@ export const useGameStore = defineStore('game', {
       for (const pos of diagonalPositions) {
         if (
           isValidPosition(state.grid, pos.r, pos.c) &&
-          state.grid[pos.r][pos.c].state === 'queen'
+          state.grid[pos.r][pos.c].playerMark === 'queen'
         ) {
           return false;
         }
@@ -105,7 +109,7 @@ export const useGameStore = defineStore('game', {
         for (let r = 0; r < state.gridSize; r++) {
           for (let c = 0; c < state.gridSize; c++) {
             if (
-              state.grid[r][c].state === 'queen' &&
+              state.grid[r][c].playerMark === 'queen' &&
               state.grid[r][c].groupColor === square.groupColor
             ) {
               return false;
@@ -162,12 +166,11 @@ export const useGameStore = defineStore('game', {
     },
 
     placeFlag(row: number, col: number) {
-      if (this.grid[row][col].state !== 'empty') return false;
+      if (this.grid[row][col].playerMark !== 'empty') return false;
 
       this.saveToHistory();
 
       // Update legacy grid
-      this.grid[row][col].state = 'flag';
       this.grid[row][col].playerMark = 'flag';
 
       // Update new model
@@ -179,7 +182,7 @@ export const useGameStore = defineStore('game', {
     placeQueen(row: number, col: number) {
       if (!this.isValidMove(row, col)) {
         // Update legacy grid
-        this.grid[row][col].state = 'invalid';
+        this.grid[row][col].playerMark = 'invalid';
 
         // Update new model
         this.playerGrid.invalid.push({ row, col });
@@ -190,7 +193,6 @@ export const useGameStore = defineStore('game', {
       this.saveToHistory();
 
       // Update legacy grid
-      this.grid[row][col].state = 'queen';
       this.grid[row][col].playerMark = 'queen';
 
       // Update new model
@@ -205,9 +207,9 @@ export const useGameStore = defineStore('game', {
     updateBlockedMoves() {
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state === 'empty') {
+          if (this.grid[row][col].playerMark === 'empty') {
             if (!this.isValidMove(row, col)) {
-              this.grid[row][col].state = 'flag';
+              this.grid[row][col].playerMark = 'flag';
             }
           }
         }
@@ -245,11 +247,18 @@ export const useGameStore = defineStore('game', {
     },
 
     handleSquareClick(row: number, col: number) {
-      const currentState = this.grid[row][col].state;
+      const currentState = this.grid[row][col].playerMark;
       if (currentState === 'empty') {
         this.placeFlag(row, col);
       } else if (currentState === 'flag') {
         this.placeQueen(row, col);
+      } else if (currentState === 'queen') {
+        // Just clear this specific square
+        this.grid[row][col].playerMark = 'empty';
+        // Remove from player grid
+        this.playerGrid.queens = this.playerGrid.queens.filter(
+          (pos) => !(pos.row === row && pos.col === col)
+        );
       }
     },
 
@@ -304,11 +313,10 @@ export const useGameStore = defineStore('game', {
       this.playerGrid.invalid = [];
 
       // Legacy: Use clearMarkers utility
-      clearMarkers(this.grid);
       // Reset player marks
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          this.grid[row][col].playerMark = undefined;
+          this.grid[row][col].playerMark = 'empty';
         }
       }
 
@@ -583,8 +591,8 @@ export const useGameStore = defineStore('game', {
       // Clear previous queen positions
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state === 'queen') {
-            this.grid[row][col].state = 'empty';
+          if (this.grid[row][col].playerMark === 'queen') {
+            this.grid[row][col].playerMark = 'empty';
           }
         }
       }
@@ -637,7 +645,7 @@ export const useGameStore = defineStore('game', {
       // Copy only the queens and their color groups
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state === 'queen') {
+          if (this.grid[row][col].playerMark === 'queen') {
             puzzleGrid[row][col] = {
               position: { row, col },
               state: 'queen' as const,
@@ -764,7 +772,7 @@ export const useGameStore = defineStore('game', {
         // Row content with queens
         for (let col = 0; col < this.gridSize; col++) {
           const square = this.grid[row][col];
-          const symbol = square.state === 'queen' ? queenSymbol : emptySymbol;
+          const symbol = square.playerMark === 'queen' ? queenSymbol : emptySymbol;
           output += ` ${symbol}`;
         }
         output += '\n';
@@ -1053,7 +1061,7 @@ export const useGameStore = defineStore('game', {
         if (positions.length === 1) {
           const { row, col } = positions[0];
           // Skip singleton if it's a queen to avoid duplicating color among queens
-          if (this.grid[row][col].state === 'queen') continue;
+          if (this.grid[row][col].playerMark === 'queen') continue;
           const neighborColors = new Set<string>();
           for (const dir of directions) {
             const newR = row + dir.dr;
@@ -1082,7 +1090,7 @@ export const useGameStore = defineStore('game', {
         for (let col = 0; col < this.gridSize; col++) {
           // Skip solution cells so we don't change a square that should have a queen
           if (
-            this.grid[row][col].state === 'empty' &&
+            this.grid[row][col].playerMark === 'empty' &&
             !this.currentSolution.some((q) => q.row === row && q.col === col)
           ) {
             empties.push({ row, col });
@@ -1260,23 +1268,23 @@ export const useGameStore = defineStore('game', {
       // Reset all states in the grid
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          this.grid[row][col].state = 'empty';
+          this.grid[row][col].playerMark = 'empty';
         }
       }
 
       // Set queens
       for (const pos of this.playerGrid.queens) {
-        this.grid[pos.row][pos.col].state = 'queen';
+        this.grid[pos.row][pos.col].playerMark = 'queen';
       }
 
       // Set flags
       for (const pos of this.playerGrid.flags) {
-        this.grid[pos.row][pos.col].state = 'flag';
+        this.grid[pos.row][pos.col].playerMark = 'flag';
       }
 
       // Set invalid
       for (const pos of this.playerGrid.invalid) {
-        this.grid[pos.row][pos.col].state = 'invalid';
+        this.grid[pos.row][pos.col].playerMark = 'invalid';
       }
     },
 
@@ -1299,11 +1307,11 @@ export const useGameStore = defineStore('game', {
           }
 
           // Set state
-          if (cell.state === 'queen') {
+          if (cell.playerMark === 'queen') {
             this.playerGrid.queens.push({ row, col });
-          } else if (cell.state === 'flag') {
+          } else if (cell.playerMark === 'flag') {
             this.playerGrid.flags.push({ row, col });
-          } else if (cell.state === 'invalid') {
+          } else if (cell.playerMark === 'invalid') {
             this.playerGrid.invalid.push({ row, col });
           }
         }
@@ -1340,6 +1348,19 @@ export const useGameStore = defineStore('game', {
     toggleVerboseMode() {
       this.verboseMode = !this.verboseMode;
       this.addDebugLog(`Verbose mode ${this.verboseMode ? 'enabled' : 'disabled'}`);
+    },
+
+    bruteForceSolver(maxSolutions = 5): number {
+      return bruteForceSolver(
+        this.grid,
+        this.gridSize,
+        (row, col) => this.placeQueen(row, col),
+        (row, col) => this.placeFlag(row, col),
+        () => this.countFlags(),
+        () => this.queenPositions,
+        (msg) => this.addDebugLog(msg),
+        maxSolutions
+      );
     },
   },
 });

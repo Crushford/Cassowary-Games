@@ -13,20 +13,22 @@
           :key="`${rowIndex}-${colIndex}`"
           class="aspect-square w-full rounded border border-surface flex items-center justify-center text-xs relative"
           :class="{
-            'bg-primary': square.state === 'queen' && !square.groupColor,
-            'bg-secondary': square.state === 'flag',
-            'bg-surface': square.state === 'empty' && !square.groupColor,
-            [`bg-group-${square.groupColor}-900`]: square.state === 'queen' && square.groupColor,
-            [`bg-group-${square.groupColor}-700`]: square.state !== 'queen' && square.groupColor,
+            'bg-primary': square.playerMark === 'queen' && !square.groupColor,
+            'bg-secondary': square.playerMark === 'flag',
+            'bg-surface': square.playerMark === 'empty' && !square.groupColor,
+            [`bg-group-${square.groupColor}-900`]:
+              square.playerMark === 'queen' && square.groupColor,
+            [`bg-group-${square.groupColor}-700`]:
+              square.playerMark !== 'queen' && square.groupColor,
           }"
         >
           <span
-            v-if="square.state === 'queen'"
+            v-if="square.playerMark === 'queen'"
             class="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center"
             >👑</span
           >
           <span
-            v-else-if="square.state === 'flag'"
+            v-else-if="square.playerMark === 'flag'"
             class="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center"
             >🚩</span
           >

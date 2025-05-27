@@ -56,7 +56,7 @@ const exportText = computed(() => {
         }
         colorGroups.get(color)!.push(`(${row},${col})`);
       }
-      if (gameStore.grid[row][col].state === 'empty') {
+      if (gameStore.grid[row][col].playerMark === 'empty') {
         emptySquares.push(`(${row},${col})`);
       }
     }

@@ -86,6 +86,27 @@
         <span class="text-white">Correct number of queens</span>
       </div>
     </div>
+
+    <!-- Brute Force Solver Section -->
+    <div class="flex flex-col gap-2 p-4 bg-slate-700 rounded-lg">
+      <h3 class="text-lg font-medium text-white mb-2">Solution Uniqueness</h3>
+      <div class="flex flex-col gap-2">
+        <BaseButton
+          @click="handleBruteForceSolve"
+          :disabled="!canRunSteps"
+          disabledTitle="Place queens first"
+          class="bg-purple-600 hover:bg-purple-500 text-lg font-medium"
+        >
+          🔍 Check Solution Uniqueness
+        </BaseButton>
+        <div v-if="solutionCount !== null" class="text-white">
+          Found {{ solutionCount }} solution{{ solutionCount !== 1 ? 's' : '' }}
+          <span v-if="solutionCount > 1" class="text-yellow-400">
+            (Puzzle has multiple solutions!)
+          </span>
+        </div>
+      </div>
+    </div>
   </aside>
 </template>
 
@@ -145,6 +166,9 @@ const checkmarkClass = (isValid: boolean) => {
   return isValid ? 'text-green-500' : 'text-red-500';
 };
 
+// Add solution count ref
+const solutionCount = ref<number | null>(null);
+
 // Methods
 function handleRunAllSteps() {
   gameStore.runAllSolverSteps();
@@ -177,5 +201,11 @@ function handleResetBoard() {
 
 function clearLogs() {
   gameStore.debugLogs = [];
+}
+
+// Add brute force solver handler
+function handleBruteForceSolve() {
+  solutionCount.value = gameStore.bruteForceSolver(5);
+  gameStore.addDebugLog(`Brute force solver found ${solutionCount.value} solutions`);
 }
 </script>

@@ -2,20 +2,20 @@ import type { GridSquare, Pos } from '../types/types';
 
 // Create an empty grid with specified dimensions
 export function createEmptyGrid(size: number): GridSquare[][] {
-  const grid: GridSquare[][] = [];
-  for (let row = 0; row < size; row++) {
-    const gridRow: GridSquare[] = [];
-    for (let col = 0; col < size; col++) {
-      gridRow.push({
-        position: { row, col },
-        state: 'empty',
-        groupColor: undefined,
-        playerMark: undefined as 'queen' | 'flag' | undefined,
-      });
-    }
-    grid.push(gridRow);
-  }
-  return grid;
+  return Array(size)
+    .fill(null)
+    .map((_, row) =>
+      Array(size)
+        .fill(null)
+        .map(
+          (_, col) =>
+            ({
+              position: { row, col },
+              playerMark: 'empty',
+              groupColor: undefined,
+            }) as GridSquare
+        )
+    );
 }
 
 // Clone a grid for history management
@@ -23,9 +23,8 @@ export function cloneGrid(grid: GridSquare[][]): GridSquare[][] {
   return grid.map((row) =>
     row.map((cell) => ({
       position: { ...cell.position },
-      state: cell.state,
-      groupColor: cell.groupColor,
       playerMark: cell.playerMark,
+      groupColor: cell.groupColor,
     }))
   );
 }
@@ -40,7 +39,7 @@ export function getQueenPositions(grid: GridSquare[][]): Pos[] {
   const positions: Pos[] = [];
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[0].length; col++) {
-      if (grid[row][col].state === 'queen') {
+      if (grid[row][col].playerMark === 'queen') {
         positions.push({ row, col });
       }
     }
@@ -56,7 +55,7 @@ export function computeAvailableMoves(
   const availableMoves: Pos[] = [];
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[0].length; col++) {
-      if (grid[row][col].state === 'empty' && isValidMoveFn(row, col)) {
+      if (grid[row][col].playerMark === 'empty' && isValidMoveFn(row, col)) {
         availableMoves.push({ row, col });
       }
     }
@@ -68,8 +67,8 @@ export function computeAvailableMoves(
 export function clearMarkers(grid: GridSquare[][]): void {
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[0].length; col++) {
-      if (grid[row][col].state !== 'empty') {
-        grid[row][col].state = 'empty';
+      if (grid[row][col].playerMark !== 'empty') {
+        grid[row][col].playerMark = 'empty';
       }
     }
   }
@@ -85,22 +84,25 @@ export function queenAttacks(aRow: number, aCol: number, tRow: number, tCol: num
   return Math.abs(aRow - tRow) === Math.abs(aCol - tCol);
 }
 
-// Count empty cells in the grid
-export function countEmptyCells(grid: GridSquare[][]): number {
-  return countCellsWithState(grid, 'empty');
-}
-
 // Count cells with a specific state
-export function countCellsWithState(grid: GridSquare[][], state: string): number {
+export function countCellsWithState(
+  grid: GridSquare[][],
+  targetState: 'queen' | 'flag' | 'invalid' | 'empty'
+): number {
   let count = 0;
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[0].length; col++) {
-      if (grid[row][col].state === state) {
+      if (grid[row][col].playerMark === targetState) {
         count++;
       }
     }
   }
   return count;
+}
+
+// Count empty cells in a grid
+export function countEmptyCells(grid: GridSquare[][]): number {
+  return countCellsWithState(grid, 'empty');
 }
 
 // Get distribution of colors in the grid

@@ -39,9 +39,8 @@ export interface UIState {
  */
 export interface GridSquare {
   position: Pos;
-  state: 'empty' | 'queen' | 'flag' | 'invalid';
   groupColor?: string;
-  playerMark?: 'queen' | 'flag';
+  playerMark: 'empty' | 'queen' | 'flag' | 'invalid';
 }
 
 /**
@@ -91,6 +90,7 @@ export interface GameState {
 export interface SquareProps {
   row: number;
   col: number;
+  mode?: 'player' | 'solution';
 }
 
 /**

@@ -24,7 +24,7 @@ export function placeLastFreeQueens(
       }
     }
     for (const [color, group] of colorGroups.entries()) {
-      const free: Pos[] = group.filter(({ row, col }) => grid[row][col].state === 'empty');
+      const free: Pos[] = group.filter(({ row, col }) => grid[row][col].playerMark === 'empty');
       if (free.length === 1) {
         const { row, col } = free[0];
         placeQueen(row, col);
@@ -39,7 +39,7 @@ export function placeLastFreeQueens(
     for (let row = 0; row < gridSize; row++) {
       const free: Pos[] = [];
       for (let col = 0; col < gridSize; col++) {
-        if (grid[row][col].state === 'empty') free.push({ row, col });
+        if (grid[row][col].playerMark === 'empty') free.push({ row, col });
       }
       if (free.length === 1) {
         const { row, col } = free[0];
@@ -55,7 +55,7 @@ export function placeLastFreeQueens(
     for (let col = 0; col < gridSize; col++) {
       const free: Pos[] = [];
       for (let row = 0; row < gridSize; row++) {
-        if (grid[row][col].state === 'empty') free.push({ row, col });
+        if (grid[row][col].playerMark === 'empty') free.push({ row, col });
       }
       if (free.length === 1) {
         const { row, col } = free[0];
@@ -84,7 +84,7 @@ export function flagBlockingSquares(
   const emptyColorGroups = new Map<string, Pos[]>();
   for (let r = 0; r < gridSize; r++) {
     for (let c = 0; c < gridSize; c++) {
-      if (grid[r][c].state === 'empty') {
+      if (grid[r][c].playerMark === 'empty') {
         const grp = grid[r][c].groupColor;
         if (!grp) continue;
         if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
@@ -96,7 +96,7 @@ export function flagBlockingSquares(
   // For each empty square, check all other color groups
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
-      if (grid[row][col].state !== 'empty') continue;
+      if (grid[row][col].playerMark !== 'empty') continue;
       const myColor = grid[row][col].groupColor;
       if (!myColor) continue;
       for (const [otherColor, groupEmpty] of emptyColorGroups.entries()) {
@@ -132,7 +132,7 @@ export function eliminateConstrainedRows(
   // Build map of empty squares by color group
   for (let r = 0; r < gridSize; r++) {
     for (let c = 0; c < gridSize; c++) {
-      if (grid[r][c].state === 'empty') {
+      if (grid[r][c].playerMark === 'empty') {
         const grp = grid[r][c].groupColor;
         if (!grp) continue;
         if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
@@ -160,7 +160,7 @@ export function eliminateConstrainedRows(
     if (uniqueColors.length === S.length && uniqueColors.length > 0) {
       for (const row of S) {
         for (let col = 0; col < gridSize; col++) {
-          if (grid[row][col].state === 'empty') {
+          if (grid[row][col].playerMark === 'empty') {
             const grp = grid[row][col].groupColor;
             if (!grp || !uniqueColors.includes(grp)) {
               placeFlag(row, col);
@@ -185,7 +185,7 @@ export function eliminateConstrainedColumns(
   // Build map of empty squares by color group
   for (let r = 0; r < gridSize; r++) {
     for (let c = 0; c < gridSize; c++) {
-      if (grid[r][c].state === 'empty') {
+      if (grid[r][c].playerMark === 'empty') {
         const grp = grid[r][c].groupColor;
         if (!grp) continue;
         if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
@@ -213,7 +213,7 @@ export function eliminateConstrainedColumns(
     if (uniqueColors.length === S.length && uniqueColors.length > 0) {
       for (const col of S) {
         for (let row = 0; row < gridSize; row++) {
-          if (grid[row][col].state === 'empty') {
+          if (grid[row][col].playerMark === 'empty') {
             const grp = grid[row][col].groupColor;
             if (!grp || !uniqueColors.includes(grp)) {
               placeFlag(row, col);
@@ -246,7 +246,7 @@ export function blockRowsAndColumns(
   }
   for (let r = 0; r < gridSize; r++) {
     for (let c = 0; c < gridSize; c++) {
-      if (grid[r][c].state === 'empty') {
+      if (grid[r][c].playerMark === 'empty') {
         freeRows.get(r)!.push({ row: r, col: c });
         freeCols.get(c)!.push({ row: r, col: c });
       }
@@ -255,7 +255,7 @@ export function blockRowsAndColumns(
   // Try each empty square and flag if it blocks an entire row or column
   outer: for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
-      if (grid[row][col].state !== 'empty') continue;
+      if (grid[row][col].playerMark !== 'empty') continue;
       // Check other rows
       for (const [r, positions] of freeRows.entries()) {
         if (r === row || positions.length === 0) continue;

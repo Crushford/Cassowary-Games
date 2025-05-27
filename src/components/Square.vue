@@ -1,14 +1,13 @@
 <template>
   <div
-    class="aspect-square w-full cursor-pointer rounded-lg border-2 transition-colors duration-200"
+    class="w-12 h-12 flex items-center justify-center rounded cursor-pointer transition-all duration-200"
     :class="squareClasses"
     @click="handleClick"
   >
-    <div class="flex h-full items-center justify-center text-2xl">
-      <span v-if="squareState === 'flag'">🚩</span>
-      <span v-else-if="squareState === 'queen'">👑</span>
-      <span v-else-if="squareState === 'invalid'">❌</span>
-    </div>
+    <span v-if="squareMark === 'queen'" class="text-xl text-white">♛</span>
+    <span v-else-if="squareMark === 'flag'" class="text-sm text-yellow-400">🚩</span>
+    <span v-else-if="squareMark === 'invalid'" class="text-xl text-red-500">⚠️</span>
+    <span v-else class="text-transparent">.</span>
   </div>
 </template>
 
@@ -18,10 +17,16 @@ import { computed } from 'vue';
 import type { SquareProps } from '../types/types';
 
 const props = defineProps<SquareProps>();
+
 const gameStore = useGameStore();
 
-const squareState = computed(() => {
-  return gameStore.grid[props.row][props.col].state;
+const squareMark = computed(() => {
+  if (props.mode === 'solution') {
+    return gameStore.puzzleGrid.solution.some((q) => q.row === props.row && q.col === props.col)
+      ? 'queen'
+      : 'empty';
+  }
+  return gameStore.grid[props.row][props.col].playerMark;
 });
 
 const groupColor = computed(() => {
@@ -30,7 +35,7 @@ const groupColor = computed(() => {
 
 const squareClasses = computed(() => {
   const hasGroupColor = !!groupColor.value;
-  const state = squareState.value;
+  const mark = squareMark.value;
 
   // Apply background color based on group
   if (hasGroupColor) {
@@ -41,12 +46,18 @@ const squareClasses = computed(() => {
 
   // Apply border colors based on state
   return {
-    'border-primary': state === 'flag',
-    'border-secondary': state === 'queen' || state === 'invalid',
+    'border-primary': mark === 'flag',
+    'border-secondary': mark === 'queen' || mark === 'invalid',
   };
 });
 
 const handleClick = () => {
-  gameStore.handleSquareClick(props.row, props.col);
+  if (props.mode === 'player') {
+    if (gameStore.colorToolActive && gameStore.colorToolSelectedColor) {
+      gameStore.setSquareColor(props.row, props.col, gameStore.colorToolSelectedColor);
+    } else {
+      gameStore.handleSquareClick(props.row, props.col);
+    }
+  }
 };
 </script>

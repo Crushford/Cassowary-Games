@@ -103,7 +103,7 @@ export function createEmptyGrid(
  * Get all positions where queens are placed.
  */
 export function getQueenPositions(grid: GridSquare[][]): Pos[] {
-  return findPositions(grid, (cell) => cell.state === 'queen');
+  return findPositions(grid, (cell) => cell.playerMark === 'queen');
 }
 
 /**
@@ -113,7 +113,10 @@ export function computeAvailableMoves(
   grid: GridSquare[][],
   isValidMove: (row: number, col: number) => boolean
 ): Pos[] {
-  return findPositions(grid, (cell, row, col) => cell.state === 'empty' && isValidMove(row, col));
+  return findPositions(
+    grid,
+    (cell, row, col) => cell.playerMark === 'empty' && isValidMove(row, col)
+  );
 }
 
 /**
@@ -122,8 +125,12 @@ export function computeAvailableMoves(
 export function clearMarkers(grid: GridSquare[][]): void {
   grid.forEach((row) =>
     row.forEach((cell) => {
-      if (cell.state === 'queen' || cell.state === 'flag' || cell.state === 'invalid') {
-        cell.state = 'empty';
+      if (
+        cell.playerMark === 'queen' ||
+        cell.playerMark === 'flag' ||
+        cell.playerMark === 'invalid'
+      ) {
+        cell.playerMark = 'empty';
       }
     })
   );
@@ -140,7 +147,9 @@ export function countCells(grid: GridSquare[][], predicate: (cell: GridSquare) =
  * Check if all squares are filled (queen or flag).
  */
 export function allFilled(grid: GridSquare[][]): boolean {
-  return grid.every((row) => row.every((cell) => cell.state === 'queen' || cell.state === 'flag'));
+  return grid.every((row) =>
+    row.every((cell) => cell.playerMark === 'queen' || cell.playerMark === 'flag')
+  );
 }
 
 /**
@@ -169,7 +178,7 @@ export function validatePuzzle(
   requiredQueens: number,
   minGroupSize: number = 2
 ): { queenCountValid: boolean; allFilled: boolean; colorGroupsValid: boolean } {
-  const queenCount = countCells(grid, (cell) => cell.state === 'queen');
+  const queenCount = countCells(grid, (cell) => cell.playerMark === 'queen');
   const allFilledFlag = allFilled(grid);
   const groupCounts = countColorGroups(grid);
   const colorGroupsFlag = Object.values(groupCounts).every((c) => c >= minGroupSize);
@@ -191,7 +200,7 @@ export function cloneGrid(grid: GridSquare[][]): GridSquare[][] {
  * Count cells with a specific state.
  */
 export function countCellsWithState(grid: GridSquare[][], state: string): number {
-  return countCells(grid, (cell) => cell.state === state);
+  return countCells(grid, (cell) => cell.playerMark === state);
 }
 
 /**
