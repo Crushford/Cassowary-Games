@@ -72,6 +72,18 @@ export const useGameStore = defineStore('game', {
       return positions;
     },
 
+    solutionQueenPositions: (state): Pos[] => {
+      const sol: Pos[] = [];
+      for (let r = 0; r < state.gridSize; r++) {
+        for (let c = 0; c < state.gridSize; c++) {
+          if (state.grid[r][c].isSolutionQueen) {
+            sol.push({ row: r, col: c });
+          }
+        }
+      }
+      return sol;
+    },
+
     isValidMove: (state) => (row: number, col: number) => {
       const square = state.grid[row][col];
 

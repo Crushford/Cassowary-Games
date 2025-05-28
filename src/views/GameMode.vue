@@ -59,7 +59,12 @@
         </div>
       </div>
 
-      <GameGrid v-if="!showPuzzleSelect" @undo="handleUndo" @restart="clearQueensAndFlags" />
+      <GameGrid
+        v-if="!showPuzzleSelect"
+        mode="player"
+        @undo="handleUndo"
+        @restart="clearQueensAndFlags"
+      />
     </div>
   </div>
 </template>

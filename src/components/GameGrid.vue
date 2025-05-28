@@ -50,17 +50,10 @@ import { ref, watch, onMounted } from 'vue';
 import { useGameStore } from '../stores/gameStore';
 import Square from './Square.vue';
 
-defineProps({
-  mode: {
-    type: String as () => 'player' | 'solution',
-    default: 'player',
-    validator: (value: string) => ['player', 'solution'].includes(value),
-  },
-  showControls: {
-    type: Boolean,
-    default: true,
-  },
-});
+const props = defineProps<{
+  mode: 'solution' | 'player';
+  showControls?: boolean;
+}>();
 
 const gameStore = useGameStore();
 const localGridSize = ref(gameStore.gridSize);
