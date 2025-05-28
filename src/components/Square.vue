@@ -32,7 +32,7 @@ const gameStore = useGameStore();
 
 // Get player mark state for player mode
 const playerMark = computed(() => {
-  return gameStore.getSquareState(props.row, props.col);
+  return gameStore.getPlayerMarking(props.row, props.col);
 });
 
 // Check if this square has a solution queen for solution mode
@@ -47,45 +47,15 @@ const groupColor = computed(() => {
 
 const squareClasses = computed(() => {
   const hasGroupColor = !!groupColor.value;
-  const isPlayerMode = props.mode !== 'solution';
 
   let classes: Record<string, boolean> = {
     // Color group background
     [`bg-group-${groupColor.value}-700`]: hasGroupColor,
-
-    // Disable pointer events for solution mode
-    'pointer-events-none': !isPlayerMode,
-    'cursor-pointer': isPlayerMode,
-    'cursor-default': !isPlayerMode,
   };
 
   // Add player-mode specific styling
-  if (isPlayerMode) {
-    const mark = playerMark.value;
-    const hasSolutionQueen = isSolutionQueen.value;
 
-    classes = {
-      ...classes,
-      // State-based borders
-      'border-primary': mark === 'flag',
-      'border-secondary': mark === 'queen' || mark === 'invalid',
-
-      // Solution feedback
-      'bg-green-100': mark === 'queen' && !!hasSolutionQueen,
-      'bg-red-100': mark === 'queen' && !hasSolutionQueen,
-      'bg-blue-50': !!hasSolutionQueen && mark === null,
-    };
-  } else {
-    // Solution mode styling - make it visually clear it's read-only
-    classes = {
-      ...classes,
-      'border-slate-600': true,
-      'opacity-75': true,
-      'bg-slate-700': !hasGroupColor, // fallback background when no color group
-    };
-  }
-
-  return classes;
+  return hasGroupColor && [`bg-group-${groupColor.value}-700`];
 });
 
 const handleClick = () => {
