@@ -11,7 +11,6 @@ export function createEmptyGrid(size: number): GridSquare[][] {
           (_, col) =>
             ({
               position: { row, col },
-              playerMark: null,
               groupColor: undefined,
             }) as GridSquare
         )
@@ -23,8 +22,8 @@ export function cloneGrid(grid: GridSquare[][]): GridSquare[][] {
   return grid.map((row) =>
     row.map((cell) => ({
       position: { ...cell.position },
-      playerMark: cell.playerMark,
       groupColor: cell.groupColor,
+      isSolutionQueen: cell.isSolutionQueen,
     }))
   );
 }
@@ -34,12 +33,12 @@ export function isValidPosition(grid: GridSquare[][], row: number, col: number):
   return row >= 0 && row < grid.length && col >= 0 && col < grid[0].length;
 }
 
-// Get all queen positions from the grid
-export function getQueenPositions(grid: GridSquare[][]): Pos[] {
+// Get all queen positions from the playerMarks matrix
+export function getQueenPositions(grid: GridSquare[][], playerMarks: MarkType[][]): Pos[] {
   const positions: Pos[] = [];
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[0].length; col++) {
-      if (grid[row][col].playerMark === 'queen') {
+      if (playerMarks[row][col] === 'queen') {
         positions.push({ row, col });
       }
     }
@@ -50,12 +49,13 @@ export function getQueenPositions(grid: GridSquare[][]): Pos[] {
 // Compute available moves based on current grid state
 export function computeAvailableMoves(
   grid: GridSquare[][],
+  playerMarks: MarkType[][],
   isValidMoveFn: (row: number, col: number) => boolean
 ): Pos[] {
   const availableMoves: Pos[] = [];
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[0].length; col++) {
-      if (grid[row][col].playerMark === null && isValidMoveFn(row, col)) {
+      if (playerMarks[row][col] === null && isValidMoveFn(row, col)) {
         availableMoves.push({ row, col });
       }
     }
@@ -83,11 +83,15 @@ export function queenAttacks(aRow: number, aCol: number, tRow: number, tCol: num
 }
 
 // Count cells with a specific state
-export function countCellsWithState(grid: GridSquare[][], targetState: MarkType): number {
+export function countCellsWithState(
+  grid: GridSquare[][],
+  playerMarks: MarkType[][],
+  targetState: MarkType
+): number {
   let count = 0;
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[0].length; col++) {
-      if (grid[row][col].playerMark === targetState) {
+      if (playerMarks[row][col] === targetState) {
         count++;
       }
     }
@@ -96,8 +100,8 @@ export function countCellsWithState(grid: GridSquare[][], targetState: MarkType)
 }
 
 // Count empty cells in a grid
-export function countEmptyCells(grid: GridSquare[][]): number {
-  return countCellsWithState(grid, null);
+export function countEmptyCells(grid: GridSquare[][], playerMarks: MarkType[][]): number {
+  return countCellsWithState(grid, playerMarks, null);
 }
 
 // Get distribution of colors in the grid
@@ -126,13 +130,14 @@ export function getColorDistribution(grid: GridSquare[][]): {
 // Validate a puzzle's state (queen count and color groups)
 export function validatePuzzleState(
   grid: GridSquare[][],
+  playerMarks: MarkType[][],
   gridSize: number
 ): {
   queenCountValid: boolean;
   colorGroupsValid: boolean;
 } {
   // Count queens
-  const queens = getQueenPositions(grid);
+  const queens = getQueenPositions(grid, playerMarks);
   const queenCountValid = queens.length === gridSize;
 
   // Check color groups

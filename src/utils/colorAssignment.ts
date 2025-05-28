@@ -32,8 +32,6 @@ export function ensureNoSingletonColorBlocks(grid: GridSquare[][]): GridSquare[]
   for (const [color, positions] of Object.entries(colorGroups)) {
     if (positions.length === 1) {
       const { row, col } = positions[0];
-      // Skip singleton if it's a queen to avoid duplicating color among queens
-      if (newGrid[row][col].playerMark === 'queen') continue;
       const neighborColors = new Set<string>();
       for (const dir of directions) {
         const newR = row + dir.dr;
@@ -91,7 +89,7 @@ export function addOneToEachColorGroup(grid: GridSquare[][]): GridSquare[][] {
 
       if (isValidPosition(newGrid, r, c)) {
         const neighbor = newGrid[r][c];
-        if (!neighbor.groupColor && neighbor.playerMark !== 'queen') {
+        if (!neighbor.groupColor) {
           neighbor.groupColor = base.square.groupColor;
           break; // only one added per group
         }
@@ -213,7 +211,7 @@ export function fillRemainingSquares(
     log(`Sample uncolored positions:`);
     for (let i = 0; i < samplesToShow; i++) {
       const { row, col } = uncoloredPositions[i];
-      log(`  - Position (${row}, ${col}): state=${newGrid[row][col].playerMark}`);
+      log(`  - Position (${row}, ${col}): no groupColor`);
     }
   }
 

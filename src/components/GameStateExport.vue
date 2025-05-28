@@ -36,7 +36,17 @@ const hasMultipleSolutions = computed(() => {
 // Update the export text to include solver steps
 const exportText = computed(() => {
   const stateText = gameStore.exportGameState();
-  const originalQueens = gameStore.puzzleGrid.solution.map((q) => `(${q.row},${q.col})`).join(', ');
+
+  // Get solution queens from grid
+  const solutionQueens: string[] = [];
+  for (let row = 0; row < gameStore.gridSize; row++) {
+    for (let col = 0; col < gameStore.gridSize; col++) {
+      if (gameStore.grid[row][col].isSolutionQueen) {
+        solutionQueens.push(`(${row},${col})`);
+      }
+    }
+  }
+
   const solvedQueens = gameStore.queenPositions.map((q) => `(${q.row},${q.col})`).join(', ');
 
   // Get validation state
@@ -56,7 +66,7 @@ const exportText = computed(() => {
         }
         colorGroups.get(color)!.push(`(${row},${col})`);
       }
-      if (gameStore.grid[row][col].playerMark === 'empty') {
+      if (gameStore.getSquareState(row, col) === null) {
         emptySquares.push(`(${row},${col})`);
       }
     }
@@ -67,13 +77,23 @@ const exportText = computed(() => {
     .map(([color, squares]) => `${color}: [${squares.join(', ')}]`)
     .join('\n');
 
+  // Count invalid squares
+  let invalidCount = 0;
+  for (let row = 0; row < gameStore.gridSize; row++) {
+    for (let col = 0; col < gameStore.gridSize; col++) {
+      if (gameStore.getSquareState(row, col) === 'invalid') {
+        invalidCount++;
+      }
+    }
+  }
+
   const additionalInfo = `
-Original Queen Positions: [${originalQueens}]
+Solution Queen Positions: [${solutionQueens.join(', ')}]
 Your Solved Queen Positions: [${solvedQueens}]
 
 Current State:
 - Flags placed: ${gameStore.countFlags()}
-- Invalid squares: ${gameStore.playerGrid.invalid.length}
+- Invalid squares: ${invalidCount}
 - Available moves: ${gameStore.availableMoves.length}
 - Empty squares: [${emptySquares.join(', ')}]
 

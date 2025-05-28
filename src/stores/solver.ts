@@ -1,9 +1,10 @@
-import type { GridSquare, Pos } from '../types/types';
-import { queenAttacks } from './gameStoreUtils';
+import type { GridSquare, Pos, MarkType } from '../types/types';
+import { queenAttacks } from './gridUtils';
 
 // Helper for step 1: Place queens in last free squares of color blocks, rows, or columns
 export function placeLastFreeQueens(
   grid: GridSquare[][],
+  playerMarks: MarkType[][],
   gridSize: number,
   placeQueen: (row: number, col: number) => boolean
 ): boolean {
@@ -24,7 +25,7 @@ export function placeLastFreeQueens(
       }
     }
     for (const [color, group] of colorGroups.entries()) {
-      const free: Pos[] = group.filter(({ row, col }) => grid[row][col].playerMark === 'empty');
+      const free: Pos[] = group.filter(({ row, col }) => playerMarks[row][col] === null);
       if (free.length === 1) {
         const { row, col } = free[0];
         placeQueen(row, col);
@@ -39,7 +40,7 @@ export function placeLastFreeQueens(
     for (let row = 0; row < gridSize; row++) {
       const free: Pos[] = [];
       for (let col = 0; col < gridSize; col++) {
-        if (grid[row][col].playerMark === 'empty') free.push({ row, col });
+        if (playerMarks[row][col] === null) free.push({ row, col });
       }
       if (free.length === 1) {
         const { row, col } = free[0];
@@ -55,7 +56,7 @@ export function placeLastFreeQueens(
     for (let col = 0; col < gridSize; col++) {
       const free: Pos[] = [];
       for (let row = 0; row < gridSize; row++) {
-        if (grid[row][col].playerMark === 'empty') free.push({ row, col });
+        if (playerMarks[row][col] === null) free.push({ row, col });
       }
       if (free.length === 1) {
         const { row, col } = free[0];
@@ -74,6 +75,7 @@ export function placeLastFreeQueens(
 // Helper for step 2: Flag squares where a queen would block all remaining squares in other color groups
 export function flagBlockingSquares(
   grid: GridSquare[][],
+  playerMarks: MarkType[][],
   gridSize: number,
   placeFlag: (row: number, col: number) => boolean
 ): boolean {
@@ -84,7 +86,7 @@ export function flagBlockingSquares(
   const emptyColorGroups = new Map<string, Pos[]>();
   for (let r = 0; r < gridSize; r++) {
     for (let c = 0; c < gridSize; c++) {
-      if (grid[r][c].playerMark === 'empty') {
+      if (playerMarks[r][c] === null) {
         const grp = grid[r][c].groupColor;
         if (!grp) continue;
         if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
@@ -96,7 +98,7 @@ export function flagBlockingSquares(
   // For each empty square, check all other color groups
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
-      if (grid[row][col].playerMark !== 'empty') continue;
+      if (playerMarks[row][col] !== null) continue;
       const myColor = grid[row][col].groupColor;
       if (!myColor) continue;
       for (const [otherColor, groupEmpty] of emptyColorGroups.entries()) {
@@ -125,6 +127,7 @@ export function flagBlockingSquares(
 // Step 3: Constrained Row Elimination
 export function eliminateConstrainedRows(
   grid: GridSquare[][],
+  playerMarks: MarkType[][],
   gridSize: number,
   placeFlag: (row: number, col: number) => boolean
 ): boolean {
@@ -132,7 +135,7 @@ export function eliminateConstrainedRows(
   // Build map of empty squares by color group
   for (let r = 0; r < gridSize; r++) {
     for (let c = 0; c < gridSize; c++) {
-      if (grid[r][c].playerMark === 'empty') {
+      if (playerMarks[r][c] === null) {
         const grp = grid[r][c].groupColor;
         if (!grp) continue;
         if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
@@ -160,7 +163,7 @@ export function eliminateConstrainedRows(
     if (uniqueColors.length === S.length && uniqueColors.length > 0) {
       for (const row of S) {
         for (let col = 0; col < gridSize; col++) {
-          if (grid[row][col].playerMark === 'empty') {
+          if (playerMarks[row][col] === null) {
             const grp = grid[row][col].groupColor;
             if (!grp || !uniqueColors.includes(grp)) {
               placeFlag(row, col);
@@ -178,6 +181,7 @@ export function eliminateConstrainedRows(
 // Step 4: Constrained Column Elimination
 export function eliminateConstrainedColumns(
   grid: GridSquare[][],
+  playerMarks: MarkType[][],
   gridSize: number,
   placeFlag: (row: number, col: number) => boolean
 ): boolean {
@@ -185,7 +189,7 @@ export function eliminateConstrainedColumns(
   // Build map of empty squares by color group
   for (let r = 0; r < gridSize; r++) {
     for (let c = 0; c < gridSize; c++) {
-      if (grid[r][c].playerMark === 'empty') {
+      if (playerMarks[r][c] === null) {
         const grp = grid[r][c].groupColor;
         if (!grp) continue;
         if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
@@ -213,7 +217,7 @@ export function eliminateConstrainedColumns(
     if (uniqueColors.length === S.length && uniqueColors.length > 0) {
       for (const col of S) {
         for (let row = 0; row < gridSize; row++) {
-          if (grid[row][col].playerMark === 'empty') {
+          if (playerMarks[row][col] === null) {
             const grp = grid[row][col].groupColor;
             if (!grp || !uniqueColors.includes(grp)) {
               placeFlag(row, col);
@@ -231,6 +235,7 @@ export function eliminateConstrainedColumns(
 // Step 5: Flag squares where a queen would block all remaining free squares in any row or column
 export function blockRowsAndColumns(
   grid: GridSquare[][],
+  playerMarks: MarkType[][],
   gridSize: number,
   placeFlag: (row: number, col: number) => boolean
 ): boolean {
@@ -246,7 +251,7 @@ export function blockRowsAndColumns(
   }
   for (let r = 0; r < gridSize; r++) {
     for (let c = 0; c < gridSize; c++) {
-      if (grid[r][c].playerMark === 'empty') {
+      if (playerMarks[r][c] === null) {
         freeRows.get(r)!.push({ row: r, col: c });
         freeCols.get(c)!.push({ row: r, col: c });
       }
@@ -255,7 +260,7 @@ export function blockRowsAndColumns(
   // Try each empty square and flag if it blocks an entire row or column
   outer: for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
-      if (grid[row][col].playerMark !== 'empty') continue;
+      if (playerMarks[row][col] !== null) continue;
       // Check other rows
       for (const [r, positions] of freeRows.entries()) {
         if (r === row || positions.length === 0) continue;
@@ -284,6 +289,7 @@ export function blockRowsAndColumns(
 // Main solver loop that runs all steps until no changes
 export function runAllSolverSteps(
   grid: GridSquare[][],
+  playerMarks: MarkType[][],
   gridSize: number,
   placeQueen: (row: number, col: number) => boolean,
   placeFlag: (row: number, col: number) => boolean,
@@ -322,27 +328,27 @@ export function runAllSolverSteps(
     const prevFlags = countFlags();
 
     // Step 1: Place last free queens
-    let changed1 = placeLastFreeQueens(grid, gridSize, placeQueen);
+    let changed1 = placeLastFreeQueens(grid, playerMarks, gridSize, placeQueen);
     let newQueens = getQueenPositions().length - prevQueenPositions;
     stats.step1Queens += newQueens;
 
     // Step 2: Flag blocking squares
-    let changed2 = flagBlockingSquares(grid, gridSize, placeFlag);
+    let changed2 = flagBlockingSquares(grid, playerMarks, gridSize, placeFlag);
     let newFlags = countFlags() - prevFlags;
     stats.step2Flags += newFlags;
 
     // Step 3: Constrained Row Elimination
-    let changed3 = eliminateConstrainedRows(grid, gridSize, placeFlag);
+    let changed3 = eliminateConstrainedRows(grid, playerMarks, gridSize, placeFlag);
     newFlags = countFlags() - prevFlags;
     stats.step3Flags += newFlags;
 
     // Step 4: Constrained Column Elimination
-    let changed4 = eliminateConstrainedColumns(grid, gridSize, placeFlag);
+    let changed4 = eliminateConstrainedColumns(grid, playerMarks, gridSize, placeFlag);
     newFlags = countFlags() - prevFlags;
     stats.step4Flags += newFlags;
 
     // Step 5: Flag Row/Column Blocking Squares
-    let changed5 = blockRowsAndColumns(grid, gridSize, placeFlag);
+    let changed5 = blockRowsAndColumns(grid, playerMarks, gridSize, placeFlag);
     newFlags = countFlags() - prevFlags;
     stats.step5Flags += newFlags;
 

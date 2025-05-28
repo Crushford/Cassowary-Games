@@ -45,7 +45,6 @@ export interface GridSquare {
   position: Pos;
   groupColor?: string;
   isSolutionQueen?: boolean;
-  playerMark: MarkType;
 }
 
 /**
