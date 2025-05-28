@@ -66,7 +66,7 @@ export interface GameState {
   // Core game state
   grid: GridSquare[][];
   gridSize: number;
-  moveHistory: { grid: GridSquare[][]; playerMarks: MarkType[][] }[];
+  moveHistory: MarkType[][][];
   playerMarks: MarkType[][]; // N×N matrix of player marks
 
   // UI state

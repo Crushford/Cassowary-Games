@@ -8,11 +8,11 @@ import {
   clearMarkers,
   validatePuzzleState,
   isValidPosition,
-  cloneGrid,
   queenAttacks,
   countEmptyCells,
   countCellsWithState,
   getColorDistribution,
+  clonePlayerMarks,
 } from './gridUtils';
 import {
   assignColors,
@@ -163,8 +163,6 @@ export const useGameStore = defineStore('game', {
     },
 
     placeFlag(row: number, col: number) {
-      if (this.playerMarks[row][col] !== null) return false;
-
       this.setPlayerMark(row, col, 'flag');
       return true;
     },
@@ -192,18 +190,14 @@ export const useGameStore = defineStore('game', {
     },
 
     saveToHistory() {
-      this.moveHistory.push({
-        grid: cloneGrid(this.grid),
-        playerMarks: this.playerMarks.map((row) => [...row]),
-      });
+      this.moveHistory.push(clonePlayerMarks(this.playerMarks));
     },
 
     handleUndo() {
       if (this.moveHistory.length > 0) {
-        const lastState = this.moveHistory.pop();
-        if (lastState) {
-          this.grid = lastState.grid;
-          this.playerMarks = lastState.playerMarks;
+        const lastPlayerMarks = this.moveHistory.pop();
+        if (lastPlayerMarks) {
+          this.playerMarks = lastPlayerMarks;
 
           this.updateAvailableMoves();
           this.checkCompletion();
@@ -230,7 +224,11 @@ export const useGameStore = defineStore('game', {
       } else if (currentState === 'flag') {
         this.placeQueen(row, col);
       } else if (currentState === 'queen' || currentState === 'invalid') {
-        this.setPlayerMark(row, col, 'flag');
+        // Clear the square (set to null)
+        this.saveToHistory();
+        this.playerMarks[row][col] = null;
+        this.updateAvailableMoves();
+        this.checkCompletion();
       }
     },
 
@@ -1334,13 +1332,11 @@ export const useGameStore = defineStore('game', {
     // New method to set player marks
     setPlayerMark(row: number, col: number, mark: Exclude<MarkType, null>): void {
       this.saveToHistory();
-      const current = this.playerMarks[row][col];
-      const next = current === mark ? null : mark;
 
-      // Update source-of-truth
-      this.playerMarks[row][col] = next;
+      // Update source-of-truth directly (no toggle logic here)
+      this.playerMarks[row][col] = mark;
 
-      if (next === 'queen') {
+      if (mark === 'queen') {
         this.updateBlockedMoves();
         this.updateAvailableMoves();
         this.checkCompletion();

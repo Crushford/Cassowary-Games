@@ -1,5 +1,5 @@
 import type { GridSquare, MarkType } from '../types/types';
-import { cloneGrid } from './gridUtils';
+import { clonePlayerMarks } from './gridUtils';
 import { runAllSolverSteps } from './solver';
 
 /**
@@ -58,8 +58,7 @@ export function bruteForceSolver(
         if (playerMarks[row][col] !== null) continue;
 
         // 3a) Snapshot grid state
-        const snapshot = cloneGrid(grid);
-        const playerMarksSnapshot = playerMarks.map((row) => [...row]);
+        const snapshot = clonePlayerMarks(playerMarks);
 
         // 3b) Place queen & re-apply flags
         placeQueen(row, col);
@@ -82,8 +81,7 @@ export function bruteForceSolver(
         // 3c) Restore snapshot
         for (let r = 0; r < gridSize; r++) {
           for (let c = 0; c < gridSize; c++) {
-            grid[r][c] = { ...snapshot[r][c] };
-            playerMarks[r][c] = playerMarksSnapshot[r][c];
+            playerMarks[r][c] = snapshot[r][c];
           }
         }
       }

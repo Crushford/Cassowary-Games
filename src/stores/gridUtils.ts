@@ -17,17 +17,6 @@ export function createEmptyGrid(size: number): GridSquare[][] {
     );
 }
 
-// Clone a grid for history management
-export function cloneGrid(grid: GridSquare[][]): GridSquare[][] {
-  return grid.map((row) =>
-    row.map((cell) => ({
-      position: { ...cell.position },
-      groupColor: cell.groupColor,
-      isSolutionQueen: cell.isSolutionQueen,
-    }))
-  );
-}
-
 // Check if a position is valid on the grid
 export function isValidPosition(grid: GridSquare[][], row: number, col: number): boolean {
   return row >= 0 && row < grid.length && col >= 0 && col < grid[0].length;
@@ -167,4 +156,8 @@ export function validatePuzzleState(
     queenCountValid,
     colorGroupsValid,
   };
+}
+
+export function clonePlayerMarks(playerMarks: MarkType[][]): MarkType[][] {
+  return playerMarks.map((row) => [...row]);
 }
