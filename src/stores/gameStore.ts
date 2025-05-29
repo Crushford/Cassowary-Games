@@ -139,6 +139,7 @@ export const useGameStore = defineStore('game', {
       this.playerMarks = Array.from({ length: this.gridSize }, () =>
         Array(this.gridSize).fill(null as MarkType)
       );
+      this.addDebugLog('playerMarks RESET by initializeGrid');
     },
 
     // Helper method to add debug logs
@@ -198,6 +199,7 @@ export const useGameStore = defineStore('game', {
         const lastPlayerMarks = this.moveHistory.pop();
         if (lastPlayerMarks) {
           this.playerMarks = lastPlayerMarks;
+          this.addDebugLog('playerMarks RESET by handleUndo');
         }
       }
     },
@@ -338,12 +340,14 @@ export const useGameStore = defineStore('game', {
 
       // Clear all playerMarks
       clearMarkers(this.playerMarks);
+      this.addDebugLog('playerMarks CLEARED by clearQueensAndFlags');
 
       this.isComplete = false;
     },
 
     clearMarkers() {
       clearMarkers(this.playerMarks);
+      this.addDebugLog('playerMarks CLEARED by clearMarkers');
     },
 
     hasAnySolutionQueens(): boolean {
@@ -1371,29 +1375,6 @@ export const useGameStore = defineStore('game', {
           }
         }
       }
-    },
-
-    // Method to check if a puzzle can be solved using solver steps
-    isPuzzleSolvable(): boolean {
-      // Save current state
-      const currentQueens = [...this.queenPositions];
-
-      // Clear the board
-      this.clearQueensAndFlags();
-
-      // Run solver steps
-      this.runAllSolverSteps();
-
-      // Check if we got the correct number of queens
-      const success = this.queenPositions.length === this.gridSize;
-
-      // Restore original state
-      this.clearQueensAndFlags();
-      for (const pos of currentQueens) {
-        this.placeQueen(pos.row, pos.col);
-      }
-
-      return success;
     },
 
     // Add toggle for verbose mode

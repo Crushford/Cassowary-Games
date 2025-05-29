@@ -51,7 +51,6 @@ const exportText = computed(() => {
 
   // Get validation state
   const { queenCountValid, allFilled, colorGroupsValid } = gameStore.validatePuzzle();
-  const isSolvable = gameStore.isPuzzleSolvable();
 
   // Get color group details
   const colorGroups = new Map<string, string[]>();
@@ -101,7 +100,6 @@ Validation State:
 - Queen count valid: ${queenCountValid}
 - All squares filled: ${allFilled}
 - Color groups valid: ${colorGroupsValid}
-- Is solvable: ${isSolvable}
 
 Color Group Details:
 ${colorGroupDetails}`;

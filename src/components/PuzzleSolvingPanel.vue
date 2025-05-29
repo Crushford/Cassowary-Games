@@ -66,10 +66,6 @@
     <div class="flex flex-col gap-2 p-4 bg-slate-700 rounded-lg">
       <h3 class="text-lg font-medium text-white mb-2">Validation Results</h3>
       <div class="flex items-center gap-2">
-        <span :class="checkmarkClass(isSolvable)">{{ isSolvable ? '✅' : '❌' }}</span>
-        <span class="text-white">Puzzle is solvable</span>
-      </div>
-      <div class="flex items-center gap-2">
         <span :class="checkmarkClass(colorsConnected)">{{ colorsConnected ? '✅' : '❌' }}</span>
         <span class="text-white">All colors connected</span>
       </div>
@@ -120,11 +116,6 @@ const Accordion = defineAsyncComponent(() => import('./Accordion.vue'));
 const gameStore = useGameStore();
 
 // Computed properties for validation states
-const isSolvable = computed(() => {
-  const { queenCountValid, allFilled, colorGroupsValid } = gameStore.validatePuzzle();
-  return queenCountValid && allFilled && colorGroupsValid;
-});
-
 const colorsConnected = computed(() => {
   const colors = new Set<string>();
   for (let row = 0; row < gameStore.gridSize; row++) {
