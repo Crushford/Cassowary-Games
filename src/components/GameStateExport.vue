@@ -94,7 +94,7 @@ Your Solved Queen Positions: [${solvedQueens}]
 Current State:
 - Flags placed: ${gameStore.countFlags()}
 - Invalid squares: ${invalidCount}
-- Available moves: ${gameStore.availableMoves.length}
+
 - Empty squares: [${emptySquares.join(', ')}]
 
 Validation State:
