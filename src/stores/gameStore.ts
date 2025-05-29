@@ -140,8 +140,6 @@ export const useGameStore = defineStore('game', {
       this.playerMarks = Array.from({ length: this.gridSize }, () =>
         Array(this.gridSize).fill(null as MarkType)
       );
-
-      this.updateAvailableMoves();
     },
 
     // Helper method to add debug logs
@@ -154,14 +152,6 @@ export const useGameStore = defineStore('game', {
       this.debugLogs.push(message);
       console.log('Added debug log:', message);
     },
-
-    updateAvailableMoves() {
-      // Use computeAvailableMoves utility
-      this.availableMoves = computeAvailableMoves(this.grid, this.playerMarks, (row, col) =>
-        this.isValidMove(row, col)
-      );
-    },
-
     placeFlag(row: number, col: number) {
       this.setPlayerMark(row, col, 'flag');
       return true;
@@ -198,8 +188,6 @@ export const useGameStore = defineStore('game', {
         const lastPlayerMarks = this.moveHistory.pop();
         if (lastPlayerMarks) {
           this.playerMarks = lastPlayerMarks;
-
-          this.updateAvailableMoves();
         }
       }
     },
@@ -273,7 +261,6 @@ export const useGameStore = defineStore('game', {
       clearMarkers(this.playerMarks);
 
       this.isComplete = false;
-      this.updateAvailableMoves();
     },
 
     clearMarkers() {
@@ -671,7 +658,6 @@ export const useGameStore = defineStore('game', {
       }
 
       this.currentPuzzle = puzzleName;
-      this.updateAvailableMoves();
       this.setError(null);
       return true;
     },
@@ -1326,7 +1312,6 @@ export const useGameStore = defineStore('game', {
 
       if (mark === 'queen') {
         this.updateBlockedMoves();
-        this.updateAvailableMoves();
       }
     },
 
