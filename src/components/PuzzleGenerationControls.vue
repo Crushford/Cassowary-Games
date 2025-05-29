@@ -206,49 +206,89 @@ function handleFillRemaining() {
 
 function handleRunAllSteps() {
   try {
-    // Clear any existing error messages
+    // Clear any existing error messages and debug logs
     gameStore.setError(null);
 
+    gameStore.addDebugLog('=== Starting Run All Steps ===');
+
     // Reset everything first
+    gameStore.addDebugLog('Step 1: Initializing grid and clearing markers');
     gameStore.initializeGrid();
     gameStore.clearQueensAndFlags();
 
     // Generate a full solution with queens
+    gameStore.addDebugLog('Step 2: Generating full solution');
     gameStore.generateFullSolution();
+
     if (gameStore.queenPositions.length !== gameStore.gridSize) {
-      gameStore.setError('Failed to generate queen positions');
+      const errorMsg = `Failed to generate queen positions: ${gameStore.queenPositions.length}/${gameStore.gridSize} queens placed`;
+      gameStore.addDebugLog(`❌ ${errorMsg}`);
+      gameStore.setError(errorMsg);
       return;
     }
+    gameStore.addDebugLog(`✅ Generated ${gameStore.queenPositions.length} queens`);
 
     // Assign initial colors to queens
+    gameStore.addDebugLog('Step 3: Assigning initial colors');
     gameStore.assignColorGroups();
 
     // Expand color groups
+    gameStore.addDebugLog('Step 4: Expanding color groups');
     gameStore.addOneColorToEachGroup();
 
     // Add one color to each row
+    gameStore.addDebugLog('Step 5: Adding colors to rows');
     gameStore.addOneColorToEachRow();
 
     // Fill remaining squares
+    gameStore.addDebugLog('Step 6: Filling remaining squares');
     gameStore.fillRemainingSingleSquares();
 
     // Validate the final state
+    gameStore.addDebugLog('Step 7: Validating final state');
     const { queenCountValid, allFilled, colorGroupsValid } = gameStore.validatePuzzle();
+
+    gameStore.addDebugLog(
+      `Validation results: queens=${queenCountValid}, filled=${allFilled}, colors=${colorGroupsValid}`
+    );
+
     if (!(queenCountValid && allFilled && colorGroupsValid)) {
-      gameStore.setError('Generated puzzle is invalid');
+      const issues = [];
+      if (!queenCountValid) issues.push('incorrect queen count');
+      if (!allFilled) issues.push('unfilled squares');
+      if (!colorGroupsValid) issues.push('invalid color groups');
+
+      const errorMsg = `Generated puzzle is invalid: ${issues.join(', ')}`;
+      gameStore.addDebugLog(`❌ ${errorMsg}`);
+      gameStore.setError(errorMsg);
       return;
     }
 
     // Save the puzzle if everything is valid
+    gameStore.addDebugLog('Step 8: Saving puzzle');
     const puzzleName = gameStore.savePuzzleToLocalStorage();
+
     if (puzzleName) {
+      gameStore.addDebugLog(`✅ SUCCESS: Puzzle saved as "${puzzleName}"`);
       gameStore.setError(null);
     } else {
-      gameStore.setError('Failed to save puzzle');
+      const errorMsg = 'Failed to save puzzle to local storage';
+      gameStore.addDebugLog(`❌ ${errorMsg}`);
+      gameStore.setError(errorMsg);
     }
+
+    gameStore.addDebugLog('=== Run All Steps Complete ===');
   } catch (error) {
     console.error('Error in handleRunAllSteps:', error);
-    gameStore.setError('An error occurred while generating the puzzle');
+
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    const fullErrorMsg = `An error occurred while generating the puzzle: ${errorMessage}`;
+
+    gameStore.addDebugLog(`❌ CRITICAL ERROR: ${errorMessage}`);
+    gameStore.addDebugLog(
+      `Stack trace: ${error instanceof Error ? error.stack : 'No stack trace available'}`
+    );
+    gameStore.setError(fullErrorMsg);
   }
 }
 

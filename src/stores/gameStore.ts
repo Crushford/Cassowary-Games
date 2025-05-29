@@ -48,7 +48,6 @@ export const useGameStore = defineStore('game', {
 
     // Game progress
     currentLevel: 1,
-    availableMoves: [],
     isComplete: false,
     errorMessage: null,
     savedPuzzles: [],
@@ -149,8 +148,19 @@ export const useGameStore = defineStore('game', {
         console.warn('debugLogs was not an array, resetting it', this.debugLogs);
         this.debugLogs = [];
       }
-      this.debugLogs.push(message);
-      console.log('Added debug log:', message);
+
+      // Add timestamp to debug messages
+      const timestamp = new Date().toLocaleTimeString();
+      const logMessage = `[${timestamp}] ${message}`;
+
+      this.debugLogs.push(logMessage);
+
+      // Keep only last 1000 entries to prevent memory issues
+      if (this.debugLogs.length > 1000) {
+        this.debugLogs = this.debugLogs.slice(-500);
+      }
+
+      console.log('Debug log:', logMessage);
     },
     placeFlag(row: number, col: number) {
       this.setPlayerMark(row, col, 'flag');
@@ -213,22 +223,91 @@ export const useGameStore = defineStore('game', {
       }
     },
 
+    /**
+     * Attempts to place all queens on the board using knight-move preference and full backtracking.
+     * Returns true if a solution is found, false otherwise.
+     */
     placeRandomQueen(): boolean {
-      if (this.availableMoves.length === 0) {
-        // If we have no valid moves but not all queens are placed,
-        // we're in a dead end. Reset the grid instead of showing error.
-        if (this.queenPositions.length < this.gridSize) {
-          this.clearQueensAndFlags();
-          return this.placeRandomQueen(); // Try again with fresh grid
-        }
+      const maxAttempts = 1000; // Max total attempts before full reset
+      let attempts = 0;
+      const gridSize = this.gridSize;
+      const moveStack: { row: number; col: number; prevMarks: MarkType[][] }[] = [];
+      const verbose = this.verboseMode;
 
-        this.setError('No valid moves available');
+      // Helper: Get all valid moves (optionally only knight-moves from last queen)
+      const getValidMoves = (preferKnight: boolean): { row: number; col: number }[] => {
+        const moves: { row: number; col: number }[] = [];
+        let knightMoves: { row: number; col: number }[] = [];
+        let lastQueen = null;
+        // Find last queen placed
+        for (let r = 0; r < gridSize; r++) {
+          for (let c = 0; c < gridSize; c++) {
+            if (this.playerMarks[r][c] === 'queen') lastQueen = { row: r, col: c };
+          }
+        }
+        for (let row = 0; row < gridSize; row++) {
+          for (let col = 0; col < gridSize; col++) {
+            if (this.playerMarks[row][col] === null && this.isValidMove(row, col)) {
+              moves.push({ row, col });
+              if (lastQueen) {
+                const dr = Math.abs(row - lastQueen.row);
+                const dc = Math.abs(col - lastQueen.col);
+                if ((dr === 2 && dc === 1) || (dr === 1 && dc === 2)) {
+                  knightMoves.push({ row, col });
+                }
+              }
+            }
+          }
+        }
+        return preferKnight && knightMoves.length > 0 ? knightMoves : moves;
+      };
+
+      // Helper: Deep clone playerMarks
+      const cloneMarks = (marks: MarkType[][]) => marks.map((row) => [...row]);
+
+      // Recursive backtracking function
+      const backtrack = (queensPlaced: number): boolean => {
+        if (queensPlaced === gridSize) return true;
+        if (++attempts > maxAttempts) return false;
+
+        // Try knight-moves first, then any valid move
+        const moves = getValidMoves(true);
+        if (moves.length === 0) return false;
+        // Shuffle moves for randomness
+        for (let i = moves.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [moves[i], moves[j]] = [moves[j], moves[i]];
+        }
+        for (const { row, col } of moves) {
+          // Save state for backtracking
+          const prevMarks = cloneMarks(this.playerMarks);
+          // Simulate player: place flag, then queen
+          this.setPlayerMark(row, col, 'flag');
+          this.setPlayerMark(row, col, 'queen');
+          this.updateBlockedMoves();
+          if (verbose)
+            this.addDebugLog(`Tried queen at (${row},${col}), stack depth ${queensPlaced + 1}`);
+          if (backtrack(queensPlaced + 1)) return true;
+          // Backtrack
+          for (let r = 0; r < gridSize; r++) {
+            for (let c = 0; c < gridSize; c++) {
+              this.playerMarks[r][c] = prevMarks[r][c];
+            }
+          }
+          if (verbose)
+            this.addDebugLog(`Backtracked from (${row},${col}), stack depth ${queensPlaced + 1}`);
+        }
         return false;
-      }
-      const randomIndex = Math.floor(Math.random() * this.availableMoves.length);
-      const { row, col } = this.availableMoves[randomIndex];
-      this.setError(null);
-      return this.placeQueen(row, col);
+      };
+
+      // Clear board before starting
+      this.clearQueensAndFlags();
+      let success = backtrack(0);
+      if (!success && verbose)
+        this.addDebugLog(
+          'Failed to generate a random queen placement after max attempts, resetting.'
+        );
+      return success;
     },
 
     setError(message: string | null) {
@@ -543,6 +622,8 @@ export const useGameStore = defineStore('game', {
 
     // New method to generate a full solution
     generateFullSolution() {
+      this.addDebugLog('Starting generateFullSolution');
+
       // Clear existing solution
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
@@ -553,24 +634,56 @@ export const useGameStore = defineStore('game', {
       // Keep placing queens until we have a complete solution or no more moves
       let attempts = 0;
       const maxAttempts = 100;
+      let consecutiveFailures = 0;
+      const maxConsecutiveFailures = 5;
+
+      this.addDebugLog(`Target: ${this.gridSize} queens, Max attempts: ${maxAttempts}`);
 
       // Try to solve the puzzle
-      while (!this.isComplete && attempts < maxAttempts) {
+      while (this.queenPositions.length < this.gridSize && attempts < maxAttempts) {
+        attempts++;
+
+        if (attempts % 10 === 0) {
+          this.addDebugLog(
+            `Attempt ${attempts}: ${this.queenPositions.length}/${this.gridSize} queens placed`
+          );
+        }
+
         const success = this.placeRandomQueen();
         if (!success) {
-          // If we can't place more queens, restart and try again
-          this.clearQueensAndFlags();
+          consecutiveFailures++;
+          this.addDebugLog(`Placement failed, consecutive failures: ${consecutiveFailures}`);
+
+          if (consecutiveFailures >= maxConsecutiveFailures) {
+            this.addDebugLog('Too many consecutive failures, resetting board');
+            this.clearQueensAndFlags();
+            consecutiveFailures = 0;
+          }
+        } else {
+          consecutiveFailures = 0; // Reset failure counter on success
         }
-        attempts++;
       }
 
-      // Record the final queen placements in our solution data
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          if (this.playerMarks[row][col] === 'queen') {
-            this.grid[row][col].isSolutionQueen = true;
+      const finalQueenCount = this.queenPositions.length;
+      this.addDebugLog(
+        `Generation complete: ${finalQueenCount}/${this.gridSize} queens after ${attempts} attempts`
+      );
+
+      if (finalQueenCount === this.gridSize) {
+        // Record the final queen placements in our solution data
+        for (let row = 0; row < this.gridSize; row++) {
+          for (let col = 0; col < this.gridSize; col++) {
+            if (this.playerMarks[row][col] === 'queen') {
+              this.grid[row][col].isSolutionQueen = true;
+            }
           }
         }
+        this.addDebugLog('✅ Full solution generated and saved');
+      } else {
+        this.addDebugLog(
+          `❌ Failed to generate full solution: only ${finalQueenCount}/${this.gridSize} queens placed`
+        );
+        this.setError(`Could not place all queens: ${finalQueenCount}/${this.gridSize} placed`);
       }
     },
 

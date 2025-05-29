@@ -78,7 +78,6 @@ export interface GameState {
 
   // Game progress
   currentLevel: number;
-  availableMoves: Pos[];
   isComplete: boolean;
   errorMessage: string | null;
   savedPuzzles: { name: string; grid: GridSquare[][]; gridSize: number }[];
