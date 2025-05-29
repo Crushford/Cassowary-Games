@@ -200,7 +200,6 @@ export const useGameStore = defineStore('game', {
           this.playerMarks = lastPlayerMarks;
 
           this.updateAvailableMoves();
-          this.checkCompletion();
         }
       }
     },
@@ -223,12 +222,6 @@ export const useGameStore = defineStore('game', {
         this.placeFlag(row, col);
       } else if (currentState === 'flag') {
         this.placeQueen(row, col);
-      } else if (currentState === 'queen' || currentState === 'invalid') {
-        // Clear the square (set to null)
-        this.saveToHistory();
-        this.playerMarks[row][col] = null;
-        this.updateAvailableMoves();
-        this.checkCompletion();
       }
     },
 
@@ -248,15 +241,6 @@ export const useGameStore = defineStore('game', {
       const { row, col } = this.availableMoves[randomIndex];
       this.setError(null);
       return this.placeQueen(row, col);
-    },
-
-    checkCompletion() {
-      const { queenCountValid, colorGroupsValid } = validatePuzzleState(
-        this.grid,
-        this.playerMarks,
-        this.gridSize
-      );
-      this.isComplete = queenCountValid && colorGroupsValid;
     },
 
     setError(message: string | null) {
@@ -290,6 +274,10 @@ export const useGameStore = defineStore('game', {
 
       this.isComplete = false;
       this.updateAvailableMoves();
+    },
+
+    clearMarkers() {
+      clearMarkers(this.playerMarks);
     },
 
     hasAnySolutionQueens(): boolean {
@@ -1247,7 +1235,7 @@ export const useGameStore = defineStore('game', {
       return this.playerMarks[row][col] === 'invalid';
     },
 
-    getSquareState(row: number, col: number): MarkType {
+    getPlayerMarking(row: number, col: number): MarkType {
       return this.playerMarks[row][col];
     },
 
@@ -1339,7 +1327,6 @@ export const useGameStore = defineStore('game', {
       if (mark === 'queen') {
         this.updateBlockedMoves();
         this.updateAvailableMoves();
-        this.checkCompletion();
       }
     },
 

@@ -66,7 +66,7 @@ const exportText = computed(() => {
         }
         colorGroups.get(color)!.push(`(${row},${col})`);
       }
-      if (gameStore.getSquareState(row, col) === null) {
+      if (gameStore.getPlayerMarking(row, col) === null) {
         emptySquares.push(`(${row},${col})`);
       }
     }
@@ -81,7 +81,7 @@ const exportText = computed(() => {
   let invalidCount = 0;
   for (let row = 0; row < gameStore.gridSize; row++) {
     for (let col = 0; col < gameStore.gridSize; col++) {
-      if (gameStore.getSquareState(row, col) === 'invalid') {
+      if (gameStore.getPlayerMarking(row, col) === 'invalid') {
         invalidCount++;
       }
     }

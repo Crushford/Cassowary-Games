@@ -196,7 +196,7 @@ function handleBlockRowsAndColumns() {
 
 function handleResetBoard() {
   // Only clear queens and flags, preserve colors
-  gameStore.clearQueensAndFlags();
+  gameStore.clearMarkers();
 }
 
 function clearLogs() {

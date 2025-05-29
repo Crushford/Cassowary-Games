@@ -10,7 +10,7 @@
       <template v-for="rowIndex in gameStore.gridSize" :key="rowIndex">
         <Square
           v-for="colIndex in gameStore.gridSize"
-          :key="colIndex"
+          :key="`${rowIndex}-${colIndex}`"
           :row="rowIndex - 1"
           :col="colIndex - 1"
           :mode="mode"
@@ -19,7 +19,7 @@
     </div>
 
     <!-- Control Buttons -->
-    <div v-if="showControls" class="mt-4 flex gap-4">
+    <div class="mt-4 flex gap-4">
       <button
         v-if="mode === 'player'"
         @click="gameStore.handleUndo()"
@@ -29,17 +29,10 @@
       </button>
       <button
         v-if="mode === 'player'"
-        @click="gameStore.clearQueensAndFlags()"
+        @click="gameStore.clearMarkers()"
         class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
       >
         Reset
-      </button>
-      <button
-        v-if="mode === 'solution'"
-        @click="gameStore.generateFullSolution"
-        class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-      >
-        Generate Solution
       </button>
     </div>
   </div>
