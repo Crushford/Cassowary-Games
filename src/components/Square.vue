@@ -1,52 +1,73 @@
 <template>
-  <div
-    class="aspect-square w-full cursor-pointer rounded-lg border-2 transition-colors duration-200"
+  <button
+    class="aspect-square w-full rounded-lg border-2 transition-colors duration-200 min-h-[40px] relative"
     :class="squareClasses"
     @click="handleClick"
   >
-    <div class="flex h-full items-center justify-center text-2xl">
-      <span v-if="squareState === 'flag'">🚩</span>
-      <span v-else-if="squareState === 'queen'">👑</span>
-      <span v-else-if="squareState === 'invalid'">❌</span>
-    </div>
-  </div>
+    <!-- Solution mode: only show solution queens -->
+    <template v-if="props.mode === 'solution'">
+      <span v-if="isSolutionQueen">👑</span>
+    </template>
+
+    <!-- Player mode: show player marks (flags, queens, invalid) -->
+    <template v-else>
+      <span v-if="playerMark === 'flag'">🚩</span>
+      <span v-else-if="playerMark === 'queen'">👑</span>
+      <span v-else-if="playerMark === 'invalid'">❌</span>
+    </template>
+  </button>
 </template>
 
 <script setup lang="ts">
 import { useGameStore } from '../stores/gameStore';
 import { computed } from 'vue';
-import type { SquareProps } from '../types/types';
 
-const props = defineProps<SquareProps>();
+const props = defineProps<{
+  row: number;
+  col: number;
+  mode: 'solution' | 'player';
+}>();
+
 const gameStore = useGameStore();
 
-const squareState = computed(() => {
-  return gameStore.grid[props.row][props.col].state;
+// Get player mark state for player mode
+const playerMark = computed(() => {
+  return gameStore.getPlayerMarking(props.row, props.col);
 });
 
+// Check if this square has a solution queen for solution mode
+const isSolutionQueen = computed(() => {
+  return gameStore.solutionQueenPositions.some((q) => q.row === props.row && q.col === props.col);
+});
+
+// Get color from the grid
 const groupColor = computed(() => {
   return gameStore.grid[props.row][props.col].groupColor;
 });
 
 const squareClasses = computed(() => {
   const hasGroupColor = !!groupColor.value;
-  const state = squareState.value;
 
-  // Apply background color based on group
-  if (hasGroupColor) {
-    return {
-      [`bg-group-${groupColor.value}-700`]: true,
-    };
-  }
-
-  // Apply border colors based on state
-  return {
-    'border-primary': state === 'flag',
-    'border-secondary': state === 'queen' || state === 'invalid',
+  let classes: Record<string, boolean> = {
+    // Color group background
+    [`bg-group-${groupColor.value}-700`]: hasGroupColor,
   };
+
+  // Add player-mode specific styling
+
+  return hasGroupColor && [`bg-group-${groupColor.value}-700`];
 });
 
 const handleClick = () => {
-  gameStore.handleSquareClick(props.row, props.col);
+  // Only handle clicks in player mode
+  if (props.mode === 'player') {
+    gameStore.handleSquareClick(props.row, props.col);
+  }
+};
+</script>
+
+<script lang="ts">
+export default {
+  name: 'Square',
 };
 </script>

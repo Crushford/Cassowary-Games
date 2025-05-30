@@ -34,14 +34,17 @@ export interface UIState {
 }
 
 /**
- * Represents a single square in the game grid (legacy format).
- * Will be phased out as we transition to the new data model.
+ * Represents a mark on a grid square
+ */
+export type MarkType = null | 'flag' | 'queen' | 'invalid';
+
+/**
+ * Represents a single square in the game grid.
  */
 export interface GridSquare {
   position: Pos;
-  state: 'empty' | 'queen' | 'flag' | 'invalid';
   groupColor?: string;
-  playerMark?: 'queen' | 'flag';
+  isSolutionQueen?: boolean;
 }
 
 /**
@@ -60,25 +63,25 @@ export interface AttemptResult {
  * Represents the complete game state.
  */
 export interface GameState {
-  // Legacy grid format - will be phased out
+  // Core game state
   grid: GridSquare[][];
   gridSize: number;
-  moveHistory: { grid: GridSquare[][] }[];
+  moveHistory: MarkType[][][];
+  playerMarks: MarkType[][]; // N×N matrix of player marks
 
-  // New data model
-  puzzleGrid: PuzzleGrid;
-  playerGrid: PlayerGrid;
-  uiState: UIState;
+  // UI state
+  uiState: {
+    showSolution: boolean;
+    selectedTool: 'queen' | 'flag' | 'color' | null;
+    selectedColor: string | null;
+  };
 
-  // Other state
+  // Game progress
   currentLevel: number;
-  availableMoves: Pos[];
   isComplete: boolean;
   errorMessage: string | null;
   savedPuzzles: { name: string; grid: GridSquare[][]; gridSize: number }[];
   currentPuzzle: string | null;
-  currentSolution: Pos[];
-  solutionQueens: Pos[];
   debugLogs: string[];
   colorToolActive: boolean;
   colorToolSelectedColor: string | null;
@@ -91,13 +94,7 @@ export interface GameState {
 export interface SquareProps {
   row: number;
   col: number;
-}
-
-/**
- * Props for the DebugGrid component.
- */
-export interface DebugGridProps {
-  grid: GridSquare[][];
+  mode?: 'player' | 'solution';
 }
 
 /**
