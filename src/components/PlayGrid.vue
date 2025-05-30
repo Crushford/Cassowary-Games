@@ -47,7 +47,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
 import { COLOR_BG_HOVER_CLASSES } from '@/utils/colorPalette';
-import COLOR_BG_IMAGES from '@/utils/colorPalette';
+import { COLOR_BG_IMAGES } from '@/utils/colorPalette';
 import { ColorName } from '../types/types';
 import { useGameStore } from '../stores/gameStore';
 
