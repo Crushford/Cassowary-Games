@@ -118,6 +118,25 @@ export const COLOR_BG_HOVER_CLASSES: Record<ColorName, string> = {
   amber: 'bg-amber-500/50 hover:bg-amber-500/70',
 };
 
+export const COLOR_BG_IMAGES: Record<ColorName, string> = {
+  red: 'background-image: url("/assets/red.png"); background-size: cover; background-position: center;',
+  blue: 'background-image: url("/assets/blue.png"); background-size: cover; background-position: center;',
+  green:
+    'background-image: url("/assets/green.png"); background-size: cover; background-position: center;',
+  yellow:
+    'background-image: url("/assets/yellow.png"); background-size: cover; background-position: center;',
+  purple:
+    'background-image: url("/assets/purple.png"); background-size: cover; background-position: center;',
+  pink: 'background-image: url("/assets/pink.png"); background-size: cover; background-position: center;',
+  orange:
+    'background-image: url("/assets/orange.png"); background-size: cover; background-position: center;',
+  teal: 'background-image: url("/assets/teal.png"); background-size: cover; background-position: center;',
+  indigo:
+    'background-image: url("/assets/indigo.png"); background-size: cover; background-position: center;',
+  amber:
+    'background-image: url("/assets/amber.png"); background-size: cover; background-position: center;',
+};
+
 // Get a subset of the main palette with a specific size
 export function getColorPalette(size = 10): ColorName[] {
   if (size > COLOR_PALETTE.length) {
