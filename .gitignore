@@ -28,3 +28,12 @@ dist-ssr
 !.yarn/releases
 !.yarn/cache
 !.yarn/install-state.gz
+
+# Build output
+/dist
+
+# TypeScript build info
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+vite.config.d.ts
