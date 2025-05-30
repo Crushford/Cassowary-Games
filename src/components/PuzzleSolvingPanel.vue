@@ -66,10 +66,6 @@
     <div class="flex flex-col gap-2 p-4 bg-slate-700 rounded-lg">
       <h3 class="text-lg font-medium text-white mb-2">Validation Results</h3>
       <div class="flex items-center gap-2">
-        <span :class="checkmarkClass(isSolvable)">{{ isSolvable ? '✅' : '❌' }}</span>
-        <span class="text-white">Puzzle is solvable</span>
-      </div>
-      <div class="flex items-center gap-2">
         <span :class="checkmarkClass(colorsConnected)">{{ colorsConnected ? '✅' : '❌' }}</span>
         <span class="text-white">All colors connected</span>
       </div>
@@ -86,6 +82,27 @@
         <span class="text-white">Correct number of queens</span>
       </div>
     </div>
+
+    <!-- Brute Force Solver Section -->
+    <div class="flex flex-col gap-2 p-4 bg-slate-700 rounded-lg">
+      <h3 class="text-lg font-medium text-white mb-2">Solution Uniqueness</h3>
+      <div class="flex flex-col gap-2">
+        <BaseButton
+          @click="handleBruteForceSolve"
+          :disabled="!canRunSteps"
+          disabledTitle="Place queens first"
+          class="bg-purple-600 hover:bg-purple-500 text-lg font-medium"
+        >
+          🔍 Check Solution Uniqueness
+        </BaseButton>
+        <div v-if="solutionCount !== null" class="text-white">
+          Found {{ solutionCount }} solution{{ solutionCount !== 1 ? 's' : '' }}
+          <span v-if="solutionCount > 1" class="text-yellow-400">
+            (Puzzle has multiple solutions!)
+          </span>
+        </div>
+      </div>
+    </div>
   </aside>
 </template>
 
@@ -99,11 +116,6 @@ const Accordion = defineAsyncComponent(() => import('./Accordion.vue'));
 const gameStore = useGameStore();
 
 // Computed properties for validation states
-const isSolvable = computed(() => {
-  const { queenCountValid, allFilled, colorGroupsValid } = gameStore.validatePuzzle();
-  return queenCountValid && allFilled && colorGroupsValid;
-});
-
 const colorsConnected = computed(() => {
   const colors = new Set<string>();
   for (let row = 0; row < gameStore.gridSize; row++) {
@@ -145,6 +157,9 @@ const checkmarkClass = (isValid: boolean) => {
   return isValid ? 'text-green-500' : 'text-red-500';
 };
 
+// Add solution count ref
+const solutionCount = ref<number | null>(null);
+
 // Methods
 function handleRunAllSteps() {
   gameStore.runAllSolverSteps();
@@ -172,10 +187,16 @@ function handleBlockRowsAndColumns() {
 
 function handleResetBoard() {
   // Only clear queens and flags, preserve colors
-  gameStore.clearQueensAndFlags();
+  gameStore.clearMarkers();
 }
 
 function clearLogs() {
   gameStore.debugLogs = [];
+}
+
+// Add brute force solver handler
+function handleBruteForceSolve() {
+  solutionCount.value = gameStore.bruteForceSolver(5);
+  gameStore.addDebugLog(`Brute force solver found ${solutionCount.value} solutions`);
 }
 </script>

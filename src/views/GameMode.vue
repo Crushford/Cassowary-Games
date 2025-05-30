@@ -4,7 +4,7 @@
       <!-- Header -->
       <div class="flex flex-col justify-between items-center mb-4 gap-3">
         <h1 class="text-lg font-bold text-gray-100 text-center truncate">
-          {{ gameStore.currentPuzzle || `Level ${currentLevel}` }}
+          {{ gameStore.currentPuzzle || 'Puzzle' }}
         </h1>
         <button
           v-if="gameStore.currentPuzzle"
@@ -48,7 +48,7 @@
       <div v-else class="flex flex-col items-center w-full">
         <!-- responsive square + scroll -->
         <div class="w-full aspect-square">
-          <GameGrid @undo="handleUndo" @restart="clearQueensAndFlags" />
+          <PlayGrid @undo="handleUndo" @restart="clearQueensAndFlags" />
         </div>
       </div>
     </div>
@@ -57,12 +57,10 @@
 
 <script setup lang="ts">
 import { useGameStore } from '../stores/gameStore';
-import GameGrid from '../components/GameGrid.vue';
-import { storeToRefs } from 'pinia';
+import PlayGrid from '../components/PlayGrid.vue';
 import { ref, onMounted } from 'vue';
 
 const gameStore = useGameStore();
-const { currentLevel, isComplete } = storeToRefs(gameStore);
 const showPuzzleSelect = ref(true);
 
 onMounted(() => {
@@ -75,14 +73,6 @@ const handleUndo = () => {
 
 const clearQueensAndFlags = () => {
   gameStore.clearQueensAndFlags();
-};
-
-const handlePrevLevel = () => {
-  gameStore.handlePreviousLevel();
-};
-
-const handleNextLevel = () => {
-  gameStore.handleNextLevel();
 };
 
 const loadPuzzle = (puzzleName: string) => {

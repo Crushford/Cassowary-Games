@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import type { GridSquare, Pos, GameState, AttemptResult } from '../types/types';
+import type { GridSquare, Pos, GameState, AttemptResult, MarkType } from '../types/types';
 // Import utility functions
 import {
   createEmptyGrid,
@@ -8,12 +8,12 @@ import {
   clearMarkers,
   validatePuzzleState,
   isValidPosition,
-  cloneGrid,
   queenAttacks,
   countEmptyCells,
   countCellsWithState,
   getColorDistribution,
-} from './gameStoreUtils';
+  clonePlayerMarks,
+} from './gridUtils';
 import {
   assignColors,
   ensureNoSingletonColorBlocks,
@@ -29,48 +29,58 @@ import {
   blockRowsAndColumns,
   runAllSolverSteps,
 } from './solver';
+import { bruteForceSolver } from './bruteForceSolver';
 
 export const useGameStore = defineStore('game', {
   state: (): GameState => ({
-    // Legacy grid format
+    // Core game state
     grid: createEmptyGrid(6),
     gridSize: 6,
     moveHistory: [],
-    currentLevel: 1,
-    availableMoves: [],
-    isComplete: false,
-    errorMessage: null,
-    savedPuzzles: [],
-    currentPuzzle: null,
-    currentSolution: [],
-    debugLogs: [], // Initialize as empty array
-    colorToolActive: false,
-    colorToolSelectedColor: null as string | null,
-    solutionQueens: [],
-    verboseMode: false, // Add verbose mode flag
+    playerMarks: Array.from({ length: 6 }, () => Array(6).fill(null as MarkType)),
 
-    // New data model
-    puzzleGrid: {
-      size: 6,
-      colorGroups: new Map<string, string>(),
-      solution: [],
-    },
-    playerGrid: {
-      queens: [],
-      flags: [],
-      invalid: [],
-    },
+    // UI state
     uiState: {
       showSolution: false,
       selectedTool: null,
       selectedColor: null,
     },
+
+    // Game progress
+    currentLevel: 1,
+    isComplete: false,
+    errorMessage: null,
+    savedPuzzles: [],
+    currentPuzzle: null,
+    debugLogs: [],
+    colorToolActive: false,
+    colorToolSelectedColor: null,
+    verboseMode: false,
   }),
 
   getters: {
-    // Use getQueenPositions utility
     queenPositions: (state): Pos[] => {
-      return getQueenPositions(state.grid);
+      const positions: Pos[] = [];
+      for (let row = 0; row < state.gridSize; row++) {
+        for (let col = 0; col < state.gridSize; col++) {
+          if (state.playerMarks[row][col] === 'queen') {
+            positions.push({ row, col });
+          }
+        }
+      }
+      return positions;
+    },
+
+    solutionQueenPositions: (state): Pos[] => {
+      const sol: Pos[] = [];
+      for (let r = 0; r < state.gridSize; r++) {
+        for (let c = 0; c < state.gridSize; c++) {
+          if (state.grid[r][c].isSolutionQueen) {
+            sol.push({ row: r, col: c });
+          }
+        }
+      }
+      return sol;
     },
 
     isValidMove: (state) => (row: number, col: number) => {
@@ -78,7 +88,7 @@ export const useGameStore = defineStore('game', {
 
       // Check if there's a queen in the same row or column
       for (let i = 0; i < state.gridSize; i++) {
-        if (state.grid[row][i].state === 'queen' || state.grid[i][col].state === 'queen') {
+        if (state.playerMarks[row][i] === 'queen' || state.playerMarks[i][col] === 'queen') {
           return false;
         }
       }
@@ -94,7 +104,7 @@ export const useGameStore = defineStore('game', {
       for (const pos of diagonalPositions) {
         if (
           isValidPosition(state.grid, pos.r, pos.c) &&
-          state.grid[pos.r][pos.c].state === 'queen'
+          state.playerMarks[pos.r][pos.c] === 'queen'
         ) {
           return false;
         }
@@ -105,7 +115,7 @@ export const useGameStore = defineStore('game', {
         for (let r = 0; r < state.gridSize; r++) {
           for (let c = 0; c < state.gridSize; c++) {
             if (
-              state.grid[r][c].state === 'queen' &&
+              state.playerMarks[r][c] === 'queen' &&
               state.grid[r][c].groupColor === square.groupColor
             ) {
               return false;
@@ -120,27 +130,16 @@ export const useGameStore = defineStore('game', {
 
   actions: {
     initializeGrid() {
-      // Reset debug logs to ensure it's an array
       this.debugLogs = [];
-
-      // Legacy grid initialization
       this.grid = createEmptyGrid(this.gridSize);
       this.moveHistory = [];
       this.isComplete = false;
 
-      // New model initialization
-      this.puzzleGrid.size = this.gridSize;
-      this.puzzleGrid.colorGroups.clear();
-      this.puzzleGrid.solution = [];
-
-      this.playerGrid.queens = [];
-      this.playerGrid.flags = [];
-      this.playerGrid.invalid = [];
-
-      this.updateAvailableMoves();
-
-      // Add a test debug log
-      this.addDebugLog('Grid initialized with size: ' + this.gridSize);
+      // Initialize playerMarks matrix
+      this.playerMarks = Array.from({ length: this.gridSize }, () =>
+        Array(this.gridSize).fill(null as MarkType)
+      );
+      this.addDebugLog('playerMarks RESET by initializeGrid');
     },
 
     // Helper method to add debug logs
@@ -150,64 +149,41 @@ export const useGameStore = defineStore('game', {
         console.warn('debugLogs was not an array, resetting it', this.debugLogs);
         this.debugLogs = [];
       }
-      this.debugLogs.push(message);
-      console.log('Added debug log:', message);
-    },
 
-    updateAvailableMoves() {
-      // Use computeAvailableMoves utility
-      this.availableMoves = computeAvailableMoves(this.grid, (row, col) =>
-        this.isValidMove(row, col)
-      );
-    },
+      // Add timestamp to debug messages
+      const timestamp = new Date().toLocaleTimeString();
+      const logMessage = `[${timestamp}] ${message}`;
 
+      this.debugLogs.push(logMessage);
+
+      // Keep only last 1000 entries to prevent memory issues
+      if (this.debugLogs.length > 1000) {
+        this.debugLogs = this.debugLogs.slice(-500);
+      }
+
+      console.log('Debug log:', logMessage);
+    },
     placeFlag(row: number, col: number) {
-      if (this.grid[row][col].state !== 'empty') return false;
-
-      this.saveToHistory();
-
-      // Update legacy grid
-      this.grid[row][col].state = 'flag';
-      this.grid[row][col].playerMark = 'flag';
-
-      // Update new model
-      this.playerGrid.flags.push({ row, col });
-
+      this.setPlayerMark(row, col, 'flag');
       return true;
     },
 
     placeQueen(row: number, col: number) {
       if (!this.isValidMove(row, col)) {
-        // Update legacy grid
-        this.grid[row][col].state = 'invalid';
-
-        // Update new model
-        this.playerGrid.invalid.push({ row, col });
-
+        this.setPlayerMark(row, col, 'invalid');
         return false;
       }
 
-      this.saveToHistory();
-
-      // Update legacy grid
-      this.grid[row][col].state = 'queen';
-      this.grid[row][col].playerMark = 'queen';
-
-      // Update new model
-      this.playerGrid.queens.push({ row, col });
-
-      this.updateBlockedMoves();
-      this.updateAvailableMoves();
-      this.checkCompletion();
+      this.setPlayerMark(row, col, 'queen');
       return true;
     },
 
     updateBlockedMoves() {
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state === 'empty') {
+          if (this.playerMarks[row][col] === null) {
             if (!this.isValidMove(row, col)) {
-              this.grid[row][col].state = 'flag';
+              this.playerMarks[row][col] = 'flag';
             }
           }
         }
@@ -215,19 +191,15 @@ export const useGameStore = defineStore('game', {
     },
 
     saveToHistory() {
-      // Use cloneGrid utility
-      this.moveHistory.push({
-        grid: cloneGrid(this.grid),
-      });
+      this.moveHistory.push(clonePlayerMarks(this.playerMarks));
     },
 
     handleUndo() {
       if (this.moveHistory.length > 0) {
-        const lastState = this.moveHistory.pop();
-        if (lastState) {
-          this.grid = lastState.grid;
-          this.updateAvailableMoves();
-          this.checkCompletion();
+        const lastPlayerMarks = this.moveHistory.pop();
+        if (lastPlayerMarks) {
+          this.playerMarks = lastPlayerMarks;
+          this.addDebugLog('playerMarks RESET by handleUndo');
         }
       }
     },
@@ -245,36 +217,99 @@ export const useGameStore = defineStore('game', {
     },
 
     handleSquareClick(row: number, col: number) {
-      const currentState = this.grid[row][col].state;
-      if (currentState === 'empty') {
+      const currentState = this.playerMarks[row][col];
+      if (currentState === null) {
         this.placeFlag(row, col);
       } else if (currentState === 'flag') {
         this.placeQueen(row, col);
       }
     },
 
+    /**
+     * Attempts to place all queens on the board using knight-move preference and full backtracking.
+     * Returns true if a solution is found, false otherwise.
+     */
     placeRandomQueen(): boolean {
-      if (this.availableMoves.length === 0) {
-        // If we have no valid moves but not all queens are placed,
-        // we're in a dead end. Reset the grid instead of showing error.
-        if (this.queenPositions.length < this.gridSize) {
-          this.clearQueensAndFlags();
-          return this.placeRandomQueen(); // Try again with fresh grid
+      const maxAttempts = 1000; // Max total attempts before full reset
+      let attempts = 0;
+      const gridSize = this.gridSize;
+      const moveStack: { row: number; col: number; prevMarks: MarkType[][] }[] = [];
+      const verbose = this.verboseMode;
+
+      // Helper: Get all valid moves (optionally only knight-moves from last queen)
+      const getValidMoves = (preferKnight: boolean): { row: number; col: number }[] => {
+        const moves: { row: number; col: number }[] = [];
+        let knightMoves: { row: number; col: number }[] = [];
+        let lastQueen = null;
+        // Find last queen placed
+        for (let r = 0; r < gridSize; r++) {
+          for (let c = 0; c < gridSize; c++) {
+            if (this.playerMarks[r][c] === 'queen') lastQueen = { row: r, col: c };
+          }
         }
+        for (let row = 0; row < gridSize; row++) {
+          for (let col = 0; col < gridSize; col++) {
+            if (this.playerMarks[row][col] === null && this.isValidMove(row, col)) {
+              moves.push({ row, col });
+              if (lastQueen) {
+                const dr = Math.abs(row - lastQueen.row);
+                const dc = Math.abs(col - lastQueen.col);
+                if ((dr === 2 && dc === 1) || (dr === 1 && dc === 2)) {
+                  knightMoves.push({ row, col });
+                }
+              }
+            }
+          }
+        }
+        return preferKnight && knightMoves.length > 0 ? knightMoves : moves;
+      };
 
-        this.setError('No valid moves available');
+      // Helper: Deep clone playerMarks
+      const cloneMarks = (marks: MarkType[][]) => marks.map((row) => [...row]);
+
+      // Recursive backtracking function
+      const backtrack = (queensPlaced: number): boolean => {
+        if (queensPlaced === gridSize) return true;
+        if (++attempts > maxAttempts) return false;
+
+        // Try knight-moves first, then any valid move
+        const moves = getValidMoves(true);
+        if (moves.length === 0) return false;
+        // Shuffle moves for randomness
+        for (let i = moves.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [moves[i], moves[j]] = [moves[j], moves[i]];
+        }
+        for (const { row, col } of moves) {
+          // Save state for backtracking
+          const prevMarks = cloneMarks(this.playerMarks);
+          // Simulate player: place flag, then queen
+          this.setPlayerMark(row, col, 'flag');
+          this.setPlayerMark(row, col, 'queen');
+          this.updateBlockedMoves();
+          if (verbose)
+            this.addDebugLog(`Tried queen at (${row},${col}), stack depth ${queensPlaced + 1}`);
+          if (backtrack(queensPlaced + 1)) return true;
+          // Backtrack
+          for (let r = 0; r < gridSize; r++) {
+            for (let c = 0; c < gridSize; c++) {
+              this.playerMarks[r][c] = prevMarks[r][c];
+            }
+          }
+          if (verbose)
+            this.addDebugLog(`Backtracked from (${row},${col}), stack depth ${queensPlaced + 1}`);
+        }
         return false;
-      }
-      const randomIndex = Math.floor(Math.random() * this.availableMoves.length);
-      const { row, col } = this.availableMoves[randomIndex];
-      this.setError(null);
-      return this.placeQueen(row, col);
-    },
+      };
 
-    checkCompletion() {
-      // Use validatePuzzleState utility
-      const { queenCountValid, colorGroupsValid } = validatePuzzleState(this.grid, this.gridSize);
-      this.isComplete = queenCountValid && colorGroupsValid;
+      // Clear board before starting
+      this.clearQueensAndFlags();
+      let success = backtrack(0);
+      if (!success && verbose)
+        this.addDebugLog(
+          'Failed to generate a random queen placement after max attempts, resetting.'
+        );
+      return success;
     },
 
     setError(message: string | null) {
@@ -291,39 +326,49 @@ export const useGameStore = defineStore('game', {
       this.setError(null);
     },
 
-    clearQueensAndFlags() {
-      // Save current queen positions as the solution if not already set
-      if (this.puzzleGrid.solution.length === 0 && this.queenPositions.length > 0) {
-        this.puzzleGrid.solution = [...this.queenPositions];
-        this.solutionQueens = [...this.queenPositions];
-      }
-
-      // Clear only the player grid
-      this.playerGrid.queens = [];
-      this.playerGrid.flags = [];
-      this.playerGrid.invalid = [];
-
-      // Legacy: Use clearMarkers utility
-      clearMarkers(this.grid);
-      // Reset player marks
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          this.grid[row][col].playerMark = undefined;
+    clearQueensAndFlags(): void {
+      // Save current queen positions as the solution
+      if (!this.hasAnySolutionQueens() && this.queenPositions.length > 0) {
+        for (let row = 0; row < this.gridSize; row++) {
+          for (let col = 0; col < this.gridSize; col++) {
+            if (this.playerMarks[row][col] === 'queen') {
+              this.grid[row][col].isSolutionQueen = true;
+            }
+          }
         }
       }
 
+      // Clear all playerMarks
+      clearMarkers(this.playerMarks);
+      this.addDebugLog('playerMarks CLEARED by clearQueensAndFlags');
+
       this.isComplete = false;
-      this.updateAvailableMoves();
+    },
+
+    clearMarkers() {
+      clearMarkers(this.playerMarks);
+      this.addDebugLog('playerMarks CLEARED by clearMarkers');
+    },
+
+    hasAnySolutionQueens(): boolean {
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].isSolutionQueen) {
+            return true;
+          }
+        }
+      }
+      return false;
     },
 
     // Replace original countFlags with more generic countCellsWithState utility
     countFlags() {
-      return countCellsWithState(this.grid, 'flag');
+      return countCellsWithState(this.grid, this.playerMarks, 'flag');
     },
 
     // Replace original countEmptySquares with utility
     countEmptySquares() {
-      return countEmptyCells(this.grid);
+      return countEmptyCells(this.grid, this.playerMarks);
     },
 
     // Use isValidPosition utility to simplify this method
@@ -333,7 +378,11 @@ export const useGameStore = defineStore('game', {
 
     // Use validatePuzzleState utility for validation
     validatePuzzle() {
-      const { queenCountValid, colorGroupsValid } = validatePuzzleState(this.grid, this.gridSize);
+      const { queenCountValid, colorGroupsValid } = validatePuzzleState(
+        this.grid,
+        this.playerMarks,
+        this.gridSize
+      );
       const allFilled = this.countEmptySquares() === 0;
       return { queenCountValid, allFilled, colorGroupsValid };
     },
@@ -438,7 +487,7 @@ export const useGameStore = defineStore('game', {
       );
     },
 
-    setSquareColor(row: number, col: number, color: string) {
+    setSquareColor(row: number, col: number, color: string | undefined) {
       this.saveToHistory();
       this.grid[row][col].groupColor = color;
       this.addDebugLog(`Set color of square (${row}, ${col}) to ${color}`);
@@ -577,35 +626,69 @@ export const useGameStore = defineStore('game', {
 
     // New method to generate a full solution
     generateFullSolution() {
-      // Clear existing solution
-      this.puzzleGrid.solution = [];
+      this.addDebugLog('Starting generateFullSolution');
 
-      // Clear previous queen positions
+      // Clear existing solution
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state === 'queen') {
-            this.grid[row][col].state = 'empty';
-          }
+          this.grid[row][col].isSolutionQueen = false;
         }
       }
 
       // Keep placing queens until we have a complete solution or no more moves
       let attempts = 0;
       const maxAttempts = 100;
+      let consecutiveFailures = 0;
+      const maxConsecutiveFailures = 5;
+
+      this.addDebugLog(`Target: ${this.gridSize} queens, Max attempts: ${maxAttempts}`);
 
       // Try to solve the puzzle
-      while (!this.isComplete && attempts < maxAttempts) {
+      while (this.queenPositions.length < this.gridSize && attempts < maxAttempts) {
+        attempts++;
+
+        if (attempts % 10 === 0) {
+          this.addDebugLog(
+            `Attempt ${attempts}: ${this.queenPositions.length}/${this.gridSize} queens placed`
+          );
+        }
+
         const success = this.placeRandomQueen();
         if (!success) {
-          // If we can't place more queens, restart and try again
-          this.clearQueensAndFlags();
+          consecutiveFailures++;
+          this.addDebugLog(`Placement failed, consecutive failures: ${consecutiveFailures}`);
+
+          if (consecutiveFailures >= maxConsecutiveFailures) {
+            this.addDebugLog('Too many consecutive failures, resetting board');
+            this.clearQueensAndFlags();
+            consecutiveFailures = 0;
+          }
+        } else {
+          consecutiveFailures = 0; // Reset failure counter on success
         }
-        attempts++;
       }
 
-      // Record the final queen placements in our solution data
-      this.puzzleGrid.solution = [...this.queenPositions];
-      this.currentSolution = [...this.queenPositions];
+      const finalQueenCount = this.queenPositions.length;
+      this.addDebugLog(
+        `Generation complete: ${finalQueenCount}/${this.gridSize} queens after ${attempts} attempts`
+      );
+
+      if (finalQueenCount === this.gridSize) {
+        // Record the final queen placements in our solution data
+        for (let row = 0; row < this.gridSize; row++) {
+          for (let col = 0; col < this.gridSize; col++) {
+            if (this.playerMarks[row][col] === 'queen') {
+              this.grid[row][col].isSolutionQueen = true;
+            }
+          }
+        }
+        this.addDebugLog('✅ Full solution generated and saved');
+      } else {
+        this.addDebugLog(
+          `❌ Failed to generate full solution: only ${finalQueenCount}/${this.gridSize} queens placed`
+        );
+        this.setError(`Could not place all queens: ${finalQueenCount}/${this.gridSize} placed`);
+      }
     },
 
     savePuzzleToLocalStorage() {
@@ -627,9 +710,8 @@ export const useGameStore = defineStore('game', {
               (_, col) =>
                 ({
                   position: { row, col },
-                  state: 'empty' as const,
                   groupColor: undefined,
-                  playerMark: undefined,
+                  playerMark: null,
                 }) as GridSquare
             )
         );
@@ -637,19 +719,17 @@ export const useGameStore = defineStore('game', {
       // Copy only the queens and their color groups
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].state === 'queen') {
+          if (this.playerMarks[row][col] === 'queen') {
             puzzleGrid[row][col] = {
               position: { row, col },
-              state: 'queen' as const,
               groupColor: this.grid[row][col].groupColor,
               playerMark: 'queen' as const,
             } as GridSquare;
           } else if (this.grid[row][col].groupColor) {
             puzzleGrid[row][col] = {
               position: { row, col },
-              state: 'empty' as const,
               groupColor: this.grid[row][col].groupColor,
-              playerMark: undefined,
+              playerMark: null,
             } as GridSquare;
           }
         }
@@ -695,7 +775,6 @@ export const useGameStore = defineStore('game', {
       }
 
       this.currentPuzzle = puzzleName;
-      this.updateAvailableMoves();
       this.setError(null);
       return true;
     },
@@ -763,8 +842,7 @@ export const useGameStore = defineStore('game', {
 
         // Row content with queens
         for (let col = 0; col < this.gridSize; col++) {
-          const square = this.grid[row][col];
-          const symbol = square.state === 'queen' ? queenSymbol : emptySymbol;
+          const symbol = this.playerMarks[row][col] === 'queen' ? queenSymbol : emptySymbol;
           output += ` ${symbol}`;
         }
         output += '\n';
@@ -916,8 +994,12 @@ export const useGameStore = defineStore('game', {
             if (attemptResult.success) {
               // Restore the original solution
               this.clearQueensAndFlags();
-              for (const pos of this.puzzleGrid.solution) {
-                this.placeQueen(pos.row, pos.col);
+              for (let row = 0; row < this.gridSize; row++) {
+                for (let col = 0; col < this.gridSize; col++) {
+                  if (this.grid[row][col].isSolutionQueen) {
+                    this.placeQueen(row, col);
+                  }
+                }
               }
 
               const name = this.savePuzzleToLocalStorage();
@@ -988,31 +1070,37 @@ export const useGameStore = defineStore('game', {
 
     // Helper for step 1: Place queens in last free squares of color blocks, rows, or columns
     placeLastFreeQueens() {
-      return placeLastFreeQueens(this.grid, this.gridSize, (row, col) => this.placeQueen(row, col));
+      return placeLastFreeQueens(this.grid, this.playerMarks, this.gridSize, (row, col) =>
+        this.placeQueen(row, col)
+      );
     },
 
     // Helper for step 2: Flag squares where a queen would block all remaining squares in other color groups
     flagBlockingSquares() {
-      return flagBlockingSquares(this.grid, this.gridSize, (row, col) => this.placeFlag(row, col));
+      return flagBlockingSquares(this.grid, this.playerMarks, this.gridSize, (row, col) =>
+        this.placeFlag(row, col)
+      );
     },
 
     // Step 3: Constrained Row Elimination
     eliminateConstrainedRows() {
-      return eliminateConstrainedRows(this.grid, this.gridSize, (row, col) =>
+      return eliminateConstrainedRows(this.grid, this.playerMarks, this.gridSize, (row, col) =>
         this.placeFlag(row, col)
       );
     },
 
     // Step 4: Constrained Column Elimination
     eliminateConstrainedColumns() {
-      return eliminateConstrainedColumns(this.grid, this.gridSize, (row, col) =>
+      return eliminateConstrainedColumns(this.grid, this.playerMarks, this.gridSize, (row, col) =>
         this.placeFlag(row, col)
       );
     },
 
     // Step 5: Flag squares where a queen would block all remaining free squares in any row or column
     blockRowsAndColumns() {
-      return blockRowsAndColumns(this.grid, this.gridSize, (row, col) => this.placeFlag(row, col));
+      return blockRowsAndColumns(this.grid, this.playerMarks, this.gridSize, (row, col) =>
+        this.placeFlag(row, col)
+      );
     },
 
     // New: Loop through all steps until no changes
@@ -1020,6 +1108,7 @@ export const useGameStore = defineStore('game', {
       // Instead of creating a local array, we'll just pass our logging function
       runAllSolverSteps(
         this.grid,
+        this.playerMarks,
         this.gridSize,
         (row, col) => this.placeQueen(row, col),
         (row, col) => this.placeFlag(row, col),
@@ -1053,7 +1142,7 @@ export const useGameStore = defineStore('game', {
         if (positions.length === 1) {
           const { row, col } = positions[0];
           // Skip singleton if it's a queen to avoid duplicating color among queens
-          if (this.grid[row][col].state === 'queen') continue;
+          if (this.playerMarks[row][col] === 'queen') continue;
           const neighborColors = new Set<string>();
           for (const dir of directions) {
             const newR = row + dir.dr;
@@ -1078,13 +1167,20 @@ export const useGameStore = defineStore('game', {
     // Add action to randomly change the color of an empty square to an adjacent neighbor color
     forceChangeColor() {
       const empties: Pos[] = [];
+      // Check if any solution queens exist
+      let hasSolutionQueens = false;
+      for (let r = 0; r < this.gridSize && !hasSolutionQueens; r++) {
+        for (let c = 0; c < this.gridSize && !hasSolutionQueens; c++) {
+          if (this.grid[r][c].isSolutionQueen) {
+            hasSolutionQueens = true;
+          }
+        }
+      }
+
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
           // Skip solution cells so we don't change a square that should have a queen
-          if (
-            this.grid[row][col].state === 'empty' &&
-            !this.currentSolution.some((q) => q.row === row && q.col === col)
-          ) {
+          if (this.playerMarks[row][col] === null && !hasSolutionQueens) {
             empties.push({ row, col });
           }
         }
@@ -1218,128 +1314,110 @@ export const useGameStore = defineStore('game', {
     },
 
     getSquareColor(row: number, col: number): string | undefined {
-      return this.puzzleGrid.colorGroups.get(this.posToKey({ row, col }));
+      return this.grid[row][col].groupColor;
     },
 
     setSquareColorNew(row: number, col: number, color: string | undefined): void {
       const key = this.posToKey({ row, col });
       if (color) {
-        this.puzzleGrid.colorGroups.set(key, color);
+        this.grid[row][col].groupColor = color;
       } else {
-        this.puzzleGrid.colorGroups.delete(key);
+        this.grid[row][col].groupColor = undefined;
       }
     },
 
     isSquareQueen(row: number, col: number): boolean {
-      return this.playerGrid.queens.some((pos) => pos.row === row && pos.col === col);
+      return this.playerMarks[row][col] === 'queen';
     },
 
     isSquareFlag(row: number, col: number): boolean {
-      return this.playerGrid.flags.some((pos) => pos.row === row && pos.col === col);
+      return this.playerMarks[row][col] === 'flag';
     },
 
     isSquareInvalid(row: number, col: number): boolean {
-      return this.playerGrid.invalid.some((pos) => pos.row === row && pos.col === col);
+      return this.playerMarks[row][col] === 'invalid';
     },
 
-    getSquareState(row: number, col: number): 'empty' | 'queen' | 'flag' | 'invalid' {
-      if (this.isSquareQueen(row, col)) return 'queen';
-      if (this.isSquareFlag(row, col)) return 'flag';
-      if (this.isSquareInvalid(row, col)) return 'invalid';
-      return 'empty';
+    getPlayerMarking(row: number, col: number): MarkType {
+      return this.playerMarks[row][col];
     },
 
     // Method to sync legacy grid with new model (temporary during transition)
     syncGridWithNewModel(): void {
-      // Update colors in the grid from puzzleGrid
-      for (const [key, color] of this.puzzleGrid.colorGroups.entries()) {
-        const pos = this.keyToPos(key);
-        this.grid[pos.row][pos.col].groupColor = color;
-      }
-
-      // Reset all states in the grid
+      // Update colors in the grid
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          this.grid[row][col].state = 'empty';
+          const cell = this.grid[row][col];
+          if (cell.groupColor) {
+            this.grid[row][col].groupColor = cell.groupColor;
+          }
         }
-      }
-
-      // Set queens
-      for (const pos of this.playerGrid.queens) {
-        this.grid[pos.row][pos.col].state = 'queen';
-      }
-
-      // Set flags
-      for (const pos of this.playerGrid.flags) {
-        this.grid[pos.row][pos.col].state = 'flag';
-      }
-
-      // Set invalid
-      for (const pos of this.playerGrid.invalid) {
-        this.grid[pos.row][pos.col].state = 'invalid';
       }
     },
 
     // Method to sync new model with legacy grid (temporary during transition)
     syncNewModelWithGrid(): void {
       // Clear new model data
-      this.puzzleGrid.colorGroups.clear();
-      this.playerGrid.queens = [];
-      this.playerGrid.flags = [];
-      this.playerGrid.invalid = [];
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          this.grid[row][col].groupColor = undefined;
+          this.grid[row][col].isSolutionQueen = false;
+          this.playerMarks[row][col] = null;
+        }
+      }
 
       // Update from legacy grid
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
           const cell = this.grid[row][col];
-
-          // Set color
           if (cell.groupColor) {
-            this.setSquareColorNew(row, col, cell.groupColor);
-          }
-
-          // Set state
-          if (cell.state === 'queen') {
-            this.playerGrid.queens.push({ row, col });
-          } else if (cell.state === 'flag') {
-            this.playerGrid.flags.push({ row, col });
-          } else if (cell.state === 'invalid') {
-            this.playerGrid.invalid.push({ row, col });
+            this.grid[row][col].groupColor = cell.groupColor;
           }
         }
       }
-
-      // Sync solution
-      this.puzzleGrid.solution = [...this.solutionQueens];
-    },
-
-    // Method to check if a puzzle can be solved using solver steps
-    isPuzzleSolvable(): boolean {
-      // Save current state
-      const currentQueens = [...this.queenPositions];
-
-      // Clear the board
-      this.clearQueensAndFlags();
-
-      // Run solver steps
-      this.runAllSolverSteps();
-
-      // Check if we got the correct number of queens
-      const success = this.queenPositions.length === this.gridSize;
-
-      // Restore original state
-      this.clearQueensAndFlags();
-      for (const pos of currentQueens) {
-        this.placeQueen(pos.row, pos.col);
-      }
-
-      return success;
     },
 
     // Add toggle for verbose mode
     toggleVerboseMode() {
       this.verboseMode = !this.verboseMode;
       this.addDebugLog(`Verbose mode ${this.verboseMode ? 'enabled' : 'disabled'}`);
+    },
+
+    bruteForceSolver(maxSolutions = 5): number {
+      return bruteForceSolver(
+        this.grid,
+        this.playerMarks,
+        this.gridSize,
+        (row, col) => this.placeQueen(row, col),
+        (row, col) => this.placeFlag(row, col),
+        () => this.countFlags(),
+        () => this.queenPositions,
+        (msg) => this.addDebugLog(msg),
+        maxSolutions
+      );
+    },
+
+    // New method to set player marks
+    setPlayerMark(row: number, col: number, mark: Exclude<MarkType, null>): void {
+      this.saveToHistory();
+
+      // Update source-of-truth directly (no toggle logic here)
+      this.playerMarks[row][col] = mark;
+
+      if (mark === 'queen') {
+        this.updateBlockedMoves();
+      }
+    },
+
+    // Helper to get render state
+    getRenderState(row: number, col: number) {
+      const playerMark = this.playerMarks[row][col];
+      const hasSolutionQueen = this.grid[row][col].isSolutionQueen;
+
+      const isCorrect = playerMark === 'queen' && hasSolutionQueen;
+      const isIncorrect = playerMark === 'queen' && !hasSolutionQueen;
+
+      return { playerMark, hasSolutionQueen, isCorrect, isIncorrect };
     },
   },
 });

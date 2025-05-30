@@ -36,12 +36,21 @@ const hasMultipleSolutions = computed(() => {
 // Update the export text to include solver steps
 const exportText = computed(() => {
   const stateText = gameStore.exportGameState();
-  const originalQueens = gameStore.puzzleGrid.solution.map((q) => `(${q.row},${q.col})`).join(', ');
+
+  // Get solution queens from grid
+  const solutionQueens: string[] = [];
+  for (let row = 0; row < gameStore.gridSize; row++) {
+    for (let col = 0; col < gameStore.gridSize; col++) {
+      if (gameStore.grid[row][col].isSolutionQueen) {
+        solutionQueens.push(`(${row},${col})`);
+      }
+    }
+  }
+
   const solvedQueens = gameStore.queenPositions.map((q) => `(${q.row},${q.col})`).join(', ');
 
   // Get validation state
   const { queenCountValid, allFilled, colorGroupsValid } = gameStore.validatePuzzle();
-  const isSolvable = gameStore.isPuzzleSolvable();
 
   // Get color group details
   const colorGroups = new Map<string, string[]>();
@@ -56,7 +65,7 @@ const exportText = computed(() => {
         }
         colorGroups.get(color)!.push(`(${row},${col})`);
       }
-      if (gameStore.grid[row][col].state === 'empty') {
+      if (gameStore.getPlayerMarking(row, col) === null) {
         emptySquares.push(`(${row},${col})`);
       }
     }
@@ -67,21 +76,30 @@ const exportText = computed(() => {
     .map(([color, squares]) => `${color}: [${squares.join(', ')}]`)
     .join('\n');
 
+  // Count invalid squares
+  let invalidCount = 0;
+  for (let row = 0; row < gameStore.gridSize; row++) {
+    for (let col = 0; col < gameStore.gridSize; col++) {
+      if (gameStore.getPlayerMarking(row, col) === 'invalid') {
+        invalidCount++;
+      }
+    }
+  }
+
   const additionalInfo = `
-Original Queen Positions: [${originalQueens}]
+Solution Queen Positions: [${solutionQueens.join(', ')}]
 Your Solved Queen Positions: [${solvedQueens}]
 
 Current State:
 - Flags placed: ${gameStore.countFlags()}
-- Invalid squares: ${gameStore.playerGrid.invalid.length}
-- Available moves: ${gameStore.availableMoves.length}
+- Invalid squares: ${invalidCount}
+
 - Empty squares: [${emptySquares.join(', ')}]
 
 Validation State:
 - Queen count valid: ${queenCountValid}
 - All squares filled: ${allFilled}
 - Color groups valid: ${colorGroupsValid}
-- Is solvable: ${isSolvable}
 
 Color Group Details:
 ${colorGroupDetails}`;
