@@ -2,48 +2,24 @@
   <div class="relative flex flex-col items-center">
     <!-- Game Grid -->
     <div
-      class="grid bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg"
+      class="grid w-full bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg gap-1"
       :style="{
         gridTemplateColumns: `repeat(${gameStore.gridSize}, minmax(0, 1fr))`,
       }"
     >
-      <template v-for="(row, rowIndex) in gameStore.grid" :key="rowIndex">
-        <div v-for="(cell, colIndex) in row" :key="colIndex" class="relative">
-          <div
-            class="relative w-12 h-12 flex items-center justify-center cursor-pointer"
-            :class="getCellClasses(cell)"
-            :style="getCellBackgroundStyle(cell)"
-            @click="handleCellClick(rowIndex, colIndex)"
-            @contextmenu.prevent="handleRightClick(rowIndex, colIndex)"
-          >
-            <span v-if="shouldShowQueen(rowIndex, colIndex)" class="text-xl text-white">🍯</span>
-            <span v-else-if="shouldShowFlag(rowIndex, colIndex)" class="text-sm text-yellow-400"
-              >🚧</span
-            >
-            <div
-              v-else-if="shouldShowInvalid(rowIndex, colIndex)"
-              class="grid grid-cols-2 gap-1 text-xs leading-none"
-            >
-              <span>🐜</span>
-              <span>🐜</span>
-              <span>🐜</span>
-              <span>🐜</span>
-              <span>🐜</span>
-              <span>🐜</span>
-            </div>
-            <span v-else class="text-transparent">.</span>
-          </div>
-          <!-- Border overlay -->
-          <div
-            class="absolute inset-0 pointer-events-none z-10"
-            :class="getWrapperBorderClasses(cell, rowIndex, colIndex)"
-          ></div>
-        </div>
+      <template v-for="rowIndex in gameStore.gridSize" :key="rowIndex">
+        <Square
+          v-for="colIndex in gameStore.gridSize"
+          :key="`${rowIndex}-${colIndex}`"
+          :row="rowIndex - 1"
+          :col="colIndex - 1"
+          :mode="mode"
+        />
       </template>
     </div>
 
     <!-- Control Buttons -->
-    <div v-if="showControls" class="mt-4 flex gap-4">
+    <div class="mt-4 flex gap-4">
       <button
         v-if="mode === 'player'"
         @click="gameStore.handleUndo()"
@@ -53,105 +29,27 @@
       </button>
       <button
         v-if="mode === 'player'"
-        @click="gameStore.clearQueensAndFlags()"
+        @click="gameStore.clearMarkers()"
         class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
       >
-        Restart
-      </button>
-      <button
-        v-if="mode === 'solution'"
-        @click="gameStore.generateFullSolution"
-        class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-      >
-        Generate Solution
+        Reset
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, defineComponent } from 'vue';
-import { COLOR_BG_HOVER_CLASSES, COLOR_BG_IMAGES } from '@/utils/colorPalette';
-import { ColorName } from '../types/types';
+import { ref, watch, onMounted } from 'vue';
 import { useGameStore } from '../stores/gameStore';
+import Square from './Square.vue';
 
-defineComponent({
-  name: 'GameGrid',
-});
-
-const props = defineProps({
-  mode: {
-    type: String,
-    default: 'player',
-    validator: (value: string) => ['player', 'solution'].includes(value),
-  },
-  showControls: {
-    type: Boolean,
-    default: true,
-  },
-});
+const props = defineProps<{
+  mode: 'solution' | 'player';
+  showControls?: boolean;
+}>();
 
 const gameStore = useGameStore();
 const localGridSize = ref(gameStore.gridSize);
-
-// Default background/hover class for cells with dirt texture
-const defaultBgClass = 'bg-slate-700 hover:bg-slate-600';
-const defaultBgStyle =
-  'background-image: url("/assets/cell-background.png"); background-size: cover; background-position: center;';
-
-// Function to get cell classes (background and state classes)
-function getCellClasses(cell: { groupColor?: string; state?: string }) {
-  const classes = [];
-
-  // Add background color class with individual textures
-  if (cell.groupColor) {
-    classes.push(COLOR_BG_HOVER_CLASSES[cell.groupColor as ColorName]);
-  } else {
-    classes.push(defaultBgClass);
-  }
-
-  return classes;
-}
-
-// Function to get background style for each cell
-function getCellBackgroundStyle(cell: { groupColor?: string }) {
-  console.log(gameStore.grid);
-  if (cell.groupColor === 'pink') debugger;
-  if (cell.groupColor) {
-    return COLOR_BG_IMAGES[cell.groupColor as ColorName];
-  }
-  return defaultBgStyle;
-}
-
-// Conditional display methods
-function shouldShowQueen(row: number, col: number): boolean {
-  if (props.mode === 'solution') {
-    return isSolutionQueen(row, col);
-  } else {
-    return gameStore.playerGrid.queens.some((q) => q.row === row && q.col === col);
-  }
-}
-
-function shouldShowFlag(row: number, col: number): boolean {
-  if (props.mode === 'solution') {
-    return false; // No flags in solution view
-  } else {
-    return gameStore.playerGrid.flags.some((f) => f.row === row && f.col === col);
-  }
-}
-
-function shouldShowInvalid(row: number, col: number): boolean {
-  if (props.mode === 'solution') {
-    return false; // No invalid markers in solution view
-  } else {
-    return gameStore.playerGrid.invalid.some((i) => i.row === row && i.col === col);
-  }
-}
-
-// Solution-specific methods
-function isSolutionQueen(row: number, col: number): boolean {
-  return gameStore.puzzleGrid.solution.some((q) => q.row === row && q.col === col);
-}
 
 // Watch for grid size changes from the store
 watch(
@@ -165,94 +63,10 @@ watch(
 onMounted(() => {
   localGridSize.value = gameStore.gridSize;
 });
+</script>
 
-// Handle cell clicks
-function handleCellClick(row: number, col: number) {
-  // If color tool is active and a color is selected, apply the color
-  if (gameStore.colorToolActive && gameStore.colorToolSelectedColor) {
-    gameStore.setSquareColor(row, col, gameStore.colorToolSelectedColor);
-  } else if (props.mode === 'player') {
-    // Use handleSquareClick to cycle: empty -> flag -> queen
-    gameStore.handleSquareClick(row, col);
-  }
-}
-
-// Handle right-clicks for flags
-function handleRightClick(row: number, col: number) {
-  if (props.mode === 'player') {
-    // Only place flags in player mode
-    gameStore.placeFlag(row, col);
-  }
-}
-
-// Update grid size
-function updateGridSize() {
-  gameStore.setGridSize(localGridSize.value);
-}
-
-// New function to handle wrapper border classes
-function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col: number) {
-  const classes = [];
-  const grid = gameStore.grid;
-  const maxRow = grid.length - 1;
-  const maxCol = grid[0].length - 1;
-
-  // Check right neighbor
-  if (col < maxCol) {
-    if (grid[row][col + 1].groupColor !== cell.groupColor) {
-      // Different color group - blue border
-      classes.push('border-r-2 border-r-blue-700');
-    } else {
-      // Same color group - green border with opacity
-      classes.push('border-r-2 border-r-green-500/10');
-    }
-  } else {
-    // Edge of puzzle - grey border
-    classes.push('border-r-2 border-r-gray-500');
-  }
-
-  // Check left neighbor
-  if (col > 0) {
-    if (grid[row][col - 1].groupColor !== cell.groupColor) {
-      // Different color group - blue border
-      classes.push('border-l-2 border-l-blue-700');
-    } else {
-      // Same color group - green border with opacity
-      classes.push('border-l-2 border-l-green-500/10');
-    }
-  } else {
-    // Edge of puzzle - grey border
-    classes.push('border-l-2 border-l-gray-500');
-  }
-
-  // Check bottom neighbor
-  if (row < maxRow) {
-    if (grid[row + 1][col].groupColor !== cell.groupColor) {
-      // Different color group - blue border
-      classes.push('border-b-2 border-b-blue-700');
-    } else {
-      // Same color group - green border with opacity
-      classes.push('border-b-2 border-b-green-500/10');
-    }
-  } else {
-    // Edge of puzzle - grey border
-    classes.push('border-b-2 border-b-gray-500');
-  }
-
-  // Check top neighbor
-  if (row > 0) {
-    if (grid[row - 1][col].groupColor !== cell.groupColor) {
-      // Different color group - blue border
-      classes.push('border-t-2 border-t-blue-700');
-    } else {
-      // Same color group - green border with opacity
-      classes.push('border-t-2 border-t-green-500/10');
-    }
-  } else {
-    // Edge of puzzle - grey border
-    classes.push('border-t-2 border-t-gray-500');
-  }
-
-  return classes;
-}
+<script lang="ts">
+export default {
+  name: 'GameGrid',
+};
 </script>
