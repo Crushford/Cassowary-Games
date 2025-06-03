@@ -20,6 +20,10 @@ import {
   addOneToEachColorGroup,
   addColorToEachRow,
   fillRemainingSquares,
+  assignInitialColorsToQueens as assignInitialColorsToQueensUtil,
+  expandColorGroups as expandColorGroupsUtil,
+  addColorOnePerRow as addColorOnePerRowUtil,
+  fillRemainingSingleSquares as fillRemainingSingleSquaresUtil,
 } from '../utils/colorAssignment';
 import {
   placeLastFreeQueens,
@@ -387,104 +391,34 @@ export const useGameStore = defineStore('game', {
       return { queenCountValid, allFilled, colorGroupsValid };
     },
 
+    // Split assignColorGroups into 5 steps
     assignColorGroups() {
-      this.grid = assignColors(this.grid, this.queenPositions, (message) =>
-        this.addDebugLog(message)
+      this.assignInitialColorsToQueens();
+      this.expandColorGroups();
+      this.addColorOnePerRow();
+      this.fillRemainingSingleSquares();
+    },
+
+    // Step 1: Assign a unique color to each queen (do not expand)
+    assignInitialColorsToQueens() {
+      this.grid = assignInitialColorsToQueensUtil(this.grid, this.queenPositions, (msg) =>
+        this.addDebugLog(msg)
       );
     },
 
-    // New method to add one color to each group
-    addOneColorToEachGroup() {
-      // Save current state to history before making changes
-      this.saveToHistory();
-
-      // Get the current state of the grid
-      const beforeState = this.grid.map((row) => row.map((square) => ({ ...square })));
-
-      // Apply the color growth
-      this.grid = addOneToEachColorGroup(this.grid);
-
-      // Count colors before and after
-      const colorsBefore = this.countColoredCells(beforeState);
-      const colorsAfter = this.countColoredCells(this.grid);
-
-      this.addDebugLog(`Adding one square to each color group`);
-      this.addDebugLog(`- Before: ${colorsBefore.total} colored cells`);
-      this.addDebugLog(`- After: ${colorsAfter.total} colored cells`);
-      this.addDebugLog(`- Added: ${colorsAfter.total - colorsBefore.total} new colored cells`);
-
-      // Log detailed color distribution
-      Object.entries(colorsAfter.byColor).forEach(([color, count]) => {
-        const before = colorsBefore.byColor[color] || 0;
-        this.addDebugLog(
-          `  - ${color}: ${before} → ${count as number} (+${(count as number) - before})`
-        );
-      });
+    // Step 2: Expand each color group to adjacent cells (add one neighbor to each group)
+    expandColorGroups() {
+      this.grid = expandColorGroupsUtil(this.grid, (msg) => this.addDebugLog(msg));
     },
 
-    // Helper method to count colored cells
-    countColoredCells(grid: GridSquare[][]) {
-      const result = {
-        total: 0,
-        byColor: {} as Record<string, number>,
-      };
-
-      for (let row = 0; row < grid.length; row++) {
-        for (let col = 0; col < grid[0].length; col++) {
-          const color = grid[row][col].groupColor;
-          if (color) {
-            result.total++;
-            result.byColor[color] = (result.byColor[color] || 0) + 1;
-          }
-        }
-      }
-
-      return result;
+    // Step 3: Add one colored square to each row, using neighbors
+    addColorOnePerRow() {
+      this.grid = addColorOnePerRowUtil(this.grid, (msg) => this.addDebugLog(msg));
     },
 
-    // New method to add one color to each row
-    addOneColorToEachRow(targetRow?: number) {
-      // Save current state to history before making changes
-      this.saveToHistory();
-
-      // Get the current state of the grid
-      const beforeState = this.grid.map((row) => row.map((square) => ({ ...square })));
-
-      // Apply the color change - pass logging function
-      this.grid = addColorToEachRow(this.grid, (message) => this.addDebugLog(message), targetRow);
-
-      // Count colors before and after
-      const colorsBefore = this.countColoredCells(beforeState);
-      const colorsAfter = this.countColoredCells(this.grid);
-
-      const rowDesc = targetRow !== undefined ? `row ${targetRow}` : 'each row';
-      this.addDebugLog(`Adding one color to ${rowDesc}`);
-      this.addDebugLog(`- Before: ${colorsBefore.total} colored cells`);
-      this.addDebugLog(`- After: ${colorsAfter.total} colored cells`);
-      this.addDebugLog(`- Added: ${colorsAfter.total - colorsBefore.total} new colored cells`);
-    },
-
-    // Method to fill any remaining uncolored squares with a neighboring color
+    // Step 4: Fill all remaining uncolored cells with valid colors
     fillRemainingSingleSquares() {
-      // Save current state to history before making changes
-      this.saveToHistory();
-
-      // Get the current state of the grid
-      const beforeState = this.grid.map((row) => row.map((square) => ({ ...square })));
-
-      // Apply the color fill using the imported function
-      this.grid = fillRemainingSquares(this.grid, (message) => this.addDebugLog(message));
-
-      // Count colors before and after
-      const colorsBefore = this.countColoredCells(beforeState);
-      const colorsAfter = this.countColoredCells(this.grid);
-
-      this.addDebugLog(
-        `- Before: ${colorsBefore.total}/${this.gridSize * this.gridSize} cells colored`
-      );
-      this.addDebugLog(
-        `- After: ${colorsAfter.total}/${this.gridSize * this.gridSize} cells colored`
-      );
+      this.grid = fillRemainingSingleSquaresUtil(this.grid, (msg) => this.addDebugLog(msg));
     },
 
     setSquareColor(row: number, col: number, color: string | undefined) {

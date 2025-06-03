@@ -80,7 +80,7 @@
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 2: Color Each Queen</span>
         <BaseButton
-          @click="handleAssignInitialColors"
+          @click="gameStore.assignInitialColorsToQueens()"
           :disabled="!hasQueens"
           disabledTitle="Place queens first"
           class="bg-purple-950 hover:bg-purple-900"
@@ -93,7 +93,7 @@
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 3: Expand Color Groups</span>
         <BaseButton
-          @click="handleExpandColors"
+          @click="gameStore.expandColorGroups()"
           :disabled="!hasAnyColors"
           disabledTitle="Assign colors first"
           class="bg-teal-950 hover:bg-teal-900"
@@ -106,7 +106,7 @@
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 4: Color One Square Per Row</span>
         <BaseButton
-          @click="handleColorOnePerRow"
+          @click="gameStore.addColorOnePerRow()"
           :disabled="!hasAnyColors"
           disabledTitle="Assign colors first"
           class="bg-emerald-950 hover:bg-emerald-900"
@@ -119,7 +119,7 @@
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 5: Fill Remaining</span>
         <BaseButton
-          @click="handleFillRemaining"
+          @click="gameStore.fillRemainingSingleSquares()"
           :disabled="!hasAnyColors"
           disabledTitle="Assign colors first"
           class="bg-cyan-950 hover:bg-cyan-900"
@@ -187,22 +187,6 @@ function handlePlaceRandomQueen() {
 
 function handleGenerateFullSolution() {
   gameStore.generateFullSolution();
-}
-
-function handleAssignInitialColors() {
-  gameStore.assignColorGroups();
-}
-
-function handleExpandColors() {
-  gameStore.addOneColorToEachGroup();
-}
-
-function handleColorOnePerRow() {
-  gameStore.addOneColorToEachRow();
-}
-
-function handleFillRemaining() {
-  gameStore.fillRemainingSingleSquares();
 }
 
 function handleRunAllSteps() {

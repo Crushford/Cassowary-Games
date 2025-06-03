@@ -558,3 +558,159 @@ function countColoredSquares(grid: GridSquare[][]): number {
   }
   return count;
 }
+
+// Step 1: Assign a unique color to each queen (do not expand)
+export function assignInitialColorsToQueens(
+  grid: GridSquare[][],
+  queenPositions: Pos[],
+  log?: (message: string) => void
+): GridSquare[][] {
+  const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
+  const gridSize = newGrid.length;
+  // Reset all colors
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      newGrid[r][c].groupColor = undefined;
+    }
+  }
+  // Assign unique colors to each queen
+  const palette = ['red', 'blue', 'green', 'yellow', 'purple', 'pink'];
+  if (queenPositions.length > palette.length) {
+    log?.(`Not enough colors for ${queenPositions.length} queens`);
+    return newGrid;
+  }
+  queenPositions.forEach(({ row, col }) => {
+    newGrid[row][col].groupColor = palette.pop();
+  });
+  log?.('Assigned initial colors to queens');
+  return newGrid;
+}
+
+// Step 2: Expand each color group to adjacent cells (add one neighbor to each group)
+export function expandColorGroups(
+  grid: GridSquare[][],
+  log?: (message: string) => void
+): GridSquare[][] {
+  const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
+  const gridSize = newGrid.length;
+  const dirs: [number, number][] = [
+    [0, -1],
+    [0, 1],
+    [-1, 0],
+    [1, 0],
+  ];
+  const byColor: Record<string, { row: number; col: number; square: GridSquare }[]> = {};
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
+      const square = newGrid[row][col];
+      if (!square.groupColor) continue;
+      (byColor[square.groupColor] ??= []).push({ row, col, square });
+    }
+  }
+  for (const group of Object.values(byColor) as {
+    row: number;
+    col: number;
+    square: GridSquare;
+  }[][]) {
+    const base = group[0];
+    const shuffled = dirs.slice().sort(() => Math.random() - 0.5);
+    for (const [dr, dc] of shuffled) {
+      const r = base.row + dr;
+      const c = base.col + dc;
+      if (r >= 0 && r < gridSize && c >= 0 && c < gridSize && !newGrid[r][c].groupColor) {
+        newGrid[r][c].groupColor = base.square.groupColor;
+        break;
+      }
+    }
+  }
+  log?.('Expanded color groups by one neighbor');
+  return newGrid;
+}
+
+// Step 3: Add one colored square to each row, using neighbors
+export function addColorOnePerRow(
+  grid: GridSquare[][],
+  log?: (message: string) => void
+): GridSquare[][] {
+  const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
+  const gridSize = newGrid.length;
+  const dirs: [number, number][] = [
+    [0, -1],
+    [0, 1],
+    [-1, 0],
+    [1, 0],
+  ];
+  for (let row = 0; row < gridSize; row++) {
+    const uncolored = newGrid[row]
+      .map((square, col) => ({ square, col }))
+      .filter(({ square }) => !square.groupColor);
+    if (uncolored.length === 0) continue;
+    const { col } = uncolored[Math.floor(Math.random() * uncolored.length)];
+    const neighborColors: string[] = [];
+    for (const [dr, dc] of dirs) {
+      const r = row + dr,
+        c = col + dc;
+      if (r >= 0 && r < gridSize && c >= 0 && c < gridSize) {
+        const color = newGrid[r][c].groupColor;
+        if (color) neighborColors.push(color);
+      }
+    }
+    const counts: Record<string, number> = {};
+    neighborColors.forEach((c) => (counts[c] = (counts[c] || 0) + 1));
+    const validColors: string[] = Object.keys(counts).filter((c) => counts[c] < 2);
+    if (validColors.length === 0) continue;
+    const chosen = validColors[Math.floor(Math.random() * validColors.length)];
+    newGrid[row][col].groupColor = chosen;
+  }
+  log?.('Added one colored square per row');
+  return newGrid;
+}
+
+// Step 4: Fill all remaining uncolored cells with valid colors
+export function fillRemainingSingleSquares(
+  grid: GridSquare[][],
+  log?: (message: string) => void
+): GridSquare[][] {
+  const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
+  const gridSize = newGrid.length;
+  // First pass: fill with neighbor colors
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
+      if (newGrid[row][col].groupColor) continue;
+      const neighborColors: string[] = [];
+      for (const [dr, dc] of [
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1],
+      ]) {
+        const newRow = row + dr,
+          newCol = col + dc;
+        if (
+          newRow >= 0 &&
+          newRow < gridSize &&
+          newCol >= 0 &&
+          newCol < gridSize &&
+          newGrid[newRow][newCol].groupColor
+        ) {
+          neighborColors.push(newGrid[newRow][newCol].groupColor!);
+        }
+      }
+      if (neighborColors.length > 0) {
+        const randomColor = neighborColors[Math.floor(Math.random() * neighborColors.length)];
+        newGrid[row][col].groupColor = randomColor;
+      }
+    }
+  }
+  // Second pass: assign from palette if still uncolored
+  const palette = ['red', 'blue', 'green', 'yellow', 'purple', 'pink'];
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
+      if (!newGrid[row][col].groupColor) {
+        newGrid[row][col].groupColor = palette[Math.floor(Math.random() * palette.length)];
+      }
+    }
+  }
+  log?.('Filled all remaining uncolored squares');
+  return newGrid;
+}
