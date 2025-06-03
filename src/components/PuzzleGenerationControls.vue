@@ -45,7 +45,7 @@
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 0: Reset Board</span>
         <BaseButton
-          @click="handleResetBoard"
+          @click="gameStore.clearQueensAndFlags()"
           :disabled="!gameStore.queenPositions.length"
           class="bg-red-950 hover:bg-red-900"
         >
@@ -58,7 +58,7 @@
         <span class="text-sm text-slate-400">Step 1: Place Queens</span>
         <div class="flex gap-2">
           <BaseButton
-            @click="handlePlaceRandomQueen"
+            @click="gameStore.placeRandomQueen()"
             :disabled="!canPlaceQueens"
             disabledTitle="No valid moves"
             class="bg-blue-950 hover:bg-blue-900 text-sm"
@@ -174,15 +174,6 @@ const isGenerating = ref(false);
 // Methods
 function handleGridSizeChange() {
   gameStore.setGridSize(gridSize.value);
-}
-
-function handleResetBoard() {
-  gameStore.initializeGrid();
-  gameStore.clearQueensAndFlags();
-}
-
-function handlePlaceRandomQueen() {
-  gameStore.placeRandomQueen();
 }
 
 function handleRunAllSteps() {
