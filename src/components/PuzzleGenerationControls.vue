@@ -81,7 +81,7 @@
         <span class="text-sm text-slate-400">Step 2: Color Each Queen</span>
         <BaseButton
           @click="gameStore.assignInitialColorsToQueens()"
-          :disabled="!hasQueens"
+          :disabled="!gameStore.queenPositions.length || hasAnyColors"
           disabledTitle="Place queens first"
           class="bg-purple-950 hover:bg-purple-900"
         >
@@ -141,11 +141,6 @@ const gameStore = useGameStore();
 
 // Reactive state
 const gridSize = ref(gameStore.gridSize);
-
-// Computed properties
-const hasQueens = computed(() => {
-  return gameStore.queenPositions && gameStore.queenPositions.length > 0;
-});
 
 const hasAnyColors = computed(() => {
   for (let row = 0; row < gameStore.gridSize; row++) {
