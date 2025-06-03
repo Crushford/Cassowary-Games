@@ -40,7 +40,7 @@
     </div>
 
     <!-- Step-by-Step Controls in Accordion -->
-    <Accordion title="Step-by-Step Controls" :open="true">
+    <Accordion title="Step-by-Step Controls" :defaultOpen="true">
       <!-- Step 1: Reset Board -->
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 0: Reset Board</span>
