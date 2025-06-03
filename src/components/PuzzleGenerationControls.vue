@@ -40,18 +40,22 @@
     </div>
 
     <!-- Step-by-Step Controls in Accordion -->
-    <Accordion title="Step-by-Step Controls">
+    <Accordion title="Step-by-Step Controls" :open="true">
       <!-- Step 1: Reset Board -->
       <div class="flex flex-col gap-2">
-        <span class="text-sm text-slate-400">Step 1: Reset Board</span>
-        <BaseButton @click="handleResetBoard" class="bg-red-950 hover:bg-red-900">
+        <span class="text-sm text-slate-400">Step 0: Reset Board</span>
+        <BaseButton
+          @click="handleResetBoard"
+          :disabled="!gameStore.queenPositions.length"
+          class="bg-red-950 hover:bg-red-900"
+        >
           Clear Queens & Colors
         </BaseButton>
       </div>
 
       <!-- Step 2: Place Queens -->
       <div class="flex flex-col gap-2">
-        <span class="text-sm text-slate-400">Step 2: Place Queens</span>
+        <span class="text-sm text-slate-400">Step 1: Place Queens</span>
         <div class="flex gap-2">
           <BaseButton
             @click="handlePlaceRandomQueen"
@@ -74,7 +78,7 @@
 
       <!-- Step 3: Color Each Queen -->
       <div class="flex flex-col gap-2">
-        <span class="text-sm text-slate-400">Step 3: Color Each Queen</span>
+        <span class="text-sm text-slate-400">Step 2: Color Each Queen</span>
         <BaseButton
           @click="handleAssignInitialColors"
           :disabled="!hasQueens"
@@ -82,15 +86,12 @@
           class="bg-purple-950 hover:bg-purple-900"
         >
           Assign Initial Colors to Queens
-          <span class="block text-sm text-purple-300"
-            >[TODO: Fix color assignment to queen positions]</span
-          >
         </BaseButton>
       </div>
 
       <!-- Step 4: Expand Color Groups -->
       <div class="flex flex-col gap-2">
-        <span class="text-sm text-slate-400">Step 4: Expand Color Groups</span>
+        <span class="text-sm text-slate-400">Step 3: Expand Color Groups</span>
         <BaseButton
           @click="handleExpandColors"
           :disabled="!hasAnyColors"
@@ -103,7 +104,7 @@
 
       <!-- Step 5: Color One Per Row -->
       <div class="flex flex-col gap-2">
-        <span class="text-sm text-slate-400">Step 5: Color One Square Per Row</span>
+        <span class="text-sm text-slate-400">Step 4: Color One Square Per Row</span>
         <BaseButton
           @click="handleColorOnePerRow"
           :disabled="!hasAnyColors"
@@ -116,7 +117,7 @@
 
       <!-- Step 6: Fill Remaining -->
       <div class="flex flex-col gap-2">
-        <span class="text-sm text-slate-400">Step 6: Fill Remaining</span>
+        <span class="text-sm text-slate-400">Step 5: Fill Remaining</span>
         <BaseButton
           @click="handleFillRemaining"
           :disabled="!hasAnyColors"

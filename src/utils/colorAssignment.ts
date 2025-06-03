@@ -1,7 +1,7 @@
 import type { GridSquare, Pos } from '../types/types';
 
 // Helper function to check if a position is valid within the grid
-function isValidPosition(grid: GridSquare[][], row: number, col: number): boolean {
+function isInGridBounds(grid: GridSquare[][], row: number, col: number): boolean {
   return row >= 0 && row < grid.length && col >= 0 && col < grid[0].length;
 }
 
@@ -37,7 +37,7 @@ export function ensureNoSingletonColorBlocks(grid: GridSquare[][]): GridSquare[]
         const newR = row + dir.dr;
         const newC = col + dir.dc;
         if (
-          isValidPosition(newGrid, newR, newC) &&
+          isInGridBounds(newGrid, newR, newC) &&
           newGrid[newR][newC].groupColor &&
           newGrid[newR][newC].groupColor !== color
         ) {
@@ -87,7 +87,7 @@ export function addOneToEachColorGroup(grid: GridSquare[][]): GridSquare[][] {
       const r = base.row + dr;
       const c = base.col + dc;
 
-      if (isValidPosition(newGrid, r, c)) {
+      if (isInGridBounds(newGrid, r, c)) {
         const neighbor = newGrid[r][c];
         if (!neighbor.groupColor) {
           neighbor.groupColor = base.square.groupColor;
@@ -144,7 +144,7 @@ export function addColorToEachRow(
     for (const [dr, dc] of dirs) {
       const r = row + dr,
         c = col + dc;
-      if (isValidPosition(newGrid, r, c)) {
+      if (isInGridBounds(newGrid, r, c)) {
         const color = newGrid[r][c].groupColor;
         if (color) neighborColors.push(color);
       }
@@ -240,7 +240,7 @@ export function fillRemainingSquares(
         const newRow = row + dr;
         const newCol = col + dc;
 
-        if (isValidPosition(newGrid, newRow, newCol) && newGrid[newRow][newCol].groupColor) {
+        if (isInGridBounds(newGrid, newRow, newCol) && newGrid[newRow][newCol].groupColor) {
           neighborColors.push(newGrid[newRow][newCol].groupColor!);
           neighbors.push({ row: newRow, col: newCol, color: newGrid[newRow][newCol].groupColor! });
         }
@@ -284,7 +284,7 @@ export function fillRemainingSquares(
             const newRow = row + dr;
             const newCol = col + dc;
 
-            if (isValidPosition(newGrid, newRow, newCol) && newGrid[newRow][newCol].groupColor) {
+            if (isInGridBounds(newGrid, newRow, newCol) && newGrid[newRow][newCol].groupColor) {
               extendedColors.push(newGrid[newRow][newCol].groupColor!);
             }
           }
