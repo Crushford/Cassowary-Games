@@ -66,7 +66,7 @@
             Place Random Queen
           </BaseButton>
           <BaseButton
-            @click="handleGenerateFullSolution"
+            @click="gameStore.placeAllQueens()"
             :disabled="!canPlaceQueens"
             disabledTitle="Board is full"
             class="bg-blue-950 hover:bg-blue-900 text-sm"
@@ -185,10 +185,6 @@ function handlePlaceRandomQueen() {
   gameStore.placeRandomQueen();
 }
 
-function handleGenerateFullSolution() {
-  gameStore.generateFullSolution();
-}
-
 function handleRunAllSteps() {
   try {
     // Clear any existing error messages and debug logs
@@ -201,9 +197,9 @@ function handleRunAllSteps() {
     gameStore.initializeGrid();
     gameStore.clearQueensAndFlags();
 
-    // Generate a full solution with queens
-    gameStore.addDebugLog('Step 2: Generating full solution');
-    gameStore.generateFullSolution();
+    // Place all queens
+    gameStore.addDebugLog('Step 2: Placing all queens');
+    gameStore.placeAllQueens();
 
     if (gameStore.queenPositions.length !== gameStore.gridSize) {
       const errorMsg = `Failed to generate queen positions: ${gameStore.queenPositions.length}/${gameStore.gridSize} queens placed`;
@@ -214,53 +210,20 @@ function handleRunAllSteps() {
     gameStore.addDebugLog(`✅ Generated ${gameStore.queenPositions.length} queens`);
 
     // Assign initial colors to queens
-    gameStore.addDebugLog('Step 3: Assigning initial colors');
-    gameStore.assignColorGroups();
+    gameStore.addDebugLog('Step 3: Assigning initial colors to queens');
+    gameStore.assignInitialColorsToQueens();
 
     // Expand color groups
     gameStore.addDebugLog('Step 4: Expanding color groups');
-    gameStore.addOneColorToEachGroup();
+    gameStore.expandColorGroups();
 
-    // Add one color to each row
-    gameStore.addDebugLog('Step 5: Adding colors to rows');
-    gameStore.addOneColorToEachRow();
+    // Color one square per row
+    gameStore.addDebugLog('Step 5: Coloring one square per row');
+    gameStore.addColorOnePerRow();
 
     // Fill remaining squares
     gameStore.addDebugLog('Step 6: Filling remaining squares');
     gameStore.fillRemainingSingleSquares();
-
-    // Validate the final state
-    gameStore.addDebugLog('Step 7: Validating final state');
-    const { queenCountValid, allFilled, colorGroupsValid } = gameStore.validatePuzzle();
-
-    gameStore.addDebugLog(
-      `Validation results: queens=${queenCountValid}, filled=${allFilled}, colors=${colorGroupsValid}`
-    );
-
-    if (!(queenCountValid && allFilled && colorGroupsValid)) {
-      const issues = [];
-      if (!queenCountValid) issues.push('incorrect queen count');
-      if (!allFilled) issues.push('unfilled squares');
-      if (!colorGroupsValid) issues.push('invalid color groups');
-
-      const errorMsg = `Generated puzzle is invalid: ${issues.join(', ')}`;
-      gameStore.addDebugLog(`❌ ${errorMsg}`);
-      gameStore.setError(errorMsg);
-      return;
-    }
-
-    // Save the puzzle if everything is valid
-    gameStore.addDebugLog('Step 8: Saving puzzle');
-    const puzzleName = gameStore.savePuzzleToLocalStorage();
-
-    if (puzzleName) {
-      gameStore.addDebugLog(`✅ SUCCESS: Puzzle saved as "${puzzleName}"`);
-      gameStore.setError(null);
-    } else {
-      const errorMsg = 'Failed to save puzzle to local storage';
-      gameStore.addDebugLog(`❌ ${errorMsg}`);
-      gameStore.setError(errorMsg);
-    }
 
     gameStore.addDebugLog('=== Run All Steps Complete ===');
   } catch (error) {

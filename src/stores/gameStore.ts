@@ -15,11 +15,6 @@ import {
   clonePlayerMarks,
 } from './gridUtils';
 import {
-  assignColors,
-  ensureNoSingletonColorBlocks,
-  addOneToEachColorGroup,
-  addColorToEachRow,
-  fillRemainingSquares,
   assignInitialColorsToQueens as assignInitialColorsToQueensUtil,
   expandColorGroups as expandColorGroupsUtil,
   addColorOnePerRow as addColorOnePerRowUtil,
@@ -500,10 +495,6 @@ export const useGameStore = defineStore('game', {
           }
         }
       }
-
-      // The grid is now assigned to a utility function, so we need to create a copy of the grid here
-      // by calling the singleton color blocks function from the color assignment utils
-      this.grid = ensureNoSingletonColorBlocks(this.grid);
     },
 
     // Function to check if a color forms a connected group and return color information
@@ -559,8 +550,8 @@ export const useGameStore = defineStore('game', {
     },
 
     // New method to generate a full solution
-    generateFullSolution() {
-      this.addDebugLog('Starting generateFullSolution');
+    placeAllQueens() {
+      this.addDebugLog('Starting placeAllQueens');
 
       // Clear existing solution
       for (let row = 0; row < this.gridSize; row++) {
@@ -810,7 +801,7 @@ export const useGameStore = defineStore('game', {
     // Helper for one generation attempt: returns puzzle name or null
     attemptGeneratePuzzle(attempt: number, requiredQueens: number): string | null {
       this.addDebugLog(`Attempt ${attempt}: Starting puzzle generation`);
-      this.generateFullSolution(); // build full solution
+      this.placeAllQueens(); // build full solution
 
       // Make sure color groups are assigned before proceeding
       this.addDebugLog(`Attempt ${attempt}: Assigning color groups to solution`);
@@ -827,11 +818,7 @@ export const useGameStore = defineStore('game', {
 
       this.clearQueensAndFlags(); // reset markers
       this.runAllSolverSteps(); // cycle solve steps
-      if (!this.forceChangeColor()) {
-        this.addDebugLog(`Attempt ${attempt}: Color change failed`);
-        return null;
-      }
-      this.runAllSolverSteps(); // re-run solver steps
+
       const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
 
       // Add more detailed validation logs
@@ -880,7 +867,7 @@ export const useGameStore = defineStore('game', {
             }
 
             // Generate solution with queens
-            this.generateFullSolution();
+            this.placeAllQueens();
 
             // Skip if solution generation failed
             if (this.queenPositions.length !== this.gridSize) {
@@ -1051,134 +1038,6 @@ export const useGameStore = defineStore('game', {
         (message: string) => this.addDebugLog(message),
         this.verboseMode
       );
-    },
-
-    // Add helper to ensure no color block has a singleton square
-    ensureNoSingletonColorBlocks() {
-      const colorGroups: Record<string, Pos[]> = {};
-      // Build map of color groups
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          const color = this.grid[row][col].groupColor;
-          if (!color) continue;
-          if (!colorGroups[color]) colorGroups[color] = [];
-          colorGroups[color].push({ row, col });
-        }
-      }
-      const directions = [
-        { dr: 1, dc: 0 },
-        { dr: -1, dc: 0 },
-        { dr: 0, dc: 1 },
-        { dr: 0, dc: -1 },
-      ];
-      // Reassign any singleton cell to a neighbor's color
-      for (const [color, positions] of Object.entries(colorGroups)) {
-        if (positions.length === 1) {
-          const { row, col } = positions[0];
-          // Skip singleton if it's a queen to avoid duplicating color among queens
-          if (this.playerMarks[row][col] === 'queen') continue;
-          const neighborColors = new Set<string>();
-          for (const dir of directions) {
-            const newR = row + dir.dr;
-            const newC = col + dir.dc;
-            if (
-              this.isValidPosition(newR, newC) &&
-              this.grid[newR][newC].groupColor &&
-              this.grid[newR][newC].groupColor !== color
-            ) {
-              neighborColors.add(this.grid[newR][newC].groupColor!);
-            }
-          }
-          if (neighborColors.size > 0) {
-            const choices = Array.from(neighborColors);
-            const newColor = choices[Math.floor(Math.random() * choices.length)];
-            this.grid[row][col].groupColor = newColor;
-          }
-        }
-      }
-    },
-
-    // Add action to randomly change the color of an empty square to an adjacent neighbor color
-    forceChangeColor() {
-      const empties: Pos[] = [];
-      // Check if any solution queens exist
-      let hasSolutionQueens = false;
-      for (let r = 0; r < this.gridSize && !hasSolutionQueens; r++) {
-        for (let c = 0; c < this.gridSize && !hasSolutionQueens; c++) {
-          if (this.grid[r][c].isSolutionQueen) {
-            hasSolutionQueens = true;
-          }
-        }
-      }
-
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          // Skip solution cells so we don't change a square that should have a queen
-          if (this.playerMarks[row][col] === null && !hasSolutionQueens) {
-            empties.push({ row, col });
-          }
-        }
-      }
-      // Log number of empty squares found
-      this.addDebugLog(`forceChangeColor: found ${empties.length} empty squares`);
-      if (empties.length === 0) {
-        this.addDebugLog('forceChangeColor: no empty squares to change color');
-        this.setError('No empty squares to change color');
-        return false;
-      }
-      const randIdx = Math.floor(Math.random() * empties.length);
-      const { row, col } = empties[randIdx];
-      // Log selected square
-      this.addDebugLog(`forceChangeColor: selected empty square at (${row},${col})`);
-      const directions = [
-        { dr: -1, dc: 0 },
-        { dr: 1, dc: 0 },
-        { dr: 0, dc: -1 },
-        { dr: 0, dc: 1 },
-      ];
-      const neighborColors: string[] = [];
-      for (const { dr, dc } of directions) {
-        const newR = row + dr;
-        const newC = col + dc;
-        if (this.isValidPosition(newR, newC)) {
-          const color = this.grid[newR][newC].groupColor;
-          if (color) {
-            neighborColors.push(color);
-          }
-        }
-      }
-      // Log adjacent neighbor colors
-      this.addDebugLog(`forceChangeColor: neighborColors = [${neighborColors.join(', ')}]`);
-
-      let newColor;
-      if (neighborColors.length === 0) {
-        // If no neighbors have colors, assign a random color from the palette
-        const colorPalette: ('red' | 'blue' | 'green' | 'yellow' | 'purple' | 'pink')[] = [
-          'red',
-          'blue',
-          'green',
-          'yellow',
-          'purple',
-          'pink',
-        ];
-        newColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
-        this.addDebugLog(
-          `forceChangeColor: no adjacent colors found, using random color "${newColor}"`
-        );
-      } else {
-        // Use an adjacent color
-        newColor = neighborColors[Math.floor(Math.random() * neighborColors.length)];
-        this.addDebugLog(`forceChangeColor: using adjacent color "${newColor}"`);
-      }
-
-      // Log applying the color change
-      this.addDebugLog(`forceChangeColor: changing square (${row},${col}) to color ${newColor}`);
-      this.saveToHistory();
-      this.grid[row][col].groupColor = newColor;
-
-      // Use the imported ensureNoSingletonColorBlocks function
-      this.grid = ensureNoSingletonColorBlocks(this.grid);
-      return true;
     },
 
     // Generate summary statistics from attempts

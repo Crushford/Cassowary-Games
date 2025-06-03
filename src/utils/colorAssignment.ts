@@ -5,56 +5,6 @@ function isInGridBounds(grid: GridSquare[][], row: number, col: number): boolean
   return row >= 0 && row < grid.length && col >= 0 && col < grid[0].length;
 }
 
-// Helper to ensure no color block has a singleton square
-export function ensureNoSingletonColorBlocks(grid: GridSquare[][]): GridSquare[][] {
-  const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
-  const gridSize = newGrid.length;
-
-  const colorGroups: Record<string, Pos[]> = {};
-  // Build map of color groups
-  for (let row = 0; row < gridSize; row++) {
-    for (let col = 0; col < gridSize; col++) {
-      const color = newGrid[row][col].groupColor;
-      if (!color) continue;
-      if (!colorGroups[color]) colorGroups[color] = [];
-      colorGroups[color].push({ row, col });
-    }
-  }
-
-  const directions = [
-    { dr: 1, dc: 0 },
-    { dr: -1, dc: 0 },
-    { dr: 0, dc: 1 },
-    { dr: 0, dc: -1 },
-  ];
-
-  // Reassign any singleton cell to a neighbor's color
-  for (const [color, positions] of Object.entries(colorGroups)) {
-    if (positions.length === 1) {
-      const { row, col } = positions[0];
-      const neighborColors = new Set<string>();
-      for (const dir of directions) {
-        const newR = row + dir.dr;
-        const newC = col + dir.dc;
-        if (
-          isInGridBounds(newGrid, newR, newC) &&
-          newGrid[newR][newC].groupColor &&
-          newGrid[newR][newC].groupColor !== color
-        ) {
-          neighborColors.add(newGrid[newR][newC].groupColor!);
-        }
-      }
-      if (neighborColors.size > 0) {
-        const choices = Array.from(neighborColors);
-        const newColor = choices[Math.floor(Math.random() * choices.length)];
-        newGrid[row][col].groupColor = newColor;
-      }
-    }
-  }
-
-  return newGrid;
-}
-
 // Helper to add one square to each color group
 export function addOneToEachColorGroup(grid: GridSquare[][]): GridSquare[][] {
   const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
