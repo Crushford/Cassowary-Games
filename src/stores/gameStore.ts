@@ -55,7 +55,13 @@ export const useGameStore = defineStore('game', {
     colorToolActive: false,
     colorToolSelectedColor: null,
     verboseMode: false,
-    isGenerating: false,
+    puzzleGenerationState: {
+      isGenerating: false,
+      currentStep: null,
+      completedSteps: 0,
+      totalSteps: 5, // Assuming there are 5 main steps
+      isInterrupted: false,
+    },
   }),
 
   getters: {
@@ -844,7 +850,15 @@ export const useGameStore = defineStore('game', {
     },
 
     // New method to generate and validate a puzzle that can be solved with steps
-    generateAndValidatePuzzleWithSteps(maxAttempts = 100): string | null {
+    async generateStepSolvablePuzzle(maxAttempts = 100) {
+      if (this.puzzleGenerationState.isGenerating) return;
+
+      this.puzzleGenerationState.isGenerating = true;
+      this.puzzleGenerationState.currentStep = null;
+      this.puzzleGenerationState.completedSteps = 0;
+      this.puzzleGenerationState.totalSteps = 5; // Assuming there are 5 main steps
+      this.puzzleGenerationState.isInterrupted = false;
+
       try {
         // Reset logs for clarity
         this.debugLogs = [];
@@ -859,6 +873,11 @@ export const useGameStore = defineStore('game', {
         let attemptSummary: AttemptResult[] = [];
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          if (this.puzzleGenerationState.isInterrupted) {
+            this.addDebugLog('Process interrupted');
+            break;
+          }
+
           try {
             // Only log every 5th attempt for brevity
             const shouldLogDetail = attempt % 5 === 1 || attempt === maxAttempts;
@@ -869,6 +888,7 @@ export const useGameStore = defineStore('game', {
 
             // Generate solution with queens
             this.placeAllQueens();
+            this.puzzleGenerationState.completedSteps++;
 
             // Skip if solution generation failed
             if (this.queenPositions.length !== this.gridSize) {
@@ -880,6 +900,7 @@ export const useGameStore = defineStore('game', {
 
             // Assign color groups
             this.assignColorGroups();
+            this.puzzleGenerationState.completedSteps++;
 
             // More concise color distribution info
             if (shouldLogDetail) {
@@ -891,6 +912,7 @@ export const useGameStore = defineStore('game', {
 
             // Run solver steps to verify puzzle is step-solvable
             this.runAllSolverSteps();
+            this.puzzleGenerationState.completedSteps++;
 
             // Validate the puzzle state after solver steps
             const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
@@ -959,6 +981,9 @@ export const useGameStore = defineStore('game', {
         this.addDebugLog(`❌ CRITICAL ERROR: ${errorMessage}`);
         this.setError(`Error generating puzzle: ${errorMessage}`);
         return null;
+      } finally {
+        this.puzzleGenerationState.isGenerating = false;
+        this.puzzleGenerationState.currentStep = null;
       }
     },
 
@@ -1269,23 +1294,8 @@ export const useGameStore = defineStore('game', {
       }
     },
 
-    async generateStepSolvablePuzzle() {
-      if (this.isGenerating) return;
-
-      this.isGenerating = true;
-      try {
-        const puzzleName = await this.generateAndValidatePuzzleWithSteps();
-        if (puzzleName) {
-          this.setError(null);
-        } else {
-          this.setError('Failed to generate a step-solvable puzzle');
-        }
-      } catch (error) {
-        console.error('Error generating step-solvable puzzle:', error);
-        this.setError('An error occurred while generating the puzzle');
-      } finally {
-        this.isGenerating = false;
-      }
+    interruptPuzzleGeneration() {
+      this.puzzleGenerationState.isInterrupted = true;
     },
   },
 });
