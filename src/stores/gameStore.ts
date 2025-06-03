@@ -55,6 +55,7 @@ export const useGameStore = defineStore('game', {
     colorToolActive: false,
     colorToolSelectedColor: null,
     verboseMode: false,
+    isGenerating: false,
   }),
 
   getters: {
@@ -1265,6 +1266,25 @@ export const useGameStore = defineStore('game', {
           `Stack trace: ${error instanceof Error ? error.stack : 'No stack trace available'}`
         );
         this.setError(fullErrorMsg);
+      }
+    },
+
+    async generateStepSolvablePuzzle() {
+      if (this.isGenerating) return;
+
+      this.isGenerating = true;
+      try {
+        const puzzleName = await this.generateAndValidatePuzzleWithSteps();
+        if (puzzleName) {
+          this.setError(null);
+        } else {
+          this.setError('Failed to generate a step-solvable puzzle');
+        }
+      } catch (error) {
+        console.error('Error generating step-solvable puzzle:', error);
+        this.setError('An error occurred while generating the puzzle');
+      } finally {
+        this.isGenerating = false;
       }
     },
   },

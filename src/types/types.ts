@@ -86,6 +86,7 @@ export interface GameState {
   colorToolActive: boolean;
   colorToolSelectedColor: string | null;
   verboseMode: boolean;
+  isGenerating: boolean;
 }
 
 /**

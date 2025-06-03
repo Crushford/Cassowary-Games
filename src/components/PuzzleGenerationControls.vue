@@ -177,21 +177,6 @@ function handleRunAllSteps() {
 
 // Add new handler
 async function handleGenerateStepSolvablePuzzle() {
-  if (isGenerating.value) return;
-
-  isGenerating.value = true;
-  try {
-    const puzzleName = await gameStore.generateAndValidatePuzzleWithSteps();
-    if (puzzleName) {
-      gameStore.setError(null);
-    } else {
-      gameStore.setError('Failed to generate a step-solvable puzzle');
-    }
-  } catch (error) {
-    console.error('Error generating step-solvable puzzle:', error);
-    gameStore.setError('An error occurred while generating the puzzle');
-  } finally {
-    isGenerating.value = false;
-  }
+  await gameStore.generateStepSolvablePuzzle();
 }
 </script>
