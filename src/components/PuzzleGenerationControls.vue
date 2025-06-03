@@ -172,58 +172,7 @@ function handleGridSizeChange() {
 }
 
 function handleRunAllSteps() {
-  try {
-    // Clear any existing error messages and debug logs
-    gameStore.setError(null);
-
-    gameStore.addDebugLog('=== Starting Run All Steps ===');
-
-    // Reset everything first
-    gameStore.addDebugLog('Step 1: Initializing grid and clearing markers');
-    gameStore.initializeGrid();
-    gameStore.clearQueensAndFlags();
-
-    // Place all queens
-    gameStore.addDebugLog('Step 2: Placing all queens');
-    gameStore.placeAllQueens();
-
-    if (gameStore.queenPositions.length !== gameStore.gridSize) {
-      const errorMsg = `Failed to generate queen positions: ${gameStore.queenPositions.length}/${gameStore.gridSize} queens placed`;
-      gameStore.addDebugLog(`❌ ${errorMsg}`);
-      gameStore.setError(errorMsg);
-      return;
-    }
-    gameStore.addDebugLog(`✅ Generated ${gameStore.queenPositions.length} queens`);
-
-    // Assign initial colors to queens
-    gameStore.addDebugLog('Step 3: Assigning initial colors to queens');
-    gameStore.assignInitialColorsToQueens();
-
-    // Expand color groups
-    gameStore.addDebugLog('Step 4: Expanding color groups');
-    gameStore.expandColorGroups();
-
-    // Color one square per row
-    gameStore.addDebugLog('Step 5: Coloring one square per row');
-    gameStore.addColorOnePerRow();
-
-    // Fill remaining squares
-    gameStore.addDebugLog('Step 6: Filling remaining squares');
-    gameStore.fillRemainingSingleSquares();
-
-    gameStore.addDebugLog('=== Run All Steps Complete ===');
-  } catch (error) {
-    console.error('Error in handleRunAllSteps:', error);
-
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    const fullErrorMsg = `An error occurred while generating the puzzle: ${errorMessage}`;
-
-    gameStore.addDebugLog(`❌ CRITICAL ERROR: ${errorMessage}`);
-    gameStore.addDebugLog(
-      `Stack trace: ${error instanceof Error ? error.stack : 'No stack trace available'}`
-    );
-    gameStore.setError(fullErrorMsg);
-  }
+  gameStore.runAllSteps();
 }
 
 // Add new handler

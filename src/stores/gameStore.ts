@@ -1212,5 +1212,60 @@ export const useGameStore = defineStore('game', {
 
       return { playerMark, hasSolutionQueen, isCorrect, isIncorrect };
     },
+
+    runAllSteps() {
+      try {
+        // Clear any existing error messages and debug logs
+        this.setError(null);
+
+        this.addDebugLog('=== Starting Run All Steps ===');
+
+        // Reset everything first
+        this.addDebugLog('Step 1: Initializing grid and clearing markers');
+        this.initializeGrid();
+        this.clearQueensAndFlags();
+
+        // Place all queens
+        this.addDebugLog('Step 2: Placing all queens');
+        this.placeAllQueens();
+
+        if (this.queenPositions.length !== this.gridSize) {
+          const errorMsg = `Failed to generate queen positions: ${this.queenPositions.length}/${this.gridSize} queens placed`;
+          this.addDebugLog(`❌ ${errorMsg}`);
+          this.setError(errorMsg);
+          return;
+        }
+        this.addDebugLog(`✅ Generated ${this.queenPositions.length} queens`);
+
+        // Assign initial colors to queens
+        this.addDebugLog('Step 3: Assigning initial colors to queens');
+        this.assignInitialColorsToQueens();
+
+        // Expand color groups
+        this.addDebugLog('Step 4: Expanding color groups');
+        this.expandColorGroups();
+
+        // Color one square per row
+        this.addDebugLog('Step 5: Coloring one square per row');
+        this.addColorOnePerRow();
+
+        // Fill remaining squares
+        this.addDebugLog('Step 6: Filling remaining squares');
+        this.fillRemainingSingleSquares();
+
+        this.addDebugLog('=== Run All Steps Complete ===');
+      } catch (error) {
+        console.error('Error in runAllSteps:', error);
+
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const fullErrorMsg = `An error occurred while generating the puzzle: ${errorMessage}`;
+
+        this.addDebugLog(`❌ CRITICAL ERROR: ${errorMessage}`);
+        this.addDebugLog(
+          `Stack trace: ${error instanceof Error ? error.stack : 'No stack trace available'}`
+        );
+        this.setError(fullErrorMsg);
+      }
+    },
   },
 });
