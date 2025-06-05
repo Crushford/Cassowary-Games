@@ -30,8 +30,6 @@
         {{ gameStore.errorMessage }}
       </div>
 
-      <PuzzleGenerationProgress />
-
       <section
         v-if="gameStore.debugLogs.length > 0"
         class="relative bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg"
@@ -109,9 +107,6 @@ const PuzzleSolvingPanel = defineAsyncComponent(
   () => import('../components/PuzzleSolvingPanel.vue')
 );
 const GameStateExport = defineAsyncComponent(() => import('../components/GameStateExport.vue'));
-const PuzzleGenerationProgress = defineAsyncComponent(
-  () => import('../components/PuzzleGenerationProgress.vue')
-);
 
 const gameStore = useGameStore();
 const copyStatus = ref('');
