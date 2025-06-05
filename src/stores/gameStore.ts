@@ -558,7 +558,9 @@ export const useGameStore = defineStore('game', {
 
     // New method to generate a full solution
     placeAllQueens() {
-      this.addDebugLog('Starting placeAllQueens');
+      if (this.verboseMode) {
+        this.addDebugLog('Starting placeAllQueens');
+      }
 
       // Clear existing solution
       for (let row = 0; row < this.gridSize; row++) {
@@ -573,13 +575,15 @@ export const useGameStore = defineStore('game', {
       let consecutiveFailures = 0;
       const maxConsecutiveFailures = 5;
 
-      this.addDebugLog(`Target: ${this.gridSize} queens, Max attempts: ${maxAttempts}`);
+      if (this.verboseMode) {
+        this.addDebugLog(`Target: ${this.gridSize} queens, Max attempts: ${maxAttempts}`);
+      }
 
       // Try to solve the puzzle
       while (this.queenPositions.length < this.gridSize && attempts < maxAttempts) {
         attempts++;
 
-        if (attempts % 10 === 0) {
+        if (this.verboseMode && attempts % 10 === 0) {
           this.addDebugLog(
             `Attempt ${attempts}: ${this.queenPositions.length}/${this.gridSize} queens placed`
           );
@@ -588,10 +592,14 @@ export const useGameStore = defineStore('game', {
         const success = this.placeRandomQueen();
         if (!success) {
           consecutiveFailures++;
-          this.addDebugLog(`Placement failed, consecutive failures: ${consecutiveFailures}`);
+          if (this.verboseMode) {
+            this.addDebugLog(`Placement failed, consecutive failures: ${consecutiveFailures}`);
+          }
 
           if (consecutiveFailures >= maxConsecutiveFailures) {
-            this.addDebugLog('Too many consecutive failures, resetting board');
+            if (this.verboseMode) {
+              this.addDebugLog('Too many consecutive failures, resetting board');
+            }
             this.clearQueensAndFlags();
             consecutiveFailures = 0;
           }
@@ -601,9 +609,11 @@ export const useGameStore = defineStore('game', {
       }
 
       const finalQueenCount = this.queenPositions.length;
-      this.addDebugLog(
-        `Generation complete: ${finalQueenCount}/${this.gridSize} queens after ${attempts} attempts`
-      );
+      if (this.verboseMode) {
+        this.addDebugLog(
+          `Generation complete: ${finalQueenCount}/${this.gridSize} queens after ${attempts} attempts`
+        );
+      }
 
       if (finalQueenCount === this.gridSize) {
         // Record the final queen placements in our solution data
@@ -614,11 +624,15 @@ export const useGameStore = defineStore('game', {
             }
           }
         }
-        this.addDebugLog('✅ Full solution generated and saved');
+        if (this.verboseMode) {
+          this.addDebugLog('✅ Full solution generated and saved');
+        }
       } else {
-        this.addDebugLog(
-          `❌ Failed to generate full solution: only ${finalQueenCount}/${this.gridSize} queens placed`
-        );
+        if (this.verboseMode) {
+          this.addDebugLog(
+            `❌ Failed to generate full solution: only ${finalQueenCount}/${this.gridSize} queens placed`
+          );
+        }
         this.setError(`Could not place all queens: ${finalQueenCount}/${this.gridSize} placed`);
       }
     },
@@ -850,7 +864,7 @@ export const useGameStore = defineStore('game', {
     },
 
     // New method to generate and validate a puzzle that can be solved with steps
-    async generateStepSolvablePuzzle(maxAttempts = 100) {
+    async generateStepSolvablePuzzle(maxAttempts = 10000) {
       if (this.puzzleGenerationState.isGenerating) return;
 
       this.puzzleGenerationState.isGenerating = true;
@@ -910,11 +924,18 @@ export const useGameStore = defineStore('game', {
             // Clear queens and flags to test step-solving
             this.clearQueensAndFlags();
 
-            // Run solver steps to verify puzzle is step-solvable
-            this.runAllSolverSteps();
+            // Run brute force solver to verify puzzle has exactly one solution
+            const numSolutions = this.bruteForceSolver(2); // Look for up to 2 solutions
             this.puzzleGenerationState.completedSteps++;
 
-            // Validate the puzzle state after solver steps
+            if (numSolutions !== 1) {
+              if (shouldLogDetail) {
+                this.addDebugLog(`Skipping: Found ${numSolutions} solutions, need exactly 1`);
+              }
+              continue;
+            }
+
+            // Validate the puzzle state after solver
             const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
             const queenCount = this.queenPositions.length;
 
