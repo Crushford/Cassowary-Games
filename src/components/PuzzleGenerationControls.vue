@@ -19,7 +19,7 @@
     <!-- Main Run All Steps Button -->
     <div class="flex flex-col gap-2">
       <BaseButton
-        @click="handleRunAllSteps"
+        @click="gameStore.runAllSteps()"
         class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
       >
         ▶️ Run All Steps (Generate Full Puzzle)
@@ -27,7 +27,7 @@
 
       <!-- New Step-Solvable Puzzle Button -->
       <BaseButton
-        @click="handleGenerateStepSolvablePuzzle"
+        @click="gameStore.findValidPuzzleWithSteps()"
         :disabled="isGenerating"
         class="bg-emerald-600 hover:bg-emerald-500 text-lg font-medium"
       >
@@ -169,14 +169,5 @@ const isGenerating = ref(false);
 // Methods
 function handleGridSizeChange() {
   gameStore.setGridSize(gridSize.value);
-}
-
-function handleRunAllSteps() {
-  gameStore.runAllSteps();
-}
-
-// Add new handler
-async function handleGenerateStepSolvablePuzzle() {
-  await gameStore.generateStepSolvablePuzzle();
 }
 </script>
