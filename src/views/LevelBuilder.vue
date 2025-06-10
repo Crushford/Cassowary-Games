@@ -98,42 +98,38 @@
 import { ref, watch, nextTick, onMounted, defineAsyncComponent } from 'vue';
 import { useGameStore } from '../stores/gameStore';
 
-// Use defineAsyncComponent to fix the "no default export" error
-const GameGrid = defineAsyncComponent(() => import('../components/GameGrid.vue'));
 const PuzzleGenerationControls = defineAsyncComponent(
   () => import('../components/PuzzleGenerationControls.vue')
 );
+const ColorPaletteTool = defineAsyncComponent(() => import('../components/ColorPaletteTool.vue'));
+const GameGrid = defineAsyncComponent(() => import('../components/GameGrid.vue'));
 const PuzzleSolvingPanel = defineAsyncComponent(
   () => import('../components/PuzzleSolvingPanel.vue')
 );
-const ColorPaletteTool = defineAsyncComponent(() => import('../components/ColorPaletteTool.vue'));
 const GameStateExport = defineAsyncComponent(() => import('../components/GameStateExport.vue'));
 
 const gameStore = useGameStore();
 const copyStatus = ref('');
 
 // Copy functions
-async function copyToClipboard(text: string) {
-  try {
-    await navigator.clipboard.writeText(text);
+function copyLast20Logs() {
+  const logsToCopy = gameStore.debugLogs.slice(-20).join('\n');
+  navigator.clipboard.writeText(logsToCopy).then(() => {
     copyStatus.value = 'Copied!';
     setTimeout(() => {
       copyStatus.value = '';
     }, 2000);
-  } catch (err) {
-    console.error('Failed to copy text: ', err);
-    copyStatus.value = 'Failed to copy';
-  }
-}
-
-function copyLast20Logs() {
-  const last20Logs = gameStore.debugLogs.slice(-20).join('\n');
-  copyToClipboard(last20Logs);
+  });
 }
 
 function copyAllLogs() {
-  const allLogs = gameStore.debugLogs.join('\n');
-  copyToClipboard(allLogs);
+  const logsToCopy = gameStore.debugLogs.join('\n');
+  navigator.clipboard.writeText(logsToCopy).then(() => {
+    copyStatus.value = 'Copied!';
+    setTimeout(() => {
+      copyStatus.value = '';
+    }, 2000);
+  });
 }
 
 // Function to reset board for solving

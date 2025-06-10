@@ -122,3 +122,9 @@ const copyToClipboard = () => {
     });
 };
 </script>
+
+<script lang="ts">
+export default {
+  name: 'GameStateExport',
+};
+</script>

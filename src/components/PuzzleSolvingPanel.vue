@@ -190,10 +190,6 @@ function handleResetBoard() {
   gameStore.clearMarkers();
 }
 
-function clearLogs() {
-  gameStore.debugLogs = [];
-}
-
 // Add brute force solver handler
 function handleBruteForceSolve() {
   solutionCount.value = gameStore.bruteForceSolver(5);

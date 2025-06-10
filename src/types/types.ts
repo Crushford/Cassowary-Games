@@ -86,6 +86,13 @@ export interface GameState {
   colorToolActive: boolean;
   colorToolSelectedColor: string | null;
   verboseMode: boolean;
+  puzzleGenerationState: {
+    isGenerating: boolean;
+    currentStep: string | null;
+    completedSteps: number;
+    totalSteps: number;
+    isInterrupted: boolean;
+  };
 }
 
 /**

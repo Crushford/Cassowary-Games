@@ -15,11 +15,10 @@ import {
   clonePlayerMarks,
 } from './gridUtils';
 import {
-  assignColors,
-  ensureNoSingletonColorBlocks,
-  addOneToEachColorGroup,
-  addColorToEachRow,
-  fillRemainingSquares,
+  assignInitialColorsToQueens as assignInitialColorsToQueensUtil,
+  expandColorGroups as expandColorGroupsUtil,
+  addColorOnePerRow as addColorOnePerRowUtil,
+  fillRemainingSingleSquares as fillRemainingSingleSquaresUtil,
 } from '../utils/colorAssignment';
 import {
   placeLastFreeQueens,
@@ -56,6 +55,13 @@ export const useGameStore = defineStore('game', {
     colorToolActive: false,
     colorToolSelectedColor: null,
     verboseMode: false,
+    puzzleGenerationState: {
+      isGenerating: false,
+      currentStep: null,
+      completedSteps: 0,
+      totalSteps: 5, // Assuming there are 5 main steps
+      isInterrupted: false,
+    },
   }),
 
   getters: {
@@ -387,104 +393,34 @@ export const useGameStore = defineStore('game', {
       return { queenCountValid, allFilled, colorGroupsValid };
     },
 
+    // Split assignColorGroups into 5 steps
     assignColorGroups() {
-      this.grid = assignColors(this.grid, this.queenPositions, (message) =>
-        this.addDebugLog(message)
+      this.assignInitialColorsToQueens();
+      this.expandColorGroups();
+      this.addColorOnePerRow();
+      this.fillRemainingSingleSquares();
+    },
+
+    // Step 1: Assign a unique color to each queen (do not expand)
+    assignInitialColorsToQueens() {
+      this.grid = assignInitialColorsToQueensUtil(this.grid, this.queenPositions, (msg) =>
+        this.addDebugLog(msg)
       );
     },
 
-    // New method to add one color to each group
-    addOneColorToEachGroup() {
-      // Save current state to history before making changes
-      this.saveToHistory();
-
-      // Get the current state of the grid
-      const beforeState = this.grid.map((row) => row.map((square) => ({ ...square })));
-
-      // Apply the color growth
-      this.grid = addOneToEachColorGroup(this.grid);
-
-      // Count colors before and after
-      const colorsBefore = this.countColoredCells(beforeState);
-      const colorsAfter = this.countColoredCells(this.grid);
-
-      this.addDebugLog(`Adding one square to each color group`);
-      this.addDebugLog(`- Before: ${colorsBefore.total} colored cells`);
-      this.addDebugLog(`- After: ${colorsAfter.total} colored cells`);
-      this.addDebugLog(`- Added: ${colorsAfter.total - colorsBefore.total} new colored cells`);
-
-      // Log detailed color distribution
-      Object.entries(colorsAfter.byColor).forEach(([color, count]) => {
-        const before = colorsBefore.byColor[color] || 0;
-        this.addDebugLog(
-          `  - ${color}: ${before} → ${count as number} (+${(count as number) - before})`
-        );
-      });
+    // Step 2: Expand each color group to adjacent cells (add one neighbor to each group)
+    expandColorGroups() {
+      this.grid = expandColorGroupsUtil(this.grid, (msg) => this.addDebugLog(msg));
     },
 
-    // Helper method to count colored cells
-    countColoredCells(grid: GridSquare[][]) {
-      const result = {
-        total: 0,
-        byColor: {} as Record<string, number>,
-      };
-
-      for (let row = 0; row < grid.length; row++) {
-        for (let col = 0; col < grid[0].length; col++) {
-          const color = grid[row][col].groupColor;
-          if (color) {
-            result.total++;
-            result.byColor[color] = (result.byColor[color] || 0) + 1;
-          }
-        }
-      }
-
-      return result;
+    // Step 3: Add one colored square to each row, using neighbors
+    addColorOnePerRow() {
+      this.grid = addColorOnePerRowUtil(this.grid, (msg) => this.addDebugLog(msg));
     },
 
-    // New method to add one color to each row
-    addOneColorToEachRow(targetRow?: number) {
-      // Save current state to history before making changes
-      this.saveToHistory();
-
-      // Get the current state of the grid
-      const beforeState = this.grid.map((row) => row.map((square) => ({ ...square })));
-
-      // Apply the color change - pass logging function
-      this.grid = addColorToEachRow(this.grid, (message) => this.addDebugLog(message), targetRow);
-
-      // Count colors before and after
-      const colorsBefore = this.countColoredCells(beforeState);
-      const colorsAfter = this.countColoredCells(this.grid);
-
-      const rowDesc = targetRow !== undefined ? `row ${targetRow}` : 'each row';
-      this.addDebugLog(`Adding one color to ${rowDesc}`);
-      this.addDebugLog(`- Before: ${colorsBefore.total} colored cells`);
-      this.addDebugLog(`- After: ${colorsAfter.total} colored cells`);
-      this.addDebugLog(`- Added: ${colorsAfter.total - colorsBefore.total} new colored cells`);
-    },
-
-    // Method to fill any remaining uncolored squares with a neighboring color
+    // Step 4: Fill all remaining uncolored cells with valid colors
     fillRemainingSingleSquares() {
-      // Save current state to history before making changes
-      this.saveToHistory();
-
-      // Get the current state of the grid
-      const beforeState = this.grid.map((row) => row.map((square) => ({ ...square })));
-
-      // Apply the color fill using the imported function
-      this.grid = fillRemainingSquares(this.grid, (message) => this.addDebugLog(message));
-
-      // Count colors before and after
-      const colorsBefore = this.countColoredCells(beforeState);
-      const colorsAfter = this.countColoredCells(this.grid);
-
-      this.addDebugLog(
-        `- Before: ${colorsBefore.total}/${this.gridSize * this.gridSize} cells colored`
-      );
-      this.addDebugLog(
-        `- After: ${colorsAfter.total}/${this.gridSize * this.gridSize} cells colored`
-      );
+      this.grid = fillRemainingSingleSquaresUtil(this.grid, (msg) => this.addDebugLog(msg));
     },
 
     setSquareColor(row: number, col: number, color: string | undefined) {
@@ -566,10 +502,6 @@ export const useGameStore = defineStore('game', {
           }
         }
       }
-
-      // The grid is now assigned to a utility function, so we need to create a copy of the grid here
-      // by calling the singleton color blocks function from the color assignment utils
-      this.grid = ensureNoSingletonColorBlocks(this.grid);
     },
 
     // Function to check if a color forms a connected group and return color information
@@ -625,8 +557,10 @@ export const useGameStore = defineStore('game', {
     },
 
     // New method to generate a full solution
-    generateFullSolution() {
-      this.addDebugLog('Starting generateFullSolution');
+    placeAllQueens() {
+      if (this.verboseMode) {
+        this.addDebugLog('Starting placeAllQueens');
+      }
 
       // Clear existing solution
       for (let row = 0; row < this.gridSize; row++) {
@@ -641,13 +575,15 @@ export const useGameStore = defineStore('game', {
       let consecutiveFailures = 0;
       const maxConsecutiveFailures = 5;
 
-      this.addDebugLog(`Target: ${this.gridSize} queens, Max attempts: ${maxAttempts}`);
+      if (this.verboseMode) {
+        this.addDebugLog(`Target: ${this.gridSize} queens, Max attempts: ${maxAttempts}`);
+      }
 
       // Try to solve the puzzle
       while (this.queenPositions.length < this.gridSize && attempts < maxAttempts) {
         attempts++;
 
-        if (attempts % 10 === 0) {
+        if (this.verboseMode && attempts % 10 === 0) {
           this.addDebugLog(
             `Attempt ${attempts}: ${this.queenPositions.length}/${this.gridSize} queens placed`
           );
@@ -656,10 +592,14 @@ export const useGameStore = defineStore('game', {
         const success = this.placeRandomQueen();
         if (!success) {
           consecutiveFailures++;
-          this.addDebugLog(`Placement failed, consecutive failures: ${consecutiveFailures}`);
+          if (this.verboseMode) {
+            this.addDebugLog(`Placement failed, consecutive failures: ${consecutiveFailures}`);
+          }
 
           if (consecutiveFailures >= maxConsecutiveFailures) {
-            this.addDebugLog('Too many consecutive failures, resetting board');
+            if (this.verboseMode) {
+              this.addDebugLog('Too many consecutive failures, resetting board');
+            }
             this.clearQueensAndFlags();
             consecutiveFailures = 0;
           }
@@ -669,9 +609,11 @@ export const useGameStore = defineStore('game', {
       }
 
       const finalQueenCount = this.queenPositions.length;
-      this.addDebugLog(
-        `Generation complete: ${finalQueenCount}/${this.gridSize} queens after ${attempts} attempts`
-      );
+      if (this.verboseMode) {
+        this.addDebugLog(
+          `Generation complete: ${finalQueenCount}/${this.gridSize} queens after ${attempts} attempts`
+        );
+      }
 
       if (finalQueenCount === this.gridSize) {
         // Record the final queen placements in our solution data
@@ -682,11 +624,15 @@ export const useGameStore = defineStore('game', {
             }
           }
         }
-        this.addDebugLog('✅ Full solution generated and saved');
+        if (this.verboseMode) {
+          this.addDebugLog('✅ Full solution generated and saved');
+        }
       } else {
-        this.addDebugLog(
-          `❌ Failed to generate full solution: only ${finalQueenCount}/${this.gridSize} queens placed`
-        );
+        if (this.verboseMode) {
+          this.addDebugLog(
+            `❌ Failed to generate full solution: only ${finalQueenCount}/${this.gridSize} queens placed`
+          );
+        }
         this.setError(`Could not place all queens: ${finalQueenCount}/${this.gridSize} placed`);
       }
     },
@@ -874,9 +820,9 @@ export const useGameStore = defineStore('game', {
     debugLogs: [] as string[],
 
     // Helper for one generation attempt: returns puzzle name or null
-    attemptGeneratePuzzle(attempt: number, requiredQueens: number): string | null {
+    generateCandidatePuzzle(attempt: number, requiredQueens: number): string | null {
       this.addDebugLog(`Attempt ${attempt}: Starting puzzle generation`);
-      this.generateFullSolution(); // build full solution
+      this.placeAllQueens(); // build full solution
 
       // Make sure color groups are assigned before proceeding
       this.addDebugLog(`Attempt ${attempt}: Assigning color groups to solution`);
@@ -891,13 +837,9 @@ export const useGameStore = defineStore('game', {
         this.addDebugLog(`  - Color ${color}: ${count} cells`);
       });
 
-      this.clearQueensAndFlags(); // reset markers
+      this.clearMarkers(); // reset markers
       this.runAllSolverSteps(); // cycle solve steps
-      if (!this.forceChangeColor()) {
-        this.addDebugLog(`Attempt ${attempt}: Color change failed`);
-        return null;
-      }
-      this.runAllSolverSteps(); // re-run solver steps
+
       const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
 
       // Add more detailed validation logs
@@ -922,7 +864,15 @@ export const useGameStore = defineStore('game', {
     },
 
     // New method to generate and validate a puzzle that can be solved with steps
-    generateAndValidatePuzzleWithSteps(maxAttempts = 100): string | null {
+    async findValidPuzzleWithSteps(maxAttempts = 1000) {
+      if (this.puzzleGenerationState.isGenerating) return;
+
+      this.puzzleGenerationState.isGenerating = true;
+      this.puzzleGenerationState.currentStep = null;
+      this.puzzleGenerationState.completedSteps = 0;
+      this.puzzleGenerationState.totalSteps = 5; // Assuming there are 5 main steps
+      this.puzzleGenerationState.isInterrupted = false;
+
       try {
         // Reset logs for clarity
         this.debugLogs = [];
@@ -937,6 +887,11 @@ export const useGameStore = defineStore('game', {
         let attemptSummary: AttemptResult[] = [];
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          if (this.puzzleGenerationState.isInterrupted) {
+            this.addDebugLog('Process interrupted');
+            break;
+          }
+
           try {
             // Only log every 5th attempt for brevity
             const shouldLogDetail = attempt % 5 === 1 || attempt === maxAttempts;
@@ -945,75 +900,32 @@ export const useGameStore = defineStore('game', {
               this.addDebugLog(`\nAttempt ${attempt}/${maxAttempts}`);
             }
 
-            // Generate solution with queens
-            this.generateFullSolution();
+            // Call generateCandidatePuzzle to get a potential puzzle
+            const puzzleName = this.generateCandidatePuzzle(attempt, requiredQueens);
 
-            // Skip if solution generation failed
-            if (this.queenPositions.length !== this.gridSize) {
-              this.addDebugLog(
-                `Failed to generate full solution. Got ${this.queenPositions.length}/${this.gridSize} queens.`
-              );
-              continue;
-            }
+            if (puzzleName) {
+              // Run brute force solver to verify puzzle has exactly one solution
+              const numSolutions = this.bruteForceSolver(2); // Look for up to 2 solutions
+              this.puzzleGenerationState.completedSteps++;
 
-            // Assign color groups
-            this.assignColorGroups();
-
-            // More concise color distribution info
-            if (shouldLogDetail) {
-              this.logColorDistribution();
-            }
-
-            // Clear queens and flags to test step-solving
-            this.clearQueensAndFlags();
-
-            // Run solver steps to verify puzzle is step-solvable
-            this.runAllSolverSteps();
-
-            // Validate the puzzle state after solver steps
-            const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
-            const queenCount = this.queenPositions.length;
-
-            const attemptResult = {
-              attempt,
-              queens: queenCount,
-              requiredQueens,
-              allFilled,
-              colorGroupsValid,
-              success: queenCountValid && allFilled && colorGroupsValid,
-            };
-
-            attemptSummary.push(attemptResult);
-
-            if (shouldLogDetail) {
-              this.addDebugLog(
-                `Queens: ${queenCount}/${requiredQueens}, Filled: ${allFilled}, Valid Groups: ${colorGroupsValid}`
-              );
-            }
-
-            if (attemptResult.success) {
-              // Restore the original solution
-              this.clearQueensAndFlags();
-              for (let row = 0; row < this.gridSize; row++) {
-                for (let col = 0; col < this.gridSize; col++) {
-                  if (this.grid[row][col].isSolutionQueen) {
-                    this.placeQueen(row, col);
-                  }
-                }
-              }
-
-              const name = this.savePuzzleToLocalStorage();
-              if (name) {
+              if (numSolutions === 1) {
                 this.addDebugLog(
-                  `\n✅ SUCCESS: Step-solvable puzzle saved as "${name}" after ${attempt} attempts`
+                  `\n✅ SUCCESS: Step-solvable puzzle saved as "${puzzleName}" after ${attempt} attempts`
                 );
 
                 // Add summary statistics
                 this.summarizeAttempts(attemptSummary);
 
-                return name;
+                return puzzleName;
+              } else {
+                if (shouldLogDetail) {
+                  this.addDebugLog(`Skipping: Found ${numSolutions} solutions, need exactly 1`);
+                }
               }
             }
+
+            // Continue to next attempt if no valid puzzle was generated
+            continue;
           } catch (attemptError) {
             // Log error for this specific attempt but continue with next
             console.error(`Error in attempt ${attempt}:`, attemptError);
@@ -1037,6 +949,9 @@ export const useGameStore = defineStore('game', {
         this.addDebugLog(`❌ CRITICAL ERROR: ${errorMessage}`);
         this.setError(`Error generating puzzle: ${errorMessage}`);
         return null;
+      } finally {
+        this.puzzleGenerationState.isGenerating = false;
+        this.puzzleGenerationState.currentStep = null;
       }
     },
 
@@ -1117,134 +1032,6 @@ export const useGameStore = defineStore('game', {
         (message: string) => this.addDebugLog(message),
         this.verboseMode
       );
-    },
-
-    // Add helper to ensure no color block has a singleton square
-    ensureNoSingletonColorBlocks() {
-      const colorGroups: Record<string, Pos[]> = {};
-      // Build map of color groups
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          const color = this.grid[row][col].groupColor;
-          if (!color) continue;
-          if (!colorGroups[color]) colorGroups[color] = [];
-          colorGroups[color].push({ row, col });
-        }
-      }
-      const directions = [
-        { dr: 1, dc: 0 },
-        { dr: -1, dc: 0 },
-        { dr: 0, dc: 1 },
-        { dr: 0, dc: -1 },
-      ];
-      // Reassign any singleton cell to a neighbor's color
-      for (const [color, positions] of Object.entries(colorGroups)) {
-        if (positions.length === 1) {
-          const { row, col } = positions[0];
-          // Skip singleton if it's a queen to avoid duplicating color among queens
-          if (this.playerMarks[row][col] === 'queen') continue;
-          const neighborColors = new Set<string>();
-          for (const dir of directions) {
-            const newR = row + dir.dr;
-            const newC = col + dir.dc;
-            if (
-              this.isValidPosition(newR, newC) &&
-              this.grid[newR][newC].groupColor &&
-              this.grid[newR][newC].groupColor !== color
-            ) {
-              neighborColors.add(this.grid[newR][newC].groupColor!);
-            }
-          }
-          if (neighborColors.size > 0) {
-            const choices = Array.from(neighborColors);
-            const newColor = choices[Math.floor(Math.random() * choices.length)];
-            this.grid[row][col].groupColor = newColor;
-          }
-        }
-      }
-    },
-
-    // Add action to randomly change the color of an empty square to an adjacent neighbor color
-    forceChangeColor() {
-      const empties: Pos[] = [];
-      // Check if any solution queens exist
-      let hasSolutionQueens = false;
-      for (let r = 0; r < this.gridSize && !hasSolutionQueens; r++) {
-        for (let c = 0; c < this.gridSize && !hasSolutionQueens; c++) {
-          if (this.grid[r][c].isSolutionQueen) {
-            hasSolutionQueens = true;
-          }
-        }
-      }
-
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          // Skip solution cells so we don't change a square that should have a queen
-          if (this.playerMarks[row][col] === null && !hasSolutionQueens) {
-            empties.push({ row, col });
-          }
-        }
-      }
-      // Log number of empty squares found
-      this.addDebugLog(`forceChangeColor: found ${empties.length} empty squares`);
-      if (empties.length === 0) {
-        this.addDebugLog('forceChangeColor: no empty squares to change color');
-        this.setError('No empty squares to change color');
-        return false;
-      }
-      const randIdx = Math.floor(Math.random() * empties.length);
-      const { row, col } = empties[randIdx];
-      // Log selected square
-      this.addDebugLog(`forceChangeColor: selected empty square at (${row},${col})`);
-      const directions = [
-        { dr: -1, dc: 0 },
-        { dr: 1, dc: 0 },
-        { dr: 0, dc: -1 },
-        { dr: 0, dc: 1 },
-      ];
-      const neighborColors: string[] = [];
-      for (const { dr, dc } of directions) {
-        const newR = row + dr;
-        const newC = col + dc;
-        if (this.isValidPosition(newR, newC)) {
-          const color = this.grid[newR][newC].groupColor;
-          if (color) {
-            neighborColors.push(color);
-          }
-        }
-      }
-      // Log adjacent neighbor colors
-      this.addDebugLog(`forceChangeColor: neighborColors = [${neighborColors.join(', ')}]`);
-
-      let newColor;
-      if (neighborColors.length === 0) {
-        // If no neighbors have colors, assign a random color from the palette
-        const colorPalette: ('red' | 'blue' | 'green' | 'yellow' | 'purple' | 'pink')[] = [
-          'red',
-          'blue',
-          'green',
-          'yellow',
-          'purple',
-          'pink',
-        ];
-        newColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
-        this.addDebugLog(
-          `forceChangeColor: no adjacent colors found, using random color "${newColor}"`
-        );
-      } else {
-        // Use an adjacent color
-        newColor = neighborColors[Math.floor(Math.random() * neighborColors.length)];
-        this.addDebugLog(`forceChangeColor: using adjacent color "${newColor}"`);
-      }
-
-      // Log applying the color change
-      this.addDebugLog(`forceChangeColor: changing square (${row},${col}) to color ${newColor}`);
-      this.saveToHistory();
-      this.grid[row][col].groupColor = newColor;
-
-      // Use the imported ensureNoSingletonColorBlocks function
-      this.grid = ensureNoSingletonColorBlocks(this.grid);
-      return true;
     },
 
     // Generate summary statistics from attempts
@@ -1418,6 +1205,65 @@ export const useGameStore = defineStore('game', {
       const isIncorrect = playerMark === 'queen' && !hasSolutionQueen;
 
       return { playerMark, hasSolutionQueen, isCorrect, isIncorrect };
+    },
+
+    runAllSteps() {
+      try {
+        // Clear any existing error messages and debug logs
+        this.setError(null);
+
+        this.addDebugLog('=== Starting Run All Steps ===');
+
+        // Reset everything first
+        this.addDebugLog('Step 1: Initializing grid and clearing markers');
+        this.initializeGrid();
+        this.clearQueensAndFlags();
+
+        // Place all queens
+        this.addDebugLog('Step 2: Placing all queens');
+        this.placeAllQueens();
+
+        if (this.queenPositions.length !== this.gridSize) {
+          const errorMsg = `Failed to generate queen positions: ${this.queenPositions.length}/${this.gridSize} queens placed`;
+          this.addDebugLog(`❌ ${errorMsg}`);
+          this.setError(errorMsg);
+          return;
+        }
+        this.addDebugLog(`✅ Generated ${this.queenPositions.length} queens`);
+
+        // Assign initial colors to queens
+        this.addDebugLog('Step 3: Assigning initial colors to queens');
+        this.assignInitialColorsToQueens();
+
+        // Expand color groups
+        this.addDebugLog('Step 4: Expanding color groups');
+        this.expandColorGroups();
+
+        // Color one square per row
+        this.addDebugLog('Step 5: Coloring one square per row');
+        this.addColorOnePerRow();
+
+        // Fill remaining squares
+        this.addDebugLog('Step 6: Filling remaining squares');
+        this.fillRemainingSingleSquares();
+
+        this.addDebugLog('=== Run All Steps Complete ===');
+      } catch (error) {
+        console.error('Error in runAllSteps:', error);
+
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const fullErrorMsg = `An error occurred while generating the puzzle: ${errorMessage}`;
+
+        this.addDebugLog(`❌ CRITICAL ERROR: ${errorMessage}`);
+        this.addDebugLog(
+          `Stack trace: ${error instanceof Error ? error.stack : 'No stack trace available'}`
+        );
+        this.setError(fullErrorMsg);
+      }
+    },
+
+    interruptPuzzleGeneration() {
+      this.puzzleGenerationState.isInterrupted = true;
     },
   },
 });
