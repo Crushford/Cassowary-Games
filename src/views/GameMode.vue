@@ -7,9 +7,10 @@
           <span class="text-amber-400">🍯</span>
           <span>{{ gameStore.honeyPots }}</span>
         </div>
+        <!-- Health Display -->
         <div class="flex items-center space-x-2">
-          <span class="text-gray-400">🐜</span>
-          <span>{{ gameStore.bites }}</span>
+          <span class="text-red-400">❤️</span>
+          <span>{{ gameStore.bites }}/{{ gameStore.maxHealth }}</span>
         </div>
       </div>
 
@@ -29,9 +30,11 @@
         <div
           class="bg-gray-800 p-8 rounded-lg shadow-xl transform transition-all duration-500 scale-100 hover:scale-105"
         >
-          <h2 class="text-2xl font-bold text-amber-400 mb-4">Level Complete!</h2>
+          <h2 class="text-2xl font-bold text-amber-400 mb-4">
+            {{ gameStore.isAlive ? 'Level Complete!' : 'Game Over!' }}
+          </h2>
           <p class="text-white mb-2">Honey Pots Collected: {{ gameStore.honeyPots }}</p>
-          <p class="text-white mb-4">Ant Bites: {{ gameStore.bites }}</p>
+          <p class="text-white mb-4">Ant Bites: {{ gameStore.bites }}/{{ gameStore.maxHealth }}</p>
           <p class="text-gray-400 text-sm">Click anywhere to continue</p>
         </div>
       </div>

@@ -32,6 +32,7 @@ import { bruteForceSolver } from './bruteForceSolver';
 
 // Constants
 const DEFAULT_GRID_SIZE = 4;
+const MAX_HEALTH = 10; // Maximum health points
 
 export const useGameStore = defineStore('game', {
   state: (): GameState => ({
@@ -139,6 +140,23 @@ export const useGameStore = defineStore('game', {
 
       return true;
     },
+
+    // Add new getters for health
+    maxHealth(): number {
+      return MAX_HEALTH;
+    },
+
+    remainingHealth(): number {
+      return Math.max(0, MAX_HEALTH - this.bites);
+    },
+
+    isAlive(): boolean {
+      return this.remainingHealth > 0;
+    },
+
+    healthPercentage(): number {
+      return (this.remainingHealth / MAX_HEALTH) * 100;
+    },
   },
 
   actions: {
@@ -240,6 +258,11 @@ export const useGameStore = defineStore('game', {
         } else {
           this.playerMarks[row][col] = 'invalid';
           this.bites++;
+
+          // Check if player is still alive
+          if (!this.isAlive) {
+            this.handleGameOver();
+          }
         }
       }
     },
@@ -1313,6 +1336,12 @@ export const useGameStore = defineStore('game', {
 
     interruptPuzzleGeneration() {
       this.puzzleGenerationState.isInterrupted = true;
+    },
+
+    // Add new action to handle game over
+    handleGameOver() {
+      this.setError('Game Over - You ran out of health!');
+      this.isComplete = true;
     },
   },
 });
