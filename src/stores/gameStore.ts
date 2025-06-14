@@ -43,6 +43,7 @@ export const useGameStore = defineStore('game', {
       Array(DEFAULT_GRID_SIZE).fill(null as MarkType)
     ),
     bites: 0, // Add new state for tracking bites
+    honeyPots: 0, // Add new state for tracking honey pots collected
 
     // UI state
     uiState: {
@@ -237,6 +238,7 @@ export const useGameStore = defineStore('game', {
         // Second click: dig
         if (this.grid[row][col].isSolutionQueen) {
           this.placeQueen(row, col);
+          this.honeyPots++; // Increment honey pots when a queen is correctly placed
         } else {
           this.playerMarks[row][col] = 'invalid';
           this.bites++;
