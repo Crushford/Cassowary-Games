@@ -182,11 +182,6 @@ export const useGameStore = defineStore('game', {
     },
 
     placeQueen(row: number, col: number) {
-      if (!this.isValidMove(row, col)) {
-        this.setPlayerMark(row, col, 'invalid');
-        return false;
-      }
-
       this.setPlayerMark(row, col, 'queen');
       return true;
     },
@@ -239,10 +234,27 @@ export const useGameStore = defineStore('game', {
         if (this.grid[row][col].isSolutionQueen) {
           this.placeQueen(row, col);
           this.honeyPots++; // Increment honey pots when a queen is correctly placed
+
+          // Check if the board is complete after placing a queen
+          this.checkBoardCompletion();
         } else {
           this.playerMarks[row][col] = 'invalid';
           this.bites++;
         }
+      }
+    },
+
+    checkBoardCompletion() {
+      // Check if all squares have been marked (queen, flag, or invalid)
+      const allSquaresMarked = this.playerMarks.every((row) => row.every((mark) => mark !== null));
+
+      if (allSquaresMarked) {
+        // Board is complete, prepare for next level
+        this.isComplete = true;
+        this.currentLevel++;
+
+        // Generate new puzzle for next level
+        this.findValidPuzzleWithSteps();
       }
     },
 
