@@ -132,11 +132,6 @@ function copyAllLogs() {
   });
 }
 
-// Function to reset board for solving
-function resetBoardForSolving() {
-  gameStore.clearQueensAndFlags();
-}
-
 const logsContainer = ref<HTMLElement | null>(null);
 watch(
   () => gameStore.debugLogs,

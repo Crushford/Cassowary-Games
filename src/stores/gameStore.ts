@@ -358,7 +358,6 @@ export const useGameStore = defineStore('game', {
 
       // Clear all playerMarks
       clearMarkers(this.playerMarks);
-      this.addDebugLog('playerMarks CLEARED by clearQueensAndFlags');
 
       this.isComplete = false;
     },
@@ -838,7 +837,6 @@ export const useGameStore = defineStore('game', {
 
         // Reset the grid and clear any existing state
         this.initializeGrid();
-        this.clearQueensAndFlags();
 
         // Place all queens
         this.placeAllQueens();
@@ -1254,7 +1252,6 @@ export const useGameStore = defineStore('game', {
         // Reset everything first
         this.addDebugLog('Step 1: Initializing grid and clearing markers');
         this.initializeGrid();
-        this.clearQueensAndFlags();
 
         // Place all queens
         this.addDebugLog('Step 2: Placing all queens');
