@@ -235,9 +235,10 @@ export const useGameStore = defineStore('game', {
         this.placeFlag(row, col);
       } else if (currentState === 'flag') {
         // Second click: dig
-        this.placeQueen(row, col);
-        // If not a queen, take a bite
-        if (!this.grid[row][col].isSolutionQueen) {
+        if (this.grid[row][col].isSolutionQueen) {
+          this.placeQueen(row, col);
+        } else {
+          this.playerMarks[row][col] = 'invalid';
           this.bites++;
         }
       }
