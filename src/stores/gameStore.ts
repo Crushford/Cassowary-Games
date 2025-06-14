@@ -831,48 +831,71 @@ export const useGameStore = defineStore('game', {
     // Log array for test steps
     debugLogs: [] as string[],
 
-    // Helper for one generation attempt: returns puzzle name or null
-    generateCandidatePuzzle(attempt: number, requiredQueens: number): string | null {
-      this.addDebugLog(`Attempt ${attempt}: Starting puzzle generation`);
-      this.placeAllQueens(); // build full solution
+    // Helper for one generation attempt: returns true if successful, false otherwise
+    generateCandidatePuzzle(attempt: number, requiredQueens: number): boolean {
+      try {
+        this.addDebugLog(`Attempt ${attempt}: Starting puzzle generation`);
 
-      // Make sure color groups are assigned before proceeding
-      this.addDebugLog(`Attempt ${attempt}: Assigning color groups to solution`);
-      this.assignColorGroups();
+        // Reset the grid and clear any existing state
+        this.initializeGrid();
+        this.clearQueensAndFlags();
 
-      // Debug info: get color distribution using utility
-      const { totalColored, totalSquares, colorCounts } = getColorDistribution(this.grid);
-      this.addDebugLog(
-        `Attempt ${attempt}: Color assignment complete - ${totalColored}/${totalSquares} cells colored`
-      );
-      Object.entries(colorCounts).forEach(([color, count]) => {
-        this.addDebugLog(`  - Color ${color}: ${count} cells`);
-      });
+        // Place all queens
+        this.placeAllQueens();
 
-      this.clearMarkers(); // reset markers
-      this.runAllSolverSteps(); // cycle solve steps
+        // Verify we have the correct number of queens
+        if (this.queenPositions.length !== requiredQueens) {
+          this.addDebugLog(
+            `Attempt ${attempt}: Failed to place required queens (${this.queenPositions.length}/${requiredQueens})`
+          );
+          return false;
+        }
 
-      const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
+        // Assign color groups
+        this.addDebugLog(`Attempt ${attempt}: Assigning color groups to solution`);
+        this.assignColorGroups();
 
-      // Add more detailed validation logs
-      this.addDebugLog(`Attempt ${attempt}: Final validation:`);
-      this.addDebugLog(
-        `  - Queens: ${this.queenPositions.length}/${requiredQueens} (valid: ${queenCountValid})`
-      );
-      this.addDebugLog(`  - All cells filled: ${allFilled}`);
-      this.addDebugLog(`  - Color groups valid: ${colorGroupsValid}`);
-
-      if (!(queenCountValid && allFilled && colorGroupsValid)) {
+        // Debug info: get color distribution
+        const { totalColored, totalSquares, colorCounts } = getColorDistribution(this.grid);
         this.addDebugLog(
-          `Attempt ${attempt}: Validation failed. Queens: ${this.queenPositions.length}, Filled: ${allFilled}, Colors OK: ${colorGroupsValid}`
+          `Attempt ${attempt}: Color assignment complete - ${totalColored}/${totalSquares} cells colored`
         );
-        return null;
+        Object.entries(colorCounts).forEach(([color, count]) => {
+          this.addDebugLog(`  - Color ${color}: ${count} cells`);
+        });
+
+        // Clear markers and run solver steps
+        this.clearMarkers();
+        this.runAllSolverSteps();
+
+        // Validate the puzzle
+        const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
+
+        // Add detailed validation logs
+        this.addDebugLog(`Attempt ${attempt}: Final validation:`);
+        this.addDebugLog(
+          `  - Queens: ${this.queenPositions.length}/${requiredQueens} (valid: ${queenCountValid})`
+        );
+        this.addDebugLog(`  - All cells filled: ${allFilled}`);
+        this.addDebugLog(`  - Color groups valid: ${colorGroupsValid}`);
+
+        // Check if the puzzle is valid
+        if (!(queenCountValid && allFilled && colorGroupsValid)) {
+          this.addDebugLog(
+            `Attempt ${attempt}: Validation failed. Queens: ${this.queenPositions.length}, Filled: ${allFilled}, Colors OK: ${colorGroupsValid}`
+          );
+          return false;
+        }
+
+        this.addDebugLog(`Attempt ${attempt}: Successfully generated puzzle`);
+        return true;
+      } catch (error) {
+        console.error(`Error in generateCandidatePuzzle:`, error);
+        this.addDebugLog(
+          `Attempt ${attempt}: Error generating puzzle: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+        return false;
       }
-      const name = this.savePuzzleToLocalStorage();
-      if (!name) {
-        this.addDebugLog(`Attempt ${attempt}: Save failed`);
-      }
-      return name || null;
     },
 
     // New method to generate and validate a puzzle that can be solved with steps
@@ -913,30 +936,28 @@ export const useGameStore = defineStore('game', {
               this.addDebugLog(`\nAttempt ${attempt}/${maxAttempts}`);
             }
 
-            // Call generateCandidatePuzzle to get a potential puzzle
-            const puzzleName = this.generateCandidatePuzzle(attempt, requiredQueens);
+            // Generate a candidate puzzle
+            this.generateCandidatePuzzle(attempt, requiredQueens);
 
-            if (puzzleName) {
-              // Run brute force solver to verify puzzle has exactly one solution
-              const numSolutions = this.bruteForceSolver(2); // Look for up to 2 solutions
-              this.puzzleGenerationState.completedSteps++;
+            // Run brute force solver to verify puzzle has exactly one solution
+            const numSolutions = this.bruteForceSolver(2); // Look for up to 2 solutions
+            this.puzzleGenerationState.completedSteps++;
 
-              if (numSolutions === 1) {
-                this.addDebugLog(
-                  `\n✅ SUCCESS: Step-solvable puzzle saved as "${puzzleName}" after ${attempt} attempts`
-                );
+            if (numSolutions === 1) {
+              this.addDebugLog(
+                `\n✅ SUCCESS: Step-solvable puzzle generated after ${attempt} attempts`
+              );
 
-                // Clear player markings for the new game mode
-                this.clearMarkers();
+              // Clear player markings for the new game mode
+              this.clearMarkers();
 
-                // Add summary statistics
-                this.summarizeAttempts(attemptSummary);
+              // Add summary statistics
+              this.summarizeAttempts(attemptSummary);
 
-                return puzzleName;
-              } else {
-                if (shouldLogDetail) {
-                  this.addDebugLog(`Skipping: Found ${numSolutions} solutions, need exactly 1`);
-                }
+              return true;
+            } else {
+              if (shouldLogDetail) {
+                this.addDebugLog(`Skipping: Found ${numSolutions} solutions, need exactly 1`);
               }
             }
 
@@ -958,13 +979,13 @@ export const useGameStore = defineStore('game', {
         this.summarizeAttempts(attemptSummary);
 
         this.setError(`Failed to generate a step-solvable puzzle after ${maxAttempts} attempts`);
-        return null;
+        return false;
       } catch (error: unknown) {
         console.error('Critical error in puzzle generation:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         this.addDebugLog(`❌ CRITICAL ERROR: ${errorMessage}`);
         this.setError(`Error generating puzzle: ${errorMessage}`);
-        return null;
+        return false;
       } finally {
         this.puzzleGenerationState.isGenerating = false;
         this.puzzleGenerationState.currentStep = null;

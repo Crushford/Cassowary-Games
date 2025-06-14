@@ -18,7 +18,6 @@ import { onMounted } from 'vue';
 const gameStore = useGameStore();
 
 onMounted(() => {
-  debugger;
   gameStore.findValidPuzzleWithSteps();
 });
 

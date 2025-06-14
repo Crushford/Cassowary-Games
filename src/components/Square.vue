@@ -37,7 +37,7 @@ const playerMark = computed(() => {
 
 // Check if this square has a solution queen for solution mode
 const isSolutionQueen = computed(() => {
-  return gameStore.solutionQueenPositions.some((q) => q.row === props.row && q.col === props.col);
+  return gameStore.grid[props.row][props.col].isSolutionQueen;
 });
 
 // Get color from the grid
@@ -47,21 +47,39 @@ const groupColor = computed(() => {
 
 const squareClasses = computed(() => {
   const hasGroupColor = !!groupColor.value;
+  const classes = [];
 
-  let classes: Record<string, boolean> = {
-    // Color group background
-    [`bg-group-${groupColor.value}-700`]: hasGroupColor,
-  };
+  if (hasGroupColor) {
+    classes.push(`bg-group-${groupColor.value}-700`);
+  }
 
-  // Add player-mode specific styling
+  // Add hover state
+  classes.push('hover:bg-opacity-80');
 
-  return hasGroupColor && [`bg-group-${groupColor.value}-700`];
+  return classes;
 });
 
 const handleClick = () => {
   // Only handle clicks in player mode
   if (props.mode === 'player') {
-    gameStore.handleSquareClick(props.row, props.col);
+    const currentMark = gameStore.getPlayerMarking(props.row, props.col);
+
+    if (currentMark === null) {
+      // First click: place flag
+      gameStore.placeFlag(props.row, props.col);
+    } else if (currentMark === 'flag') {
+      // Second click: try to place queen
+      if (gameStore.isValidMove(props.row, props.col)) {
+        gameStore.placeQueen(props.row, props.col);
+        // If not a solution queen, increment bites
+        if (!isSolutionQueen.value) {
+          gameStore.bites++;
+        }
+      } else {
+        // Invalid move, mark as invalid
+        gameStore.setPlayerMark(props.row, props.col, 'invalid');
+      }
+    }
   }
 };
 </script>
