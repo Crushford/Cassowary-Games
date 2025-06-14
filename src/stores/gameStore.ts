@@ -30,13 +30,21 @@ import {
 } from './solver';
 import { bruteForceSolver } from './bruteForceSolver';
 
+// Constants
+const DEFAULT_GRID_SIZE = 4;
+const MAX_HEALTH = 10; // Maximum health points
+
 export const useGameStore = defineStore('game', {
   state: (): GameState => ({
     // Core game state
-    grid: createEmptyGrid(6),
-    gridSize: 6,
+    grid: createEmptyGrid(DEFAULT_GRID_SIZE),
+    gridSize: DEFAULT_GRID_SIZE,
     moveHistory: [],
-    playerMarks: Array.from({ length: 6 }, () => Array(6).fill(null as MarkType)),
+    playerMarks: Array.from({ length: DEFAULT_GRID_SIZE }, () =>
+      Array(DEFAULT_GRID_SIZE).fill(null as MarkType)
+    ),
+    bites: 0, // Add new state for tracking bites
+    honeyPots: 0, // Add new state for tracking honey pots collected
 
     // UI state
     uiState: {
@@ -132,6 +140,23 @@ export const useGameStore = defineStore('game', {
 
       return true;
     },
+
+    // Add new getters for health
+    maxHealth(): number {
+      return MAX_HEALTH;
+    },
+
+    remainingHealth(): number {
+      return Math.max(0, MAX_HEALTH - this.bites);
+    },
+
+    isAlive(): boolean {
+      return this.remainingHealth > 0;
+    },
+
+    healthPercentage(): number {
+      return (this.remainingHealth / MAX_HEALTH) * 100;
+    },
   },
 
   actions: {
@@ -175,11 +200,6 @@ export const useGameStore = defineStore('game', {
     },
 
     placeQueen(row: number, col: number) {
-      if (!this.isValidMove(row, col)) {
-        this.setPlayerMark(row, col, 'invalid');
-        return false;
-      }
-
       this.setPlayerMark(row, col, 'queen');
       return true;
     },
@@ -225,9 +245,39 @@ export const useGameStore = defineStore('game', {
     handleSquareClick(row: number, col: number) {
       const currentState = this.playerMarks[row][col];
       if (currentState === null) {
+        // First click: place flag
         this.placeFlag(row, col);
       } else if (currentState === 'flag') {
-        this.placeQueen(row, col);
+        // Second click: dig
+        if (this.grid[row][col].isSolutionQueen) {
+          this.placeQueen(row, col);
+          this.honeyPots++; // Increment honey pots when a queen is correctly placed
+
+          // Check if the board is complete after placing a queen
+          this.checkBoardCompletion();
+        } else {
+          this.playerMarks[row][col] = 'invalid';
+          this.bites++;
+
+          // Check if player is still alive
+          if (!this.isAlive) {
+            this.handleGameOver();
+          }
+        }
+      }
+    },
+
+    checkBoardCompletion() {
+      // Check if all squares have been marked (queen, flag, or invalid)
+      const allSquaresMarked = this.playerMarks.every((row) => row.every((mark) => mark !== null));
+
+      if (allSquaresMarked) {
+        // Board is complete, prepare for next level
+        this.isComplete = true;
+        this.currentLevel++;
+
+        // Generate new puzzle for next level
+        this.findValidPuzzleWithSteps();
       }
     },
 
@@ -346,7 +396,6 @@ export const useGameStore = defineStore('game', {
 
       // Clear all playerMarks
       clearMarkers(this.playerMarks);
-      this.addDebugLog('playerMarks CLEARED by clearQueensAndFlags');
 
       this.isComplete = false;
     },
@@ -819,48 +868,70 @@ export const useGameStore = defineStore('game', {
     // Log array for test steps
     debugLogs: [] as string[],
 
-    // Helper for one generation attempt: returns puzzle name or null
-    generateCandidatePuzzle(attempt: number, requiredQueens: number): string | null {
-      this.addDebugLog(`Attempt ${attempt}: Starting puzzle generation`);
-      this.placeAllQueens(); // build full solution
+    // Helper for one generation attempt: returns true if successful, false otherwise
+    generateCandidatePuzzle(attempt: number, requiredQueens: number): boolean {
+      try {
+        this.addDebugLog(`Attempt ${attempt}: Starting puzzle generation`);
 
-      // Make sure color groups are assigned before proceeding
-      this.addDebugLog(`Attempt ${attempt}: Assigning color groups to solution`);
-      this.assignColorGroups();
+        // Reset the grid and clear any existing state
+        this.initializeGrid();
 
-      // Debug info: get color distribution using utility
-      const { totalColored, totalSquares, colorCounts } = getColorDistribution(this.grid);
-      this.addDebugLog(
-        `Attempt ${attempt}: Color assignment complete - ${totalColored}/${totalSquares} cells colored`
-      );
-      Object.entries(colorCounts).forEach(([color, count]) => {
-        this.addDebugLog(`  - Color ${color}: ${count} cells`);
-      });
+        // Place all queens
+        this.placeAllQueens();
 
-      this.clearMarkers(); // reset markers
-      this.runAllSolverSteps(); // cycle solve steps
+        // Verify we have the correct number of queens
+        if (this.queenPositions.length !== requiredQueens) {
+          this.addDebugLog(
+            `Attempt ${attempt}: Failed to place required queens (${this.queenPositions.length}/${requiredQueens})`
+          );
+          return false;
+        }
 
-      const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
+        // Assign color groups
+        this.addDebugLog(`Attempt ${attempt}: Assigning color groups to solution`);
+        this.assignColorGroups();
 
-      // Add more detailed validation logs
-      this.addDebugLog(`Attempt ${attempt}: Final validation:`);
-      this.addDebugLog(
-        `  - Queens: ${this.queenPositions.length}/${requiredQueens} (valid: ${queenCountValid})`
-      );
-      this.addDebugLog(`  - All cells filled: ${allFilled}`);
-      this.addDebugLog(`  - Color groups valid: ${colorGroupsValid}`);
-
-      if (!(queenCountValid && allFilled && colorGroupsValid)) {
+        // Debug info: get color distribution
+        const { totalColored, totalSquares, colorCounts } = getColorDistribution(this.grid);
         this.addDebugLog(
-          `Attempt ${attempt}: Validation failed. Queens: ${this.queenPositions.length}, Filled: ${allFilled}, Colors OK: ${colorGroupsValid}`
+          `Attempt ${attempt}: Color assignment complete - ${totalColored}/${totalSquares} cells colored`
         );
-        return null;
+        Object.entries(colorCounts).forEach(([color, count]) => {
+          this.addDebugLog(`  - Color ${color}: ${count} cells`);
+        });
+
+        // Clear markers and run solver steps
+        this.clearMarkers();
+        this.runAllSolverSteps();
+
+        // Validate the puzzle
+        const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
+
+        // Add detailed validation logs
+        this.addDebugLog(`Attempt ${attempt}: Final validation:`);
+        this.addDebugLog(
+          `  - Queens: ${this.queenPositions.length}/${requiredQueens} (valid: ${queenCountValid})`
+        );
+        this.addDebugLog(`  - All cells filled: ${allFilled}`);
+        this.addDebugLog(`  - Color groups valid: ${colorGroupsValid}`);
+
+        // Check if the puzzle is valid
+        if (!(queenCountValid && allFilled && colorGroupsValid)) {
+          this.addDebugLog(
+            `Attempt ${attempt}: Validation failed. Queens: ${this.queenPositions.length}, Filled: ${allFilled}, Colors OK: ${colorGroupsValid}`
+          );
+          return false;
+        }
+
+        this.addDebugLog(`Attempt ${attempt}: Successfully generated puzzle`);
+        return true;
+      } catch (error) {
+        console.error(`Error in generateCandidatePuzzle:`, error);
+        this.addDebugLog(
+          `Attempt ${attempt}: Error generating puzzle: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+        return false;
       }
-      const name = this.savePuzzleToLocalStorage();
-      if (!name) {
-        this.addDebugLog(`Attempt ${attempt}: Save failed`);
-      }
-      return name || null;
     },
 
     // New method to generate and validate a puzzle that can be solved with steps
@@ -876,6 +947,7 @@ export const useGameStore = defineStore('game', {
       try {
         // Reset logs for clarity
         this.debugLogs = [];
+        this.bites = 0; // Reset bites counter
 
         // Use grid size for required queens - they should match
         const requiredQueens = this.gridSize;
@@ -900,27 +972,28 @@ export const useGameStore = defineStore('game', {
               this.addDebugLog(`\nAttempt ${attempt}/${maxAttempts}`);
             }
 
-            // Call generateCandidatePuzzle to get a potential puzzle
-            const puzzleName = this.generateCandidatePuzzle(attempt, requiredQueens);
+            // Generate a candidate puzzle
+            this.generateCandidatePuzzle(attempt, requiredQueens);
 
-            if (puzzleName) {
-              // Run brute force solver to verify puzzle has exactly one solution
-              const numSolutions = this.bruteForceSolver(2); // Look for up to 2 solutions
-              this.puzzleGenerationState.completedSteps++;
+            // Run brute force solver to verify puzzle has exactly one solution
+            const numSolutions = this.bruteForceSolver(2); // Look for up to 2 solutions
+            this.puzzleGenerationState.completedSteps++;
 
-              if (numSolutions === 1) {
-                this.addDebugLog(
-                  `\n✅ SUCCESS: Step-solvable puzzle saved as "${puzzleName}" after ${attempt} attempts`
-                );
+            if (numSolutions === 1) {
+              this.addDebugLog(
+                `\n✅ SUCCESS: Step-solvable puzzle generated after ${attempt} attempts`
+              );
 
-                // Add summary statistics
-                this.summarizeAttempts(attemptSummary);
+              // Clear player markings for the new game mode
+              this.clearMarkers();
 
-                return puzzleName;
-              } else {
-                if (shouldLogDetail) {
-                  this.addDebugLog(`Skipping: Found ${numSolutions} solutions, need exactly 1`);
-                }
+              // Add summary statistics
+              this.summarizeAttempts(attemptSummary);
+
+              return true;
+            } else {
+              if (shouldLogDetail) {
+                this.addDebugLog(`Skipping: Found ${numSolutions} solutions, need exactly 1`);
               }
             }
 
@@ -942,13 +1015,13 @@ export const useGameStore = defineStore('game', {
         this.summarizeAttempts(attemptSummary);
 
         this.setError(`Failed to generate a step-solvable puzzle after ${maxAttempts} attempts`);
-        return null;
+        return false;
       } catch (error: unknown) {
         console.error('Critical error in puzzle generation:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         this.addDebugLog(`❌ CRITICAL ERROR: ${errorMessage}`);
         this.setError(`Error generating puzzle: ${errorMessage}`);
-        return null;
+        return false;
       } finally {
         this.puzzleGenerationState.isGenerating = false;
         this.puzzleGenerationState.currentStep = null;
@@ -1217,7 +1290,6 @@ export const useGameStore = defineStore('game', {
         // Reset everything first
         this.addDebugLog('Step 1: Initializing grid and clearing markers');
         this.initializeGrid();
-        this.clearQueensAndFlags();
 
         // Place all queens
         this.addDebugLog('Step 2: Placing all queens');
@@ -1264,6 +1336,12 @@ export const useGameStore = defineStore('game', {
 
     interruptPuzzleGeneration() {
       this.puzzleGenerationState.isInterrupted = true;
+    },
+
+    // Add new action to handle game over
+    handleGameOver() {
+      this.setError('Game Over - You ran out of health!');
+      this.isComplete = true;
     },
   },
 });

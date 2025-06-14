@@ -1,54 +1,47 @@
 <template>
   <div class="flex flex-col bg-gray-900">
     <div class="w-full max-w-full mx-auto">
-      <!-- Header -->
-      <div class="flex flex-col justify-between items-center mb-4 gap-3">
-        <h1 class="text-lg font-bold text-gray-100 text-center truncate">
-          {{ gameStore.currentPuzzle || 'Puzzle' }}
-        </h1>
-        <button
-          v-if="gameStore.currentPuzzle"
-          class="rounded-lg bg-purple-900 px-4 py-2 text-white hover:bg-purple-700 text-sm"
-          @click="backToLevelSelect"
-        >
-          Back to Puzzles
-        </button>
+      <!-- Stats Bar -->
+      <div class="flex justify-between items-center px-4 py-2 bg-gray-800 text-white">
+        <div class="flex items-center space-x-2">
+          <span class="text-amber-400">🍯</span>
+          <span>{{ gameStore.honeyPots }}</span>
+        </div>
+        <!-- Health Display -->
+        <div class="flex items-center space-x-2">
+          <span class="text-red-400">❤️</span>
+          <span>{{ gameStore.bites }}/{{ gameStore.maxHealth }}</span>
+        </div>
       </div>
 
-      <div v-if="showPuzzleSelect" class="mb-6">
-        <h2 class="text-xl font-semibold mb-2 text-gray-100">Select a Saved Puzzle</h2>
+      <!-- Level Display -->
+      <div class="flex justify-center py-2 bg-gray-800 text-white border-t border-gray-700">
+        <div class="flex items-center space-x-2">
+          <span class="text-lg font-semibold">Level {{ gameStore.currentLevel }}</span>
+        </div>
+      </div>
 
+      <!-- Level Complete Animation -->
+      <div
+        v-if="gameStore.isComplete"
+        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+        @click="gameStore.isComplete = false"
+      >
         <div
-          v-if="!gameStore.savedPuzzles.length"
-          class="p-4 bg-gray-800 rounded-lg text-center text-gray-300"
+          class="bg-gray-800 p-8 rounded-lg shadow-xl transform transition-all duration-500 scale-100 hover:scale-105"
         >
-          No puzzles saved yet. Create puzzles in the Level Builder.
-        </div>
-
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div
-            v-for="puzzle in gameStore.savedPuzzles"
-            :key="puzzle.name"
-            class="p-4 bg-gray-800 rounded-lg shadow hover:shadow-lg cursor-pointer border border-gray-700 transition-all duration-200"
-            @click="loadPuzzle(puzzle.name)"
-          >
-            <div class="font-bold text-gray-100">{{ puzzle.name }}</div>
-            <div class="text-sm text-gray-400">{{ puzzle.gridSize }}x{{ puzzle.gridSize }}</div>
-            <button
-              class="mt-2 text-xs text-red-400 hover:text-red-300"
-              @click.stop="deletePuzzle(puzzle.name)"
-            >
-              Delete
-            </button>
-          </div>
+          <h2 class="text-2xl font-bold text-amber-400 mb-4">
+            {{ gameStore.isAlive ? 'Level Complete!' : 'Game Over!' }}
+          </h2>
+          <p class="text-white mb-2">Honey Pots Collected: {{ gameStore.honeyPots }}</p>
+          <p class="text-white mb-4">Ant Bites: {{ gameStore.bites }}/{{ gameStore.maxHealth }}</p>
+          <p class="text-gray-400 text-sm">Click anywhere to continue</p>
         </div>
       </div>
 
-      <!-- Game Grid -->
-      <div v-else class="flex flex-col items-center w-full">
-        <!-- responsive square + scroll -->
+      <div class="flex flex-col items-center w-full">
         <div class="w-full aspect-square">
-          <PlayGrid @undo="handleUndo" @restart="clearQueensAndFlags" />
+          <PlayGrid />
         </div>
       </div>
     </div>
@@ -58,38 +51,13 @@
 <script setup lang="ts">
 import { useGameStore } from '../stores/gameStore';
 import PlayGrid from '../components/PlayGrid.vue';
-import { ref, onMounted } from 'vue';
+import { onMounted } from 'vue';
 
 const gameStore = useGameStore();
-const showPuzzleSelect = ref(true);
 
 onMounted(() => {
-  gameStore.loadPuzzlesFromLocalStorage();
+  gameStore.findValidPuzzleWithSteps();
 });
-
-const handleUndo = () => {
-  gameStore.handleUndo();
-};
-
-const clearQueensAndFlags = () => {
-  gameStore.clearQueensAndFlags();
-};
-
-const loadPuzzle = (puzzleName: string) => {
-  gameStore.loadPuzzle(puzzleName);
-  showPuzzleSelect.value = false;
-};
-
-const deletePuzzle = (puzzleName: string) => {
-  if (confirm(`Are you sure you want to delete "${puzzleName}"?`)) {
-    gameStore.deletePuzzle(puzzleName);
-  }
-};
-
-const backToLevelSelect = () => {
-  gameStore.currentPuzzle = null;
-  showPuzzleSelect.value = true;
-};
 
 defineOptions({
   name: 'GameMode',

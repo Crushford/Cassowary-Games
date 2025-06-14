@@ -68,6 +68,8 @@ export interface GameState {
   gridSize: number;
   moveHistory: MarkType[][][];
   playerMarks: MarkType[][]; // N×N matrix of player marks
+  bites: number; // Track number of bites taken
+  honeyPots: number; // Track number of honey pots collected
 
   // UI state
   uiState: {

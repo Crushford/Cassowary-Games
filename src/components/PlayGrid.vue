@@ -45,14 +45,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
 import { COLOR_BG_HOVER_CLASSES } from '@/utils/colorPalette';
 import { COLOR_BG_IMAGES } from '@/utils/colorPalette';
 import { ColorName } from '../types/types';
 import { useGameStore } from '../stores/gameStore';
+import { onMounted } from 'vue';
 
 const gameStore = useGameStore();
-const localGridSize = ref(gameStore.gridSize);
+
+onMounted(() => {
+  gameStore.clearMarkers();
+});
 
 // Default background/hover class for cells with dirt texture
 const defaultBgClass = 'bg-slate-700 hover:bg-slate-600';
@@ -90,18 +93,6 @@ function shouldShowFlag(row: number, col: number): boolean {
 function shouldShowInvalid(row: number, col: number): boolean {
   return gameStore.playerMarks[row][col] === 'invalid';
 }
-
-// Watch for grid size changes from the store
-watch(
-  () => gameStore.gridSize,
-  (newSize) => {
-    localGridSize.value = newSize;
-  }
-);
-
-onMounted(() => {
-  localGridSize.value = gameStore.gridSize;
-});
 
 // Handle cell clicks
 function handleCellClick(row: number, col: number) {
