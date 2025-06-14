@@ -68,6 +68,7 @@ export interface GameState {
   gridSize: number;
   moveHistory: MarkType[][][];
   playerMarks: MarkType[][]; // N×N matrix of player marks
+  bites: number; // Track number of bites taken
 
   // UI state
   uiState: {

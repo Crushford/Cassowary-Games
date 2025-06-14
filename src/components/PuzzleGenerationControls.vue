@@ -35,7 +35,7 @@
           v-if="isGenerating"
           class="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"
         ></span>
-        {{ isGenerating ? 'Generating...' : '🎯 Generate Step-Solvable Puzzle' }}
+        {{ isGenerating ? 'Generating...' : '🎯findValidPuzzleWithSteps()' }}
       </BaseButton>
     </div>
 
@@ -132,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent } from 'vue';
+import { ref, computed, defineAsyncComponent, onMounted, watch } from 'vue';
 const BaseButton = defineAsyncComponent(() => import('./BaseButton.vue'));
 const Accordion = defineAsyncComponent(() => import('./Accordion.vue'));
 import { useGameStore } from '../stores/gameStore';
@@ -141,6 +141,19 @@ const gameStore = useGameStore();
 
 // Reactive state
 const gridSize = ref(gameStore.gridSize);
+const isGenerating = ref(false);
+
+// Watch for generation state changes
+const updateGeneratingState = () => {
+  isGenerating.value = gameStore.puzzleGenerationState.isGenerating;
+};
+
+onMounted(() => {
+  // Initialize game store
+  gameStore.loadPuzzlesFromLocalStorage();
+  // Set up watcher for generation state
+  watch(() => gameStore.puzzleGenerationState.isGenerating, updateGeneratingState);
+});
 
 const hasAnyColors = computed(() => {
   for (let row = 0; row < gameStore.gridSize; row++) {
@@ -162,9 +175,6 @@ const hasCompletedGame = computed(() => {
 const canPlaceQueens = computed(() => {
   return gameStore.queenPositions.length < gameStore.gridSize;
 });
-
-// Add new state for generation
-const isGenerating = ref(false);
 
 // Methods
 function handleGridSizeChange() {

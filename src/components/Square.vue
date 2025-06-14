@@ -11,9 +11,9 @@
 
     <!-- Player mode: show player marks (flags, queens, invalid) -->
     <template v-else>
-      <span v-if="playerMark === 'flag'">🚩</span>
-      <span v-else-if="playerMark === 'queen'">👑</span>
-      <span v-else-if="playerMark === 'invalid'">❌</span>
+      <span v-if="playerMark === 'flag'" class="text-yellow-400">🚧</span>
+      <span v-else-if="playerMark === 'queen'" class="text-white">🍯</span>
+      <span v-else-if="playerMark === 'invalid'" class="text-red-500">🐜</span>
     </template>
   </button>
 </template>

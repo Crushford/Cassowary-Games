@@ -30,13 +30,19 @@ import {
 } from './solver';
 import { bruteForceSolver } from './bruteForceSolver';
 
+// Constants
+const DEFAULT_GRID_SIZE = 4;
+
 export const useGameStore = defineStore('game', {
   state: (): GameState => ({
     // Core game state
-    grid: createEmptyGrid(6),
-    gridSize: 6,
+    grid: createEmptyGrid(DEFAULT_GRID_SIZE),
+    gridSize: DEFAULT_GRID_SIZE,
     moveHistory: [],
-    playerMarks: Array.from({ length: 6 }, () => Array(6).fill(null as MarkType)),
+    playerMarks: Array.from({ length: DEFAULT_GRID_SIZE }, () =>
+      Array(DEFAULT_GRID_SIZE).fill(null as MarkType)
+    ),
+    bites: 0, // Add new state for tracking bites
 
     // UI state
     uiState: {
@@ -225,9 +231,15 @@ export const useGameStore = defineStore('game', {
     handleSquareClick(row: number, col: number) {
       const currentState = this.playerMarks[row][col];
       if (currentState === null) {
+        // First click: place flag
         this.placeFlag(row, col);
       } else if (currentState === 'flag') {
+        // Second click: dig
         this.placeQueen(row, col);
+        // If not a queen, take a bite
+        if (!this.grid[row][col].isSolutionQueen) {
+          this.bites++;
+        }
       }
     },
 
@@ -876,6 +888,7 @@ export const useGameStore = defineStore('game', {
       try {
         // Reset logs for clarity
         this.debugLogs = [];
+        this.bites = 0; // Reset bites counter
 
         // Use grid size for required queens - they should match
         const requiredQueens = this.gridSize;
@@ -912,6 +925,9 @@ export const useGameStore = defineStore('game', {
                 this.addDebugLog(
                   `\n✅ SUCCESS: Step-solvable puzzle saved as "${puzzleName}" after ${attempt} attempts`
                 );
+
+                // Clear player markings for the new game mode
+                this.clearMarkers();
 
                 // Add summary statistics
                 this.summarizeAttempts(attemptSummary);
