@@ -2,7 +2,7 @@
   <button
     class="aspect-square w-full rounded-lg border-2 transition-colors duration-200 min-h-[40px] relative"
     :class="squareClasses"
-    @click="handleClick"
+    @click="gameStore.handleSquareClick(row, col)"
   >
     <!-- Solution mode: only show solution queens -->
     <template v-if="props.mode === 'solution'">
@@ -58,30 +58,6 @@ const squareClasses = computed(() => {
 
   return classes;
 });
-
-const handleClick = () => {
-  // Only handle clicks in player mode
-  if (props.mode === 'player') {
-    const currentMark = gameStore.getPlayerMarking(props.row, props.col);
-
-    if (currentMark === null) {
-      // First click: place flag
-      gameStore.placeFlag(props.row, props.col);
-    } else if (currentMark === 'flag') {
-      // Second click: try to place queen
-      if (gameStore.isValidMove(props.row, props.col)) {
-        gameStore.placeQueen(props.row, props.col);
-        // If not a solution queen, increment bites
-        if (!isSolutionQueen.value) {
-          gameStore.bites++;
-        }
-      } else {
-        // Invalid move, mark as invalid
-        gameStore.setPlayerMark(props.row, props.col, 'invalid');
-      }
-    }
-  }
-};
 </script>
 
 <script lang="ts">
