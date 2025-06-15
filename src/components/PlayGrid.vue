@@ -1,5 +1,5 @@
 <template>
-  <div class="relative flex flex-col items-center">
+  <div class="flex flex-col items-center">
     <!-- Game Grid -->
     <div
       class="grid bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg"
@@ -8,37 +8,37 @@
       }"
     >
       <template v-for="(row, rowIndex) in gameStore.grid" :key="rowIndex">
-        <div v-for="(cell, colIndex) in row" :key="colIndex" class="relative">
-          <div
-            class="relative w-12 h-12 flex items-center justify-center cursor-pointer"
-            :class="getCellClasses(cell)"
-            :style="getCellBackgroundStyle(cell)"
-            @click="handleCellClick(rowIndex, colIndex)"
-            @contextmenu.prevent="handleRightClick(rowIndex, colIndex)"
+        <button
+          v-for="(cell, colIndex) in row"
+          :key="colIndex"
+          class="relative w-12 h-12 flex items-center justify-center cursor-pointer select-none"
+          :class="getCellClasses(cell)"
+          :style="getCellBackgroundStyle(cell)"
+          @click="handleCellClick(rowIndex, colIndex)"
+          @contextmenu.prevent="handleRightClick(rowIndex, colIndex)"
+        >
+          <span v-if="shouldShowQueen(rowIndex, colIndex)" class="text-xl text-white">🍯</span>
+          <span v-else-if="shouldShowFlag(rowIndex, colIndex)" class="text-sm text-yellow-400"
+            >🚧</span
           >
-            <span v-if="shouldShowQueen(rowIndex, colIndex)" class="text-xl text-white">🍯</span>
-            <span v-else-if="shouldShowFlag(rowIndex, colIndex)" class="text-sm text-yellow-400"
-              >🚧</span
-            >
-            <div
-              v-else-if="shouldShowInvalid(rowIndex, colIndex)"
-              class="grid grid-cols-2 gap-1 text-xs leading-none"
-            >
-              <span>🐜</span>
-              <span>🐜</span>
-              <span>🐜</span>
-              <span>🐜</span>
-              <span>🐜</span>
-              <span>🐜</span>
-            </div>
-            <span v-else class="text-transparent">.</span>
+          <div
+            v-else-if="shouldShowInvalid(rowIndex, colIndex)"
+            class="grid grid-cols-2 gap-1 text-xs leading-none"
+          >
+            <span>🐜</span>
+            <span>🐜</span>
+            <span>🐜</span>
+            <span>🐜</span>
+            <span>🐜</span>
+            <span>🐜</span>
           </div>
+          <span v-else class="text-transparent">.</span>
           <!-- Border overlay -->
           <div
             class="absolute inset-0 pointer-events-none z-10"
             :class="getWrapperBorderClasses(cell, rowIndex, colIndex)"
           ></div>
-        </div>
+        </button>
       </template>
     </div>
   </div>

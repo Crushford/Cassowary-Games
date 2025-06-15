@@ -1,5 +1,5 @@
 <template>
-  <div class="relative flex flex-col items-center">
+  <div class="flex flex-col items-center">
     <!-- Game Grid -->
     <div
       class="grid w-full bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg gap-1"
