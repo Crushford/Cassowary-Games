@@ -289,10 +289,11 @@ export const useGameStore = defineStore('game', {
     },
 
     checkBoardCompletion() {
-      // Check if all squares have been marked (queen, flag, or invalid)
-      const allSquaresMarked = this.playerMarks.every((row) => row.every((mark) => mark !== null));
+      // Check if we have the correct number of queens (equal to grid size)
+      const queenCount = this.queenPositions.length;
+      const requiredQueens = this.gridSize;
 
-      if (allSquaresMarked) {
+      if (queenCount === requiredQueens) {
         // Board is complete, prepare for next level
         this.isComplete = true;
         this.currentLevel++;
