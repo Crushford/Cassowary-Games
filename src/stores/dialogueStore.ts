@@ -1,62 +1,70 @@
 import { defineStore } from 'pinia';
 
-export interface DialogueOption {
+export interface DialogueTopic {
   id: string;
-  text: string;
-  nextNodeId: string;
+  questionText: string;
+  answerText: string;
+  prerequisites: string[];
 }
 
-export interface DialogueNode {
+export interface CharacterDialogue {
   id: string;
-  text: string;
-  options: DialogueOption[];
+  displayName: string;
+  fallbackEmoji: string;
+  portraitUrl: string | null;
+  introNodeId: string;
+  dialogue: DialogueTopic[];
 }
 
 export interface DialogueState {
-  currentNodeId: string | null;
+  currentCharacter: CharacterDialogue | null;
+  currentTopicId: string | null;
+  hasSeenTopics: Set<string>;
   isAnimating: boolean;
-  dialogueTree: Record<string, DialogueNode>;
-  hasSeenNode: Set<string>;
 }
 
 export const useDialogueStore = defineStore('dialogue', {
   state: (): DialogueState => ({
-    currentNodeId: null,
+    currentCharacter: null,
+    currentTopicId: null,
+    hasSeenTopics: new Set(),
     isAnimating: false,
-    dialogueTree: {},
-    hasSeenNode: new Set(),
   }),
 
   getters: {
-    currentNode: (state): DialogueNode | null => {
-      if (!state.currentNodeId) return null;
-      return state.dialogueTree[state.currentNodeId] || null;
+    currentTopic: (state): DialogueTopic | null => {
+      if (!state.currentCharacter || !state.currentTopicId) return null;
+      return state.currentCharacter.dialogue.find((t) => t.id === state.currentTopicId) || null;
     },
 
-    currentOptions: (state): DialogueOption[] => {
-      if (!state.currentNodeId) return [];
-      return state.dialogueTree[state.currentNodeId]?.options || [];
+    availableTopics: (state): DialogueTopic[] => {
+      if (!state.currentCharacter) return [];
+
+      return state.currentCharacter.dialogue.filter((topic) =>
+        topic.prerequisites.every((prereq) => state.hasSeenTopics.has(prereq))
+      );
     },
 
     isDialogueActive: (state): boolean => {
-      return state.currentNodeId !== null;
+      return state.currentCharacter !== null;
     },
   },
 
   actions: {
-    initializeDialogue(dialogueTree: Record<string, DialogueNode>, startNodeId: string) {
-      this.dialogueTree = dialogueTree;
-      this.currentNodeId = startNodeId;
-      this.hasSeenNode = new Set([startNodeId]);
+    loadCharacter(character: CharacterDialogue) {
+      this.currentCharacter = character;
+      this.currentTopicId = character.introNodeId;
+      this.hasSeenTopics = new Set([character.introNodeId]);
     },
 
-    goToNode(nodeId: string) {
-      if (!this.dialogueTree[nodeId]) {
-        console.error(`Dialogue node ${nodeId} not found`);
-        return;
-      }
-      this.currentNodeId = nodeId;
-      this.hasSeenNode.add(nodeId);
+    selectTopic(topicId: string) {
+      if (!this.currentCharacter) return;
+
+      const topic = this.currentCharacter.dialogue.find((t) => t.id === topicId);
+      if (!topic) return;
+
+      this.currentTopicId = topicId;
+      this.hasSeenTopics.add(topicId);
     },
 
     setAnimating(isAnimating: boolean) {
@@ -64,13 +72,14 @@ export const useDialogueStore = defineStore('dialogue', {
     },
 
     resetDialogue() {
-      this.currentNodeId = null;
+      this.currentCharacter = null;
+      this.currentTopicId = null;
+      this.hasSeenTopics.clear();
       this.isAnimating = false;
-      this.hasSeenNode.clear();
     },
 
-    hasVisitedNode(nodeId: string): boolean {
-      return this.hasSeenNode.has(nodeId);
+    hasSeenTopic(topicId: string): boolean {
+      return this.hasSeenTopics.has(topicId);
     },
   },
 });

@@ -5,7 +5,9 @@
       <div class="flex-1 flex items-center px-4 py-2">
         <!-- Character Avatar -->
         <div class="flex-shrink-0 mr-4">
-          <span class="text-4xl animate-bounce">🦜</span>
+          <span class="text-4xl animate-bounce">{{
+            dialogueStore.currentCharacter?.fallbackEmoji || '🦜'
+          }}</span>
         </div>
 
         <!-- Dialogue Text -->
@@ -14,7 +16,7 @@
             class="text-white text-base leading-relaxed"
             :class="{ 'animate-pulse': dialogueStore.isAnimating }"
           >
-            <span v-if="dialogueStore.currentNode" class="typewriter">
+            <span v-if="dialogueStore.currentTopic" class="typewriter">
               {{ displayedText }}
             </span>
           </div>
@@ -24,12 +26,12 @@
       <!-- Response Options -->
       <div class="px-4 pb-2 space-y-2">
         <button
-          v-for="option in dialogueStore.currentOptions"
-          :key="option.id"
-          @click="selectOption(option)"
+          v-for="topic in dialogueStore.availableTopics"
+          :key="topic.id"
+          @click="selectTopic(topic)"
           class="w-full px-3 py-1.5 text-white text-sm font-bold text-center rounded-xl border border-white bg-white/10 hover:bg-white/20 hover:scale-105 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/50"
         >
-          {{ option.text }}
+          {{ topic.questionText }}
         </button>
       </div>
     </div>
@@ -37,25 +39,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, onUnmounted } from 'vue';
 import { useDialogueStore } from '../stores/dialogueStore';
-import { dialogueTree } from '../data/dialogue';
+import cockatooJames from '../data/characters/cockatooJames.json';
 
 const dialogueStore = useDialogueStore();
 const displayedText = ref('');
 const typewriterSpeed = 30; // milliseconds per character
+let typewriterInterval: number | null = null;
 
 // Initialize dialogue when component mounts
 onMounted(() => {
-  dialogueStore.initializeDialogue(dialogueTree, 'start');
+  dialogueStore.loadCharacter(cockatooJames);
   startTypewriter();
 });
 
-// Watch for changes in current node
+// Watch for changes in current topic
 watch(
-  () => dialogueStore.currentNode,
-  (newNode) => {
-    if (newNode) {
+  () => dialogueStore.currentTopic,
+  (newTopic) => {
+    if (newTopic) {
       startTypewriter();
     }
   }
@@ -63,30 +66,43 @@ watch(
 
 // Typewriter effect
 const startTypewriter = () => {
-  if (!dialogueStore.currentNode) return;
+  if (!dialogueStore.currentTopic) return;
+
+  // Clear any existing interval
+  if (typewriterInterval) {
+    clearInterval(typewriterInterval);
+  }
 
   dialogueStore.setAnimating(true);
   displayedText.value = '';
-  const text = dialogueStore.currentNode.text;
+  const text = dialogueStore.currentTopic.answerText;
   let currentIndex = 0;
 
-  const typeNextChar = () => {
+  typewriterInterval = window.setInterval(() => {
     if (currentIndex < text.length) {
-      displayedText.value += text[currentIndex];
+      displayedText.value = text.slice(0, currentIndex + 1);
       currentIndex++;
-      setTimeout(typeNextChar, typewriterSpeed);
     } else {
+      if (typewriterInterval) {
+        clearInterval(typewriterInterval);
+        typewriterInterval = null;
+      }
       dialogueStore.setAnimating(false);
     }
-  };
-
-  typeNextChar();
+  }, typewriterSpeed);
 };
 
-// Handle option selection
-const selectOption = (option: { nextNodeId: string }) => {
-  dialogueStore.goToNode(option.nextNodeId);
+// Handle topic selection
+const selectTopic = (topic: { id: string }) => {
+  dialogueStore.selectTopic(topic.id);
 };
+
+// Clean up interval on component unmount
+onUnmounted(() => {
+  if (typewriterInterval) {
+    clearInterval(typewriterInterval);
+  }
+});
 
 defineOptions({
   name: 'DialogueBox',
