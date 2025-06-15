@@ -7,7 +7,7 @@
   "dialogue": [
     {
       "id": "start",
-      "questionText": "G'day, what's this place?",
+      "questionText": "what's this place?",
       "answerText": "You're in the middle of a dream. My dream, technically. Welcome to the ant farm. You'll be digging for honey pots and, probably, getting bitten a few times.",
       "prerequisites": []
     },
@@ -15,6 +15,12 @@
       "id": "ask_honey",
       "questionText": "What's a honey pot?",
       "answerText": "Honey pots are replete ants — they swell up with nectar until they're basically living storage units. The goal is to find them without getting stung.",
+      "prerequisites": []
+    },
+    {
+      "id": "how_to_play",
+      "questionText": "How do I play?",
+      "answerText": "Just click around, you'll figure it out.",
       "prerequisites": []
     },
     {
