@@ -45,6 +45,8 @@ export const useGameStore = defineStore('game', {
     ),
     bites: 0, // Add new state for tracking bites
     honeyPots: 0, // Add new state for tracking honey pots collected
+    highScore: 0, // Track highest honey pots in a single day
+    currentDay: 1, // Start at day 1
 
     // UI state
     uiState: {
@@ -1363,6 +1365,61 @@ export const useGameStore = defineStore('game', {
     handleGameOver() {
       this.setError('Game Over - You ran out of health!');
       this.isComplete = true;
+    },
+
+    // Add new method to handle game restart
+    restartGame() {
+      // Save high score if current score is higher
+      if (this.honeyPots > this.highScore) {
+        this.highScore = this.honeyPots;
+        localStorage.setItem('highScore', this.highScore.toString());
+      }
+
+      // Reset game state
+      this.currentLevel = 1;
+      this.honeyPots = 0;
+      this.bites = 0;
+      this.isComplete = false;
+      this.initializeGrid();
+      this.findValidPuzzleWithSteps();
+    },
+
+    // Add method to load high score from localStorage
+    loadHighScore() {
+      const savedHighScore = localStorage.getItem('highScore');
+      if (savedHighScore) {
+        this.highScore = parseInt(savedHighScore, 10);
+      }
+    },
+
+    // Update method to handle starting a new day
+    startNewDay() {
+      // Save high score if current day's honey pots is higher
+      if (this.honeyPots > this.highScore) {
+        this.highScore = this.honeyPots;
+        localStorage.setItem('highScore', this.highScore.toString());
+      }
+
+      // Increment day and reset daily stats
+      this.currentDay++;
+      this.honeyPots = 0;
+      this.bites = 0;
+      this.isComplete = false;
+      this.initializeGrid();
+      this.findValidPuzzleWithSteps();
+    },
+
+    // Add method to load current day from localStorage
+    loadCurrentDay() {
+      const savedDay = localStorage.getItem('currentDay');
+      if (savedDay) {
+        this.currentDay = parseInt(savedDay, 10);
+      }
+    },
+
+    // Add method to save current day to localStorage
+    saveCurrentDay() {
+      localStorage.setItem('currentDay', this.currentDay.toString());
     },
   },
 });

@@ -17,7 +17,7 @@
       <!-- Level Display -->
       <div class="flex justify-center py-2 bg-gray-800 text-white border-t border-gray-700">
         <div class="flex items-center space-x-2">
-          <span class="text-lg font-semibold">Level {{ gameStore.currentLevel }}</span>
+          <span class="text-lg font-semibold">Day {{ gameStore.currentDay }}</span>
         </div>
       </div>
 
@@ -25,17 +25,22 @@
       <div
         v-if="gameStore.isComplete"
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-        @click="gameStore.isComplete = false"
+        @click="gameStore.startNewDay()"
       >
         <div
           class="bg-gray-800 p-8 rounded-lg shadow-xl transform transition-all duration-500 scale-100 hover:scale-105"
         >
           <h2 class="text-2xl font-bold text-amber-400 mb-4">
-            {{ gameStore.isAlive ? 'Level Complete!' : 'Game Over!' }}
+            {{ gameStore.isAlive ? 'Day Complete!' : 'Game Over!' }}
           </h2>
-          <p class="text-white mb-2">Honey Pots Collected: {{ gameStore.honeyPots }}</p>
+          <p class="text-white mb-2">
+            Day {{ gameStore.currentDay }} Honey Pots: {{ gameStore.honeyPots }}
+          </p>
+          <p class="text-white mb-2">Best Day: {{ gameStore.highScore }} Honey Pots</p>
           <p class="text-white mb-4">Ant Bites: {{ gameStore.bites }}/{{ gameStore.maxHealth }}</p>
-          <p class="text-gray-400 text-sm">Click anywhere to continue</p>
+          <p class="text-gray-400 text-sm">
+            Click anywhere to start Day {{ gameStore.currentDay + 1 }}
+          </p>
         </div>
       </div>
 

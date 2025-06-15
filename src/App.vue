@@ -33,5 +33,7 @@ const gameStore = useGameStore();
 // Load saved puzzles from local storage on app mount
 onMounted(() => {
   gameStore.loadPuzzlesFromLocalStorage();
+  gameStore.loadHighScore();
+  gameStore.loadCurrentDay();
 });
 </script>

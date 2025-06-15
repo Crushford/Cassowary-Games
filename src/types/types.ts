@@ -71,6 +71,8 @@ export interface GameState {
   playerMarks: MarkType[][]; // N×N matrix of player marks
   bites: number; // Track number of bites taken
   honeyPots: number; // Track number of honey pots collected
+  highScore: number; // Track highest honey pots in a single day
+  currentDay: number; // Track current day number
 
   // UI state
   uiState: {
