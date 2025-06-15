@@ -15,7 +15,6 @@
           :class="getCellClasses(cell)"
           :style="getCellBackgroundStyle(cell)"
           @click="handleCellClick(rowIndex, colIndex)"
-          @contextmenu.prevent="handleRightClick(rowIndex, colIndex)"
         >
           <span v-if="shouldShowQueen(rowIndex, colIndex)" class="text-xl text-white">🍯</span>
           <span v-else-if="shouldShowFlag(rowIndex, colIndex)" class="text-sm text-yellow-400"
@@ -97,11 +96,6 @@ function shouldShowInvalid(row: number, col: number): boolean {
 // Handle cell clicks
 function handleCellClick(row: number, col: number) {
   gameStore.handleSquareClick(row, col);
-}
-
-// Handle right-clicks for flags
-function handleRightClick(row: number, col: number) {
-  gameStore.placeFlag(row, col);
 }
 
 // Function to handle wrapper border classes
