@@ -7,11 +7,7 @@
           <span class="text-amber-400">🍯</span>
           <span>{{ gameStore.honeyPots }}</span>
         </div>
-        <!-- Health Display -->
-        <div class="flex items-center space-x-2">
-          <span class="text-red-400">❤️</span>
-          <span>{{ gameStore.bites }}/{{ gameStore.maxHealth }}</span>
-        </div>
+        <BitesDisplay />
       </div>
 
       <!-- Level Display -->
@@ -58,6 +54,7 @@ import { useGameStore } from '../stores/gameStore';
 import PlayGrid from '../components/PlayGrid.vue';
 import { onMounted } from 'vue';
 import DiggingModeToggle from '../components/DiggingModeToggle.vue';
+import BitesDisplay from '../components/BitesDisplay.vue';
 
 const gameStore = useGameStore();
 
