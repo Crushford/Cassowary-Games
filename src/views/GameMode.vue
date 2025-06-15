@@ -1,4 +1,6 @@
 <template>
+  <!-- Add Dialogue Box -->
+  <DialogueBox />
   <div class="flex flex-col bg-gray-900">
     <div class="w-full max-w-full mx-auto">
       <!-- Stats Bar -->
@@ -53,6 +55,7 @@ import PlayGrid from '../components/PlayGrid.vue';
 import { onMounted } from 'vue';
 import DiggingModeToggle from '../components/DiggingModeToggle.vue';
 import BitesDisplay from '../components/BitesDisplay.vue';
+import DialogueBox from '../components/DialogueBox.vue';
 
 const gameStore = useGameStore();
 
