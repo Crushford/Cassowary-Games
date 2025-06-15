@@ -2,18 +2,10 @@
   <div class="relative w-full px-4 pb-2">
     <div
       ref="textContainer"
-      class="relative overflow-y-auto max-h-[6em] pr-1"
+      class="relative overflow-y-auto h-[3.5em] pr-1"
       style="line-height: 1.2em"
       @scroll="handleScroll"
     >
-      <!-- Fade overlays -->
-      <div
-        class="absolute top-0 left-0 w-full h-2 bg-gradient-to-b from-black/90 to-transparent pointer-events-none z-10"
-      ></div>
-      <div
-        class="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-t from-black/90 to-transparent pointer-events-none z-10"
-      ></div>
-
       <!-- Animated text -->
       <Transition name="fade-slide" mode="out-in">
         <div
@@ -56,7 +48,8 @@ const handleScroll = () => {
   const { scrollTop, scrollHeight, clientHeight } = textContainer.value;
   const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 1;
 
-  if (scrollTop < lastScrollTop.value) {
+  // Only disable auto-scroll if user manually scrolls up
+  if (scrollTop < lastScrollTop.value && !isAtBottom) {
     isAutoScrolling.value = false;
   } else if (isAtBottom) {
     isAutoScrolling.value = true;
@@ -67,7 +60,11 @@ const handleScroll = () => {
 // Scroll to bottom if auto-scrolling is enabled
 const scrollToBottom = () => {
   if (!textContainer.value || !isAutoScrolling.value) return;
-  textContainer.value.scrollTop = textContainer.value.scrollHeight;
+  requestAnimationFrame(() => {
+    if (textContainer.value) {
+      textContainer.value.scrollTop = textContainer.value.scrollHeight;
+    }
+  });
 };
 
 // Typewriter effect
