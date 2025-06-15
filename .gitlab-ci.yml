@@ -2,13 +2,12 @@ image: 'node:20'
 
 stages:
   - build
-  - test
   - deploy
 
 build:
   stage: build
   script:
-    - yarn install --frozen-lockfile --check-files --non-interactive
+    - yarn install --frozen-lockfile
     - yarn build
   artifacts:
     paths:
