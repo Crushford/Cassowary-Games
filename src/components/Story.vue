@@ -24,8 +24,14 @@
 
       <!-- Character Avatar (Cockatoo) -->
       <div class="col-start-5 row-start-1 flex items-start justify-end pr-4">
-        <span class="text-5xl animate-bounce select-none">
-          {{ dialogueStore.currentCharacter?.fallbackEmoji || '🦜' }}
+        <img
+          v-if="dialogueStore.currentCharacter?.portraitUrl"
+          :src="dialogueStore.currentCharacter.portraitUrl"
+          alt="Character Portrait"
+          class="w-16 h-16 object-contain rounded-full shadow-lg animate-bounce select-none"
+        />
+        <span v-else class="text-5xl animate-bounce select-none">
+          {{ dialogueStore.currentCharacter?.fallbackEmoji }}
         </span>
       </div>
     </div>

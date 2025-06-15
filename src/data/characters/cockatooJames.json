@@ -2,7 +2,7 @@
   "id": "cockatooJames",
   "displayName": "James",
   "fallbackEmoji": "🦜",
-  "portraitUrl": null,
+  "portraitUrl": "/assets/characters/cockatoo-james.png",
   "introNodeId": "start",
   "dialogue": [
     {
