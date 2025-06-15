@@ -39,9 +39,7 @@
         </div>
       </div>
 
-      <div class="flex flex-col items-center w-full">
-        <PlayGrid />
-      </div>
+      <PlayGrid />
     </div>
   </div>
 </template>

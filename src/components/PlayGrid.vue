@@ -1,8 +1,8 @@
 <template>
-  <div class="flex flex-col items-center">
+  <div class="flex flex-col items-center w-full max-w-4xl mx-auto p-4">
     <!-- Game Grid -->
     <div
-      class="grid bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg"
+      class="grid bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg w-full"
       :style="{
         gridTemplateColumns: `repeat(${gameStore.gridSize}, minmax(0, 1fr))`,
       }"
@@ -11,7 +11,7 @@
         <button
           v-for="(cell, colIndex) in row"
           :key="colIndex"
-          class="relative w-12 h-12 flex items-center justify-center cursor-pointer select-none"
+          class="aspect-square flex items-center justify-center cursor-pointer select-none"
           :class="getCellClasses(cell)"
           :style="getCellBackgroundStyle(cell)"
           @click="handleCellClick(rowIndex, colIndex)"
