@@ -16,16 +16,15 @@
           :style="getCellBackgroundStyle(cell)"
           @click="handleCellClick(rowIndex, colIndex)"
         >
-          <span v-if="shouldShowQueen(rowIndex, colIndex)" class="text-xl text-white">🍯</span>
-          <span v-else-if="shouldShowFlag(rowIndex, colIndex)" class="text-sm text-yellow-400"
+          <span v-if="shouldShowQueen(rowIndex, colIndex)" :class="getEmojiSizeClass()">🍯</span>
+          <span v-else-if="shouldShowFlag(rowIndex, colIndex)" :class="getEmojiSizeClass()"
             >🚧</span
           >
           <div
             v-else-if="shouldShowInvalid(rowIndex, colIndex)"
-            class="grid grid-cols-2 gap-1 text-xs leading-none"
+            class="grid grid-cols-2 gap-1 leading-none"
+            :class="getEmojiSizeClass()"
           >
-            <span>🐜</span>
-            <span>🐜</span>
             <span>🐜</span>
             <span>🐜</span>
             <span>🐜</span>
@@ -150,6 +149,14 @@ function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col
   }
 
   return classes;
+}
+
+function getEmojiSizeClass() {
+  const size = gameStore.gridSize;
+  if (size <= 4) return 'text-3xl';
+  if (size <= 6) return 'text-2xl';
+  if (size <= 8) return 'text-xl';
+  return 'text-lg';
 }
 </script>
 
