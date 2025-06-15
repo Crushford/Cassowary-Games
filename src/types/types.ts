@@ -31,6 +31,7 @@ export interface UIState {
   showSolution: boolean;
   selectedTool: 'queen' | 'flag' | 'color' | null;
   selectedColor: string | null;
+  diggingMode: 'auto' | 'dig' | 'flag';
 }
 
 /**
@@ -76,6 +77,7 @@ export interface GameState {
     showSolution: boolean;
     selectedTool: 'queen' | 'flag' | 'color' | null;
     selectedColor: string | null;
+    diggingMode: 'auto' | 'dig' | 'flag';
   };
 
   // Game progress

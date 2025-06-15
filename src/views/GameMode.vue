@@ -40,6 +40,10 @@
       </div>
 
       <PlayGrid />
+      <!-- Digging Mode Toggle -->
+      <div class="flex justify-center py-2 bg-gray-800 text-white border-t border-gray-700">
+        <DiggingModeToggle />
+      </div>
     </div>
   </div>
 </template>
@@ -48,6 +52,7 @@
 import { useGameStore } from '../stores/gameStore';
 import PlayGrid from '../components/PlayGrid.vue';
 import { onMounted } from 'vue';
+import DiggingModeToggle from '../components/DiggingModeToggle.vue';
 
 const gameStore = useGameStore();
 

@@ -51,6 +51,7 @@ export const useGameStore = defineStore('game', {
       showSolution: false,
       selectedTool: null,
       selectedColor: null,
+      diggingMode: 'auto', // 'auto', 'dig', or 'flag'
     },
 
     // Game progress
@@ -244,24 +245,44 @@ export const useGameStore = defineStore('game', {
 
     handleSquareClick(row: number, col: number) {
       const currentState = this.playerMarks[row][col];
-      if (currentState === null) {
-        // First click: place flag
-        this.placeFlag(row, col);
-      } else if (currentState === 'flag') {
-        // Second click: dig
+
+      if (this.uiState.diggingMode === 'dig') {
+        // Direct dig mode
         if (this.grid[row][col].isSolutionQueen) {
           this.placeQueen(row, col);
-          this.honeyPots++; // Increment honey pots when a queen is correctly placed
-
-          // Check if the board is complete after placing a queen
+          this.honeyPots++;
           this.checkBoardCompletion();
         } else {
           this.playerMarks[row][col] = 'invalid';
           this.bites++;
-
-          // Check if player is still alive
           if (!this.isAlive) {
             this.handleGameOver();
+          }
+        }
+      } else if (this.uiState.diggingMode === 'flag') {
+        // Direct flag mode
+        if (currentState === null) {
+          this.placeFlag(row, col);
+        } else if (currentState === 'flag') {
+          this.playerMarks[row][col] = null;
+        }
+      } else {
+        // Auto mode (default)
+        if (currentState === null) {
+          // First click: place flag
+          this.placeFlag(row, col);
+        } else if (currentState === 'flag') {
+          // Second click: dig
+          if (this.grid[row][col].isSolutionQueen) {
+            this.placeQueen(row, col);
+            this.honeyPots++;
+            this.checkBoardCompletion();
+          } else {
+            this.playerMarks[row][col] = 'invalid';
+            this.bites++;
+            if (!this.isAlive) {
+              this.handleGameOver();
+            }
           }
         }
       }
