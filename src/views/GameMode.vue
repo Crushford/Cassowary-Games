@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col h-screen bg-gray-900">
-    <!-- Dialogue Box (Fixed 1/3 height) -->
-    <DialogueBox />
+    <!-- Story Component (Fixed 1/3 height) -->
+    <Story />
 
     <!-- Game Content (Fixed 2/3 height) -->
     <div class="h-[67vh] flex flex-col">
@@ -63,7 +63,7 @@ import PlayGrid from '../components/PlayGrid.vue';
 import { onMounted } from 'vue';
 import DiggingModeToggle from '../components/DiggingModeToggle.vue';
 import BitesDisplay from '../components/BitesDisplay.vue';
-import DialogueBox from '../components/DialogueBox.vue';
+import Story from '../components/Story.vue';
 
 const gameStore = useGameStore();
 
