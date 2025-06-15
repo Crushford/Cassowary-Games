@@ -98,6 +98,10 @@ const startTypewriter = () => {
 onUnmounted(() => {
   if (typewriterInterval) clearInterval(typewriterInterval);
 });
+
+defineOptions({
+  name: 'DialogueBox',
+});
 </script>
 
 <style scoped>

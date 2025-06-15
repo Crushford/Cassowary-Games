@@ -76,26 +76,6 @@ const selectTopic = (topic: { id: string }) => {
   dialogueStore.selectTopic(topic.id);
 };
 
-// Utility to position buttons in an arc using transform
-const getArcStyle = (index: number) => {
-  const total = dialogueStore.availableTopics.length;
-  const baseX = 100; // increased from 80 to spread out more
-  const baseY = 100; // increased from 80 to spread out more
-  const spread = 80; // increased from 60 to spread out more
-
-  const angleDeg = -spread / 2 + (spread / (total - 1 || 1)) * index;
-  const angleRad = (angleDeg * Math.PI) / 180;
-
-  const x = baseX * Math.cos(angleRad);
-  const y = baseY * Math.sin(angleRad);
-
-  return {
-    left: '4rem',
-    bottom: '4rem',
-    transform: `translate(${x}px, -${y}px)`,
-  };
-};
-
 defineOptions({
   name: 'Story',
 });
