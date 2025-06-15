@@ -968,7 +968,6 @@ export const useGameStore = defineStore('game', {
       try {
         // Reset logs for clarity
         this.debugLogs = [];
-        this.bites = 0; // Reset bites counter
 
         // Use grid size for required queens - they should match
         const requiredQueens = this.gridSize;
