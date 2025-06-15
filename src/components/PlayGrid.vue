@@ -1,44 +1,42 @@
 <template>
-  <div class="relative flex flex-col items-center">
+  <div class="flex flex-col items-center w-full max-w-4xl mx-auto p-4">
     <!-- Game Grid -->
     <div
-      class="grid bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg"
+      class="grid bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg w-full"
       :style="{
         gridTemplateColumns: `repeat(${gameStore.gridSize}, minmax(0, 1fr))`,
       }"
     >
       <template v-for="(row, rowIndex) in gameStore.grid" :key="rowIndex">
-        <div v-for="(cell, colIndex) in row" :key="colIndex" class="relative">
-          <div
-            class="relative w-12 h-12 flex items-center justify-center cursor-pointer"
-            :class="getCellClasses(cell)"
-            :style="getCellBackgroundStyle(cell)"
-            @click="handleCellClick(rowIndex, colIndex)"
-            @contextmenu.prevent="handleRightClick(rowIndex, colIndex)"
+        <button
+          v-for="(cell, colIndex) in row"
+          :key="colIndex"
+          class="aspect-square flex items-center justify-center cursor-pointer select-none"
+          :class="getCellClasses(cell)"
+          :style="getCellBackgroundStyle(cell)"
+          @click="handleCellClick(rowIndex, colIndex)"
+        >
+          <span v-if="shouldShowQueen(rowIndex, colIndex)" :class="getEmojiSizeClass()">🍯</span>
+          <span v-else-if="shouldShowFlag(rowIndex, colIndex)" :class="getEmojiSizeClass()"
+            >🚧</span
           >
-            <span v-if="shouldShowQueen(rowIndex, colIndex)" class="text-xl text-white">🍯</span>
-            <span v-else-if="shouldShowFlag(rowIndex, colIndex)" class="text-sm text-yellow-400"
-              >🚧</span
-            >
-            <div
-              v-else-if="shouldShowInvalid(rowIndex, colIndex)"
-              class="grid grid-cols-2 gap-1 text-xs leading-none"
-            >
-              <span>🐜</span>
-              <span>🐜</span>
-              <span>🐜</span>
-              <span>🐜</span>
-              <span>🐜</span>
-              <span>🐜</span>
-            </div>
-            <span v-else class="text-transparent">.</span>
+          <div
+            v-else-if="shouldShowInvalid(rowIndex, colIndex)"
+            class="grid grid-cols-2 gap-1 leading-none"
+            :class="getEmojiSizeClass()"
+          >
+            <span>🐜</span>
+            <span>🐜</span>
+            <span>🐜</span>
+            <span>🐜</span>
           </div>
+          <span v-else class="text-transparent">.</span>
           <!-- Border overlay -->
           <div
             class="absolute inset-0 pointer-events-none z-10"
             :class="getWrapperBorderClasses(cell, rowIndex, colIndex)"
           ></div>
-        </div>
+        </button>
       </template>
     </div>
   </div>
@@ -60,7 +58,7 @@ onMounted(() => {
 // Default background/hover class for cells with dirt texture
 const defaultBgClass = 'bg-slate-700 hover:bg-slate-600';
 const defaultBgStyle =
-  'background-image: url("/assets/cell-background.png"); background-size: cover; background-position: center;';
+  'background-image: url("/assets/ant-next-colors/cell-background.png"); background-size: cover; background-position: center;';
 
 // Function to get cell classes (background and state classes)
 function getCellClasses(cell: { groupColor?: string; state?: string }) {
@@ -97,11 +95,6 @@ function shouldShowInvalid(row: number, col: number): boolean {
 // Handle cell clicks
 function handleCellClick(row: number, col: number) {
   gameStore.handleSquareClick(row, col);
-}
-
-// Handle right-clicks for flags
-function handleRightClick(row: number, col: number) {
-  gameStore.placeFlag(row, col);
 }
 
 // Function to handle wrapper border classes
@@ -156,6 +149,14 @@ function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col
   }
 
   return classes;
+}
+
+function getEmojiSizeClass() {
+  const size = gameStore.gridSize;
+  if (size <= 4) return 'text-3xl';
+  if (size <= 6) return 'text-2xl';
+  if (size <= 8) return 'text-xl';
+  return 'text-lg';
 }
 </script>
 

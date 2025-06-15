@@ -1,6 +1,6 @@
 <template>
   <button
-    class="aspect-square w-full rounded-lg border-2 transition-colors duration-200 min-h-[40px] relative"
+    class="aspect-square w-full rounded-lg border-2 transition-colors duration-200 min-h-[40px] select-none"
     :class="squareClasses"
     @click="gameStore.handleSquareClick(row, col)"
   >

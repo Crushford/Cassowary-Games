@@ -1,47 +1,60 @@
 <template>
-  <div class="flex flex-col bg-gray-900">
-    <div class="w-full max-w-full mx-auto">
-      <!-- Stats Bar -->
-      <div class="flex justify-between items-center px-4 py-2 bg-gray-800 text-white">
-        <div class="flex items-center space-x-2">
-          <span class="text-amber-400">🍯</span>
-          <span>{{ gameStore.honeyPots }}</span>
-        </div>
-        <!-- Health Display -->
-        <div class="flex items-center space-x-2">
-          <span class="text-red-400">❤️</span>
-          <span>{{ gameStore.bites }}/{{ gameStore.maxHealth }}</span>
-        </div>
-      </div>
+  <div
+    class="mx-auto bg-gray-800 shadow-2xl overflow-hidden flex flex-col w-full max-w-[480px] max-h-[100vh] aspect-[9/19.5] rounded-none sm:rounded-[40px]"
+  >
+    <!-- Story Component (Fixed 1/3 height) -->
+    <div class="h-1/3 min-h-0">
+      <Story />
+    </div>
 
-      <!-- Level Display -->
-      <div class="flex justify-center py-2 bg-gray-800 text-white border-t border-gray-700">
-        <div class="flex items-center space-x-2">
-          <span class="text-lg font-semibold">Level {{ gameStore.currentLevel }}</span>
+    <!-- Game Content (Fixed 2/3 height) -->
+    <div class="h-2/3 min-h-0 w-full flex flex-col">
+      <div class="flex-1 flex flex-col">
+        <!-- Stats Bar -->
+        <div class="flex justify-between items-center px-4 py-2 bg-gray-800 text-white">
+          <div class="flex items-center space-x-2">
+            <span class="text-amber-400">🍯</span>
+            <span>{{ gameStore.honeyPots }}</span>
+          </div>
+          <BitesDisplay />
         </div>
-      </div>
 
-      <!-- Level Complete Animation -->
-      <div
-        v-if="gameStore.isComplete"
-        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-        @click="gameStore.isComplete = false"
-      >
+        <!-- Level Display -->
+        <div class="flex justify-center py-2 bg-gray-800 text-white border-t border-gray-700">
+          <div class="flex items-center space-x-2">
+            <span class="text-lg font-semibold">Day {{ gameStore.currentDay }}</span>
+          </div>
+        </div>
+
+        <!-- Level Complete Animation -->
         <div
-          class="bg-gray-800 p-8 rounded-lg shadow-xl transform transition-all duration-500 scale-100 hover:scale-105"
+          v-if="gameStore.isComplete"
+          class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
         >
-          <h2 class="text-2xl font-bold text-amber-400 mb-4">
-            {{ gameStore.isAlive ? 'Level Complete!' : 'Game Over!' }}
-          </h2>
-          <p class="text-white mb-2">Honey Pots Collected: {{ gameStore.honeyPots }}</p>
-          <p class="text-white mb-4">Ant Bites: {{ gameStore.bites }}/{{ gameStore.maxHealth }}</p>
-          <p class="text-gray-400 text-sm">Click anywhere to continue</p>
+          <div
+            class="bg-gray-800 p-8 rounded-lg shadow-xl transform transition-all duration-500 scale-100"
+          >
+            <h2 class="text-2xl font-bold text-amber-400 mb-4">You passed out!</h2>
+            <p class="text-white mb-2">Day {{ gameStore.currentDay }}</p>
+            <p class="text-white mb-2">Honey Pots: {{ gameStore.honeyPots }}</p>
+            <p class="text-white mb-4">Best Day: {{ gameStore.highScore }} Honey Pots</p>
+            <button
+              @click="gameStore.startNewDay()"
+              class="w-full py-3 px-6 bg-amber-500 hover:bg-amber-400 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
+            >
+              Start Day {{ gameStore.currentDay + 1 }}
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div class="flex flex-col items-center w-full">
-        <div class="w-full aspect-square">
+        <!-- Play Grid (Flexible height) -->
+        <div class="flex-1 overflow-auto min-h-0">
           <PlayGrid />
+        </div>
+
+        <!-- Digging Mode Toggle -->
+        <div class="flex justify-center py-2 bg-gray-800 text-white border-t border-gray-700">
+          <DiggingModeToggle />
         </div>
       </div>
     </div>
@@ -52,6 +65,9 @@
 import { useGameStore } from '../stores/gameStore';
 import PlayGrid from '../components/PlayGrid.vue';
 import { onMounted } from 'vue';
+import DiggingModeToggle from '../components/DiggingModeToggle.vue';
+import BitesDisplay from '../components/BitesDisplay.vue';
+import Story from '../components/Story.vue';
 
 const gameStore = useGameStore();
 

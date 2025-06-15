@@ -32,7 +32,7 @@ import { bruteForceSolver } from './bruteForceSolver';
 
 // Constants
 const DEFAULT_GRID_SIZE = 4;
-const MAX_HEALTH = 10; // Maximum health points
+const MAX_HEALTH = 3; // Maximum health points
 
 export const useGameStore = defineStore('game', {
   state: (): GameState => ({
@@ -45,12 +45,15 @@ export const useGameStore = defineStore('game', {
     ),
     bites: 0, // Add new state for tracking bites
     honeyPots: 0, // Add new state for tracking honey pots collected
+    highScore: 0, // Track highest honey pots in a single day
+    currentDay: 1, // Start at day 1
 
     // UI state
     uiState: {
       showSolution: false,
       selectedTool: null,
       selectedColor: null,
+      diggingMode: 'auto', // 'auto', 'dig', or 'flag'
     },
 
     // Game progress
@@ -230,48 +233,59 @@ export const useGameStore = defineStore('game', {
       }
     },
 
-    handlePreviousLevel() {
-      if (this.currentLevel > 1) {
-        this.currentLevel--;
-        this.initializeGrid();
+    // 1. Top‐level click handler now just routes to one of three actions
+    handleSquareClick(row: number, col: number) {
+      const mode = this.uiState.diggingMode;
+      if (mode === 'dig') {
+        this.digSquare(row, col);
+      } else if (mode === 'flag') {
+        this.flagSquare(row, col);
+      } else {
+        this.autoSquare(row, col);
       }
     },
 
-    handleNextLevel() {
-      this.currentLevel++;
-      this.initializeGrid();
-    },
-
-    handleSquareClick(row: number, col: number) {
-      const currentState = this.playerMarks[row][col];
-      if (currentState === null) {
-        // First click: place flag
-        this.placeFlag(row, col);
-      } else if (currentState === 'flag') {
-        // Second click: dig
-        if (this.grid[row][col].isSolutionQueen) {
-          this.placeQueen(row, col);
-          this.honeyPots++; // Increment honey pots when a queen is correctly placed
-
-          // Check if the board is complete after placing a queen
-          this.checkBoardCompletion();
-        } else {
-          this.playerMarks[row][col] = 'invalid';
-          this.bites++;
-
-          // Check if player is still alive
-          if (!this.isAlive) {
-            this.handleGameOver();
-          }
+    // 2. Dig action
+    digSquare(row: number, col: number) {
+      if (this.grid[row][col].isSolutionQueen) {
+        this.placeQueen(row, col);
+        this.honeyPots++;
+        this.checkBoardCompletion();
+      } else {
+        this.playerMarks[row][col] = 'invalid';
+        this.bites++;
+        if (!this.isAlive) {
+          this.handleGameOver();
         }
       }
     },
 
-    checkBoardCompletion() {
-      // Check if all squares have been marked (queen, flag, or invalid)
-      const allSquaresMarked = this.playerMarks.every((row) => row.every((mark) => mark !== null));
+    // 3. Flag action
+    flagSquare(row: number, col: number) {
+      const state = this.playerMarks[row][col];
+      if (state === null) {
+        this.placeFlag(row, col);
+      } else if (state === 'flag') {
+        this.playerMarks[row][col] = null;
+      }
+    },
 
-      if (allSquaresMarked) {
+    // 4. Auto mode: first click flags, second click digs
+    autoSquare(row: number, col: number) {
+      const state = this.playerMarks[row][col];
+      if (state === null) {
+        this.flagSquare(row, col);
+      } else if (state === 'flag') {
+        this.digSquare(row, col);
+      }
+    },
+
+    checkBoardCompletion() {
+      // Check if we have the correct number of queens (equal to grid size)
+      const queenCount = this.queenPositions.length;
+      const requiredQueens = this.gridSize;
+
+      if (queenCount === requiredQueens) {
         // Board is complete, prepare for next level
         this.isComplete = true;
         this.currentLevel++;
@@ -947,7 +961,6 @@ export const useGameStore = defineStore('game', {
       try {
         // Reset logs for clarity
         this.debugLogs = [];
-        this.bites = 0; // Reset bites counter
 
         // Use grid size for required queens - they should match
         const requiredQueens = this.gridSize;
@@ -1342,6 +1355,61 @@ export const useGameStore = defineStore('game', {
     handleGameOver() {
       this.setError('Game Over - You ran out of health!');
       this.isComplete = true;
+    },
+
+    // Add new method to handle game restart
+    restartGame() {
+      // Save high score if current score is higher
+      if (this.honeyPots > this.highScore) {
+        this.highScore = this.honeyPots;
+        localStorage.setItem('highScore', this.highScore.toString());
+      }
+
+      // Reset game state
+      this.currentLevel = 1;
+      this.honeyPots = 0;
+      this.bites = 0;
+      this.isComplete = false;
+      this.initializeGrid();
+      this.findValidPuzzleWithSteps();
+    },
+
+    // Add method to load high score from localStorage
+    loadHighScore() {
+      const savedHighScore = localStorage.getItem('highScore');
+      if (savedHighScore) {
+        this.highScore = parseInt(savedHighScore, 10);
+      }
+    },
+
+    // Update method to handle starting a new day
+    startNewDay() {
+      // Save high score if current day's honey pots is higher
+      if (this.honeyPots > this.highScore) {
+        this.highScore = this.honeyPots;
+        localStorage.setItem('highScore', this.highScore.toString());
+      }
+
+      // Increment day and reset daily stats
+      this.currentDay++;
+      this.honeyPots = 0;
+      this.bites = 0;
+      this.isComplete = false;
+      this.initializeGrid();
+      this.findValidPuzzleWithSteps();
+    },
+
+    // Add method to load current day from localStorage
+    loadCurrentDay() {
+      const savedDay = localStorage.getItem('currentDay');
+      if (savedDay) {
+        this.currentDay = parseInt(savedDay, 10);
+      }
+    },
+
+    // Add method to save current day to localStorage
+    saveCurrentDay() {
+      localStorage.setItem('currentDay', this.currentDay.toString());
     },
   },
 });
