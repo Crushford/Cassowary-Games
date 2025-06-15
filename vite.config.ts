@@ -12,6 +12,11 @@ function publicPath() {
 // https://vitejs.dev/config/
 export default defineConfig({
   base: publicPath(),
+  build: {
+    outDir: 'public',
+    assetsDir: 'assets',
+    emptyOutDir: true,
+  },
   plugins: [vue()],
   resolve: {
     alias: {
