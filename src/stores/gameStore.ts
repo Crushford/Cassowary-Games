@@ -233,60 +233,50 @@ export const useGameStore = defineStore('game', {
       }
     },
 
-    handlePreviousLevel() {
-      if (this.currentLevel > 1) {
-        this.currentLevel--;
-        this.initializeGrid();
+    // 1. Top‐level click handler now just routes to one of three actions
+    handleSquareClick(row: number, col: number) {
+      const mode = this.uiState.diggingMode;
+      if (mode === 'dig') {
+        this.digSquare(row, col);
+      } else if (mode === 'flag') {
+        this.flagSquare(row, col);
+      } else {
+        this.autoSquare(row, col);
       }
     },
 
-    handleNextLevel() {
-      this.currentLevel++;
-      this.initializeGrid();
+    // 2. Dig action
+    digSquare(row: number, col: number) {
+      if (this.grid[row][col].isSolutionQueen) {
+        this.placeQueen(row, col);
+        this.honeyPots++;
+        this.checkBoardCompletion();
+      } else {
+        this.playerMarks[row][col] = 'invalid';
+        this.bites++;
+        if (!this.isAlive) {
+          this.handleGameOver();
+        }
+      }
     },
 
-    handleSquareClick(row: number, col: number) {
-      const currentState = this.playerMarks[row][col];
+    // 3. Flag action
+    flagSquare(row: number, col: number) {
+      const state = this.playerMarks[row][col];
+      if (state === null) {
+        this.placeFlag(row, col);
+      } else if (state === 'flag') {
+        this.playerMarks[row][col] = null;
+      }
+    },
 
-      if (this.uiState.diggingMode === 'dig') {
-        // Direct dig mode
-        if (this.grid[row][col].isSolutionQueen) {
-          this.placeQueen(row, col);
-          this.honeyPots++;
-          this.checkBoardCompletion();
-        } else {
-          this.playerMarks[row][col] = 'invalid';
-          this.bites++;
-          if (!this.isAlive) {
-            this.handleGameOver();
-          }
-        }
-      } else if (this.uiState.diggingMode === 'flag') {
-        // Direct flag mode
-        if (currentState === null) {
-          this.placeFlag(row, col);
-        } else if (currentState === 'flag') {
-          this.playerMarks[row][col] = null;
-        }
-      } else {
-        // Auto mode (default)
-        if (currentState === null) {
-          // First click: place flag
-          this.placeFlag(row, col);
-        } else if (currentState === 'flag') {
-          // Second click: dig
-          if (this.grid[row][col].isSolutionQueen) {
-            this.placeQueen(row, col);
-            this.honeyPots++;
-            this.checkBoardCompletion();
-          } else {
-            this.playerMarks[row][col] = 'invalid';
-            this.bites++;
-            if (!this.isAlive) {
-              this.handleGameOver();
-            }
-          }
-        }
+    // 4. Auto mode: first click flags, second click digs
+    autoSquare(row: number, col: number) {
+      const state = this.playerMarks[row][col];
+      if (state === null) {
+        this.flagSquare(row, col);
+      } else if (state === 'flag') {
+        this.digSquare(row, col);
       }
     },
 
