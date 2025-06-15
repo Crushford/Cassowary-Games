@@ -4,7 +4,7 @@ pages:
   script:
     - yarn install --frozen-lockfile
     - yarn build
-    - mv dist public
+    - cp -r dist/* public/
   artifacts:
     paths:
       - public
