@@ -1,3 +1,5 @@
+// this is untested
+
 import type { GridSquare, MarkType, Pos } from '../types/types';
 
 type PlayerMarks = MarkType[][];
@@ -146,13 +148,14 @@ export function validatePuzzleHasSingleSolution(
         if (solutionsFound > maxSolutions) {
           return false; // Too many solutions
         }
+        return true;
       }
-    }
-
-    // Try placing a queen
-    if (tryPlaceQueen(pos)) {
-      // Continue solving with the queen placed
-      if (!solve()) return false;
+    } else {
+      // Try placing a queen
+      if (tryPlaceQueen(pos)) {
+        // Continue solving with the queen placed
+        if (!solve()) return false;
+      }
     }
 
     // If we get here, either placing a queen failed or we need to backtrack
