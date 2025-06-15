@@ -1,22 +1,20 @@
 <template>
-  <div class="relative w-full px-4 pb-2">
-    <div
-      ref="textContainer"
-      class="relative overflow-y-auto h-[3.5em] pr-1"
-      style="line-height: 1.2em"
-      @scroll="handleScroll"
-    >
-      <!-- Animated text -->
-      <Transition name="fade-slide" mode="out-in">
-        <div
-          v-if="dialogueStore.currentTopic"
-          :key="dialogueStore.currentTopic.id"
-          class="text-white text-base leading-tight typewriter-text"
-        >
-          {{ displayedText }}
-        </div>
-      </Transition>
-    </div>
+  <div
+    ref="textContainer"
+    class="relative overflow-y-auto h-[2.5em] pr-1"
+    style="line-height: 1.2em"
+    @scroll="handleScroll"
+  >
+    <!-- Animated text -->
+    <Transition name="fade-slide" mode="out-in">
+      <div
+        v-if="dialogueStore.currentTopic"
+        :key="dialogueStore.currentTopic.id"
+        class="text-white text-base leading-tight typewriter-text"
+      >
+        {{ displayedText }}
+      </div>
+    </Transition>
   </div>
 </template>
 
