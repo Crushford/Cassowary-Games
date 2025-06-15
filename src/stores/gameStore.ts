@@ -32,7 +32,7 @@ import { bruteForceSolver } from './bruteForceSolver';
 
 // Constants
 const DEFAULT_GRID_SIZE = 4;
-const MAX_HEALTH = 10; // Maximum health points
+const MAX_HEALTH = 3; // Maximum health points
 
 export const useGameStore = defineStore('game', {
   state: (): GameState => ({
