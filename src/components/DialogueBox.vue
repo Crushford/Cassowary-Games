@@ -35,6 +35,10 @@ watch(
   (newTopic) => {
     if (newTopic) {
       isAutoScrolling.value = true;
+      if (textContainer.value) {
+        textContainer.value.scrollTop = 0;
+      }
+
       startTypewriter();
     }
   }

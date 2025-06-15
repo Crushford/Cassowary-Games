@@ -58,7 +58,7 @@ onMounted(() => {
 // Default background/hover class for cells with dirt texture
 const defaultBgClass = 'bg-slate-700 hover:bg-slate-600';
 const defaultBgStyle =
-  'background-image: url("/assets/cell-background.png"); background-size: cover; background-position: center;';
+  'background-image: url("/assets/ant-next-colors/cell-background.png"); background-size: cover; background-position: center;';
 
 // Function to get cell classes (background and state classes)
 function getCellClasses(cell: { groupColor?: string; state?: string }) {
