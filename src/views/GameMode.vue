@@ -26,9 +26,8 @@
           class="bg-gray-800 p-8 rounded-lg shadow-xl transform transition-all duration-500 scale-100"
         >
           <h2 class="text-2xl font-bold text-amber-400 mb-4">You passed out!</h2>
-          <p class="text-white mb-2">
-            Day {{ gameStore.currentDay }} Honey Pots: {{ gameStore.honeyPots }}
-          </p>
+          <p class="text-white mb-2">Day {{ gameStore.currentDay }}</p>
+          <p class="text-white mb-2">Honey Pots: {{ gameStore.honeyPots }}</p>
           <p class="text-white mb-4">Best Day: {{ gameStore.highScore }} Honey Pots</p>
           <button
             @click="gameStore.startNewDay()"
