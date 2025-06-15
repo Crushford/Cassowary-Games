@@ -1,10 +1,23 @@
-image: node:20
+image: 'node:20'
+
+stages:
+  - build
+  - test
+  - deploy
+
+build:
+  stage: build
+  script:
+    - yarn install --frozen-lockfile --check-files --non-interactive
+    - yarn build
+  artifacts:
+    paths:
+      - public
 
 pages:
+  stage: deploy
   script:
-    - yarn install --frozen-lockfile
-    - yarn build
-    - cp -r dist/* public/
+    - echo 'Pages deployment job'
   artifacts:
     paths:
       - public
