@@ -282,11 +282,117 @@ export const useLevelBuilderStore = defineStore('game', {
       }
     },
 
+    // New method to generate a full solution
+    placeAllQueens() {
+      if (this.verboseMode) {
+        this.addDebugLog('Starting placeAllQueens');
+      }
+
+      // Helper to count queens in a marks array
+      const countQueensInMarks = (marks: MarkType[][]): number => {
+        let count = 0;
+        for (let row = 0; row < this.gridSize; row++) {
+          for (let col = 0; col < this.gridSize; col++) {
+            if (marks[row][col] === 'queen') count++;
+          }
+        }
+        return count;
+      };
+
+      // Helper to clear temporary marks
+      const clearTempMarks = (marks: MarkType[][]) => {
+        for (let row = 0; row < this.gridSize; row++) {
+          for (let col = 0; col < this.gridSize; col++) {
+            marks[row][col] = null;
+          }
+        }
+      };
+
+      // Clear existing solution
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          this.grid[row][col].isSolutionQueen = false;
+        }
+      }
+
+      // Create temporary state for tracking queen placements
+      const tempQueenMarks: MarkType[][] = Array.from({ length: this.gridSize }, () =>
+        Array(this.gridSize).fill(null as MarkType)
+      );
+
+      // Keep placing queens until we have a complete solution or no more moves
+      let attempts = 0;
+      const maxAttempts = 100;
+      let consecutiveFailures = 0;
+      const maxConsecutiveFailures = 5;
+
+      if (this.verboseMode) {
+        this.addDebugLog(`Target: ${this.gridSize} queens, Max attempts: ${maxAttempts}`);
+      }
+
+      // Try to place all queens
+      while (countQueensInMarks(tempQueenMarks) < this.gridSize && attempts < maxAttempts) {
+        attempts++;
+
+        if (this.verboseMode && attempts % 10 === 0) {
+          this.addDebugLog(
+            `Attempt ${attempts}: ${countQueensInMarks(tempQueenMarks)}/${this.gridSize} queens placed`
+          );
+        }
+
+        const success = this.placeRandomQueen(tempQueenMarks);
+        if (!success) {
+          consecutiveFailures++;
+          if (this.verboseMode) {
+            this.addDebugLog(`Placement failed, consecutive failures: ${consecutiveFailures}`);
+          }
+
+          if (consecutiveFailures >= maxConsecutiveFailures) {
+            if (this.verboseMode) {
+              this.addDebugLog('Too many consecutive failures, resetting board');
+            }
+            clearTempMarks(tempQueenMarks);
+            consecutiveFailures = 0;
+          }
+        } else {
+          consecutiveFailures = 0; // Reset failure counter on success
+        }
+      }
+
+      const finalQueenCount = countQueensInMarks(tempQueenMarks);
+      if (this.verboseMode) {
+        this.addDebugLog(
+          `Generation complete: ${finalQueenCount}/${this.gridSize} queens after ${attempts} attempts`
+        );
+      }
+
+      if (finalQueenCount === this.gridSize) {
+        // Record the final queen placements in our solution data
+        for (let row = 0; row < this.gridSize; row++) {
+          for (let col = 0; col < this.gridSize; col++) {
+            if (tempQueenMarks[row][col] === 'queen') {
+              this.grid[row][col].isSolutionQueen = true;
+            }
+          }
+        }
+        if (this.verboseMode) {
+          this.addDebugLog('✅ Full solution generated and saved');
+        }
+      } else {
+        if (this.verboseMode) {
+          this.addDebugLog(
+            `❌ Failed to generate full solution: only ${finalQueenCount}/${this.gridSize} queens placed`
+          );
+        }
+        this.setError(`Could not place all queens: ${finalQueenCount}/${this.gridSize} placed`);
+      }
+    },
+
     /**
      * Attempts to place all queens on the board using knight-move preference and full backtracking.
      * Returns true if a solution is found, false otherwise.
      */
-    placeRandomQueen(): boolean {
+    placeRandomQueen(tempQueenMarks: MarkType[][]): boolean {
       const maxAttempts = 1000; // Max total attempts before full reset
       let attempts = 0;
       const gridSize = this.gridSize;
@@ -301,12 +407,15 @@ export const useLevelBuilderStore = defineStore('game', {
         // Find last queen placed
         for (let r = 0; r < gridSize; r++) {
           for (let c = 0; c < gridSize; c++) {
-            if (this.playerMarks[r][c] === 'queen') lastQueen = { row: r, col: c };
+            if (tempQueenMarks[r][c] === 'queen') lastQueen = { row: r, col: c };
           }
         }
         for (let row = 0; row < gridSize; row++) {
           for (let col = 0; col < gridSize; col++) {
-            if (this.playerMarks[row][col] === null && this.isValidMove(row, col)) {
+            if (
+              tempQueenMarks[row][col] === null &&
+              this.isValidMoveWithMarks(row, col, tempQueenMarks)
+            ) {
               moves.push({ row, col });
               if (lastQueen) {
                 const dr = Math.abs(row - lastQueen.row);
@@ -321,7 +430,7 @@ export const useLevelBuilderStore = defineStore('game', {
         return preferKnight && knightMoves.length > 0 ? knightMoves : moves;
       };
 
-      // Helper: Deep clone playerMarks
+      // Helper: Deep clone marks
       const cloneMarks = (marks: MarkType[][]) => marks.map((row) => [...row]);
 
       // Recursive backtracking function
@@ -339,18 +448,16 @@ export const useLevelBuilderStore = defineStore('game', {
         }
         for (const { row, col } of moves) {
           // Save state for backtracking
-          const prevMarks = cloneMarks(this.playerMarks);
-          // Simulate player: place flag, then queen
-          this.setPlayerMark(row, col, 'flag');
-          this.setPlayerMark(row, col, 'queen');
-          this.updateBlockedMoves();
+          const prevMarks = cloneMarks(tempQueenMarks);
+          // Place queen
+          tempQueenMarks[row][col] = 'queen';
           if (verbose)
             this.addDebugLog(`Tried queen at (${row},${col}), stack depth ${queensPlaced + 1}`);
           if (backtrack(queensPlaced + 1)) return true;
           // Backtrack
           for (let r = 0; r < gridSize; r++) {
             for (let c = 0; c < gridSize; c++) {
-              this.playerMarks[r][c] = prevMarks[r][c];
+              tempQueenMarks[r][c] = prevMarks[r][c];
             }
           }
           if (verbose)
@@ -360,13 +467,55 @@ export const useLevelBuilderStore = defineStore('game', {
       };
 
       // Clear board before starting
-      this.clearQueensAndFlags();
+      for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
+          tempQueenMarks[row][col] = null;
+        }
+      }
       let success = backtrack(0);
       if (!success && verbose)
         this.addDebugLog(
           'Failed to generate a random queen placement after max attempts, resetting.'
         );
       return success;
+    },
+
+    // Helper to check if a move is valid using a specific marks array
+    isValidMoveWithMarks(row: number, col: number, marks: MarkType[][]): boolean {
+      // Check if there's a queen in the same row or column
+      for (let i = 0; i < this.gridSize; i++) {
+        if (marks[row][i] === 'queen' || marks[i][col] === 'queen') {
+          return false;
+        }
+      }
+
+      // Check diagonally adjacent squares (one square away)
+      const diagonalPositions = [
+        { r: row - 1, c: col - 1 }, // top-left
+        { r: row - 1, c: col + 1 }, // top-right
+        { r: row + 1, c: col - 1 }, // bottom-left
+        { r: row + 1, c: col + 1 }, // bottom-right
+      ];
+
+      for (const pos of diagonalPositions) {
+        if (this.isValidPosition(pos.r, pos.c) && marks[pos.r][pos.c] === 'queen') {
+          return false;
+        }
+      }
+
+      // Check color group (if the square has a group color)
+      const square = this.grid[row][col];
+      if (square.groupColor) {
+        for (let r = 0; r < this.gridSize; r++) {
+          for (let c = 0; c < this.gridSize; c++) {
+            if (marks[r][c] === 'queen' && this.grid[r][c].groupColor === square.groupColor) {
+              return false;
+            }
+          }
+        }
+      }
+
+      return true;
     },
 
     setError(message: string | null) {
@@ -453,7 +602,17 @@ export const useLevelBuilderStore = defineStore('game', {
 
     // Step 1: Assign a unique color to each queen (do not expand)
     assignInitialColorsToQueens() {
-      this.grid = assignInitialColorsToQueensUtil(this.grid, this.queenPositions, (msg) =>
+      // Get queen positions from the grid's isSolutionQueen property
+      const queenPositions: Pos[] = [];
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].isSolutionQueen) {
+            queenPositions.push({ row, col });
+          }
+        }
+      }
+
+      this.grid = assignInitialColorsToQueensUtil(this.grid, queenPositions, (msg) =>
         this.addDebugLog(msg)
       );
     },
@@ -604,87 +763,6 @@ export const useLevelBuilderStore = defineStore('game', {
 
       // Check if we visited all cells of this color
       return visited.size === colorCells.length;
-    },
-
-    // New method to generate a full solution
-    placeAllQueens() {
-      if (this.verboseMode) {
-        this.addDebugLog('Starting placeAllQueens');
-      }
-
-      // Clear existing solution
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          this.grid[row][col].isSolutionQueen = false;
-        }
-      }
-
-      // Keep placing queens until we have a complete solution or no more moves
-      let attempts = 0;
-      const maxAttempts = 100;
-      let consecutiveFailures = 0;
-      const maxConsecutiveFailures = 5;
-
-      if (this.verboseMode) {
-        this.addDebugLog(`Target: ${this.gridSize} queens, Max attempts: ${maxAttempts}`);
-      }
-
-      // Try to place all queens
-      while (this.queenPositions.length < this.gridSize && attempts < maxAttempts) {
-        attempts++;
-
-        if (this.verboseMode && attempts % 10 === 0) {
-          this.addDebugLog(
-            `Attempt ${attempts}: ${this.queenPositions.length}/${this.gridSize} queens placed`
-          );
-        }
-
-        const success = this.placeRandomQueen();
-        if (!success) {
-          consecutiveFailures++;
-          if (this.verboseMode) {
-            this.addDebugLog(`Placement failed, consecutive failures: ${consecutiveFailures}`);
-          }
-
-          if (consecutiveFailures >= maxConsecutiveFailures) {
-            if (this.verboseMode) {
-              this.addDebugLog('Too many consecutive failures, resetting board');
-            }
-            this.clearQueensAndFlags();
-            consecutiveFailures = 0;
-          }
-        } else {
-          consecutiveFailures = 0; // Reset failure counter on success
-        }
-      }
-
-      const finalQueenCount = this.queenPositions.length;
-      if (this.verboseMode) {
-        this.addDebugLog(
-          `Generation complete: ${finalQueenCount}/${this.gridSize} queens after ${attempts} attempts`
-        );
-      }
-
-      if (finalQueenCount === this.gridSize) {
-        // Record the final queen placements in our solution data
-        for (let row = 0; row < this.gridSize; row++) {
-          for (let col = 0; col < this.gridSize; col++) {
-            if (this.playerMarks[row][col] === 'queen') {
-              this.grid[row][col].isSolutionQueen = true;
-            }
-          }
-        }
-        if (this.verboseMode) {
-          this.addDebugLog('✅ Full solution generated and saved');
-        }
-      } else {
-        if (this.verboseMode) {
-          this.addDebugLog(
-            `❌ Failed to generate full solution: only ${finalQueenCount}/${this.gridSize} queens placed`
-          );
-        }
-        this.setError(`Could not place all queens: ${finalQueenCount}/${this.gridSize} placed`);
-      }
     },
 
     savePuzzleToLocalStorage() {
