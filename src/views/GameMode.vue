@@ -77,6 +77,7 @@ const gameStore = useGameStore();
 const isGameOver = ref(false);
 
 onMounted(() => {
+  gameStore.findValidPuzzleWithSteps();
   gameStore.loadHighScore();
   gameStore.loadCurrentDay();
 });
