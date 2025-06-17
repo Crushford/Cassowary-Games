@@ -39,7 +39,6 @@
         <span class="text-sm text-slate-400">Step 0: Reset Board</span>
         <BaseButton
           @click="levelBuilderStore.clearQueensAndFlags()"
-          :disabled="!levelBuilderStore.queenPositions.length"
           class="bg-red-950 hover:bg-red-900"
         >
           Clear Queens & Colors
@@ -52,7 +51,6 @@
         <div class="flex gap-2">
           <BaseButton
             @click="levelBuilderStore.placeRandomQueen()"
-            :disabled="!canPlaceQueens"
             disabledTitle="No valid moves"
             class="bg-blue-950 hover:bg-blue-900 text-sm"
           >
@@ -60,7 +58,6 @@
           </BaseButton>
           <BaseButton
             @click="levelBuilderStore.placeAllQueens()"
-            :disabled="!canPlaceQueens"
             disabledTitle="Board is full"
             class="bg-blue-950 hover:bg-blue-900 text-sm"
           >
