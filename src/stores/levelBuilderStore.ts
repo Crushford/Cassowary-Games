@@ -262,9 +262,6 @@ export const useLevelBuilderStore = defineStore('game', {
       } else {
         this.playerMarks[row][col] = 'invalid';
         this.bites++;
-        if (!this.isAlive) {
-          this.handleGameOver();
-        }
       }
     },
 
@@ -297,9 +294,7 @@ export const useLevelBuilderStore = defineStore('game', {
         // Board is complete, prepare for next level
         this.isComplete = true;
         this.currentLevel++;
-
-        // Generate new puzzle for next level
-        this.findValidPuzzleWithSteps();
+        this.initializeGrid();
       }
     },
 
@@ -923,7 +918,6 @@ export const useLevelBuilderStore = defineStore('game', {
       runAllSolverSteps(
         this.grid,
         this.autoTestMarks,
-        this.gridSize,
         (row, col) => {
           this.setAutoTestMark(row, col, 'queen');
           return true;
@@ -960,71 +954,46 @@ export const useLevelBuilderStore = defineStore('game', {
 
     // Step 1: Place last free queens
     placeLastFreeQueens() {
-      const result = placeLastFreeQueens(
-        this.grid,
-        this.autoTestMarks,
-        this.gridSize,
-        (row, col) => {
-          this.setAutoTestMark(row, col, 'queen');
-          return true;
-        }
-      );
+      const result = placeLastFreeQueens(this.grid, this.autoTestMarks, (row, col) => {
+        this.setAutoTestMark(row, col, 'queen');
+        return true;
+      });
       return result;
     },
 
     // Step 2: Flag blocking squares
     flagBlockingSquares() {
-      const result = flagBlockingSquares(
-        this.grid,
-        this.autoTestMarks,
-        this.gridSize,
-        (row, col) => {
-          this.setAutoTestMark(row, col, 'flag');
-          return true;
-        }
-      );
+      const result = flagBlockingSquares(this.grid, this.autoTestMarks, (row, col) => {
+        this.setAutoTestMark(row, col, 'flag');
+        return true;
+      });
       return result;
     },
 
     // Step 3: Eliminate constrained rows
     eliminateConstrainedRows() {
-      const result = eliminateConstrainedRows(
-        this.grid,
-        this.autoTestMarks,
-        this.gridSize,
-        (row, col) => {
-          this.setAutoTestMark(row, col, 'flag');
-          return true;
-        }
-      );
+      const result = eliminateConstrainedRows(this.grid, this.autoTestMarks, (row, col) => {
+        this.setAutoTestMark(row, col, 'flag');
+        return true;
+      });
       return result;
     },
 
     // Step 4: Eliminate constrained columns
     eliminateConstrainedColumns() {
-      const result = eliminateConstrainedColumns(
-        this.grid,
-        this.autoTestMarks,
-        this.gridSize,
-        (row, col) => {
-          this.setAutoTestMark(row, col, 'flag');
-          return true;
-        }
-      );
+      const result = eliminateConstrainedColumns(this.grid, this.autoTestMarks, (row, col) => {
+        this.setAutoTestMark(row, col, 'flag');
+        return true;
+      });
       return result;
     },
 
     // Step 5: Block rows and columns
     blockRowsAndColumns() {
-      const result = blockRowsAndColumns(
-        this.grid,
-        this.autoTestMarks,
-        this.gridSize,
-        (row, col) => {
-          this.setAutoTestMark(row, col, 'flag');
-          return true;
-        }
-      );
+      const result = blockRowsAndColumns(this.grid, this.autoTestMarks, (row, col) => {
+        this.setAutoTestMark(row, col, 'flag');
+        return true;
+      });
       return result;
     },
 

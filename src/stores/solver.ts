@@ -1,296 +1,256 @@
 import type { GridSquare, Pos, MarkType } from '../types/types';
-import { queenAttacks } from './gridUtils';
 
 // Helper for step 1: Place queens in last free squares of color blocks, rows, or columns
 export function placeLastFreeQueens(
   grid: GridSquare[][],
   playerMarks: MarkType[][],
-  gridSize: number,
   placeQueen: (row: number, col: number) => boolean
 ): boolean {
-  let didSomething = false;
-  let queensPlaced = 0;
-  let placed;
+  const gridSize = grid.length;
+  let placedAny = false;
 
-  do {
-    placed = false;
-    // 1. Check color blocks
-    const colorGroups = new Map<string, Pos[]>();
-    for (let row = 0; row < gridSize; row++) {
-      for (let col = 0; col < gridSize; col++) {
-        const color = grid[row][col].groupColor;
-        if (!color) continue;
-        if (!colorGroups.has(color)) colorGroups.set(color, []);
-        colorGroups.get(color)!.push({ row, col });
-      }
-    }
-    for (const [color, group] of colorGroups.entries()) {
-      const free: Pos[] = group.filter(({ row, col }) => playerMarks[row][col] === null);
-      if (free.length === 1) {
-        const { row, col } = free[0];
-        placeQueen(row, col);
-        queensPlaced++;
-        placed = true;
-        didSomething = true;
-        break;
-      }
-    }
-    if (placed) continue;
-    // 2. Check rows
-    for (let row = 0; row < gridSize; row++) {
-      const free: Pos[] = [];
-      for (let col = 0; col < gridSize; col++) {
-        if (playerMarks[row][col] === null) free.push({ row, col });
-      }
-      if (free.length === 1) {
-        const { row, col } = free[0];
-        placeQueen(row, col);
-        queensPlaced++;
-        placed = true;
-        didSomething = true;
-        break;
-      }
-    }
-    if (placed) continue;
-    // 3. Check columns
+  // For each row
+  for (let row = 0; row < gridSize; row++) {
+    let emptyCount = 0;
+    let lastEmptyCol = -1;
+
+    // Count empty squares in this row
     for (let col = 0; col < gridSize; col++) {
-      const free: Pos[] = [];
-      for (let row = 0; row < gridSize; row++) {
-        if (playerMarks[row][col] === null) free.push({ row, col });
-      }
-      if (free.length === 1) {
-        const { row, col } = free[0];
-        placeQueen(row, col);
-        queensPlaced++;
-        placed = true;
-        didSomething = true;
-        break;
+      if (playerMarks[row][col] === null) {
+        emptyCount++;
+        lastEmptyCol = col;
       }
     }
-  } while (placed);
 
-  return didSomething;
+    // If there's exactly one empty square, place a queen there
+    if (emptyCount === 1) {
+      if (placeQueen(row, lastEmptyCol)) {
+        placedAny = true;
+      }
+    }
+  }
+
+  // For each column
+  for (let col = 0; col < gridSize; col++) {
+    let emptyCount = 0;
+    let lastEmptyRow = -1;
+
+    // Count empty squares in this column
+    for (let row = 0; row < gridSize; row++) {
+      if (playerMarks[row][col] === null) {
+        emptyCount++;
+        lastEmptyRow = row;
+      }
+    }
+
+    // If there's exactly one empty square, place a queen there
+    if (emptyCount === 1) {
+      if (placeQueen(lastEmptyRow, col)) {
+        placedAny = true;
+      }
+    }
+  }
+
+  return placedAny;
 }
 
 // Helper for step 2: Flag squares where a queen would block all remaining squares in other color groups
 export function flagBlockingSquares(
   grid: GridSquare[][],
   playerMarks: MarkType[][],
-  gridSize: number,
   placeFlag: (row: number, col: number) => boolean
 ): boolean {
-  let flagCount = 0;
-  let didSomething = false;
+  const gridSize = grid.length;
+  let placedAny = false;
 
-  // Build map of empty squares by color group
-  const emptyColorGroups = new Map<string, Pos[]>();
-  for (let r = 0; r < gridSize; r++) {
-    for (let c = 0; c < gridSize; c++) {
-      if (playerMarks[r][c] === null) {
-        const grp = grid[r][c].groupColor;
-        if (!grp) continue;
-        if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
-        emptyColorGroups.get(grp)!.push({ row: r, col: c });
-      }
-    }
-  }
-
-  // For each empty square, check all other color groups
+  // For each queen
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
-      if (playerMarks[row][col] !== null) continue;
-      const myColor = grid[row][col].groupColor;
-      if (!myColor) continue;
-      for (const [otherColor, groupEmpty] of emptyColorGroups.entries()) {
-        if (otherColor === myColor) continue;
-        if (groupEmpty.length <= 1) continue;
-        let allAttacked = true;
-        for (const { row: r, col: c } of groupEmpty) {
-          if (!queenAttacks(row, col, r, c)) {
-            allAttacked = false;
-            break;
+      if (playerMarks[row][col] === 'queen') {
+        // Flag all squares in the same row and column
+        for (let i = 0; i < gridSize; i++) {
+          if (i !== col && playerMarks[row][i] === null) {
+            if (placeFlag(row, i)) {
+              placedAny = true;
+            }
+          }
+          if (i !== row && playerMarks[i][col] === null) {
+            if (placeFlag(i, col)) {
+              placedAny = true;
+            }
           }
         }
-        if (allAttacked) {
-          placeFlag(row, col);
-          flagCount++;
-          didSomething = true;
-          break;
+
+        // Flag diagonally adjacent squares
+        const directions = [
+          { dr: 1, dc: 1 }, // down-right
+          { dr: 1, dc: -1 }, // down-left
+          { dr: -1, dc: 1 }, // up-right
+          { dr: -1, dc: -1 }, // up-left
+        ];
+
+        for (const dir of directions) {
+          const newRow = row + dir.dr;
+          const newCol = col + dir.dc;
+          if (
+            newRow >= 0 &&
+            newRow < gridSize &&
+            newCol >= 0 &&
+            newCol < gridSize &&
+            playerMarks[newRow][newCol] === null
+          ) {
+            if (placeFlag(newRow, newCol)) {
+              placedAny = true;
+            }
+          }
         }
       }
     }
   }
 
-  return didSomething;
+  return placedAny;
 }
 
 // Step 3: Constrained Row Elimination
 export function eliminateConstrainedRows(
   grid: GridSquare[][],
   playerMarks: MarkType[][],
-  gridSize: number,
   placeFlag: (row: number, col: number) => boolean
 ): boolean {
-  const emptyColorGroups = new Map<string, Pos[]>();
-  // Build map of empty squares by color group
-  for (let r = 0; r < gridSize; r++) {
-    for (let c = 0; c < gridSize; c++) {
-      if (playerMarks[r][c] === null) {
-        const grp = grid[r][c].groupColor;
-        if (!grp) continue;
-        if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
-        emptyColorGroups.get(grp)!.push({ row: r, col: c });
+  const gridSize = grid.length;
+  let placedAny = false;
+
+  // For each row
+  for (let row = 0; row < gridSize; row++) {
+    // Count queens and empty squares
+    let queenCount = 0;
+    let emptySquares: number[] = [];
+
+    for (let col = 0; col < gridSize; col++) {
+      if (playerMarks[row][col] === 'queen') {
+        queenCount++;
+      } else if (playerMarks[row][col] === null) {
+        emptySquares.push(col);
+      }
+    }
+
+    // If we have exactly one empty square and one queen needed
+    if (emptySquares.length === 1 && queenCount === 0) {
+      if (placeFlag(row, emptySquares[0])) {
+        placedAny = true;
       }
     }
   }
-  // Generate all non-empty subsets of rows
-  const rows = Array.from({ length: gridSize }, (_, i) => i);
-  const subsets: number[][] = [];
-  function genSubsets(arr: number[], start: number, curr: number[]) {
-    for (let i = start; i < arr.length; i++) {
-      const next = curr.concat(arr[i]);
-      subsets.push(next);
-      genSubsets(arr, i + 1, next);
-    }
-  }
-  genSubsets(rows, 0, []);
-  let flagCount = 0;
-  let didSomething = false;
-  for (const S of subsets) {
-    const uniqueColors = Array.from(emptyColorGroups.entries())
-      .filter(([, positions]) => positions.length > 0 && positions.every((p) => S.includes(p.row)))
-      .map(([color]) => color);
-    if (uniqueColors.length === S.length && uniqueColors.length > 0) {
-      for (const row of S) {
-        for (let col = 0; col < gridSize; col++) {
-          if (playerMarks[row][col] === null) {
-            const grp = grid[row][col].groupColor;
-            if (!grp || !uniqueColors.includes(grp)) {
-              placeFlag(row, col);
-              flagCount++;
-              didSomething = true;
-            }
-          }
-        }
-      }
-    }
-  }
-  return didSomething;
+
+  return placedAny;
 }
 
 // Step 4: Constrained Column Elimination
 export function eliminateConstrainedColumns(
   grid: GridSquare[][],
   playerMarks: MarkType[][],
-  gridSize: number,
   placeFlag: (row: number, col: number) => boolean
 ): boolean {
-  const emptyColorGroups = new Map<string, Pos[]>();
-  // Build map of empty squares by color group
-  for (let r = 0; r < gridSize; r++) {
-    for (let c = 0; c < gridSize; c++) {
-      if (playerMarks[r][c] === null) {
-        const grp = grid[r][c].groupColor;
-        if (!grp) continue;
-        if (!emptyColorGroups.has(grp)) emptyColorGroups.set(grp, []);
-        emptyColorGroups.get(grp)!.push({ row: r, col: c });
+  const gridSize = grid.length;
+  let placedAny = false;
+
+  // For each column
+  for (let col = 0; col < gridSize; col++) {
+    // Count queens and empty squares
+    let queenCount = 0;
+    let emptySquares: number[] = [];
+
+    for (let row = 0; row < gridSize; row++) {
+      if (playerMarks[row][col] === 'queen') {
+        queenCount++;
+      } else if (playerMarks[row][col] === null) {
+        emptySquares.push(row);
+      }
+    }
+
+    // If we have exactly one empty square and one queen needed
+    if (emptySquares.length === 1 && queenCount === 0) {
+      if (placeFlag(emptySquares[0], col)) {
+        placedAny = true;
       }
     }
   }
-  // Generate all non-empty subsets of columns
-  const cols = Array.from({ length: gridSize }, (_, i) => i);
-  const subsets: number[][] = [];
-  function genSubsets(arr: number[], start: number, curr: number[]) {
-    for (let i = start; i < arr.length; i++) {
-      const next = curr.concat(arr[i]);
-      subsets.push(next);
-      genSubsets(arr, i + 1, next);
-    }
-  }
-  genSubsets(cols, 0, []);
-  let flagCount = 0;
-  let didSomething = false;
-  for (const S of subsets) {
-    const uniqueColors = Array.from(emptyColorGroups.entries())
-      .filter(([, positions]) => positions.length > 0 && positions.every((p) => S.includes(p.col)))
-      .map(([color]) => color);
-    if (uniqueColors.length === S.length && uniqueColors.length > 0) {
-      for (const col of S) {
-        for (let row = 0; row < gridSize; row++) {
-          if (playerMarks[row][col] === null) {
-            const grp = grid[row][col].groupColor;
-            if (!grp || !uniqueColors.includes(grp)) {
-              placeFlag(row, col);
-              flagCount++;
-              didSomething = true;
-            }
-          }
-        }
-      }
-    }
-  }
-  return didSomething;
+
+  return placedAny;
 }
 
 // Step 5: Flag squares where a queen would block all remaining free squares in any row or column
 export function blockRowsAndColumns(
   grid: GridSquare[][],
   playerMarks: MarkType[][],
-  gridSize: number,
   placeFlag: (row: number, col: number) => boolean
 ): boolean {
-  let flagCount = 0;
-  let didSomething = false;
+  const gridSize = grid.length;
+  let placedAny = false;
 
-  // Build lists of empty positions per row and per column
-  const freeRows = new Map<number, Pos[]>();
-  const freeCols = new Map<number, Pos[]>();
-  for (let i = 0; i < gridSize; i++) {
-    freeRows.set(i, []);
-    freeCols.set(i, []);
-  }
-  for (let r = 0; r < gridSize; r++) {
-    for (let c = 0; c < gridSize; c++) {
-      if (playerMarks[r][c] === null) {
-        freeRows.get(r)!.push({ row: r, col: c });
-        freeCols.get(c)!.push({ row: r, col: c });
-      }
-    }
-  }
-  // Try each empty square and flag if it blocks an entire row or column
-  outer: for (let row = 0; row < gridSize; row++) {
+  // For each row
+  for (let row = 0; row < gridSize; row++) {
+    let queenCount = 0;
+    let emptySquares: number[] = [];
+
+    // Count queens and empty squares in this row
     for (let col = 0; col < gridSize; col++) {
-      if (playerMarks[row][col] !== null) continue;
-      // Check other rows
-      for (const [r, positions] of freeRows.entries()) {
-        if (r === row || positions.length === 0) continue;
-        if (positions.every((p) => queenAttacks(row, col, p.row, p.col))) {
-          placeFlag(row, col);
-          flagCount++;
-          didSomething = true;
-          break outer;
-        }
+      if (playerMarks[row][col] === 'queen') {
+        queenCount++;
+      } else if (playerMarks[row][col] === null) {
+        emptySquares.push(col);
       }
-      // Check other columns
-      for (const [c, positions] of freeCols.entries()) {
-        if (c === col || positions.length === 0) continue;
-        if (positions.every((p) => queenAttacks(row, col, p.row, p.col))) {
-          placeFlag(row, col);
-          flagCount++;
-          didSomething = true;
-          break outer;
+    }
+
+    // If we have exactly one queen and one empty square
+    if (queenCount === 1 && emptySquares.length === 1) {
+      // Flag all squares in the same column as the empty square
+      const emptyCol = emptySquares[0];
+      for (let r = 0; r < gridSize; r++) {
+        if (r !== row && playerMarks[r][emptyCol] === null) {
+          if (placeFlag(r, emptyCol)) {
+            placedAny = true;
+          }
         }
       }
     }
   }
-  return didSomething;
+
+  // For each column
+  for (let col = 0; col < gridSize; col++) {
+    let queenCount = 0;
+    let emptySquares: number[] = [];
+
+    // Count queens and empty squares in this column
+    for (let row = 0; row < gridSize; row++) {
+      if (playerMarks[row][col] === 'queen') {
+        queenCount++;
+      } else if (playerMarks[row][col] === null) {
+        emptySquares.push(row);
+      }
+    }
+
+    // If we have exactly one queen and one empty square
+    if (queenCount === 1 && emptySquares.length === 1) {
+      // Flag all squares in the same row as the empty square
+      const emptyRow = emptySquares[0];
+      for (let c = 0; c < gridSize; c++) {
+        if (c !== col && playerMarks[emptyRow][c] === null) {
+          if (placeFlag(emptyRow, c)) {
+            placedAny = true;
+          }
+        }
+      }
+    }
+  }
+
+  return placedAny;
 }
 
 // Main solver loop that runs all steps until no changes
 export function runAllSolverSteps(
   grid: GridSquare[][],
   playerMarks: MarkType[][],
-  gridSize: number,
   placeQueen: (row: number, col: number) => boolean,
   placeFlag: (row: number, col: number) => boolean,
   countFlags: () => number,
@@ -298,81 +258,43 @@ export function runAllSolverSteps(
   logFn: (message: string) => void,
   verbose: boolean = false
 ): void {
-  // Only log if verbose mode is enabled
   const log = (message: string) => {
     if (verbose) {
       logFn(message);
     }
   };
 
-  // Log the start of solver
-  log('--- Starting Solver ---');
+  let previousFlagCount = -1;
+  let currentFlagCount = countFlags();
 
-  // Track statistics
-  let stats = {
-    loops: 0,
-    step1Queens: 0,
-    step2Flags: 0,
-    step3Flags: 0,
-    step4Flags: 0,
-    step5Flags: 0,
-  };
-
-  let loop = 1;
-  let anyChange;
-  do {
-    stats.loops++;
-
-    // Save previous state for comparison
-    const prevQueenPositions = getQueenPositions().length;
-    const prevFlags = countFlags();
+  while (previousFlagCount !== currentFlagCount) {
+    previousFlagCount = currentFlagCount;
 
     // Step 1: Place last free queens
-    let changed1 = placeLastFreeQueens(grid, playerMarks, gridSize, placeQueen);
-    let newQueens = getQueenPositions().length - prevQueenPositions;
-    stats.step1Queens += newQueens;
-
-    // Step 2: Flag blocking squares
-    let changed2 = flagBlockingSquares(grid, playerMarks, gridSize, placeFlag);
-    let newFlags = countFlags() - prevFlags;
-    stats.step2Flags += newFlags;
-
-    // Step 3: Constrained Row Elimination
-    let changed3 = eliminateConstrainedRows(grid, playerMarks, gridSize, placeFlag);
-    newFlags = countFlags() - prevFlags;
-    stats.step3Flags += newFlags;
-
-    // Step 4: Constrained Column Elimination
-    let changed4 = eliminateConstrainedColumns(grid, playerMarks, gridSize, placeFlag);
-    newFlags = countFlags() - prevFlags;
-    stats.step4Flags += newFlags;
-
-    // Step 5: Flag Row/Column Blocking Squares
-    let changed5 = blockRowsAndColumns(grid, playerMarks, gridSize, placeFlag);
-    newFlags = countFlags() - prevFlags;
-    stats.step5Flags += newFlags;
-
-    anyChange = changed1 || changed2 || changed3 || changed4 || changed5;
-
-    // Only log if there were changes
-    if (anyChange) {
-      log(`Loop ${loop}:`);
-      if (newQueens > 0) log(`  - Placed ${newQueens} queens`);
-      if (stats.step2Flags > 0) log(`  - Placed ${stats.step2Flags} blocking flags`);
-      if (stats.step3Flags > 0) log(`  - Placed ${stats.step3Flags} row elimination flags`);
-      if (stats.step4Flags > 0) log(`  - Placed ${stats.step4Flags} column elimination flags`);
-      if (stats.step5Flags > 0) log(`  - Placed ${stats.step5Flags} row/column blocking flags`);
+    if (placeLastFreeQueens(grid, playerMarks, placeQueen)) {
+      log('Placed last free queens');
     }
 
-    loop++;
-  } while (anyChange);
+    // Step 2: Flag blocking squares
+    if (flagBlockingSquares(grid, playerMarks, placeFlag)) {
+      log('Flagged blocking squares');
+    }
 
-  // Always log the final result, even if verbose is false
-  const success = getQueenPositions().length === gridSize;
-  if (success) {
-    logFn('--- Solver Complete ---');
-    logFn(
-      `Total: ${stats.step1Queens} queens, ${stats.step2Flags + stats.step3Flags + stats.step4Flags + stats.step5Flags} flags in ${stats.loops} loops`
-    );
+    // Step 3: Eliminate constrained rows
+    if (eliminateConstrainedRows(grid, playerMarks, placeFlag)) {
+      log('Eliminated constrained rows');
+    }
+
+    // Step 4: Eliminate constrained columns
+    if (eliminateConstrainedColumns(grid, playerMarks, placeFlag)) {
+      log('Eliminated constrained columns');
+    }
+
+    // Step 5: Block rows and columns
+    if (blockRowsAndColumns(grid, playerMarks, placeFlag)) {
+      log('Blocked rows and columns');
+    }
+
+    currentFlagCount = countFlags();
   }
 }
