@@ -48,22 +48,14 @@
       <!-- Step 2: Place Queens -->
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 1: Place Queens</span>
-        <div class="flex gap-2">
-          <BaseButton
-            @click="levelBuilderStore.placeRandomQueen()"
-            disabledTitle="No valid moves"
-            class="bg-blue-950 hover:bg-blue-900 text-sm"
-          >
-            Place Random Queen
-          </BaseButton>
-          <BaseButton
-            @click="levelBuilderStore.placeAllQueens()"
-            disabledTitle="Board is full"
-            class="bg-blue-950 hover:bg-blue-900 text-sm"
-          >
-            Place All Queens
-          </BaseButton>
-        </div>
+
+        <BaseButton
+          @click="levelBuilderStore.placeAllQueens()"
+          disabledTitle="Board is full"
+          class="bg-blue-950 hover:bg-blue-900 text-sm"
+        >
+          Place All Queens
+        </BaseButton>
       </div>
 
       <!-- Step 3: Color Each Queen -->
@@ -71,7 +63,6 @@
         <span class="text-sm text-slate-400">Step 2: Color Each Queen</span>
         <BaseButton
           @click="levelBuilderStore.assignInitialColorsToQueens()"
-          :disabled="!levelBuilderStore.queenPositions.length || hasAnyColors"
           disabledTitle="Place queens first"
           class="bg-purple-950 hover:bg-purple-900"
         >
