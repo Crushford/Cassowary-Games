@@ -163,24 +163,33 @@ const checkmarkClass = (isValid: boolean) => {
 // Add solution count ref
 const solutionCount = ref<number | null>(null);
 const isCheckingSolutions = ref(false);
+let checkTimeout: number | null = null;
 
-// Watch for grid changes and run validation
+// Watch for grid changes and run validation with debouncing
 watch(
   () => gameStore.grid,
   async (newGrid) => {
     if (gameStore.queenPositions.length > 0) {
-      try {
-        isCheckingSolutions.value = true;
-        solutionCount.value = await gameStore.validatePuzzleWithWorker(5);
-        gameStore.addDebugLog(`Found ${solutionCount.value} solutions`);
-      } catch (error) {
-        console.error('Error checking solutions:', error);
-        gameStore.addDebugLog(
-          `Error checking solutions: ${error instanceof Error ? error.message : 'Unknown error'}`
-        );
-      } finally {
-        isCheckingSolutions.value = false;
+      // Clear any existing timeout
+      if (checkTimeout !== null) {
+        window.clearTimeout(checkTimeout);
       }
+
+      // Set a new timeout
+      checkTimeout = window.setTimeout(async () => {
+        try {
+          isCheckingSolutions.value = true;
+          solutionCount.value = await gameStore.validatePuzzleWithWorker();
+          gameStore.addDebugLog(`Found ${solutionCount.value} solutions`);
+        } catch (error) {
+          console.error('Error checking solutions:', error);
+          gameStore.addDebugLog(
+            `Error checking solutions: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
+        } finally {
+          isCheckingSolutions.value = false;
+        }
+      }, 500); // Wait 500ms after the last change before checking
     } else {
       solutionCount.value = null;
     }
@@ -218,8 +227,11 @@ function handleResetBoard() {
   gameStore.clearMarkers();
 }
 
-// Add cleanup on component unmount
+// Clean up timeout on unmount
 onUnmounted(() => {
+  if (checkTimeout !== null) {
+    window.clearTimeout(checkTimeout);
+  }
   gameStore.cleanup();
 });
 </script>

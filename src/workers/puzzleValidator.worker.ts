@@ -95,10 +95,10 @@ function isPuzzleBlocked(grid: GridSquare[][], playerMarks: PlayerMarks): boolea
 function validatePuzzle(grid: GridSquare[][], maxSolutions: number = 2): number {
   const gridSize = grid.length;
   let solutionsFound = 0;
+  const previousQueenPositions: Pos[] = []; // Track queen positions from previous solutions
 
   // Create a temporary playerMarks array for validation
   let playerMarks: PlayerMarks = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
-  const stepStates: PlayerMarks[] = [];
 
   // First, flag all squares with null color groups
   for (let row = 0; row < gridSize; row++) {
@@ -109,7 +109,28 @@ function validatePuzzle(grid: GridSquare[][], maxSolutions: number = 2): number 
     }
   }
 
+  const stepStates: PlayerMarks[] = [];
+
+  // Helper function to get queen positions
+  function getQueenPositions(): Pos[] {
+    const positions: Pos[] = [];
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        if (playerMarks[row][col] === 'queen') {
+          positions.push({ row, col });
+        }
+      }
+    }
+    return positions;
+  }
+
   function tryPlaceQueen(pos: Pos): boolean {
+    // If this position was a queen in a previous solution, we must place a flag instead
+    if (previousQueenPositions.some((p) => p.row === pos.row && p.col === pos.col)) {
+      playerMarks[pos.row][pos.col] = 'flag';
+      return false;
+    }
+
     // Save current state
     stepStates.push(JSON.parse(JSON.stringify(playerMarks)));
 
@@ -135,23 +156,42 @@ function validatePuzzle(grid: GridSquare[][], maxSolutions: number = 2): number 
   }
 
   function solve(): boolean {
+    // Early exit if we've found enough solutions
+    if (solutionsFound >= maxSolutions) {
+      return false;
+    }
+
     const pos = findNextEmptySquare(playerMarks);
     if (!pos) {
       // No more empty squares - check if we have a valid solution
       const queenCount = playerMarks.flat().filter((mark) => mark === 'queen').length;
       if (queenCount === gridSize) {
-        solutionsFound++;
-        if (solutionsFound > maxSolutions) {
-          return false; // Too many solutions
+        // Store the queen positions for this solution
+        const queenPositions = getQueenPositions();
+
+        // Check if this solution is different from previous ones
+        const isNewSolution = !previousQueenPositions.some((prevPos) =>
+          queenPositions.some(
+            (currPos) => currPos.row === prevPos.row && currPos.col === prevPos.col
+          )
+        );
+
+        if (isNewSolution) {
+          solutionsFound++;
+          // Store one queen position from this solution to force a different path next time
+          if (queenPositions.length > 0) {
+            previousQueenPositions.push(queenPositions[0]);
+          }
         }
-        return true;
+        return solutionsFound < maxSolutions;
       }
-    } else {
-      // Try placing a queen
-      if (tryPlaceQueen(pos)) {
-        // Continue solving with the queen placed
-        if (!solve()) return false;
-      }
+      return true;
+    }
+
+    // Try placing a queen
+    if (tryPlaceQueen(pos)) {
+      // Continue solving with the queen placed
+      if (!solve()) return false;
     }
 
     // If we get here, either placing a queen failed or we need to backtrack
@@ -166,7 +206,7 @@ function validatePuzzle(grid: GridSquare[][], maxSolutions: number = 2): number 
 
 // Handle messages from the main thread
 self.onmessage = (e: MessageEvent) => {
-  const { grid, maxSolutions } = e.data;
+  const { grid, maxSolutions = 2 } = e.data;
   const solutions = validatePuzzle(grid, maxSolutions);
   self.postMessage({ solutions });
 };

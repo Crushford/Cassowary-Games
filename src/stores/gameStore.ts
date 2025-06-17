@@ -1414,15 +1414,6 @@ export const useGameStore = defineStore('game', {
     },
 
     async validatePuzzleWithWorker(maxSolutions: number = 2): Promise<number> {
-      // First, check for null color groups and flag them
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          if (this.grid[row][col].groupColor === null) {
-            this.placeFlag(row, col);
-          }
-        }
-      }
-
       // Then validate the puzzle using the worker
       return validatePuzzleWithWorker(this.grid, maxSolutions);
     },
