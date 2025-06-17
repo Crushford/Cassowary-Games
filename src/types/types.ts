@@ -60,39 +60,49 @@ export interface AttemptResult {
   success: boolean;
 }
 
-/**
- * Represents the complete game state.
- */
-export interface GameState {
-  // Core game state
+// Base interface for common properties
+interface BaseState {
   grid: GridSquare[][];
   gridSize: number;
   moveHistory: MarkType[][][];
-  playerMarks: MarkType[][]; // N×N matrix of player marks
-  autoTestMarks: MarkType[][]; // N×N matrix of automatic test marks
-  bites: number; // Track number of bites taken
-  honeyPots: number; // Track number of honey pots collected
-  highScore: number; // Track highest honey pots in a single day
-  currentDay: number; // Track current day number
-
-  // UI state
+  playerMarks: MarkType[][];
   uiState: {
     showSolution: boolean;
-    selectedTool: 'queen' | 'flag' | 'color' | null;
+    selectedTool: string | null;
     selectedColor: string | null;
     diggingMode: 'auto' | 'dig' | 'flag';
   };
-
-  // Game progress
-  currentLevel: number;
   isComplete: boolean;
   errorMessage: string | null;
-  savedPuzzles: { name: string; grid: GridSquare[][]; gridSize: number }[];
-  currentPuzzle: string | null;
   debugLogs: string[];
   colorToolActive: boolean;
   colorToolSelectedColor: string | null;
   verboseMode: boolean;
+}
+
+// Game-specific state
+export interface GameState extends BaseState {
+  bites: number;
+  honeyPots: number;
+  highScore: number;
+  currentDay: number;
+  currentLevel: number;
+  savedPuzzles: any[];
+  currentPuzzle: string | null;
+  puzzleGenerationState: {
+    isGenerating: boolean;
+    currentStep: string | null;
+    completedSteps: number;
+    totalSteps: number;
+    isInterrupted: boolean;
+  };
+}
+
+// Level builder-specific state
+export interface LevelBuilderState extends BaseState {
+  autoTestMarks: MarkType[][];
+  savedPuzzles: any[];
+  currentPuzzle: string | null;
   puzzleGenerationState: {
     isGenerating: boolean;
     currentStep: string | null;

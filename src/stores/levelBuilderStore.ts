@@ -1,5 +1,12 @@
 import { defineStore } from 'pinia';
-import type { GridSquare, Pos, GameState, AttemptResult, MarkType } from '../types/types';
+import type {
+  GridSquare,
+  Pos,
+  GameState,
+  AttemptResult,
+  MarkType,
+  LevelBuilderState,
+} from '../types/types';
 // Import utility functions
 import {
   createEmptyGrid,
@@ -25,10 +32,9 @@ import { validatePuzzleWithWorker, terminateWorker } from '../utils/puzzleValida
 
 // Constants
 const DEFAULT_GRID_SIZE = 6;
-const MAX_HEALTH = 3; // Maximum health points
 
-export const useLevelBuilderStore = defineStore('game', {
-  state: (): GameState => ({
+export const useLevelBuilderStore = defineStore('levelBuilder', {
+  state: (): LevelBuilderState => ({
     // Core game state
     grid: createEmptyGrid(DEFAULT_GRID_SIZE),
     gridSize: DEFAULT_GRID_SIZE,
@@ -39,21 +45,16 @@ export const useLevelBuilderStore = defineStore('game', {
     autoTestMarks: Array.from({ length: DEFAULT_GRID_SIZE }, () =>
       Array(DEFAULT_GRID_SIZE).fill(null as MarkType)
     ),
-    bites: 0, // Add new state for tracking bites
-    honeyPots: 0, // Add new state for tracking honey pots collected
-    highScore: 0, // Track highest honey pots in a single day
-    currentDay: 1, // Start at day 1
 
     // UI state
     uiState: {
       showSolution: false,
       selectedTool: null,
       selectedColor: null,
-      diggingMode: 'auto', // 'auto', 'dig', or 'flag'
+      diggingMode: 'auto',
     },
 
     // Game progress
-    currentLevel: 1,
     isComplete: false,
     errorMessage: null,
     savedPuzzles: [],
@@ -66,7 +67,7 @@ export const useLevelBuilderStore = defineStore('game', {
       isGenerating: false,
       currentStep: null,
       completedSteps: 0,
-      totalSteps: 5, // Assuming there are 5 main steps
+      totalSteps: 5,
       isInterrupted: false,
     },
   }),
@@ -140,22 +141,7 @@ export const useLevelBuilderStore = defineStore('game', {
       return true;
     },
 
-    // Add new getters for health
-    maxHealth(): number {
-      return MAX_HEALTH;
-    },
-
-    remainingHealth(): number {
-      return Math.max(0, MAX_HEALTH - this.bites);
-    },
-
-    isAlive(): boolean {
-      return this.remainingHealth > 0;
-    },
-
-    healthPercentage(): number {
-      return (this.remainingHealth / MAX_HEALTH) * 100;
-    },
+    // Remove health-related getters
   },
 
   actions: {
