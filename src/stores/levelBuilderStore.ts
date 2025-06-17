@@ -32,7 +32,7 @@ import { bruteForceSolver } from './bruteForceSolver';
 import { validatePuzzleWithWorker, terminateWorker } from '../utils/puzzleValidator';
 
 // Constants
-const DEFAULT_GRID_SIZE = 4;
+const DEFAULT_GRID_SIZE = 6;
 const MAX_HEALTH = 3; // Maximum health points
 
 export const useLevelBuilderStore = defineStore('game', {
