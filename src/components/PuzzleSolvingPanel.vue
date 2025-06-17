@@ -87,19 +87,22 @@
     <div class="flex flex-col gap-2 p-4 bg-slate-700 rounded-lg">
       <h3 class="text-lg font-medium text-white mb-2">Solution Uniqueness</h3>
       <div class="flex flex-col gap-2">
-        <BaseButton
-          @click="handleBruteForceSolve"
-          :disabled="!canRunSteps"
-          disabledTitle="Place queens first"
-          class="bg-purple-600 hover:bg-purple-500 text-lg font-medium"
-        >
-          🔍 Check Solution Uniqueness
-        </BaseButton>
-        <div v-if="solutionCount !== null" class="text-white">
-          Found {{ solutionCount }} solution{{ solutionCount !== 1 ? 's' : '' }}
-          <span v-if="solutionCount > 1" class="text-yellow-400">
-            (Puzzle has multiple solutions!)
-          </span>
+        <!-- Solution Status Display -->
+        <div class="flex items-center gap-3 p-3 bg-slate-800 rounded-lg">
+          <div v-if="isCheckingSolutions" class="flex items-center gap-2">
+            <span class="animate-spin text-2xl">⏳</span>
+            <span class="text-white">Checking solutions...</span>
+          </div>
+          <div v-else-if="solutionCount !== null" class="flex items-center gap-2">
+            <span v-if="solutionCount === 1" class="text-2xl text-green-500">✅</span>
+            <span v-else class="text-2xl text-red-500">❌</span>
+            <span class="text-xl font-bold text-white">{{ solutionCount }}</span>
+            <div class="text-white">
+              <span v-if="solutionCount === 1">Unique solution found</span>
+              <span v-else class="text-yellow-400">Multiple solutions found</span>
+            </div>
+          </div>
+          <div v-else class="text-white">Place queens to check solution uniqueness</div>
         </div>
       </div>
     </div>
@@ -107,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent } from 'vue';
+import { ref, computed, defineAsyncComponent, onUnmounted, watch } from 'vue';
 import { useGameStore } from '../stores/gameStore';
 
 const BaseButton = defineAsyncComponent(() => import('./BaseButton.vue'));
@@ -159,6 +162,31 @@ const checkmarkClass = (isValid: boolean) => {
 
 // Add solution count ref
 const solutionCount = ref<number | null>(null);
+const isCheckingSolutions = ref(false);
+
+// Watch for grid changes and run validation
+watch(
+  () => gameStore.grid,
+  async (newGrid) => {
+    if (gameStore.queenPositions.length > 0) {
+      try {
+        isCheckingSolutions.value = true;
+        solutionCount.value = await gameStore.validatePuzzleWithWorker(5);
+        gameStore.addDebugLog(`Found ${solutionCount.value} solutions`);
+      } catch (error) {
+        console.error('Error checking solutions:', error);
+        gameStore.addDebugLog(
+          `Error checking solutions: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      } finally {
+        isCheckingSolutions.value = false;
+      }
+    } else {
+      solutionCount.value = null;
+    }
+  },
+  { deep: true }
+);
 
 // Methods
 function handleRunAllSteps() {
@@ -190,9 +218,8 @@ function handleResetBoard() {
   gameStore.clearMarkers();
 }
 
-// Add brute force solver handler
-function handleBruteForceSolve() {
-  solutionCount.value = gameStore.bruteForceSolver(5);
-  gameStore.addDebugLog(`Brute force solver found ${solutionCount.value} solutions`);
-}
+// Add cleanup on component unmount
+onUnmounted(() => {
+  gameStore.cleanup();
+});
 </script>
