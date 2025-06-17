@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onUnmounted } from 'vue';
-import { useDialogueStore } from '../stores/dialogueStore';
+import { useDialogueStore } from '../../stores/dialogueStore';
 
 const dialogueStore = useDialogueStore();
 const displayedText = ref('');

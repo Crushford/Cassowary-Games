@@ -23,7 +23,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-// No setup needed for the home view
-</script>

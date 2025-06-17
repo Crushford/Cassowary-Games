@@ -2,7 +2,7 @@
   <button
     class="aspect-square w-full rounded-lg border-2 transition-colors duration-200 min-h-[40px] select-none"
     :class="squareClasses"
-    @click="gameStore.handleSquareClick(row, col)"
+    @click="levelStore.handleSquareClick(row, col)"
   >
     <!-- Solution mode: only show solution queens -->
     <template v-if="props.mode === 'solution'">
@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { useGameStore } from '../stores/gameStore';
+import { useLevelBuilderStore } from '../../stores/levelBuilderStore';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -28,21 +28,21 @@ const props = defineProps<{
   mode: 'solution' | 'player';
 }>();
 
-const gameStore = useGameStore();
+const levelStore = useLevelBuilderStore();
 
 // Get player mark state for player mode
 const playerMark = computed(() => {
-  return gameStore.getPlayerMarking(props.row, props.col);
+  return levelStore.getPlayerMarking(props.row, props.col);
 });
 
 // Check if this square has a solution queen for solution mode
 const isSolutionQueen = computed(() => {
-  return gameStore.grid[props.row][props.col].isSolutionQueen;
+  return levelStore.grid[props.row][props.col].isSolutionQueen;
 });
 
 // Get color from the grid
 const groupColor = computed(() => {
-  return gameStore.grid[props.row][props.col].groupColor;
+  return levelStore.grid[props.row][props.col].groupColor;
 });
 
 const squareClasses = computed(() => {

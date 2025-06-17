@@ -60,8 +60,8 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import { useDialogueStore } from '../stores/dialogueStore';
-import cockatooJames from '../data/characters/cockatooJames.json';
+import { useDialogueStore } from '../../stores/dialogueStore';
+import cockatooJames from '../../data/characters/cockatooJames.json';
 import DialogueBox from './DialogueBox.vue';
 
 const dialogueStore = useDialogueStore();

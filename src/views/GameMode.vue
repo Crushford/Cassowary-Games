@@ -62,17 +62,23 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import { useGameStore } from '../stores/gameStore';
-import PlayGrid from '../components/PlayGrid.vue';
-import { onMounted } from 'vue';
-import DiggingModeToggle from '../components/DiggingModeToggle.vue';
-import BitesDisplay from '../components/BitesDisplay.vue';
-import Story from '../components/Story.vue';
+import { defineAsyncComponent } from 'vue';
+
+const PlayGrid = defineAsyncComponent(() => import('../components/gameplay/PlayGrid.vue'));
+const DiggingModeToggle = defineAsyncComponent(
+  () => import('../components/gameplay/DiggingModeToggle.vue')
+);
+const BitesDisplay = defineAsyncComponent(() => import('../components/gameplay/BitesDisplay.vue'));
+const Story = defineAsyncComponent(() => import('../components/gameplay/Story.vue'));
 
 const gameStore = useGameStore();
+const isGameOver = ref(false);
 
 onMounted(() => {
-  gameStore.findValidPuzzleWithSteps();
+  gameStore.loadHighScore();
+  gameStore.loadCurrentDay();
 });
 
 defineOptions({
