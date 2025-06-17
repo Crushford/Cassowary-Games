@@ -39,27 +39,6 @@
         </BaseButton>
       </div>
     </Accordion>
-
-    <!-- Validation Results -->
-    <div class="flex flex-col gap-2 p-4 bg-slate-700 rounded-lg">
-      <h3 class="text-lg font-medium text-white mb-2">Validation Results</h3>
-      <div class="flex items-center gap-2">
-        <span :class="checkmarkClass(colorsConnected)">{{ colorsConnected ? '✅' : '❌' }}</span>
-        <span class="text-white">All colors connected</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <span :class="checkmarkClass(noSingletons)">{{ noSingletons ? '✅' : '❌' }}</span>
-        <span class="text-white">No singleton color groups</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <span :class="checkmarkClass(allFilled)">{{ allFilled ? '✅' : '❌' }}</span>
-        <span class="text-white">All squares filled</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <span :class="checkmarkClass(correctQueens)">{{ correctQueens ? '✅' : '❌' }}</span>
-        <span class="text-white">Correct number of queens</span>
-      </div>
-    </div>
   </aside>
 </template>
 
@@ -72,44 +51,6 @@ const BaseButton = defineAsyncComponent(() => import('./BaseButton.vue'));
 const Accordion = defineAsyncComponent(() => import('./Accordion.vue'));
 
 const levelStore = useLevelBuilderStore();
-
-// Computed properties for validation states
-const colorsConnected = computed(() => {
-  const colors = new Set<string>();
-  for (let row = 0; row < levelStore.gridSize; row++) {
-    for (let col = 0; col < levelStore.gridSize; col++) {
-      const color = levelStore.grid[row][col].groupColor;
-      if (color) colors.add(color);
-    }
-  }
-  return Array.from(colors).every((color) => levelStore.isColorConnected(color));
-});
-
-const noSingletons = computed(() => {
-  const colorGroups: Record<string, number> = {};
-  for (let row = 0; row < levelStore.gridSize; row++) {
-    for (let col = 0; col < levelStore.gridSize; col++) {
-      const color = levelStore.grid[row][col].groupColor;
-      if (color) {
-        colorGroups[color] = (colorGroups[color] || 0) + 1;
-      }
-    }
-  }
-  return Object.values(colorGroups).every((count) => count > 1);
-});
-
-const allFilled = computed(() => {
-  return levelStore.countEmptySquares() === 0;
-});
-
-const correctQueens = computed(() => {
-  return levelStore.queenPositions.length === levelStore.gridSize;
-});
-
-// Helper function for checkmark styling
-const checkmarkClass = (isValid: boolean) => {
-  return isValid ? 'text-green-500' : 'text-red-500';
-};
 
 // Add solution count ref
 const solutionCount = ref<number | null>(null);

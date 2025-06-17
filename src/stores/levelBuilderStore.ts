@@ -629,7 +629,7 @@ export const useLevelBuilderStore = defineStore('game', {
         this.addDebugLog(`Target: ${this.gridSize} queens, Max attempts: ${maxAttempts}`);
       }
 
-      // Try to solve the puzzle
+      // Try to place all queens
       while (this.queenPositions.length < this.gridSize && attempts < maxAttempts) {
         attempts++;
 
