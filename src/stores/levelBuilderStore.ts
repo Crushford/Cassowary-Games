@@ -85,6 +85,43 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       return positions;
     },
 
+    colorGroups: (state) => {
+      const groups = new Map<
+        string,
+        {
+          positions: Array<{
+            pos: Pos;
+            autoTestMark: MarkType;
+            playerMark: MarkType;
+            groupColor: string | undefined;
+          }>;
+        }
+      >();
+
+      // Initialize groups for each color
+      for (let row = 0; row < state.gridSize; row++) {
+        for (let col = 0; col < state.gridSize; col++) {
+          const color = state.grid[row][col].groupColor;
+          if (color) {
+            if (!groups.has(color)) {
+              groups.set(color, {
+                positions: [],
+              });
+            }
+            const group = groups.get(color)!;
+            group.positions.push({
+              pos: { row, col },
+              autoTestMark: state.autoTestMarks[row][col],
+              playerMark: state.playerMarks[row][col],
+              groupColor: color,
+            });
+          }
+        }
+      }
+
+      return groups;
+    },
+
     solutionQueenPositions: (state): Pos[] => {
       const sol: Pos[] = [];
       for (let r = 0; r < state.gridSize; r++) {
@@ -1050,26 +1087,12 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       this.addDebugLog('Step 1: Placing last free queens');
       let placedAny = false;
 
-      // Check color groups
-      const colorGroups = new Map<string, Pos[]>();
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          const color = this.grid[row][col].groupColor;
-          if (color) {
-            if (!colorGroups.has(color)) {
-              colorGroups.set(color, []);
-            }
-            colorGroups.get(color)?.push({ row, col });
-          }
-        }
-      }
-
       // Check each color group for last free square
-      for (const [color, positions] of colorGroups) {
+      for (const [color, group] of this.colorGroups) {
         let unflaggedCount = 0;
         let lastUnflaggedPos: Pos | null = null;
 
-        for (const pos of positions) {
+        for (const { pos } of group.positions) {
           if (this.autoTestMarks[pos.row][pos.col] !== 'flag') {
             unflaggedCount++;
             lastUnflaggedPos = pos;
@@ -1184,6 +1207,8 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
 
     // Step 3: Eliminate constrained rows
     eliminateConstrainedRows() {
+      this.placeLastFreeQueens();
+
       this.addDebugLog('Step 3: Eliminating constrained rows');
       let placedAny = false;
 
@@ -1214,6 +1239,7 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
 
     // Step 4: Eliminate constrained columns
     eliminateConstrainedColumns() {
+      this.placeLastFreeQueens();
       this.addDebugLog('Step 4: Eliminating constrained columns');
       let placedAny = false;
 
@@ -1244,6 +1270,7 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
 
     // Step 5: Block rows and columns
     blockRowsAndColumns() {
+      this.placeLastFreeQueens();
       this.addDebugLog('Step 5: Blocking rows and columns');
       let placedAny = false;
 
