@@ -121,6 +121,25 @@ const GameStateExport = defineAsyncComponent(
 const levelBuilderStore = useLevelBuilderStore();
 const copyStatus = ref('');
 
+// Watchers
+watch(
+  () => levelBuilderStore.debugLogs,
+  () =>
+    nextTick(() => {
+      if (logsContainer.value) logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
+    }),
+  { deep: true }
+);
+
+watch(
+  () => levelBuilderStore.grid,
+  () => {
+    levelBuilderStore.clearAutoTestMarks();
+    levelBuilderStore.runAllSolverSteps();
+  },
+  { deep: true }
+);
+
 // Copy functions
 function copyLast20Logs() {
   const logsToCopy = levelBuilderStore.debugLogs.slice(-20).join('\n');
@@ -143,14 +162,6 @@ function copyAllLogs() {
 }
 
 const logsContainer = ref<HTMLElement | null>(null);
-watch(
-  () => levelBuilderStore.debugLogs,
-  () =>
-    nextTick(() => {
-      if (logsContainer.value) logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
-    }),
-  { deep: true }
-);
 onMounted(() => {
   if (logsContainer.value && levelBuilderStore.debugLogs.length)
     logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
