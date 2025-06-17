@@ -52,9 +52,6 @@ const Accordion = defineAsyncComponent(() => import('./Accordion.vue'));
 
 const levelStore = useLevelBuilderStore();
 
-// Add solution count ref
-const solutionCount = ref<number | null>(null);
-const isCheckingSolutions = ref(false);
 let checkTimeout: number | null = null;
 
 function handleRunAutoTest() {
