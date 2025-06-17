@@ -82,30 +82,6 @@
         <span class="text-white">Correct number of queens</span>
       </div>
     </div>
-
-    <!-- Brute Force Solver Section -->
-    <div class="flex flex-col gap-2 p-4 bg-slate-700 rounded-lg">
-      <h3 class="text-lg font-medium text-white mb-2">Solution Uniqueness</h3>
-      <div class="flex flex-col gap-2">
-        <!-- Solution Status Display -->
-        <div class="flex items-center gap-3 p-3 bg-slate-800 rounded-lg">
-          <div v-if="isCheckingSolutions" class="flex items-center gap-2">
-            <span class="animate-spin text-2xl">⏳</span>
-            <span class="text-white">Checking solutions...</span>
-          </div>
-          <div v-else-if="solutionCount !== null" class="flex items-center gap-2">
-            <span v-if="solutionCount === 1" class="text-2xl text-green-500">✅</span>
-            <span v-else class="text-2xl text-red-500">❌</span>
-            <span class="text-xl font-bold text-white">{{ solutionCount }}</span>
-            <div class="text-white">
-              <span v-if="solutionCount === 1">Unique solution found</span>
-              <span v-else class="text-yellow-400">Multiple solutions found</span>
-            </div>
-          </div>
-          <div v-else class="text-white">Place queens to check solution uniqueness</div>
-        </div>
-      </div>
-    </div>
   </aside>
 </template>
 
