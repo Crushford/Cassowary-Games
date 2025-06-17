@@ -167,11 +167,10 @@ export const useLevelBuilderStore = defineStore('game', {
   },
 
   actions: {
+    // Initialize a fresh grid state
     initializeGrid() {
-      this.debugLogs = [];
+      // Clear existing solution
       this.grid = createEmptyGrid(this.gridSize);
-      this.moveHistory = [];
-      this.isComplete = false;
 
       // Initialize playerMarks matrix
       this.playerMarks = Array.from({ length: this.gridSize }, () =>
@@ -181,7 +180,9 @@ export const useLevelBuilderStore = defineStore('game', {
       this.autoTestMarks = Array.from({ length: this.gridSize }, () =>
         Array(this.gridSize).fill(null as MarkType)
       );
-      this.addDebugLog('playerMarks and autoTestMarks RESET by initializeGrid');
+
+      this.isComplete = false;
+      this.addDebugLog('Grid fully reset to initial state');
     },
 
     // Helper method to add debug logs

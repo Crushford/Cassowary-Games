@@ -37,11 +37,8 @@
       <!-- Step 1: Reset Board -->
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 0: Reset Board</span>
-        <BaseButton
-          @click="levelBuilderStore.clearQueensAndFlags()"
-          class="bg-red-950 hover:bg-red-900"
-        >
-          Clear Queens & Colors
+        <BaseButton @click="levelBuilderStore.initializeGrid()" class="bg-red-950 hover:bg-red-900">
+          Reset Grid to Initial State
         </BaseButton>
       </div>
 
