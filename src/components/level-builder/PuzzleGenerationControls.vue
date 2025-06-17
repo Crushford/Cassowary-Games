@@ -19,23 +19,16 @@
     <!-- Main Run All Steps Button -->
     <div class="flex flex-col gap-2">
       <BaseButton
-        @click="levelBuilderStore.runAllSteps()"
+        @click="
+          () => {
+            levelBuilderStore.clearQueensAndFlags();
+            levelBuilderStore.placeAllQueens();
+            levelBuilderStore.assignInitialColorsToQueens();
+          }
+        "
         class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
       >
-        ▶️ Run All Steps (Generate Full Puzzle)
-      </BaseButton>
-
-      <!-- New Step-Solvable Puzzle Button -->
-      <BaseButton
-        @click="levelBuilderStore.findValidPuzzleWithSteps()"
-        :disabled="isGenerating"
-        class="bg-emerald-600 hover:bg-emerald-500 text-lg font-medium"
-      >
-        <span
-          v-if="isGenerating"
-          class="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"
-        ></span>
-        {{ isGenerating ? 'Generating...' : '🎯findValidPuzzleWithSteps()' }}
+        ▶️ Place Queens & Assign Initial Colors
       </BaseButton>
     </div>
 

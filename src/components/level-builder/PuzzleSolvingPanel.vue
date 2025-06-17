@@ -8,14 +8,6 @@
       🔄 Reset Board for Solving
     </BaseButton>
 
-    <!-- Solve Puzzle Button -->
-    <BaseButton
-      @click="handleRunAllSteps"
-      class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
-    >
-      ▶️ Solve Puzzle (Run All Steps)
-    </BaseButton>
-
     <!-- Auto Test Button -->
     <BaseButton
       @click="handleRunAutoTest"
@@ -114,10 +106,6 @@ const correctQueens = computed(() => {
   return levelStore.queenPositions.length === levelStore.gridSize;
 });
 
-const canRunSteps = computed(() => {
-  return levelStore.queenPositions.length > 0;
-});
-
 // Helper function for checkmark styling
 const checkmarkClass = (isValid: boolean) => {
   return isValid ? 'text-green-500' : 'text-red-500';
@@ -127,11 +115,6 @@ const checkmarkClass = (isValid: boolean) => {
 const solutionCount = ref<number | null>(null);
 const isCheckingSolutions = ref(false);
 let checkTimeout: number | null = null;
-
-// Methods
-function handleRunAllSteps() {
-  levelStore.runAllSolverSteps();
-}
 
 function handleRunAutoTest() {
   // Clear any existing auto test marks
