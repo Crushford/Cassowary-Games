@@ -97,49 +97,46 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       return sol;
     },
 
-    isValidMove: (state) => (row: number, col: number) => {
-      const square = state.grid[row][col];
+    isValidMove:
+      (state) =>
+      (row: number, col: number, useAutoTest: boolean = false) => {
+        const marks = useAutoTest ? state.autoTestMarks : state.playerMarks;
+        const square = state.grid[row][col];
 
-      // Check if there's a queen in the same row or column
-      for (let i = 0; i < state.gridSize; i++) {
-        if (state.playerMarks[row][i] === 'queen' || state.playerMarks[i][col] === 'queen') {
-          return false;
+        // Check if there's a queen in the same row or column
+        for (let i = 0; i < state.gridSize; i++) {
+          if (marks[row][i] === 'queen' || marks[i][col] === 'queen') {
+            return false;
+          }
         }
-      }
 
-      // Check diagonally adjacent squares (one square away)
-      const diagonalPositions = [
-        { r: row - 1, c: col - 1 }, // top-left
-        { r: row - 1, c: col + 1 }, // top-right
-        { r: row + 1, c: col - 1 }, // bottom-left
-        { r: row + 1, c: col + 1 }, // bottom-right
-      ];
+        // Check diagonally adjacent squares (one square away)
+        const diagonalPositions = [
+          { r: row - 1, c: col - 1 }, // top-left
+          { r: row - 1, c: col + 1 }, // top-right
+          { r: row + 1, c: col - 1 }, // bottom-left
+          { r: row + 1, c: col + 1 }, // bottom-right
+        ];
 
-      for (const pos of diagonalPositions) {
-        if (
-          isValidPosition(state.grid, pos.r, pos.c) &&
-          state.playerMarks[pos.r][pos.c] === 'queen'
-        ) {
-          return false;
+        for (const pos of diagonalPositions) {
+          if (isValidPosition(state.grid, pos.r, pos.c) && marks[pos.r][pos.c] === 'queen') {
+            return false;
+          }
         }
-      }
 
-      // Check color group (if the square has a group color)
-      if (square.groupColor) {
-        for (let r = 0; r < state.gridSize; r++) {
-          for (let c = 0; c < state.gridSize; c++) {
-            if (
-              state.playerMarks[r][c] === 'queen' &&
-              state.grid[r][c].groupColor === square.groupColor
-            ) {
-              return false;
+        // Check color group (if the square has a group color)
+        if (square.groupColor) {
+          for (let r = 0; r < state.gridSize; r++) {
+            for (let c = 0; c < state.gridSize; c++) {
+              if (marks[r][c] === 'queen' && state.grid[r][c].groupColor === square.groupColor) {
+                return false;
+              }
             }
           }
         }
-      }
 
-      return true;
-    },
+        return true;
+      },
 
     // Remove health-related getters
   },
@@ -194,12 +191,14 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       return true;
     },
 
-    updateBlockedMoves() {
+    updateBlockedMoves(useAutoTest: boolean = false) {
+      const marks = useAutoTest ? this.autoTestMarks : this.playerMarks;
+
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (this.playerMarks[row][col] === null) {
-            if (!this.isValidMove(row, col)) {
-              this.playerMarks[row][col] = 'flag';
+          if (marks[row][col] === null) {
+            if (!this.isValidMove(row, col, useAutoTest)) {
+              marks[row][col] = 'flag';
             }
           }
         }
@@ -233,11 +232,19 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
     },
 
     // 2. Dig action
-    digSquare(row: number, col: number) {
+    digSquare(row: number, col: number, isAutoTest: boolean = false) {
       if (this.grid[row][col].isSolutionQueen) {
-        this.placeQueen(row, col);
+        if (isAutoTest) {
+          this.setAutoTestMark(row, col, 'queen');
+        } else {
+          this.placeQueen(row, col);
+        }
       } else {
-        this.playerMarks[row][col] = 'invalid';
+        if (isAutoTest) {
+          this.setAutoTestMark(row, col, 'invalid');
+        } else {
+          this.playerMarks[row][col] = 'invalid';
+        }
       }
     },
 
@@ -1043,44 +1050,78 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       this.addDebugLog('Step 1: Placing last free queens');
       let placedAny = false;
 
-      // For each row
+      // Check color groups
+      const colorGroups = new Map<string, Pos[]>();
       for (let row = 0; row < this.gridSize; row++) {
-        let emptyCount = 0;
-        let lastEmptyCol = -1;
-
-        // Count empty squares in this row
         for (let col = 0; col < this.gridSize; col++) {
-          if (this.autoTestMarks[row][col] === null) {
-            emptyCount++;
-            lastEmptyCol = col;
+          const color = this.grid[row][col].groupColor;
+          if (color) {
+            if (!colorGroups.has(color)) {
+              colorGroups.set(color, []);
+            }
+            colorGroups.get(color)?.push({ row, col });
+          }
+        }
+      }
+
+      // Check each color group for last free square
+      for (const [color, positions] of colorGroups) {
+        let unflaggedCount = 0;
+        let lastUnflaggedPos: Pos | null = null;
+
+        for (const pos of positions) {
+          if (this.autoTestMarks[pos.row][pos.col] !== 'flag') {
+            unflaggedCount++;
+            lastUnflaggedPos = pos;
           }
         }
 
-        // If there's exactly one empty square, place a queen there
-        if (emptyCount === 1) {
-          this.setAutoTestMark(row, lastEmptyCol, 'queen');
-          this.addDebugLog(`Placed queen at (${row}, ${lastEmptyCol})`);
+        // If there's exactly one unflagged square in the color group
+        if (unflaggedCount === 1 && lastUnflaggedPos) {
+          this.digSquare(lastUnflaggedPos.row, lastUnflaggedPos.col, true);
+          this.addDebugLog(
+            `Dug square at (${lastUnflaggedPos.row}, ${lastUnflaggedPos.col}) in color group ${color}`
+          );
           placedAny = true;
         }
       }
 
-      // For each column
-      for (let col = 0; col < this.gridSize; col++) {
-        let emptyCount = 0;
-        let lastEmptyRow = -1;
+      // Check rows
+      for (let row = 0; row < this.gridSize; row++) {
+        let unflaggedCount = 0;
+        let lastUnflaggedCol = -1;
 
-        // Count empty squares in this column
-        for (let row = 0; row < this.gridSize; row++) {
-          if (this.autoTestMarks[row][col] === null) {
-            emptyCount++;
-            lastEmptyRow = row;
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.autoTestMarks[row][col] !== 'flag') {
+            unflaggedCount++;
+            lastUnflaggedCol = col;
           }
         }
 
-        // If there's exactly one empty square, place a queen there
-        if (emptyCount === 1) {
-          this.setAutoTestMark(lastEmptyRow, col, 'queen');
-          this.addDebugLog(`Placed queen at (${lastEmptyRow}, ${col})`);
+        // If there's exactly one unflagged square in the row
+        if (unflaggedCount === 1 && lastUnflaggedCol !== -1) {
+          this.digSquare(row, lastUnflaggedCol, true);
+          this.addDebugLog(`Dug square at (${row}, ${lastUnflaggedCol}) in row`);
+          placedAny = true;
+        }
+      }
+
+      // Check columns
+      for (let col = 0; col < this.gridSize; col++) {
+        let unflaggedCount = 0;
+        let lastUnflaggedRow = -1;
+
+        for (let row = 0; row < this.gridSize; row++) {
+          if (this.autoTestMarks[row][col] !== 'flag') {
+            unflaggedCount++;
+            lastUnflaggedRow = row;
+          }
+        }
+
+        // If there's exactly one unflagged square in the column
+        if (unflaggedCount === 1 && lastUnflaggedRow !== -1) {
+          this.digSquare(lastUnflaggedRow, col, true);
+          this.addDebugLog(`Dug square at (${lastUnflaggedRow}, ${col}) in column`);
           placedAny = true;
         }
       }
@@ -1363,6 +1404,7 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
     // New method to set auto test marks
     setAutoTestMark(row: number, col: number, mark: Exclude<MarkType, null>): void {
       this.autoTestMarks[row][col] = mark;
+      this.updateBlockedMoves(true);
     },
 
     // New method to get auto test marking
