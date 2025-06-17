@@ -69,6 +69,7 @@ export interface GameState {
   gridSize: number;
   moveHistory: MarkType[][][];
   playerMarks: MarkType[][]; // N×N matrix of player marks
+  autoTestMarks: MarkType[][]; // N×N matrix of automatic test marks
   bites: number; // Track number of bites taken
   honeyPots: number; // Track number of honey pots collected
   highScore: number; // Track highest honey pots in a single day
@@ -107,7 +108,7 @@ export interface GameState {
 export interface SquareProps {
   row: number;
   col: number;
-  mode?: 'player' | 'solution';
+  mode?: 'player' | 'solution' | 'autoTest';
 }
 
 /**

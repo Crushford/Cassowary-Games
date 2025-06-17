@@ -44,6 +44,9 @@ export const useLevelBuilderStore = defineStore('game', {
     playerMarks: Array.from({ length: DEFAULT_GRID_SIZE }, () =>
       Array(DEFAULT_GRID_SIZE).fill(null as MarkType)
     ),
+    autoTestMarks: Array.from({ length: DEFAULT_GRID_SIZE }, () =>
+      Array(DEFAULT_GRID_SIZE).fill(null as MarkType)
+    ),
     bites: 0, // Add new state for tracking bites
     honeyPots: 0, // Add new state for tracking honey pots collected
     highScore: 0, // Track highest honey pots in a single day
@@ -174,7 +177,11 @@ export const useLevelBuilderStore = defineStore('game', {
       this.playerMarks = Array.from({ length: this.gridSize }, () =>
         Array(this.gridSize).fill(null as MarkType)
       );
-      this.addDebugLog('playerMarks RESET by initializeGrid');
+      // Initialize autoTestMarks matrix
+      this.autoTestMarks = Array.from({ length: this.gridSize }, () =>
+        Array(this.gridSize).fill(null as MarkType)
+      );
+      this.addDebugLog('playerMarks and autoTestMarks RESET by initializeGrid');
     },
 
     // Helper method to add debug logs
@@ -989,11 +996,13 @@ export const useLevelBuilderStore = defineStore('game', {
             // Generate a candidate puzzle
             this.generateCandidatePuzzle(attempt, requiredQueens);
 
-            // Run brute force solver to verify puzzle has exactly one solution
-            const numSolutions = this.bruteForceSolver(2); // Look for up to 2 solutions
+            // Run solver steps to verify puzzle is solvable
+            this.runAllSolverSteps();
             this.puzzleGenerationState.completedSteps++;
 
-            if (numSolutions === 1) {
+            // Check if we have a complete solution
+            const { queenCountValid, allFilled, colorGroupsValid } = this.validatePuzzle();
+            if (queenCountValid && allFilled && colorGroupsValid) {
               this.addDebugLog(
                 `\n✅ SUCCESS: Step-solvable puzzle generated after ${attempt} attempts`
               );
@@ -1007,7 +1016,7 @@ export const useLevelBuilderStore = defineStore('game', {
               return true;
             } else {
               if (shouldLogDetail) {
-                this.addDebugLog(`Skipping: Found ${numSolutions} solutions, need exactly 1`);
+                this.addDebugLog(`Skipping: Puzzle not solvable with steps`);
               }
             }
 
@@ -1070,55 +1079,114 @@ export const useLevelBuilderStore = defineStore('game', {
       }
     },
 
-    // Helper for step 1: Place queens in last free squares of color blocks, rows, or columns
-    placeLastFreeQueens() {
-      return placeLastFreeQueens(this.grid, this.playerMarks, this.gridSize, (row, col) =>
-        this.placeQueen(row, col)
-      );
-    },
-
-    // Helper for step 2: Flag squares where a queen would block all remaining squares in other color groups
-    flagBlockingSquares() {
-      return flagBlockingSquares(this.grid, this.playerMarks, this.gridSize, (row, col) =>
-        this.placeFlag(row, col)
-      );
-    },
-
-    // Step 3: Constrained Row Elimination
-    eliminateConstrainedRows() {
-      return eliminateConstrainedRows(this.grid, this.playerMarks, this.gridSize, (row, col) =>
-        this.placeFlag(row, col)
-      );
-    },
-
-    // Step 4: Constrained Column Elimination
-    eliminateConstrainedColumns() {
-      return eliminateConstrainedColumns(this.grid, this.playerMarks, this.gridSize, (row, col) =>
-        this.placeFlag(row, col)
-      );
-    },
-
-    // Step 5: Flag squares where a queen would block all remaining free squares in any row or column
-    blockRowsAndColumns() {
-      return blockRowsAndColumns(this.grid, this.playerMarks, this.gridSize, (row, col) =>
-        this.placeFlag(row, col)
-      );
-    },
-
-    // New: Loop through all steps until no changes
+    // New method to run all solver steps using autoTestMarks
     runAllSolverSteps() {
-      // Instead of creating a local array, we'll just pass our logging function
       runAllSolverSteps(
         this.grid,
-        this.playerMarks,
+        this.autoTestMarks,
         this.gridSize,
-        (row, col) => this.placeQueen(row, col),
-        (row, col) => this.placeFlag(row, col),
-        () => this.countFlags(),
-        () => this.queenPositions,
+        (row, col) => {
+          this.setAutoTestMark(row, col, 'queen');
+          return true;
+        },
+        (row, col) => {
+          this.setAutoTestMark(row, col, 'flag');
+          return true;
+        },
+        () => this.countAutoTestFlags(),
+        () => this.getAutoTestQueenPositions(),
         (message: string) => this.addDebugLog(message),
         this.verboseMode
       );
+      return true;
+    },
+
+    // Helper method to count auto test flags
+    countAutoTestFlags(): number {
+      return countCellsWithState(this.grid, this.autoTestMarks, 'flag');
+    },
+
+    // Helper method to get auto test queen positions
+    getAutoTestQueenPositions(): Pos[] {
+      const positions: Pos[] = [];
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.autoTestMarks[row][col] === 'queen') {
+            positions.push({ row, col });
+          }
+        }
+      }
+      return positions;
+    },
+
+    // Step 1: Place last free queens
+    placeLastFreeQueens() {
+      const result = placeLastFreeQueens(
+        this.grid,
+        this.autoTestMarks,
+        this.gridSize,
+        (row, col) => {
+          this.setAutoTestMark(row, col, 'queen');
+          return true;
+        }
+      );
+      return result;
+    },
+
+    // Step 2: Flag blocking squares
+    flagBlockingSquares() {
+      const result = flagBlockingSquares(
+        this.grid,
+        this.autoTestMarks,
+        this.gridSize,
+        (row, col) => {
+          this.setAutoTestMark(row, col, 'flag');
+          return true;
+        }
+      );
+      return result;
+    },
+
+    // Step 3: Eliminate constrained rows
+    eliminateConstrainedRows() {
+      const result = eliminateConstrainedRows(
+        this.grid,
+        this.autoTestMarks,
+        this.gridSize,
+        (row, col) => {
+          this.setAutoTestMark(row, col, 'flag');
+          return true;
+        }
+      );
+      return result;
+    },
+
+    // Step 4: Eliminate constrained columns
+    eliminateConstrainedColumns() {
+      const result = eliminateConstrainedColumns(
+        this.grid,
+        this.autoTestMarks,
+        this.gridSize,
+        (row, col) => {
+          this.setAutoTestMark(row, col, 'flag');
+          return true;
+        }
+      );
+      return result;
+    },
+
+    // Step 5: Block rows and columns
+    blockRowsAndColumns() {
+      const result = blockRowsAndColumns(
+        this.grid,
+        this.autoTestMarks,
+        this.gridSize,
+        (row, col) => {
+          this.setAutoTestMark(row, col, 'flag');
+          return true;
+        }
+      );
+      return result;
     },
 
     // Generate summary statistics from attempts
@@ -1437,6 +1505,22 @@ export const useLevelBuilderStore = defineStore('game', {
           }
         }
       }
+    },
+
+    // New method to set auto test marks
+    setAutoTestMark(row: number, col: number, mark: Exclude<MarkType, null>): void {
+      this.autoTestMarks[row][col] = mark;
+    },
+
+    // New method to get auto test marking
+    getAutoTestMarking(row: number, col: number): MarkType {
+      return this.autoTestMarks[row][col];
+    },
+
+    // New method to clear auto test marks
+    clearAutoTestMarks(): void {
+      clearMarkers(this.autoTestMarks);
+      this.addDebugLog('autoTestMarks CLEARED by clearAutoTestMarks');
     },
   },
 });

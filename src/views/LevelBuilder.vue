@@ -18,6 +18,12 @@
 
         <!-- Player Grid -->
         <div class="flex flex-col items-center">
+          <h3 class="text-lg font-semibold mb-3 text-white">Automatic Test</h3>
+          <GameGrid mode="autoTest" />
+        </div>
+
+        <!-- Player Grid -->
+        <div class="flex flex-col items-center">
           <h3 class="text-lg font-semibold mb-3 text-white">Test Your Solution</h3>
           <GameGrid mode="player" />
         </div>

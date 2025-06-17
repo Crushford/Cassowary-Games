@@ -44,7 +44,7 @@ import { useLevelBuilderStore } from '../../stores/levelBuilderStore';
 import Square from './Square.vue';
 
 const props = defineProps<{
-  mode: 'solution' | 'player';
+  mode: 'solution' | 'player' | 'autoTest';
   showControls?: boolean;
 }>();
 

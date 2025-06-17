@@ -16,6 +16,14 @@
       ▶️ Solve Puzzle (Run All Steps)
     </BaseButton>
 
+    <!-- Auto Test Button -->
+    <BaseButton
+      @click="handleRunAutoTest"
+      class="bg-purple-600 hover:bg-purple-500 text-lg font-medium"
+    >
+      🧪 Run Auto Test
+    </BaseButton>
+
     <!-- Collapsible Step-by-Step Controls -->
     <Accordion title="Step-by-Step Controls">
       <div class="flex flex-col gap-2">
@@ -120,40 +128,15 @@ const solutionCount = ref<number | null>(null);
 const isCheckingSolutions = ref(false);
 let checkTimeout: number | null = null;
 
-// Watch for grid changes and run validation with debouncing
-watch(
-  () => levelStore.grid,
-  async (newGrid) => {
-    if (levelStore.queenPositions.length > 0) {
-      // Clear any existing timeout
-      if (checkTimeout !== null) {
-        window.clearTimeout(checkTimeout);
-      }
-
-      // Set a new timeout
-      checkTimeout = window.setTimeout(async () => {
-        try {
-          isCheckingSolutions.value = true;
-          solutionCount.value = await levelStore.validatePuzzleWithWorker();
-          levelStore.addDebugLog(`Found ${solutionCount.value} solutions`);
-        } catch (error) {
-          console.error('Error checking solutions:', error);
-          levelStore.addDebugLog(
-            `Error checking solutions: ${error instanceof Error ? error.message : 'Unknown error'}`
-          );
-        } finally {
-          isCheckingSolutions.value = false;
-        }
-      }, 500); // Wait 500ms after the last change before checking
-    } else {
-      solutionCount.value = null;
-    }
-  },
-  { deep: true }
-);
-
 // Methods
 function handleRunAllSteps() {
+  levelStore.runAllSolverSteps();
+}
+
+function handleRunAutoTest() {
+  // Clear any existing auto test marks
+  levelStore.clearAutoTestMarks();
+  // Run the solver steps
   levelStore.runAllSolverSteps();
 }
 
