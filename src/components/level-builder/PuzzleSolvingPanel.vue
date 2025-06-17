@@ -4,8 +4,11 @@
     <h2 class="text-2xl font-semibold text-white">Puzzle Solving & Validation</h2>
 
     <!-- Reset Button at Top -->
-    <BaseButton @click="handleResetBoard" class="bg-red-800 hover:bg-red-700 text-lg font-medium">
-      🔄 Reset Board for Solving
+    <BaseButton
+      @click="levelStore.clearAutoTestMarks()"
+      class="bg-red-800 hover:bg-red-700 text-lg font-medium"
+    >
+      🔄 Reset Auto Test Markers
     </BaseButton>
 
     <!-- Auto Test Button -->
@@ -79,11 +82,6 @@ function handleEliminateConstrainedColumns() {
 
 function handleBlockRowsAndColumns() {
   levelStore.blockRowsAndColumns();
-}
-
-function handleResetBoard() {
-  // Only clear queens and flags, preserve colors
-  levelStore.clearMarkers();
 }
 
 // Clean up timeout on unmount
