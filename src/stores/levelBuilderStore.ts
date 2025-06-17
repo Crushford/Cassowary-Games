@@ -1028,52 +1028,6 @@ export const useLevelBuilderStore = defineStore('game', {
       return result;
     },
 
-    // Generate summary statistics from attempts
-    summarizeAttempts(attempts: AttemptResult[]) {
-      try {
-        if (!attempts || attempts.length === 0) {
-          this.addDebugLog('No attempt data to summarize');
-          return;
-        }
-
-        const queensHistogram: Record<number, number> = {};
-        let filledCount = 0;
-        let validGroupsCount = 0;
-
-        attempts.forEach((attempt) => {
-          queensHistogram[attempt.queens] = (queensHistogram[attempt.queens] || 0) + 1;
-          if (attempt.allFilled) filledCount++;
-          if (attempt.colorGroupsValid) validGroupsCount++;
-        });
-
-        this.addDebugLog(`\n--- Generation Statistics ---`);
-        this.addDebugLog(`Total attempts: ${attempts.length}`);
-
-        if (Object.keys(queensHistogram).length > 0) {
-          this.addDebugLog(`Queens distribution: ${JSON.stringify(queensHistogram)}`);
-        }
-
-        const filledPercent = attempts.length
-          ? Math.round((filledCount / attempts.length) * 100)
-          : 0;
-        const validPercent = attempts.length
-          ? Math.round((validGroupsCount / attempts.length) * 100)
-          : 0;
-
-        this.addDebugLog(
-          `Fully filled boards: ${filledCount}/${attempts.length} (${filledPercent}%)`
-        );
-        this.addDebugLog(
-          `Valid color groups: ${validGroupsCount}/${attempts.length} (${validPercent}%)`
-        );
-      } catch (error: unknown) {
-        console.error('Error summarizing attempts:', error);
-        this.addDebugLog(
-          `Error summarizing attempt data: ${error instanceof Error ? error.message : 'Unknown error'}`
-        );
-      }
-    },
-
     setColorToolActive(active: boolean) {
       this.colorToolActive = active;
     },
@@ -1123,59 +1077,10 @@ export const useLevelBuilderStore = defineStore('game', {
       return this.playerMarks[row][col];
     },
 
-    // Method to sync legacy grid with new model (temporary during transition)
-    syncGridWithNewModel(): void {
-      // Update colors in the grid
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          const cell = this.grid[row][col];
-          if (cell.groupColor) {
-            this.grid[row][col].groupColor = cell.groupColor;
-          }
-        }
-      }
-    },
-
-    // Method to sync new model with legacy grid (temporary during transition)
-    syncNewModelWithGrid(): void {
-      // Clear new model data
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          this.grid[row][col].groupColor = undefined;
-          this.grid[row][col].isSolutionQueen = false;
-          this.playerMarks[row][col] = null;
-        }
-      }
-
-      // Update from legacy grid
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
-          const cell = this.grid[row][col];
-          if (cell.groupColor) {
-            this.grid[row][col].groupColor = cell.groupColor;
-          }
-        }
-      }
-    },
-
     // Add toggle for verbose mode
     toggleVerboseMode() {
       this.verboseMode = !this.verboseMode;
       this.addDebugLog(`Verbose mode ${this.verboseMode ? 'enabled' : 'disabled'}`);
-    },
-
-    bruteForceSolver(maxSolutions = 5): number {
-      return bruteForceSolver(
-        this.grid,
-        this.playerMarks,
-        this.gridSize,
-        (row, col) => this.placeQueen(row, col),
-        (row, col) => this.placeFlag(row, col),
-        () => this.countFlags(),
-        () => this.queenPositions,
-        (msg) => this.addDebugLog(msg),
-        maxSolutions
-      );
     },
 
     // New method to set player marks
@@ -1190,81 +1095,7 @@ export const useLevelBuilderStore = defineStore('game', {
       }
     },
 
-    // Helper to get render state
-    getRenderState(row: number, col: number) {
-      const playerMark = this.playerMarks[row][col];
-      const hasSolutionQueen = this.grid[row][col].isSolutionQueen;
-
-      const isCorrect = playerMark === 'queen' && hasSolutionQueen;
-      const isIncorrect = playerMark === 'queen' && !hasSolutionQueen;
-
-      return { playerMark, hasSolutionQueen, isCorrect, isIncorrect };
-    },
-
-    interruptPuzzleGeneration() {
-      this.puzzleGenerationState.isInterrupted = true;
-    },
-
-    // Add new action to handle game over
-    handleGameOver() {
-      this.setError('Game Over - You ran out of health!');
-      this.isComplete = true;
-    },
-
     // Add new method to handle game restart
-    restartGame() {
-      // Save high score if current score is higher
-      if (this.honeyPots > this.highScore) {
-        this.highScore = this.honeyPots;
-        localStorage.setItem('highScore', this.highScore.toString());
-      }
-
-      // Reset game state
-      this.currentLevel = 1;
-      this.honeyPots = 0;
-      this.bites = 0;
-      this.isComplete = false;
-      this.initializeGrid();
-      this.findValidPuzzleWithSteps();
-    },
-
-    // Add method to load high score from localStorage
-    loadHighScore() {
-      const savedHighScore = localStorage.getItem('highScore');
-      if (savedHighScore) {
-        this.highScore = parseInt(savedHighScore, 10);
-      }
-    },
-
-    // Update method to handle starting a new day
-    startNewDay() {
-      // Save high score if current day's honey pots is higher
-      if (this.honeyPots > this.highScore) {
-        this.highScore = this.honeyPots;
-        localStorage.setItem('highScore', this.highScore.toString());
-      }
-
-      // Increment day and reset daily stats
-      this.currentDay++;
-      this.honeyPots = 0;
-      this.bites = 0;
-      this.isComplete = false;
-      this.initializeGrid();
-      this.findValidPuzzleWithSteps();
-    },
-
-    // Add method to load current day from localStorage
-    loadCurrentDay() {
-      const savedDay = localStorage.getItem('currentDay');
-      if (savedDay) {
-        this.currentDay = parseInt(savedDay, 10);
-      }
-    },
-
-    // Add method to save current day to localStorage
-    saveCurrentDay() {
-      localStorage.setItem('currentDay', this.currentDay.toString());
-    },
 
     async validatePuzzleWithWorker(maxSolutions: number = 2): Promise<number> {
       // Then validate the puzzle using the worker
