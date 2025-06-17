@@ -29,7 +29,6 @@ import {
   runAllSolverSteps,
 } from './solver';
 import { bruteForceSolver } from './bruteForceSolver';
-import { validatePuzzleWithWorker, terminateWorker } from '../utils/puzzleValidator';
 
 // Constants
 const DEFAULT_GRID_SIZE = 4;
@@ -1411,16 +1410,6 @@ export const useGameStore = defineStore('game', {
     // Add method to save current day to localStorage
     saveCurrentDay() {
       localStorage.setItem('currentDay', this.currentDay.toString());
-    },
-
-    async validatePuzzleWithWorker(maxSolutions: number = 2): Promise<number> {
-      // Then validate the puzzle using the worker
-      return validatePuzzleWithWorker(this.grid, maxSolutions);
-    },
-
-    // Add cleanup method to terminate worker when store is destroyed
-    cleanup() {
-      terminateWorker();
     },
   },
 });
