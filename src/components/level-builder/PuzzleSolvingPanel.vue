@@ -13,7 +13,7 @@
 
     <!-- Auto Test Button -->
     <BaseButton
-      @click="handleRunAutoTest"
+      @click="levelStore.runAllSolverSteps()"
       class="bg-purple-600 hover:bg-purple-500 text-lg font-medium"
     >
       🧪 Run Auto Test
@@ -56,13 +56,6 @@ const Accordion = defineAsyncComponent(() => import('./Accordion.vue'));
 const levelStore = useLevelBuilderStore();
 
 let checkTimeout: number | null = null;
-
-function handleRunAutoTest() {
-  // Clear any existing auto test marks
-  levelStore.clearAutoTestMarks();
-  // Run the solver steps
-  levelStore.runAllSolverSteps();
-}
 
 function handlePlaceLastFreeQueens() {
   levelStore.placeLastFreeQueens();
