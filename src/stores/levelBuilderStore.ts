@@ -257,11 +257,8 @@ export const useLevelBuilderStore = defineStore('game', {
     digSquare(row: number, col: number) {
       if (this.grid[row][col].isSolutionQueen) {
         this.placeQueen(row, col);
-        this.honeyPots++;
-        this.checkBoardCompletion();
       } else {
         this.playerMarks[row][col] = 'invalid';
-        this.bites++;
       }
     },
 
@@ -282,19 +279,6 @@ export const useLevelBuilderStore = defineStore('game', {
         this.flagSquare(row, col);
       } else if (state === 'flag') {
         this.digSquare(row, col);
-      }
-    },
-
-    checkBoardCompletion() {
-      // Check if we have the correct number of queens (equal to grid size)
-      const queenCount = this.queenPositions.length;
-      const requiredQueens = this.gridSize;
-
-      if (queenCount === requiredQueens) {
-        // Board is complete, prepare for next level
-        this.isComplete = true;
-        this.currentLevel++;
-        this.initializeGrid();
       }
     },
 
