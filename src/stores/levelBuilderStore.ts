@@ -1157,47 +1157,44 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       this.addDebugLog('Step 2: Flagging blocking squares');
       let placedAny = false;
 
-      // For each queen
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (this.autoTestMarks[row][col] === 'queen') {
-            // Flag all squares in the same row and column
-            for (let i = 0; i < this.gridSize; i++) {
-              if (i !== col && this.autoTestMarks[row][i] === null) {
-                this.setAutoTestMark(row, i, 'flag');
-                this.addDebugLog(`Flagged square at (${row}, ${i})`);
-                placedAny = true;
-              }
-              if (i !== row && this.autoTestMarks[i][col] === null) {
-                this.setAutoTestMark(i, col, 'flag');
-                this.addDebugLog(`Flagged square at (${i}, ${col})`);
-                placedAny = true;
-              }
+          if (this.autoTestMarks[row][col] !== null) continue;
+
+          // Clone the current state before testing
+          const originalMarks = JSON.parse(JSON.stringify(this.autoTestMarks));
+
+          // Test placing a queen at this square
+          this.setAutoTestMark(row, col, 'queen');
+          this.updateBlockedMoves(true);
+
+          const checkInvalidQueenPlacement = (marks: MarkType[][]) => {
+            // Check if any row is all flags
+            if (marks.some((row) => row.every((mark) => mark === 'flag'))) return true;
+
+            // Check if any column is all flags
+            for (let col = 0; col < this.gridSize; col++) {
+              if (marks.every((row) => row[col] === 'flag')) return true;
             }
 
-            // Flag diagonally adjacent squares
-            const directions = [
-              { dr: 1, dc: 1 }, // down-right
-              { dr: 1, dc: -1 }, // down-left
-              { dr: -1, dc: 1 }, // up-right
-              { dr: -1, dc: -1 }, // up-left
-            ];
-
-            for (const dir of directions) {
-              const newRow = row + dir.dr;
-              const newCol = col + dir.dc;
-              if (
-                newRow >= 0 &&
-                newRow < this.gridSize &&
-                newCol >= 0 &&
-                newCol < this.gridSize &&
-                this.autoTestMarks[newRow][newCol] === null
-              ) {
-                this.setAutoTestMark(newRow, newCol, 'flag');
-                this.addDebugLog(`Flagged square at (${newRow}, ${newCol})`);
-                placedAny = true;
-              }
+            // Check if any color group is all flags
+            for (const [_, group] of this.colorGroups) {
+              if (group.positions.every(({ autoTestMark }) => autoTestMark === 'flag')) return true;
             }
+
+            return false;
+          };
+
+          const invalidQueenPlacement = checkInvalidQueenPlacement(this.autoTestMarks);
+
+          // Restore marks after test
+          this.autoTestMarks = originalMarks;
+
+          // If the test failed, flag the square for real
+          if (invalidQueenPlacement) {
+            this.setAutoTestMark(row, col, 'flag');
+            this.addDebugLog(`Flagged square at (${row}, ${col}) - invalid queen placement`);
+            placedAny = true;
           }
         }
       }
