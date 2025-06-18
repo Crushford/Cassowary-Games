@@ -1159,46 +1159,60 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
 
     // Step 2: Flag squares where a queen would block all remaining squares in other color groups
     flagBlockingSquares() {
-      this.addDebugLog('Step 2: Flagging blocking squares');
+      this.addDebugLog('Step 5: Blocking critical squares');
       let placedAny = false;
 
-      for (let row = 0; row < this.gridSize; row++) {
-        for (let col = 0; col < this.gridSize; col++) {
+      const gridSize = this.gridSize;
+
+      for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
           if (this.autoTestMarks[row][col] !== null) continue;
 
-          // Clone the current state before testing
-          const originalMarks = JSON.parse(JSON.stringify(this.autoTestMarks));
+          // Clone the current autoTest state to simulate queen placement
+          const simulatedMarks = JSON.parse(JSON.stringify(this.autoTestMarks));
 
-          // Test placing a queen at this square
-          this.setAutoTestMark(row, col, 'queen');
-          this.updateBlockedMoves(true);
+          // Place a simulated queen
+          simulatedMarks[row][col] = 'queen';
 
-          const checkInvalidQueenPlacement = (marks: MarkType[][]) => {
-            // Check if any row is all flags
-            if (marks.some((row) => row.every((mark) => mark === 'flag'))) return true;
-
-            // Check if any column is all flags
-            for (let col = 0; col < this.gridSize; col++) {
-              if (marks.every((row) => row[col] === 'flag')) return true;
+          // Recalculate blocked moves after placing the queen
+          for (let r = 0; r < gridSize; r++) {
+            for (let c = 0; c < gridSize; c++) {
+              if (simulatedMarks[r][c] !== null) continue;
+              if (!this.isValidMoveWithMarks(r, c, simulatedMarks)) {
+                simulatedMarks[r][c] = 'flag';
+              }
             }
+          }
 
-            // Check if any color group is all flags
-            for (const [_, group] of this.colorGroups) {
-              if (group.positions.every(({ autoTestMark }) => autoTestMark === 'flag')) return true;
+          // Helper to check if a line (row/column) is completely blocked
+          const isLineFullyBlocked = (getterFn: (index: number) => MarkType[]): boolean => {
+            for (let i = 0; i < gridSize; i++) {
+              const line = getterFn(i);
+              if (line.every((mark) => mark === 'flag')) {
+                return true;
+              }
             }
-
             return false;
           };
 
-          const invalidQueenPlacement = checkInvalidQueenPlacement(this.autoTestMarks);
+          // Check if placing the queen causes any full row or column to be blocked
+          const rowFullyBlocked = isLineFullyBlocked((r) => simulatedMarks[r]);
+          const colFullyBlocked = isLineFullyBlocked((c) => simulatedMarks.map((r) => r[c]));
 
-          // Restore marks after test
-          this.autoTestMarks = originalMarks;
+          // Check if it blocks an entire color group
+          let colorGroupBlocked = false;
+          for (const [_, group] of this.colorGroups) {
+            if (group.positions.every(({ pos }) => simulatedMarks[pos.row][pos.col] === 'flag')) {
+              colorGroupBlocked = true;
+              break;
+            }
+          }
 
-          // If the test failed, flag the square for real
-          if (invalidQueenPlacement) {
+          if (rowFullyBlocked || colFullyBlocked || colorGroupBlocked) {
             this.setAutoTestMark(row, col, 'flag');
-            this.addDebugLog(`Flagged square at (${row}, ${col}) - invalid queen placement`);
+            this.addDebugLog(
+              `Flagged square at (${row}, ${col}) - would block entire row, column, or color group`
+            );
             placedAny = true;
           }
         }
@@ -1285,71 +1299,6 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
     // Step 4: Eliminate constrained columns
     eliminateConstrainedColumns() {
       this.eliminateConstrainedLines(true);
-    },
-
-    // Step 5: Block rows and columns
-    blockRowsAndColumns() {
-      this.placeLastFreeQueens();
-      this.addDebugLog('Step 5: Blocking rows and columns');
-      let placedAny = false;
-
-      // For each row
-      for (let row = 0; row < this.gridSize; row++) {
-        let queenCount = 0;
-        let emptySquares: number[] = [];
-
-        // Count queens and empty squares in this row
-        for (let col = 0; col < this.gridSize; col++) {
-          if (this.autoTestMarks[row][col] === 'queen') {
-            queenCount++;
-          } else if (this.autoTestMarks[row][col] === null) {
-            emptySquares.push(col);
-          }
-        }
-
-        // If we have exactly one queen and one empty square
-        if (queenCount === 1 && emptySquares.length === 1) {
-          // Flag all squares in the same column as the empty square
-          const emptyCol = emptySquares[0];
-          for (let r = 0; r < this.gridSize; r++) {
-            if (r !== row && this.autoTestMarks[r][emptyCol] === null) {
-              this.setAutoTestMark(r, emptyCol, 'flag');
-              this.addDebugLog(`Flagged square at (${r}, ${emptyCol}) in blocked row`);
-              placedAny = true;
-            }
-          }
-        }
-      }
-
-      // For each column
-      for (let col = 0; col < this.gridSize; col++) {
-        let queenCount = 0;
-        let emptySquares: number[] = [];
-
-        // Count queens and empty squares in this column
-        for (let row = 0; row < this.gridSize; row++) {
-          if (this.autoTestMarks[row][col] === 'queen') {
-            queenCount++;
-          } else if (this.autoTestMarks[row][col] === null) {
-            emptySquares.push(row);
-          }
-        }
-
-        // If we have exactly one queen and one empty square
-        if (queenCount === 1 && emptySquares.length === 1) {
-          // Flag all squares in the same row as the empty square
-          const emptyRow = emptySquares[0];
-          for (let c = 0; c < this.gridSize; c++) {
-            if (c !== col && this.autoTestMarks[emptyRow][c] === null) {
-              this.setAutoTestMark(emptyRow, c, 'flag');
-              this.addDebugLog(`Flagged square at (${emptyRow}, ${c}) in blocked column`);
-              placedAny = true;
-            }
-          }
-        }
-      }
-
-      return placedAny;
     },
 
     setColorToolActive(active: boolean) {
