@@ -1030,6 +1030,7 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
         // Step 0: Flag squares without color groups
         if (this.flagSquaresWithoutColorGroups()) {
           this.addDebugLog('Flagged squares without color groups');
+          this.placeLastFreeQueens();
         }
 
         // Step 1: Place last free queens
@@ -1040,21 +1041,25 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
         // Step 2: Flag blocking squares
         if (this.flagBlockingSquares()) {
           this.addDebugLog('Flagged blocking squares');
+          this.placeLastFreeQueens();
         }
 
         // Step 3: Eliminate constrained rows
         if (this.eliminateConstrainedRows()) {
           this.addDebugLog('Eliminated constrained rows');
+          this.placeLastFreeQueens();
         }
 
         // Step 4: Eliminate constrained columns
         if (this.eliminateConstrainedColumns()) {
           this.addDebugLog('Eliminated constrained columns');
+          this.placeLastFreeQueens();
         }
 
         // Step 5: Block rows and columns
         if (this.blockRowsAndColumns()) {
           this.addDebugLog('Blocked rows and columns');
+          this.placeLastFreeQueens();
         }
 
         currentFlagCount = this.countAutoTestFlags();
