@@ -205,6 +205,22 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
         this.debugLogs = [];
       }
 
+      // Skip validation steps unless verbose mode is on
+      if (
+        !this.verboseMode &&
+        (message.includes('Step 0:') ||
+          message.includes('Step 1:') ||
+          message.includes('Step 2:') ||
+          message.includes('Step 3:') ||
+          message.includes('Dug square at') ||
+          message.includes('Flagged square at') ||
+          message.includes('autoTestMarks CLEARED') ||
+          message.includes('Starting auto test solver steps') ||
+          message.includes('Auto test solver steps completed'))
+      ) {
+        return;
+      }
+
       // Add timestamp to debug messages
       const timestamp = new Date().toLocaleTimeString();
       const logMessage = `[${timestamp}] ${message}`;
@@ -1153,7 +1169,7 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
 
     // Step 2: Flag squares where a queen would block all remaining squares in other color groups
     flagBlockingSquares() {
-      this.addDebugLog('Step 5: Blocking critical squares');
+      this.addDebugLog('Step 2: Blocking critical squares');
       let placedAny = false;
 
       const gridSize = this.gridSize;
