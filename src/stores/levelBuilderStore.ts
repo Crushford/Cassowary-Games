@@ -1582,5 +1582,42 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
         );
       }
     },
+
+    // New method to generate and expand colors with retry
+    async generateAndExpandColorsWithRetry(maxRetries: number = 30): Promise<boolean> {
+      this.addDebugLog('Starting generate and expand with retry');
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        this.addDebugLog(`Attempt ${attempt}/${maxRetries}`);
+
+        // Step 1: Clear and place queens with initial colors
+        this.clearQueensAndFlags();
+        this.placeAllQueens();
+        this.assignInitialColorsToQueens();
+
+        // Step 2: Try to expand colors until full
+        await this.expandRandomColorsUntilFull();
+
+        // Check if board is full
+        let coloredSquares = 0;
+        for (let row = 0; row < this.gridSize; row++) {
+          for (let col = 0; col < this.gridSize; col++) {
+            if (this.grid[row][col].groupColor) {
+              coloredSquares++;
+            }
+          }
+        }
+
+        if (coloredSquares === this.gridSize * this.gridSize) {
+          this.addDebugLog('Successfully generated and expanded colors!');
+          return true;
+        }
+
+        this.addDebugLog(`Failed to fill board on attempt ${attempt}`);
+      }
+
+      this.addDebugLog('Failed to generate valid puzzle after all retries');
+      return false;
+    },
   },
 });

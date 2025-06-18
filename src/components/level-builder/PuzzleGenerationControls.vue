@@ -39,6 +39,13 @@
       >
         🔄 Expand Random Colors safely until board is full
       </BaseButton>
+
+      <BaseButton
+        @click="handleGenerateWithRetry"
+        class="bg-green-600 hover:bg-green-500 text-lg font-medium"
+      >
+        🔁 Generate & Expand with Retry
+      </BaseButton>
     </div>
 
     <!-- Step-by-Step Controls in Accordion -->
@@ -171,5 +178,13 @@ function handleGridSizeChange() {
 
 async function handleExpandRandomColors() {
   await levelBuilderStore.expandRandomColorsUntilFull();
+}
+
+async function handleGenerateWithRetry() {
+  const success = await levelBuilderStore.generateAndExpandColorsWithRetry();
+  if (!success) {
+    // You could add some UI feedback here if needed
+    console.log('Failed to generate puzzle after all retries');
+  }
 }
 </script>
