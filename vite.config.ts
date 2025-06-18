@@ -2,8 +2,10 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
 
-// Get the base URL from GitLab Pages URL or default to root
-const base = process.env.CI_PAGES_URL ? new URL(process.env.CI_PAGES_URL).pathname : '/';
+// Get the base URL from GitLab Pages URL or default to project path
+const base = process.env.CI_PAGES_URL
+  ? new URL(process.env.CI_PAGES_URL).pathname
+  : '/honey-pot-ant-farming/';
 
 // https://vitejs.dev/config/
 export default defineConfig({
