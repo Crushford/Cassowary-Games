@@ -52,12 +52,6 @@
         >
           Step 4: Eliminate Constrained Columns
         </BaseButton>
-        <BaseButton
-          @click="levelBuilderStore.blockRowsAndColumns"
-          class="bg-blue-950 hover:bg-blue-900"
-        >
-          Step 5: Block Rows & Columns
-        </BaseButton>
       </div>
     </Accordion>
   </aside>

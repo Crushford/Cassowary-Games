@@ -1056,12 +1056,6 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
           this.placeLastFreeQueens();
         }
 
-        // Step 5: Block rows and columns
-        if (this.blockRowsAndColumns()) {
-          this.addDebugLog('Blocked rows and columns');
-          this.placeLastFreeQueens();
-        }
-
         currentFlagCount = this.countAutoTestFlags();
       }
 
@@ -1196,8 +1190,10 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
           };
 
           // Check if placing the queen causes any full row or column to be blocked
-          const rowFullyBlocked = isLineFullyBlocked((r) => simulatedMarks[r]);
-          const colFullyBlocked = isLineFullyBlocked((c) => simulatedMarks.map((r) => r[c]));
+          const rowFullyBlocked = isLineFullyBlocked((r: number) => simulatedMarks[r]);
+          const colFullyBlocked = isLineFullyBlocked((c: number) =>
+            simulatedMarks.map((r: number[]) => r[c])
+          );
 
           // Check if it blocks an entire color group
           let colorGroupBlocked = false;
@@ -1221,7 +1217,7 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       return placedAny;
     },
 
-    eliminateConstrainedLines(isColumn: boolean = false) {
+    eliminateConstrainedLines(isColumn: boolean = false): boolean {
       this.placeLastFreeQueens();
 
       const axis = isColumn ? 'column' : 'row';
@@ -1291,14 +1287,15 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
 
       return placedAny;
     },
+
     // Step 3: Eliminate constrained rows
-    eliminateConstrainedRows() {
-      this.eliminateConstrainedLines(false);
+    eliminateConstrainedRows(): boolean {
+      return this.eliminateConstrainedLines(false);
     },
 
     // Step 4: Eliminate constrained columns
-    eliminateConstrainedColumns() {
-      this.eliminateConstrainedLines(true);
+    eliminateConstrainedColumns(): boolean {
+      return this.eliminateConstrainedLines(true);
     },
 
     setColorToolActive(active: boolean) {
