@@ -19,23 +19,25 @@
     <!-- Main Run All Steps Button -->
     <div class="flex flex-col gap-2">
       <BaseButton
-        @click="gameStore.runAllSteps()"
+        @click="
+          () => {
+            levelBuilderStore.clearQueensAndFlags();
+            levelBuilderStore.placeAllQueens();
+            levelBuilderStore.assignInitialColorsToQueens();
+          }
+        "
         class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
       >
-        ▶️ Run All Steps (Generate Full Puzzle)
+        ▶️ Place Queens & Assign Initial Colors
       </BaseButton>
 
-      <!-- New Step-Solvable Puzzle Button -->
       <BaseButton
-        @click="gameStore.findValidPuzzleWithSteps()"
-        :disabled="isGenerating"
-        class="bg-emerald-600 hover:bg-emerald-500 text-lg font-medium"
+        @click="handleExpandRandomColors"
+        :disabled="!hasAnyColors"
+        disabledTitle="Assign colors first"
+        class="bg-blue-600 hover:bg-blue-500 text-lg font-medium"
       >
-        <span
-          v-if="isGenerating"
-          class="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"
-        ></span>
-        {{ isGenerating ? 'Generating...' : '🎯findValidPuzzleWithSteps()' }}
+        🔄 Expand Random Colors safely until board is full
       </BaseButton>
     </div>
 
@@ -44,44 +46,29 @@
       <!-- Step 1: Reset Board -->
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 0: Reset Board</span>
-        <BaseButton
-          @click="gameStore.clearQueensAndFlags()"
-          :disabled="!gameStore.queenPositions.length"
-          class="bg-red-950 hover:bg-red-900"
-        >
-          Clear Queens & Colors
+        <BaseButton @click="levelBuilderStore.initializeGrid()" class="bg-red-950 hover:bg-red-900">
+          Reset Grid to Initial State
         </BaseButton>
       </div>
 
       <!-- Step 2: Place Queens -->
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 1: Place Queens</span>
-        <div class="flex gap-2">
-          <BaseButton
-            @click="gameStore.placeRandomQueen()"
-            :disabled="!canPlaceQueens"
-            disabledTitle="No valid moves"
-            class="bg-blue-950 hover:bg-blue-900 text-sm"
-          >
-            Place Random Queen
-          </BaseButton>
-          <BaseButton
-            @click="gameStore.placeAllQueens()"
-            :disabled="!canPlaceQueens"
-            disabledTitle="Board is full"
-            class="bg-blue-950 hover:bg-blue-900 text-sm"
-          >
-            Place All Queens
-          </BaseButton>
-        </div>
+
+        <BaseButton
+          @click="levelBuilderStore.placeAllQueens()"
+          disabledTitle="Board is full"
+          class="bg-blue-950 hover:bg-blue-900 text-sm"
+        >
+          Place All Queens
+        </BaseButton>
       </div>
 
       <!-- Step 3: Color Each Queen -->
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 2: Color Each Queen</span>
         <BaseButton
-          @click="gameStore.assignInitialColorsToQueens()"
-          :disabled="!gameStore.queenPositions.length || hasAnyColors"
+          @click="levelBuilderStore.assignInitialColorsToQueens()"
           disabledTitle="Place queens first"
           class="bg-purple-950 hover:bg-purple-900"
         >
@@ -93,7 +80,7 @@
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 3: Expand Color Groups</span>
         <BaseButton
-          @click="gameStore.expandColorGroups()"
+          @click="levelBuilderStore.expandColorGroups()"
           :disabled="!hasAnyColors"
           disabledTitle="Assign colors first"
           class="bg-teal-950 hover:bg-teal-900"
@@ -106,7 +93,7 @@
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 4: Color One Square Per Row</span>
         <BaseButton
-          @click="gameStore.addColorOnePerRow()"
+          @click="levelBuilderStore.addColorOnePerRow()"
           :disabled="!hasAnyColors"
           disabledTitle="Assign colors first"
           class="bg-emerald-950 hover:bg-emerald-900"
@@ -119,7 +106,7 @@
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 5: Fill Remaining</span>
         <BaseButton
-          @click="gameStore.fillRemainingSingleSquares()"
+          @click="levelBuilderStore.fillRemainingSingleSquares()"
           :disabled="!hasAnyColors"
           disabledTitle="Assign colors first"
           class="bg-cyan-950 hover:bg-cyan-900"
@@ -135,30 +122,30 @@
 import { ref, computed, defineAsyncComponent, onMounted, watch } from 'vue';
 const BaseButton = defineAsyncComponent(() => import('./BaseButton.vue'));
 const Accordion = defineAsyncComponent(() => import('./Accordion.vue'));
-import { useGameStore } from '../stores/gameStore';
+import { useLevelBuilderStore } from '../../stores/levelBuilderStore';
 
-const gameStore = useGameStore();
+const levelBuilderStore = useLevelBuilderStore();
 
 // Reactive state
-const gridSize = ref(gameStore.gridSize);
+const gridSize = ref(levelBuilderStore.gridSize);
 const isGenerating = ref(false);
 
 // Watch for generation state changes
 const updateGeneratingState = () => {
-  isGenerating.value = gameStore.puzzleGenerationState.isGenerating;
+  isGenerating.value = levelBuilderStore.puzzleGenerationState.isGenerating;
 };
 
 onMounted(() => {
-  // Initialize game store
-  gameStore.loadPuzzlesFromLocalStorage();
+  // Initialize level builder store
+  levelBuilderStore.loadPuzzlesFromLocalStorage();
   // Set up watcher for generation state
-  watch(() => gameStore.puzzleGenerationState.isGenerating, updateGeneratingState);
+  watch(() => levelBuilderStore.puzzleGenerationState.isGenerating, updateGeneratingState);
 });
 
 const hasAnyColors = computed(() => {
-  for (let row = 0; row < gameStore.gridSize; row++) {
-    for (let col = 0; col < gameStore.gridSize; col++) {
-      if (gameStore.grid[row][col].groupColor) {
+  for (let row = 0; row < levelBuilderStore.gridSize; row++) {
+    for (let col = 0; col < levelBuilderStore.gridSize; col++) {
+      if (levelBuilderStore.grid[row][col].groupColor) {
         return true;
       }
     }
@@ -168,16 +155,21 @@ const hasAnyColors = computed(() => {
 
 const hasCompletedGame = computed(() => {
   return (
-    gameStore.queenPositions.length === gameStore.gridSize && gameStore.countEmptySquares() === 0
+    levelBuilderStore.queenPositions.length === levelBuilderStore.gridSize &&
+    levelBuilderStore.countEmptySquares() === 0
   );
 });
 
 const canPlaceQueens = computed(() => {
-  return gameStore.queenPositions.length < gameStore.gridSize;
+  return levelBuilderStore.queenPositions.length < levelBuilderStore.gridSize;
 });
 
 // Methods
 function handleGridSizeChange() {
-  gameStore.setGridSize(gridSize.value);
+  levelBuilderStore.setGridSize(gridSize.value);
+}
+
+async function handleExpandRandomColors() {
+  await levelBuilderStore.expandRandomColorsUntilFull();
 }
 </script>

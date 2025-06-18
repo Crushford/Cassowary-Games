@@ -21,9 +21,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useGameStore } from '../stores/gameStore';
+import { useLevelBuilderStore } from '../../stores/levelBuilderStore';
 
-const gameStore = useGameStore();
+const levelStore = useLevelBuilderStore();
 const copyStatus = ref('');
 
 // Add new computed property for multiple solutions check
@@ -35,37 +35,37 @@ const hasMultipleSolutions = computed(() => {
 
 // Update the export text to include solver steps
 const exportText = computed(() => {
-  const stateText = gameStore.exportGameState();
+  const stateText = levelStore.exportGameState();
 
   // Get solution queens from grid
   const solutionQueens: string[] = [];
-  for (let row = 0; row < gameStore.gridSize; row++) {
-    for (let col = 0; col < gameStore.gridSize; col++) {
-      if (gameStore.grid[row][col].isSolutionQueen) {
+  for (let row = 0; row < levelStore.gridSize; row++) {
+    for (let col = 0; col < levelStore.gridSize; col++) {
+      if (levelStore.grid[row][col].isSolutionQueen) {
         solutionQueens.push(`(${row},${col})`);
       }
     }
   }
 
-  const solvedQueens = gameStore.queenPositions.map((q) => `(${q.row},${q.col})`).join(', ');
+  const solvedQueens = levelStore.queenPositions.map((q) => `(${q.row},${q.col})`).join(', ');
 
   // Get validation state
-  const { queenCountValid, allFilled, colorGroupsValid } = gameStore.validatePuzzle();
+  const { queenCountValid, allFilled, colorGroupsValid } = levelStore.validatePuzzle();
 
   // Get color group details
   const colorGroups = new Map<string, string[]>();
   const emptySquares: string[] = [];
 
-  for (let row = 0; row < gameStore.gridSize; row++) {
-    for (let col = 0; col < gameStore.gridSize; col++) {
-      const color = gameStore.grid[row][col].groupColor;
+  for (let row = 0; row < levelStore.gridSize; row++) {
+    for (let col = 0; col < levelStore.gridSize; col++) {
+      const color = levelStore.grid[row][col].groupColor;
       if (color) {
         if (!colorGroups.has(color)) {
           colorGroups.set(color, []);
         }
         colorGroups.get(color)!.push(`(${row},${col})`);
       }
-      if (gameStore.getPlayerMarking(row, col) === null) {
+      if (levelStore.playerMarks[row][col] === null) {
         emptySquares.push(`(${row},${col})`);
       }
     }
@@ -78,9 +78,9 @@ const exportText = computed(() => {
 
   // Count invalid squares
   let invalidCount = 0;
-  for (let row = 0; row < gameStore.gridSize; row++) {
-    for (let col = 0; col < gameStore.gridSize; col++) {
-      if (gameStore.getPlayerMarking(row, col) === 'invalid') {
+  for (let row = 0; row < levelStore.gridSize; row++) {
+    for (let col = 0; col < levelStore.gridSize; col++) {
+      if (levelStore.playerMarks[row][col] === 'invalid') {
         invalidCount++;
       }
     }
@@ -91,7 +91,7 @@ Solution Queen Positions: [${solutionQueens.join(', ')}]
 Your Solved Queen Positions: [${solvedQueens}]
 
 Current State:
-- Flags placed: ${gameStore.countFlags()}
+- Flags placed: ${levelStore.countFlags()}
 - Invalid squares: ${invalidCount}
 
 - Empty squares: [${emptySquares.join(', ')}]

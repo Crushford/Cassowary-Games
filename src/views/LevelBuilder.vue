@@ -18,30 +18,36 @@
 
         <!-- Player Grid -->
         <div class="flex flex-col items-center">
+          <h3 class="text-lg font-semibold mb-3 text-white">Automatic Test</h3>
+          <GameGrid mode="autoTest" />
+        </div>
+
+        <!-- Player Grid -->
+        <div class="flex flex-col items-center">
           <h3 class="text-lg font-semibold mb-3 text-white">Test Your Solution</h3>
           <GameGrid mode="player" />
         </div>
       </div>
 
       <div
-        v-if="gameStore.errorMessage"
+        v-if="levelBuilderStore.errorMessage"
         class="p-4 bg-red-500/20 border border-red-500 text-red-400 rounded-lg"
       >
-        {{ gameStore.errorMessage }}
+        {{ levelBuilderStore.errorMessage }}
       </div>
 
       <section
-        v-if="gameStore.debugLogs.length > 0"
+        v-if="levelBuilderStore.debugLogs.length > 0"
         class="relative bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg"
       >
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-white">Debug Logs</h3>
           <div class="flex gap-2">
             <button
-              @click="gameStore.toggleVerboseMode()"
+              @click="levelBuilderStore.toggleVerboseMode()"
               class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
             >
-              {{ gameStore.verboseMode ? '🔊 Verbose Mode On' : '🔇 Verbose Mode Off' }}
+              {{ levelBuilderStore.verboseMode ? '🔊 Verbose Mode On' : '🔇 Verbose Mode Off' }}
             </button>
             <button
               @click="copyLast20Logs"
@@ -59,7 +65,7 @@
         </div>
         <div ref="logsContainer" class="max-h-64 overflow-auto">
           <ul class="list-disc list-inside text-sm space-y-2 text-white">
-            <li v-for="(log, i) in gameStore.debugLogs" :key="i">{{ log }}</li>
+            <li v-for="(log, i) in levelBuilderStore.debugLogs" :key="i">{{ log }}</li>
           </ul>
         </div>
         <span v-if="copyStatus" class="absolute bottom-2 right-2 text-sm text-green-400">{{
@@ -71,10 +77,10 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-white">Debug Logs</h3>
           <button
-            @click="gameStore.toggleVerboseMode()"
+            @click="levelBuilderStore.toggleVerboseMode()"
             class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
           >
-            {{ gameStore.verboseMode ? '🔊 Verbose Mode On' : '🔇 Verbose Mode Off' }}
+            {{ levelBuilderStore.verboseMode ? '🔊 Verbose Mode On' : '🔇 Verbose Mode Off' }}
           </button>
         </div>
         <p class="text-white">No logs to display yet.</p>
@@ -96,24 +102,47 @@
 
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, defineAsyncComponent } from 'vue';
-import { useGameStore } from '../stores/gameStore';
+import { useLevelBuilderStore } from '../stores/levelBuilderStore';
 
 const PuzzleGenerationControls = defineAsyncComponent(
-  () => import('../components/PuzzleGenerationControls.vue')
+  () => import('../components/level-builder/PuzzleGenerationControls.vue')
 );
-const ColorPaletteTool = defineAsyncComponent(() => import('../components/ColorPaletteTool.vue'));
-const GameGrid = defineAsyncComponent(() => import('../components/GameGrid.vue'));
+const ColorPaletteTool = defineAsyncComponent(
+  () => import('../components/level-builder/ColorPaletteTool.vue')
+);
+const GameGrid = defineAsyncComponent(() => import('../components/level-builder/GameGrid.vue'));
 const PuzzleSolvingPanel = defineAsyncComponent(
-  () => import('../components/PuzzleSolvingPanel.vue')
+  () => import('../components/level-builder/PuzzleSolvingPanel.vue')
 );
-const GameStateExport = defineAsyncComponent(() => import('../components/GameStateExport.vue'));
+const GameStateExport = defineAsyncComponent(
+  () => import('../components/level-builder/GameStateExport.vue')
+);
 
-const gameStore = useGameStore();
+const levelBuilderStore = useLevelBuilderStore();
 const copyStatus = ref('');
+
+// Watchers
+watch(
+  () => levelBuilderStore.debugLogs,
+  () =>
+    nextTick(() => {
+      if (logsContainer.value) logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
+    }),
+  { deep: true }
+);
+
+watch(
+  () => levelBuilderStore.grid,
+  () => {
+    levelBuilderStore.clearAutoTestMarks();
+    levelBuilderStore.runAllSolverSteps();
+  },
+  { deep: true }
+);
 
 // Copy functions
 function copyLast20Logs() {
-  const logsToCopy = gameStore.debugLogs.slice(-20).join('\n');
+  const logsToCopy = levelBuilderStore.debugLogs.slice(-20).join('\n');
   navigator.clipboard.writeText(logsToCopy).then(() => {
     copyStatus.value = 'Copied!';
     setTimeout(() => {
@@ -123,7 +152,7 @@ function copyLast20Logs() {
 }
 
 function copyAllLogs() {
-  const logsToCopy = gameStore.debugLogs.join('\n');
+  const logsToCopy = levelBuilderStore.debugLogs.join('\n');
   navigator.clipboard.writeText(logsToCopy).then(() => {
     copyStatus.value = 'Copied!';
     setTimeout(() => {
@@ -133,16 +162,8 @@ function copyAllLogs() {
 }
 
 const logsContainer = ref<HTMLElement | null>(null);
-watch(
-  () => gameStore.debugLogs,
-  () =>
-    nextTick(() => {
-      if (logsContainer.value) logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
-    }),
-  { deep: true }
-);
 onMounted(() => {
-  if (logsContainer.value && gameStore.debugLogs.length)
+  if (logsContainer.value && levelBuilderStore.debugLogs.length)
     logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
 });
 </script>

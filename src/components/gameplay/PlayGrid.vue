@@ -43,11 +43,11 @@
 </template>
 
 <script setup lang="ts">
-import { COLOR_BG_HOVER_CLASSES } from '@/utils/colorPalette';
-import { COLOR_BG_IMAGES } from '@/utils/colorPalette';
-import { ColorName } from '../types/types';
-import { useGameStore } from '../stores/gameStore';
+import { COLOR_BG_HOVER_CLASSES } from '../../utils/colorPalette';
+import { COLOR_BG_IMAGES } from '../../utils/colorPalette';
+import { useGameStore } from '../../stores/gameStore';
 import { onMounted } from 'vue';
+import type { ColorName } from '../../types/types';
 
 const gameStore = useGameStore();
 
@@ -62,7 +62,7 @@ const defaultBgStyle =
 
 // Function to get cell classes (background and state classes)
 function getCellClasses(cell: { groupColor?: string; state?: string }) {
-  const classes = [];
+  const classes: string[] = [];
   if (cell.groupColor) {
     classes.push(COLOR_BG_HOVER_CLASSES[cell.groupColor as ColorName]);
   } else {
@@ -99,7 +99,7 @@ function handleCellClick(row: number, col: number) {
 
 // Function to handle wrapper border classes
 function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col: number) {
-  const classes = [];
+  const classes: string[] = [];
   const grid = gameStore.grid;
   const maxRow = grid.length - 1;
   const maxCol = grid[0].length - 1;

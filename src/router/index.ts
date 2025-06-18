@@ -3,8 +3,8 @@ import GameMode from '../views/GameMode.vue';
 import LevelBuilder from '../views/LevelBuilder.vue';
 
 function getBaseUrl() {
-  if (process.env.CI_PAGES_URL) {
-    const url = new URL(process.env.CI_PAGES_URL);
+  if (import.meta.env.VITE_PAGES_URL) {
+    const url = new URL(import.meta.env.VITE_PAGES_URL);
     return url.pathname.endsWith('/') ? url.pathname : `${url.pathname}/`;
   }
   return '/';
