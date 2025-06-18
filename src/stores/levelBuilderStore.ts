@@ -1207,67 +1207,84 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       return placedAny;
     },
 
-    // Step 3: Eliminate constrained rows
-    eliminateConstrainedRows() {
+    eliminateConstrainedLines(isColumn: boolean = false) {
       this.placeLastFreeQueens();
 
-      this.addDebugLog('Step 3: Eliminating constrained rows');
+      const axis = isColumn ? 'column' : 'row';
+      const axisIndex = isColumn ? 'col' : 'row';
+      const traverseIndex = isColumn ? 'row' : 'col';
+      const gridSize = this.gridSize;
+
+      this.addDebugLog(`Step 3: Eliminating constrained ${axis}s`);
       let placedAny = false;
 
-      // For each row
-      for (let row = 0; row < this.gridSize; row++) {
-        // Count queens and empty squares
-        let queenCount = 0;
-        let emptySquares: number[] = [];
+      // Step 1: Map each color to the set of rows or columns (depending on axis) where it has unmarked squares
+      const colorToAxisMap = new Map<string, Set<number>>();
 
-        for (let col = 0; col < this.gridSize; col++) {
-          if (this.autoTestMarks[row][col] === 'queen') {
-            queenCount++;
-          } else if (this.autoTestMarks[row][col] === null) {
-            emptySquares.push(col);
+      for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
+          const color = this.grid[row][col].groupColor;
+          const mark = this.autoTestMarks[row][col];
+
+          if (mark === null && color) {
+            const coord = isColumn ? col : row;
+            if (!colorToAxisMap.has(color)) {
+              colorToAxisMap.set(color, new Set());
+            }
+            colorToAxisMap.get(color)!.add(coord);
           }
         }
+      }
 
-        // If we have exactly one empty square and one queen needed
-        if (emptySquares.length === 1 && queenCount === 0) {
-          this.setAutoTestMark(row, emptySquares[0], 'flag');
-          this.addDebugLog(`Flagged square at (${row}, ${emptySquares[0]}) in constrained row`);
-          placedAny = true;
+      // Step 2: Invert the map to find sets of colors that share the same row or column sets
+      const axisSetToColors = new Map<string, Set<string>>();
+
+      for (const [color, axisSet] of colorToAxisMap.entries()) {
+        const key = Array.from(axisSet).sort().join(',');
+        if (!axisSetToColors.has(key)) {
+          axisSetToColors.set(key, new Set());
+        }
+        axisSetToColors.get(key)!.add(color);
+      }
+
+      // Step 3: For each shared axis group with 2+ colors, flag unrelated squares in those rows/columns
+      for (const [axisKey, allowedColors] of axisSetToColors.entries()) {
+        if (allowedColors.size < 2) continue; // Skip groups with only one color
+
+        const axisValues = axisKey.split(',').map(Number);
+
+        for (const primaryIndex of axisValues) {
+          for (let secondaryIndex = 0; secondaryIndex < gridSize; secondaryIndex++) {
+            const row = isColumn ? secondaryIndex : primaryIndex;
+            const col = isColumn ? primaryIndex : secondaryIndex;
+
+            const squareColor = this.grid[row][col].groupColor;
+            const mark = this.autoTestMarks[row][col];
+
+            const isUnmarked = mark === null;
+            const isOutsideAllowedColors = !squareColor || !allowedColors.has(squareColor);
+
+            if (isUnmarked && isOutsideAllowedColors) {
+              this.setAutoTestMark(row, col, 'flag');
+              this.addDebugLog(
+                `Flagged square at (${row}, ${col}) in constrained ${axis} group [${axisKey}] for colors: ${Array.from(allowedColors).join(', ')}`
+              );
+              placedAny = true;
+            }
+          }
         }
       }
 
       return placedAny;
     },
+    // Step 3: Eliminate constrained rows
+    eliminateConstrainedRows() {
+      this.eliminateConstrainedLines(false);
+    },
 
     // Step 4: Eliminate constrained columns
     eliminateConstrainedColumns() {
-      this.placeLastFreeQueens();
-      this.addDebugLog('Step 4: Eliminating constrained columns');
-      let placedAny = false;
-
-      // For each column
-      for (let col = 0; col < this.gridSize; col++) {
-        // Count queens and empty squares
-        let queenCount = 0;
-        let emptySquares: number[] = [];
-
-        for (let row = 0; row < this.gridSize; row++) {
-          if (this.autoTestMarks[row][col] === 'queen') {
-            queenCount++;
-          } else if (this.autoTestMarks[row][col] === null) {
-            emptySquares.push(row);
-          }
-        }
-
-        // If we have exactly one empty square and one queen needed
-        if (emptySquares.length === 1 && queenCount === 0) {
-          this.setAutoTestMark(emptySquares[0], col, 'flag');
-          this.addDebugLog(`Flagged square at (${emptySquares[0]}, ${col}) in constrained column`);
-          placedAny = true;
-        }
-      }
-
-      return placedAny;
+      this.eliminateConstrainedLines(true);
     },
 
     // Step 5: Block rows and columns
