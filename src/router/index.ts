@@ -2,16 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 import GameMode from '../views/GameMode.vue';
 import LevelBuilder from '../views/LevelBuilder.vue';
 
-function getBaseUrl() {
-  if (import.meta.env.VITE_PAGES_URL) {
-    const url = new URL(import.meta.env.VITE_PAGES_URL);
-    return url.pathname.endsWith('/') ? url.pathname : `${url.pathname}/`;
-  }
-  return '/';
-}
-
 const router = createRouter({
-  history: createWebHistory(getBaseUrl()),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
