@@ -31,7 +31,7 @@ import { bruteForceSolver } from './bruteForceSolver';
 import { validatePuzzleWithWorker, terminateWorker } from '../utils/puzzleValidator';
 
 // Constants
-const DEFAULT_GRID_SIZE = 6;
+const DEFAULT_GRID_SIZE = 5;
 
 export const useLevelBuilderStore = defineStore('levelBuilder', {
   state: (): LevelBuilderState => ({
@@ -1512,12 +1512,16 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       while (coloredSquares < totalSquares && attempts < maxAttempts) {
         attempts++;
 
-        // Get all colors currently on the board
+        // Get all colors currently on the board and their counts
         const colors = new Set<string>();
+        const colorCounts: Record<string, number> = {};
         for (let row = 0; row < gridSize; row++) {
           for (let col = 0; col < gridSize; col++) {
             const color = this.grid[row][col].groupColor;
-            if (color) colors.add(color);
+            if (color) {
+              colors.add(color);
+              colorCounts[color] = (colorCounts[color] || 0) + 1;
+            }
           }
         }
 
@@ -1526,9 +1530,26 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
           return;
         }
 
-        // Convert to array and pick random color
+        // Convert to array and split into two halves
         const colorArray = Array.from(colors);
-        const randomColor = colorArray[Math.floor(Math.random() * colorArray.length)];
+        const firstHalfColors = colorArray.slice(0, Math.ceil(colorArray.length / 2));
+        const secondHalfColors = colorArray.slice(Math.ceil(colorArray.length / 2));
+
+        // Filter colors that can be expanded
+        const expandableColors = colorArray.filter((color) => {
+          if (firstHalfColors.includes(color)) {
+            return colorCounts[color] < 3; // First half limited to 3 squares
+          }
+          return true; // Second half can grow without limit
+        });
+
+        if (expandableColors.length === 0) {
+          this.addDebugLog('No expandable colors found');
+          return;
+        }
+
+        // Pick a random color from expandable colors
+        const randomColor = expandableColors[Math.floor(Math.random() * expandableColors.length)];
 
         // Try to expand this color
         const success = await this.expandColorGroupSafely(randomColor);
