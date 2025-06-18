@@ -30,6 +30,15 @@
       >
         ▶️ Place Queens & Assign Initial Colors
       </BaseButton>
+
+      <BaseButton
+        @click="handleExpandRandomColors"
+        :disabled="!hasAnyColors"
+        disabledTitle="Assign colors first"
+        class="bg-blue-600 hover:bg-blue-500 text-lg font-medium"
+      >
+        🔄 Expand Random Colors safely until board is full
+      </BaseButton>
     </div>
 
     <!-- Step-by-Step Controls in Accordion -->
@@ -158,5 +167,9 @@ const canPlaceQueens = computed(() => {
 // Methods
 function handleGridSizeChange() {
   levelBuilderStore.setGridSize(gridSize.value);
+}
+
+async function handleExpandRandomColors() {
+  await levelBuilderStore.expandRandomColorsUntilFull();
 }
 </script>

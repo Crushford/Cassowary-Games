@@ -1409,5 +1409,137 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       clearMarkers(this.autoTestMarks);
       this.addDebugLog('autoTestMarks CLEARED by clearAutoTestMarks');
     },
+
+    // New method to safely expand a color group
+    async expandColorGroupSafely(color: string | number): Promise<boolean> {
+      const gridSize = this.gridSize;
+      const originalGrid = JSON.parse(JSON.stringify(this.grid));
+      const failedPlacements = new Set();
+
+      // Step 1: Find all current positions of this color
+      const frontier = [];
+      for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
+          if (this.grid[row][col].groupColor === color) {
+            frontier.push({ row, col });
+          }
+        }
+      }
+
+      // Step 2: Try expanding from each frontier square
+      const directions = [
+        { dr: 1, dc: 0 },
+        { dr: -1, dc: 0 },
+        { dr: 0, dc: 1 },
+        { dr: 0, dc: -1 },
+      ];
+
+      while (frontier.length > 0) {
+        const current = frontier.shift()!;
+
+        for (const { dr, dc } of directions) {
+          const newRow = current.row + dr;
+          const newCol = current.col + dc;
+
+          if (!this.isValidPosition(newRow, newCol)) continue;
+          const key = `${newRow},${newCol}`;
+
+          if (this.grid[newRow][newCol].groupColor || failedPlacements.has(key)) {
+            continue;
+          }
+
+          // Try assigning the color
+          this.setSquareColor(newRow, newCol, color as string);
+          this.clearAutoTestMarks();
+          this.runAllSolverSteps();
+
+          const isValid = this.autoTestMarks.every((row) => row.every((cell) => cell !== null));
+
+          if (isValid) {
+            this.addDebugLog(`Color ${color} successfully expanded to (${newRow}, ${newCol})`);
+            frontier.push({ row: newRow, col: newCol });
+            return true; // Success this step
+          } else {
+            // Revert change
+            this.grid = JSON.parse(JSON.stringify(originalGrid));
+            failedPlacements.add(key);
+            this.addDebugLog(`Color ${color} failed at (${newRow}, ${newCol}), reverting.`);
+          }
+        }
+      }
+
+      this.addDebugLog(`Color ${color} could not be expanded further.`);
+      return false; // No valid expansion found
+    },
+
+    // New method to expand random colors until board is full
+    async expandRandomColorsUntilFull(): Promise<void> {
+      const gridSize = this.gridSize;
+      const totalSquares = gridSize * gridSize;
+      let coloredSquares = 0;
+      let attempts = 0;
+      const maxAttempts = 100; // Prevent infinite loops
+
+      // Count current colored squares
+      for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
+          if (this.grid[row][col].groupColor) {
+            coloredSquares++;
+          }
+        }
+      }
+
+      this.addDebugLog(
+        `Starting random color expansion. Current colored squares: ${coloredSquares}/${totalSquares}`
+      );
+
+      while (coloredSquares < totalSquares && attempts < maxAttempts) {
+        attempts++;
+
+        // Get all colors currently on the board
+        const colors = new Set<string>();
+        for (let row = 0; row < gridSize; row++) {
+          for (let col = 0; col < gridSize; col++) {
+            const color = this.grid[row][col].groupColor;
+            if (color) colors.add(color);
+          }
+        }
+
+        if (colors.size === 0) {
+          this.addDebugLog('No colors found on board, cannot expand');
+          return;
+        }
+
+        // Convert to array and pick random color
+        const colorArray = Array.from(colors);
+        const randomColor = colorArray[Math.floor(Math.random() * colorArray.length)];
+
+        // Try to expand this color
+        const success = await this.expandColorGroupSafely(randomColor);
+
+        if (success) {
+          // Recount colored squares
+          coloredSquares = 0;
+          for (let row = 0; row < gridSize; row++) {
+            for (let col = 0; col < gridSize; col++) {
+              if (this.grid[row][col].groupColor) {
+                coloredSquares++;
+              }
+            }
+          }
+          this.addDebugLog(`Expanded ${randomColor}. Progress: ${coloredSquares}/${totalSquares}`);
+        } else {
+          this.addDebugLog(`Failed to expand ${randomColor}, trying another color`);
+        }
+      }
+
+      if (coloredSquares === totalSquares) {
+        this.addDebugLog('Successfully filled the board with colors!');
+      } else {
+        this.addDebugLog(
+          `Could not fill the board completely. Final progress: ${coloredSquares}/${totalSquares}`
+        );
+      }
+    },
   },
 });

@@ -53,19 +53,27 @@
       <div class="space-y-2">
         <div
           v-for="(positions, color) in colorGroups"
-          :key="color"
+          :key="String(color)"
           class="flex items-center justify-between bg-slate-700 p-2 rounded"
         >
           <div class="flex items-center gap-2">
             <div class="w-4 h-4 rounded-full" :style="{ backgroundColor: color }"></div>
             <span class="text-sm text-white">{{ positions.length }} squares</span>
           </div>
-          <button
-            @click="handleDeleteColorGroup(color)"
-            class="text-red-400 hover:text-red-300 text-sm"
-          >
-            Delete
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              @click="levelBuilderStore.expandColorGroupSafely(color)"
+              class="text-blue-400 hover:text-blue-300 text-sm"
+            >
+              Expand
+            </button>
+            <button
+              @click="handleDeleteColorGroup(color)"
+              class="text-red-400 hover:text-red-300 text-sm"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -92,8 +100,8 @@ const palette = [
 
 type Color = (typeof palette)[number];
 
-const colorGroups = computed(() => {
-  const groups: { [key: string]: Pos[] } = {};
+const colorGroups = computed<Record<string, Pos[]>>(() => {
+  const groups: Record<string, Pos[]> = {};
   for (let row = 0; row < levelBuilderStore.gridSize; row++) {
     for (let col = 0; col < levelBuilderStore.gridSize; col++) {
       const color = levelBuilderStore.grid[row][col].groupColor;
