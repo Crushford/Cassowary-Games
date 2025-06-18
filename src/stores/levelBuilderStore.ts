@@ -1538,7 +1538,11 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
         // Filter colors that can be expanded
         const expandableColors = colorArray.filter((color) => {
           if (firstHalfColors.includes(color)) {
-            return colorCounts[color] < 3; // First half limited to 3 squares
+            // First color in first half limited to 2 squares, others to 3
+            if (color === firstHalfColors[0]) {
+              return colorCounts[color] < 2;
+            }
+            return colorCounts[color] < 3;
           }
           return true; // Second half can grow without limit
         });
