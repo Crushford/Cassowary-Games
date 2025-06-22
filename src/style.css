@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Prevent zoom on input focus for iOS */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  select,
+  textarea,
+  input {
+    font-size: 16px;
+  }
+}
+
+/* Ensure proper mobile viewport behavior */
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
+}
