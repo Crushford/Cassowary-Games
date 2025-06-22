@@ -1,6 +1,6 @@
 <template>
   <div
-    class="mx-auto bg-gray-800 shadow-2xl overflow-hidden flex flex-col w-full max-w-[480px] max-h-[100vh] aspect-[9/19.5] rounded-none sm:rounded-[40px]"
+    class="mx-auto bg-gray-800 shadow-2xl overflow-hidden flex flex-col w-full max-w-[480px] h-dvh aspect-[9/19.5] rounded-none sm:rounded-[40px]"
   >
     <!-- Story Component (Fixed 1/3 height) -->
     <div class="h-1/3 min-h-0">
