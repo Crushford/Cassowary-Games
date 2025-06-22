@@ -1,0 +1,33 @@
+{
+  "id": "character_unique_id",
+  "displayName": "Character Name",
+  "fallbackEmoji": "🦜",
+  "portraitUrl": "/assets/characters/character-name.png",
+  "introNodeId": "character_intro",
+  "dialogue": [
+    {
+      "id": "character_intro",
+      "questionText": "Introduction",
+      "answerText": "This is the first dialogue that appears when the character is loaded. It should introduce the character and set the tone for their personality.\n\nYou can use multiple paragraphs with \\n\\n for spacing.",
+      "prerequisites": []
+    },
+    {
+      "id": "basic_question",
+      "questionText": "Basic Question",
+      "answerText": "This is a basic question that has no prerequisites, so it will be available immediately after the intro.",
+      "prerequisites": []
+    },
+    {
+      "id": "follow_up_question",
+      "questionText": "Follow-up Question",
+      "answerText": "This question requires the player to have seen the 'basic_question' first. Notice how the prerequisites array contains the ID of the required dialogue.",
+      "prerequisites": ["basic_question"]
+    },
+    {
+      "id": "advanced_question",
+      "questionText": "Advanced Question",
+      "answerText": "This question requires multiple prerequisites. The player must have seen both 'basic_question' and 'follow_up_question' before this becomes available.",
+      "prerequisites": ["basic_question", "follow_up_question"]
+    }
+  ]
+}
