@@ -31,7 +31,7 @@ import { bruteForceSolver } from './bruteForceSolver';
 import { validatePuzzleWithWorker, terminateWorker } from '../utils/puzzleValidator';
 
 // Constants
-const DEFAULT_GRID_SIZE = 6;
+const DEFAULT_GRID_SIZE = 5;
 
 export const useLevelBuilderStore = defineStore('levelBuilder', {
   state: (): LevelBuilderState => ({
@@ -1469,7 +1469,9 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
           this.clearAutoTestMarks();
           this.runAllSolverSteps();
 
-          const isValid = this.autoTestMarks.every((row) => row.every((cell) => cell !== null));
+          const isValid = this.autoTestMarks.every((row) =>
+            row.every((cell) => cell !== null && cell !== 'invalid')
+          );
 
           if (isValid) {
             this.addDebugLog(`Color ${color} successfully expanded to (${newRow}, ${newCol})`);
@@ -1488,22 +1490,62 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       return false; // No valid expansion found
     },
 
-    // New method to expand random colors until board is full
+    // Helper method to count colored squares
+    countColoredSquares(): number {
+      let count = 0;
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].groupColor) {
+            count++;
+          }
+        }
+      }
+      return count;
+    },
+
+    // Helper method to perform initial setup
+    async performInitialSetup(): Promise<void> {
+      this.clearQueensAndFlags();
+      this.placeAllQueens();
+      this.assignInitialColorsToQueens();
+    },
+
+    // New method to generate and expand colors with retry
+    async generateAndExpandColorsWithRetry(maxRetries: number = 30): Promise<boolean> {
+      this.addDebugLog('Starting generate and expand with retry');
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        this.addDebugLog(`Attempt ${attempt}/${maxRetries}`);
+
+        // Step 1: Clear and place queens with initial colors
+        await this.performInitialSetup();
+
+        // Step 2: Try to expand colors until full
+        await this.expandRandomColorsUntilFull();
+
+        // Check if board is full
+        const coloredSquares = this.countColoredSquares();
+        if (coloredSquares === this.gridSize * this.gridSize) {
+          this.addDebugLog(`Successfully generated and expanded colors after ${attempt} tries`);
+          return true;
+        }
+
+        this.addDebugLog(`Failed to fill board on attempt ${attempt}`);
+      }
+
+      this.addDebugLog('Failed to generate valid puzzle after all retries');
+      return false;
+    },
+
+    // Update expandRandomColorsUntilFull to use countColoredSquares
     async expandRandomColorsUntilFull(): Promise<void> {
       const gridSize = this.gridSize;
       const totalSquares = gridSize * gridSize;
-      let coloredSquares = 0;
       let attempts = 0;
       const maxAttempts = 100; // Prevent infinite loops
 
       // Count current colored squares
-      for (let row = 0; row < gridSize; row++) {
-        for (let col = 0; col < gridSize; col++) {
-          if (this.grid[row][col].groupColor) {
-            coloredSquares++;
-          }
-        }
-      }
+      let coloredSquares = this.countColoredSquares();
 
       this.addDebugLog(
         `Starting random color expansion. Current colored squares: ${coloredSquares}/${totalSquares}`
@@ -1512,12 +1554,16 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       while (coloredSquares < totalSquares && attempts < maxAttempts) {
         attempts++;
 
-        // Get all colors currently on the board
+        // Get all colors currently on the board and their counts
         const colors = new Set<string>();
+        const colorCounts: Record<string, number> = {};
         for (let row = 0; row < gridSize; row++) {
           for (let col = 0; col < gridSize; col++) {
             const color = this.grid[row][col].groupColor;
-            if (color) colors.add(color);
+            if (color) {
+              colors.add(color);
+              colorCounts[color] = (colorCounts[color] || 0) + 1;
+            }
           }
         }
 
@@ -1526,23 +1572,37 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
           return;
         }
 
-        // Convert to array and pick random color
+        // Convert to array and split into two halves
         const colorArray = Array.from(colors);
-        const randomColor = colorArray[Math.floor(Math.random() * colorArray.length)];
+        const firstHalfColors = colorArray.slice(0, Math.ceil(colorArray.length / 2));
+        const secondHalfColors = colorArray.slice(Math.ceil(colorArray.length / 2));
+
+        // Filter colors that can be expanded
+        const expandableColors = colorArray.filter((color) => {
+          if (firstHalfColors.includes(color)) {
+            // First color in first half limited to 2 squares, others to 3
+            if (color === firstHalfColors[0]) {
+              return colorCounts[color] < 2;
+            }
+            return colorCounts[color] < 3;
+          }
+          return true; // Second half can grow without limit
+        });
+
+        if (expandableColors.length === 0) {
+          this.addDebugLog('No expandable colors found');
+          return;
+        }
+
+        // Pick a random color from expandable colors
+        const randomColor = expandableColors[Math.floor(Math.random() * expandableColors.length)];
 
         // Try to expand this color
         const success = await this.expandColorGroupSafely(randomColor);
 
         if (success) {
           // Recount colored squares
-          coloredSquares = 0;
-          for (let row = 0; row < gridSize; row++) {
-            for (let col = 0; col < gridSize; col++) {
-              if (this.grid[row][col].groupColor) {
-                coloredSquares++;
-              }
-            }
-          }
+          coloredSquares = this.countColoredSquares();
           this.addDebugLog(`Expanded ${randomColor}. Progress: ${coloredSquares}/${totalSquares}`);
         } else {
           this.addDebugLog(`Failed to expand ${randomColor}, trying another color`);
