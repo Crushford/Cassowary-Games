@@ -87,6 +87,7 @@ export interface GameState extends BaseState {
   highScore: number;
   currentDay: number;
   currentLevel: number;
+  isTrainingDay: boolean;
   savedPuzzles: any[];
   currentPuzzle: string | null;
   puzzleGenerationState: {

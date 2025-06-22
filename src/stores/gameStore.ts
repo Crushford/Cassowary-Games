@@ -46,7 +46,8 @@ export const useGameStore = defineStore('game', {
     bites: 0, // Add new state for tracking bites
     honeyPots: 0, // Add new state for tracking honey pots collected
     highScore: 0, // Track highest honey pots in a single day
-    currentDay: 1, // Start at day 1
+    currentDay: 0, // Start at day 0 (training day)
+    isTrainingDay: true, // Start in training mode
 
     // UI state
     uiState: {
@@ -160,6 +161,22 @@ export const useGameStore = defineStore('game', {
     healthPercentage(): number {
       return (this.remainingHealth / MAX_HEALTH) * 100;
     },
+
+    // Training day getters
+    isInTrainingMode(): boolean {
+      return this.isTrainingDay;
+    },
+
+    canStartRealGame(): boolean {
+      return this.isTrainingDay && this.honeyPots > 0;
+    },
+
+    getDayDisplay(): string {
+      if (this.isTrainingDay) {
+        return 'Training Day';
+      }
+      return `Day ${this.currentDay}`;
+    },
   },
 
   actions: {
@@ -254,7 +271,8 @@ export const useGameStore = defineStore('game', {
       } else {
         this.playerMarks[row][col] = 'invalid';
         this.bites++;
-        if (!this.isAlive) {
+        // Only handle game over if not in training mode
+        if (!this.isAlive && !this.isTrainingDay) {
           this.handleGameOver();
         }
       }
@@ -286,12 +304,18 @@ export const useGameStore = defineStore('game', {
       const requiredQueens = this.gridSize;
 
       if (queenCount === requiredQueens) {
-        // Board is complete, prepare for next level
+        // Board is complete
         this.isComplete = true;
-        this.currentLevel++;
 
-        // Generate new puzzle for next level
-        this.findValidPuzzleWithSteps();
+        if (this.isTrainingDay) {
+          // In training mode, don't increment level or generate new puzzle
+          // Just mark as complete to show training completion message
+        } else {
+          // Normal game mode - prepare for next level
+          this.currentLevel++;
+          // Generate new puzzle for next level
+          this.findValidPuzzleWithSteps();
+        }
       }
     },
 
@@ -1410,6 +1434,40 @@ export const useGameStore = defineStore('game', {
     // Add method to save current day to localStorage
     saveCurrentDay() {
       localStorage.setItem('currentDay', this.currentDay.toString());
+    },
+
+    // Training day actions
+    startRealGame() {
+      // Transition from training to real game
+      this.isTrainingDay = false;
+      this.currentDay = 1;
+      this.honeyPots = 0;
+      this.bites = 0;
+      this.isComplete = false;
+      this.initializeGrid();
+      this.findValidPuzzleWithSteps();
+      this.saveCurrentDay();
+    },
+
+    continueTraining() {
+      // Reset the current training puzzle to continue practicing
+      this.honeyPots = 0;
+      this.bites = 0;
+      this.isComplete = false;
+      this.initializeGrid();
+      this.findValidPuzzleWithSteps();
+    },
+
+    resetTraining() {
+      // Reset training day completely
+      this.isTrainingDay = true;
+      this.currentDay = 0;
+      this.honeyPots = 0;
+      this.bites = 0;
+      this.isComplete = false;
+      this.initializeGrid();
+      this.findValidPuzzleWithSteps();
+      this.saveCurrentDay();
     },
   },
 });

@@ -12,7 +12,7 @@
       <button
         v-if="dialogueStore.availableTopics[0]"
         @click="selectTopic(dialogueStore.availableTopics[0])"
-        class="col-start-1 row-start-1 text-left px-2 py-1 font-bold rounded-xl border border-white bg-white/10 hover:bg-white/20 shadow-md transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/50 max-w-[120px] whitespace-normal text-[clamp(0.8rem,4cqw,1.2rem)] text-white"
+        class="dialogue-button col-start-1 row-start-1"
       >
         {{ dialogueStore.availableTopics[0].questionText }}
       </button>
@@ -20,7 +20,7 @@
       <button
         v-if="dialogueStore.availableTopics[1]"
         @click="selectTopic(dialogueStore.availableTopics[1])"
-        class="col-start-2 row-start-1 text-left px-2 py-1 font-bold rounded-xl border border-white bg-white/10 hover:bg-white/20 shadow-md transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/50 max-w-[120px] whitespace-normal text-[clamp(0.8rem,4cqw,1.2rem)] text-white"
+        class="dialogue-button col-start-2 row-start-1"
       >
         {{ dialogueStore.availableTopics[1].questionText }}
       </button>
@@ -28,7 +28,7 @@
       <button
         v-if="dialogueStore.availableTopics[2]"
         @click="selectTopic(dialogueStore.availableTopics[2])"
-        class="col-start-2 row-start-2 text-left px-2 py-1 font-bold rounded-xl border border-white bg-white/10 hover:bg-white/20 shadow-md transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/50 max-w-[120px] whitespace-normal text-[clamp(0.8rem,4cqw,1.2rem)] text-white"
+        class="dialogue-button col-start-2 row-start-2"
       >
         {{ dialogueStore.availableTopics[2].questionText }}
       </button>
@@ -92,5 +92,10 @@ defineOptions({
 }
 .animate-bounce-slow {
   animation: bounce-slow 5s infinite;
+}
+
+.dialogue-button {
+  @apply text-left px-2 py-1 font-bold rounded-xl border border-white bg-white/10 hover:bg-white/20 shadow-md transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/50 whitespace-normal text-white overflow-hidden;
+  font-size: clamp(0.6rem, 3cqw, 1rem);
 }
 </style>

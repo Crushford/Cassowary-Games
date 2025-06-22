@@ -15,6 +15,9 @@
           <div class="flex items-center space-x-2">
             <span class="text-amber-400">🍯</span>
             <span>{{ gameStore.honeyPots }}</span>
+            <span v-if="gameStore.isTrainingDay" class="text-green-400 text-sm ml-2"
+              >(Training)</span
+            >
           </div>
           <BitesDisplay />
         </div>
@@ -22,7 +25,7 @@
         <!-- Level Display -->
         <div class="flex justify-center py-2 bg-gray-800 text-white border-t border-gray-700">
           <div class="flex items-center space-x-2">
-            <span class="text-lg font-semibold">Day {{ gameStore.currentDay }}</span>
+            <span class="text-lg font-semibold">{{ gameStore.getDayDisplay }}</span>
           </div>
         </div>
 
@@ -34,16 +37,42 @@
           <div
             class="bg-gray-800 p-8 rounded-lg shadow-xl transform transition-all duration-500 scale-100"
           >
-            <h2 class="text-2xl font-bold text-amber-400 mb-4">You passed out!</h2>
-            <p class="text-white mb-2">Day {{ gameStore.currentDay }}</p>
-            <p class="text-white mb-2">Honey Pots: {{ gameStore.honeyPots }}</p>
-            <p class="text-white mb-4">Best Day: {{ gameStore.highScore }} Honey Pots</p>
-            <button
-              @click="gameStore.startNewDay()"
-              class="w-full py-3 px-6 bg-amber-500 hover:bg-amber-400 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
-            >
-              Start Day {{ gameStore.currentDay + 1 }}
-            </button>
+            <!-- Training Day Completion -->
+            <div v-if="gameStore.isTrainingDay">
+              <h2 class="text-2xl font-bold text-green-400 mb-4">Training Complete!</h2>
+              <p class="text-white mb-2">Training Day</p>
+              <p class="text-white mb-2">Honey Pots: {{ gameStore.honeyPots }}</p>
+              <p class="text-white mb-2">Bites: {{ gameStore.bites }}</p>
+              <p class="text-white mb-4">Best Day: {{ gameStore.highScore }} Honey Pots</p>
+              <div class="flex flex-col space-y-2">
+                <button
+                  @click="gameStore.startRealGame()"
+                  class="w-full py-3 px-6 bg-green-500 hover:bg-green-400 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
+                >
+                  Start Real Game (Day 1)
+                </button>
+                <button
+                  @click="gameStore.continueTraining()"
+                  class="w-full py-3 px-6 bg-blue-500 hover:bg-blue-400 text-white font-semibold rounded-lg transition-colors duration-200"
+                >
+                  Continue Training
+                </button>
+              </div>
+            </div>
+
+            <!-- Regular Game Completion -->
+            <div v-else>
+              <h2 class="text-2xl font-bold text-amber-400 mb-4">You passed out!</h2>
+              <p class="text-white mb-2">Day {{ gameStore.currentDay }}</p>
+              <p class="text-white mb-2">Honey Pots: {{ gameStore.honeyPots }}</p>
+              <p class="text-white mb-4">Best Day: {{ gameStore.highScore }} Honey Pots</p>
+              <button
+                @click="gameStore.startNewDay()"
+                class="w-full py-3 px-6 bg-amber-500 hover:bg-amber-400 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
+              >
+                Start Day {{ gameStore.currentDay + 1 }}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -55,6 +84,19 @@
         <!-- Digging Mode Toggle -->
         <div class="flex justify-center py-2 bg-gray-800 text-white border-t border-gray-700">
           <DiggingModeToggle />
+        </div>
+
+        <!-- Training Mode Controls -->
+        <div
+          v-if="gameStore.isTrainingDay && !gameStore.isComplete"
+          class="flex justify-center py-2 bg-gray-800 text-white border-t border-gray-700"
+        >
+          <button
+            @click="gameStore.startRealGame()"
+            class="px-4 py-2 bg-green-500 hover:bg-green-400 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
+          >
+            Start Real Game
+          </button>
         </div>
       </div>
     </div>
@@ -80,6 +122,11 @@ onMounted(() => {
   gameStore.findValidPuzzleWithSteps();
   gameStore.loadHighScore();
   gameStore.loadCurrentDay();
+
+  // If we're at day 0, ensure we're in training mode
+  if (gameStore.currentDay === 0) {
+    gameStore.isTrainingDay = true;
+  }
 });
 
 defineOptions({
