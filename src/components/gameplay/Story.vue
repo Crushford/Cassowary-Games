@@ -33,7 +33,7 @@
         {{ dialogueStore.availableTopics[2].questionText }}
       </button>
       <!-- Player -->
-      <div class="col-start-1 row-start-2 flex items-end justify-start pl-2">
+      <div class="col-start-1 row-start-2 flex items-end justify-start pl-2 h-full">
         <img
           src="/assets/characters/player1.png"
           alt="Player Character"
@@ -41,12 +41,12 @@
         />
       </div>
       <!-- Character Avatar (spans 2 cols, 2 rows) -->
-      <div class="col-start-3 col-end-5 row-start-1 row-end-3 flex items-end justify-center pb-2">
+      <div class="col-start-3 col-end-5 row-start-1 row-end-3 flex items-end justify-center">
         <img
           v-if="dialogueStore.currentCharacter?.portraitUrl"
           :src="dialogueStore.currentCharacter.portraitUrl"
           alt="Character Portrait"
-          class="w-11/12 h-11/12 object-contain rounded-full animate-bounce-slow select-none"
+          class="w-11/12 h-full object-contain animate-bounce-slow select-none"
         />
         <span v-else class="text-5xl animate-bounce-slow select-none">
           {{ dialogueStore.currentCharacter?.fallbackEmoji }}
@@ -61,14 +61,13 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useDialogueStore } from '../../stores/dialogueStore';
-import cockatooJames from '../../data/characters/cockatooJames.json';
-import DialogueBox from './DialogueBox.vue';
+import macca from '../../data/characters/macca.json';
 
 const dialogueStore = useDialogueStore();
 
 // Initialize dialogue when component mounts
 onMounted(() => {
-  dialogueStore.loadCharacter(cockatooJames);
+  dialogueStore.loadCharacter(macca);
 });
 
 // Handle topic selection
@@ -88,10 +87,10 @@ defineOptions({
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-6px);
+    transform: translateY(-3px);
   }
 }
 .animate-bounce-slow {
-  animation: bounce-slow 2.5s infinite;
+  animation: bounce-slow 5s infinite;
 }
 </style>
