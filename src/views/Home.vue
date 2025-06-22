@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-dvh bg-gray-900 text-white p-8">
+  <div class="min-h-screen bg-gray-900 text-white p-8">
     <div class="max-w-4xl mx-auto">
       <h1 class="text-4xl font-bold mb-8">Honey Pot Ant Farming</h1>
 
