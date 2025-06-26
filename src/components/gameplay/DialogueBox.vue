@@ -2,18 +2,30 @@
   <div class="relative">
     <div
       ref="textContainer"
-      class="relative overflow-y-auto h-[3.5em] bg-black/20 rounded border border-white/10 mx-1 p-1"
+      class="relative overflow-y-auto h-[3.5em] rounded mx-1 p-1"
+      style="background-color: var(--game-bg-color)"
     >
-      <Transition name="fade-slide" mode="out-in">
-        <div
-          v-if="dialogueStore.currentTopic"
-          :key="dialogueStore.currentTopic.id"
-          class="text-white text-sm leading-relaxed min-h-[2.5em] whitespace-pre-wrap break-words"
-        >
-          {{ displayedText }}
-          <span v-if="dialogueStore.isAnimating" class="animate-pulse">|</span>
-        </div>
-      </Transition>
+      <!-- Gradient mask for gradual fade effect -->
+      <div
+        class="absolute top-0 left-0 right-0 h-6 pointer-events-none z-10"
+        style="
+          background: linear-gradient(
+            to bottom,
+            var(--game-bg-color) 0%,
+            rgba(58, 74, 27, 0.5) 100%,
+            transparent 100%
+          );
+        "
+      ></div>
+
+      <div
+        v-if="dialogueStore.currentTopic"
+        :key="dialogueStore.currentTopic.id"
+        class="text-white text-sm typewriter-text relative z-0"
+      >
+        {{ displayedText }}
+        <span v-if="dialogueStore.isAnimating" class="animate-pulse">|</span>
+      </div>
     </div>
   </div>
 </template>
