@@ -3,10 +3,10 @@
     class="h-[33vh] w-full border-b border-gray-700 flex-shrink-0 flex flex-col overflow-hidden container-[inline-size]"
     style="background-color: #3a4a1b"
   >
-    <!-- Grid area: fills all but 1.5em of the container -->
+    <!-- Grid area: fills most of the container, leaving space for dialogue -->
     <div
-      class="grid grid-cols-4 grid-rows-2 w-full gap-2 px-2 pt-2 pb-1 flex-shrink-0"
-      style="height: calc(100% - 2.5em)"
+      class="grid grid-cols-4 grid-rows-2 w-full gap-2 px-2 pt-2 pb-1 flex-grow"
+      style="min-height: 0"
     >
       <!-- Q1 -->
       <button
@@ -53,15 +53,17 @@
         </span>
       </div>
     </div>
-    <!-- DialogueBox: always 1.5em tall -->
-    <DialogueBox class="h-[1.5em] flex-shrink-0 w-full text-[clamp(1rem,5cqw,1.5rem)]" />
+    <!-- DialogueBox: takes remaining space -->
+    <DialogueBox class="w-full flex-shrink-0" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, defineAsyncComponent } from 'vue';
 import { useDialogueStore } from '../../stores/dialogueStore';
 import macca from '../../data/characters/macca.json';
+
+const DialogueBox = defineAsyncComponent(() => import('./DialogueBox.vue'));
 
 const dialogueStore = useDialogueStore();
 
