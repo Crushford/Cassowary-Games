@@ -2,14 +2,13 @@
   <div class="relative">
     <div
       ref="textContainer"
-      class="relative overflow-y-auto h-[3.5em] bg-black/20"
-      style="line-height: 1.4em"
+      class="relative overflow-y-auto h-[3.5em] bg-black/20 rounded border border-white/10 mx-1 p-1"
     >
       <Transition name="fade-slide" mode="out-in">
         <div
           v-if="dialogueStore.currentTopic"
           :key="dialogueStore.currentTopic.id"
-          class="text-white text-sm leading-relaxed typewriter-text"
+          class="text-white text-sm leading-relaxed min-h-[2.5em] whitespace-pre-wrap break-words"
         >
           {{ displayedText }}
           <span v-if="dialogueStore.isAnimating" class="animate-pulse">|</span>
@@ -75,13 +74,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.typewriter-text {
-  min-height: 2.5em;
-  display: block;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
 .fade-slide-enter-active,
 .fade-slide-leave-active {
   transition: all 0.3s ease;
