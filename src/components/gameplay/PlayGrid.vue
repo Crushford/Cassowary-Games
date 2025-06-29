@@ -1,21 +1,25 @@
 <template>
-  <div class="flex flex-col items-center w-full max-w-4xl mx-auto p-4">
-    <!-- Game Grid -->
+  <div class="flex flex-col">
     <div
-      class="grid bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg w-full"
-      :style="{
-        gridTemplateColumns: `repeat(${gameStore.gridSize}, minmax(0, 1fr))`,
-      }"
+      v-for="(row, rowIndex) in gameStore.grid"
+      :key="rowIndex"
+      class="flex flex-1 max-w-full justify-center"
     >
-      <template v-for="(row, rowIndex) in gameStore.grid" :key="rowIndex">
-        <button
-          v-for="(cell, colIndex) in row"
-          :key="colIndex"
-          class="aspect-square flex items-center justify-center cursor-pointer select-none"
-          :class="getCellClasses(cell)"
-          :style="getCellBackgroundStyle(cell)"
-          @click="handleCellClick(rowIndex, colIndex)"
-        >
+      <div
+        v-for="(cell, colIndex) in row"
+        :key="colIndex"
+        class="aspect-square relative"
+        @click="handleCellClick(rowIndex, colIndex)"
+      >
+        <!-- Background Image -->
+        <img
+          :src="getCellImage(cell)"
+          class="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          alt="cell background"
+        />
+
+        <!-- Emoji overlay -->
+        <div class="relative z-10 flex items-center justify-center w-full h-full">
           <span v-if="shouldShowQueen(rowIndex, colIndex)" :class="getEmojiSizeClass()">🍯</span>
           <span v-else-if="shouldShowFlag(rowIndex, colIndex)" :class="getEmojiSizeClass()"
             >🚧</span
@@ -30,21 +34,20 @@
             <span>🐜</span>
             <span>🐜</span>
           </div>
-          <span v-else class="text-transparent">.</span>
-          <!-- Border overlay -->
-          <div
-            class="absolute inset-0 pointer-events-none z-10"
-            :class="getWrapperBorderClasses(cell, rowIndex, colIndex)"
-          ></div>
-        </button>
-      </template>
+          <span v-else class="invisible">.</span>
+        </div>
+
+        <!-- Border overlay -->
+        <div
+          class="absolute inset-0 pointer-events-none z-20"
+          :class="getWrapperBorderClasses(cell, rowIndex, colIndex)"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { COLOR_BG_HOVER_CLASSES } from '../../utils/colorPalette';
-import { COLOR_BG_IMAGES } from '../../utils/colorPalette';
 import { useGameStore } from '../../stores/gameStore';
 import { onMounted } from 'vue';
 import type { ColorName } from '../../types/types';
@@ -55,31 +58,13 @@ onMounted(() => {
   gameStore.clearMarkers();
 });
 
-// Default background/hover class for cells with dirt texture
-const defaultBgClass = 'bg-slate-700 hover:bg-slate-600';
-const defaultBgStyle =
-  'background-image: url("/assets/ant-next-colors/cell-background.png"); background-size: cover; background-position: center;';
-
-// Function to get cell classes (background and state classes)
-function getCellClasses(cell: { groupColor?: string; state?: string }) {
-  const classes: string[] = [];
+function getCellImage(cell: { groupColor?: string }) {
   if (cell.groupColor) {
-    classes.push(COLOR_BG_HOVER_CLASSES[cell.groupColor as ColorName]);
-  } else {
-    classes.push(defaultBgClass);
+    return `/assets/ant-next-colors/${cell.groupColor}.png`;
   }
-  return classes;
+  return '/assets/ant-next-colors/cell-background.png';
 }
 
-// Function to get background style for each cell
-function getCellBackgroundStyle(cell: { groupColor?: string }) {
-  if (cell.groupColor) {
-    return COLOR_BG_IMAGES[cell.groupColor as ColorName];
-  }
-  return defaultBgStyle;
-}
-
-// Conditional display methods
 function shouldShowQueen(row: number, col: number): boolean {
   return gameStore.playerMarks[row][col] === 'queen';
 }
@@ -92,12 +77,10 @@ function shouldShowInvalid(row: number, col: number): boolean {
   return gameStore.playerMarks[row][col] === 'invalid';
 }
 
-// Handle cell clicks
 function handleCellClick(row: number, col: number) {
   gameStore.handleSquareClick(row, col);
 }
 
-// Function to handle wrapper border classes
 function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col: number) {
   const classes: string[] = [];
   const grid = gameStore.grid;
