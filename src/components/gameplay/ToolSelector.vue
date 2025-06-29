@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center space-x-2 bg-slate-800 p-2 rounded-lg">
+  <div class="flex items-center justify-center space-x-2 bg-slate-800 p-2 rounded-lg">
     <button
       v-for="mode in modes"
       :key="mode.value"
@@ -31,6 +31,6 @@ const modes = [
 
 <script lang="ts">
 export default {
-  name: 'DiggingModeToggle',
+  name: 'ToolSelector',
 };
 </script>
