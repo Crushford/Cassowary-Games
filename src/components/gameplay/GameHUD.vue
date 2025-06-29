@@ -1,5 +1,5 @@
 <template>
-  <div class="flex justify-between items-center">
+  <div class="flex justify-between items-center px-4">
     <div class="flex items-center space-x-2">
       <span class="text-amber-400">🍯</span>
       <span>{{ gameStore.honeyPots }}</span>

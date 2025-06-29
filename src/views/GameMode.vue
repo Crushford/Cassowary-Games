@@ -3,16 +3,15 @@
     class="h-dvh w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden"
   >
     <!-- Dialogue -->
-    <Story class="max-h-[35%] flex-none" />
+    <Story class="h-[35%] flex-none" />
 
     <!-- HUD -->
-    <GameHUD class="max-h-[10%] flex-none px-4 py-2" />
+    <GameHUD class="h-[10%] flex-none" />
 
     <!-- Grid -->
-    <PlayGrid class="h-[45%] overflow-hidden" />
-
+    <PlayGrid class="max-w-full aspect-square max-h-[45vh] overflow-hidden" />
     <!-- Tool Selector -->
-    <ToolSelector class="max-h-[10%] flex-none px-4 py-2 border-t border-gray-700" />
+    <ToolSelector class="h-[10%] flex-none border-t border-gray-700" />
 
     <!-- Completion Modal -->
     <GameCompletionModal />
