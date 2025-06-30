@@ -14,6 +14,21 @@
       <span class="text-lg">{{ mode.icon }}</span>
       <span class="text-sm">{{ mode.label }}</span>
     </button>
+
+    <!-- Auto-flagging toggle -->
+    <button
+      class="px-3 py-1 rounded-md transition-colors duration-200 flex items-center space-x-1"
+      :class="[
+        gameStore.uiState.autoFlagging
+          ? 'bg-green-600 text-white'
+          : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
+      ]"
+      @click="gameStore.uiState.autoFlagging = !gameStore.uiState.autoFlagging"
+      :title="gameStore.uiState.autoFlagging ? 'Auto-flagging enabled' : 'Auto-flagging disabled'"
+    >
+      <span class="text-lg">🚩</span>
+      <span class="text-sm">Auto</span>
+    </button>
   </div>
 </template>
 

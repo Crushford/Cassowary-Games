@@ -52,6 +52,7 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       selectedTool: null,
       selectedColor: null,
       diggingMode: 'auto',
+      autoFlagging: false,
     },
 
     // Game progress

@@ -32,6 +32,7 @@ export interface UIState {
   selectedTool: 'queen' | 'flag' | 'color' | null;
   selectedColor: string | null;
   diggingMode: 'auto' | 'dig' | 'flag';
+  autoFlagging: boolean;
 }
 
 /**
@@ -71,6 +72,7 @@ interface BaseState {
     selectedTool: string | null;
     selectedColor: string | null;
     diggingMode: 'auto' | 'dig' | 'flag';
+    autoFlagging: boolean;
   };
   isComplete: boolean;
   errorMessage: string | null;
