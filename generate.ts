@@ -66,6 +66,73 @@ const summary: Summary = {
 import fs from 'fs';
 import type { GridSquare, MarkType, Pos } from './src/types/types';
 
+// === Validation Helper Functions ===
+/**
+ * Throws if the number of solution‐queens on the grid isn't exactly expectedCount.
+ */
+function validateQueenCount(grid: GridSquare[][], expectedCount: number): void {
+  const count = grid.flat().filter((cell) => cell.isSolutionQueen).length;
+  if (count !== expectedCount) {
+    throw new Error(`Expected ${expectedCount} queens, found ${count}`);
+  }
+}
+
+/**
+ * Throws if the number of distinct queen colors isn't exactly expectedCount.
+ */
+function validateUniqueQueenColors(grid: GridSquare[][], expectedCount: number): void {
+  const colors = new Set<string>();
+  grid.forEach((row) =>
+    row.forEach((cell) => {
+      if (cell.isSolutionQueen) colors.add(cell.groupColor!);
+    })
+  );
+  if (colors.size !== expectedCount) {
+    throw new Error(`Expected ${expectedCount} unique queen colors, got ${colors.size}`);
+  }
+}
+
+/**
+ * Throws if any color group does not contain exactly expectedSize cells.
+ */
+function validateGroupSizes(grid: GridSquare[][], expectedSize: number): void {
+  const counts: Record<string, number> = {};
+  for (const row of grid) {
+    for (const cell of row) {
+      if (cell.groupColor) {
+        counts[cell.groupColor] = (counts[cell.groupColor] || 0) + 1;
+      }
+    }
+  }
+  const mismatches = Object.entries(counts).filter(([, n]) => n !== expectedSize);
+  if (mismatches.length) {
+    const details = mismatches.map(([c, n]) => `${c}:${n}`).join(', ');
+    throw new Error(`Expected groups of size ${expectedSize}, but got ${details}`);
+  }
+}
+
+/**
+ * Throws if any cell on the grid remains un-colored.
+ */
+function validateAllColored(grid: GridSquare[][]): void {
+  for (const row of grid) {
+    for (const cell of row) {
+      if (!cell.groupColor) throw new Error('Found an uncolored cell');
+    }
+  }
+}
+
+/**
+ * Throws if the board isn't fully solvable—i.e. wrong queen count, bad coloring, or uncolored cells.
+ */
+function validateSolvableAndFull(state: GeneratorState): void {
+  const { queenCountValid, colorGroupsValid } = validatePuzzleState(state.grid, SIZE);
+  const allColored = state.grid.every((r) => r.every((c) => !!c.groupColor));
+  if (!queenCountValid || !colorGroupsValid || !allColored) {
+    throw new Error('Board is not fully solvable and colored');
+  }
+}
+
 // === Local utility functions moved from gridUtils.ts ===
 function createEmptyGrid(size: number): GridSquare[][] {
   return Array(size)
@@ -308,7 +375,7 @@ function expandColorGroups(grid: GridSquare[][], log?: (...args: any[]) => void)
     [-1, 0],
     [1, 0],
   ];
-  const byColor = {};
+  const byColor: Record<string, Array<{ row: number; col: number; square: GridSquare }>> = {};
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
       const square = newGrid[row][col];
@@ -517,12 +584,6 @@ function eliminateConstrainedLines(state: GeneratorState, isColumn: boolean) {
   }
 }
 
-function isBoardSolvableAndFull(state: GeneratorState) {
-  const { queenCountValid, colorGroupsValid } = validatePuzzleState(state.grid, SIZE);
-  const allColored = state.grid.every((row) => row.every((cell) => cell.groupColor));
-  return queenCountValid && colorGroupsValid && allColored;
-}
-
 function getColorGroupSizes(grid: GridSquare[][]): { [key: string]: number } {
   const colorCounts: { [key: string]: number } = {};
   forEveryCell(grid.length, (row, col) => {
@@ -569,50 +630,27 @@ function experimentCreateValidBoard() {
     try {
       // Step 1: Place all queens
       placeAllQueens(state);
-      // Verify that the number of queens is equal to the grid size
-      let queenCount = 0;
-      forEveryCell(SIZE, (row, col) => {
-        if (state.grid[row][col].isSolutionQueen) queenCount++;
-      });
-      if (queenCount !== SIZE) {
-        throw new Error(`Step 1 failed: Expected ${SIZE} queens, found ${queenCount}`);
-      }
+      validateQueenCount(state.grid, SIZE);
+
       // Step 2: Assign initial colors to queens
       assignInitialColorsToState(state);
-      // Verify that each queen has a unique color
-      const queenColors = new Set();
-      forEveryCell(SIZE, (row, col) => {
-        if (state.grid[row][col].isSolutionQueen) {
-          queenColors.add(state.grid[row][col].groupColor);
-        }
-      });
-      if (queenColors.size !== SIZE) {
-        throw new Error(
-          `Step 2 failed: Expected ${SIZE} unique queen colors, found ${queenColors.size}`
-        );
-      }
+      validateUniqueQueenColors(state.grid, SIZE);
+
       // Step 3: Expand color groups (should be 2 squares per color)
       state.grid = expandColorGridSafely(state.grid, runAllSolverSteps, state.autoTestMarks);
-      // Verify that each color group has 2 squares
-      let groupSizes = getColorGroupSizes(state.grid);
-      if (!Object.values(groupSizes).every((n) => n === 2)) {
-        throw new Error(
-          `Step 3 failed: Expected all color groups to have 2 squares, got sizes: ${JSON.stringify(groupSizes)}`
-        );
-      }
+      validateGroupSizes(state.grid, 2);
+
       // Step 4: Expand color groups again (should be 3 squares per color)
       state.grid = expandColorGridSafely(state.grid, runAllSolverSteps, state.autoTestMarks);
-      // Verify that each color group has 3 squares
-      groupSizes = getColorGroupSizes(state.grid);
-      if (!Object.values(groupSizes).every((n) => n === 3)) {
-        throw new Error(
-          `Step 4 failed: Expected all color groups to have 3 squares, got sizes: ${JSON.stringify(groupSizes)}`
-        );
-      }
-      if (isBoardSolvableAndFull(state)) {
+      validateGroupSizes(state.grid, 3);
+
+      try {
+        validateSolvableAndFull(state);
         summary.success = true;
         summary.succeededOnAttempt = summary.attempts;
         return { success: true, grid: state.grid };
+      } catch {
+        // classification logic continues…
       }
       // 3) Classify this failure:
       const isFull = state.grid.every((row) => row.every((cell) => cell.groupColor));
