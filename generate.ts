@@ -358,9 +358,9 @@ function assignInitialColorsToState(state: GeneratorState) {
       queenPositions.push({ row, col });
     }
   });
-  state.grid = assignInitialColorsToQueens(state.grid, queenPositions, console.log);
+  state.grid = assignInitialColorsToQueens(state.grid, queenPositions);
 }
-function expandColorGroups(grid: GridSquare[][], log?: (...args: any[]) => void): GridSquare[][] {
+function expandColorGroups(grid: GridSquare[][]): GridSquare[][] {
   const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
   const gridSize = newGrid.length;
   const dirs = [
@@ -398,10 +398,10 @@ function expandColorGridSafely(state: GeneratorState): GridSquare[][] {
   const savedGridState = JSON.parse(JSON.stringify(grid));
   let solvable = false;
   let attempts = 0;
-  let newGrid = grid;
+  let newGrid = JSON.parse(JSON.stringify(grid));
   while (!solvable && attempts < 10) {
     attempts++;
-    newGrid = expandColorGroups(newGrid, console.log);
+    newGrid = expandColorGroups(newGrid);
     // Always pass a full GeneratorState
     runAllSolverSteps({ grid: newGrid, autoTestMarks });
     solvable = autoTestMarks.every((row) =>
