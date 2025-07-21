@@ -664,11 +664,6 @@ function experimentCreateValidBoard() {
         );
       }
 
-      // Run solver steps
-      if (!runAllSolverSteps(state)) {
-        throw new Error('failed on step 4');
-      }
-
       if (isBoardSolvableAndFull(state)) {
         summary.success = true;
         summary.succeededOnAttempt = summary.attempts;
