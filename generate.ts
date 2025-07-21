@@ -8,6 +8,20 @@
  * Outputs a JSON report containing puzzles, summary counters, and success status.
  */
 
+/**
+ * Iterate over every (row,col) in a size×size grid,
+ * calling `fn(row, col)` for side-effects or return-values.
+ */
+function forEveryCell<T>(size: number, fn: (row: number, col: number) => T): T[] {
+  const results: T[] = [];
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      results.push(fn(r, c));
+    }
+  }
+  return results;
+}
+
 // === Types ===
 interface GeneratorState {
   grid: GridSquare[][];
@@ -200,25 +214,19 @@ function isValidMoveWithMarks(
 function placeAllQueens(state: GeneratorState): void {
   function countQueensInMarks(marks: MarkType[][]): number {
     let count = 0;
-    for (let row = 0; row < SIZE; row++) {
-      for (let col = 0; col < SIZE; col++) {
-        if (marks[row][col] === 'queen') count++;
-      }
-    }
+    forEveryCell(SIZE, (row, col) => {
+      if (marks[row][col] === 'queen') count++;
+    });
     return count;
   }
   function clearTempMarks(marks: MarkType[][]): void {
-    for (let row = 0; row < SIZE; row++) {
-      for (let col = 0; col < SIZE; col++) {
-        marks[row][col] = null;
-      }
-    }
+    forEveryCell(SIZE, (row, col) => {
+      marks[row][col] = null;
+    });
   }
-  for (let row = 0; row < SIZE; row++) {
-    for (let col = 0; col < SIZE; col++) {
-      state.grid[row][col].isSolutionQueen = false;
-    }
-  }
+  forEveryCell(SIZE, (row, col) => {
+    state.grid[row][col].isSolutionQueen = false;
+  });
   const tempQueenMarks: MarkType[][] = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
   let attempts = 0;
   const maxAttempts = 100;
@@ -239,13 +247,11 @@ function placeAllQueens(state: GeneratorState): void {
   }
   const finalQueenCount = countQueensInMarks(tempQueenMarks);
   if (finalQueenCount === SIZE) {
-    for (let row = 0; row < SIZE; row++) {
-      for (let col = 0; col < SIZE; col++) {
-        if (tempQueenMarks[row][col] === 'queen') {
-          state.grid[row][col].isSolutionQueen = true;
-        }
+    forEveryCell(SIZE, (row, col) => {
+      if (tempQueenMarks[row][col] === 'queen') {
+        state.grid[row][col].isSolutionQueen = true;
       }
-    }
+    });
   }
 }
 
@@ -256,28 +262,24 @@ function placeRandomQueen(tempQueenMarks: MarkType[][], grid: GridSquare[][]): b
     const moves: Pos[] = [];
     const knightMoves: Pos[] = [];
     let lastQueen: Pos | null = null;
-    for (let r = 0; r < SIZE; r++) {
-      for (let c = 0; c < SIZE; c++) {
-        if (tempQueenMarks[r][c] === 'queen') lastQueen = { row: r, col: c };
-      }
-    }
-    for (let row = 0; row < SIZE; row++) {
-      for (let col = 0; col < SIZE; col++) {
-        if (
-          tempQueenMarks[row][col] === null &&
-          isValidMoveWithMarks(row, col, tempQueenMarks, grid)
-        ) {
-          moves.push({ row, col });
-          if (lastQueen) {
-            const dr = Math.abs(row - lastQueen.row);
-            const dc = Math.abs(col - lastQueen.col);
-            if ((dr === 2 && dc === 1) || (dr === 1 && dc === 2)) {
-              knightMoves.push({ row, col });
-            }
+    forEveryCell(SIZE, (r, c) => {
+      if (tempQueenMarks[r][c] === 'queen') lastQueen = { row: r, col: c };
+    });
+    forEveryCell(SIZE, (row, col) => {
+      if (
+        tempQueenMarks[row][col] === null &&
+        isValidMoveWithMarks(row, col, tempQueenMarks, grid)
+      ) {
+        moves.push({ row, col });
+        if (lastQueen) {
+          const dr = Math.abs(row - lastQueen.row);
+          const dc = Math.abs(col - lastQueen.col);
+          if ((dr === 2 && dc === 1) || (dr === 1 && dc === 2)) {
+            knightMoves.push({ row, col });
           }
         }
       }
-    }
+    });
     return preferKnight && knightMoves.length > 0 ? knightMoves : moves;
   }
   function cloneMarks(marks: MarkType[][]): MarkType[][] {
@@ -296,32 +298,26 @@ function placeRandomQueen(tempQueenMarks: MarkType[][], grid: GridSquare[][]): b
       const prevMarks = cloneMarks(tempQueenMarks);
       tempQueenMarks[row][col] = 'queen';
       if (backtrack(queensPlaced + 1)) return true;
-      for (let r = 0; r < SIZE; r++) {
-        for (let c = 0; c < SIZE; c++) {
-          tempQueenMarks[r][c] = prevMarks[r][c];
-        }
-      }
+      forEveryCell(SIZE, (r, c) => {
+        tempQueenMarks[r][c] = prevMarks[r][c];
+      });
     }
     return false;
   }
-  for (let row = 0; row < SIZE; row++) {
-    for (let col = 0; col < SIZE; col++) {
-      tempQueenMarks[row][col] = null;
-    }
-  }
+  forEveryCell(SIZE, (row, col) => {
+    tempQueenMarks[row][col] = null;
+  });
   let success = backtrack(0);
   return success;
 }
 
 function assignInitialColorsToState(state: GeneratorState) {
   const queenPositions: Pos[] = [];
-  for (let row = 0; row < SIZE; row++) {
-    for (let col = 0; col < SIZE; col++) {
-      if (state.grid[row][col].isSolutionQueen) {
-        queenPositions.push({ row, col });
-      }
+  forEveryCell(SIZE, (row, col) => {
+    if (state.grid[row][col].isSolutionQueen) {
+      queenPositions.push({ row, col });
     }
-  }
+  });
   state.grid = assignInitialColorsToQueens(state.grid, queenPositions, console.log);
 }
 function expandColorGroups(grid: GridSquare[][], log?: (...args: any[]) => void): GridSquare[][] {
@@ -401,42 +397,34 @@ function runAllSolverSteps(state: GeneratorState) {
   }
 }
 function clearAutoTestMarks(state: GeneratorState) {
-  for (let row = 0; row < SIZE; row++) {
-    for (let col = 0; col < SIZE; col++) {
-      state.autoTestMarks[row][col] = null;
-    }
-  }
+  forEveryCell(SIZE, (row, col) => {
+    state.autoTestMarks[row][col] = null;
+  });
 }
 function countAutoTestFlags(state: GeneratorState) {
   let count = 0;
-  for (let row = 0; row < SIZE; row++) {
-    for (let col = 0; col < SIZE; col++) {
-      if (state.autoTestMarks[row][col] === 'flag') count++;
-    }
-  }
+  forEveryCell(SIZE, (row, col) => {
+    if (state.autoTestMarks[row][col] === 'flag') count++;
+  });
   return count;
 }
 function flagSquaresWithoutColorGroups(state: GeneratorState) {
-  for (let row = 0; row < SIZE; row++) {
-    for (let col = 0; col < SIZE; col++) {
-      if (!state.grid[row][col].groupColor && state.autoTestMarks[row][col] === null) {
-        state.autoTestMarks[row][col] = 'flag';
-        summary.flagsPlaced++;
-      }
+  forEveryCell(SIZE, (row, col) => {
+    if (!state.grid[row][col].groupColor && state.autoTestMarks[row][col] === null) {
+      state.autoTestMarks[row][col] = 'flag';
+      summary.flagsPlaced++;
     }
-  }
+  });
 }
 function placeLastFreeQueens(state: GeneratorState) {
   const colorGroups = new Map();
-  for (let row = 0; row < SIZE; row++) {
-    for (let col = 0; col < SIZE; col++) {
-      const color = state.grid[row][col].groupColor;
-      if (color) {
-        if (!colorGroups.has(color)) colorGroups.set(color, []);
-        colorGroups.get(color).push({ row, col });
-      }
+  forEveryCell(SIZE, (row, col) => {
+    const color = state.grid[row][col].groupColor;
+    if (color) {
+      if (!colorGroups.has(color)) colorGroups.set(color, []);
+      colorGroups.get(color).push({ row, col });
     }
-  }
+  });
   for (const [color, positions] of colorGroups.entries()) {
     let unflagged = positions.filter(({ row, col }) => state.autoTestMarks[row][col] !== 'flag');
     if (unflagged.length === 1) {
@@ -446,7 +434,7 @@ function placeLastFreeQueens(state: GeneratorState) {
     }
   }
   for (let row = 0; row < SIZE; row++) {
-    let unflagged = [];
+    let unflagged: number[] = [];
     for (let col = 0; col < SIZE; col++) {
       if (state.autoTestMarks[row][col] !== 'flag') unflagged.push(col);
     }
@@ -456,7 +444,7 @@ function placeLastFreeQueens(state: GeneratorState) {
     }
   }
   for (let col = 0; col < SIZE; col++) {
-    let unflagged = [];
+    let unflagged: number[] = [];
     for (let row = 0; row < SIZE; row++) {
       if (state.autoTestMarks[row][col] !== 'flag') unflagged.push(row);
     }
@@ -467,51 +455,45 @@ function placeLastFreeQueens(state: GeneratorState) {
   }
 }
 function flagBlockingSquares(state: GeneratorState) {
-  for (let row = 0; row < SIZE; row++) {
-    for (let col = 0; col < SIZE; col++) {
-      if (state.autoTestMarks[row][col] !== null) continue;
-      const simulatedMarks = state.autoTestMarks.map((r) => [...r]);
-      simulatedMarks[row][col] = 'queen';
-      for (let r = 0; r < SIZE; r++) {
-        for (let c = 0; c < SIZE; c++) {
-          if (simulatedMarks[r][c] !== null) continue;
-          if (!isValidMoveWithMarks(r, c, simulatedMarks, state.grid)) {
-            simulatedMarks[r][c] = 'flag';
-          }
-        }
+  forEveryCell(SIZE, (row, col) => {
+    if (state.autoTestMarks[row][col] !== null) return;
+    const simulatedMarks = state.autoTestMarks.map((r) => [...r]);
+    simulatedMarks[row][col] = 'queen';
+    forEveryCell(SIZE, (r, c) => {
+      if (simulatedMarks[r][c] !== null) return;
+      if (!isValidMoveWithMarks(r, c, simulatedMarks, state.grid)) {
+        simulatedMarks[r][c] = 'flag';
       }
-      const isLineFullyBlocked = (getterFn: (index: number) => MarkType[]) => {
-        for (let i = 0; i < SIZE; i++) {
-          const line = getterFn(i);
-          if (line.every((mark) => mark === 'flag')) return true;
-        }
-        return false;
-      };
-      const rowFullyBlocked = isLineFullyBlocked((r) => simulatedMarks[r]);
-      const colFullyBlocked = isLineFullyBlocked((c) => simulatedMarks.map((r) => r[c]));
-      const colorGroups = new Map();
-      for (let r = 0; r < SIZE; r++) {
-        for (let c = 0; c < SIZE; c++) {
-          const color = state.grid[r][c].groupColor;
-          if (color) {
-            if (!colorGroups.has(color)) colorGroups.set(color, []);
-            colorGroups.get(color).push({ row: r, col: c });
-          }
-        }
+    });
+    const isLineFullyBlocked = (getterFn: (index: number) => MarkType[]) => {
+      for (let i = 0; i < SIZE; i++) {
+        const line = getterFn(i);
+        if (line.every((mark) => mark === 'flag')) return true;
       }
-      let colorGroupBlocked = false;
-      for (const positions of colorGroups.values()) {
-        if (positions.every(({ row, col }) => simulatedMarks[row][col] === 'flag')) {
-          colorGroupBlocked = true;
-          break;
-        }
+      return false;
+    };
+    const rowFullyBlocked = isLineFullyBlocked((r) => simulatedMarks[r]);
+    const colFullyBlocked = isLineFullyBlocked((c) => simulatedMarks.map((r) => r[c]));
+    const colorGroups = new Map();
+    forEveryCell(SIZE, (r, c) => {
+      const color = state.grid[r][c].groupColor;
+      if (color) {
+        if (!colorGroups.has(color)) colorGroups.set(color, []);
+        colorGroups.get(color).push({ row: r, col: c });
       }
-      if (rowFullyBlocked || colFullyBlocked || colorGroupBlocked) {
-        state.autoTestMarks[row][col] = 'flag';
-        summary.flagsPlaced++;
+    });
+    let colorGroupBlocked = false;
+    for (const positions of colorGroups.values()) {
+      if (positions.every(({ row, col }) => simulatedMarks[row][col] === 'flag')) {
+        colorGroupBlocked = true;
+        break;
       }
     }
-  }
+    if (rowFullyBlocked || colFullyBlocked || colorGroupBlocked) {
+      state.autoTestMarks[row][col] = 'flag';
+      summary.flagsPlaced++;
+    }
+  });
 }
 function eliminateConstrainedRows(state: GeneratorState) {
   eliminateConstrainedLines(state, false);
@@ -521,17 +503,15 @@ function eliminateConstrainedColumns(state: GeneratorState) {
 }
 function eliminateConstrainedLines(state: GeneratorState, isColumn: boolean) {
   const colorToAxisMap = new Map();
-  for (let row = 0; row < SIZE; row++) {
-    for (let col = 0; col < SIZE; col++) {
-      const color = state.grid[row][col].groupColor;
-      const mark = state.autoTestMarks[row][col];
-      if (mark === null && color) {
-        const coord = isColumn ? col : row;
-        if (!colorToAxisMap.has(color)) colorToAxisMap.set(color, new Set());
-        colorToAxisMap.get(color).add(coord);
-      }
+  forEveryCell(SIZE, (row, col) => {
+    const color = state.grid[row][col].groupColor;
+    const mark = state.autoTestMarks[row][col];
+    if (mark === null && color) {
+      const coord = isColumn ? col : row;
+      if (!colorToAxisMap.has(color)) colorToAxisMap.set(color, new Set());
+      colorToAxisMap.get(color).add(coord);
     }
-  }
+  });
   const axisSetToColors = new Map();
   for (const [color, axisSet] of colorToAxisMap.entries()) {
     const key = Array.from(axisSet).sort().join(',');
@@ -570,14 +550,12 @@ function isBoardSolvableAndFull(state: GeneratorState) {
 
 function getColorGroupSizes(grid: GridSquare[][]): { [key: string]: number } {
   const colorCounts: { [key: string]: number } = {};
-  for (let row = 0; row < grid.length; row++) {
-    for (let col = 0; col < grid[0].length; col++) {
-      const color = grid[row][col].groupColor;
-      if (color) {
-        colorCounts[color] = (colorCounts[color] || 0) + 1;
-      }
+  forEveryCell(grid.length, (row, col) => {
+    const color = grid[row][col].groupColor;
+    if (color) {
+      colorCounts[color] = (colorCounts[color] || 0) + 1;
     }
-  }
+  });
   return colorCounts;
 }
 
@@ -618,32 +596,26 @@ function experimentCreateValidBoard() {
       placeAllQueens(state);
       // Verify that the number of queens is equal to the grid size
       let queenCount = 0;
-      for (let row = 0; row < SIZE; row++) {
-        for (let col = 0; col < SIZE; col++) {
-          if (state.grid[row][col].isSolutionQueen) queenCount++;
-        }
-      }
+      forEveryCell(SIZE, (row, col) => {
+        if (state.grid[row][col].isSolutionQueen) queenCount++;
+      });
       if (queenCount !== SIZE) {
         throw new Error(`Step 1 failed: Expected ${SIZE} queens, found ${queenCount}`);
       }
-
       // Step 2: Assign initial colors to queens
       assignInitialColorsToState(state);
       // Verify that each queen has a unique color
       const queenColors = new Set();
-      for (let row = 0; row < SIZE; row++) {
-        for (let col = 0; col < SIZE; col++) {
-          if (state.grid[row][col].isSolutionQueen) {
-            queenColors.add(state.grid[row][col].groupColor);
-          }
+      forEveryCell(SIZE, (row, col) => {
+        if (state.grid[row][col].isSolutionQueen) {
+          queenColors.add(state.grid[row][col].groupColor);
         }
-      }
+      });
       if (queenColors.size !== SIZE) {
         throw new Error(
           `Step 2 failed: Expected ${SIZE} unique queen colors, found ${queenColors.size}`
         );
       }
-
       // Step 3: Expand color groups (should be 2 squares per color)
       state.grid = expandColorGridSafely(state.grid, runAllSolverSteps, state.autoTestMarks);
       // Verify that each color group has 2 squares
@@ -653,7 +625,6 @@ function experimentCreateValidBoard() {
           `Step 3 failed: Expected all color groups to have 2 squares, got sizes: ${JSON.stringify(groupSizes)}`
         );
       }
-
       // Step 4: Expand color groups again (should be 3 squares per color)
       state.grid = expandColorGridSafely(state.grid, runAllSolverSteps, state.autoTestMarks);
       // Verify that each color group has 3 squares
@@ -663,7 +634,6 @@ function experimentCreateValidBoard() {
           `Step 4 failed: Expected all color groups to have 3 squares, got sizes: ${JSON.stringify(groupSizes)}`
         );
       }
-
       if (isBoardSolvableAndFull(state)) {
         summary.success = true;
         summary.succeededOnAttempt = summary.attempts;
