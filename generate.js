@@ -34,13 +34,28 @@ const summary = {
 
 import fs from 'fs';
 import { createEmptyGrid, validatePuzzleState } from './src/stores/gridUtils.ts';
-import {
-  assignInitialColorsToQueens as assignInitialColors,
-  expandColorGroups as expandGroups,
-  addColorOnePerRow,
-  fillRemainingSingleSquares,
-} from './src/utils/colorAssignment.ts';
 
+function assignInitialColorsToQueens(grid, queenPositions, log) {
+  const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
+  const gridSize = newGrid.length;
+  // Reset all colors
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      newGrid[r][c].groupColor = undefined;
+    }
+  }
+  // Assign unique colors to each queen
+  const palette = ['red', 'blue', 'green', 'yellow', 'purple', 'pink'];
+  if (queenPositions.length > palette.length) {
+    if (typeof log === 'function') log(`Not enough colors for ${queenPositions.length} queens`);
+    return newGrid;
+  }
+  queenPositions.forEach(({ row, col }) => {
+    newGrid[row][col].groupColor = palette.pop();
+  });
+  if (typeof log === 'function') log('Assigned initial colors to queens');
+  return newGrid;
+}
 // === Helpers ===
 function initializeGrid() {
   const grid = createEmptyGrid(SIZE);
@@ -210,16 +225,62 @@ function assignInitialColorsToState(state) {
       }
     }
   }
-  state.grid = assignInitialColors(state.grid, queenPositions);
+  state.grid = assignInitialColorsToQueens(state.grid, queenPositions, console.log);
+}
+function expandColorGroups(grid, log) {
+  const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
+  const gridSize = newGrid.length;
+  const dirs = [
+    [0, -1],
+    [0, 1],
+    [-1, 0],
+    [1, 0],
+  ];
+  const byColor = {};
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
+      const square = newGrid[row][col];
+      if (!square.groupColor) continue;
+      if (!byColor[square.groupColor]) byColor[square.groupColor] = [];
+      byColor[square.groupColor].push({ row, col, square });
+    }
+  }
+  for (const group of Object.values(byColor)) {
+    const base = group[0];
+    const shuffled = dirs.slice().sort(() => Math.random() - 0.5);
+    for (const [dr, dc] of shuffled) {
+      const r = base.row + dr;
+      const c = base.col + dc;
+      if (r >= 0 && r < gridSize && c >= 0 && c < gridSize && !newGrid[r][c].groupColor) {
+        newGrid[r][c].groupColor = base.square.groupColor;
+        break;
+      }
+    }
+  }
+  if (typeof log === 'function') log('Expanded color groups by one neighbor');
+  return newGrid;
 }
 
-function expandGroupsOnState(state) {
-  state.grid = expandGroups(state.grid);
-  summary.colorSteps.expandedNeighbor++;
-  state.grid = addColorOnePerRow(state.grid);
-  summary.colorSteps.addedPerRow++;
-  state.grid = fillRemainingSingleSquares(state.grid);
-  summary.colorSteps.filledRemaining++;
+function expandColorGridSafely(grid, runAllSolverSteps, autoTestMarks) {
+  const savedGridState = JSON.parse(JSON.stringify(grid));
+  let solvable = false;
+  let attempts = 0;
+  let newGrid = grid;
+  while (!solvable && attempts < 10) {
+    attempts++;
+    newGrid = expandColorGroups(newGrid, console.log);
+    runAllSolverSteps({ grid: newGrid, autoTestMarks });
+    solvable = autoTestMarks.every((row) =>
+      row.every((cell) => cell !== null && cell !== 'invalid')
+    );
+    if (!solvable) {
+      newGrid = JSON.parse(JSON.stringify(savedGridState));
+    }
+  }
+  if (!solvable) {
+    throw new Error(`expandColorGridSafely: Failed after ${attempts} attempt(s).`);
+  }
+  return newGrid;
 }
 
 // === Auto-test solver loop and helpers ===
@@ -482,7 +543,7 @@ function experimentCreateValidBoard() {
       }
 
       // Step 3: Expand color groups (should be 2 squares per color)
-      expandGroupsOnState(state);
+      state.grid = expandColorGridSafely(state.grid, runAllSolverSteps, state.autoTestMarks);
       // Verify that each color group has 2 squares
       let groupSizes = getColorGroupSizes(state.grid);
       if (!Object.values(groupSizes).every((n) => n === 2)) {
@@ -492,7 +553,7 @@ function experimentCreateValidBoard() {
       }
 
       // Step 4: Expand color groups again (should be 3 squares per color)
-      expandGroupsOnState(state);
+      state.grid = expandColorGridSafely(state.grid, runAllSolverSteps, state.autoTestMarks);
       // Verify that each color group has 3 squares
       groupSizes = getColorGroupSizes(state.grid);
       if (!Object.values(groupSizes).every((n) => n === 3)) {
