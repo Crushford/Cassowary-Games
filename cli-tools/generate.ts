@@ -5,7 +5,8 @@
  * ------------
  * Standalone puzzle generator for the honeypot-ant logic.
  * Extracted from Pinia store: experimentCreateValidBoard and its helpers.
- * Outputs a JSON report containing puzzles, summary counters, and success status.
+ *
+ * Uses PuzzleDatabase for compact puzzle storage.
  */
 
 /**
@@ -64,7 +65,10 @@ const summary: Summary = {
 };
 
 import fs from 'fs';
-import type { GridSquare, MarkType, Pos } from './src/types/types';
+import type { GridSquare, MarkType, Pos } from '../src/types/types';
+import { PuzzleDatabase } from './puzzleDatabase.ts';
+
+const puzzleDatabase = new PuzzleDatabase('../public/puzzles.json');
 
 // === Validation Helper Functions ===
 /**
@@ -849,46 +853,141 @@ function experimentCreateValidBoard() {
 }
 
 function main() {
-  type Result = {
-    success: boolean;
-    grid?: GridSquare[][];
-    error?: string;
-    diagnostics?: { iterations: number; flags: number; marks: string }[];
-  };
-  const results: Result[] = [];
-  const allDiagnostics: {
-    attempt: number;
-    step: number;
-    iterations: number;
-    flags: number;
-    marks: string;
-  }[] = [];
-  for (let i = 0; i < BATCH; i++) {
-    const { success, grid, error, diagnostics } = experimentCreateValidBoard();
-    results.push({ success, grid, error, diagnostics });
-    if (diagnostics) {
-      diagnostics.forEach((diag, j) => {
-        allDiagnostics.push({ attempt: i + 1, step: j + 1, ...diag });
-      });
-    }
-    if (!success) break;
+  // Check command line arguments for different modes
+  const args = process.argv.slice(2);
+  const command = args[0];
+
+  if (command === 'list') {
+    puzzleDatabase.listPuzzles();
+    return;
   }
 
-  console.log('–– Solver diagnostics per attempt ––');
-  allDiagnostics.forEach(({ attempt, step, iterations, flags }) => {
-    console.log(`Attempt ${attempt} Step ${step}: ${iterations} iterations, ${flags} flags`);
-  });
+  if (command === 'stats') {
+    puzzleDatabase.showStats();
+    return;
+  }
 
-  const output = {
-    params: { size: SIZE, retries: RETRIES, batch: BATCH },
-    summary,
-    puzzles: results.map((r) => r.grid),
-    errors: results.filter((r) => !r.success).map((r) => r.error),
-  };
-  const json = JSON.stringify(output, null, 2);
-  if (OUT) fs.writeFileSync(OUT, json);
-  else console.log(json);
-  process.exit(summary.success ? 0 : 1);
+  if (command === 'export' && args[1]) {
+    puzzleDatabase.exportPuzzle(args[1]);
+    return;
+  }
+
+  if (command === 'delete' && args[1]) {
+    puzzleDatabase.deletePuzzle(args[1]);
+    return;
+  }
+
+  if (command === 'generate') {
+    const batchSize = parseInt(args[1]) || BATCH;
+    console.log(`Generating ${batchSize} new puzzles...`);
+
+    type Result = {
+      success: boolean;
+      grid?: GridSquare[][];
+      error?: string;
+      diagnostics?: { iterations: number; flags: number; marks: string }[];
+    };
+    const results: Result[] = [];
+    const allDiagnostics: {
+      attempt: number;
+      step: number;
+      iterations: number;
+      flags: number;
+      marks: string;
+    }[] = [];
+
+    for (let i = 0; i < batchSize; i++) {
+      console.log(`\n--- Generating puzzle ${i + 1}/${batchSize} ---`);
+      const { success, grid, error, diagnostics } = experimentCreateValidBoard();
+      results.push({ success, grid, error, diagnostics });
+      if (diagnostics) {
+        diagnostics.forEach((diag, j) => {
+          allDiagnostics.push({ attempt: i + 1, step: j + 1, ...diag });
+        });
+      }
+      if (!success) {
+        console.log(`Failed to generate puzzle ${i + 1}: ${error}`);
+        break;
+      }
+    }
+
+    console.log('\n–– Solver diagnostics per attempt ––');
+    allDiagnostics.forEach(({ attempt, step, iterations, flags }) => {
+      console.log(`Attempt ${attempt} Step ${step}: ${iterations} iterations, ${flags} flags`);
+    });
+
+    // Add successful puzzles to database
+    const successfulPuzzles = results.filter((r) => r.success);
+    if (successfulPuzzles.length > 0) {
+      console.log(`\nAdding ${successfulPuzzles.length} successful puzzles to database...`);
+      let addedCount = 0;
+      successfulPuzzles.forEach((result, index) => {
+        if (result.grid) {
+          const wasAdded = puzzleDatabase.addPuzzle(result.grid);
+          if (wasAdded) {
+            addedCount++;
+            console.log(`  Puzzle ${index + 1}: Added to database`);
+          } else {
+            console.log(`  Puzzle ${index + 1}: Duplicate, skipped`);
+          }
+        }
+      });
+
+      if (addedCount > 0) {
+        console.log(`  ${addedCount} new puzzles saved to database`);
+      }
+    }
+
+    // Output summary
+    const output = {
+      params: { size: SIZE, retries: RETRIES, batch: batchSize },
+      summary,
+      puzzlesGenerated: successfulPuzzles.length,
+      puzzlesAdded: successfulPuzzles.length,
+      errors: results.filter((r) => !r.success).map((r) => r.error),
+    };
+
+    if (OUT) {
+      fs.writeFileSync(OUT, JSON.stringify(output, null, 2));
+    } else {
+      console.log('\n=== Generation Summary ===');
+      console.log(JSON.stringify(output, null, 2));
+    }
+
+    process.exit(successfulPuzzles.length > 0 ? 0 : 1);
+  }
+
+  // Default behavior: generate one puzzle
+  console.log('Generating 1 puzzle (default behavior)...');
+  console.log('\nAvailable commands:');
+  console.log('  yarn generate                    - Generate 1 puzzle');
+  console.log('  yarn generate generate [number]  - Generate multiple puzzles');
+  console.log('  yarn puzzle-db list              - List all puzzles in database');
+  console.log('  yarn puzzle-db stats             - Show database statistics');
+  console.log('  yarn puzzle-db export <puzzleId> - Export a specific puzzle');
+  console.log('  yarn puzzle-db delete <puzzleId> - Delete a puzzle from database');
+
+  const { success, grid, error, diagnostics } = experimentCreateValidBoard();
+
+  if (success && grid) {
+    const wasAdded = puzzleDatabase.addPuzzle(grid);
+    if (wasAdded) {
+      console.log(`\n=== Generation Summary ===`);
+      console.log(`Successfully generated and saved puzzle`);
+      console.log(`Generation attempts: ${summary.attempts}`);
+      const stats = puzzleDatabase.getStats();
+      console.log(`Database now contains ${stats.totalPuzzles} puzzles`);
+    } else {
+      console.log(`\n=== Generation Summary ===`);
+      console.log(`Generated puzzle was duplicate, not saved`);
+      console.log(`Generation attempts: ${summary.attempts}`);
+      const stats = puzzleDatabase.getStats();
+      console.log(`Database contains ${stats.totalPuzzles} puzzles`);
+    }
+  } else {
+    console.log(`\nGeneration failed: ${error}`);
+    process.exit(1);
+  }
 }
 
 main();

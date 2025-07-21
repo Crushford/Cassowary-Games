@@ -1,0 +1,44 @@
+[
+  {
+    "id": "pz-0001",
+    "layout": "AABCCABBBCBBBBBDDBEBDEEEB",
+    "queens": ".Q.......Q..Q..Q.......Q.",
+    "createdAt": "2025-07-21T23:37:14.453Z"
+  },
+  {
+    "id": "pz-0002",
+    "layout": "AAAAAABCCABBDCAEEDCAEDDDA",
+    "queens": "....Q.Q......Q.Q......Q..",
+    "createdAt": "2025-07-21T23:37:46.937Z"
+  },
+  {
+    "id": "pz-0003",
+    "layout": "AAAAABACCCBBBBBDDBBBDEEEE",
+    "queens": ".Q.......Q..Q..Q.......Q.",
+    "createdAt": "2025-07-21T23:38:05.583Z"
+  },
+  {
+    "id": "pz-0004",
+    "layout": "AAABBCAABDCCADDCDDDECDEEE",
+    "queens": ".Q......Q.Q......Q......Q",
+    "createdAt": "2025-07-21T23:39:30.531Z"
+  },
+  {
+    "id": "pz-0005",
+    "layout": "ABBCCAABCBDDBBBDBBBEBBBEE",
+    "queens": "Q.......Q..Q.......Q..Q..",
+    "createdAt": "2025-07-21T23:53:02.499Z"
+  },
+  {
+    "id": "pz-0006",
+    "layout": "AAAAABBACADBCCADBECADDEEA",
+    "queens": "....Q.Q......Q.Q......Q..",
+    "createdAt": "2025-07-21T23:53:05.418Z"
+  },
+  {
+    "id": "pz-0007",
+    "layout": "AAAAABBACADBCCADCCCCDDEEE",
+    "queens": "....Q.Q......Q.Q......Q..",
+    "createdAt": "2025-07-21T23:53:05.419Z"
+  }
+]
