@@ -377,16 +377,31 @@ function expandColorGroupsInPlace(grid: GridSquare[][]): void {
       byColor[square.groupColor].push({ row, col, square });
     }
   }
-  for (const group of Object.values(byColor)) {
-    const base = group[0];
-    const shuffled = dirs.slice().sort(() => Math.random() - 0.5);
-    for (const [dr, dc] of shuffled) {
-      const r = base.row + dr;
-      const c = base.col + dc;
-      if (r >= 0 && r < gridSize && c >= 0 && c < gridSize && !grid[r][c].groupColor) {
-        grid[r][c].groupColor = base.square.groupColor;
-        break;
+
+  for (const color in byColor) {
+    const group = byColor[color];
+    let expanded = false;
+
+    // Shuffle the order of source cells to randomize expansion
+    const sources = group.slice().sort(() => Math.random() - 0.5);
+
+    for (const base of sources) {
+      const shuffledDirs = dirs.slice().sort(() => Math.random() - 0.5);
+      for (const [dr, dc] of shuffledDirs) {
+        const r = base.row + dr;
+        const c = base.col + dc;
+        if (r >= 0 && r < gridSize && c >= 0 && c < gridSize && !grid[r][c].groupColor) {
+          grid[r][c].groupColor = color;
+          expanded = true;
+          break;
+        }
       }
+      if (expanded) break;
+    }
+
+    // If no square was added, log warning
+    if (!expanded) {
+      console.warn(`Warning: Could not expand color group ${color}`);
     }
   }
 }
@@ -662,18 +677,21 @@ function experimentCreateValidBoard() {
       // Step 1: Place all queens
       placeAllQueens(state);
       validateQueenCount(state.grid, SIZE);
-
+      console.log('Step 1 complete');
       // Step 2: Assign initial colors to queens
       assignInitialColorsToState(state);
       validateUniqueQueenColors(state.grid, SIZE);
+      console.log('Step 2 complete');
 
       // Step 3: Expand color groups (should be 2 squares per color)
       expandColorGridSafely(state);
       validateGroupSizes(state.grid, 2);
+      console.log('Step 3 complete');
 
       // Step 4: Expand color groups again (should be 3 squares per color)
       expandColorGridSafely(state);
       validateGroupSizes(state.grid, 3);
+      console.log('Step 4 complete');
 
       try {
         validateSolvableAndFull(state);
