@@ -558,6 +558,12 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       return true;
     },
 
+    placeQueensAndAssignColors() {
+      this.clearQueensAndFlags();
+      this.placeAllQueens();
+      this.assignInitialColorsToQueens();
+    },
+
     setError(message: string | null) {
       this.errorMessage = message;
     },
@@ -1046,30 +1052,30 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
 
         // Step 0: Flag squares without color groups
         if (this.flagSquaresWithoutColorGroups()) {
-          this.addDebugLog('Flagged squares without color groups');
+          if (this.verboseMode) this.addDebugLog('Flagged squares without color groups');
           this.placeLastFreeQueens();
         }
 
         // Step 1: Place last free queens
         if (this.placeLastFreeQueens()) {
-          this.addDebugLog('Placed last free queens');
+          if (this.verboseMode) this.addDebugLog('Placed last free queens');
         }
 
         // Step 2: Flag blocking squares
         if (this.flagBlockingSquares()) {
-          this.addDebugLog('Flagged blocking squares');
+          if (this.verboseMode) this.addDebugLog('Flagged blocking squares');
           this.placeLastFreeQueens();
         }
 
         // Step 3: Eliminate constrained rows
         if (this.eliminateConstrainedRows()) {
-          this.addDebugLog('Eliminated constrained rows');
+          if (this.verboseMode) this.addDebugLog('Eliminated constrained rows');
           this.placeLastFreeQueens();
         }
 
         // Step 4: Eliminate constrained columns
         if (this.eliminateConstrainedColumns()) {
-          this.addDebugLog('Eliminated constrained columns');
+          if (this.verboseMode) this.addDebugLog('Eliminated constrained columns');
           this.placeLastFreeQueens();
         }
 
@@ -1234,16 +1240,17 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       return placedAny;
     },
 
-    eliminateConstrainedLines(isColumn: boolean = false): boolean {
+    eliminateConstrainedLines(
+      isColumn: boolean = false
+    ): Array<{ row: number; col: number; responsibleColors: string[] }> {
       this.placeLastFreeQueens();
 
       const axis = isColumn ? 'column' : 'row';
-      const axisIndex = isColumn ? 'col' : 'row';
-      const traverseIndex = isColumn ? 'row' : 'col';
       const gridSize = this.gridSize;
 
       this.addDebugLog(`Step 3: Eliminating constrained ${axis}s`);
       let placedAny = false;
+      const flaggedSquares: Array<{ row: number; col: number; responsibleColors: string[] }> = [];
 
       // Step 1: Map each color to the set of rows or columns (depending on axis) where it has unmarked squares
       const colorToAxisMap = new Map<string, Set<number>>();
@@ -1296,23 +1303,28 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
               this.addDebugLog(
                 `Flagged square at (${row}, ${col}) in constrained ${axis} group [${axisKey}] for colors: ${Array.from(allowedColors).join(', ')}`
               );
+              flaggedSquares.push({
+                row,
+                col,
+                responsibleColors: Array.from(allowedColors),
+              });
               placedAny = true;
             }
           }
         }
       }
 
-      return placedAny;
+      return flaggedSquares;
     },
 
     // Step 3: Eliminate constrained rows
     eliminateConstrainedRows(): boolean {
-      return this.eliminateConstrainedLines(false);
+      return this.eliminateConstrainedLines(false).length > 0;
     },
 
     // Step 4: Eliminate constrained columns
     eliminateConstrainedColumns(): boolean {
-      return this.eliminateConstrainedLines(true);
+      return this.eliminateConstrainedLines(true).length > 0;
     },
 
     setColorToolActive(active: boolean) {
@@ -1617,6 +1629,48 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
           `Could not fill the board completely. Final progress: ${coloredSquares}/${totalSquares}`
         );
       }
+    },
+
+    // Experimental: Create a valid board by expanding color groups step by step, reverting if unsolvable
+    async experimentCreateValidBoard() {
+      this.addDebugLog('Experiment: Creating valid board');
+      // Step 1: Place queens and assign initial colors
+      this.placeQueensAndAssignColors();
+
+      const expandColorGridSafely = async () => {
+        const savedGridState = JSON.parse(JSON.stringify(this.grid));
+        let solvable = false;
+        let attempts = 0;
+        const prevVerbose = this.verboseMode;
+        this.verboseMode = false; // Suppress debug logs from runAllSolverSteps
+        while (!solvable && attempts < 100) {
+          // Prevent infinite loop
+          attempts++;
+          this.expandColorGroups();
+          this.runAllSolverSteps();
+          solvable = this.autoTestMarks.every((row) =>
+            row.every((cell) => cell !== null && cell !== 'invalid')
+          );
+
+          if (!solvable) {
+            this.grid = JSON.parse(JSON.stringify(savedGridState));
+          }
+        }
+        this.verboseMode = prevVerbose; // Restore previous verbose mode
+        if (solvable) {
+          this.addDebugLog(`expandColorGridSafely: Success after ${attempts} attempt(s).`);
+        } else {
+          this.addDebugLog(`expandColorGridSafely: Failed after ${attempts} attempt(s).`);
+        }
+        return solvable;
+      };
+
+      await expandColorGridSafely();
+      this.addDebugLog('Attempting to expand color groups to 3 squares each (second pass)');
+      await expandColorGridSafely();
+      this.addDebugLog(
+        'Second pass complete. Each color group should now have 3 squares if possible and board should be solvable.'
+      );
     },
   },
 });
