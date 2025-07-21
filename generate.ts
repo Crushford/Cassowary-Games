@@ -393,7 +393,7 @@ function expandColorGroups(grid: GridSquare[][]): GridSquare[][] {
   return newGrid;
 }
 
-function expandColorGridSafely(state: GeneratorState, expectedSize: number): GridSquare[][] {
+function expandColorGridSafely(state: GeneratorState): GridSquare[][] {
   const { grid, autoTestMarks } = state;
   const savedGridState = JSON.parse(JSON.stringify(grid));
   let solvable = false;
@@ -410,19 +410,6 @@ function expandColorGridSafely(state: GeneratorState, expectedSize: number): Gri
     const afterSizes = getColorGroupSizes(newGrid);
     console.log(`    after solve pass, group sizes:`, afterSizes);
     dumpMarks(autoTestMarks);
-    const mismatches = Object.entries(afterSizes)
-      .filter(([, n]) => n !== expectedSize)
-      .map(([c, n]) => `${c}:${n}`)
-      .join(', ');
-    const allGroupsCorrect = Object.values(afterSizes).every((n) => n === expectedSize);
-    if (!allGroupsCorrect) {
-      console.log(
-        `  attempt ${attempts} failed (expected size ${expectedSize}): ${mismatches}. reverting…`
-      );
-      dumpMarks(autoTestMarks);
-      newGrid = JSON.parse(JSON.stringify(savedGridState));
-      continue;
-    }
     solvable = autoTestMarks.every((row) =>
       row.every((cell) => cell !== null && cell !== 'invalid')
     );
@@ -690,11 +677,11 @@ function experimentCreateValidBoard() {
       validateUniqueQueenColors(state.grid, SIZE);
 
       // Step 3: Expand color groups (should be 2 squares per color)
-      state.grid = expandColorGridSafely(state, 2);
+      state.grid = expandColorGridSafely(state);
       validateGroupSizes(state.grid, 2);
 
       // Step 4: Expand color groups again (should be 3 squares per color)
-      state.grid = expandColorGridSafely(state, 3);
+      state.grid = expandColorGridSafely(state);
       validateGroupSizes(state.grid, 3);
 
       try {
