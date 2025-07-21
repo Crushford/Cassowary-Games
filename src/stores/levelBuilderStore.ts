@@ -1634,7 +1634,7 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
           this.addDebugLog(
             'No further expansions possible, breaking out of expandRandomColorsUntilFull.'
           );
-          break;
+          return;
         }
       }
 
@@ -1736,7 +1736,23 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
         }
       }
 
-      this.expandRandomColorsUntilFull();
+      await this.expandRandomColorsUntilFull();
+
+      await this.runAllSolverSteps();
+
+      const isSolvable = this.autoTestMarks.every((row) =>
+        row.every((cell) => cell !== null && cell !== 'invalid')
+      );
+      const isFull = this.grid.every((row) => row.every((cell) => cell.groupColor));
+      if (isSolvable && isFull) {
+        this.addDebugLog('Board is solvable and full.');
+        return this.grid;
+      } else {
+        this.addDebugLog(
+          `Board is not solvable or not full. isSolvable: ${isSolvable}, isFull: ${isFull}`
+        );
+        return null;
+      }
     },
   },
 });
