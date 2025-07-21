@@ -402,14 +402,8 @@ function expandColorGridSafely(state: GeneratorState): GridSquare[][] {
   while (!solvable && attempts < 100) {
     attempts++;
     newGrid = expandColorGroups(newGrid);
-    const beforeSizes = getColorGroupSizes(newGrid);
-    console.log(`  attempt ${attempts}: after expandColorGroups, group sizes:`, beforeSizes);
-    const iters = runAllSolverSteps({ grid: newGrid, autoTestMarks });
-    const flags = countAutoTestFlags({ grid: newGrid, autoTestMarks });
-    console.log(`    solver pass: ${iters} iterations, ${flags} flags`);
-    const afterSizes = getColorGroupSizes(newGrid);
-    console.log(`    after solve pass, group sizes:`, afterSizes);
-    dumpMarks(autoTestMarks);
+    runAllSolverSteps({ grid: newGrid, autoTestMarks });
+
     solvable = autoTestMarks.every((row) =>
       row.every((cell) => cell !== null && cell !== 'invalid')
     );
@@ -417,6 +411,7 @@ function expandColorGridSafely(state: GeneratorState): GridSquare[][] {
       console.log('expandColorGridSafely: Failed, reverting…');
       printDebugState(state);
       newGrid = JSON.parse(JSON.stringify(savedGridState));
+      dumpMarks(autoTestMarks);
     }
   }
   if (!solvable) {
@@ -448,13 +443,12 @@ function placeQueen(state: GeneratorState, row: number, col: number): void {
   }
 }
 
-function runAllSolverSteps(state: GeneratorState): number {
+function runAllSolverSteps(state: GeneratorState): void {
   clearAutoTestMarks(state);
   let previousFlagCount = -1;
   let currentFlagCount = countAutoTestFlags(state);
-  let iterations = 0;
+
   while (previousFlagCount !== currentFlagCount) {
-    iterations++;
     previousFlagCount = currentFlagCount;
     flagSquaresWithoutColorGroups(state);
     placeLastFreeQueens(state);
@@ -466,10 +460,6 @@ function runAllSolverSteps(state: GeneratorState): number {
     placeLastFreeQueens(state);
     currentFlagCount = countAutoTestFlags(state);
   }
-  console.log(
-    `runAllSolverSteps: stabilized in ${iterations} iterations; final flags: ${currentFlagCount}`
-  );
-  return iterations;
 }
 function clearAutoTestMarks(state: GeneratorState) {
   forEveryCell(SIZE, (row, col) => {
@@ -653,6 +643,7 @@ function printDebugState(state: GeneratorState, errorMsg?: string) {
 }
 
 function dumpMarks(marks: MarkType[][]) {
+  console.log('--- Auto-test marks ---');
   console.log(
     marks
       .map((row) =>
