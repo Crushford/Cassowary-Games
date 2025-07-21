@@ -27,6 +27,9 @@ const summary = {
     addedPerRow: 0,
     filledRemaining: 0,
   },
+  // New failure diagnostics:
+  notFullCount: 0, // # of attempts where grid was incomplete
+  unsolvableCount: 0, // # of attempts where grid was full but failed validation
 };
 
 import fs from 'fs';
@@ -402,23 +405,141 @@ function isBoardSolvableAndFull(state) {
   return queenCountValid && colorGroupsValid && allColored;
 }
 
+function getColorGroupSizes(grid) {
+  const colorCounts = {};
+  for (let row = 0; row < grid.length; row++) {
+    for (let col = 0; col < grid[0].length; col++) {
+      const color = grid[row][col].groupColor;
+      if (color) {
+        colorCounts[color] = (colorCounts[color] || 0) + 1;
+      }
+    }
+  }
+  return colorCounts;
+}
+
+function printDebugState(state, errorMsg) {
+  console.error('--- Debug State ---');
+  if (errorMsg) console.error('Error:', errorMsg);
+  // Print grid colors
+  console.error('Grid colors:');
+  for (let row = 0; row < SIZE; row++) {
+    let line = '';
+    for (let col = 0; col < SIZE; col++) {
+      const cell = state.grid[row][col];
+      line += (cell.groupColor ? cell.groupColor[0].toUpperCase() : '.') + ' ';
+    }
+    console.error(line);
+  }
+  // Print queen positions
+  console.error('Queen positions:');
+  for (let row = 0; row < SIZE; row++) {
+    let line = '';
+    for (let col = 0; col < SIZE; col++) {
+      line += (state.grid[row][col].isSolutionQueen ? 'Q' : '.') + ' ';
+    }
+    console.error(line);
+  }
+  // Print color group sizes
+  const groupSizes = getColorGroupSizes(state.grid);
+  console.error('Color group sizes:', groupSizes);
+  console.error('------------------');
+}
+
 function experimentCreateValidBoard() {
   const state = initializeGrid();
-  placeAllQueens(state);
-  assignInitialColorsToState(state);
-  expandGroupsOnState(state);
-  runAllSolverSteps(state);
   for (let attempt = 1; attempt <= RETRIES; attempt++) {
     summary.attempts++;
-    if (isBoardSolvableAndFull(state)) {
-      summary.success = true;
-      summary.succeededOnAttempt = summary.attempts;
-      return { success: true, grid: state.grid };
+    try {
+      // Step 1: Place all queens
+      placeAllQueens(state);
+      // Verify that the number of queens is equal to the grid size
+      let queenCount = 0;
+      for (let row = 0; row < SIZE; row++) {
+        for (let col = 0; col < SIZE; col++) {
+          if (state.grid[row][col].isSolutionQueen) queenCount++;
+        }
+      }
+      if (queenCount !== SIZE) {
+        throw new Error(`Step 1 failed: Expected ${SIZE} queens, found ${queenCount}`);
+      }
+
+      // Step 2: Assign initial colors to queens
+      assignInitialColorsToState(state);
+      // Verify that each queen has a unique color
+      const queenColors = new Set();
+      for (let row = 0; row < SIZE; row++) {
+        for (let col = 0; col < SIZE; col++) {
+          if (state.grid[row][col].isSolutionQueen) {
+            queenColors.add(state.grid[row][col].groupColor);
+          }
+        }
+      }
+      if (queenColors.size !== SIZE) {
+        throw new Error(
+          `Step 2 failed: Expected ${SIZE} unique queen colors, found ${queenColors.size}`
+        );
+      }
+
+      // Step 3: Expand color groups (should be 2 squares per color)
+      expandGroupsOnState(state);
+      // Verify that each color group has 2 squares
+      let groupSizes = getColorGroupSizes(state.grid);
+      if (!Object.values(groupSizes).every((n) => n === 2)) {
+        throw new Error(
+          `Step 3 failed: Expected all color groups to have 2 squares, got sizes: ${JSON.stringify(groupSizes)}`
+        );
+      }
+
+      // Step 4: Expand color groups again (should be 3 squares per color)
+      expandGroupsOnState(state);
+      // Verify that each color group has 3 squares
+      groupSizes = getColorGroupSizes(state.grid);
+      if (!Object.values(groupSizes).every((n) => n === 3)) {
+        throw new Error(
+          `Step 4 failed: Expected all color groups to have 3 squares, got sizes: ${JSON.stringify(groupSizes)}`
+        );
+      }
+
+      // Run solver steps
+      if (!runAllSolverSteps(state)) {
+        throw new Error('failed on step 4');
+      }
+
+      if (isBoardSolvableAndFull(state)) {
+        summary.success = true;
+        summary.succeededOnAttempt = summary.attempts;
+        return { success: true, grid: state.grid };
+      }
+      // 3) Classify this failure:
+      const isFull = state.grid.every((row) => row.every((cell) => cell.groupColor));
+      if (!isFull) {
+        summary.notFullCount++;
+      } else {
+        const { queenCountValid, colorGroupsValid } = validatePuzzleState(
+          state.grid,
+          state.playerMarks,
+          SIZE
+        );
+        if (!(queenCountValid && colorGroupsValid)) {
+          summary.unsolvableCount++;
+        }
+      }
+      // 4) Prepare for next retry: clear auto-test marks, then loop
+      clearAutoTestMarks(state);
+    } catch (err) {
+      printDebugState(state, err && err.message ? err.message : String(err));
+      throw err;
     }
-    expandGroupsOnState(state);
-    runAllSolverSteps(state);
   }
-  return { success: false, grid: null, error: `Exceeded ${RETRIES}` };
+  // After RETRIES exhausted, return failure with diagnostics
+  const reason =
+    summary.notFullCount === summary.attempts
+      ? 'All attempts produced incomplete grids'
+      : summary.unsolvableCount === summary.attempts
+        ? 'All attempts produced full but invalid grids'
+        : 'Mixed failures';
+  return { success: false, error: reason };
 }
 
 function main() {
