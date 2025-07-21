@@ -184,11 +184,7 @@ function validatePuzzleState(
   };
 }
 
-function assignInitialColorsToQueens(
-  grid: GridSquare[][],
-  queenPositions: Pos[],
-  log?: (...args: any[]) => void
-): GridSquare[][] {
+function assignInitialColorsToQueens(grid: GridSquare[][], queenPositions: Pos[]): GridSquare[][] {
   const newGrid = grid.map((row) => row.map((square) => ({ ...square })));
   const gridSize = newGrid.length;
   // Reset all colors
@@ -200,13 +196,11 @@ function assignInitialColorsToQueens(
   // Assign unique colors to each queen
   const palette: string[] = ['red', 'blue', 'green', 'yellow', 'purple', 'pink'];
   if (queenPositions.length > palette.length) {
-    if (typeof log === 'function') log(`Not enough colors for ${queenPositions.length} queens`);
-    return newGrid;
+    throw new Error(`Not enough colors for ${queenPositions.length} queens`);
   }
   queenPositions.forEach(({ row, col }) => {
     newGrid[row][col].groupColor = palette.pop();
   });
-  if (typeof log === 'function') log('Assigned initial colors to queens');
   return newGrid;
 }
 // === Helpers ===
@@ -396,7 +390,6 @@ function expandColorGroups(grid: GridSquare[][], log?: (...args: any[]) => void)
       }
     }
   }
-  if (typeof log === 'function') log('Expanded color groups by one neighbor');
   return newGrid;
 }
 
