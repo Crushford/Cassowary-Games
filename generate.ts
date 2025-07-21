@@ -23,11 +23,10 @@ function forEveryCell<T>(size: number, fn: (row: number, col: number) => T): T[]
 }
 
 // === Types ===
-interface GeneratorState {
+type GeneratorState = {
   grid: GridSquare[][];
-  playerMarks: MarkType[][];
   autoTestMarks: MarkType[][];
-}
+};
 
 interface Summary {
   success: boolean;
@@ -84,34 +83,18 @@ function createEmptyGrid(size: number): GridSquare[][] {
     );
 }
 
-function getQueenPositions(grid: GridSquare[][], playerMarks: MarkType[][]): Pos[] {
-  const positions: Pos[] = [];
-  for (let row = 0; row < grid.length; row++) {
-    for (let col = 0; col < grid[0].length; col++) {
-      if (playerMarks[row][col] === 'queen') {
-        positions.push({ row, col });
-      }
-    }
-  }
-  return positions;
-}
-
 function validatePuzzleState(
   grid: GridSquare[][],
-  playerMarks: MarkType[][],
   gridSize: number
 ): {
   queenCountValid: boolean;
   colorGroupsValid: boolean;
 } {
-  // Count queens
-  const queens = getQueenPositions(grid, playerMarks);
+  const queens = forEveryCell(gridSize, (r, c) =>
+    grid[r][c].isSolutionQueen ? { row: r, col: c } : null
+  ).filter(Boolean) as Pos[];
   const queenCountValid = queens.length === gridSize;
-
-  // Check color groups
   let colorGroupsValid = true;
-
-  // Group queens by color
   const queensByColor: Record<string, Pos[]> = {};
   for (const queen of queens) {
     const cell = grid[queen.row][queen.col];
@@ -122,15 +105,12 @@ function validatePuzzleState(
       queensByColor[cell.groupColor].push(queen);
     }
   }
-
-  // Every color should have exactly one queen
   for (const color in queensByColor) {
     if (queensByColor[color].length !== 1) {
       colorGroupsValid = false;
       break;
     }
   }
-
   return {
     queenCountValid,
     colorGroupsValid,
@@ -165,9 +145,8 @@ function assignInitialColorsToQueens(
 // === Helpers ===
 function initializeGrid(): GeneratorState {
   const grid = createEmptyGrid(SIZE);
-  const playerMarks: MarkType[][] = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
   const autoTestMarks: MarkType[][] = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
-  return { grid, playerMarks, autoTestMarks };
+  return { grid, autoTestMarks };
 }
 
 function isValidMoveWithMarks(
@@ -367,7 +346,7 @@ function expandColorGridSafely(
     attempts++;
     newGrid = expandColorGroups(newGrid, console.log);
     // Always pass a full GeneratorState
-    runAllSolverSteps({ grid: newGrid, autoTestMarks, playerMarks: [] });
+    runAllSolverSteps({ grid: newGrid, autoTestMarks });
     solvable = autoTestMarks.every((row) =>
       row.every((cell) => cell !== null && cell !== 'invalid')
     );
@@ -539,11 +518,7 @@ function eliminateConstrainedLines(state: GeneratorState, isColumn: boolean) {
 }
 
 function isBoardSolvableAndFull(state: GeneratorState) {
-  const { queenCountValid, colorGroupsValid } = validatePuzzleState(
-    state.grid,
-    state.playerMarks,
-    SIZE
-  );
+  const { queenCountValid, colorGroupsValid } = validatePuzzleState(state.grid, SIZE);
   const allColored = state.grid.every((row) => row.every((cell) => cell.groupColor));
   return queenCountValid && colorGroupsValid && allColored;
 }
@@ -644,11 +619,7 @@ function experimentCreateValidBoard() {
       if (!isFull) {
         summary.notFullCount++;
       } else {
-        const { queenCountValid, colorGroupsValid } = validatePuzzleState(
-          state.grid,
-          state.playerMarks,
-          SIZE
-        );
+        const { queenCountValid, colorGroupsValid } = validatePuzzleState(state.grid, SIZE);
         if (!(queenCountValid && colorGroupsValid)) {
           summary.unsolvableCount++;
         }
