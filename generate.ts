@@ -400,11 +400,8 @@ function expandColorGroups(grid: GridSquare[][], log?: (...args: any[]) => void)
   return newGrid;
 }
 
-function expandColorGridSafely(
-  grid: GridSquare[][],
-  runAllSolverSteps: (state: GeneratorState) => void,
-  autoTestMarks: MarkType[][]
-): GridSquare[][] {
+function expandColorGridSafely(state: GeneratorState): GridSquare[][] {
+  const { grid, autoTestMarks } = state;
   const savedGridState = JSON.parse(JSON.stringify(grid));
   let solvable = false;
   let attempts = 0;
@@ -637,11 +634,11 @@ function experimentCreateValidBoard() {
       validateUniqueQueenColors(state.grid, SIZE);
 
       // Step 3: Expand color groups (should be 2 squares per color)
-      state.grid = expandColorGridSafely(state.grid, runAllSolverSteps, state.autoTestMarks);
+      state.grid = expandColorGridSafely(state);
       validateGroupSizes(state.grid, 2);
 
       // Step 4: Expand color groups again (should be 3 squares per color)
-      state.grid = expandColorGridSafely(state.grid, runAllSolverSteps, state.autoTestMarks);
+      state.grid = expandColorGridSafely(state);
       validateGroupSizes(state.grid, 3);
 
       try {
