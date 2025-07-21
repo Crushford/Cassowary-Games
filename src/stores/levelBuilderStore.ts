@@ -1643,7 +1643,7 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
         let attempts = 0;
         const prevVerbose = this.verboseMode;
         this.verboseMode = false; // Suppress debug logs from runAllSolverSteps
-        while (!solvable && attempts < 100) {
+        while (!solvable && attempts < 10) {
           // Prevent infinite loop
           attempts++;
           this.expandColorGroups();
@@ -1671,6 +1671,54 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       this.addDebugLog(
         'Second pass complete. Each color group should now have 3 squares if possible and board should be solvable.'
       );
+
+      this.clearAutoTestMarks();
+
+      // New logic: keep expanding eligible blocked squares until no more can be expanded or board is full
+      let keepExpanding = true;
+      while (keepExpanding) {
+        keepExpanding = false;
+        // Recompute blocked squares after each expansion
+        const blockedSquares = [
+          ...this.eliminateConstrainedLines(false),
+          ...this.eliminateConstrainedLines(true),
+        ];
+        // If board is full, stop
+        const totalSquares = this.gridSize * this.gridSize;
+        const coloredSquares = this.countColoredSquares();
+        if (coloredSquares === totalSquares) {
+          this.addDebugLog('Board is now full after expansions.');
+          break;
+        }
+        for (const { row, col, responsibleColors } of blockedSquares) {
+          const currentColor = this.grid[row][col].groupColor;
+          if (currentColor) continue; // Skip already colored squares
+          const directions = [
+            { dr: 1, dc: 0 },
+            { dr: -1, dc: 0 },
+            { dr: 0, dc: 1 },
+            { dr: 0, dc: -1 },
+          ];
+          for (const { dr, dc } of directions) {
+            const nRow = row + dr;
+            const nCol = col + dc;
+            if (!this.isValidPosition(nRow, nCol)) continue;
+            const neighborColor = this.grid[nRow][nCol].groupColor;
+            if (
+              neighborColor &&
+              !responsibleColors.includes(neighborColor) &&
+              this.grid[row][col].groupColor !== neighborColor
+            ) {
+              // Expand this color into the blocked square
+              this.setSquareColor(row, col, neighborColor);
+              this.addDebugLog(
+                `Expanded color ${neighborColor} from (${nRow}, ${nCol}) into blocked square (${row}, ${col})`
+              );
+              keepExpanding = true;
+            }
+          }
+        }
+      }
     },
   },
 });
