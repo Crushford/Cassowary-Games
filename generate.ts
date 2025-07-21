@@ -194,7 +194,7 @@ function assignInitialColorsToQueens(grid: GridSquare[][], queenPositions: Pos[]
     }
   }
   // Assign unique colors to each queen
-  const palette: string[] = ['red', 'blue', 'green', 'yellow', 'purple', 'pink'];
+  const palette: string[] = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
   if (queenPositions.length > palette.length) {
     throw new Error(`Not enough colors for ${queenPositions.length} queens`);
   }
@@ -393,21 +393,42 @@ function expandColorGroups(grid: GridSquare[][]): GridSquare[][] {
   return newGrid;
 }
 
-function expandColorGridSafely(state: GeneratorState): GridSquare[][] {
+function expandColorGridSafely(state: GeneratorState, expectedSize: number): GridSquare[][] {
   const { grid, autoTestMarks } = state;
   const savedGridState = JSON.parse(JSON.stringify(grid));
   let solvable = false;
   let attempts = 0;
   let newGrid = JSON.parse(JSON.stringify(grid));
-  while (!solvable && attempts < 10) {
+  while (!solvable && attempts < 100) {
     attempts++;
     newGrid = expandColorGroups(newGrid);
-    // Always pass a full GeneratorState
-    runAllSolverSteps({ grid: newGrid, autoTestMarks });
+    const beforeSizes = getColorGroupSizes(newGrid);
+    console.log(`  attempt ${attempts}: after expandColorGroups, group sizes:`, beforeSizes);
+    const iters = runAllSolverSteps({ grid: newGrid, autoTestMarks });
+    const flags = countAutoTestFlags({ grid: newGrid, autoTestMarks });
+    console.log(`    solver pass: ${iters} iterations, ${flags} flags`);
+    const afterSizes = getColorGroupSizes(newGrid);
+    console.log(`    after solve pass, group sizes:`, afterSizes);
+    dumpMarks(autoTestMarks);
+    const mismatches = Object.entries(afterSizes)
+      .filter(([, n]) => n !== expectedSize)
+      .map(([c, n]) => `${c}:${n}`)
+      .join(', ');
+    const allGroupsCorrect = Object.values(afterSizes).every((n) => n === expectedSize);
+    if (!allGroupsCorrect) {
+      console.log(
+        `  attempt ${attempts} failed (expected size ${expectedSize}): ${mismatches}. reverting…`
+      );
+      dumpMarks(autoTestMarks);
+      newGrid = JSON.parse(JSON.stringify(savedGridState));
+      continue;
+    }
     solvable = autoTestMarks.every((row) =>
       row.every((cell) => cell !== null && cell !== 'invalid')
     );
     if (!solvable) {
+      console.log('expandColorGridSafely: Failed, reverting…');
+      printDebugState(state);
       newGrid = JSON.parse(JSON.stringify(savedGridState));
     }
   }
@@ -418,19 +439,50 @@ function expandColorGridSafely(state: GeneratorState): GridSquare[][] {
 }
 
 // === Auto-test solver loop and helpers ===
-function runAllSolverSteps(state: GeneratorState) {
+function placeQueen(state: GeneratorState, row: number, col: number): void {
+  // Validate that this is actually a solution queen
+  if (!state.grid[row][col].isSolutionQueen) {
+    state.autoTestMarks[row][col] = 'invalid';
+    throw new Error(`Attempted to place queen at (${row}, ${col}) but it's not a solution queen`);
+  }
+
+  // Place the queen
+  state.autoTestMarks[row][col] = 'queen';
+
+  // Update blocked moves (flag squares that are no longer valid)
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      if (state.autoTestMarks[r][c] === null) {
+        if (!isValidMoveWithMarks(r, c, state.autoTestMarks, state.grid)) {
+          state.autoTestMarks[r][c] = 'flag';
+        }
+      }
+    }
+  }
+}
+
+function runAllSolverSteps(state: GeneratorState): number {
   clearAutoTestMarks(state);
   let previousFlagCount = -1;
   let currentFlagCount = countAutoTestFlags(state);
+  let iterations = 0;
   while (previousFlagCount !== currentFlagCount) {
+    iterations++;
     previousFlagCount = currentFlagCount;
     flagSquaresWithoutColorGroups(state);
     placeLastFreeQueens(state);
     flagBlockingSquares(state);
+    placeLastFreeQueens(state);
     eliminateConstrainedRows(state);
+    placeLastFreeQueens(state);
     eliminateConstrainedColumns(state);
+    placeLastFreeQueens(state);
     currentFlagCount = countAutoTestFlags(state);
   }
+  console.log(
+    `runAllSolverSteps: stabilized in ${iterations} iterations; final flags: ${currentFlagCount}`
+  );
+  return iterations;
 }
 function clearAutoTestMarks(state: GeneratorState) {
   forEveryCell(SIZE, (row, col) => {
@@ -465,7 +517,7 @@ function placeLastFreeQueens(state: GeneratorState) {
     let unflagged = positions.filter(({ row, col }) => state.autoTestMarks[row][col] !== 'flag');
     if (unflagged.length === 1) {
       const { row, col } = unflagged[0];
-      state.autoTestMarks[row][col] = 'queen';
+      placeQueen(state, row, col);
       summary.queensDug++;
     }
   }
@@ -475,7 +527,7 @@ function placeLastFreeQueens(state: GeneratorState) {
       if (state.autoTestMarks[row][col] !== 'flag') unflagged.push(col);
     }
     if (unflagged.length === 1) {
-      state.autoTestMarks[row][unflagged[0]] = 'queen';
+      placeQueen(state, row, unflagged[0]);
       summary.queensDug++;
     }
   }
@@ -485,7 +537,7 @@ function placeLastFreeQueens(state: GeneratorState) {
       if (state.autoTestMarks[row][col] !== 'flag') unflagged.push(row);
     }
     if (unflagged.length === 1) {
-      state.autoTestMarks[unflagged[0]][col] = 'queen';
+      placeQueen(state, unflagged[0], col);
       summary.queensDug++;
     }
   }
@@ -613,8 +665,19 @@ function printDebugState(state: GeneratorState, errorMsg?: string) {
   console.error('------------------');
 }
 
+function dumpMarks(marks: MarkType[][]) {
+  console.log(
+    marks
+      .map((row) =>
+        row.map((cell) => (cell === 'queen' ? 'Q' : cell === 'flag' ? 'F' : '.')).join(' ')
+      )
+      .join('\n')
+  );
+}
+
 function experimentCreateValidBoard() {
   const state = initializeGrid();
+  const diagnosticsPerAttempt: { iterations: number; flags: number; marks: string }[] = [];
   for (let attempt = 1; attempt <= RETRIES; attempt++) {
     summary.attempts++;
     try {
@@ -627,18 +690,18 @@ function experimentCreateValidBoard() {
       validateUniqueQueenColors(state.grid, SIZE);
 
       // Step 3: Expand color groups (should be 2 squares per color)
-      state.grid = expandColorGridSafely(state);
+      state.grid = expandColorGridSafely(state, 2);
       validateGroupSizes(state.grid, 2);
 
       // Step 4: Expand color groups again (should be 3 squares per color)
-      state.grid = expandColorGridSafely(state);
+      state.grid = expandColorGridSafely(state, 3);
       validateGroupSizes(state.grid, 3);
 
       try {
         validateSolvableAndFull(state);
         summary.success = true;
         summary.succeededOnAttempt = summary.attempts;
-        return { success: true, grid: state.grid };
+        return { success: true, grid: state.grid, diagnostics: diagnosticsPerAttempt };
       } catch {
         // classification logic continues…
       }
@@ -666,17 +729,40 @@ function experimentCreateValidBoard() {
       : summary.unsolvableCount === summary.attempts
         ? 'All attempts produced full but invalid grids'
         : 'Mixed failures';
-  return { success: false, error: reason };
+  return { success: false, error: reason, diagnostics: diagnosticsPerAttempt };
 }
 
 function main() {
-  type Result = { success: boolean; grid?: GridSquare[][]; error?: string };
+  type Result = {
+    success: boolean;
+    grid?: GridSquare[][];
+    error?: string;
+    diagnostics?: { iterations: number; flags: number; marks: string }[];
+  };
   const results: Result[] = [];
+  const allDiagnostics: {
+    attempt: number;
+    step: number;
+    iterations: number;
+    flags: number;
+    marks: string;
+  }[] = [];
   for (let i = 0; i < BATCH; i++) {
-    const { success, grid, error } = experimentCreateValidBoard();
-    results.push({ success, grid, error });
+    const { success, grid, error, diagnostics } = experimentCreateValidBoard();
+    results.push({ success, grid, error, diagnostics });
+    if (diagnostics) {
+      diagnostics.forEach((diag, j) => {
+        allDiagnostics.push({ attempt: i + 1, step: j + 1, ...diag });
+      });
+    }
     if (!success) break;
   }
+
+  console.log('–– Solver diagnostics per attempt ––');
+  allDiagnostics.forEach(({ attempt, step, iterations, flags }) => {
+    console.log(`Attempt ${attempt} Step ${step}: ${iterations} iterations, ${flags} flags`);
+  });
+
   const output = {
     params: { size: SIZE, retries: RETRIES, batch: BATCH },
     summary,
