@@ -1607,18 +1607,34 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
           return;
         }
 
+        // Track if any expansion happened this iteration
+        let anyExpansion = false;
+
         // Pick a random color from expandable colors
-        const randomColor = expandableColors[Math.floor(Math.random() * expandableColors.length)];
+        // Try all expandable colors in this iteration
+        for (const randomColor of expandableColors) {
+          const success = await this.expandColorGroupSafely(randomColor);
 
-        // Try to expand this color
-        const success = await this.expandColorGroupSafely(randomColor);
+          if (success) {
+            // Recount colored squares
+            coloredSquares = this.countColoredSquares();
+            this.addDebugLog(
+              `Expanded ${randomColor}. Progress: ${coloredSquares}/${totalSquares}`
+            );
+            anyExpansion = true;
+            // Optionally break here if you want only one expansion per iteration
+            // break;
+          } else {
+            this.addDebugLog(`Failed to expand ${randomColor}, trying another color`);
+          }
+        }
 
-        if (success) {
-          // Recount colored squares
-          coloredSquares = this.countColoredSquares();
-          this.addDebugLog(`Expanded ${randomColor}. Progress: ${coloredSquares}/${totalSquares}`);
-        } else {
-          this.addDebugLog(`Failed to expand ${randomColor}, trying another color`);
+        // If no expansion was possible, break to avoid infinite loop
+        if (!anyExpansion) {
+          this.addDebugLog(
+            'No further expansions possible, breaking out of expandRandomColorsUntilFull.'
+          );
+          break;
         }
       }
 
@@ -1719,6 +1735,8 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
           }
         }
       }
+
+      this.expandRandomColorsUntilFull();
     },
   },
 });
