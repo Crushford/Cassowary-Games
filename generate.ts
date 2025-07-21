@@ -51,8 +51,77 @@ const summary: Summary = {
 };
 
 import fs from 'fs';
-import { createEmptyGrid, validatePuzzleState } from './src/stores/gridUtils.ts';
 import type { GridSquare, MarkType, Pos } from './src/types/types';
+
+// === Local utility functions moved from gridUtils.ts ===
+function createEmptyGrid(size: number): GridSquare[][] {
+  return Array(size)
+    .fill(null)
+    .map((_, row) =>
+      Array(size)
+        .fill(null)
+        .map(
+          (_, col) =>
+            ({
+              position: { row, col },
+              groupColor: undefined,
+            }) as GridSquare
+        )
+    );
+}
+
+function getQueenPositions(grid: GridSquare[][], playerMarks: MarkType[][]): Pos[] {
+  const positions: Pos[] = [];
+  for (let row = 0; row < grid.length; row++) {
+    for (let col = 0; col < grid[0].length; col++) {
+      if (playerMarks[row][col] === 'queen') {
+        positions.push({ row, col });
+      }
+    }
+  }
+  return positions;
+}
+
+function validatePuzzleState(
+  grid: GridSquare[][],
+  playerMarks: MarkType[][],
+  gridSize: number
+): {
+  queenCountValid: boolean;
+  colorGroupsValid: boolean;
+} {
+  // Count queens
+  const queens = getQueenPositions(grid, playerMarks);
+  const queenCountValid = queens.length === gridSize;
+
+  // Check color groups
+  let colorGroupsValid = true;
+
+  // Group queens by color
+  const queensByColor: Record<string, Pos[]> = {};
+  for (const queen of queens) {
+    const cell = grid[queen.row][queen.col];
+    if (cell.groupColor) {
+      if (!queensByColor[cell.groupColor]) {
+        queensByColor[cell.groupColor] = [];
+      }
+      queensByColor[cell.groupColor].push(queen);
+    }
+  }
+
+  // Every color should have exactly one queen
+  for (const color in queensByColor) {
+    if (queensByColor[color].length !== 1) {
+      colorGroupsValid = false;
+      break;
+    }
+  }
+
+  return {
+    queenCountValid,
+    colorGroupsValid,
+  };
+}
 
 function assignInitialColorsToQueens(
   grid: GridSquare[][],
