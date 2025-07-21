@@ -11,7 +11,6 @@
 // === Fixed Parameters ===
 const SIZE = 5; // grid width/height
 const RETRIES = 30; // max generation attempts
-const SEED = 12345; // deterministic RNG seed
 const BATCH = 1; // number of puzzles to generate
 const OUT = null; // null ⇒ stdout, or a file path
 
@@ -38,16 +37,6 @@ import {
   addColorOnePerRow,
   fillRemainingSingleSquares,
 } from './src/utils/colorAssignment.ts';
-
-// === Seedable RNG ===
-let _seed = SEED;
-function random() {
-  _seed = (_seed * 9301 + 49297) % 233280;
-  return _seed / 233280;
-}
-function seedRandom(s) {
-  _seed = s;
-}
 
 // === Helpers ===
 function initializeGrid() {
@@ -185,7 +174,7 @@ function placeRandomQueen(tempQueenMarks, grid) {
     const moves = getValidMoves(true);
     if (moves.length === 0) return false;
     for (let i = moves.length - 1; i > 0; i--) {
-      const j = Math.floor(random() * (i + 1));
+      const j = Math.floor(Math.random() * (i + 1));
       [moves[i], moves[j]] = [moves[j], moves[i]];
     }
     for (const { row, col } of moves) {
@@ -433,7 +422,6 @@ function experimentCreateValidBoard() {
 }
 
 function main() {
-  seedRandom(SEED);
   const results = [];
   for (let i = 0; i < BATCH; i++) {
     const { success, grid, error } = experimentCreateValidBoard();
@@ -441,7 +429,7 @@ function main() {
     if (!success) break;
   }
   const output = {
-    params: { size: SIZE, retries: RETRIES, seed: SEED, batch: BATCH },
+    params: { size: SIZE, retries: RETRIES, batch: BATCH },
     summary,
     puzzles: results.map((r) => r.grid),
     errors: results.filter((r) => !r.success).map((r) => r.error),
