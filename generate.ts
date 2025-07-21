@@ -629,6 +629,63 @@ function getColorGroupSizes(grid: GridSquare[][]): { [key: string]: number } {
   return colorCounts;
 }
 
+function countColoredSquares(grid: GridSquare[][]): number {
+  let count = 0;
+  forEveryCell(grid.length, (row, col) => {
+    if (grid[row][col].groupColor) count++;
+  });
+  return count;
+}
+
+function isValidPosition(row: number, col: number): boolean {
+  return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
+}
+
+function eliminateConstrainedLinesForExpansion(
+  grid: GridSquare[][],
+  isColumn: boolean
+): Array<{ row: number; col: number; responsibleColors: string[] }> {
+  const colorToAxisMap = new Map();
+  forEveryCell(SIZE, (row, col) => {
+    const color = grid[row][col].groupColor;
+    if (color) {
+      const coord = isColumn ? col : row;
+      if (!colorToAxisMap.has(color)) colorToAxisMap.set(color, new Set());
+      colorToAxisMap.get(color).add(coord);
+    }
+  });
+
+  const axisSetToColors = new Map();
+  for (const [color, axisSet] of colorToAxisMap.entries()) {
+    const key = Array.from(axisSet).sort().join(',');
+    if (!axisSetToColors.has(key)) axisSetToColors.set(key, new Set());
+    axisSetToColors.get(key).add(color);
+  }
+
+  const blockedSquares: Array<{ row: number; col: number; responsibleColors: string[] }> = [];
+  for (const [axisKey, allowedColors] of axisSetToColors.entries()) {
+    if (allowedColors.size < 2) continue;
+    const axisValues = axisKey.split(',').map(Number);
+    for (const primaryIndex of axisValues) {
+      for (let secondaryIndex = 0; secondaryIndex < SIZE; secondaryIndex++) {
+        const row = isColumn ? secondaryIndex : primaryIndex;
+        const col = isColumn ? primaryIndex : secondaryIndex;
+        const squareColor = grid[row][col].groupColor;
+        const isUnmarked = !squareColor;
+        const isOutsideAllowedColors = !squareColor || !allowedColors.has(squareColor);
+        if (isUnmarked && isOutsideAllowedColors) {
+          blockedSquares.push({
+            row,
+            col,
+            responsibleColors: Array.from(allowedColors),
+          });
+        }
+      }
+    }
+  }
+  return blockedSquares;
+}
+
 function printDebugState(state: GeneratorState, errorMsg?: string) {
   console.error('--- Debug State ---');
   if (errorMsg) console.error('Error:', errorMsg);
@@ -668,6 +725,66 @@ function dumpMarks(marks: MarkType[][]) {
   );
 }
 
+function expandIntoBlockedSquares(state: GeneratorState): void {
+  clearAutoTestMarks(state);
+
+  // Keep expanding eligible blocked squares until no more can be expanded or board is full
+  let keepExpanding = true;
+  while (keepExpanding) {
+    keepExpanding = false;
+    // Recompute blocked squares after each expansion
+    const blockedSquares = [
+      ...eliminateConstrainedLinesForExpansion(state.grid, false),
+      ...eliminateConstrainedLinesForExpansion(state.grid, true),
+    ];
+    // If board is full, stop
+    const totalSquares = SIZE * SIZE;
+    const coloredSquares = countColoredSquares(state.grid);
+    if (coloredSquares === totalSquares) {
+      console.log('Board is now full after expansions.');
+      break;
+    }
+    for (const { row, col, responsibleColors } of blockedSquares) {
+      const currentColor = state.grid[row][col].groupColor;
+      if (currentColor) continue; // Skip already colored squares
+      const directions = [
+        { dr: 1, dc: 0 },
+        { dr: -1, dc: 0 },
+        { dr: 0, dc: 1 },
+        { dr: 0, dc: -1 },
+      ];
+      for (const { dr, dc } of directions) {
+        const nRow = row + dr;
+        const nCol = col + dc;
+        if (!isValidPosition(nRow, nCol)) continue;
+        const neighborColor = state.grid[nRow][nCol].groupColor;
+        if (neighborColor && !responsibleColors.includes(neighborColor)) {
+          // Expand this color into the blocked square
+          state.grid[row][col].groupColor = neighborColor;
+          console.log(
+            `Expanded color ${neighborColor} from (${nRow}, ${nCol}) into blocked square (${row}, ${col})`
+          );
+          keepExpanding = true;
+          break; // Only expand one color per blocked square per iteration
+        }
+      }
+    }
+  }
+
+  runAllSolverSteps(state);
+
+  // Validate that Step 5 actually filled the board
+  const totalSquares = SIZE * SIZE;
+  const coloredSquares = countColoredSquares(state.grid);
+  if (coloredSquares < totalSquares) {
+    console.log(
+      `Step 5 warning: Board not fully filled. ${coloredSquares}/${totalSquares} squares colored.`
+    );
+  } else {
+    console.log(`Step 5 complete: Board fully filled (${coloredSquares}/${totalSquares} squares)`);
+  }
+}
+
 function experimentCreateValidBoard() {
   const state = initializeGrid();
   const diagnosticsPerAttempt: { iterations: number; flags: number; marks: string }[] = [];
@@ -692,6 +809,9 @@ function experimentCreateValidBoard() {
       expandColorGridSafely(state);
       validateGroupSizes(state.grid, 3);
       console.log('Step 4 complete');
+
+      // Step 5: Expand into blocked squares until board is full
+      expandIntoBlockedSquares(state);
 
       try {
         validateSolvableAndFull(state);
