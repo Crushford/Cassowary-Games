@@ -121,6 +121,150 @@ export class PuzzleDatabase {
   }
 
   /**
+   * Rotate a grid 90 degrees clockwise
+   */
+  private rotateGrid90Degrees(grid: GridSquare[][]): GridSquare[][] {
+    const size = grid.length;
+    const rotated = Array(size)
+      .fill(null)
+      .map(() => Array(size).fill(null));
+
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        // Rotate 90 degrees clockwise: (row, col) -> (col, size-1-row)
+        const newRow = col;
+        const newCol = size - 1 - row;
+        rotated[newRow][newCol] = {
+          ...grid[row][col],
+          position: { row: newRow, col: newCol },
+        };
+      }
+    }
+
+    return rotated;
+  }
+
+  /**
+   * Mirror a grid horizontally
+   */
+  private mirrorGridHorizontally(grid: GridSquare[][]): GridSquare[][] {
+    const size = grid.length;
+    const mirrored = Array(size)
+      .fill(null)
+      .map(() => Array(size).fill(null));
+
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        // Mirror horizontally: (row, col) -> (row, size-1-col)
+        const newRow = row;
+        const newCol = size - 1 - col;
+        mirrored[newRow][newCol] = {
+          ...grid[row][col],
+          position: { row: newRow, col: newCol },
+        };
+      }
+    }
+
+    return mirrored;
+  }
+
+  /**
+   * Mirror a grid vertically
+   */
+  private mirrorGridVertically(grid: GridSquare[][]): GridSquare[][] {
+    const size = grid.length;
+    const mirrored = Array(size)
+      .fill(null)
+      .map(() => Array(size).fill(null));
+
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        // Mirror vertically: (row, col) -> (size-1-row, col)
+        const newRow = size - 1 - row;
+        const newCol = col;
+        mirrored[newRow][newCol] = {
+          ...grid[row][col],
+          position: { row: newRow, col: newCol },
+        };
+      }
+    }
+
+    return mirrored;
+  }
+
+  /**
+   * Generate all 16 variants of a puzzle (4 rotations + mirrors for each)
+   */
+  private generateAllVariants(grid: GridSquare[][]): GridSquare[][][] {
+    // Original puzzle (0° rotation)
+    const original = grid;
+
+    // Horizontal mirror of original
+    const originalH = this.mirrorGridHorizontally(original);
+
+    // Vertical mirror of original
+    const originalV = this.mirrorGridVertically(original);
+
+    // Both mirrors of original
+    const originalHV = this.mirrorGridVertically(this.mirrorGridHorizontally(original));
+
+    // 90 degree rotation
+    const rotation90 = this.rotateGrid90Degrees(grid);
+
+    // Horizontal mirror of 90° rotation
+    const rotation90H = this.mirrorGridHorizontally(rotation90);
+
+    // Vertical mirror of 90° rotation
+    const rotation90V = this.mirrorGridVertically(rotation90);
+
+    // Both mirrors of 90° rotation
+    const rotation90HV = this.mirrorGridVertically(this.mirrorGridHorizontally(rotation90));
+
+    // 180 degree rotation
+    const rotation180 = this.rotateGrid90Degrees(rotation90);
+
+    // Horizontal mirror of 180° rotation
+    const rotation180H = this.mirrorGridHorizontally(rotation180);
+
+    // Vertical mirror of 180° rotation
+    const rotation180V = this.mirrorGridVertically(rotation180);
+
+    // Both mirrors of 180° rotation
+    const rotation180HV = this.mirrorGridVertically(this.mirrorGridHorizontally(rotation180));
+
+    // 270 degree rotation
+    const rotation270 = this.rotateGrid90Degrees(rotation180);
+
+    // Horizontal mirror of 270° rotation
+    const rotation270H = this.mirrorGridHorizontally(rotation270);
+
+    // Vertical mirror of 270° rotation
+    const rotation270V = this.mirrorGridVertically(rotation270);
+
+    // Both mirrors of 270° rotation
+    const rotation270HV = this.mirrorGridVertically(this.mirrorGridHorizontally(rotation270));
+
+    return [
+      original,
+      originalH,
+      originalV,
+      originalHV,
+      rotation90,
+      rotation90H,
+      rotation90V,
+      rotation90HV,
+      rotation180,
+      rotation180H,
+      rotation180V,
+      rotation180HV,
+      rotation270,
+      rotation270H,
+      rotation270V,
+      rotation270HV,
+    ];
+  }
+
+  /**
    * Check if a puzzle is a duplicate
    */
   private isDuplicate(puzzle: { layout: string; queens: string }): boolean {
@@ -132,35 +276,50 @@ export class PuzzleDatabase {
   // === Public API ===
 
   /**
-   * Add a puzzle to the database
-   * Returns true if added, false if duplicate
+   * Add a puzzle to the database (including all 4 rotations)
+   * Returns true if any new puzzles were added, false if all were duplicates
    */
   addPuzzle(grid: GridSquare[][]): boolean {
-    const encoded = this.encodePuzzle(grid);
+    const variants: GridSquare[][][] = this.generateAllVariants(grid);
+    const baseId = this.generateNextId();
+    const suffixes = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    let addedCount = 0;
 
-    // Check for duplicates
-    if (this.isDuplicate(encoded)) {
-      console.log('Puzzle already exists, skipping save.');
-      return false;
+    for (let i = 0; i < variants.length; i++) {
+      const variant = variants[i];
+      const encoded = this.encodePuzzle(variant);
+
+      // Check for duplicates
+      if (this.isDuplicate(encoded)) {
+        console.log(`Variant ${suffixes[i]} already exists, skipping.`);
+        continue;
+      }
+
+      // Generate ID with suffix
+      const id = `${baseId}-${suffixes[i]}`;
+
+      // Create puzzle entry
+      const puzzle: PuzzleStringFormat = {
+        id,
+        layout: encoded.layout,
+        queens: encoded.queens,
+        createdAt: new Date().toISOString(),
+      };
+
+      this.puzzles.push(puzzle);
+      console.log(`Added puzzle ${id} to database`);
+      addedCount++;
     }
 
-    // Generate unique ID
-    const id = this.generateNextId();
-
-    // Create puzzle entry
-    const puzzle: PuzzleStringFormat = {
-      id,
-      layout: encoded.layout,
-      queens: encoded.queens,
-      createdAt: new Date().toISOString(),
-    };
-
-    this.puzzles.push(puzzle);
-    console.log(`Added puzzle ${id} to database`);
-
-    // Save to file
-    this.save();
-    return true;
+    if (addedCount > 0) {
+      // Save to file
+      this.save();
+      console.log(`Added ${addedCount} new puzzle variants to database`);
+      return true;
+    } else {
+      console.log('All variants already exist, no new puzzles added.');
+      return false;
+    }
   }
 
   /**
