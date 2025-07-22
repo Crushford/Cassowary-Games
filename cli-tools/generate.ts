@@ -510,7 +510,9 @@ function placeLastFreeQueens(state: GeneratorState) {
     }
   });
   for (const [color, positions] of colorGroups.entries()) {
-    let unflagged = positions.filter(({ row, col }) => state.autoTestMarks[row][col] !== 'flag');
+    let unflagged = positions.filter(
+      ({ row, col }: { row: number; col: number }) => state.autoTestMarks[row][col] !== 'flag'
+    );
     if (unflagged.length === 1) {
       const { row, col } = unflagged[0];
       placeQueen(state, row, col);
@@ -568,7 +570,11 @@ function flagBlockingSquares(state: GeneratorState) {
     });
     let colorGroupBlocked = false;
     for (const positions of colorGroups.values()) {
-      if (positions.every(({ row, col }) => simulatedMarks[row][col] === 'flag')) {
+      if (
+        positions.every(
+          ({ row, col }: { row: number; col: number }) => simulatedMarks[row][col] === 'flag'
+        )
+      ) {
         colorGroupBlocked = true;
         break;
       }
@@ -838,7 +844,8 @@ function experimentCreateValidBoard() {
       // 4) Prepare for next retry: clear auto-test marks, then loop
       clearAutoTestMarks(state);
     } catch (err) {
-      printDebugState(state, err && err.message ? err.message : String(err));
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      printDebugState(state, errorMessage);
       throw err;
     }
   }
