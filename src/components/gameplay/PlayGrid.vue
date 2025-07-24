@@ -60,9 +60,9 @@ onMounted(() => {
 
 function getCellImage(cell: { groupColor?: string }) {
   if (cell.groupColor) {
-    return `/assets/ant-next-colors/${cell.groupColor}.png`;
+    return `/assets/ant-nest-colors/${cell.groupColor}.png`;
   }
-  return '/assets/ant-next-colors/cell-background.png';
+  return '/assets/ant-nest-colors/cell-background.png';
 }
 
 function shouldShowQueen(row: number, col: number): boolean {
