@@ -65,9 +65,9 @@ const summary: Summary = {
 };
 
 import fs from 'fs';
-import type { GridSquare, MarkType, Pos } from '../src/types/types';
+import type { GridSquare, MarkType, Pos, ColorName } from '../src/types/types';
 import { PuzzleDatabase } from './puzzleDatabase.ts';
-import { COLOR_PALETTE } from '../src/utils/colorPalette.ts';
+import { COLOR_PALETTE, COLOR_SYMBOLS } from '../src/utils/colorPalette.ts';
 
 const puzzleDatabase = new PuzzleDatabase('../public/puzzles.json');
 
@@ -707,7 +707,8 @@ function printDebugState(state: GeneratorState, errorMsg?: string) {
     let line = '';
     for (let col = 0; col < SIZE; col++) {
       const cell = state.grid[row][col];
-      line += (cell.groupColor ? cell.groupColor[0].toUpperCase() : '.') + ' ';
+      const colorKey = cell.groupColor || 'undefined';
+      line += COLOR_SYMBOLS[colorKey as ColorName | 'undefined'] + ' ';
     }
     console.error(line);
   }
