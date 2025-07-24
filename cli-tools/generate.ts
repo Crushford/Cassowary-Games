@@ -67,6 +67,7 @@ const summary: Summary = {
 import fs from 'fs';
 import type { GridSquare, MarkType, Pos } from '../src/types/types';
 import { PuzzleDatabase } from './puzzleDatabase.ts';
+import { COLOR_PALETTE } from '../src/utils/colorPalette.ts';
 
 const puzzleDatabase = new PuzzleDatabase('../public/puzzles.json');
 
@@ -355,9 +356,10 @@ function assignInitialColorsToState(state: GeneratorState): void {
     }
   }
 
-  // Assign unique colors to each queen
-  const palette: string[] = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
+  // Assign unique colors to each queen using colorPalette.ts
+  const palette = [...COLOR_PALETTE];
   if (queenPositions.length > palette.length) {
+    debugger;
     throw new Error(`Not enough colors for ${queenPositions.length} queens`);
   }
   queenPositions.forEach(({ row, col }) => {
