@@ -2,11 +2,12 @@
  * Puzzle Database Management
  *
  * Handles compact puzzle string format storage and retrieval.
- * Puzzles are stored in puzzles.json using efficient string encoding.
+ * Puzzles are stored in puzzles.json organized by grid size for efficient access.
  */
 
 import fs from 'fs';
-import type { GridSquare } from '../src/types/types';
+import type { GridSquare, ColorName } from '../src/types/types';
+import { COLOR_SYMBOLS } from '../src/utils/colorPalette.ts';
 
 // === Types ===
 export interface PuzzleStringFormat {
@@ -16,11 +17,12 @@ export interface PuzzleStringFormat {
   createdAt: string; // ISO timestamp when the puzzle was generated
 }
 
-// === Variant Transform System Type ===
-type CoordinateTransform = (row: number, column: number) => [number, number];
+export interface PuzzleDatabaseStructure {
+  [sizeKey: string]: PuzzleStringFormat[]; // e.g., "5x5", "6x6", "7x7"
+}
 
 export class PuzzleDatabase {
-  private puzzles: PuzzleStringFormat[] = [];
+  private puzzles: PuzzleDatabaseStructure = {};
   private readonly filePath: string;
 
   constructor(filePath: string = '../public/puzzles.json') {
@@ -37,15 +39,17 @@ export class PuzzleDatabase {
     try {
       if (fs.existsSync(this.filePath)) {
         const data = fs.readFileSync(this.filePath, 'utf8');
-        this.puzzles = JSON.parse(data) as PuzzleStringFormat[];
-        console.log(`Loaded ${this.puzzles.length} existing puzzles`);
+        this.puzzles = JSON.parse(data) as PuzzleDatabaseStructure;
+
+        const totalPuzzles = this.getTotalPuzzleCount();
+        console.log(`Loaded ${totalPuzzles} existing puzzles organized by size`);
       } else {
         console.log('Creating new puzzle database');
-        this.puzzles = [];
+        this.puzzles = {};
       }
     } catch (error) {
       console.warn(`Error loading puzzles: ${error}. Creating new database.`);
-      this.puzzles = [];
+      this.puzzles = {};
     }
   }
 
@@ -56,7 +60,8 @@ export class PuzzleDatabase {
     try {
       const json = JSON.stringify(this.puzzles, null, 2);
       fs.writeFileSync(this.filePath, json);
-      console.log(`Saved ${this.puzzles.length} puzzles to database`);
+      const totalPuzzles = this.getTotalPuzzleCount();
+      console.log(`Saved ${totalPuzzles} puzzles to database`);
     } catch (error) {
       console.error(`Error saving puzzles: ${error}`);
       throw error;
@@ -64,15 +69,27 @@ export class PuzzleDatabase {
   }
 
   /**
+   * Get total number of puzzles across all sizes
+   */
+  private getTotalPuzzleCount(): number {
+    return Object.values(this.puzzles).reduce(
+      (total, sizePuzzles) => total + sizePuzzles.length,
+      0
+    );
+  }
+
+  /**
    * Generate next unique ID
    */
   private generateNextId(): string {
-    if (this.puzzles.length === 0) {
+    const allPuzzles = this.getAllPuzzles();
+
+    if (allPuzzles.length === 0) {
       return 'pz-0001';
     }
 
     // Extract numeric suffixes from existing IDs
-    const numericSuffixes = this.puzzles
+    const numericSuffixes = allPuzzles
       .map((p) => p.id)
       .filter((id) => id.startsWith('pz-'))
       .map((id) => {
@@ -96,10 +113,6 @@ export class PuzzleDatabase {
     let layout = '';
     let queens = '';
 
-    // Create color mapping for this puzzle
-    const colorToLetter = new Map<string, string>();
-    let nextLetter = 'A';
-
     for (let row = 0; row < size; row++) {
       for (let column = 0; column < size; column++) {
         const cell = grid[row][column];
@@ -107,42 +120,16 @@ export class PuzzleDatabase {
         // Encode queen position
         queens += cell.isSolutionQueen ? 'Q' : '.';
 
-        // Encode color
+        // Encode color using COLOR_SYMBOLS mapping
         if (cell.groupColor) {
-          if (!colorToLetter.has(cell.groupColor)) {
-            colorToLetter.set(cell.groupColor, nextLetter);
-            nextLetter = String.fromCharCode(nextLetter.charCodeAt(0) + 1);
-          }
-          layout += colorToLetter.get(cell.groupColor);
+          layout += COLOR_SYMBOLS[cell.groupColor as ColorName];
         } else {
-          layout += '.'; // No color assigned
+          layout += COLOR_SYMBOLS['undefined'];
         }
       }
     }
 
     return { layout, queens };
-  }
-
-  // === Variant Transform System (Refactored) ===
-
-  private transformGrid(
-    originalGrid: GridSquare[][],
-    transform: CoordinateTransform
-  ): GridSquare[][] {
-    const gridSize = originalGrid.length;
-    const newGrid = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
-
-    for (let row = 0; row < gridSize; row++) {
-      for (let column = 0; column < gridSize; column++) {
-        const [newRow, newColumn] = transform(row, column);
-        newGrid[newRow][newColumn] = {
-          ...originalGrid[row][column],
-          position: { row: newRow, col: newColumn },
-        };
-      }
-    }
-
-    return newGrid;
   }
 
   /**
@@ -208,15 +195,6 @@ export class PuzzleDatabase {
     ];
   }
 
-  /**
-   * Check if a puzzle is a duplicate
-   */
-  private isDuplicate(puzzle: { layout: string; queens: string }): boolean {
-    return this.puzzles.some(
-      (existing) => existing.layout === puzzle.layout && existing.queens === puzzle.queens
-    );
-  }
-
   // === Public API ===
 
   /**
@@ -234,8 +212,13 @@ export class PuzzleDatabase {
       const [variant, suffix] = variants[i];
       const encoded = this.encodePuzzle(variant);
 
-      // Check for duplicates
-      const duplicate = this.puzzles.find(
+      // Determine grid size for the puzzle
+      const size = grid.length;
+      const sizeKey = `${size}x${size}`;
+
+      // Check for duplicates within the same size
+      const puzzlesOfSameSize = this.puzzles[sizeKey] || [];
+      const duplicate = puzzlesOfSameSize.find(
         (existing) => existing.layout === encoded.layout && existing.queens === encoded.queens
       );
       if (duplicate) {
@@ -258,7 +241,10 @@ export class PuzzleDatabase {
         createdAt: new Date().toISOString(),
       };
 
-      this.puzzles.push(puzzle);
+      if (!this.puzzles[sizeKey]) {
+        this.puzzles[sizeKey] = [];
+      }
+      this.puzzles[sizeKey].push(puzzle);
       console.log(`[DEBUG] Added puzzle ${id} to database`);
       addedCount++;
     }
@@ -280,14 +266,20 @@ export class PuzzleDatabase {
    * Get all puzzles
    */
   getAllPuzzles(): PuzzleStringFormat[] {
-    return [...this.puzzles];
+    return Object.values(this.puzzles).flat();
   }
 
   /**
    * Get puzzle by ID
    */
   getPuzzle(id: string): PuzzleStringFormat | undefined {
-    return this.puzzles.find((p) => p.id === id);
+    for (const sizeGroup of Object.values(this.puzzles)) {
+      const puzzle = sizeGroup.find((p) => p.id === id);
+      if (puzzle) {
+        return puzzle;
+      }
+    }
+    return undefined;
   }
 
   /**
@@ -295,14 +287,20 @@ export class PuzzleDatabase {
    * Returns true if deleted, false if not found
    */
   deletePuzzle(id: string): boolean {
-    const index = this.puzzles.findIndex((p) => p.id === id);
-    if (index === -1) {
+    let deleted = false;
+    for (const sizeGroup of Object.values(this.puzzles)) {
+      const index = sizeGroup.findIndex((p) => p.id === id);
+      if (index !== -1) {
+        sizeGroup.splice(index, 1);
+        deleted = true;
+        console.log(`Deleted puzzle ${id} from database`);
+        break; // Found and deleted, no need to check other sizes
+      }
+    }
+    if (!deleted) {
       console.log(`Puzzle ${id} not found in database`);
       return false;
     }
-
-    this.puzzles.splice(index, 1);
-    console.log(`Deleted puzzle ${id} from database`);
     this.save();
     return true;
   }
@@ -316,7 +314,8 @@ export class PuzzleDatabase {
     uniqueLayouts: number;
     dateRange?: { start: string; end: string };
   } {
-    if (this.puzzles.length === 0) {
+    const totalPuzzles = this.getTotalPuzzleCount();
+    if (totalPuzzles === 0) {
       return {
         totalPuzzles: 0,
         gridSizes: [],
@@ -324,13 +323,21 @@ export class PuzzleDatabase {
       };
     }
 
-    const gridSizes = this.puzzles.map((p) => Math.sqrt(p.layout.length));
+    const gridSizes = Object.keys(this.puzzles).map((key) => {
+      const sizeMatch = key.match(/(\d+)x(\d+)/);
+      if (sizeMatch) {
+        return parseInt(sizeMatch[1], 10);
+      }
+      return 0; // Should not happen if keys are consistent
+    });
     const uniqueSizes = [...new Set(gridSizes)];
-    const uniqueLayouts = new Set(this.puzzles.map((p) => p.layout)).size;
+    const uniqueLayouts = new Set(this.getAllPuzzles().map((p) => p.layout)).size;
 
     let dateRange: { start: string; end: string } | undefined;
-    if (this.puzzles.length > 1) {
-      const dates = this.puzzles.map((p) => new Date(p.createdAt)).sort();
+    if (this.getAllPuzzles().length > 1) {
+      const dates = this.getAllPuzzles()
+        .map((p) => new Date(p.createdAt))
+        .sort();
       dateRange = {
         start: dates[0].toISOString(),
         end: dates[dates.length - 1].toISOString(),
@@ -338,7 +345,7 @@ export class PuzzleDatabase {
     }
 
     return {
-      totalPuzzles: this.puzzles.length,
+      totalPuzzles: this.getTotalPuzzleCount(),
       gridSizes: uniqueSizes,
       uniqueLayouts,
       dateRange,
@@ -371,22 +378,28 @@ export class PuzzleDatabase {
    */
   listPuzzles(): void {
     console.log('\n=== Puzzle Database ===');
-    console.log(`Total puzzles: ${this.puzzles.length}`);
+    const totalPuzzles = this.getTotalPuzzleCount();
+    console.log(`Total puzzles: ${totalPuzzles}`);
 
-    if (this.puzzles.length === 0) {
+    if (totalPuzzles === 0) {
       console.log('No puzzles in database');
       return;
     }
 
     console.log('\nPuzzles:');
-    this.puzzles.forEach((puzzle, index) => {
-      const gridSize = Math.sqrt(puzzle.layout.length);
-      console.log(`${index + 1}. ${puzzle.id}`);
-      console.log(`   Created: ${puzzle.createdAt}`);
-      console.log(`   Grid size: ${gridSize}x${gridSize}`);
-      console.log(`   Layout: ${puzzle.layout}`);
-      console.log(`   Queens: ${puzzle.queens}`);
-      console.log('');
+    Object.entries(this.puzzles).forEach(([sizeKey, puzzles]) => {
+      const size = sizeKey.match(/(\d+)x(\d+)/);
+      if (size) {
+        const gridSize = parseInt(size[1], 10);
+        console.log(`\nGrid Size: ${gridSize}x${gridSize}`);
+        puzzles.forEach((puzzle, index) => {
+          console.log(`${index + 1}. ${puzzle.id}`);
+          console.log(`   Created: ${puzzle.createdAt}`);
+          console.log(`   Layout: ${puzzle.layout}`);
+          console.log(`   Queens: ${puzzle.queens}`);
+          console.log('');
+        });
+      }
     });
   }
 
@@ -409,5 +422,47 @@ export class PuzzleDatabase {
     if (stats.dateRange) {
       console.log(`Date range: ${stats.dateRange.start} to ${stats.dateRange.end}`);
     }
+  }
+
+  // === Size-based Access Methods ===
+
+  /**
+   * Get all available grid sizes
+   */
+  getAvailableSizes(): number[] {
+    return Object.keys(this.puzzles)
+      .map((key) => {
+        const sizeMatch = key.match(/(\d+)x(\d+)/);
+        return sizeMatch ? parseInt(sizeMatch[1], 10) : 0;
+      })
+      .filter((size) => size > 0)
+      .sort((a, b) => a - b);
+  }
+
+  /**
+   * Get all puzzles for a specific grid size
+   */
+  getPuzzlesBySize(size: number): PuzzleStringFormat[] {
+    const sizeKey = `${size}x${size}`;
+    return this.puzzles[sizeKey] || [];
+  }
+
+  /**
+   * Get a random puzzle for a specific grid size
+   */
+  getRandomPuzzleBySize(size: number): PuzzleStringFormat | undefined {
+    const puzzles = this.getPuzzlesBySize(size);
+    if (puzzles.length === 0) {
+      return undefined;
+    }
+    const randomIndex = Math.floor(Math.random() * puzzles.length);
+    return puzzles[randomIndex];
+  }
+
+  /**
+   * Get puzzle count for a specific grid size
+   */
+  getPuzzleCountBySize(size: number): number {
+    return this.getPuzzlesBySize(size).length;
   }
 }

@@ -99,6 +99,8 @@ export interface GameState extends BaseState {
     totalSteps: number;
     isInterrupted: boolean;
   };
+  puzzleDatabase: any;
+  currentPuzzleIndex: number;
 }
 
 // Level builder-specific state

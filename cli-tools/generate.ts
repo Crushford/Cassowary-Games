@@ -65,8 +65,9 @@ const summary: Summary = {
 };
 
 import fs from 'fs';
-import type { GridSquare, MarkType, Pos } from '../src/types/types';
+import type { GridSquare, MarkType, Pos, ColorName } from '../src/types/types';
 import { PuzzleDatabase } from './puzzleDatabase.ts';
+import { COLOR_PALETTE, COLOR_SYMBOLS } from '../src/utils/colorPalette.ts';
 
 const puzzleDatabase = new PuzzleDatabase('../public/puzzles.json');
 
@@ -355,9 +356,10 @@ function assignInitialColorsToState(state: GeneratorState): void {
     }
   }
 
-  // Assign unique colors to each queen
-  const palette: string[] = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
+  // Assign unique colors to each queen using colorPalette.ts
+  const palette = [...COLOR_PALETTE];
   if (queenPositions.length > palette.length) {
+    debugger;
     throw new Error(`Not enough colors for ${queenPositions.length} queens`);
   }
   queenPositions.forEach(({ row, col }) => {
@@ -455,11 +457,37 @@ function placeQueen(state: GeneratorState, row: number, col: number): void {
     for (let c = 0; c < SIZE; c++) {
       if (state.autoTestMarks[r][c] === null) {
         if (!isValidMoveWithMarks(r, c, state.autoTestMarks, state.grid)) {
-          state.autoTestMarks[r][c] = 'flag';
+          placeFlag(
+            state,
+            r,
+            c,
+            'placeQueen blocked moves',
+            `blocked by queen at (${row}, ${col})`
+          );
         }
       }
     }
   }
+}
+
+// Function to place a flag with validation and context
+function placeFlag(
+  state: GeneratorState,
+  row: number,
+  col: number,
+  context: string,
+  reason?: string
+): void {
+  // Validate that we're not flagging a solution queen
+  if (state.grid[row][col].isSolutionQueen) {
+    const errorMsg = `Attempted to flag solution queen at (${row}, ${col}) in ${context}`;
+    const reasonMsg = reason ? ` - Reason: ${reason}` : '';
+    throw new Error(errorMsg + reasonMsg);
+  }
+
+  // Place the flag
+  state.autoTestMarks[row][col] = 'flag';
+  summary.flagsPlaced++;
 }
 
 function runAllSolverSteps(state: GeneratorState): void {
@@ -495,8 +523,7 @@ function countAutoTestFlags(state: GeneratorState) {
 function flagSquaresWithoutColorGroups(state: GeneratorState) {
   forEveryCell(SIZE, (row, col) => {
     if (!state.grid[row][col].groupColor && state.autoTestMarks[row][col] === null) {
-      state.autoTestMarks[row][col] = 'flag';
-      summary.flagsPlaced++;
+      placeFlag(state, row, col, 'flagSquaresWithoutColorGroups', 'square has no color group');
     }
   });
 }
@@ -580,8 +607,12 @@ function flagBlockingSquares(state: GeneratorState) {
       }
     }
     if (rowFullyBlocked || colFullyBlocked || colorGroupBlocked) {
-      state.autoTestMarks[row][col] = 'flag';
-      summary.flagsPlaced++;
+      const reasons = [];
+      if (rowFullyBlocked) reasons.push('row fully blocked');
+      if (colFullyBlocked) reasons.push('column fully blocked');
+      if (colorGroupBlocked) reasons.push('color group blocked');
+      const reason = reasons.join(', ');
+      placeFlag(state, row, col, 'flagBlockingSquares', reason);
     }
   });
 }
@@ -592,6 +623,7 @@ function eliminateConstrainedColumns(state: GeneratorState) {
   eliminateConstrainedLines(state, true);
 }
 function eliminateConstrainedLines(state: GeneratorState, isColumn: boolean) {
+  // step 1: map each color to the set of rows or columns (depending on axis) where it has unmarked squares
   const colorToAxisMap = new Map();
   forEveryCell(SIZE, (row, col) => {
     const color = state.grid[row][col].groupColor;
@@ -602,15 +634,25 @@ function eliminateConstrainedLines(state: GeneratorState, isColumn: boolean) {
       colorToAxisMap.get(color).add(coord);
     }
   });
+  // Step 2: Invert the map to find sets of colors that share the same row or column sets
+
   const axisSetToColors = new Map();
   for (const [color, axisSet] of colorToAxisMap.entries()) {
+    // make a string of the columns or rows that a color group have to see if it matches any other color group
     const key = Array.from(axisSet).sort().join(',');
     if (!axisSetToColors.has(key)) axisSetToColors.set(key, new Set());
     axisSetToColors.get(key).add(color);
   }
+  if (axisSetToColors.size === 0) return;
   for (const [axisKey, allowedColors] of axisSetToColors.entries()) {
+    //no point in flagging if there is only 1 color in the row or column as it must be a solution queen
     if (allowedColors.size < 2) continue;
+
     const axisValues = axisKey.split(',').map(Number);
+
+    // there should be the same number of colors as the number of rows or columns in the axis
+    if (axisValues !== allowedColors.size) continue;
+
     for (const primaryIndex of axisValues) {
       for (let secondaryIndex = 0; secondaryIndex < SIZE; secondaryIndex++) {
         const row = isColumn ? secondaryIndex : primaryIndex;
@@ -620,8 +662,13 @@ function eliminateConstrainedLines(state: GeneratorState, isColumn: boolean) {
         const isUnmarked = mark === null;
         const isOutsideAllowedColors = !squareColor || !allowedColors.has(squareColor);
         if (isUnmarked && isOutsideAllowedColors) {
-          state.autoTestMarks[row][col] = 'flag';
-          summary.flagsPlaced++;
+          //temp
+          if (state.grid[row][col].isSolutionQueen) {
+            debugger;
+          }
+
+          const reason = `outside allowed colors for ${Array.from(allowedColors).join(',')} on ${isColumn ? 'column' : 'row'} ${primaryIndex}`;
+          placeFlag(state, row, col, 'eliminateConstrainedLines', reason);
         }
       }
     }
@@ -705,7 +752,8 @@ function printDebugState(state: GeneratorState, errorMsg?: string) {
     let line = '';
     for (let col = 0; col < SIZE; col++) {
       const cell = state.grid[row][col];
-      line += (cell.groupColor ? cell.groupColor[0].toUpperCase() : '.') + ' ';
+      const colorKey = cell.groupColor || 'undefined';
+      line += COLOR_SYMBOLS[colorKey as ColorName | 'undefined'] + ' ';
     }
     console.error(line);
   }
@@ -722,6 +770,7 @@ function printDebugState(state: GeneratorState, errorMsg?: string) {
   const groupSizes = getColorGroupSizes(state.grid);
   console.error('Color group sizes:', groupSizes);
   console.error('------------------');
+  dumpMarks(state.autoTestMarks);
 }
 
 function dumpMarks(marks: MarkType[][]) {

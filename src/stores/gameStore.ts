@@ -1,5 +1,13 @@
 import { defineStore } from 'pinia';
-import type { GridSquare, Pos, GameState, AttemptResult, MarkType } from '../types/types';
+import type {
+  GridSquare,
+  Pos,
+  GameState,
+  AttemptResult,
+  MarkType,
+  ColorName,
+} from '../types/types';
+import { COLOR_SYMBOLS } from '../utils/colorPalette';
 // Import utility functions
 import {
   createEmptyGrid,
@@ -31,8 +39,19 @@ import {
 import { bruteForceSolver } from './bruteForceSolver';
 
 // Constants
-const DEFAULT_GRID_SIZE = 4;
+const DEFAULT_GRID_SIZE = 5;
 const MAX_HEALTH = 3; // Maximum health points
+
+// Create reverse mapping from symbols to color names
+const SYMBOL_TO_COLOR: Record<string, ColorName> = Object.entries(COLOR_SYMBOLS).reduce(
+  (acc, [color, symbol]) => {
+    if (color !== 'undefined') {
+      acc[symbol] = color as ColorName;
+    }
+    return acc;
+  },
+  {} as Record<string, ColorName>
+);
 
 export const useGameStore = defineStore('game', {
   state: (): GameState => ({
@@ -75,6 +94,9 @@ export const useGameStore = defineStore('game', {
       totalSteps: 5, // Assuming there are 5 main steps
       isInterrupted: false,
     },
+    // Add new state for puzzle database
+    puzzleDatabase: null as any,
+    currentPuzzleIndex: 0, // Track current puzzle index for sequential loading
   }),
 
   getters: {
@@ -314,8 +336,8 @@ export const useGameStore = defineStore('game', {
         } else {
           // Normal game mode - prepare for next level
           this.currentLevel++;
-          // Generate new puzzle for next level
-          this.findValidPuzzleWithSteps();
+          // Load new puzzle for next level
+          this.loadRandomPuzzle();
         }
       }
     },
@@ -973,6 +995,127 @@ export const useGameStore = defineStore('game', {
       }
     },
 
+    // Load puzzle database from puzzles.json
+    async loadPuzzleDatabase() {
+      try {
+        const response = await fetch('/puzzles.json');
+        if (!response.ok) {
+          throw new Error(`Failed to load puzzles.json: ${response.status}`);
+        }
+        //filter for id ending in -0
+        const data = await response.json();
+        // The data is an object with keys like "5x5", each containing an array of puzzles
+        // Filter each size's puzzles to only include those with id ending in -0
+        this.puzzleDatabase = {};
+        for (const [sizeKey, puzzles] of Object.entries(data)) {
+          this.puzzleDatabase[sizeKey] = (puzzles as any[]).filter((puzzle: any) =>
+            puzzle.id.endsWith('-0')
+          );
+        }
+        this.addDebugLog('Puzzle database loaded successfully');
+        return true;
+      } catch (error) {
+        console.error('Error loading puzzle database:', error);
+        this.addDebugLog(
+          `Error loading puzzle database: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+        return false;
+      }
+    },
+
+    // Parse puzzle data from JSON format
+    parsePuzzleData(puzzleData: any) {
+      const gridSize = Math.sqrt(puzzleData.layout.length);
+      const layout = puzzleData.layout;
+      const queens = puzzleData.queens;
+
+      // Initialize grid
+      this.initializeGrid();
+
+      // Parse layout (color groups) using SYMBOL_TO_COLOR mapping
+      for (let i = 0; i < layout.length; i++) {
+        const row = Math.floor(i / gridSize);
+        const col = i % gridSize;
+        const symbol = layout[i];
+
+        if (symbol !== '.') {
+          const colorName = SYMBOL_TO_COLOR[symbol];
+          if (colorName) {
+            this.grid[row][col].groupColor = colorName;
+          } else {
+            this.addDebugLog(`Warning: Unknown color symbol '${symbol}' at position ${i}`);
+          }
+        }
+      }
+
+      // Parse queens (solution)
+      for (let i = 0; i < queens.length; i++) {
+        const row = Math.floor(i / gridSize);
+        const col = i % gridSize;
+
+        if (queens[i] === 'Q') {
+          this.grid[row][col].isSolutionQueen = true;
+        }
+      }
+
+      this.addDebugLog(`Puzzle ${puzzleData.id} loaded: ${gridSize}x${gridSize} grid`);
+    },
+
+    // Get the next puzzle in sequence for the current grid size
+    getNextPuzzle() {
+      if (!this.puzzleDatabase) {
+        this.addDebugLog('No puzzle database loaded');
+        return null;
+      }
+
+      const sizeKey = `${this.gridSize}x${this.gridSize}`;
+      const puzzlesForSize = this.puzzleDatabase[sizeKey];
+
+      if (!puzzlesForSize || puzzlesForSize.length === 0) {
+        this.addDebugLog(`No puzzles found for size ${sizeKey}`);
+        return null;
+      }
+
+      // Get the next puzzle in sequence, wrapping around to the beginning
+      const selectedPuzzle = puzzlesForSize[this.currentPuzzleIndex % puzzlesForSize.length];
+
+      // Increment the index for next time
+      this.currentPuzzleIndex++;
+
+      this.addDebugLog(
+        `Selected puzzle ${selectedPuzzle.id} (${this.currentPuzzleIndex}/${puzzlesForSize.length}) from ${puzzlesForSize.length} available puzzles`
+      );
+      return selectedPuzzle;
+    },
+
+    // New method to load a random puzzle from the database
+    async loadRandomPuzzle() {
+      // Load database if not already loaded
+      if (!this.puzzleDatabase) {
+        const success = await this.loadPuzzleDatabase();
+        if (!success) {
+          this.setError('Failed to load puzzle database');
+          return false;
+        }
+      }
+
+      // Get the next puzzle in sequence
+      const puzzle = this.getNextPuzzle();
+      if (!puzzle) {
+        this.setError(`No puzzles available for ${this.gridSize}x${this.gridSize} grid`);
+        return false;
+      }
+
+      // Parse and load the puzzle
+      this.parsePuzzleData(puzzle);
+
+      // Clear player markings for the new game
+      this.clearMarkers();
+
+      this.addDebugLog(`✅ Successfully loaded puzzle ${puzzle.id}`);
+      return true;
+    },
+
     // New method to generate and validate a puzzle that can be solved with steps
     async findValidPuzzleWithSteps(maxAttempts = 1000) {
       if (this.puzzleGenerationState.isGenerating) return;
@@ -980,85 +1123,32 @@ export const useGameStore = defineStore('game', {
       this.puzzleGenerationState.isGenerating = true;
       this.puzzleGenerationState.currentStep = null;
       this.puzzleGenerationState.completedSteps = 0;
-      this.puzzleGenerationState.totalSteps = 5; // Assuming there are 5 main steps
+      this.puzzleGenerationState.totalSteps = 1; // Only one step now - loading puzzle
       this.puzzleGenerationState.isInterrupted = false;
 
       try {
         // Reset logs for clarity
         this.debugLogs = [];
 
-        // Use grid size for required queens - they should match
-        const requiredQueens = this.gridSize;
+        this.addDebugLog(`Loading a random puzzle for ${this.gridSize}x${this.gridSize} board...`);
 
-        this.addDebugLog(
-          `Starting to generate a step-solvable puzzle for ${this.gridSize}x${this.gridSize} board...`
-        );
+        // Load a random puzzle from the database
+        const success = await this.loadRandomPuzzle();
 
-        let attemptSummary: AttemptResult[] = [];
-
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          if (this.puzzleGenerationState.isInterrupted) {
-            this.addDebugLog('Process interrupted');
-            break;
-          }
-
-          try {
-            // Only log every 5th attempt for brevity
-            const shouldLogDetail = attempt % 5 === 1 || attempt === maxAttempts;
-
-            if (shouldLogDetail) {
-              this.addDebugLog(`\nAttempt ${attempt}/${maxAttempts}`);
-            }
-
-            // Generate a candidate puzzle
-            this.generateCandidatePuzzle(attempt, requiredQueens);
-
-            // Run brute force solver to verify puzzle has exactly one solution
-            const numSolutions = this.bruteForceSolver(2); // Look for up to 2 solutions
-            this.puzzleGenerationState.completedSteps++;
-
-            if (numSolutions === 1) {
-              this.addDebugLog(
-                `\n✅ SUCCESS: Step-solvable puzzle generated after ${attempt} attempts`
-              );
-
-              // Clear player markings for the new game mode
-              this.clearMarkers();
-
-              // Add summary statistics
-              this.summarizeAttempts(attemptSummary);
-
-              return true;
-            } else {
-              if (shouldLogDetail) {
-                this.addDebugLog(`Skipping: Found ${numSolutions} solutions, need exactly 1`);
-              }
-            }
-
-            // Continue to next attempt if no valid puzzle was generated
-            continue;
-          } catch (attemptError) {
-            // Log error for this specific attempt but continue with next
-            console.error(`Error in attempt ${attempt}:`, attemptError);
-            const errorMessage =
-              attemptError instanceof Error ? attemptError.message : 'Unknown error';
-            this.addDebugLog(`❌ Error in attempt ${attempt}: ${errorMessage}`);
-          }
+        if (success) {
+          this.puzzleGenerationState.completedSteps = 1;
+          this.addDebugLog('✅ SUCCESS: Random puzzle loaded successfully');
+          return true;
+        } else {
+          this.addDebugLog('❌ FAILED: Could not load a puzzle from database');
+          this.setError('Failed to load a puzzle from database');
+          return false;
         }
-
-        // Generate failure summary with statistics
-        this.addDebugLog(
-          `\n❌ FAILED: Could not generate step-solvable puzzle after ${maxAttempts} attempts`
-        );
-        this.summarizeAttempts(attemptSummary);
-
-        this.setError(`Failed to generate a step-solvable puzzle after ${maxAttempts} attempts`);
-        return false;
       } catch (error: unknown) {
-        console.error('Critical error in puzzle generation:', error);
+        console.error('Critical error in puzzle loading:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         this.addDebugLog(`❌ CRITICAL ERROR: ${errorMessage}`);
-        this.setError(`Error generating puzzle: ${errorMessage}`);
+        this.setError(`Error loading puzzle: ${errorMessage}`);
         return false;
       } finally {
         this.puzzleGenerationState.isGenerating = false;
@@ -1396,7 +1486,7 @@ export const useGameStore = defineStore('game', {
       this.bites = 0;
       this.isComplete = false;
       this.initializeGrid();
-      this.findValidPuzzleWithSteps();
+      this.loadRandomPuzzle();
     },
 
     // Add method to load high score from localStorage
@@ -1421,7 +1511,7 @@ export const useGameStore = defineStore('game', {
       this.bites = 0;
       this.isComplete = false;
       this.initializeGrid();
-      this.findValidPuzzleWithSteps();
+      this.loadRandomPuzzle();
     },
 
     // Add method to load current day from localStorage
@@ -1446,7 +1536,7 @@ export const useGameStore = defineStore('game', {
       this.bites = 0;
       this.isComplete = false;
       this.initializeGrid();
-      this.findValidPuzzleWithSteps();
+      this.loadRandomPuzzle();
       this.saveCurrentDay();
     },
 
@@ -1456,7 +1546,7 @@ export const useGameStore = defineStore('game', {
       this.bites = 0;
       this.isComplete = false;
       this.initializeGrid();
-      this.findValidPuzzleWithSteps();
+      this.loadRandomPuzzle();
     },
 
     resetTraining() {
@@ -1467,7 +1557,7 @@ export const useGameStore = defineStore('game', {
       this.bites = 0;
       this.isComplete = false;
       this.initializeGrid();
-      this.findValidPuzzleWithSteps();
+      this.loadRandomPuzzle();
       this.saveCurrentDay();
     },
   },
