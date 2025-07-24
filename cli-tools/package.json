@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "generate": "ts-node generate.ts",
-    "puzzle-db": "ts-node puzzleDb.ts",
+    "puzzle-db": "ts-node puzzleDbCli.ts",
     "build": "tsc",
     "test": "echo \"No tests specified\" && exit 0"
   },
