@@ -20,9 +20,6 @@ export interface PuzzleDatabaseStructure {
   [sizeKey: string]: PuzzleStringFormat[]; // e.g., "5x5", "6x6", "7x7"
 }
 
-// === Variant Transform System Type ===
-type CoordinateTransform = (row: number, column: number) => [number, number];
-
 export class PuzzleDatabase {
   private puzzles: PuzzleDatabaseStructure = {};
   private readonly filePath: string;
@@ -142,28 +139,6 @@ export class PuzzleDatabase {
     return { layout, queens };
   }
 
-  // === Variant Transform System (Refactored) ===
-
-  private transformGrid(
-    originalGrid: GridSquare[][],
-    transform: CoordinateTransform
-  ): GridSquare[][] {
-    const gridSize = originalGrid.length;
-    const newGrid = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
-
-    for (let row = 0; row < gridSize; row++) {
-      for (let column = 0; column < gridSize; column++) {
-        const [newRow, newColumn] = transform(row, column);
-        newGrid[newRow][newColumn] = {
-          ...originalGrid[row][column],
-          position: { row: newRow, col: newColumn },
-        };
-      }
-    }
-
-    return newGrid;
-  }
-
   /**
    * Generate all 16 variants of a puzzle (4 rotations + mirrors for each), with descriptive suffixes
    * Returns: Array of [variantGrid, suffix]
@@ -225,18 +200,6 @@ export class PuzzleDatabase {
       ...variantsFor(rot180, '180'),
       ...variantsFor(rot270, '270'),
     ];
-  }
-
-  /**
-   * Check if a puzzle is a duplicate within the same size
-   */
-  private isDuplicate(puzzle: { layout: string; queens: string }, size: number): boolean {
-    const sizeKey = `${size}x${size}`;
-    const puzzlesOfSameSize = this.puzzles[sizeKey] || [];
-
-    return puzzlesOfSameSize.some(
-      (existing) => existing.layout === puzzle.layout && existing.queens === puzzle.queens
-    );
   }
 
   // === Public API ===
