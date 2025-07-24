@@ -6,7 +6,8 @@
  */
 
 import fs from 'fs';
-import type { GridSquare } from '../src/types/types';
+import type { GridSquare, ColorName } from '../src/types/types';
+import { COLOR_SYMBOLS } from '../src/utils/colorPalette.ts';
 
 // === Types ===
 export interface PuzzleStringFormat {
@@ -112,10 +113,6 @@ export class PuzzleDatabase {
     let layout = '';
     let queens = '';
 
-    // Create color mapping for this puzzle
-    const colorToLetter = new Map<string, string>();
-    let nextLetter = 'A';
-
     for (let row = 0; row < size; row++) {
       for (let column = 0; column < size; column++) {
         const cell = grid[row][column];
@@ -123,15 +120,11 @@ export class PuzzleDatabase {
         // Encode queen position
         queens += cell.isSolutionQueen ? 'Q' : '.';
 
-        // Encode color
+        // Encode color using COLOR_SYMBOLS mapping
         if (cell.groupColor) {
-          if (!colorToLetter.has(cell.groupColor)) {
-            colorToLetter.set(cell.groupColor, nextLetter);
-            nextLetter = String.fromCharCode(nextLetter.charCodeAt(0) + 1);
-          }
-          layout += colorToLetter.get(cell.groupColor);
+          layout += COLOR_SYMBOLS[cell.groupColor as ColorName];
         } else {
-          layout += '.'; // No color assigned
+          layout += COLOR_SYMBOLS['undefined'];
         }
       }
     }
