@@ -42,6 +42,7 @@ interface Summary {
   };
   notFullCount: number;
   unsolvableCount: number;
+  groupSizeValidationFailures: number;
 }
 
 const SIZE = 5; // grid width/height
@@ -62,6 +63,7 @@ const summary: Summary = {
   },
   notFullCount: 0,
   unsolvableCount: 0,
+  groupSizeValidationFailures: 0,
 };
 
 import fs from 'fs';
@@ -98,9 +100,9 @@ function validateUniqueQueenColors(grid: GridSquare[][], expectedCount: number):
 }
 
 /**
- * Throws if any color group does not contain exactly expectedSize cells.
+ * Returns true if all color groups contain exactly expectedSize cells, false otherwise.
  */
-function validateGroupSizes(grid: GridSquare[][], expectedSize: number): void {
+function validateGroupSizes(grid: GridSquare[][], expectedSize: number): boolean {
   const counts: Record<string, number> = {};
   for (const row of grid) {
     for (const cell of row) {
@@ -112,20 +114,12 @@ function validateGroupSizes(grid: GridSquare[][], expectedSize: number): void {
   const mismatches = Object.entries(counts).filter(([, n]) => n !== expectedSize);
   if (mismatches.length) {
     const details = mismatches.map(([c, n]) => `${c}:${n}`).join(', ');
-    debugger;
-    throw new Error(`Expected groups of size ${expectedSize}, but got ${details}`);
+    console.log(
+      `Group size validation failed: Expected groups of size ${expectedSize}, but got ${details}`
+    );
+    return false;
   }
-}
-
-/**
- * Throws if any cell on the grid remains un-colored.
- */
-function validateAllColored(grid: GridSquare[][]): void {
-  for (const row of grid) {
-    for (const cell of row) {
-      if (!cell.groupColor) throw new Error('Found an uncolored cell');
-    }
-  }
+  return true;
 }
 
 const isSolvable = (state: GeneratorState): boolean => {
@@ -916,7 +910,10 @@ function experimentCreateValidBoard() {
       }
       // Step 3: Expand color groups (should be 2 squares per color)
       expandColorGridSafely(state);
-      validateGroupSizes(state.grid, 2);
+      if (!validateGroupSizes(state.grid, 2)) {
+        summary.groupSizeValidationFailures++;
+        throw new Error('Group size validation failed at step 3');
+      }
       console.log('Step 3 complete');
       if (!isSolvable(state)) {
         debugger;
@@ -924,7 +921,10 @@ function experimentCreateValidBoard() {
       }
       // Step 4: Expand color groups again (should be 3 squares per color)
       expandColorGridSafely(state);
-      validateGroupSizes(state.grid, 3);
+      if (!validateGroupSizes(state.grid, 3)) {
+        summary.groupSizeValidationFailures++;
+        throw new Error('Group size validation failed at step 4');
+      }
       console.log('Step 4 complete');
       if (!isSolvable(state)) {
         debugger;
@@ -958,17 +958,30 @@ function experimentCreateValidBoard() {
       clearAutoTestMarks(state);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
+
+      // Check if this is a group size validation failure
+      if (errorMessage.includes('Group size validation failed')) {
+        console.log(`Attempt ${attempt}: ${errorMessage} - retrying...`);
+        // Reset the grid for the next attempt
+        state.grid = createEmptyGrid(SIZE);
+        state.autoTestMarks = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+        continue; // Skip to next attempt
+      }
+
+      // For other errors, log and re-throw
       printDebugState(state, errorMessage);
       throw err;
     }
   }
   // After RETRIES exhausted, return failure with diagnostics
   const reason =
-    summary.notFullCount === summary.attempts
-      ? 'All attempts produced incomplete grids'
-      : summary.unsolvableCount === summary.attempts
-        ? 'All attempts produced full but invalid grids'
-        : 'Mixed failures';
+    summary.groupSizeValidationFailures === summary.attempts
+      ? 'All attempts failed group size validation'
+      : summary.notFullCount === summary.attempts
+        ? 'All attempts produced incomplete grids'
+        : summary.unsolvableCount === summary.attempts
+          ? 'All attempts produced full but invalid grids'
+          : 'Mixed failures';
   return { success: false, error: reason, diagnostics: diagnosticsPerAttempt };
 }
 
