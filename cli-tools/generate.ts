@@ -46,8 +46,8 @@ interface Summary {
   expandColorGridFailures: number;
 }
 
-const SIZE = 6; // grid width/height
-const RETRIES = 3000; // max generation attempts
+const SIZE = 8; // grid width/height
+const RETRIES = 30000; // max generation attempts
 const BATCH = 1; // number of puzzles to generate
 const OUT: string | null = null; // null ⇒ stdout, or a file path
 
