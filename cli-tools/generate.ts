@@ -43,10 +43,11 @@ interface Summary {
   notFullCount: number;
   unsolvableCount: number;
   groupSizeValidationFailures: number;
+  expandColorGridFailures: number;
 }
 
-const SIZE = 5; // grid width/height
-const RETRIES = 30; // max generation attempts
+const SIZE = 8; // grid width/height
+const RETRIES = 30000; // max generation attempts
 const BATCH = 1; // number of puzzles to generate
 const OUT: string | null = null; // null ⇒ stdout, or a file path
 
@@ -64,6 +65,7 @@ const summary: Summary = {
   notFullCount: 0,
   unsolvableCount: 0,
   groupSizeValidationFailures: 0,
+  expandColorGridFailures: 0,
 };
 
 import fs from 'fs';
@@ -420,7 +422,7 @@ function expandColorGroupsInPlace(grid: GridSquare[][]): void {
   }
 }
 
-function expandColorGridSafely(state: GeneratorState): void {
+function expandColorGridSafely(state: GeneratorState): boolean {
   const backup = cloneGrid(state.grid);
   let solvable = false;
   let attempts = 0;
@@ -439,12 +441,14 @@ function expandColorGridSafely(state: GeneratorState): void {
     }
   }
   if (!solvable) {
-    throw new Error(`expandColorGridSafely: Failed after ${attempts} attempt(s).`);
+    console.log(`expandColorGridSafely: Failed after ${attempts} attempts`);
+    return false;
   }
 
   console.log(`expandColorGridSafely: Success after ${attempts} attempts`);
   printDebugState(state);
   dumpMarks(state.autoTestMarks);
+  return true;
 }
 
 // === Auto-test solver loop and helpers ===
@@ -909,7 +913,10 @@ function experimentCreateValidBoard() {
         throw new Error('Board is not fully solvable');
       }
       // Step 3: Expand color groups (should be 2 squares per color)
-      expandColorGridSafely(state);
+      if (!expandColorGridSafely(state)) {
+        summary.expandColorGridFailures++;
+        throw new Error('expandColorGridSafely failed after maximum attempts');
+      }
       if (!validateGroupSizes(state.grid, 2)) {
         summary.groupSizeValidationFailures++;
         throw new Error('Group size validation failed at step 3');
@@ -920,7 +927,10 @@ function experimentCreateValidBoard() {
         throw new Error('Board is not fully solvable');
       }
       // Step 4: Expand color groups again (should be 3 squares per color)
-      expandColorGridSafely(state);
+      if (!expandColorGridSafely(state)) {
+        summary.expandColorGridFailures++;
+        throw new Error('expandColorGridSafely failed at step 4');
+      }
       if (!validateGroupSizes(state.grid, 3)) {
         summary.groupSizeValidationFailures++;
         throw new Error('Group size validation failed at step 4');
@@ -968,6 +978,15 @@ function experimentCreateValidBoard() {
         continue; // Skip to next attempt
       }
 
+      // Check if this is an expandColorGridSafely failure
+      if (errorMessage.includes('expandColorGridSafely failed')) {
+        console.log(`Attempt ${attempt}: ${errorMessage} - retrying...`);
+        // Reset the grid for the next attempt
+        state.grid = createEmptyGrid(SIZE);
+        state.autoTestMarks = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+        continue; // Skip to next attempt
+      }
+
       // For other errors, log and re-throw
       printDebugState(state, errorMessage);
       throw err;
@@ -977,11 +996,13 @@ function experimentCreateValidBoard() {
   const reason =
     summary.groupSizeValidationFailures === summary.attempts
       ? 'All attempts failed group size validation'
-      : summary.notFullCount === summary.attempts
-        ? 'All attempts produced incomplete grids'
-        : summary.unsolvableCount === summary.attempts
-          ? 'All attempts produced full but invalid grids'
-          : 'Mixed failures';
+      : summary.expandColorGridFailures === summary.attempts
+        ? 'All attempts failed expandColorGridSafely'
+        : summary.notFullCount === summary.attempts
+          ? 'All attempts produced incomplete grids'
+          : summary.unsolvableCount === summary.attempts
+            ? 'All attempts produced full but invalid grids'
+            : 'Mixed failures';
   return { success: false, error: reason, diagnostics: diagnosticsPerAttempt };
 }
 

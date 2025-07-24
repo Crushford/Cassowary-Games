@@ -39,7 +39,7 @@ import {
 import { bruteForceSolver } from './bruteForceSolver';
 
 // Constants
-const DEFAULT_GRID_SIZE = 5;
+const DEFAULT_GRID_SIZE = 4;
 const MAX_HEALTH = 3; // Maximum health points
 
 // Create reverse mapping from symbols to color names
