@@ -55,6 +55,7 @@ export const useGameStore = defineStore('game', {
       selectedTool: null,
       selectedColor: null,
       diggingMode: 'auto', // 'auto', 'dig', or 'flag'
+      autoFlagging: false, // Automatically flag blocked squares when placing queens
     },
 
     // Game progress
@@ -1301,7 +1302,7 @@ export const useGameStore = defineStore('game', {
       // Update source-of-truth directly (no toggle logic here)
       this.playerMarks[row][col] = mark;
 
-      if (mark === 'queen') {
+      if (mark === 'queen' && this.uiState.autoFlagging) {
         this.updateBlockedMoves();
       }
     },

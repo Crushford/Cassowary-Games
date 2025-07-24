@@ -21,9 +21,7 @@
       <BaseButton
         @click="
           () => {
-            levelBuilderStore.clearQueensAndFlags();
-            levelBuilderStore.placeAllQueens();
-            levelBuilderStore.assignInitialColorsToQueens();
+            levelBuilderStore.placeQueensAndAssignColors();
           }
         "
         class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
@@ -45,6 +43,13 @@
         class="bg-green-600 hover:bg-green-500 text-lg font-medium"
       >
         🔁 Generate & Expand with Retry
+      </BaseButton>
+
+      <BaseButton
+        @click="levelBuilderStore.experimentCreateValidBoard()"
+        class="bg-pink-600 hover:bg-pink-500 text-lg font-medium"
+      >
+        Experiment: Create Valid Board
       </BaseButton>
     </div>
 

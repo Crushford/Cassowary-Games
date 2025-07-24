@@ -1,0 +1,21 @@
+{
+  "name": "honey-pot-ant-cli-tools",
+  "version": "1.0.0",
+  "description": "CLI tools for honey pot ant puzzle generation and database management",
+  "type": "module",
+  "scripts": {
+    "generate": "ts-node generate.ts",
+    "puzzle-db": "ts-node puzzleDbCli.ts"
+  },
+  "dependencies": {
+    "fs": "^0.0.1-security"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

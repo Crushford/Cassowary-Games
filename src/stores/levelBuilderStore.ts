@@ -52,6 +52,7 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       selectedTool: null,
       selectedColor: null,
       diggingMode: 'auto',
+      autoFlagging: false,
     },
 
     // Game progress
@@ -557,6 +558,12 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       return true;
     },
 
+    placeQueensAndAssignColors() {
+      this.clearQueensAndFlags();
+      this.placeAllQueens();
+      this.assignInitialColorsToQueens();
+    },
+
     setError(message: string | null) {
       this.errorMessage = message;
     },
@@ -1045,30 +1052,30 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
 
         // Step 0: Flag squares without color groups
         if (this.flagSquaresWithoutColorGroups()) {
-          this.addDebugLog('Flagged squares without color groups');
+          if (this.verboseMode) this.addDebugLog('Flagged squares without color groups');
           this.placeLastFreeQueens();
         }
 
         // Step 1: Place last free queens
         if (this.placeLastFreeQueens()) {
-          this.addDebugLog('Placed last free queens');
+          if (this.verboseMode) this.addDebugLog('Placed last free queens');
         }
 
         // Step 2: Flag blocking squares
         if (this.flagBlockingSquares()) {
-          this.addDebugLog('Flagged blocking squares');
+          if (this.verboseMode) this.addDebugLog('Flagged blocking squares');
           this.placeLastFreeQueens();
         }
 
         // Step 3: Eliminate constrained rows
         if (this.eliminateConstrainedRows()) {
-          this.addDebugLog('Eliminated constrained rows');
+          if (this.verboseMode) this.addDebugLog('Eliminated constrained rows');
           this.placeLastFreeQueens();
         }
 
         // Step 4: Eliminate constrained columns
         if (this.eliminateConstrainedColumns()) {
-          this.addDebugLog('Eliminated constrained columns');
+          if (this.verboseMode) this.addDebugLog('Eliminated constrained columns');
           this.placeLastFreeQueens();
         }
 
@@ -1233,16 +1240,17 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       return placedAny;
     },
 
-    eliminateConstrainedLines(isColumn: boolean = false): boolean {
+    eliminateConstrainedLines(
+      isColumn: boolean = false
+    ): Array<{ row: number; col: number; responsibleColors: string[] }> {
       this.placeLastFreeQueens();
 
       const axis = isColumn ? 'column' : 'row';
-      const axisIndex = isColumn ? 'col' : 'row';
-      const traverseIndex = isColumn ? 'row' : 'col';
       const gridSize = this.gridSize;
 
       this.addDebugLog(`Step 3: Eliminating constrained ${axis}s`);
       let placedAny = false;
+      const flaggedSquares: Array<{ row: number; col: number; responsibleColors: string[] }> = [];
 
       // Step 1: Map each color to the set of rows or columns (depending on axis) where it has unmarked squares
       const colorToAxisMap = new Map<string, Set<number>>();
@@ -1295,23 +1303,28 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
               this.addDebugLog(
                 `Flagged square at (${row}, ${col}) in constrained ${axis} group [${axisKey}] for colors: ${Array.from(allowedColors).join(', ')}`
               );
+              flaggedSquares.push({
+                row,
+                col,
+                responsibleColors: Array.from(allowedColors),
+              });
               placedAny = true;
             }
           }
         }
       }
 
-      return placedAny;
+      return flaggedSquares;
     },
 
     // Step 3: Eliminate constrained rows
     eliminateConstrainedRows(): boolean {
-      return this.eliminateConstrainedLines(false);
+      return this.eliminateConstrainedLines(false).length > 0;
     },
 
     // Step 4: Eliminate constrained columns
     eliminateConstrainedColumns(): boolean {
-      return this.eliminateConstrainedLines(true);
+      return this.eliminateConstrainedLines(true).length > 0;
     },
 
     setColorToolActive(active: boolean) {
@@ -1594,18 +1607,34 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
           return;
         }
 
+        // Track if any expansion happened this iteration
+        let anyExpansion = false;
+
         // Pick a random color from expandable colors
-        const randomColor = expandableColors[Math.floor(Math.random() * expandableColors.length)];
+        // Try all expandable colors in this iteration
+        for (const randomColor of expandableColors) {
+          const success = await this.expandColorGroupSafely(randomColor);
 
-        // Try to expand this color
-        const success = await this.expandColorGroupSafely(randomColor);
+          if (success) {
+            // Recount colored squares
+            coloredSquares = this.countColoredSquares();
+            this.addDebugLog(
+              `Expanded ${randomColor}. Progress: ${coloredSquares}/${totalSquares}`
+            );
+            anyExpansion = true;
+            // Optionally break here if you want only one expansion per iteration
+            // break;
+          } else {
+            this.addDebugLog(`Failed to expand ${randomColor}, trying another color`);
+          }
+        }
 
-        if (success) {
-          // Recount colored squares
-          coloredSquares = this.countColoredSquares();
-          this.addDebugLog(`Expanded ${randomColor}. Progress: ${coloredSquares}/${totalSquares}`);
-        } else {
-          this.addDebugLog(`Failed to expand ${randomColor}, trying another color`);
+        // If no expansion was possible, break to avoid infinite loop
+        if (!anyExpansion) {
+          this.addDebugLog(
+            'No further expansions possible, breaking out of expandRandomColorsUntilFull.'
+          );
+          return;
         }
       }
 
@@ -1615,6 +1644,114 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
         this.addDebugLog(
           `Could not fill the board completely. Final progress: ${coloredSquares}/${totalSquares}`
         );
+      }
+    },
+
+    // Experimental: Create a valid board by expanding color groups step by step, reverting if unsolvable
+    async experimentCreateValidBoard() {
+      this.addDebugLog('Experiment: Creating valid board');
+      // Step 1: Place queens and assign initial colors
+      this.placeQueensAndAssignColors();
+
+      const expandColorGridSafely = async () => {
+        const savedGridState = JSON.parse(JSON.stringify(this.grid));
+        let solvable = false;
+        let attempts = 0;
+        const prevVerbose = this.verboseMode;
+        this.verboseMode = false; // Suppress debug logs from runAllSolverSteps
+        while (!solvable && attempts < 10) {
+          // Prevent infinite loop
+          attempts++;
+          this.expandColorGroups();
+          this.runAllSolverSteps();
+          solvable = this.autoTestMarks.every((row) =>
+            row.every((cell) => cell !== null && cell !== 'invalid')
+          );
+
+          if (!solvable) {
+            this.grid = JSON.parse(JSON.stringify(savedGridState));
+          }
+        }
+        this.verboseMode = prevVerbose; // Restore previous verbose mode
+        if (solvable) {
+          this.addDebugLog(`expandColorGridSafely: Success after ${attempts} attempt(s).`);
+        } else {
+          this.addDebugLog(`expandColorGridSafely: Failed after ${attempts} attempt(s).`);
+        }
+        return solvable;
+      };
+
+      await expandColorGridSafely();
+      this.addDebugLog('Attempting to expand color groups to 3 squares each (second pass)');
+      await expandColorGridSafely();
+      this.addDebugLog(
+        'Second pass complete. Each color group should now have 3 squares if possible and board should be solvable.'
+      );
+
+      this.clearAutoTestMarks();
+
+      // New logic: keep expanding eligible blocked squares until no more can be expanded or board is full
+      let keepExpanding = true;
+      while (keepExpanding) {
+        keepExpanding = false;
+        // Recompute blocked squares after each expansion
+        const blockedSquares = [
+          ...this.eliminateConstrainedLines(false),
+          ...this.eliminateConstrainedLines(true),
+        ];
+        // If board is full, stop
+        const totalSquares = this.gridSize * this.gridSize;
+        const coloredSquares = this.countColoredSquares();
+        if (coloredSquares === totalSquares) {
+          this.addDebugLog('Board is now full after expansions.');
+          break;
+        }
+        for (const { row, col, responsibleColors } of blockedSquares) {
+          const currentColor = this.grid[row][col].groupColor;
+          if (currentColor) continue; // Skip already colored squares
+          const directions = [
+            { dr: 1, dc: 0 },
+            { dr: -1, dc: 0 },
+            { dr: 0, dc: 1 },
+            { dr: 0, dc: -1 },
+          ];
+          for (const { dr, dc } of directions) {
+            const nRow = row + dr;
+            const nCol = col + dc;
+            if (!this.isValidPosition(nRow, nCol)) continue;
+            const neighborColor = this.grid[nRow][nCol].groupColor;
+            if (
+              neighborColor &&
+              !responsibleColors.includes(neighborColor) &&
+              this.grid[row][col].groupColor !== neighborColor
+            ) {
+              // Expand this color into the blocked square
+              this.setSquareColor(row, col, neighborColor);
+              this.addDebugLog(
+                `Expanded color ${neighborColor} from (${nRow}, ${nCol}) into blocked square (${row}, ${col})`
+              );
+              keepExpanding = true;
+            }
+          }
+        }
+      }
+
+      await this.expandRandomColorsUntilFull();
+
+      await this.runAllSolverSteps();
+
+      const isSolvable = this.autoTestMarks.every((row) =>
+        row.every((cell) => cell !== null && cell !== 'invalid')
+      );
+      const isFull = this.grid.every((row) => row.every((cell) => cell.groupColor));
+      if (isSolvable && isFull) {
+        this.addDebugLog('Board is solvable and full.');
+        return this.grid;
+      } else {
+        this.addDebugLog(
+          `Board is not solvable or not full. isSolvable: ${isSolvable}, isFull: ${isFull}`
+        );
+        return null;
       }
     },
   },
