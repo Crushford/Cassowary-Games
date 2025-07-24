@@ -100,6 +100,7 @@ export interface GameState extends BaseState {
     isInterrupted: boolean;
   };
   puzzleDatabase: any;
+  currentPuzzleIndex: number;
 }
 
 // Level builder-specific state

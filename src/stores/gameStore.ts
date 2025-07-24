@@ -39,7 +39,7 @@ import {
 import { bruteForceSolver } from './bruteForceSolver';
 
 // Constants
-const DEFAULT_GRID_SIZE = 4;
+const DEFAULT_GRID_SIZE = 5;
 const MAX_HEALTH = 3; // Maximum health points
 
 // Create reverse mapping from symbols to color names
@@ -96,6 +96,7 @@ export const useGameStore = defineStore('game', {
     },
     // Add new state for puzzle database
     puzzleDatabase: null as any,
+    currentPuzzleIndex: 0, // Track current puzzle index for sequential loading
   }),
 
   getters: {
@@ -1001,7 +1002,16 @@ export const useGameStore = defineStore('game', {
         if (!response.ok) {
           throw new Error(`Failed to load puzzles.json: ${response.status}`);
         }
-        this.puzzleDatabase = await response.json();
+        //filter for id ending in -0
+        const data = await response.json();
+        // The data is an object with keys like "5x5", each containing an array of puzzles
+        // Filter each size's puzzles to only include those with id ending in -0
+        this.puzzleDatabase = {};
+        for (const [sizeKey, puzzles] of Object.entries(data)) {
+          this.puzzleDatabase[sizeKey] = (puzzles as any[]).filter((puzzle: any) =>
+            puzzle.id.endsWith('-0')
+          );
+        }
         this.addDebugLog('Puzzle database loaded successfully');
         return true;
       } catch (error) {
@@ -1051,8 +1061,8 @@ export const useGameStore = defineStore('game', {
       this.addDebugLog(`Puzzle ${puzzleData.id} loaded: ${gridSize}x${gridSize} grid`);
     },
 
-    // Get a random puzzle for the current grid size
-    getRandomPuzzle() {
+    // Get the next puzzle in sequence for the current grid size
+    getNextPuzzle() {
       if (!this.puzzleDatabase) {
         this.addDebugLog('No puzzle database loaded');
         return null;
@@ -1066,12 +1076,14 @@ export const useGameStore = defineStore('game', {
         return null;
       }
 
-      // Pick a random puzzle
-      const randomIndex = Math.floor(Math.random() * puzzlesForSize.length);
-      const selectedPuzzle = puzzlesForSize[randomIndex];
+      // Get the next puzzle in sequence, wrapping around to the beginning
+      const selectedPuzzle = puzzlesForSize[this.currentPuzzleIndex % puzzlesForSize.length];
+
+      // Increment the index for next time
+      this.currentPuzzleIndex++;
 
       this.addDebugLog(
-        `Selected puzzle ${selectedPuzzle.id} from ${puzzlesForSize.length} available puzzles`
+        `Selected puzzle ${selectedPuzzle.id} (${this.currentPuzzleIndex}/${puzzlesForSize.length}) from ${puzzlesForSize.length} available puzzles`
       );
       return selectedPuzzle;
     },
@@ -1087,8 +1099,8 @@ export const useGameStore = defineStore('game', {
         }
       }
 
-      // Get a random puzzle
-      const puzzle = this.getRandomPuzzle();
+      // Get the next puzzle in sequence
+      const puzzle = this.getNextPuzzle();
       if (!puzzle) {
         this.setError(`No puzzles available for ${this.gridSize}x${this.gridSize} grid`);
         return false;
