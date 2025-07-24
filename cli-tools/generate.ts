@@ -623,6 +623,7 @@ function eliminateConstrainedColumns(state: GeneratorState) {
   eliminateConstrainedLines(state, true);
 }
 function eliminateConstrainedLines(state: GeneratorState, isColumn: boolean) {
+  // step 1: map each color to the set of rows or columns (depending on axis) where it has unmarked squares
   const colorToAxisMap = new Map();
   forEveryCell(SIZE, (row, col) => {
     const color = state.grid[row][col].groupColor;
@@ -633,15 +634,25 @@ function eliminateConstrainedLines(state: GeneratorState, isColumn: boolean) {
       colorToAxisMap.get(color).add(coord);
     }
   });
+  // Step 2: Invert the map to find sets of colors that share the same row or column sets
+
   const axisSetToColors = new Map();
   for (const [color, axisSet] of colorToAxisMap.entries()) {
+    // make a string of the columns or rows that a color group have to see if it matches any other color group
     const key = Array.from(axisSet).sort().join(',');
     if (!axisSetToColors.has(key)) axisSetToColors.set(key, new Set());
     axisSetToColors.get(key).add(color);
   }
+  if (axisSetToColors.size === 0) return;
   for (const [axisKey, allowedColors] of axisSetToColors.entries()) {
+    //no point in flagging if there is only 1 color in the row or column as it must be a solution queen
     if (allowedColors.size < 2) continue;
+
     const axisValues = axisKey.split(',').map(Number);
+
+    // there should be the same number of colors as the number of rows or columns in the axis
+    if (axisValues !== allowedColors.size) continue;
+
     for (const primaryIndex of axisValues) {
       for (let secondaryIndex = 0; secondaryIndex < SIZE; secondaryIndex++) {
         const row = isColumn ? secondaryIndex : primaryIndex;
@@ -651,6 +662,11 @@ function eliminateConstrainedLines(state: GeneratorState, isColumn: boolean) {
         const isUnmarked = mark === null;
         const isOutsideAllowedColors = !squareColor || !allowedColors.has(squareColor);
         if (isUnmarked && isOutsideAllowedColors) {
+          //temp
+          if (state.grid[row][col].isSolutionQueen) {
+            debugger;
+          }
+
           const reason = `outside allowed colors for ${Array.from(allowedColors).join(',')} on ${isColumn ? 'column' : 'row'} ${primaryIndex}`;
           placeFlag(state, row, col, 'eliminateConstrainedLines', reason);
         }
@@ -754,6 +770,7 @@ function printDebugState(state: GeneratorState, errorMsg?: string) {
   const groupSizes = getColorGroupSizes(state.grid);
   console.error('Color group sizes:', groupSizes);
   console.error('------------------');
+  dumpMarks(state.autoTestMarks);
 }
 
 function dumpMarks(marks: MarkType[][]) {
