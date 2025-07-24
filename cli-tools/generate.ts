@@ -112,6 +112,7 @@ function validateGroupSizes(grid: GridSquare[][], expectedSize: number): void {
   const mismatches = Object.entries(counts).filter(([, n]) => n !== expectedSize);
   if (mismatches.length) {
     const details = mismatches.map(([c, n]) => `${c}:${n}`).join(', ');
+    debugger;
     throw new Error(`Expected groups of size ${expectedSize}, but got ${details}`);
   }
 }
@@ -127,10 +128,23 @@ function validateAllColored(grid: GridSquare[][]): void {
   }
 }
 
+const isSolvable = (state: GeneratorState): boolean => {
+  clearAutoTestMarks(state);
+  runAllSolverSteps(state);
+  const isSolved = state.autoTestMarks.every((r) => r.every((c) => c === 'flag' || c === 'queen'));
+
+  return isSolved;
+};
+
 /**
  * Throws if the board isn't fully solvable—i.e. wrong queen count, bad coloring, or uncolored cells.
  */
 function validateSolvableAndFull(state: GeneratorState): void {
+  if (!isSolvable(state)) {
+    debugger;
+    throw new Error('Board is not fully solvable');
+  }
+
   const { queenCountValid, colorGroupsValid } = validatePuzzleState(state.grid, SIZE);
   const allColored = state.grid.every((r) => r.every((c) => !!c.groupColor));
   if (!queenCountValid || !colorGroupsValid || !allColored) {
@@ -420,11 +434,9 @@ function expandColorGridSafely(state: GeneratorState): void {
   while (!solvable && attempts < 100) {
     attempts++;
     expandColorGroupsInPlace(state.grid);
-    runAllSolverSteps(state);
 
-    solvable = state.autoTestMarks.every((row) =>
-      row.every((cell) => cell !== null && cell !== 'invalid')
-    );
+    solvable = isSolvable(state);
+
     if (!solvable) {
       // console.log(`expandColorGridSafely: Failed attempt:${attempts} attempts, reverting…`);
       // printDebugState(state);
@@ -445,6 +457,7 @@ function expandColorGridSafely(state: GeneratorState): void {
 function placeQueen(state: GeneratorState, row: number, col: number): void {
   // Validate that this is actually a solution queen
   if (!state.grid[row][col].isSolutionQueen) {
+    debugger;
     state.autoTestMarks[row][col] = 'invalid';
     throw new Error(`Attempted to place queen at (${row}, ${col}) but it's not a solution queen`);
   }
@@ -480,6 +493,7 @@ function placeFlag(
 ): void {
   // Validate that we're not flagging a solution queen
   if (state.grid[row][col].isSolutionQueen) {
+    debugger;
     const errorMsg = `Attempted to flag solution queen at (${row}, ${col}) in ${context}`;
     const reasonMsg = reason ? ` - Reason: ${reason}` : '';
     throw new Error(errorMsg + reasonMsg);
@@ -787,15 +801,24 @@ function dumpMarks(marks: MarkType[][]) {
 function expandIntoBlockedSquares(state: GeneratorState): void {
   clearAutoTestMarks(state);
 
+  // Track failed expansion attempts to avoid repeating them
+  const failedAttempts = new Set<string>(); // Format: "row,col,color"
+
   // Keep expanding eligible blocked squares until no more can be expanded or board is full
   let keepExpanding = true;
-  while (keepExpanding) {
+  let expansionCount = 0;
+  const maxExpansions = SIZE * SIZE; // Prevent infinite loops
+
+  while (keepExpanding && expansionCount < maxExpansions) {
     keepExpanding = false;
+    expansionCount++;
+
     // Recompute blocked squares after each expansion
     const blockedSquares = [
       ...eliminateConstrainedLinesForExpansion(state.grid, false),
       ...eliminateConstrainedLinesForExpansion(state.grid, true),
     ];
+
     // If board is full, stop
     const totalSquares = SIZE * SIZE;
     const coloredSquares = countColoredSquares(state.grid);
@@ -803,31 +826,58 @@ function expandIntoBlockedSquares(state: GeneratorState): void {
       console.log('Board is now full after expansions.');
       break;
     }
+
     for (const { row, col, responsibleColors } of blockedSquares) {
       const currentColor = state.grid[row][col].groupColor;
       if (currentColor) continue; // Skip already colored squares
+
       const directions = [
         { dr: 1, dc: 0 },
         { dr: -1, dc: 0 },
         { dr: 0, dc: 1 },
         { dr: 0, dc: -1 },
       ];
+
       for (const { dr, dc } of directions) {
         const nRow = row + dr;
         const nCol = col + dc;
         if (!isValidPosition(nRow, nCol)) continue;
+
         const neighborColor = state.grid[nRow][nCol].groupColor;
-        if (neighborColor && !responsibleColors.includes(neighborColor)) {
-          // Expand this color into the blocked square
-          state.grid[row][col].groupColor = neighborColor;
+        if (!neighborColor || responsibleColors.includes(neighborColor)) continue;
+
+        // Check if this specific expansion has already failed
+        const attemptKey = `${row},${col},${neighborColor}`;
+        if (failedAttempts.has(attemptKey)) continue;
+
+        // Try the expansion
+        const originalColor = state.grid[row][col].groupColor;
+        state.grid[row][col].groupColor = neighborColor;
+
+        // Check if the board is still solvable
+        const wasSolvable = isSolvable(state);
+
+        if (wasSolvable) {
+          // Expansion successful
           console.log(
             `Expanded color ${neighborColor} from (${nRow}, ${nCol}) into blocked square (${row}, ${col})`
           );
           keepExpanding = true;
           break; // Only expand one color per blocked square per iteration
+        } else {
+          // Expansion failed - revert and record the failure
+          state.grid[row][col].groupColor = originalColor;
+          failedAttempts.add(attemptKey);
+          console.log(
+            `Failed expansion: color ${neighborColor} into (${row}, ${col}) - made board unsolvable`
+          );
         }
       }
     }
+  }
+
+  if (expansionCount >= maxExpansions) {
+    console.log(`Warning: Reached maximum expansion attempts (${maxExpansions})`);
   }
 
   runAllSolverSteps(state);
@@ -839,6 +889,7 @@ function expandIntoBlockedSquares(state: GeneratorState): void {
     console.log(
       `Step 5 warning: Board not fully filled. ${coloredSquares}/${totalSquares} squares colored.`
     );
+    console.log(`Failed expansion attempts: ${failedAttempts.size}`);
   } else {
     console.log(`Step 5 complete: Board fully filled (${coloredSquares}/${totalSquares} squares)`);
   }
@@ -858,20 +909,32 @@ function experimentCreateValidBoard() {
       assignInitialColorsToState(state);
       validateUniqueQueenColors(state.grid, SIZE);
       console.log('Step 2 complete');
-
+      if (!isSolvable(state)) {
+        debugger;
+        throw new Error('Board is not fully solvable');
+      }
       // Step 3: Expand color groups (should be 2 squares per color)
       expandColorGridSafely(state);
       validateGroupSizes(state.grid, 2);
       console.log('Step 3 complete');
-
+      if (!isSolvable(state)) {
+        debugger;
+        throw new Error('Board is not fully solvable');
+      }
       // Step 4: Expand color groups again (should be 3 squares per color)
       expandColorGridSafely(state);
       validateGroupSizes(state.grid, 3);
       console.log('Step 4 complete');
-
+      if (!isSolvable(state)) {
+        debugger;
+        throw new Error('Board is not fully solvable');
+      }
       // Step 5: Expand into blocked squares until board is full
       expandIntoBlockedSquares(state);
-
+      if (!isSolvable(state)) {
+        debugger;
+        throw new Error('Board is not fully solvable');
+      }
       try {
         validateSolvableAndFull(state);
         summary.success = true;
