@@ -526,6 +526,7 @@ function clearAutoTestMarks(state: GeneratorState) {
   forEveryCell(SIZE, (row, col) => {
     state.autoTestMarks[row][col] = null;
   });
+  flagSquaresWithoutColorGroups(state);
 }
 function countAutoTestFlags(state: GeneratorState) {
   let count = 0;
