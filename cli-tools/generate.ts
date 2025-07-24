@@ -457,11 +457,37 @@ function placeQueen(state: GeneratorState, row: number, col: number): void {
     for (let c = 0; c < SIZE; c++) {
       if (state.autoTestMarks[r][c] === null) {
         if (!isValidMoveWithMarks(r, c, state.autoTestMarks, state.grid)) {
-          state.autoTestMarks[r][c] = 'flag';
+          placeFlag(
+            state,
+            r,
+            c,
+            'placeQueen blocked moves',
+            `blocked by queen at (${row}, ${col})`
+          );
         }
       }
     }
   }
+}
+
+// Function to place a flag with validation and context
+function placeFlag(
+  state: GeneratorState,
+  row: number,
+  col: number,
+  context: string,
+  reason?: string
+): void {
+  // Validate that we're not flagging a solution queen
+  if (state.grid[row][col].isSolutionQueen) {
+    const errorMsg = `Attempted to flag solution queen at (${row}, ${col}) in ${context}`;
+    const reasonMsg = reason ? ` - Reason: ${reason}` : '';
+    throw new Error(errorMsg + reasonMsg);
+  }
+
+  // Place the flag
+  state.autoTestMarks[row][col] = 'flag';
+  summary.flagsPlaced++;
 }
 
 function runAllSolverSteps(state: GeneratorState): void {
@@ -497,8 +523,7 @@ function countAutoTestFlags(state: GeneratorState) {
 function flagSquaresWithoutColorGroups(state: GeneratorState) {
   forEveryCell(SIZE, (row, col) => {
     if (!state.grid[row][col].groupColor && state.autoTestMarks[row][col] === null) {
-      state.autoTestMarks[row][col] = 'flag';
-      summary.flagsPlaced++;
+      placeFlag(state, row, col, 'flagSquaresWithoutColorGroups', 'square has no color group');
     }
   });
 }
@@ -582,8 +607,12 @@ function flagBlockingSquares(state: GeneratorState) {
       }
     }
     if (rowFullyBlocked || colFullyBlocked || colorGroupBlocked) {
-      state.autoTestMarks[row][col] = 'flag';
-      summary.flagsPlaced++;
+      const reasons = [];
+      if (rowFullyBlocked) reasons.push('row fully blocked');
+      if (colFullyBlocked) reasons.push('column fully blocked');
+      if (colorGroupBlocked) reasons.push('color group blocked');
+      const reason = reasons.join(', ');
+      placeFlag(state, row, col, 'flagBlockingSquares', reason);
     }
   });
 }
@@ -622,8 +651,8 @@ function eliminateConstrainedLines(state: GeneratorState, isColumn: boolean) {
         const isUnmarked = mark === null;
         const isOutsideAllowedColors = !squareColor || !allowedColors.has(squareColor);
         if (isUnmarked && isOutsideAllowedColors) {
-          state.autoTestMarks[row][col] = 'flag';
-          summary.flagsPlaced++;
+          const reason = `outside allowed colors for ${Array.from(allowedColors).join(',')} on ${isColumn ? 'column' : 'row'} ${primaryIndex}`;
+          placeFlag(state, row, col, 'eliminateConstrainedLines', reason);
         }
       }
     }
