@@ -16,6 +16,9 @@ export interface PuzzleStringFormat {
   createdAt: string; // ISO timestamp when the puzzle was generated
 }
 
+// === Variant Transform System Type ===
+type CoordinateTransform = (row: number, column: number) => [number, number];
+
 export class PuzzleDatabase {
   private puzzles: PuzzleStringFormat[] = [];
   private readonly filePath: string;
@@ -98,8 +101,8 @@ export class PuzzleDatabase {
     let nextLetter = 'A';
 
     for (let row = 0; row < size; row++) {
-      for (let col = 0; col < size; col++) {
-        const cell = grid[row][col];
+      for (let column = 0; column < size; column++) {
+        const cell = grid[row][column];
 
         // Encode queen position
         queens += cell.isSolutionQueen ? 'Q' : '.';
@@ -120,147 +123,88 @@ export class PuzzleDatabase {
     return { layout, queens };
   }
 
-  /**
-   * Rotate a grid 90 degrees clockwise
-   */
-  private rotateGrid90Degrees(grid: GridSquare[][]): GridSquare[][] {
-    const size = grid.length;
-    const rotated = Array(size)
-      .fill(null)
-      .map(() => Array(size).fill(null));
+  // === Variant Transform System (Refactored) ===
 
-    for (let row = 0; row < size; row++) {
-      for (let col = 0; col < size; col++) {
-        // Rotate 90 degrees clockwise: (row, col) -> (col, size-1-row)
-        const newRow = col;
-        const newCol = size - 1 - row;
-        rotated[newRow][newCol] = {
-          ...grid[row][col],
-          position: { row: newRow, col: newCol },
+  private transformGrid(
+    originalGrid: GridSquare[][],
+    transform: CoordinateTransform
+  ): GridSquare[][] {
+    const gridSize = originalGrid.length;
+    const newGrid = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
+
+    for (let row = 0; row < gridSize; row++) {
+      for (let column = 0; column < gridSize; column++) {
+        const [newRow, newColumn] = transform(row, column);
+        newGrid[newRow][newColumn] = {
+          ...originalGrid[row][column],
+          position: { row: newRow, col: newColumn },
         };
       }
     }
 
-    return rotated;
+    return newGrid;
   }
 
   /**
-   * Mirror a grid horizontally
+   * Generate all 16 variants of a puzzle (4 rotations + mirrors for each), with descriptive suffixes
+   * Returns: Array of [variantGrid, suffix]
    */
-  private mirrorGridHorizontally(grid: GridSquare[][]): GridSquare[][] {
+  private generateAllVariants(grid: GridSquare[][]): [GridSquare[][], string][] {
     const size = grid.length;
-    const mirrored = Array(size)
-      .fill(null)
-      .map(() => Array(size).fill(null));
 
-    for (let row = 0; row < size; row++) {
-      for (let col = 0; col < size; col++) {
-        // Mirror horizontally: (row, col) -> (row, size-1-col)
-        const newRow = row;
-        const newCol = size - 1 - col;
-        mirrored[newRow][newCol] = {
-          ...grid[row][col],
-          position: { row: newRow, col: newCol },
-        };
+    // Single rotate90 function
+    const rotate90 = (input: GridSquare[][]): GridSquare[][] => {
+      const newGrid = Array.from({ length: size }, () => Array(size).fill(null));
+      for (let row = 0; row < size; row++) {
+        for (let col = 0; col < size; col++) {
+          newGrid[col][size - 1 - row] = {
+            ...input[row][col],
+            position: { row: col, col: size - 1 - row },
+          };
+        }
       }
-    }
+      return newGrid;
+    };
 
-    return mirrored;
-  }
+    // Mirror functions
+    const mirrorVertical = (input: GridSquare[][]): GridSquare[][] => {
+      return input.map((row, rowIdx) =>
+        row.map((cell, colIdx) => ({
+          ...input[size - 1 - rowIdx][colIdx],
+          position: { row: rowIdx, col: colIdx },
+        }))
+      );
+    };
+    const mirrorHorizontal = (input: GridSquare[][]): GridSquare[][] => {
+      return input.map((row, rowIdx) =>
+        row.map((cell, colIdx) => ({
+          ...input[rowIdx][size - 1 - colIdx],
+          position: { row: rowIdx, col: colIdx },
+        }))
+      );
+    };
 
-  /**
-   * Mirror a grid vertically
-   */
-  private mirrorGridVertically(grid: GridSquare[][]): GridSquare[][] {
-    const size = grid.length;
-    const mirrored = Array(size)
-      .fill(null)
-      .map(() => Array(size).fill(null));
-
-    for (let row = 0; row < size; row++) {
-      for (let col = 0; col < size; col++) {
-        // Mirror vertically: (row, col) -> (size-1-row, col)
-        const newRow = size - 1 - row;
-        const newCol = col;
-        mirrored[newRow][newCol] = {
-          ...grid[row][col],
-          position: { row: newRow, col: newCol },
-        };
-      }
-    }
-
-    return mirrored;
-  }
-
-  /**
-   * Generate all 16 variants of a puzzle (4 rotations + mirrors for each)
-   */
-  private generateAllVariants(grid: GridSquare[][]): GridSquare[][][] {
-    // Original puzzle (0° rotation)
+    // Rotations
     const original = grid;
+    const rot90 = rotate90(original);
+    const rot180 = rotate90(rot90);
+    const rot270 = rotate90(rot180);
 
-    // Horizontal mirror of original
-    const originalH = this.mirrorGridHorizontally(original);
+    // Helper to generate all 4 mirror variants for a given grid and base name
+    const variantsFor = (baseGrid: GridSquare[][], baseName: string) =>
+      [
+        [baseGrid, baseName],
+        [mirrorVertical(baseGrid), baseName + 'V'],
+        [mirrorHorizontal(baseGrid), baseName + 'H'],
+        [mirrorHorizontal(mirrorVertical(baseGrid)), baseName + 'VH'],
+      ] as [GridSquare[][], string][];
 
-    // Vertical mirror of original
-    const originalV = this.mirrorGridVertically(original);
-
-    // Both mirrors of original
-    const originalHV = this.mirrorGridVertically(this.mirrorGridHorizontally(original));
-
-    // 90 degree rotation
-    const rotation90 = this.rotateGrid90Degrees(grid);
-
-    // Horizontal mirror of 90° rotation
-    const rotation90H = this.mirrorGridHorizontally(rotation90);
-
-    // Vertical mirror of 90° rotation
-    const rotation90V = this.mirrorGridVertically(rotation90);
-
-    // Both mirrors of 90° rotation
-    const rotation90HV = this.mirrorGridVertically(this.mirrorGridHorizontally(rotation90));
-
-    // 180 degree rotation
-    const rotation180 = this.rotateGrid90Degrees(rotation90);
-
-    // Horizontal mirror of 180° rotation
-    const rotation180H = this.mirrorGridHorizontally(rotation180);
-
-    // Vertical mirror of 180° rotation
-    const rotation180V = this.mirrorGridVertically(rotation180);
-
-    // Both mirrors of 180° rotation
-    const rotation180HV = this.mirrorGridVertically(this.mirrorGridHorizontally(rotation180));
-
-    // 270 degree rotation
-    const rotation270 = this.rotateGrid90Degrees(rotation180);
-
-    // Horizontal mirror of 270° rotation
-    const rotation270H = this.mirrorGridHorizontally(rotation270);
-
-    // Vertical mirror of 270° rotation
-    const rotation270V = this.mirrorGridVertically(rotation270);
-
-    // Both mirrors of 270° rotation
-    const rotation270HV = this.mirrorGridVertically(this.mirrorGridHorizontally(rotation270));
-
+    // Collect all variants
     return [
-      original,
-      originalH,
-      originalV,
-      originalHV,
-      rotation90,
-      rotation90H,
-      rotation90V,
-      rotation90HV,
-      rotation180,
-      rotation180H,
-      rotation180V,
-      rotation180HV,
-      rotation270,
-      rotation270H,
-      rotation270V,
-      rotation270HV,
+      ...variantsFor(original, '0'),
+      ...variantsFor(rot90, '90'),
+      ...variantsFor(rot180, '180'),
+      ...variantsFor(rot270, '270'),
     ];
   }
 
@@ -276,27 +220,35 @@ export class PuzzleDatabase {
   // === Public API ===
 
   /**
-   * Add a puzzle to the database (including all 4 rotations)
+   * Add a puzzle to the database (including all 16 variants)
    * Returns true if any new puzzles were added, false if all were duplicates
    */
   addPuzzle(grid: GridSquare[][]): boolean {
-    const variants: GridSquare[][][] = this.generateAllVariants(grid);
+    const variants: [GridSquare[][], string][] = this.generateAllVariants(grid);
     const baseId = this.generateNextId();
-    const suffixes = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
     let addedCount = 0;
+    let skippedCount = 0;
+    console.log(`[DEBUG] Generating ${variants.length} variants for baseId ${baseId}`);
 
     for (let i = 0; i < variants.length; i++) {
-      const variant = variants[i];
+      const [variant, suffix] = variants[i];
       const encoded = this.encodePuzzle(variant);
 
       // Check for duplicates
-      if (this.isDuplicate(encoded)) {
-        console.log(`Variant ${suffixes[i]} already exists, skipping.`);
+      const duplicate = this.puzzles.find(
+        (existing) => existing.layout === encoded.layout && existing.queens === encoded.queens
+      );
+      if (duplicate) {
+        console.log(`[DEBUG] Skipped variant ${suffix} (duplicate)`);
+        console.log(`  layout: ${encoded.layout}`);
+        console.log(`  queens: ${encoded.queens}`);
+        console.log(`  matched existing id: ${duplicate.id}`);
+        skippedCount++;
         continue;
       }
 
-      // Generate ID with suffix
-      const id = `${baseId}-${suffixes[i]}`;
+      // Generate ID with descriptive suffix
+      const id = `${baseId}-${suffix}`;
 
       // Create puzzle entry
       const puzzle: PuzzleStringFormat = {
@@ -307,9 +259,11 @@ export class PuzzleDatabase {
       };
 
       this.puzzles.push(puzzle);
-      console.log(`Added puzzle ${id} to database`);
+      console.log(`[DEBUG] Added puzzle ${id} to database`);
       addedCount++;
     }
+
+    console.log(`[DEBUG] Variants added: ${addedCount}, skipped (duplicates): ${skippedCount}`);
 
     if (addedCount > 0) {
       // Save to file
