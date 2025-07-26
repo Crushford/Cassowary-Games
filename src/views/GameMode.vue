@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, defineAsyncComponent } from 'vue';
+import { onMounted, watch, defineAsyncComponent } from 'vue';
 import { useGameStore } from '../stores/gameStore';
 import { useDialogueStore } from '../stores/dialogueStore';
 
@@ -34,6 +34,9 @@ const GameCompletionModal = defineAsyncComponent(
 const gameStore = useGameStore();
 
 onMounted(() => {
+  // Load user configuration first
+  gameStore.loadUserConfiguration();
+
   gameStore.findValidPuzzleWithSteps();
   gameStore.loadHighScore();
   gameStore.loadCurrentDay();
@@ -43,6 +46,21 @@ onMounted(() => {
     gameStore.isTrainingDay = true;
   }
 });
+
+// Watch for configuration changes and save them
+watch(
+  () => gameStore.uiState.diggingMode,
+  () => {
+    gameStore.saveUserConfiguration();
+  }
+);
+
+watch(
+  () => gameStore.uiState.autoFlagging,
+  () => {
+    gameStore.saveUserConfiguration();
+  }
+);
 
 defineOptions({
   name: 'GameMode',

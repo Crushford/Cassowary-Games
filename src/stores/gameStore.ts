@@ -42,6 +42,13 @@ import { bruteForceSolver } from './bruteForceSolver';
 const DEFAULT_GRID_SIZE = 4;
 const MAX_HEALTH = 3; // Maximum health points
 
+// Configuration keys for localStorage
+const CONFIG_KEYS = {
+  GRID_SIZE: 'honey-pot-ant-farming-grid-size',
+  DIGGING_MODE: 'honey-pot-ant-farming-digging-mode',
+  AUTO_FLAGGING: 'honey-pot-ant-farming-auto-flagging',
+} as const;
+
 // Create reverse mapping from symbols to color names
 const SYMBOL_TO_COLOR: Record<string, ColorName> = Object.entries(COLOR_SYMBOLS).reduce(
   (acc, [color, symbol]) => {
@@ -203,6 +210,49 @@ export const useGameStore = defineStore('game', {
   },
 
   actions: {
+    // Configuration management
+    loadUserConfiguration() {
+      try {
+        // Load grid size
+        const savedGridSize = localStorage.getItem(CONFIG_KEYS.GRID_SIZE);
+        if (savedGridSize) {
+          const size = parseInt(savedGridSize, 10);
+          if ([4, 5, 6, 7, 8].includes(size)) {
+            this.gridSize = size;
+          }
+        }
+
+        // Load digging mode
+        const savedDiggingMode = localStorage.getItem(CONFIG_KEYS.DIGGING_MODE);
+        if (savedDiggingMode && ['auto', 'dig', 'flag'].includes(savedDiggingMode)) {
+          this.uiState.diggingMode = savedDiggingMode as 'auto' | 'dig' | 'flag';
+        }
+
+        // Load auto-flagging preference
+        const savedAutoFlagging = localStorage.getItem(CONFIG_KEYS.AUTO_FLAGGING);
+        if (savedAutoFlagging !== null) {
+          this.uiState.autoFlagging = savedAutoFlagging === 'true';
+        }
+      } catch (error) {
+        console.warn('Failed to load user configuration:', error);
+      }
+    },
+
+    saveUserConfiguration() {
+      try {
+        localStorage.setItem(CONFIG_KEYS.GRID_SIZE, this.gridSize.toString());
+        localStorage.setItem(CONFIG_KEYS.DIGGING_MODE, this.uiState.diggingMode);
+        localStorage.setItem(CONFIG_KEYS.AUTO_FLAGGING, this.uiState.autoFlagging.toString());
+      } catch (error) {
+        console.warn('Failed to save user configuration:', error);
+      }
+    },
+
+    toggleAutoFlagging() {
+      this.uiState.autoFlagging = !this.uiState.autoFlagging;
+      this.saveUserConfiguration();
+    },
+
     initializeGrid() {
       this.debugLogs = [];
       this.grid = createEmptyGrid(this.gridSize);
@@ -455,6 +505,7 @@ export const useGameStore = defineStore('game', {
       this.gridSize = size;
       this.initializeGrid();
       this.setError(null);
+      this.saveUserConfiguration();
     },
 
     clearQueensAndFlags(): void {

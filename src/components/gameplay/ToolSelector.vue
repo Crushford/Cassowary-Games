@@ -52,7 +52,7 @@
             ? 'bg-green-600 text-white shadow'
             : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
         ]"
-        @click="gameStore.uiState.autoFlagging = !gameStore.uiState.autoFlagging"
+        @click="gameStore.toggleAutoFlagging()"
         :aria-pressed="gameStore.uiState.autoFlagging"
       >
         <span>🤖</span>
