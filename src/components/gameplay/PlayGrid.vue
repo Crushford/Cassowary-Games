@@ -8,7 +8,7 @@
       <div
         v-for="(cell, colIndex) in row"
         :key="colIndex"
-        class="aspect-square relative"
+        class="h-full aspect-square relative"
         @click="handleCellClick(rowIndex, colIndex)"
       >
         <!-- Background Image -->
@@ -29,9 +29,6 @@
             class="grid grid-cols-2 gap-1 leading-none"
             :class="getEmojiSizeClass()"
           >
-            <span>🐜</span>
-            <span>🐜</span>
-            <span>🐜</span>
             <span>🐜</span>
           </div>
           <span v-else class="invisible">.</span>
