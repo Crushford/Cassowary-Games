@@ -96,8 +96,6 @@ function handleTouchStart(event: TouchEvent) {
 
   const touch = event.touches[0];
   const element = document.elementFromPoint(touch.clientX, touch.clientY);
-
-  // Find the parent cell element that has data attributes
   const cellElement = findParentCellElement(element);
 
   if (cellElement && cellElement.hasAttribute('data-row') && cellElement.hasAttribute('data-col')) {
@@ -107,25 +105,17 @@ function handleTouchStart(event: TouchEvent) {
 
     const row = parseInt(cellElement.getAttribute('data-row')!);
     const col = parseInt(cellElement.getAttribute('data-col')!);
-    const cellKey = `${row},${col}`;
-    swipedCells.value.add(cellKey);
-
-    // Flag the starting cell if it's empty
-    if (gameStore.playerMarks[row][col] === null) {
-      gameStore.placeFlag(row, col);
-    }
+    swipedCells.value.add(`${row},${col}`);
+    // Do not place a flag yet — we wait to see if the user moves
   }
 }
 
 function handleTouchMove(event: TouchEvent) {
   if (!isSwiping.value || event.touches.length !== 1) return;
-
-  event.preventDefault(); // Prevent scrolling while swiping
+  event.preventDefault();
 
   const touch = event.touches[0];
   const element = document.elementFromPoint(touch.clientX, touch.clientY);
-
-  // Find the parent cell element that has data attributes
   const cellElement = findParentCellElement(element);
 
   if (cellElement && cellElement.hasAttribute('data-row') && cellElement.hasAttribute('data-col')) {
@@ -136,30 +126,25 @@ function handleTouchMove(event: TouchEvent) {
     if (!swipedCells.value.has(cellKey)) {
       swipedCells.value.add(cellKey);
 
-      // Flag the cell if it's empty
-      if (gameStore.playerMarks[row][col] === null) {
-        gameStore.placeFlag(row, col);
+      if (swipedCells.value.size === 2) {
+        // Just confirmed a swipe, flag all visited so far
+        for (const key of swipedCells.value) {
+          const [r, c] = key.split(',').map(Number);
+          if (gameStore.playerMarks[r][c] === null) {
+            gameStore.placeFlag(r, c);
+          }
+        }
+      } else if (swipedCells.value.size > 2) {
+        // Normal swipe continuation
+        if (gameStore.playerMarks[row][col] === null) {
+          gameStore.placeFlag(row, col);
+        }
       }
     }
   }
 }
 
 function handleTouchEnd(event: TouchEvent) {
-  if (isSwiping.value) {
-    // Only process as a swipe if we've touched multiple cells
-    if (swipedCells.value.size > 1) {
-      // This was a multi-cell swipe - all cells have already been flagged during the move
-      console.log(`Swipe completed: ${swipedCells.value.size} cells flagged`);
-    } else {
-      // This was a single touch - treat it as a normal click
-      const cellKey = Array.from(swipedCells.value)[0];
-      if (cellKey) {
-        const [row, col] = cellKey.split(',').map(Number);
-        handleCellClick(row, col);
-      }
-    }
-  }
-
   isSwiping.value = false;
   swipeStartPos.value = null;
   swipedCells.value.clear();
