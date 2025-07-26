@@ -92,6 +92,7 @@ export interface GameState extends BaseState {
   isTrainingDay: boolean;
   savedPuzzles: any[];
   currentPuzzle: string | null;
+  showGameRules: boolean;
   puzzleGenerationState: {
     isGenerating: boolean;
     currentStep: string | null;

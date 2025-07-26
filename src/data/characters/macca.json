@@ -6,6 +6,12 @@
   "introNodeId": "macca_intro",
   "dialogue": [
     {
+      "id": "rules",
+      "questionText": "Can you show me the rules again?",
+      "action": "show_rules",
+      "prerequisites": []
+    },
+    {
       "id": "macca_intro",
       "questionText": "Wait, I'm confused, what am I looking at?",
       "answerText": "OK so in front of you you can see a Honey Pot Ant Farm, each color group is a different Honey Pot Ant nest, each nest has a special section where they keep their hone and that is what we are looking for.",

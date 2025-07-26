@@ -13,7 +13,7 @@
     ></div>
 
     <div
-      v-if="dialogueStore.currentTopic"
+      v-if="dialogueStore.currentTopic && dialogueStore.currentTopic.answerText"
       :key="dialogueStore.currentTopic.id"
       class="text-white text-sm typewriter-text z-0 h-[5.5em]"
     >
@@ -52,7 +52,7 @@ watch(
 
 // Typewriter effect
 const startTypewriter = () => {
-  if (!dialogueStore.currentTopic) return;
+  if (!dialogueStore.currentTopic || !dialogueStore.currentTopic.answerText) return;
   if (typewriterInterval) clearInterval(typewriterInterval);
 
   dialogueStore.setAnimating(true);

@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia';
+import { useGameStore } from './gameStore';
 
 export interface DialogueTopic {
   id: string;
   questionText: string;
-  answerText: string;
+  answerText?: string;
+  action?: string;
   prerequisites: string[];
 }
 
@@ -84,6 +86,23 @@ export const useDialogueStore = defineStore('dialogue', {
 
       // Save to localStorage
       this.saveConversationHistory();
+
+      // Handle action if present
+      if (topic.action) {
+        this.handleAction(topic.action);
+      }
+    },
+
+    handleAction(action: string) {
+      const gameStore = useGameStore();
+
+      switch (action) {
+        case 'show_rules':
+          gameStore.showGameRules = true;
+          break;
+        default:
+          console.warn(`Unknown action: ${action}`);
+      }
     },
 
     setAnimating(isAnimating: boolean) {

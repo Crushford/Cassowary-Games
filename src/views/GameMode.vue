@@ -13,8 +13,9 @@
     <!-- Tool Selector -->
     <ToolSelector class="h-[10%] flex-none border-t border-gray-700" />
 
-    <!-- Completion Modal -->
-    <GameCompletionModal />
+    <!-- Modals -->
+    <RulesModal :is-visible="gameStore.showGameRules" @close="gameStore.showGameRules = false" />
+    <PuzzleCompletionModal :is-visible="gameStore.isComplete" />
   </div>
 </template>
 
@@ -26,8 +27,9 @@ const Story = defineAsyncComponent(() => import('../components/gameplay/Story.vu
 const GameHUD = defineAsyncComponent(() => import('../components/gameplay/GameHUD.vue'));
 const PlayGrid = defineAsyncComponent(() => import('../components/gameplay/PlayGrid.vue'));
 const ToolSelector = defineAsyncComponent(() => import('../components/gameplay/ToolSelector.vue'));
-const GameCompletionModal = defineAsyncComponent(
-  () => import('../components/gameplay/GameCompletionModal.vue')
+const RulesModal = defineAsyncComponent(() => import('../components/gameplay/RulesModal.vue'));
+const PuzzleCompletionModal = defineAsyncComponent(
+  () => import('../components/gameplay/PuzzleCompletionModal.vue')
 );
 
 const gameStore = useGameStore();
@@ -43,6 +45,11 @@ onMounted(() => {
   // If we're at day 0, ensure we're in training mode
   if (gameStore.currentDay === 0) {
     gameStore.isTrainingDay = true;
+  }
+
+  // Show rules on first visit if user hasn't seen them before
+  if (!gameStore.hasSeenRules()) {
+    gameStore.showGameRules = true;
   }
 });
 
