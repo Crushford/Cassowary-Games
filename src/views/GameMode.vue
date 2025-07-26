@@ -21,7 +21,6 @@
 <script setup lang="ts">
 import { onMounted, watch, defineAsyncComponent } from 'vue';
 import { useGameStore } from '../stores/gameStore';
-import { useDialogueStore } from '../stores/dialogueStore';
 
 const Story = defineAsyncComponent(() => import('../components/gameplay/Story.vue'));
 const GameHUD = defineAsyncComponent(() => import('../components/gameplay/GameHUD.vue'));

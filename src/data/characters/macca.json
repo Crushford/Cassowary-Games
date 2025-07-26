@@ -7,57 +7,9 @@
   "dialogue": [
     {
       "id": "macca_intro",
-      "questionText": "Introduction",
-      "answerText": "Oh, hello little beak.\nWelcome to Bay Nest 9. I'm Macca. Senior forager. Local expert. Bit of a dream-watcher too, if you're into that.\nWe're training on honeypot ants today. They're sacred to us—not just sweet, but… revealing. A sting can open your mind. Or end your afternoon.\nYou'll be working with a dummy grid at first. No venom. Just logic. One replete per row, per column, and per colour group. And no diagonal touching—repletes spoil when they're too close.\nGet it right, and you walk away rich and buzzing. Get it wrong, and you walk sideways.\nDon't worry, I'll be nearby. You can ask me anything that rattles around your casque.\nLet's begin.",
+      "questionText": "Wait, I'm confused, what am I looking at?",
+      "answerText": "OK so in front of you you can see a Honey Pot Ant Farm, each color group is a different Honey Pot Ant nest, each nest has a special section where they keep their hone and that is what we are looking for.",
       "prerequisites": []
-    },
-    {
-      "id": "who_are_you",
-      "questionText": "Who are you?",
-      "answerText": "Macca. Been harvesting ants since before you hatched. I train new foragers, sort venom samples, and sometimes I talk to ants. They never talk back, but they do dance.",
-      "prerequisites": ["macca_intro"]
-    },
-    {
-      "id": "why_do_ants_matter",
-      "questionText": "Why do these ants matter so much?",
-      "answerText": "Because they carry nectar. Because they sting. Because they teach. Every colony's a temple if you learn how to listen. Or at least how to not get stung.",
-      "prerequisites": ["who_are_you"]
-    },
-    {
-      "id": "how_dangerous_are_they",
-      "questionText": "Are the stings really that dangerous?",
-      "answerText": "Depends on your mind. One bite and you might laugh. Two and you might cry. Three and you'll wake up next week asking where your feathers went. We say three stings makes a season disappear.",
-      "prerequisites": ["why_do_ants_matter"]
-    },
-    {
-      "id": "why_dont_they_touch",
-      "questionText": "Why can't repletes touch diagonally?",
-      "answerText": "They're chemically territorial. Put them too close and they rot from the inside. Or worse, they blend—like mixing dreams you're not ready for.",
-      "prerequisites": ["why_do_ants_matter"]
-    },
-    {
-      "id": "what_are_colour_groups_macca",
-      "questionText": "What's with the colour groups?",
-      "answerText": "Each tile's a different bloodline. Repletes compete even in memory. One per group, or you get cross-signals. Ghosts of old colonies murmuring through the nectar.",
-      "prerequisites": ["why_dont_they_touch"]
-    },
-    {
-      "id": "what_if_i_get_stung",
-      "questionText": "What happens if I get stung?",
-      "answerText": "First sting? You'll giggle. Second? You'll wobble. Third? You'll lie down and watch the sky melt. You'll be fine. Eventually.",
-      "prerequisites": ["how_dangerous_are_they"]
-    },
-    {
-      "id": "what_is_training_grid",
-      "questionText": "What is the training grid?",
-      "answerText": "It's a safe nest. No venom. Just logic. You practice your eye, your mind, your instinct. Real grids come later—deep tunnels, real stakes.",
-      "prerequisites": ["who_are_you"]
-    },
-    {
-      "id": "how_did_you_get_into_this",
-      "questionText": "How did you get into honeypot farming?",
-      "answerText": "I followed the ants. Simple as that. One day I got stung and saw my own shadow walk away. Next day, I was here. Haven't looked back.",
-      "prerequisites": ["who_are_you"]
     }
   ]
 }
