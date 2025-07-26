@@ -69,16 +69,6 @@ export const useDialogueStore = defineStore('dialogue', {
       if (!this.conversationHistory[character.id]) {
         this.conversationHistory[character.id] = new Set();
       }
-
-      // Set current topic to intro if we haven't seen it yet, but don't add to history
-      if (!this.conversationHistory[character.id].has(character.introNodeId)) {
-        this.currentTopicId = character.introNodeId;
-        // Don't auto-add to conversation history - let user click it first
-      } else {
-        // If we've already seen the intro, find the first available topic
-        const available = this.availableTopics;
-        this.currentTopicId = available.length > 0 ? available[0].id : null;
-      }
     },
 
     async selectTopic(topicId: string) {
