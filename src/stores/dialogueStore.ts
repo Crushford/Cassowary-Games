@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia';
+import { useGameStore } from './gameStore';
 
 export interface DialogueTopic {
   id: string;
   questionText: string;
-  answerText: string;
+  answerText?: string;
+  action?: string;
   prerequisites: string[];
 }
 
@@ -19,16 +21,17 @@ export interface CharacterDialogue {
 export interface DialogueState {
   currentCharacter: CharacterDialogue | null;
   currentTopicId: string | null;
-  hasSeenTopics: Set<string>;
   isAnimating: boolean;
+  // Conversation history per character
+  conversationHistory: Record<string, Set<string>>;
 }
 
 export const useDialogueStore = defineStore('dialogue', {
   state: (): DialogueState => ({
     currentCharacter: null,
     currentTopicId: null,
-    hasSeenTopics: new Set(),
     isAnimating: false,
+    conversationHistory: {},
   }),
 
   getters: {
@@ -40,31 +43,66 @@ export const useDialogueStore = defineStore('dialogue', {
     availableTopics: (state): DialogueTopic[] => {
       if (!state.currentCharacter) return [];
 
-      return state.currentCharacter.dialogue.filter((topic) =>
-        topic.prerequisites.every((prereq) => state.hasSeenTopics.has(prereq))
-      );
+      // Get the conversation history for this character
+      const characterHistory = state.conversationHistory[state.currentCharacter.id] || new Set();
+
+      return state.currentCharacter.dialogue.filter((topic) => {
+        // Check if all prerequisites have been seen in this character's conversation history
+        return topic.prerequisites.every((prereq) => characterHistory.has(prereq));
+      });
     },
 
     isDialogueActive: (state): boolean => {
       return state.currentCharacter !== null;
+    },
+
+    // Get conversation history for current character
+    currentCharacterHistory: (state): Set<string> => {
+      if (!state.currentCharacter) return new Set();
+      return state.conversationHistory[state.currentCharacter.id] || new Set();
     },
   },
 
   actions: {
     loadCharacter(character: CharacterDialogue) {
       this.currentCharacter = character;
-      this.currentTopicId = character.introNodeId;
-      this.hasSeenTopics = new Set([character.introNodeId]);
+
+      // Initialize conversation history for this character if it doesn't exist
+      if (!this.conversationHistory[character.id]) {
+        this.conversationHistory[character.id] = new Set();
+      }
     },
 
-    selectTopic(topicId: string) {
+    async selectTopic(topicId: string) {
       if (!this.currentCharacter) return;
 
       const topic = this.currentCharacter.dialogue.find((t) => t.id === topicId);
       if (!topic) return;
 
       this.currentTopicId = topicId;
-      this.hasSeenTopics.add(topicId);
+
+      // Add to persistent history
+      this.conversationHistory[this.currentCharacter.id].add(topicId);
+
+      // Save to localStorage
+      this.saveConversationHistory();
+
+      // Handle action if present
+      if (topic.action) {
+        this.handleAction(topic.action);
+      }
+    },
+
+    handleAction(action: string) {
+      const gameStore = useGameStore();
+
+      switch (action) {
+        case 'show_rules':
+          gameStore.showGameRules = true;
+          break;
+        default:
+          console.warn(`Unknown action: ${action}`);
+      }
     },
 
     setAnimating(isAnimating: boolean) {
@@ -74,12 +112,54 @@ export const useDialogueStore = defineStore('dialogue', {
     resetDialogue() {
       this.currentCharacter = null;
       this.currentTopicId = null;
-      this.hasSeenTopics.clear();
       this.isAnimating = false;
     },
 
     hasSeenTopic(topicId: string): boolean {
-      return this.hasSeenTopics.has(topicId);
+      if (!this.currentCharacter) return false;
+      return this.conversationHistory[this.currentCharacter.id]?.has(topicId) || false;
+    },
+
+    // Save conversation history to localStorage
+    saveConversationHistory() {
+      try {
+        const historyToSave: Record<string, string[]> = {};
+        for (const [characterId, topics] of Object.entries(this.conversationHistory)) {
+          historyToSave[characterId] = Array.from(topics);
+        }
+        localStorage.setItem('dialogue-conversation-history', JSON.stringify(historyToSave));
+      } catch (error) {
+        console.warn('Failed to save conversation history:', error);
+      }
+    },
+
+    // Load conversation history from localStorage
+    loadConversationHistory() {
+      try {
+        const saved = localStorage.getItem('dialogue-conversation-history');
+        if (saved) {
+          const historyData: Record<string, string[]> = JSON.parse(saved);
+          this.conversationHistory = {};
+          for (const [characterId, topics] of Object.entries(historyData)) {
+            this.conversationHistory[characterId] = new Set(topics);
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to load conversation history:', error);
+        this.conversationHistory = {};
+      }
+    },
+
+    // Reset conversation history for a specific character
+    resetCharacterHistory(characterId: string) {
+      this.conversationHistory[characterId] = new Set();
+      this.saveConversationHistory();
+    },
+
+    // Reset all conversation history
+    resetAllHistory() {
+      this.conversationHistory = {};
+      this.saveConversationHistory();
     },
   },
 });

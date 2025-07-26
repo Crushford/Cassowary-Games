@@ -47,6 +47,7 @@ const CONFIG_KEYS = {
   GRID_SIZE: 'honey-pot-ant-farming-grid-size',
   DIGGING_MODE: 'honey-pot-ant-farming-digging-mode',
   AUTO_FLAGGING: 'honey-pot-ant-farming-auto-flagging',
+  RULES_SEEN: 'honey-pot-ant-farming-rules-seen',
 } as const;
 
 // Create reverse mapping from symbols to color names
@@ -104,6 +105,7 @@ export const useGameStore = defineStore('game', {
     // Add new state for puzzle database
     puzzleDatabase: null as any,
     currentPuzzleIndex: 0, // Track current puzzle index for sequential loading
+    showGameRules: false, // Controls the rules modal visibility
   }),
 
   getters: {
@@ -245,6 +247,31 @@ export const useGameStore = defineStore('game', {
         localStorage.setItem(CONFIG_KEYS.AUTO_FLAGGING, this.uiState.autoFlagging.toString());
       } catch (error) {
         console.warn('Failed to save user configuration:', error);
+      }
+    },
+
+    markRulesAsSeen() {
+      try {
+        localStorage.setItem(CONFIG_KEYS.RULES_SEEN, 'true');
+      } catch (error) {
+        console.warn('Failed to save rules seen state:', error);
+      }
+    },
+
+    hasSeenRules(): boolean {
+      try {
+        return localStorage.getItem(CONFIG_KEYS.RULES_SEEN) === 'true';
+      } catch (error) {
+        console.warn('Failed to load rules seen state:', error);
+        return false;
+      }
+    },
+
+    resetRulesSeen() {
+      try {
+        localStorage.removeItem(CONFIG_KEYS.RULES_SEEN);
+      } catch (error) {
+        console.warn('Failed to reset rules seen state:', error);
       }
     },
 

@@ -1,5 +1,5 @@
 <template>
-  <div ref="textContainer" class="relative overflow-y-auto h-[3.5em] bg-black/20">
+  <div ref="textContainer" class="relative overflow-y-auto h-[5.5em] bg-black/20">
     <div
       class="absolute -top-1 left-0 right-0 h-4 pointer-events-none z-10"
       style="
@@ -13,9 +13,9 @@
     ></div>
 
     <div
-      v-if="dialogueStore.currentTopic"
+      v-if="dialogueStore.currentTopic && dialogueStore.currentTopic.answerText"
       :key="dialogueStore.currentTopic.id"
-      class="text-white text-sm typewriter-text z-0 h-[3.5em]"
+      class="text-white text-sm typewriter-text z-0 h-[5.5em]"
     >
       <span class="absolute bottom-0">{{ displayedText }}</span>
     </div>
@@ -52,7 +52,7 @@ watch(
 
 // Typewriter effect
 const startTypewriter = () => {
-  if (!dialogueStore.currentTopic) return;
+  if (!dialogueStore.currentTopic || !dialogueStore.currentTopic.answerText) return;
   if (typewriterInterval) clearInterval(typewriterInterval);
 
   dialogueStore.setAnimating(true);
