@@ -1,51 +1,42 @@
 <template>
   <div class="flex items-center justify-center bg-slate-800 p-2 rounded-lg">
-    <!-- Mode radio group -->
-    <div class="flex items-center space-x-1 bg-slate-700 rounded-md px-1 py-0.5 relative">
-      <div v-for="mode in modes" :key="mode.value" class="relative">
+    <!-- Mode dropdown -->
+    <div class="flex items-center relative">
+      <div class="relative">
         <button
-          class="px-3 py-2 rounded-md transition-colors duration-200 flex items-center justify-center focus:outline-none min-w-[44px] min-h-[44px] text-xl"
-          :class="[
-            gameStore.uiState.diggingMode === mode.value
-              ? 'bg-blue-600 text-white shadow'
-              : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
-          ]"
-          @click="gameStore.uiState.diggingMode = mode.value"
-          :aria-pressed="gameStore.uiState.diggingMode === mode.value"
+          class="px-3 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-lg bg-slate-700 text-slate-300 hover:bg-slate-600"
+          @click="toggleModeDropdown"
+          :aria-expanded="modeDropdownOpen"
+          aria-label="Select digging mode"
         >
-          <span>{{ mode.icon }}</span>
+          <span>{{ getCurrentModeIcon() }}</span>
+          <span class="text-xs">▼</span>
         </button>
-      </div>
-      <!-- Single question mark icon for all modes -->
-      <button
-        class="ml-2 bg-slate-900 text-slate-300 rounded-full w-6 h-6 flex items-center justify-center text-base border border-slate-600 hover:bg-slate-700 focus:outline-none z-10 relative"
-        @click.stop="toggleTooltip('modes')"
-        aria-label="Show info about tool modes"
-      >
-        ?
-      </button>
-      <!-- Tooltip for all modes -->
-      <div
-        v-if="tooltipOpen === 'modes'"
-        class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full mb-2 z-20 bg-slate-900 text-slate-100 text-xs rounded shadow-lg px-4 py-3 w-64 border border-slate-700"
-      >
-        <div class="font-semibold text-sm mb-2">Change what each tap does in the game</div>
-        <ul class="space-y-2">
-          <li
+
+        <!-- Mode dropdown -->
+        <div
+          v-if="modeDropdownOpen"
+          class="absolute bottom-full left-0 mb-1 bg-slate-900 text-slate-100 rounded shadow-lg border border-slate-700 z-20 min-w-[280px]"
+        >
+          <div class="px-4 py-3 border-b border-slate-700">
+            <div class="font-semibold text-sm">Change what each tap does in the game</div>
+          </div>
+          <div
             v-for="mode in modes"
             :key="mode.value"
-            class="flex items-start space-x-2"
-            :class="
-              gameStore.uiState.diggingMode === mode.value ? 'bg-blue-700/30 rounded px-2 py-1' : ''
-            "
+            class="px-4 py-3 hover:bg-slate-700 cursor-pointer transition-colors duration-150"
+            :class="gameStore.uiState.diggingMode === mode.value ? 'bg-blue-700/30' : ''"
+            @click="selectMode(mode.value)"
           >
-            <span class="text-lg">{{ mode.icon }}</span>
-            <div>
-              <span class="font-semibold text-sm">{{ mode.label }}</span>
-              <div class="text-xs">{{ mode.description }}</div>
+            <div class="flex items-start space-x-3">
+              <span class="text-lg">{{ mode.icon }}</span>
+              <div>
+                <div class="font-semibold text-sm">{{ mode.label }}</div>
+                <div class="text-xs text-slate-300">{{ mode.description }}</div>
+              </div>
             </div>
-          </li>
-        </ul>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -160,6 +151,26 @@ const availableSizes = [4, 5, 6, 7, 8];
 
 const tooltipOpen = ref<string | null>(null);
 const sizeDropdownOpen = ref(false);
+const modeDropdownOpen = ref(false);
+
+function getCurrentModeIcon(): string {
+  const currentMode = modes.find((mode) => mode.value === gameStore.uiState.diggingMode);
+  return currentMode ? currentMode.icon : '🔄';
+}
+
+function toggleModeDropdown() {
+  modeDropdownOpen.value = !modeDropdownOpen.value;
+  // Close other dropdowns when opening mode dropdown
+  if (modeDropdownOpen.value) {
+    tooltipOpen.value = null;
+    sizeDropdownOpen.value = false;
+  }
+}
+
+function selectMode(modeValue: 'auto' | 'dig' | 'flag') {
+  gameStore.uiState.diggingMode = modeValue;
+  modeDropdownOpen.value = false;
+}
 
 function toggleTooltip(modeValue: string) {
   tooltipOpen.value = tooltipOpen.value === modeValue ? null : modeValue;
@@ -167,9 +178,10 @@ function toggleTooltip(modeValue: string) {
 
 function toggleSizeDropdown() {
   sizeDropdownOpen.value = !sizeDropdownOpen.value;
-  // Close tooltip when opening dropdown
+  // Close other dropdowns when opening size dropdown
   if (sizeDropdownOpen.value) {
     tooltipOpen.value = null;
+    modeDropdownOpen.value = false;
   }
 }
 
@@ -191,6 +203,7 @@ function handleClickOutside(event: MouseEvent) {
   if (toolSelector && !toolSelector.contains(event.target as Node)) {
     tooltipOpen.value = null;
     sizeDropdownOpen.value = false;
+    modeDropdownOpen.value = false;
   }
 }
 
@@ -201,11 +214,11 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside);
 });
 
-// Close tooltip when mode or auto-flag changes
+// Close dropdowns when mode or auto-flag changes
 watch(
   () => gameStore.uiState.diggingMode,
   () => {
-    if (tooltipOpen.value === 'modes') tooltipOpen.value = null;
+    modeDropdownOpen.value = false;
   }
 );
 watch(
