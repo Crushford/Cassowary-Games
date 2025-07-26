@@ -1,23 +1,44 @@
 <template>
   <Modal :is-visible="isVisible">
     <div>
-      <h2 class="text-2xl font-bold text-amber-400 mb-4">How to Play</h2>
-      <div class="text-white space-y-3 text-sm">
-        <p>Welcome to Honey Pot Ant Farming!</p>
-        <p>
-          In front of you, you can see a Honey Pot Ant Farm. Each color group represents a different
-          Honey Pot Ant nest.
-        </p>
-        <p>
-          Each nest has a special section where they keep their honey - that's what we're looking
-          for!
-        </p>
-        <p>
-          Your goal is to find the honey pots (🍯) by strategically placing flags (🚧) and digging
-          in the right spots.
-        </p>
-        <p>
-          Be careful though - if you dig in the wrong place, you might get bitten by an ant (🐜)!
+      <div class="bg-blue-900 text-white p-4 rounded-xl max-w-md mx-auto space-y-2 text-base">
+        <h2 class="text-yellow-400 font-bold text-xl">How to Play</h2>
+
+        <div class="space-y-1">
+          <p>Your goal: Find the hidden honey pots (🍯).</p>
+          <p>Each color group hides exactly <strong>one</strong> honey pot.</p>
+        </div>
+
+        <div class="bg-blue-800 p-4 rounded-lg space-y-1">
+          <h3 class="font-semibold text-white">Key Rules:</h3>
+          <ul class="list-disc list-inside space-y-1">
+            <li>🍯 One honey pot per color group</li>
+            <li>🍯 One per column</li>
+            <li>🍯 One per row</li>
+            <li>🚫 No diagonal touching</li>
+          </ul>
+        </div>
+
+        <div class="bg-blue-800 p-4 rounded-lg space-y-1">
+          <h3 class="font-semibold text-white">How to Win:</h3>
+          <ul class="list-disc list-inside space-y-1">
+            <li>
+              Use <strong>flags</strong> (🚧) to mark squares where you know there is no honey
+            </li>
+            <li>Once only one space remains, <strong>dig</strong> (⛏️) there</li>
+          </ul>
+        </div>
+
+        <div class="bg-blue-800 p-4 rounded-lg space-y-1">
+          <h3 class="font-semibold text-white">Controls:</h3>
+          <ul class="list-disc list-inside space-y-1">
+            <li>Tap once to place a flag (🚧), tap again to dig (⛏️)</li>
+            <li>Once only one space remains, <strong>dig</strong> (⛏️) there</li>
+          </ul>
+        </div>
+
+        <p class="text-red-300 font-medium">
+          ⚠️ Dig wrong and you’ll get bitten by an ant (🐜). Three bites = pass out!
         </p>
       </div>
       <button
