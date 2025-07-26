@@ -15,7 +15,7 @@
       "id": "who_are_you",
       "questionText": "Who are you?",
       "answerText": "Macca. Been harvesting ants since before you hatched. I train new foragers, sort venom samples, and sometimes I talk to ants. They never talk back, but they do dance.",
-      "prerequisites": []
+      "prerequisites": ["macca_intro"]
     },
     {
       "id": "why_do_ants_matter",
@@ -51,7 +51,7 @@
       "id": "what_is_training_grid",
       "questionText": "What is the training grid?",
       "answerText": "It's a safe nest. No venom. Just logic. You practice your eye, your mind, your instinct. Real grids come later—deep tunnels, real stakes.",
-      "prerequisites": []
+      "prerequisites": ["who_are_you"]
     },
     {
       "id": "how_did_you_get_into_this",
