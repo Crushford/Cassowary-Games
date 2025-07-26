@@ -46,7 +46,7 @@
     <!-- Auto-flagging toggle -->
     <div class="flex items-center relative">
       <button
-        class="px-3 py-1 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-xl"
+        class="px-3 py-1 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-xl relative"
         :class="[
           gameStore.uiState.autoFlagging
             ? 'bg-green-600 text-white shadow'
@@ -58,9 +58,9 @@
         <span>🤖</span>
         <span>🚩</span>
       </button>
-      <!-- Single question mark icon for auto-flag -->
+      <!-- Question mark icon positioned on top of auto-flag button -->
       <button
-        class="ml-2 bg-slate-900 text-slate-300 rounded-full w-6 h-6 flex items-center justify-center text-base border border-slate-600 hover:bg-slate-700 focus:outline-none z-10 relative"
+        class="absolute -top-1 -right-1 bg-slate-900 text-slate-300 rounded-full w-6 h-6 flex items-center justify-center text-base border border-slate-600 hover:bg-slate-700 focus:outline-none z-30"
         @click.stop="toggleTooltip('autoFlag')"
         aria-label="Show info about auto-flag"
       >
