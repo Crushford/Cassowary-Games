@@ -33,7 +33,7 @@
           >
           <div
             v-else-if="shouldShowInvalid(rowIndex, colIndex)"
-            class="grid grid-cols-2 gap-1 leading-none"
+            class="flex items-center justify-center leading-none w-full h-full"
             :class="getEmojiSizeClass()"
           >
             <span>🐜</span>
@@ -145,6 +145,21 @@ function handleTouchMove(event: TouchEvent) {
 }
 
 function handleTouchEnd(event: TouchEvent) {
+  if (isSwiping.value) {
+    // Only process as a swipe if we've touched multiple cells
+    if (swipedCells.value.size > 1) {
+      // This was a multi-cell swipe - all cells have already been flagged during the move
+      console.log(`Swipe completed: ${swipedCells.value.size} cells flagged`);
+    } else {
+      // This was a single touch - treat it as a normal click
+      const cellKey = Array.from(swipedCells.value)[0];
+      if (cellKey) {
+        const [row, col] = cellKey.split(',').map(Number);
+        handleCellClick(row, col);
+      }
+    }
+  }
+
   isSwiping.value = false;
   swipeStartPos.value = null;
   swipedCells.value.clear();
