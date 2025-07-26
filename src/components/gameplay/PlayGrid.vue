@@ -33,7 +33,7 @@
           >
           <div
             v-else-if="shouldShowInvalid(rowIndex, colIndex)"
-            class="grid grid-cols-2 gap-1 leading-none"
+            class="flex items-center justify-center leading-none w-full h-full"
             :class="getEmojiSizeClass()"
           >
             <span>🐜</span>
@@ -96,8 +96,6 @@ function handleTouchStart(event: TouchEvent) {
 
   const touch = event.touches[0];
   const element = document.elementFromPoint(touch.clientX, touch.clientY);
-
-  // Find the parent cell element that has data attributes
   const cellElement = findParentCellElement(element);
 
   if (cellElement && cellElement.hasAttribute('data-row') && cellElement.hasAttribute('data-col')) {
@@ -107,25 +105,17 @@ function handleTouchStart(event: TouchEvent) {
 
     const row = parseInt(cellElement.getAttribute('data-row')!);
     const col = parseInt(cellElement.getAttribute('data-col')!);
-    const cellKey = `${row},${col}`;
-    swipedCells.value.add(cellKey);
-
-    // Flag the starting cell if it's empty
-    if (gameStore.playerMarks[row][col] === null) {
-      gameStore.placeFlag(row, col);
-    }
+    swipedCells.value.add(`${row},${col}`);
+    // Do not place a flag yet — we wait to see if the user moves
   }
 }
 
 function handleTouchMove(event: TouchEvent) {
   if (!isSwiping.value || event.touches.length !== 1) return;
-
-  event.preventDefault(); // Prevent scrolling while swiping
+  event.preventDefault();
 
   const touch = event.touches[0];
   const element = document.elementFromPoint(touch.clientX, touch.clientY);
-
-  // Find the parent cell element that has data attributes
   const cellElement = findParentCellElement(element);
 
   if (cellElement && cellElement.hasAttribute('data-row') && cellElement.hasAttribute('data-col')) {
@@ -136,9 +126,19 @@ function handleTouchMove(event: TouchEvent) {
     if (!swipedCells.value.has(cellKey)) {
       swipedCells.value.add(cellKey);
 
-      // Flag the cell if it's empty
-      if (gameStore.playerMarks[row][col] === null) {
-        gameStore.placeFlag(row, col);
+      if (swipedCells.value.size === 2) {
+        // Just confirmed a swipe, flag all visited so far
+        for (const key of swipedCells.value) {
+          const [r, c] = key.split(',').map(Number);
+          if (gameStore.playerMarks[r][c] === null) {
+            gameStore.placeFlag(r, c);
+          }
+        }
+      } else if (swipedCells.value.size > 2) {
+        // Normal swipe continuation
+        if (gameStore.playerMarks[row][col] === null) {
+          gameStore.placeFlag(row, col);
+        }
       }
     }
   }
