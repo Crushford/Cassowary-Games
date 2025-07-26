@@ -89,8 +89,6 @@ const selectTopic = async (topic: { id: string }) => {
 // Helper function to determine button positioning based on index
 const getDialogueButtonClass = (index: number): string => {
   switch (index) {
-    case 0:
-      return 'col-start-1 row-start-1';
     case 1:
       return 'col-start-2 row-start-1';
     case 2:
