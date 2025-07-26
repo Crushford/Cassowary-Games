@@ -95,36 +95,24 @@
         <!-- Size dropdown -->
         <div
           v-if="sizeDropdownOpen"
-          class="absolute bottom-full left-0 mb-1 bg-slate-900 text-slate-100 rounded shadow-lg border border-slate-700 z-20 min-w-[80px]"
+          class="absolute bottom-full right-1 mb-1 bg-slate-900 text-slate-100 rounded shadow-lg border border-slate-700 z-20 min-w-[200px]"
         >
+          <div class="px-4 py-3 border-b border-slate-700">
+            <div class="font-semibold text-sm mb-1">Board Size</div>
+            <div class="text-xs text-slate-300">
+              Change the size of the game board. Larger boards have more honeypots to find!
+            </div>
+          </div>
           <div
             v-for="size in availableSizes"
             :key="size"
-            class="px-3 py-2 hover:bg-slate-700 cursor-pointer transition-colors duration-150"
+            class="px-4 py-2 hover:bg-slate-700 cursor-pointer transition-colors duration-150"
             :class="size === gameStore.gridSize ? 'bg-blue-700/30' : ''"
             @click="selectSize(size)"
           >
             {{ size }}×{{ size }}
           </div>
         </div>
-      </div>
-
-      <!-- Question mark icon for size selector -->
-      <button
-        class="ml-2 bg-slate-900 text-slate-300 rounded-full w-6 h-6 flex items-center justify-center text-base border border-slate-600 hover:bg-slate-700 focus:outline-none z-10 relative"
-        @click.stop="toggleTooltip('size')"
-        aria-label="Show info about board size"
-      >
-        ?
-      </button>
-
-      <!-- Tooltip for size selector -->
-      <div
-        v-if="tooltipOpen === 'size'"
-        class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full mb-2 z-20 bg-slate-900 text-slate-100 text-xs rounded shadow-lg px-4 py-3 w-64 border border-slate-700"
-      >
-        <div class="font-semibold text-sm mb-1">Board Size</div>
-        <div>Change the size of the game board. Larger boards have more honeypots to find!</div>
       </div>
     </div>
   </div>
