@@ -1,5 +1,10 @@
 <template>
-  <div class="flex flex-col">
+  <div
+    class="flex flex-col"
+    @touchstart="handleTouchStart"
+    @touchmove="handleTouchMove"
+    @touchend="handleTouchEnd"
+  >
     <div
       v-for="(row, rowIndex) in gameStore.grid"
       :key="rowIndex"
@@ -10,6 +15,8 @@
         :key="colIndex"
         class="h-full aspect-square relative"
         @click="handleCellClick(rowIndex, colIndex)"
+        :data-row="rowIndex"
+        :data-col="colIndex"
       >
         <!-- Background Image -->
         <img
@@ -46,10 +53,15 @@
 
 <script setup lang="ts">
 import { useGameStore } from '../../stores/gameStore';
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import type { ColorName } from '../../types/types';
 
 const gameStore = useGameStore();
+
+// Swipe tracking state
+const isSwiping = ref(false);
+const swipeStartPos = ref<{ x: number; y: number } | null>(null);
+const swipedCells = ref<Set<string>>(new Set());
 
 onMounted(() => {
   gameStore.clearMarkers();
@@ -76,6 +88,87 @@ function shouldShowInvalid(row: number, col: number): boolean {
 
 function handleCellClick(row: number, col: number) {
   gameStore.handleSquareClick(row, col);
+}
+
+// Touch event handlers for swipe functionality
+function handleTouchStart(event: TouchEvent) {
+  if (event.touches.length !== 1) return;
+
+  const touch = event.touches[0];
+  const element = document.elementFromPoint(touch.clientX, touch.clientY);
+
+  // Find the parent cell element that has data attributes
+  const cellElement = findParentCellElement(element);
+
+  if (cellElement && cellElement.hasAttribute('data-row') && cellElement.hasAttribute('data-col')) {
+    isSwiping.value = true;
+    swipeStartPos.value = { x: touch.clientX, y: touch.clientY };
+    swipedCells.value.clear();
+
+    const row = parseInt(cellElement.getAttribute('data-row')!);
+    const col = parseInt(cellElement.getAttribute('data-col')!);
+    const cellKey = `${row},${col}`;
+    swipedCells.value.add(cellKey);
+
+    // Flag the starting cell if it's empty
+    if (gameStore.playerMarks[row][col] === null) {
+      gameStore.placeFlag(row, col);
+    }
+  }
+}
+
+function handleTouchMove(event: TouchEvent) {
+  if (!isSwiping.value || event.touches.length !== 1) return;
+
+  event.preventDefault(); // Prevent scrolling while swiping
+
+  const touch = event.touches[0];
+  const element = document.elementFromPoint(touch.clientX, touch.clientY);
+
+  // Find the parent cell element that has data attributes
+  const cellElement = findParentCellElement(element);
+
+  if (cellElement && cellElement.hasAttribute('data-row') && cellElement.hasAttribute('data-col')) {
+    const row = parseInt(cellElement.getAttribute('data-row')!);
+    const col = parseInt(cellElement.getAttribute('data-col')!);
+    const cellKey = `${row},${col}`;
+
+    if (!swipedCells.value.has(cellKey)) {
+      swipedCells.value.add(cellKey);
+
+      // Flag the cell if it's empty
+      if (gameStore.playerMarks[row][col] === null) {
+        gameStore.placeFlag(row, col);
+      }
+    }
+  }
+}
+
+function handleTouchEnd(event: TouchEvent) {
+  isSwiping.value = false;
+  swipeStartPos.value = null;
+  swipedCells.value.clear();
+}
+
+// Helper function to find the parent cell element with data attributes
+function findParentCellElement(element: Element | null): Element | null {
+  if (!element) return null;
+
+  // Check if this element has the data attributes
+  if (element.hasAttribute('data-row') && element.hasAttribute('data-col')) {
+    return element;
+  }
+
+  // Check parent elements
+  let parent = element.parentElement;
+  while (parent) {
+    if (parent.hasAttribute('data-row') && parent.hasAttribute('data-col')) {
+      return parent;
+    }
+    parent = parent.parentElement;
+  }
+
+  return null;
 }
 
 function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col: number) {
