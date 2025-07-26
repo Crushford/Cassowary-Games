@@ -273,6 +273,20 @@ export const useGameStore = defineStore('game', {
       }
     },
 
+    undoLastFlag() {
+      // Find the last flag placed by the player and remove it
+      for (let row = this.gridSize - 1; row >= 0; row--) {
+        for (let col = this.gridSize - 1; col >= 0; col--) {
+          if (this.playerMarks[row][col] === 'flag') {
+            this.playerMarks[row][col] = null;
+            this.addDebugLog(`Flag removed at position (${row}, ${col})`);
+            return; // Only remove the last flag found
+          }
+        }
+      }
+      this.addDebugLog('No flags found to remove');
+    },
+
     // 1. Top‐level click handler now just routes to one of three actions
     handleSquareClick(row: number, col: number) {
       const mode = this.uiState.diggingMode;

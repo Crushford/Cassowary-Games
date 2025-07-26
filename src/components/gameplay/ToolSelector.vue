@@ -56,7 +56,7 @@
         :aria-pressed="gameStore.uiState.autoFlagging"
       >
         <span>🤖</span>
-        <span>🚩</span>
+        <span>🚧</span>
       </button>
       <!-- Question mark icon positioned on top of auto-flag button -->
       <button
@@ -73,6 +73,37 @@
       >
         <div class="font-semibold text-sm mb-1">Auto-flag blocked positions</div>
         <div>If enabled, automatically flag all blocked positions when you find a honeypot.</div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="mx-3 h-10 border-l border-slate-500"></div>
+
+    <!-- Undo last flag button -->
+    <div class="flex items-center relative">
+      <button
+        class="px-3 py-1 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-xl relative bg-slate-700 text-slate-300 hover:bg-slate-600"
+        @click="undoLastFlag"
+        aria-label="Undo last flag"
+      >
+        <span>↶</span>
+        <span>🚧</span>
+      </button>
+      <!-- Question mark icon positioned on top of undo button -->
+      <button
+        class="absolute -top-1 -right-1 bg-slate-900 text-slate-300 rounded-full w-6 h-6 flex items-center justify-center text-base border border-slate-600 hover:bg-slate-700 focus:outline-none z-30"
+        @click.stop="toggleTooltip('undo')"
+        aria-label="Show info about undo flag"
+      >
+        ?
+      </button>
+      <!-- Tooltip for undo flag -->
+      <div
+        v-if="tooltipOpen === 'undo'"
+        class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full mb-2 z-20 bg-slate-900 text-slate-100 text-xs rounded shadow-lg px-4 py-3 w-64 border border-slate-700"
+      >
+        <div class="font-semibold text-sm mb-1">Undo last flag</div>
+        <div>Remove the last flag you placed on the board.</div>
       </div>
     </div>
 
@@ -184,6 +215,11 @@ function selectSize(size: number) {
     }
   }
   sizeDropdownOpen.value = false;
+}
+
+function undoLastFlag() {
+  gameStore.undoLastFlag();
+  tooltipOpen.value = null;
 }
 
 function handleClickOutside(event: MouseEvent) {
