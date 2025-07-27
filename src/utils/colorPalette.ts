@@ -120,22 +120,16 @@ export const COLOR_BG_HOVER_CLASSES: Record<ColorName, string> = {
 
 // Background image styles for each color
 export const COLOR_BG_IMAGES: Record<ColorName, string> = {
-  red: 'background-image: url("/assets/ant-nest-colors/red.png"); background-size: cover; background-position: center;',
-  blue: 'background-image: url("/assets/ant-nest-colors/blue.png"); background-size: cover; background-position: center;',
-  green:
-    'background-image: url("/assets/ant-nest-colors/green.png"); background-size: cover; background-position: center;',
-  yellow:
-    'background-image: url("/assets/ant-nest-colors/yellow.png"); background-size: cover; background-position: center;',
-  purple:
-    'background-image: url("/assets/ant-nest-colors/purple.png"); background-size: cover; background-position: center;',
-  pink: 'background-image: url("/assets/ant-nest-colors/pink.png"); background-size: cover; background-position: center;', // Using purple as fallback
-  orange:
-    'background-image: url("/assets/ant-nest-colors/orange.png"); background-size: cover; background-position: center;',
-  teal: 'background-image: url("/assets/ant-nest-colors/teal.png"); background-size: cover; background-position: center;',
-  indigo:
-    'background-image: url("/assets/ant-nest-colors/indigo.png"); background-size: cover; background-position: center;',
-  amber:
-    'background-image: url("/assets/ant-nest-colors/amber.png"); background-size: cover; background-position: center;',
+  red: 'background-image: url("/assets/ant-nest-colors/red.png");',
+  blue: 'background-image: url("/assets/ant-nest-colors/blue.png");',
+  green: 'background-image: url("/assets/ant-nest-colors/green.png");',
+  yellow: 'background-image: url("/assets/ant-nest-colors/yellow.png");',
+  purple: 'background-image: url("/assets/ant-nest-colors/purple.png");',
+  pink: 'background-image: url("/assets/ant-nest-colors/pink.png");',
+  orange: 'background-image: url("/assets/ant-nest-colors/orange.png");',
+  teal: 'background-image: url("/assets/ant-nest-colors/teal.png");',
+  indigo: 'background-image: url("/assets/ant-nest-colors/indigo.png");',
+  amber: 'background-image: url("/assets/ant-nest-colors/amber.png");',
 };
 
 // Get a subset of the main palette with a specific size

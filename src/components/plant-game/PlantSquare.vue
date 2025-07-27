@@ -47,8 +47,12 @@ const gridCell = computed(() => {
 watch(
   () => props.store.currentStep,
   (newStep, oldStep) => {
-    // If we're moving from step 1 to step 2 and this cell has a honey pot
-    if (oldStep === 1 && newStep === 2 && gridCell.value.base === 'honey') {
+    // If we're moving from step 1 to step 2 and this cell has a honey pot or ant
+    if (
+      oldStep === 1 &&
+      newStep === 2 &&
+      (gridCell.value.base === 'honey' || gridCell.value.base === 'ant')
+    ) {
       shouldFlip.value = true;
       isFlipping.value = true;
 
@@ -76,6 +80,10 @@ const getColorBackgroundStyle = (gridCell: any, store: any) => {
   }
 
   if (gridCell.base === 'ant') {
+    // In step 2, ants become blank (no background image)
+    if (store.currentStep === 2 && gridCell.groupColor === null) {
+      return '';
+    }
     return "background-image: url('/assets/card-backs/ant.png');";
   }
 
@@ -88,9 +96,14 @@ const getColorBackgroundStyle = (gridCell: any, store: any) => {
 
 // Get the appropriate background style for the card
 const getCardBackgroundStyle = () => {
-  // During the first half of flip animation, show honey pot image
-  if (isFlipping.value && gridCell.value.base === 'honey') {
-    return "background-image: url('/assets/card-backs/honey.png'); background-size: cover; background-position: center;";
+  // During the first half of flip animation, show original image
+  if (isFlipping.value) {
+    if (gridCell.value.base === 'honey') {
+      return "background-image: url('/assets/card-backs/honey.png');";
+    }
+    if (gridCell.value.base === 'ant') {
+      return "background-image: url('/assets/card-backs/ant.png');";
+    }
   }
 
   return getColorBackgroundStyle(gridCell.value, props.store);
