@@ -14,6 +14,9 @@ export const usePlantStore = defineStore('plant', {
     showGameRules: false,
     gridSize: 4, // Default grid size
 
+    // Puzzle step management
+    currentStep: 1, // 1 = place honey pots, 2 = place color cards
+
     // Grid state
     grid: [] as any[][], // Empty grid for plant game
 
@@ -23,6 +26,9 @@ export const usePlantStore = defineStore('plant', {
     // Card deck state
     availableColors: [] as string[], // Colors available for current grid size
 
+    // Honey pot state
+    honeyPotsPlaced: 0, // Number of honey pots placed on the grid
+
     // Add more state as needed
   }),
 
@@ -30,6 +36,25 @@ export const usePlantStore = defineStore('plant', {
     // Check if a color has cards available (always true for unlimited deck)
     hasCardsAvailable: () => (color: string) => {
       return true; // Unlimited cards
+    },
+
+    // Check if next step button should be enabled
+    canProceedToNextStep(): boolean {
+      if (this.currentStep === 1) {
+        // In step 1, need same number of honey pots as grid size
+        return this.honeyPotsPlaced === this.gridSize;
+      }
+      return false;
+    },
+
+    // Check if we're in step 1 (honey pot placement)
+    isHoneyPotStep(): boolean {
+      return this.currentStep === 1;
+    },
+
+    // Check if we're in step 2 (color card placement)
+    isColorCardStep(): boolean {
+      return this.currentStep === 2;
     },
   },
 
@@ -85,6 +110,7 @@ export const usePlantStore = defineStore('plant', {
       this.gridSize = size;
       this.initializeGrid();
       this.initializeCardDeck();
+      this.honeyPotsPlaced = 0; // Reset honey pot count when grid size changes
       this.saveUserConfiguration();
     },
 
@@ -118,19 +144,48 @@ export const usePlantStore = defineStore('plant', {
       };
     },
 
+    selectHoneyPot() {
+      this.selectedCard = {
+        type: 'honey',
+        imageUrl: '/assets/card-backs/honey.png',
+      };
+    },
+
+    nextStep() {
+      if (this.canProceedToNextStep) {
+        this.currentStep++;
+        this.selectedCard = null; // Clear any selected card
+      }
+    },
+
+    previousStep() {
+      if (this.currentStep > 1) {
+        this.currentStep--;
+        this.selectedCard = null; // Clear any selected card
+      }
+    },
+
     placeCard(row: number, col: number) {
       if (this.selectedCard && this.isValidPosition(row, col)) {
-        // Place the card at the specified position
-        this.grid[row][col] = {
-          isEmpty: false,
-          card: this.selectedCard,
-          colorGroup: this.selectedCard.colorGroup || null,
-        };
+        // Check if cell is empty
+        if (this.grid[row][col].isEmpty) {
+          // Place the card at the specified position
+          this.grid[row][col] = {
+            isEmpty: false,
+            card: this.selectedCard,
+            colorGroup: this.selectedCard.colorGroup || null,
+          };
 
-        // Clear the selected card
-        this.selectedCard = null;
+          // Update honey pot count if placing a honey pot
+          if (this.selectedCard.type === 'honey') {
+            this.honeyPotsPlaced++;
+          }
 
-        console.log(`Card placed at (${row}, ${col})`);
+          // Clear the selected card
+          this.selectedCard = null;
+
+          console.log(`Card placed at (${row}, ${col})`);
+        }
       }
     },
 
@@ -140,6 +195,11 @@ export const usePlantStore = defineStore('plant', {
 
     clearCell(row: number, col: number) {
       if (this.isValidPosition(row, col)) {
+        // Check if removing a honey pot
+        if (!this.grid[row][col].isEmpty && this.grid[row][col].card?.type === 'honey') {
+          this.honeyPotsPlaced--;
+        }
+
         this.grid[row][col] = {
           isEmpty: true,
           card: null,
@@ -154,6 +214,8 @@ export const usePlantStore = defineStore('plant', {
       this.initializeCardDeck();
       this.selectedCard = null;
       this.isComplete = false;
+      this.currentStep = 1;
+      this.honeyPotsPlaced = 0;
     },
 
     // Add more actions as needed

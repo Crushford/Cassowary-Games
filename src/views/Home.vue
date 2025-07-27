@@ -46,7 +46,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-// No debug code needed - routing is working properly
-</script>
