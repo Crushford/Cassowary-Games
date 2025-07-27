@@ -14,14 +14,17 @@
     <ToolSelector class="h-[10%] flex-none border-t border-gray-700" />
 
     <!-- Modals -->
-    <RulesModal :is-visible="gameStore.showGameRules" @close="gameStore.showGameRules = false" />
-    <PuzzleCompletionModal :is-visible="gameStore.isComplete" />
+    <RulesModal
+      :is-visible="harvestStore.showGameRules"
+      @close="harvestStore.showGameRules = false"
+    />
+    <PuzzleCompletionModal :is-visible="harvestStore.isComplete" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, watch, defineAsyncComponent } from 'vue';
-import { useGameStore } from '../stores/gameStore';
+import { useHarvestStore } from '../stores/harvestStore';
 
 const Story = defineAsyncComponent(() => import('../components/gameplay/Story.vue'));
 const GameHUD = defineAsyncComponent(() => import('../components/gameplay/GameHUD.vue'));
@@ -32,43 +35,43 @@ const PuzzleCompletionModal = defineAsyncComponent(
   () => import('../components/gameplay/PuzzleCompletionModal.vue')
 );
 
-const gameStore = useGameStore();
+const harvestStore = useHarvestStore();
 
 onMounted(() => {
   // Load user configuration first
-  gameStore.loadUserConfiguration();
+  harvestStore.loadUserConfiguration();
 
-  gameStore.findValidPuzzleWithSteps();
-  gameStore.loadHighScore();
-  gameStore.loadCurrentDay();
+  harvestStore.findValidPuzzleWithSteps();
+  harvestStore.loadHighScore();
+  harvestStore.loadCurrentDay();
 
   // If we're at day 0, ensure we're in training mode
-  if (gameStore.currentDay === 0) {
-    gameStore.isTrainingDay = true;
+  if (harvestStore.currentDay === 0) {
+    harvestStore.isTrainingDay = true;
   }
 
   // Show rules on first visit if user hasn't seen them before
-  if (!gameStore.hasSeenRules()) {
-    gameStore.showGameRules = true;
+  if (!harvestStore.hasSeenRules()) {
+    harvestStore.showGameRules = true;
   }
 });
 
 // Watch for configuration changes and save them
 watch(
-  () => gameStore.uiState.diggingMode,
+  () => harvestStore.uiState.diggingMode,
   () => {
-    gameStore.saveUserConfiguration();
+    harvestStore.saveUserConfiguration();
   }
 );
 
 watch(
-  () => gameStore.uiState.autoFlagging,
+  () => harvestStore.uiState.autoFlagging,
   () => {
-    gameStore.saveUserConfiguration();
+    harvestStore.saveUserConfiguration();
   }
 );
 
 defineOptions({
-  name: 'GameMode',
+  name: 'HarvestGame',
 });
 </script>

@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import GameMode from '../views/GameMode.vue';
+import HarvestGame from '../views/HarvestGame.vue';
 import LevelBuilder from '../views/LevelBuilder.vue';
 
 const router = createRouter({
@@ -19,7 +19,7 @@ const router = createRouter({
     {
       path: '/game',
       name: 'game',
-      component: GameMode,
+      component: HarvestGame,
     },
   ],
 });

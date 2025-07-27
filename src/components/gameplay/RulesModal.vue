@@ -52,10 +52,10 @@
 </template>
 
 <script setup lang="ts">
-import { useGameStore } from '../../stores/gameStore';
+import { useHarvestStore } from '../../stores/harvestStore';
 import Modal from './Modal.vue';
 
-const gameStore = useGameStore();
+const harvestStore = useHarvestStore();
 
 defineProps<{
   isVisible: boolean;
@@ -66,7 +66,7 @@ const emit = defineEmits<{
 }>();
 
 const onClose = () => {
-  gameStore.markRulesAsSeen();
+  harvestStore.markRulesAsSeen();
   emit('close');
 };
 </script>

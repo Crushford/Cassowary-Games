@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { useGameStore } from './gameStore';
+import { useHarvestStore } from './harvestStore';
 
 export interface DialogueTopic {
   id: string;
@@ -94,11 +94,11 @@ export const useDialogueStore = defineStore('dialogue', {
     },
 
     handleAction(action: string) {
-      const gameStore = useGameStore();
+      const harvestStore = useHarvestStore();
 
       switch (action) {
         case 'show_rules':
-          gameStore.showGameRules = true;
+          harvestStore.showGameRules = true;
           break;
         default:
           console.warn(`Unknown action: ${action}`);

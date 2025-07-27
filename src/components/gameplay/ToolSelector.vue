@@ -25,7 +25,7 @@
             v-for="mode in modes"
             :key="mode.value"
             class="px-4 py-3 hover:bg-slate-700 cursor-pointer transition-colors duration-150"
-            :class="gameStore.uiState.diggingMode === mode.value ? 'bg-blue-700/30' : ''"
+            :class="harvestStore.uiState.diggingMode === mode.value ? 'bg-blue-700/30' : ''"
             @click="selectMode(mode.value)"
           >
             <div class="flex items-start space-x-3">
@@ -48,12 +48,12 @@
       <button
         class="px-3 py-1 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-xl relative"
         :class="[
-          gameStore.uiState.autoFlagging
+          harvestStore.uiState.autoFlagging
             ? 'bg-green-600 text-white shadow'
             : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
         ]"
-        @click="gameStore.toggleAutoFlagging()"
-        :aria-pressed="gameStore.uiState.autoFlagging"
+        @click="harvestStore.toggleAutoFlagging()"
+        :aria-pressed="harvestStore.uiState.autoFlagging"
       >
         <span>🤖</span>
         <span>🚧</span>
@@ -119,7 +119,7 @@
           :aria-expanded="sizeDropdownOpen"
           aria-label="Select board size"
         >
-          <span>{{ gameStore.gridSize }}×{{ gameStore.gridSize }}</span>
+          <span>{{ harvestStore.gridSize }}×{{ harvestStore.gridSize }}</span>
           <span class="text-xs">▼</span>
         </button>
 
@@ -138,7 +138,7 @@
             v-for="size in availableSizes"
             :key="size"
             class="px-4 py-2 hover:bg-slate-700 cursor-pointer transition-colors duration-150"
-            :class="size === gameStore.gridSize ? 'bg-blue-700/30' : ''"
+            :class="size === harvestStore.gridSize ? 'bg-blue-700/30' : ''"
             @click="selectSize(size)"
           >
             {{ size }}×{{ size }}
@@ -151,9 +151,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
-import { useGameStore } from '../../stores/gameStore';
+import { useHarvestStore } from '../../stores/harvestStore';
 
-const gameStore = useGameStore();
+const harvestStore = useHarvestStore();
 
 const modes = [
   {
@@ -173,7 +173,7 @@ const sizeDropdownOpen = ref(false);
 const modeDropdownOpen = ref(false);
 
 function getCurrentModeIcon(): string {
-  const currentMode = modes.find((mode) => mode.value === gameStore.uiState.diggingMode);
+  const currentMode = modes.find((mode) => mode.value === harvestStore.uiState.diggingMode);
   return currentMode ? currentMode.icon : '🔄';
 }
 
@@ -187,7 +187,7 @@ function toggleModeDropdown() {
 }
 
 function selectMode(modeValue: 'auto' | 'dig' | 'flag') {
-  gameStore.uiState.diggingMode = modeValue;
+  harvestStore.uiState.diggingMode = modeValue;
   modeDropdownOpen.value = false;
 }
 
@@ -205,20 +205,20 @@ function toggleSizeDropdown() {
 }
 
 function selectSize(size: number) {
-  if (size !== gameStore.gridSize) {
-    gameStore.setGridSize(size);
+  if (size !== harvestStore.gridSize) {
+    harvestStore.setGridSize(size);
     // Restart the game with the new size
-    if (gameStore.isTrainingDay) {
-      gameStore.resetTraining();
+    if (harvestStore.isTrainingDay) {
+      harvestStore.resetTraining();
     } else {
-      gameStore.restartGame();
+      harvestStore.restartGame();
     }
   }
   sizeDropdownOpen.value = false;
 }
 
 function undoLastFlag() {
-  gameStore.undoLastFlag();
+  harvestStore.undoLastFlag();
   tooltipOpen.value = null;
 }
 
@@ -240,13 +240,13 @@ onBeforeUnmount(() => {
 
 // Close dropdowns when mode or auto-flag changes
 watch(
-  () => gameStore.uiState.diggingMode,
+  () => harvestStore.uiState.diggingMode,
   () => {
     modeDropdownOpen.value = false;
   }
 );
 watch(
-  () => gameStore.uiState.autoFlagging,
+  () => harvestStore.uiState.autoFlagging,
   () => {
     if (tooltipOpen.value === 'autoFlag') tooltipOpen.value = null;
   }
@@ -254,7 +254,7 @@ watch(
 
 // Close size dropdown when grid size changes
 watch(
-  () => gameStore.gridSize,
+  () => harvestStore.gridSize,
   () => {
     sizeDropdownOpen.value = false;
   }

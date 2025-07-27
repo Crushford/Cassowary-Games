@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { useGameStore } from '../../stores/gameStore';
+import { useHarvestStore } from '../../stores/harvestStore';
 import type { ColorName } from '../../types/types';
 
 interface Props {
@@ -40,7 +40,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const gameStore = useGameStore();
+const harvestStore = useHarvestStore();
 
 function getCellImage(cell: { groupColor?: string }) {
   if (cell.groupColor) {
@@ -50,20 +50,20 @@ function getCellImage(cell: { groupColor?: string }) {
 }
 
 function shouldShowQueen(row: number, col: number): boolean {
-  return gameStore.playerMarks[row][col] === 'queen';
+  return harvestStore.playerMarks[row][col] === 'queen';
 }
 
 function shouldShowFlag(row: number, col: number): boolean {
-  return gameStore.playerMarks[row][col] === 'flag';
+  return harvestStore.playerMarks[row][col] === 'flag';
 }
 
 function shouldShowInvalid(row: number, col: number): boolean {
-  return gameStore.playerMarks[row][col] === 'invalid';
+  return harvestStore.playerMarks[row][col] === 'invalid';
 }
 
 function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col: number) {
   const classes: string[] = [];
-  const grid = gameStore.grid;
+  const grid = harvestStore.grid;
   const maxRow = grid.length - 1;
   const maxCol = grid[0].length - 1;
 
@@ -115,7 +115,7 @@ function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col
 }
 
 function getEmojiSizeClass() {
-  const size = gameStore.gridSize;
+  const size = harvestStore.gridSize;
   if (size <= 4) return 'text-3xl';
   if (size <= 6) return 'text-2xl';
   if (size <= 8) return 'text-xl';

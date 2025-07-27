@@ -6,7 +6,7 @@
     @touchend="handleTouchEnd"
   >
     <div
-      v-for="(row, rowIndex) in gameStore.grid"
+      v-for="(row, rowIndex) in harvestStore.grid"
       :key="rowIndex"
       class="flex flex-1 max-w-full justify-center"
     >
@@ -25,11 +25,11 @@
 </template>
 
 <script setup lang="ts">
-import { useGameStore } from '../../stores/gameStore';
+import { useHarvestStore } from '../../stores/harvestStore';
 import { onMounted, ref } from 'vue';
 import FarmSquare from './FarmSquare.vue';
 
-const gameStore = useGameStore();
+const harvestStore = useHarvestStore();
 
 // Swipe tracking state
 const isSwiping = ref(false);
@@ -37,11 +37,11 @@ const swipeStartPos = ref<{ x: number; y: number } | null>(null);
 const swipedCells = ref<Set<string>>(new Set());
 
 onMounted(() => {
-  gameStore.clearMarkers();
+  harvestStore.clearMarkers();
 });
 
 function handleCellClick(row: number, col: number) {
-  gameStore.handleSquareClick(row, col);
+  harvestStore.handleSquareClick(row, col);
 }
 
 // Touch event handlers for swipe functionality
@@ -84,14 +84,14 @@ function handleTouchMove(event: TouchEvent) {
         // Just confirmed a swipe, flag all visited so far
         for (const key of swipedCells.value) {
           const [r, c] = key.split(',').map(Number);
-          if (gameStore.playerMarks[r][c] === null) {
-            gameStore.placeFlag(r, c);
+          if (harvestStore.playerMarks[r][c] === null) {
+            harvestStore.placeFlag(r, c);
           }
         }
       } else if (swipedCells.value.size > 2) {
         // Normal swipe continuation
-        if (gameStore.playerMarks[row][col] === null) {
-          gameStore.placeFlag(row, col);
+        if (harvestStore.playerMarks[row][col] === null) {
+          harvestStore.placeFlag(row, col);
         }
       }
     }

@@ -61,7 +61,7 @@ const SYMBOL_TO_COLOR: Record<string, ColorName> = Object.entries(COLOR_SYMBOLS)
   {} as Record<string, ColorName>
 );
 
-export const useGameStore = defineStore('game', {
+export const useHarvestStore = defineStore('game', {
   state: (): GameState => ({
     // Core game state
     grid: createEmptyGrid(DEFAULT_GRID_SIZE),

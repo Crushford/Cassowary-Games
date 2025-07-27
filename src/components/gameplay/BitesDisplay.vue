@@ -3,17 +3,17 @@
     <div class="w-32 h-4 bg-gray-700 rounded-full overflow-hidden">
       <div
         class="h-full bg-red-500 transition-all duration-300 ease-in-out"
-        :style="{ width: `${(gameStore.bites / gameStore.maxHealth) * 100}%` }"
+        :style="{ width: `${(harvestStore.bites / harvestStore.maxHealth) * 100}%` }"
       ></div>
     </div>
-    <span class="text-red-400 text-sm">{{ gameStore.bites }}/{{ gameStore.maxHealth }}</span>
+    <span class="text-red-400 text-sm">{{ harvestStore.bites }}/{{ harvestStore.maxHealth }}</span>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useGameStore } from '../../stores/gameStore';
+import { useHarvestStore } from '../../stores/harvestStore';
 
-const gameStore = useGameStore();
+const harvestStore = useHarvestStore();
 </script>
 
 <script lang="ts">

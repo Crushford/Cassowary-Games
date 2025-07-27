@@ -8,8 +8,8 @@
           to="/game"
           class="block p-6 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
         >
-          <h2 class="text-2xl font-bold mb-2">Play Game</h2>
-          <p>Start playing the honeypot ant farming game</p>
+          <h2 class="text-2xl font-bold mb-2">Play Harvest Game</h2>
+          <p>Start playing the honeypot ant harvesting game</p>
         </router-link>
 
         <router-link
