@@ -25,17 +25,25 @@ export const usePlantStore = defineStore('plant', {
 
     // Card deck state
     availableColors: [] as string[], // Colors available for current grid size
-
-    // Honey pot state
-    honeyPotsPlaced: 0, // Number of honey pots placed on the grid
-
-    // Add more state as needed
   }),
 
   getters: {
     // Check if a color has cards available (always true for unlimited deck)
     hasCardsAvailable: () => (color: string) => {
       return true; // Unlimited cards
+    },
+
+    // Get the count of honey pots on the grid
+    honeyPotsPlaced(): number {
+      let count = 0;
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (!this.grid[row][col].isEmpty && this.grid[row][col].card?.type === 'honey') {
+            count++;
+          }
+        }
+      }
+      return count;
     },
 
     // Check if next step button should be enabled
@@ -133,7 +141,6 @@ export const usePlantStore = defineStore('plant', {
       this.gridSize = size;
       this.initializeGrid();
       this.initializeCardDeck();
-      this.honeyPotsPlaced = 0; // Reset honey pot count when grid size changes
       this.saveUserConfiguration();
     },
 
@@ -201,7 +208,6 @@ export const usePlantStore = defineStore('plant', {
 
           // Update honey pot count if placing a honey pot
           if (this.selectedCard.type === 'honey') {
-            this.honeyPotsPlaced++;
             // Place ants on all blocked positions
             this.placeAntsForHoneyPot(row, col);
           }
@@ -266,7 +272,6 @@ export const usePlantStore = defineStore('plant', {
 
         // Check if removing a honey pot
         if (!cell.isEmpty && cell.card?.type === 'honey') {
-          this.honeyPotsPlaced--;
           // Remove ants that were placed by this honey pot
           this.removeAntsForHoneyPot(row, col);
         }
@@ -311,7 +316,6 @@ export const usePlantStore = defineStore('plant', {
       this.selectedCard = null;
       this.isComplete = false;
       this.currentStep = 1;
-      this.honeyPotsPlaced = 0;
     },
 
     // Add more actions as needed
