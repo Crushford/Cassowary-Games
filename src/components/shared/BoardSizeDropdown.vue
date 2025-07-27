@@ -17,25 +17,34 @@
       </svg>
     </button>
 
-    <!-- Size dropdown -->
+    <!-- Modal overlay -->
     <div
       v-if="sizeDropdownOpen"
-      class="absolute bottom-full right-1 mb-1 bg-slate-900 text-slate-100 rounded shadow-lg border border-slate-700 z-20 min-w-[200px]"
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+      @click="sizeDropdownOpen = false"
     >
-      <div class="px-4 py-3 border-b border-slate-700">
-        <div class="font-semibold text-sm mb-1">Board Size</div>
-        <div class="text-xs text-slate-300">
-          Change the size of the game board. Larger boards have more to explore!
-        </div>
-      </div>
+      <!-- Size dropdown modal -->
       <div
-        v-for="size in availableSizes"
-        :key="size"
-        class="px-4 py-2 hover:bg-slate-700 cursor-pointer transition-colors duration-150"
-        :class="size === store.gridSize ? 'bg-blue-700/30' : ''"
-        @click="selectSize(size)"
+        class="bg-slate-900 text-slate-100 rounded-lg shadow-xl border border-slate-700 min-w-[300px] max-w-[400px]"
+        @click.stop
       >
-        {{ size }}×{{ size }}
+        <div class="px-6 py-4 border-b border-slate-700">
+          <div class="font-semibold text-lg mb-2">Board Size</div>
+          <div class="text-sm text-slate-300">
+            Change the size of the game board. Larger boards have more to explore!
+          </div>
+        </div>
+        <div class="p-2">
+          <div
+            v-for="size in availableSizes"
+            :key="size"
+            class="px-4 py-3 hover:bg-slate-700 cursor-pointer transition-colors duration-150 rounded"
+            :class="size === store.gridSize ? 'bg-blue-700/30' : ''"
+            @click="selectSize(size)"
+          >
+            <div class="text-lg font-medium">{{ size }}×{{ size }}</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
