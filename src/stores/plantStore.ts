@@ -136,6 +136,11 @@ export const usePlantStore = defineStore('plant', {
       this.initializeGrid();
       this.initializeCardDeck();
 
+      // Check if we're on step 2 but have no honey pots placed - if so, go back to step 1
+      if (this.currentStep === 2 && this.honeyPotsPlaced === 0) {
+        this.currentStep = 1;
+      }
+
       // Auto-select honey pot card when starting at step 1
       if (this.currentStep === 1) {
         this.selectHoneyPot();
