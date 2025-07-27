@@ -17,8 +17,14 @@ export const usePlantStore = defineStore('plant', {
     // Puzzle step management
     currentStep: 1, // 1 = place honey pots, 2 = place color cards
 
-    // Grid state
-    grid: [] as any[][], // Empty grid for plant game
+    // Grid state - use same structure as harvestStore
+    grid: [] as Array<
+      Array<{
+        position: { row: number; col: number };
+        groupColor?: string | null;
+        base?: 'honey' | 'ant' | null;
+      }>
+    >,
 
     // Card placement state
     selectedCard: null as any, // Currently selected card for placement
@@ -51,12 +57,7 @@ export const usePlantStore = defineStore('plant', {
 
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (
-            this.grid[row] &&
-            this.grid[row][col] &&
-            !this.grid[row][col].isEmpty &&
-            this.grid[row][col].card?.type === 'honey'
-          ) {
+          if (this.grid[row][col].base === 'honey') {
             count++;
           }
         }
@@ -186,15 +187,13 @@ export const usePlantStore = defineStore('plant', {
       // Create an empty grid of the specified size
       this.grid = Array(this.gridSize)
         .fill(null)
-        .map(() =>
+        .map((_, row) =>
           Array(this.gridSize)
             .fill(null)
-            .map(() => ({
-              // Empty cell structure - can be extended later
-              isEmpty: true,
-              card: null, // No card placed yet
-              colorGroup: null, // No color group assigned yet
-              // Add more properties as needed for plant game
+            .map((_, col) => ({
+              position: { row, col },
+              groupColor: null,
+              base: null,
             }))
         );
     },
@@ -223,19 +222,35 @@ export const usePlantStore = defineStore('plant', {
       if (this.canProceedToNextStep) {
         this.currentStep++;
         this.selectedCard = null; // Clear any selected card
+
+        // Assign random colors to honey pots when transitioning to step 2
+        if (this.currentStep === 2) {
+          this.assignColorsToHoneyPots();
+        }
       }
     },
 
-    previousStep() {
-      if (this.currentStep > 1) {
-        this.currentStep--;
-        // Auto-select honey pot card when entering step 1
-        if (this.currentStep === 1) {
-          this.selectHoneyPot();
-        } else {
-          this.selectedCard = null; // Clear any selected card
+    assignColorsToHoneyPots() {
+      // Get all honey pot positions
+      const honeyPotPositions: Array<{ row: number; col: number }> = [];
+
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row] && this.grid[row][col] && this.grid[row][col].base === 'honey') {
+            honeyPotPositions.push({ row, col });
+          }
         }
       }
+
+      // Use all available colors and shuffle them
+      const shuffledColors = [...this.availableColors].sort(() => Math.random() - 0.5);
+
+      // Assign a unique color to each honey pot
+      honeyPotPositions.forEach((pos, index) => {
+        const color = shuffledColors[index];
+        // Set the groupColor on the grid cell (this is what PlantSquare will read)
+        this.grid[pos.row][pos.col].groupColor = color;
+      });
     },
 
     placeCard(row: number, col: number) {
@@ -246,16 +261,16 @@ export const usePlantStore = defineStore('plant', {
         this.grid[row] &&
         this.grid[row][col]
       ) {
-        // Check if cell is empty
-        if (this.grid[row][col].isEmpty) {
+        // Check if cell is empty (no base)
+        if (!this.grid[row][col].base) {
           // Store the previous state for undo
           const previousState = JSON.parse(JSON.stringify(this.grid[row][col]));
 
           // Place the card at the specified position
           this.grid[row][col] = {
-            isEmpty: false,
-            card: this.selectedCard,
-            colorGroup: this.selectedCard.colorGroup || null,
+            position: { row, col },
+            groupColor: this.selectedCard.colorGroup || null,
+            base: this.selectedCard.type === 'honey' ? 'honey' : null,
           };
 
           // If placing a honey pot, recalculate all ant positions
@@ -270,8 +285,6 @@ export const usePlantStore = defineStore('plant', {
             previousState,
             step: this.currentStep,
           });
-
-          console.log(`Card placed at (${row}, ${col})`);
         }
       }
     },
@@ -281,16 +294,11 @@ export const usePlantStore = defineStore('plant', {
       // First, remove all existing ants
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (
-            this.grid[row] &&
-            this.grid[row][col] &&
-            !this.grid[row][col].isEmpty &&
-            this.grid[row][col].card?.type === 'ant'
-          ) {
+          if (this.grid[row] && this.grid[row][col] && this.grid[row][col].base === 'ant') {
             this.grid[row][col] = {
-              isEmpty: true,
-              card: null,
-              colorGroup: null,
+              position: { row, col },
+              groupColor: null,
+              base: null,
             };
           }
         }
@@ -299,12 +307,7 @@ export const usePlantStore = defineStore('plant', {
       // Then place ants for all honey pots
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (
-            this.grid[row] &&
-            this.grid[row][col] &&
-            !this.grid[row][col].isEmpty &&
-            this.grid[row][col].card?.type === 'honey'
-          ) {
+          if (this.grid[row] && this.grid[row][col] && this.grid[row][col].base === 'honey') {
             this.placeAntsForHoneyPot(row, col);
           }
         }
@@ -327,14 +330,11 @@ export const usePlantStore = defineStore('plant', {
           // Check if this position should be blocked by the honey pot
           if (this.isBlockedByHoneyPot(row, col, honeyPotRow, honeyPotCol)) {
             // Only place an ant if the cell is empty
-            if (this.grid[row] && this.grid[row][col] && this.grid[row][col].isEmpty) {
+            if (this.grid[row] && this.grid[row][col] && !this.grid[row][col].base) {
               this.grid[row][col] = {
-                isEmpty: false,
-                card: {
-                  type: 'ant',
-                  imageUrl: '/assets/card-backs/ant.png ', // Using player image as ant for now
-                },
-                colorGroup: null,
+                position: { row, col },
+                groupColor: null,
+                base: 'ant',
               };
             }
           }
@@ -366,12 +366,12 @@ export const usePlantStore = defineStore('plant', {
         const cell = this.grid[row][col];
 
         // Check if removing a honey pot
-        if (!cell.isEmpty && cell.card?.type === 'honey') {
+        if (cell.base === 'honey') {
           // Clear the cell first
           this.grid[row][col] = {
-            isEmpty: true,
-            card: null,
-            colorGroup: null,
+            position: { row, col },
+            groupColor: null,
+            base: null,
           };
 
           // Then recalculate all ant positions
@@ -379,9 +379,9 @@ export const usePlantStore = defineStore('plant', {
         } else {
           // For non-honey pot cells, just clear normally
           this.grid[row][col] = {
-            isEmpty: true,
-            card: null,
-            colorGroup: null,
+            position: { row, col },
+            groupColor: null,
+            base: null,
           };
         }
       }
@@ -405,11 +405,11 @@ export const usePlantStore = defineStore('plant', {
             if (this.grid[row] && this.grid[row][col]) {
               const cell = this.grid[row][col];
               // Only remove if it's an ant (not another honey pot or color card)
-              if (!cell.isEmpty && cell.card?.type === 'ant') {
+              if (cell.base === 'ant') {
                 this.grid[row][col] = {
-                  isEmpty: true,
-                  card: null,
-                  colorGroup: null,
+                  position: { row, col },
+                  groupColor: null,
+                  base: null,
                 };
               }
             }
@@ -430,8 +430,6 @@ export const usePlantStore = defineStore('plant', {
           // Always recalculate ant positions after any undo operation
           // This ensures ants are properly placed based on current honey pot positions
           this.recalculateAntPositions();
-
-          console.log(`Undid placement at (${lastPlacement.row}, ${lastPlacement.col})`);
         }
       }
     },
