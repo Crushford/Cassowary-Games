@@ -18,7 +18,7 @@ export const COLOR_PALETTE: ColorName[] = [
 // Single letter symbols for each color (useful for text output)
 export const COLOR_SYMBOLS: Record<ColorName | 'undefined', string> = {
   red: 'R',
-  blue: 'B',
+  blue: 'A',
   green: 'G',
   yellow: 'Y',
   purple: 'P',
@@ -26,7 +26,7 @@ export const COLOR_SYMBOLS: Record<ColorName | 'undefined', string> = {
   orange: 'O',
   teal: 'T',
   indigo: 'I',
-  amber: 'A',
+  amber: 'B',
   undefined: '.',
 };
 
