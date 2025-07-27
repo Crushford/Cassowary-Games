@@ -1,5 +1,5 @@
 <template>
-  <div
+  <button
     class="h-full w-full border border-black transition-colors duration-150 cursor-pointer bg-gray-800 hover:bg-gray-700"
     @click="handleClick"
   >
@@ -18,7 +18,7 @@
         />
       </div>
     </div>
-  </div>
+  </button>
 </template>
 
 <script setup lang="ts">
@@ -110,9 +110,16 @@ const getCardBackgroundStyle = () => {
 };
 
 const handleClick = () => {
-  if (props.store.selectedCard) {
-    // Place the selected card
-    props.store.placeCard(props.rowIndex, props.colIndex);
+  if (props.store.currentStep === 1) {
+    // Step 1: Place honey pot if cell is empty
+    if (!gridCell.value.base) {
+      props.store.placeHoneyPot(props.rowIndex, props.colIndex);
+    }
+  } else if (props.store.currentStep === 2) {
+    // Step 2: Assign color if cell doesn't have a color group
+    if (!gridCell.value.groupColor) {
+      props.store.assignColorToSquare(props.rowIndex, props.colIndex);
+    }
   }
 };
 

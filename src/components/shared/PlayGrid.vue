@@ -14,7 +14,6 @@
         v-for="(cell, colIndex) in row"
         :key="colIndex"
         class="flex-1 aspect-square relative"
-        @click="handleCellClick(rowIndex, colIndex)"
         :data-row="rowIndex"
         :data-col="colIndex"
       >
@@ -40,26 +39,6 @@ const props = withDefaults(defineProps<Props>(), {
 const isSwiping = ref(false);
 const swipeStartPos = ref<{ x: number; y: number } | null>(null);
 const swipedCells = ref<Set<string>>(new Set());
-
-onMounted(() => {
-  // Initialize any store-specific logic
-  if (props.store.clearMarkers) {
-    props.store.clearMarkers();
-  }
-});
-
-function handleCellClick(row: number, col: number) {
-  if (props.store.handleSquareClick) {
-    props.store.handleSquareClick(row, col);
-  } else if (props.store.placeCard) {
-    // For plant game - handle card placement
-    if (props.store.selectedCard) {
-      props.store.placeCard(row, col);
-    } else {
-      console.log(`Clicked cell at (${row}, ${col})`);
-    }
-  }
-}
 
 // Touch event handlers for swipe functionality (only if enabled)
 function handleTouchStart(event: TouchEvent) {

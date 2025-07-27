@@ -94,6 +94,21 @@ export const usePlantStore = defineStore('plant', {
       return this.placementHistory.length > 0;
     },
 
+    // Check if a color is currently selected in step 2
+    hasSelectedColor(): boolean {
+      return this.selectedCard && this.selectedCard.colorGroup && this.currentStep === 2;
+    },
+
+    // Get the currently selected color
+    selectedColor(): string | null {
+      return this.selectedCard?.colorGroup || null;
+    },
+
+    // Check if honey pot is currently selected in step 1
+    hasSelectedHoneyPot(): boolean {
+      return this.selectedCard && this.selectedCard.type === 'honey' && this.currentStep === 1;
+    },
+
     // Step information for UI
     stepTitle(): string {
       switch (this.currentStep) {
@@ -262,30 +277,23 @@ export const usePlantStore = defineStore('plant', {
       });
     },
 
-    placeCard(row: number, col: number) {
-      if (
-        this.selectedCard &&
-        this.isValidPosition(row, col) &&
-        this.grid &&
-        this.grid[row] &&
-        this.grid[row][col]
-      ) {
+    // Place honey pot in step 1
+    placeHoneyPot(row: number, col: number) {
+      if (this.selectedCard.type === 'honey' && this.grid[row][col]) {
         // Check if cell is empty (no base)
         if (!this.grid[row][col].base) {
           // Store the previous state for undo
           const previousState = JSON.parse(JSON.stringify(this.grid[row][col]));
 
-          // Place the card at the specified position
+          // Place the honey pot
           this.grid[row][col] = {
             position: { row, col },
-            groupColor: this.selectedCard.colorGroup || null,
-            base: this.selectedCard.type === 'honey' ? 'honey' : null,
+            groupColor: null,
+            base: 'honey',
           };
 
-          // If placing a honey pot, recalculate all ant positions
-          if (this.selectedCard.type === 'honey') {
-            this.recalculateAntPositions();
-          }
+          // Recalculate all ant positions
+          this.recalculateAntPositions();
 
           // Add to placement history for undo
           this.placementHistory.push({
@@ -295,6 +303,25 @@ export const usePlantStore = defineStore('plant', {
             step: this.currentStep,
           });
         }
+      }
+    },
+
+    // Assign color to an empty square in step 2
+    assignColorToSquare(row: number, col: number) {
+      if (this.selectedCard.colorGroup && this.grid[row][col]) {
+        // Store the previous state for undo
+        const previousState = JSON.parse(JSON.stringify(this.grid[row][col]));
+
+        // Assign the color to the square
+        this.grid[row][col].groupColor = this.selectedCard.colorGroup;
+
+        // Add to placement history for undo
+        this.placementHistory.push({
+          row,
+          col,
+          previousState,
+          step: this.currentStep,
+        });
       }
     },
 
