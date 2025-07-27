@@ -17,41 +17,32 @@
       </svg>
     </button>
 
-    <!-- Modal overlay -->
-    <div
-      v-if="sizeDropdownOpen"
-      class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
-      @click="sizeDropdownOpen = false"
-    >
-      <!-- Size dropdown modal -->
-      <div
-        class="bg-slate-900 text-slate-100 rounded-lg shadow-xl border border-slate-700 min-w-[300px] max-w-[400px]"
-        @click.stop
-      >
-        <div class="px-6 py-4 border-b border-slate-700">
-          <div class="font-semibold text-lg mb-2">Board Size</div>
-          <div class="text-sm text-slate-300">
-            Change the size of the game board. Larger boards have more to explore!
-          </div>
-        </div>
-        <div class="p-2">
+    <!-- Modal -->
+    <Modal :is-visible="sizeDropdownOpen" @close="sizeDropdownOpen = false">
+      <div class="text-center">
+        <h3 class="text-xl font-semibold text-white mb-4">Board Size</h3>
+        <p class="text-gray-300 mb-6">
+          Change the size of the game board. Larger boards have more to explore!
+        </p>
+        <div class="space-y-2">
           <div
             v-for="size in availableSizes"
             :key="size"
-            class="px-4 py-3 hover:bg-slate-700 cursor-pointer transition-colors duration-150 rounded"
-            :class="size === store.gridSize ? 'bg-blue-700/30' : ''"
+            class="px-4 py-3 hover:bg-gray-700 cursor-pointer transition-colors duration-150 rounded"
+            :class="size === store.gridSize ? 'bg-blue-600' : ''"
             @click="selectSize(size)"
           >
-            <div class="text-lg font-medium">{{ size }}×{{ size }}</div>
+            <div class="text-lg font-medium text-white">{{ size }}×{{ size }}</div>
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import Modal from './Modal.vue';
 
 interface Props {
   store: any; // The store that has gridSize property and setGridSize method
