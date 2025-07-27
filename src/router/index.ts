@@ -21,6 +21,10 @@ const router = createRouter({
       name: 'game',
       component: HarvestGame,
     },
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/',
+    },
   ],
 });
 
