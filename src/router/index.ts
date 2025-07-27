@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HarvestGame from '../views/HarvestGame.vue';
+import PlantGame from '../views/PlantGame.vue';
 import LevelBuilder from '../views/LevelBuilder.vue';
 
 const router = createRouter({
@@ -20,6 +21,11 @@ const router = createRouter({
       path: '/harvest',
       name: 'harvest',
       component: HarvestGame,
+    },
+    {
+      path: '/plant',
+      name: 'plant',
+      component: PlantGame,
     },
     {
       path: '/:pathMatch(.*)*',
