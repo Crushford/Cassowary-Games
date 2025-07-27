@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia';
+import { rulesStorage } from '../utils/rulesStorage';
 
 // Configuration keys for localStorage
 const CONFIG_KEYS = {
   GRID_SIZE: 'honey-pot-ant-farming-plant-grid-size',
-  RULES_SEEN: 'honey-pot-ant-farming-plant-rules-seen',
 } as const;
 
 export const usePlantStore = defineStore('plant', {
@@ -53,28 +53,15 @@ export const usePlantStore = defineStore('plant', {
     },
 
     hasSeenRules(): boolean {
-      try {
-        return localStorage.getItem(CONFIG_KEYS.RULES_SEEN) === 'true';
-      } catch (error) {
-        console.warn('Failed to load rules seen state:', error);
-        return false;
-      }
+      return rulesStorage.hasSeenRules('plant');
     },
 
     markRulesAsSeen() {
-      try {
-        localStorage.setItem(CONFIG_KEYS.RULES_SEEN, 'true');
-      } catch (error) {
-        console.warn('Failed to save rules seen state:', error);
-      }
+      rulesStorage.markRulesAsSeen('plant');
     },
 
     resetRulesSeen() {
-      try {
-        localStorage.removeItem(CONFIG_KEYS.RULES_SEEN);
-      } catch (error) {
-        console.warn('Failed to reset rules seen state:', error);
-      }
+      rulesStorage.resetRulesSeen('plant');
     },
 
     closeRulesModal() {
