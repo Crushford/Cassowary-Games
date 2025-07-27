@@ -17,7 +17,7 @@
     <PlantTools :plant-store="plantStore" />
 
     <!-- Modals -->
-    <RulesModal :is-visible="plantStore.showGameRules" @close="plantStore.showGameRules = false" />
+    <RulesModal :store="plantStore" />
     <PuzzleCompletionModal :is-visible="plantStore.isComplete" />
   </div>
 </template>

@@ -22,10 +22,7 @@
     <ToolSelector class="h-[10%] flex-none border-t border-gray-700" />
 
     <!-- Modals -->
-    <RulesModal
-      :is-visible="harvestStore.showGameRules"
-      @close="harvestStore.showGameRules = false"
-    />
+    <RulesModal :store="harvestStore" />
     <PuzzleCompletionModal :is-visible="harvestStore.isComplete" />
   </div>
 </template>

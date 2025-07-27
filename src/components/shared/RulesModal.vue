@@ -1,5 +1,5 @@
 <template>
-  <Modal :is-visible="isVisible">
+  <Modal :is-visible="props.store.showGameRules">
     <div>
       <div class="bg-blue-900 text-white p-4 rounded-xl max-w-md mx-auto space-y-2 text-base">
         <h2 class="text-yellow-400 font-bold text-xl">How to Play</h2>
@@ -52,22 +52,19 @@
 </template>
 
 <script setup lang="ts">
-import { useHarvestStore } from '../../stores/harvestStore';
 import Modal from './Modal.vue';
 
-const harvestStore = useHarvestStore();
+interface Props {
+  store: {
+    showGameRules: boolean;
+    closeRulesModal: () => void;
+  };
+}
 
-defineProps<{
-  isVisible: boolean;
-}>();
-
-const emit = defineEmits<{
-  close: [];
-}>();
+const props = defineProps<Props>();
 
 const onClose = () => {
-  harvestStore.markRulesAsSeen();
-  emit('close');
+  props.store.closeRulesModal();
 };
 </script>
 

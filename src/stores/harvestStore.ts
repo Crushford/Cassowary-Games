@@ -275,6 +275,11 @@ export const useHarvestStore = defineStore('game', {
       }
     },
 
+    closeRulesModal() {
+      this.markRulesAsSeen();
+      this.showGameRules = false;
+    },
+
     toggleAutoFlagging() {
       this.uiState.autoFlagging = !this.uiState.autoFlagging;
       this.saveUserConfiguration();

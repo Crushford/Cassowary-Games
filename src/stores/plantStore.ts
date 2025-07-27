@@ -1,5 +1,11 @@
 import { defineStore } from 'pinia';
 
+// Configuration keys for localStorage
+const CONFIG_KEYS = {
+  GRID_SIZE: 'honey-pot-ant-farming-plant-grid-size',
+  RULES_SEEN: 'honey-pot-ant-farming-plant-rules-seen',
+} as const;
+
 export const usePlantStore = defineStore('plant', {
   state: () => ({
     // Basic game state
@@ -23,13 +29,32 @@ export const usePlantStore = defineStore('plant', {
   actions: {
     // Configuration management
     loadUserConfiguration() {
-      // Load any saved configuration
+      try {
+        // Load grid size
+        const savedGridSize = localStorage.getItem(CONFIG_KEYS.GRID_SIZE);
+        if (savedGridSize) {
+          const size = parseInt(savedGridSize, 10);
+          if ([4, 5, 6, 7, 8].includes(size)) {
+            this.gridSize = size;
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to load user configuration:', error);
+      }
       this.initializeGrid();
+    },
+
+    saveUserConfiguration() {
+      try {
+        localStorage.setItem(CONFIG_KEYS.GRID_SIZE, this.gridSize.toString());
+      } catch (error) {
+        console.warn('Failed to save user configuration:', error);
+      }
     },
 
     hasSeenRules(): boolean {
       try {
-        return localStorage.getItem('plant-game-rules-seen') === 'true';
+        return localStorage.getItem(CONFIG_KEYS.RULES_SEEN) === 'true';
       } catch (error) {
         console.warn('Failed to load rules seen state:', error);
         return false;
@@ -38,10 +63,23 @@ export const usePlantStore = defineStore('plant', {
 
     markRulesAsSeen() {
       try {
-        localStorage.setItem('plant-game-rules-seen', 'true');
+        localStorage.setItem(CONFIG_KEYS.RULES_SEEN, 'true');
       } catch (error) {
         console.warn('Failed to save rules seen state:', error);
       }
+    },
+
+    resetRulesSeen() {
+      try {
+        localStorage.removeItem(CONFIG_KEYS.RULES_SEEN);
+      } catch (error) {
+        console.warn('Failed to reset rules seen state:', error);
+      }
+    },
+
+    closeRulesModal() {
+      this.markRulesAsSeen();
+      this.showGameRules = false;
     },
 
     setGridSize(size: number) {
@@ -51,6 +89,7 @@ export const usePlantStore = defineStore('plant', {
       }
       this.gridSize = size;
       this.initializeGrid();
+      this.saveUserConfiguration();
     },
 
     initializeGrid() {
