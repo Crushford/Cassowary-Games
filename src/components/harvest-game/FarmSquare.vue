@@ -1,32 +1,29 @@
 <template>
-  <div class="h-full aspect-square relative">
-    <!-- Background Image -->
-    <img
-      :src="getCellImage(cell)"
-      class="absolute inset-0 w-full h-full object-cover pointer-events-none"
-      alt="cell background"
-    />
+  <img
+    :src="getCellImage(cell)"
+    class="absolute inset-0 w-full h-full object-cover pointer-events-none"
+    alt="cell background"
+  />
 
-    <!-- Emoji overlay -->
-    <div class="relative z-10 flex items-center justify-center w-full h-full">
-      <span v-if="shouldShowQueen(rowIndex, colIndex)" :class="getEmojiSizeClass()">🍯</span>
-      <span v-else-if="shouldShowFlag(rowIndex, colIndex)" :class="getEmojiSizeClass()">🚧</span>
-      <div
-        v-else-if="shouldShowInvalid(rowIndex, colIndex)"
-        class="flex items-center justify-center leading-none w-full h-full"
-        :class="getEmojiSizeClass()"
-      >
-        <span>🐜</span>
-      </div>
-      <span v-else class="invisible">.</span>
-    </div>
-
-    <!-- Border overlay -->
+  <!-- Emoji overlay -->
+  <div class="relative z-10 flex items-center justify-center w-full h-full">
+    <span v-if="shouldShowQueen(rowIndex, colIndex)" :class="getEmojiSizeClass()">🍯</span>
+    <span v-else-if="shouldShowFlag(rowIndex, colIndex)" :class="getEmojiSizeClass()">🚧</span>
     <div
-      class="absolute inset-0 pointer-events-none z-20"
-      :class="getWrapperBorderClasses(cell, rowIndex, colIndex)"
-    />
+      v-else-if="shouldShowInvalid(rowIndex, colIndex)"
+      class="flex items-center justify-center leading-none w-full h-full"
+      :class="getEmojiSizeClass()"
+    >
+      <span>🐜</span>
+    </div>
+    <span v-else class="invisible">.</span>
   </div>
+
+  <!-- Border overlay -->
+  <div
+    class="absolute inset-0 pointer-events-none z-20"
+    :class="getWrapperBorderClasses(cell, rowIndex, colIndex)"
+  />
 </template>
 
 <script setup lang="ts">

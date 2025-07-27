@@ -18,7 +18,9 @@
         :data-row="rowIndex"
         :data-col="colIndex"
       >
-        <slot :cell="cell" :row-index="rowIndex" :col-index="colIndex" :store="store" />
+        <div class="h-full aspect-square relative">
+          <slot :cell="cell" :row-index="rowIndex" :col-index="colIndex" :store="store" />
+        </div>
       </div>
     </div>
   </div>
