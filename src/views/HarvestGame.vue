@@ -9,7 +9,16 @@
     <GameHUD class="h-[10%] flex-none" />
 
     <!-- Grid -->
-    <PlayGrid class="max-w-full aspect-square max-h-[45vh] overflow-hidden" />
+    <PlayGrid
+      class="max-w-full aspect-square max-h-[45vh] overflow-hidden"
+      :grid="harvestStore.grid"
+      :store="harvestStore"
+      :enable-touch="true"
+    >
+      <template #default="{ cell, rowIndex, colIndex }">
+        <FarmSquare :cell="cell" :row-index="rowIndex" :col-index="colIndex" />
+      </template>
+    </PlayGrid>
     <!-- Tool Selector -->
     <ToolSelector class="h-[10%] flex-none border-t border-gray-700" />
 
@@ -28,7 +37,8 @@ import { useHarvestStore } from '../stores/harvestStore';
 
 const Story = defineAsyncComponent(() => import('../components/gameplay/Story.vue'));
 const GameHUD = defineAsyncComponent(() => import('../components/gameplay/GameHUD.vue'));
-const PlayGrid = defineAsyncComponent(() => import('../components/gameplay/PlayGrid.vue'));
+const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
+const FarmSquare = defineAsyncComponent(() => import('../components/gameplay/FarmSquare.vue'));
 const ToolSelector = defineAsyncComponent(() => import('../components/gameplay/ToolSelector.vue'));
 const RulesModal = defineAsyncComponent(() => import('../components/gameplay/RulesModal.vue'));
 const PuzzleCompletionModal = defineAsyncComponent(

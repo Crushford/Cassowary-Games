@@ -5,9 +5,13 @@
     <!-- Dialogue -->
     <Story class="h-[35%] flex-none" />
 
-    <!-- Game area (placeholder for now) -->
-    <div class="flex-1 bg-gray-700 flex items-center justify-center">
-      <div class="text-gray-400">Plant game area coming soon...</div>
+    <!-- Game area -->
+    <div class="flex-1 bg-gray-700 p-4">
+      <PlayGrid :store="plantStore">
+        <template #default="{ cell, rowIndex, colIndex, store }">
+          <PlantSquare :cell="cell" :row-index="rowIndex" :col-index="colIndex" :store="store" />
+        </template>
+      </PlayGrid>
     </div>
 
     <!-- Tools -->
@@ -25,6 +29,8 @@ import { usePlantStore } from '../stores/plantStore';
 
 const Story = defineAsyncComponent(() => import('../components/gameplay/Story.vue'));
 const PlantTools = defineAsyncComponent(() => import('../components/gameplay/PlantTools.vue'));
+const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
+const PlantSquare = defineAsyncComponent(() => import('../components/gameplay/PlantSquare.vue'));
 
 const RulesModal = defineAsyncComponent(() => import('../components/gameplay/RulesModal.vue'));
 const PuzzleCompletionModal = defineAsyncComponent(
