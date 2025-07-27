@@ -11,37 +11,30 @@
 
       <!-- Step 1: Honey Pot Placement -->
       <div v-if="plantStore.isHoneyPotStep" class="flex flex-col gap-4">
-        <!-- Honey Pot Cards and Grid Size Selector -->
-        <div class="flex items-center justify-between">
-          <div class="flex flex-wrap gap-4 justify-center flex-1">
-            <div class="flex items-center gap-2">
-              <CardStack
-                image-src="/assets/card-backs/honey.png"
-                alt-text="honey pot card"
-                :is-selected="plantStore.selectedCard?.type === 'honey'"
-                @select="plantStore.selectHoneyPot()"
-              />
-              <span class="text-sm text-gray-600 font-medium">
-                {{ plantStore.honeyPotsRemaining }} remaining
-              </span>
-            </div>
-          </div>
+        <!-- All controls in one row -->
+        <div class="flex items-center justify-between gap-4">
+          <!-- Grid Size Dropdown -->
           <BoardSizeDropdown :store="plantStore" />
-        </div>
 
-        <!-- Honey Pot Counter -->
-        <div class="text-center">
-          <p class="text-sm text-gray-600">
-            Honey pots placed: {{ plantStore.honeyPotsPlaced }} / {{ plantStore.gridSize }}
-          </p>
-        </div>
+          <CardStack
+            image-src="/assets/card-backs/honey.png"
+            alt-text="honey pot card"
+            :is-selected="plantStore.selectedCard?.type === 'honey'"
+            @select="plantStore.selectHoneyPot()"
+          />
 
-        <!-- Next Step Button -->
-        <div class="flex justify-center">
+          <!-- Honey Pot Counter -->
+          <div class="text-center">
+            <p class="text-sm text-gray-600">
+              {{ plantStore.honeyPotsPlaced }} / {{ plantStore.gridSize }} placed
+            </p>
+          </div>
+
+          <!-- Next Step Button -->
           <button
             @click="plantStore.nextStep()"
             :disabled="!plantStore.canProceedToNextStep"
-            class="px-6 py-2 bg-blue-500 text-white rounded-md font-medium transition-colors"
+            class="px-4 py-2 bg-blue-500 text-white rounded-md font-medium transition-colors text-sm"
             :class="{
               'bg-blue-500 hover:bg-blue-600': plantStore.canProceedToNextStep,
               'bg-gray-300 cursor-not-allowed': !plantStore.canProceedToNextStep,

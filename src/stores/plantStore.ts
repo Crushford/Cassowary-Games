@@ -111,6 +111,11 @@ export const usePlantStore = defineStore('plant', {
       }
       this.initializeGrid();
       this.initializeCardDeck();
+
+      // Auto-select honey pot card when starting at step 1
+      if (this.currentStep === 1) {
+        this.selectHoneyPot();
+      }
     },
 
     saveUserConfiguration() {
@@ -226,9 +231,6 @@ export const usePlantStore = defineStore('plant', {
             // Place ants on all blocked positions
             this.placeAntsForHoneyPot(row, col);
           }
-
-          // Clear the selected card
-          this.selectedCard = null;
 
           console.log(`Card placed at (${row}, ${col})`);
         }
