@@ -1,6 +1,6 @@
 <template>
   <div
-    class="h-full w-full border-2 border-black transition-colors duration-150 cursor-pointer m-0.5"
+    class="h-full w-full border border-black transition-colors duration-150 cursor-pointer"
     :class="[
       cell.isEmpty ? 'bg-gray-800 hover:bg-gray-700' : 'bg-blue-600',
       store.selectedCard ? 'ring-2 ring-yellow-400 ring-opacity-50' : '',

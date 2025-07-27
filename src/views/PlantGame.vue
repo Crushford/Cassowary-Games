@@ -6,13 +6,12 @@
     <Story class="h-[35%] flex-none" />
 
     <!-- Game area -->
-    <div class="flex-1 bg-gray-700 p-4">
-      <PlayGrid :store="plantStore">
-        <template #default="{ cell, rowIndex, colIndex, store }">
-          <PlantSquare :cell="cell" :row-index="rowIndex" :col-index="colIndex" :store="store" />
-        </template>
-      </PlayGrid>
-    </div>
+
+    <PlayGrid class="max-w-full aspect-square max-h-[45vh]" :store="plantStore">
+      <template #default="{ cell, rowIndex, colIndex, store }">
+        <PlantSquare :cell="cell" :row-index="rowIndex" :col-index="colIndex" :store="store" />
+      </template>
+    </PlayGrid>
 
     <!-- Tools -->
     <PlantTools :plant-store="plantStore" />
