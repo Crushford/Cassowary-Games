@@ -229,8 +229,12 @@ export const usePlantStore = defineStore('plant', {
         this.selectedCard = null; // Clear any selected card
 
         // Assign random colors to honey pots when transitioning to step 2
+        // Delay color assignment to allow flip animation to start first
         if (this.currentStep === 2) {
-          this.assignColorsToHoneyPots();
+          // Delay by 300ms to allow flip animation to start
+          setTimeout(() => {
+            this.assignColorsToHoneyPots();
+          }, 300);
         }
       }
     },
