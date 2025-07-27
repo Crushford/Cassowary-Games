@@ -13,14 +13,12 @@
       <div
         v-for="(cell, colIndex) in row"
         :key="colIndex"
-        class="h-full aspect-square relative"
+        class="flex-1 aspect-square relative"
         @click="handleCellClick(rowIndex, colIndex)"
         :data-row="rowIndex"
         :data-col="colIndex"
       >
-        <div class="h-full aspect-square relative">
-          <slot :cell="cell" :row-index="rowIndex" :col-index="colIndex" :store="store" />
-        </div>
+        <slot :cell="cell" :row-index="rowIndex" :col-index="colIndex" :store="store" />
       </div>
     </div>
   </div>
