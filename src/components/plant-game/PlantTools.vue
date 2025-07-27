@@ -4,9 +4,9 @@
       <!-- Step Header -->
       <div class="text-center">
         <h3 class="text-lg font-semibold text-white-800">
-          Step {{ plantStore.currentStep }}: {{ stepTitle }}
+          Step {{ plantStore.currentStep }}: {{ plantStore.stepTitle }}
         </h3>
-        <p class="text-sm text-gray-600 mt-1">{{ stepDescription }}</p>
+        <p class="text-sm text-gray-600 mt-1">{{ plantStore.stepDescription }}</p>
       </div>
 
       <!-- Step 1: Honey Pot Placement -->
@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, computed } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { usePlantStore } from '../../stores/plantStore';
 
 const BoardSizeDropdown = defineAsyncComponent(() => import('../shared/BoardSizeDropdown.vue'));
@@ -84,27 +84,4 @@ const CardStack = defineAsyncComponent(() => import('./CardStack.vue'));
 
 // Use the store directly instead of through props
 const plantStore = usePlantStore();
-
-// Computed properties for step information
-const stepTitle = computed(() => {
-  switch (plantStore.currentStep) {
-    case 1:
-      return 'Place Honey Pots';
-    case 2:
-      return 'Place Color Cards';
-    default:
-      return 'Unknown Step';
-  }
-});
-
-const stepDescription = computed(() => {
-  switch (plantStore.currentStep) {
-    case 1:
-      return `Place exactly ${plantStore.gridSize} honey pots on the grid. You can change the grid size using the dropdown.`;
-    case 2:
-      return 'Place color cards to complete the puzzle.';
-    default:
-      return '';
-  }
-});
 </script>

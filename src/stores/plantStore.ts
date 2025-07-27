@@ -56,6 +56,29 @@ export const usePlantStore = defineStore('plant', {
     isColorCardStep(): boolean {
       return this.currentStep === 2;
     },
+
+    // Step information for UI
+    stepTitle(): string {
+      switch (this.currentStep) {
+        case 1:
+          return 'Place Honey Pots';
+        case 2:
+          return 'Place Color Cards';
+        default:
+          return 'Unknown Step';
+      }
+    },
+
+    stepDescription(): string {
+      switch (this.currentStep) {
+        case 1:
+          return `Place exactly ${this.gridSize} honey pots on the grid. You can change the grid size using the dropdown.`;
+        case 2:
+          return 'Place color cards to complete the puzzle.';
+        default:
+          return '';
+      }
+    },
   },
 
   actions: {
@@ -179,6 +202,8 @@ export const usePlantStore = defineStore('plant', {
           // Update honey pot count if placing a honey pot
           if (this.selectedCard.type === 'honey') {
             this.honeyPotsPlaced++;
+            // Place ants on all blocked positions
+            this.placeAntsForHoneyPot(row, col);
           }
 
           // Clear the selected card
@@ -189,15 +214,61 @@ export const usePlantStore = defineStore('plant', {
       }
     },
 
+    placeAntsForHoneyPot(honeyPotRow: number, honeyPotCol: number) {
+      // Place ants on all positions that this honey pot blocks
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          // Skip the honey pot position itself
+          if (row === honeyPotRow && col === honeyPotCol) {
+            continue;
+          }
+
+          // Check if this position should be blocked by the honey pot
+          if (this.isBlockedByHoneyPot(row, col, honeyPotRow, honeyPotCol)) {
+            // Only place an ant if the cell is empty
+            if (this.grid[row][col].isEmpty) {
+              this.grid[row][col] = {
+                isEmpty: false,
+                card: {
+                  type: 'ant',
+                  imageUrl: '/assets/card-backs/ant.png ', // Using player image as ant for now
+                },
+                colorGroup: null,
+              };
+            }
+          }
+        }
+      }
+    },
+
+    isBlockedByHoneyPot(
+      row: number,
+      col: number,
+      honeyPotRow: number,
+      honeyPotCol: number
+    ): boolean {
+      // A position is blocked if it's in the same row, column, or diagonally adjacent
+      const sameRow = row === honeyPotRow;
+      const sameCol = col === honeyPotCol;
+      const diagonalAdjacent =
+        Math.abs(row - honeyPotRow) === 1 && Math.abs(col - honeyPotCol) === 1;
+
+      return sameRow || sameCol || diagonalAdjacent;
+    },
+
     isValidPosition(row: number, col: number): boolean {
       return row >= 0 && row < this.gridSize && col >= 0 && col < this.gridSize;
     },
 
     clearCell(row: number, col: number) {
       if (this.isValidPosition(row, col)) {
+        const cell = this.grid[row][col];
+
         // Check if removing a honey pot
-        if (!this.grid[row][col].isEmpty && this.grid[row][col].card?.type === 'honey') {
+        if (!cell.isEmpty && cell.card?.type === 'honey') {
           this.honeyPotsPlaced--;
+          // Remove ants that were placed by this honey pot
+          this.removeAntsForHoneyPot(row, col);
         }
 
         this.grid[row][col] = {
@@ -205,6 +276,31 @@ export const usePlantStore = defineStore('plant', {
           card: null,
           colorGroup: null,
         };
+      }
+    },
+
+    removeAntsForHoneyPot(honeyPotRow: number, honeyPotCol: number) {
+      // Remove ants from positions that were blocked by this honey pot
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          // Skip the honey pot position itself
+          if (row === honeyPotRow && col === honeyPotCol) {
+            continue;
+          }
+
+          // Check if this position was blocked by the honey pot
+          if (this.isBlockedByHoneyPot(row, col, honeyPotRow, honeyPotCol)) {
+            const cell = this.grid[row][col];
+            // Only remove if it's an ant (not another honey pot or color card)
+            if (!cell.isEmpty && cell.card?.type === 'ant') {
+              this.grid[row][col] = {
+                isEmpty: true,
+                card: null,
+                colorGroup: null,
+              };
+            }
+          }
+        }
       }
     },
 
