@@ -5,16 +5,14 @@
     <!-- Dialogue -->
     <Story class="h-[35%] flex-none" />
 
-    <!-- Game area -->
+    <!-- Plant Tools - Increased height since no HUD -->
+    <PlantTools class="h-[20%] flex-none" />
 
     <PlayGrid class="max-w-full aspect-square max-h-[45vh]" :store="plantStore">
       <template #default="{ cell, rowIndex, colIndex, store }">
         <PlantSquare :cell="cell" :row-index="rowIndex" :col-index="colIndex" :store="store" />
       </template>
     </PlayGrid>
-
-    <!-- Tools -->
-    <PlantTools :plant-store="plantStore" />
 
     <!-- Modals -->
     <RulesModal :store="plantStore" />

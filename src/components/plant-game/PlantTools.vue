@@ -1,24 +1,27 @@
 <template>
-  <div class="flex items-center justify-between p-4 bg-slate-900 border-t border-slate-700">
-    <div class="flex items-center gap-4">
-      <!-- Left side tools can go here -->
-    </div>
+  <!-- Header -->
 
-    <div class="flex items-center gap-2">
-      <!-- Board size dropdown -->
-      <BoardSizeDropdown :store="plantStore" />
+  <!-- Card Deck Section -->
+  <div class="flex-1 p-4">
+    <div class="flex flex-col gap-4">
+      <!-- Card Stacks and Board Size Dropdown on same row -->
+      <div class="flex items-center justify-between">
+        <div class="flex flex-wrap gap-4 justify-center flex-1">
+          <CardDeck />
+        </div>
+        <BoardSizeDropdown :store="plantStore" />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { defineAsyncComponent } from 'vue';
+import { usePlantStore } from '../../stores/plantStore';
 
 const BoardSizeDropdown = defineAsyncComponent(() => import('../shared/BoardSizeDropdown.vue'));
+const CardDeck = defineAsyncComponent(() => import('./CardDeck.vue'));
 
-interface Props {
-  plantStore: any;
-}
-
-defineProps<Props>();
+// Use the store directly instead of through props
+const plantStore = usePlantStore();
 </script>

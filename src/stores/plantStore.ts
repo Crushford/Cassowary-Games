@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { rulesStorage } from '../utils/rulesStorage';
+import { COLOR_PALETTE } from '../utils/colorPalette';
 
 // Configuration keys for localStorage
 const CONFIG_KEYS = {
@@ -19,11 +20,17 @@ export const usePlantStore = defineStore('plant', {
     // Card placement state
     selectedCard: null as any, // Currently selected card for placement
 
+    // Card deck state
+    availableColors: [] as string[], // Colors available for current grid size
+
     // Add more state as needed
   }),
 
   getters: {
-    // Add getters as needed
+    // Check if a color has cards available (always true for unlimited deck)
+    hasCardsAvailable: () => (color: string) => {
+      return true; // Unlimited cards
+    },
   },
 
   actions: {
@@ -42,6 +49,7 @@ export const usePlantStore = defineStore('plant', {
         console.warn('Failed to load user configuration:', error);
       }
       this.initializeGrid();
+      this.initializeCardDeck();
     },
 
     saveUserConfiguration() {
@@ -76,6 +84,7 @@ export const usePlantStore = defineStore('plant', {
       }
       this.gridSize = size;
       this.initializeGrid();
+      this.initializeCardDeck();
       this.saveUserConfiguration();
     },
 
@@ -96,8 +105,17 @@ export const usePlantStore = defineStore('plant', {
         );
     },
 
-    selectCard(card: any) {
-      this.selectedCard = card;
+    initializeCardDeck() {
+      // Select colors based on grid size (same number of colors as grid size)
+      this.availableColors = COLOR_PALETTE.slice(0, this.gridSize);
+    },
+
+    selectCard(color: string) {
+      this.selectedCard = {
+        color: color,
+        colorGroup: color,
+        imageUrl: `/assets/ant-nest-colors/${color}.png`,
+      };
     },
 
     placeCard(row: number, col: number) {
@@ -128,6 +146,14 @@ export const usePlantStore = defineStore('plant', {
           colorGroup: null,
         };
       }
+    },
+
+    // Reset the game
+    resetGame() {
+      this.initializeGrid();
+      this.initializeCardDeck();
+      this.selectedCard = null;
+      this.isComplete = false;
     },
 
     // Add more actions as needed
