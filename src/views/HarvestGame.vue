@@ -11,7 +11,6 @@
     <!-- Grid -->
     <PlayGrid
       class="max-w-full aspect-square max-h-[45vh] overflow-hidden"
-      :grid="harvestStore.grid"
       :store="harvestStore"
       :enable-touch="true"
     >

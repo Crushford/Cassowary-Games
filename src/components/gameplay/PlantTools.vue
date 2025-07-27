@@ -12,7 +12,9 @@
 </template>
 
 <script setup lang="ts">
-import BoardSizeDropdown from '../shared/BoardSizeDropdown.vue';
+import { defineAsyncComponent } from 'vue';
+
+const BoardSizeDropdown = defineAsyncComponent(() => import('../shared/BoardSizeDropdown.vue'));
 
 interface Props {
   plantStore: any;
