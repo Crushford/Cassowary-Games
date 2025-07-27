@@ -6,7 +6,6 @@
         <h3 class="text-lg font-semibold text-white-800">
           Step {{ plantStore.currentStep }}: {{ plantStore.stepTitle }}
         </h3>
-        <p class="text-sm text-gray-600 mt-1">{{ plantStore.stepDescription }}</p>
       </div>
 
       <!-- Step 1: Honey Pot Placement -->
@@ -29,19 +28,6 @@
               {{ plantStore.honeyPotsPlaced }} / {{ plantStore.gridSize }} placed
             </p>
           </div>
-
-          <!-- Next Step Button -->
-          <button
-            @click="plantStore.nextStep()"
-            :disabled="!plantStore.canProceedToNextStep"
-            class="px-4 py-2 bg-blue-500 text-white rounded-md font-medium transition-colors text-sm"
-            :class="{
-              'bg-blue-500 hover:bg-blue-600': plantStore.canProceedToNextStep,
-              'bg-gray-300 cursor-not-allowed': !plantStore.canProceedToNextStep,
-            }"
-          >
-            Next Step
-          </button>
         </div>
       </div>
 

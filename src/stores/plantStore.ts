@@ -25,6 +25,14 @@ export const usePlantStore = defineStore('plant', {
 
     // Card deck state
     availableColors: [] as string[], // Colors available for current grid size
+
+    // Undo functionality
+    placementHistory: [] as Array<{
+      row: number;
+      col: number;
+      previousState: any;
+      step: number;
+    }>,
   }),
 
   getters: {
@@ -36,9 +44,19 @@ export const usePlantStore = defineStore('plant', {
     // Get the count of honey pots on the grid
     honeyPotsPlaced(): number {
       let count = 0;
+      // Check if grid is initialized
+      if (!this.grid || this.grid.length === 0) {
+        return count;
+      }
+
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
-          if (!this.grid[row][col].isEmpty && this.grid[row][col].card?.type === 'honey') {
+          if (
+            this.grid[row] &&
+            this.grid[row][col] &&
+            !this.grid[row][col].isEmpty &&
+            this.grid[row][col].card?.type === 'honey'
+          ) {
             count++;
           }
         }
@@ -68,6 +86,11 @@ export const usePlantStore = defineStore('plant', {
     // Check if we're in step 2 (color card placement)
     isColorCardStep(): boolean {
       return this.currentStep === 2;
+    },
+
+    // Check if undo is available
+    canUndo(): boolean {
+      return this.placementHistory.length > 0;
     },
 
     // Step information for UI
@@ -216,9 +239,18 @@ export const usePlantStore = defineStore('plant', {
     },
 
     placeCard(row: number, col: number) {
-      if (this.selectedCard && this.isValidPosition(row, col)) {
+      if (
+        this.selectedCard &&
+        this.isValidPosition(row, col) &&
+        this.grid &&
+        this.grid[row] &&
+        this.grid[row][col]
+      ) {
         // Check if cell is empty
         if (this.grid[row][col].isEmpty) {
+          // Store the previous state for undo
+          const previousState = JSON.parse(JSON.stringify(this.grid[row][col]));
+
           // Place the card at the specified position
           this.grid[row][col] = {
             isEmpty: false,
@@ -226,19 +258,65 @@ export const usePlantStore = defineStore('plant', {
             colorGroup: this.selectedCard.colorGroup || null,
           };
 
-          // Update honey pot count if placing a honey pot
+          // If placing a honey pot, recalculate all ant positions
           if (this.selectedCard.type === 'honey') {
-            // Place ants on all blocked positions
-            this.placeAntsForHoneyPot(row, col);
+            this.recalculateAntPositions();
           }
+
+          // Add to placement history for undo
+          this.placementHistory.push({
+            row,
+            col,
+            previousState,
+            step: this.currentStep,
+          });
 
           console.log(`Card placed at (${row}, ${col})`);
         }
       }
     },
 
+    // Recalculate all ant positions based on current honey pot placements
+    recalculateAntPositions() {
+      // First, remove all existing ants
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (
+            this.grid[row] &&
+            this.grid[row][col] &&
+            !this.grid[row][col].isEmpty &&
+            this.grid[row][col].card?.type === 'ant'
+          ) {
+            this.grid[row][col] = {
+              isEmpty: true,
+              card: null,
+              colorGroup: null,
+            };
+          }
+        }
+      }
+
+      // Then place ants for all honey pots
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (
+            this.grid[row] &&
+            this.grid[row][col] &&
+            !this.grid[row][col].isEmpty &&
+            this.grid[row][col].card?.type === 'honey'
+          ) {
+            this.placeAntsForHoneyPot(row, col);
+          }
+        }
+      }
+    },
+
     placeAntsForHoneyPot(honeyPotRow: number, honeyPotCol: number) {
       // Place ants on all positions that this honey pot blocks
+      if (!this.grid || this.grid.length === 0) {
+        return;
+      }
+
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
           // Skip the honey pot position itself
@@ -249,7 +327,7 @@ export const usePlantStore = defineStore('plant', {
           // Check if this position should be blocked by the honey pot
           if (this.isBlockedByHoneyPot(row, col, honeyPotRow, honeyPotCol)) {
             // Only place an ant if the cell is empty
-            if (this.grid[row][col].isEmpty) {
+            if (this.grid[row] && this.grid[row][col] && this.grid[row][col].isEmpty) {
               this.grid[row][col] = {
                 isEmpty: false,
                 card: {
@@ -284,25 +362,37 @@ export const usePlantStore = defineStore('plant', {
     },
 
     clearCell(row: number, col: number) {
-      if (this.isValidPosition(row, col)) {
+      if (this.isValidPosition(row, col) && this.grid && this.grid[row] && this.grid[row][col]) {
         const cell = this.grid[row][col];
 
         // Check if removing a honey pot
         if (!cell.isEmpty && cell.card?.type === 'honey') {
-          // Remove ants that were placed by this honey pot
-          this.removeAntsForHoneyPot(row, col);
-        }
+          // Clear the cell first
+          this.grid[row][col] = {
+            isEmpty: true,
+            card: null,
+            colorGroup: null,
+          };
 
-        this.grid[row][col] = {
-          isEmpty: true,
-          card: null,
-          colorGroup: null,
-        };
+          // Then recalculate all ant positions
+          this.recalculateAntPositions();
+        } else {
+          // For non-honey pot cells, just clear normally
+          this.grid[row][col] = {
+            isEmpty: true,
+            card: null,
+            colorGroup: null,
+          };
+        }
       }
     },
 
     removeAntsForHoneyPot(honeyPotRow: number, honeyPotCol: number) {
       // Remove ants from positions that were blocked by this honey pot
+      if (!this.grid || this.grid.length === 0) {
+        return;
+      }
+
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
           // Skip the honey pot position itself
@@ -312,16 +402,36 @@ export const usePlantStore = defineStore('plant', {
 
           // Check if this position was blocked by the honey pot
           if (this.isBlockedByHoneyPot(row, col, honeyPotRow, honeyPotCol)) {
-            const cell = this.grid[row][col];
-            // Only remove if it's an ant (not another honey pot or color card)
-            if (!cell.isEmpty && cell.card?.type === 'ant') {
-              this.grid[row][col] = {
-                isEmpty: true,
-                card: null,
-                colorGroup: null,
-              };
+            if (this.grid[row] && this.grid[row][col]) {
+              const cell = this.grid[row][col];
+              // Only remove if it's an ant (not another honey pot or color card)
+              if (!cell.isEmpty && cell.card?.type === 'ant') {
+                this.grid[row][col] = {
+                  isEmpty: true,
+                  card: null,
+                  colorGroup: null,
+                };
+              }
             }
           }
+        }
+      }
+    },
+
+    // Undo the last placement
+    undo() {
+      if (this.placementHistory.length > 0 && this.grid) {
+        const lastPlacement = this.placementHistory.pop()!;
+
+        // Restore the previous state
+        if (this.grid[lastPlacement.row] && this.grid[lastPlacement.row][lastPlacement.col]) {
+          this.grid[lastPlacement.row][lastPlacement.col] = lastPlacement.previousState;
+
+          // Always recalculate ant positions after any undo operation
+          // This ensures ants are properly placed based on current honey pot positions
+          this.recalculateAntPositions();
+
+          console.log(`Undid placement at (${lastPlacement.row}, ${lastPlacement.col})`);
         }
       }
     },
@@ -332,6 +442,7 @@ export const usePlantStore = defineStore('plant', {
       this.initializeCardDeck();
       this.isComplete = false;
       this.currentStep = 1;
+      this.placementHistory = []; // Clear placement history on reset
       // Auto-select honey pot card when starting at step 1
       this.selectHoneyPot();
     },

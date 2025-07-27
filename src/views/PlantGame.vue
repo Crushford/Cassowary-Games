@@ -5,14 +5,18 @@
     <!-- Dialogue -->
     <Story class="h-[35%] flex-none" />
 
-    <!-- Plant Tools - Increased height since no HUD -->
-    <PlantTools class="h-[20%] flex-none" />
+    <!-- Plant Tools - Reduced height -->
+    <PlantTools class="h-[15%] flex-none" />
 
-    <PlayGrid class="max-w-full aspect-square max-h-[45vh]" :store="plantStore">
+    <!-- PlayGrid - Flex to fill available space -->
+    <PlayGrid class="flex-1 max-w-full p-2 h-[35%]" :store="plantStore">
       <template #default="{ cell, rowIndex, colIndex, store }">
         <PlantSquare :cell="cell" :row-index="rowIndex" :col-index="colIndex" :store="store" />
       </template>
     </PlayGrid>
+
+    <!-- Bottom Menu -->
+    <BottomMenu class="h-[15%]" />
 
     <!-- Modals -->
     <RulesModal :store="plantStore" />
@@ -28,6 +32,7 @@ const Story = defineAsyncComponent(() => import('../components/shared/Story.vue'
 const PlantTools = defineAsyncComponent(() => import('../components/plant-game/PlantTools.vue'));
 const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
 const PlantSquare = defineAsyncComponent(() => import('../components/plant-game/PlantSquare.vue'));
+const BottomMenu = defineAsyncComponent(() => import('../components/plant-game/BottomMenu.vue'));
 
 const RulesModal = defineAsyncComponent(() => import('../components/shared/RulesModal.vue'));
 const PuzzleCompletionModal = defineAsyncComponent(
