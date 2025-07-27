@@ -34,14 +34,16 @@
 import { onMounted, watch, defineAsyncComponent } from 'vue';
 import { useHarvestStore } from '../stores/harvestStore';
 
-const Story = defineAsyncComponent(() => import('../components/gameplay/Story.vue'));
-const GameHUD = defineAsyncComponent(() => import('../components/gameplay/GameHUD.vue'));
+const Story = defineAsyncComponent(() => import('../components/shared/Story.vue'));
+const GameHUD = defineAsyncComponent(() => import('../components/harvest-game/GameHUD.vue'));
 const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
-const FarmSquare = defineAsyncComponent(() => import('../components/gameplay/FarmSquare.vue'));
-const ToolSelector = defineAsyncComponent(() => import('../components/gameplay/ToolSelector.vue'));
-const RulesModal = defineAsyncComponent(() => import('../components/gameplay/RulesModal.vue'));
+const FarmSquare = defineAsyncComponent(() => import('../components/harvest-game/FarmSquare.vue'));
+const ToolSelector = defineAsyncComponent(
+  () => import('../components/harvest-game/ToolSelector.vue')
+);
+const RulesModal = defineAsyncComponent(() => import('../components/shared/RulesModal.vue'));
 const PuzzleCompletionModal = defineAsyncComponent(
-  () => import('../components/gameplay/PuzzleCompletionModal.vue')
+  () => import('../components/shared/PuzzleCompletionModal.vue')
 );
 
 const harvestStore = useHarvestStore();

@@ -27,14 +27,14 @@
 import { onMounted, defineAsyncComponent } from 'vue';
 import { usePlantStore } from '../stores/plantStore';
 
-const Story = defineAsyncComponent(() => import('../components/gameplay/Story.vue'));
-const PlantTools = defineAsyncComponent(() => import('../components/gameplay/PlantTools.vue'));
+const Story = defineAsyncComponent(() => import('../components/shared/Story.vue'));
+const PlantTools = defineAsyncComponent(() => import('../components/plant-game/PlantTools.vue'));
 const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
-const PlantSquare = defineAsyncComponent(() => import('../components/gameplay/PlantSquare.vue'));
+const PlantSquare = defineAsyncComponent(() => import('../components/plant-game/PlantSquare.vue'));
 
-const RulesModal = defineAsyncComponent(() => import('../components/gameplay/RulesModal.vue'));
+const RulesModal = defineAsyncComponent(() => import('../components/shared/RulesModal.vue'));
 const PuzzleCompletionModal = defineAsyncComponent(
-  () => import('../components/gameplay/PuzzleCompletionModal.vue')
+  () => import('../components/shared/PuzzleCompletionModal.vue')
 );
 
 const plantStore = usePlantStore();
