@@ -46,6 +46,11 @@ export const usePlantStore = defineStore('plant', {
       return count;
     },
 
+    // Get the count of remaining honey pot cards
+    honeyPotsRemaining(): number {
+      return this.gridSize - this.honeyPotsPlaced;
+    },
+
     // Check if next step button should be enabled
     canProceedToNextStep(): boolean {
       if (this.currentStep === 1) {
@@ -142,6 +147,11 @@ export const usePlantStore = defineStore('plant', {
       this.initializeGrid();
       this.initializeCardDeck();
       this.saveUserConfiguration();
+
+      // Auto-select honey pot card if we're in step 1
+      if (this.currentStep === 1) {
+        this.selectHoneyPot();
+      }
     },
 
     initializeGrid() {
@@ -191,7 +201,12 @@ export const usePlantStore = defineStore('plant', {
     previousStep() {
       if (this.currentStep > 1) {
         this.currentStep--;
-        this.selectedCard = null; // Clear any selected card
+        // Auto-select honey pot card when entering step 1
+        if (this.currentStep === 1) {
+          this.selectHoneyPot();
+        } else {
+          this.selectedCard = null; // Clear any selected card
+        }
       }
     },
 
@@ -313,9 +328,10 @@ export const usePlantStore = defineStore('plant', {
     resetGame() {
       this.initializeGrid();
       this.initializeCardDeck();
-      this.selectedCard = null;
       this.isComplete = false;
       this.currentStep = 1;
+      // Auto-select honey pot card when starting at step 1
+      this.selectHoneyPot();
     },
 
     // Add more actions as needed

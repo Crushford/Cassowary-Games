@@ -14,12 +14,17 @@
         <!-- Honey Pot Cards and Grid Size Selector -->
         <div class="flex items-center justify-between">
           <div class="flex flex-wrap gap-4 justify-center flex-1">
-            <CardStack
-              image-src="/assets/card-backs/honey.png"
-              alt-text="honey pot card"
-              :is-selected="plantStore.selectedCard?.type === 'honey'"
-              @select="plantStore.selectHoneyPot()"
-            />
+            <div class="flex items-center gap-2">
+              <CardStack
+                image-src="/assets/card-backs/honey.png"
+                alt-text="honey pot card"
+                :is-selected="plantStore.selectedCard?.type === 'honey'"
+                @select="plantStore.selectHoneyPot()"
+              />
+              <span class="text-sm text-gray-600 font-medium">
+                {{ plantStore.honeyPotsRemaining }} remaining
+              </span>
+            </div>
           </div>
           <BoardSizeDropdown :store="plantStore" />
         </div>
