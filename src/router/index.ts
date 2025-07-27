@@ -17,8 +17,8 @@ const router = createRouter({
       component: LevelBuilder,
     },
     {
-      path: '/game',
-      name: 'game',
+      path: '/harvest',
+      name: 'harvest',
       component: HarvestGame,
     },
     {

@@ -5,7 +5,7 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <router-link
-          to="/game"
+          to="/harvest"
           class="block p-6 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
         >
           <h2 class="text-2xl font-bold mb-2">Play Harvest Game</h2>
