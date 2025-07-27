@@ -5,6 +5,14 @@
     <!-- Dialogue -->
     <Story class="h-[35%] flex-none" />
 
+    <!-- Game area (placeholder for now) -->
+    <div class="flex-1 bg-gray-700 flex items-center justify-center">
+      <div class="text-gray-400">Plant game area coming soon...</div>
+    </div>
+
+    <!-- Tools -->
+    <PlantTools :plant-store="plantStore" />
+
     <!-- Modals -->
     <RulesModal :is-visible="plantStore.showGameRules" @close="plantStore.showGameRules = false" />
     <PuzzleCompletionModal :is-visible="plantStore.isComplete" />
@@ -16,6 +24,7 @@ import { onMounted, defineAsyncComponent } from 'vue';
 import { usePlantStore } from '../stores/plantStore';
 
 const Story = defineAsyncComponent(() => import('../components/gameplay/Story.vue'));
+const PlantTools = defineAsyncComponent(() => import('../components/gameplay/PlantTools.vue'));
 
 const RulesModal = defineAsyncComponent(() => import('../components/gameplay/RulesModal.vue'));
 const PuzzleCompletionModal = defineAsyncComponent(

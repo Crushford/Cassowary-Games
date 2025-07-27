@@ -111,47 +111,15 @@
     <div class="mx-3 h-10 border-l border-slate-500"></div>
 
     <!-- Size selector -->
-    <div class="flex items-center relative">
-      <div class="relative">
-        <button
-          class="px-3 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-lg bg-slate-700 text-slate-300 hover:bg-slate-600"
-          @click="toggleSizeDropdown"
-          :aria-expanded="sizeDropdownOpen"
-          aria-label="Select board size"
-        >
-          <span>{{ harvestStore.gridSize }}×{{ harvestStore.gridSize }}</span>
-          <span class="text-xs">▼</span>
-        </button>
-
-        <!-- Size dropdown -->
-        <div
-          v-if="sizeDropdownOpen"
-          class="absolute bottom-full right-1 mb-1 bg-slate-900 text-slate-100 rounded shadow-lg border border-slate-700 z-20 min-w-[200px]"
-        >
-          <div class="px-4 py-3 border-b border-slate-700">
-            <div class="font-semibold text-sm mb-1">Board Size</div>
-            <div class="text-xs text-slate-300">
-              Change the size of the game board. Larger boards have more honeypots to find!
-            </div>
-          </div>
-          <div
-            v-for="size in availableSizes"
-            :key="size"
-            class="px-4 py-2 hover:bg-slate-700 cursor-pointer transition-colors duration-150"
-            :class="size === harvestStore.gridSize ? 'bg-blue-700/30' : ''"
-            @click="selectSize(size)"
-          >
-            {{ size }}×{{ size }}
-          </div>
-        </div>
-      </div>
-    </div>
+    <BoardSizeDropdown :store="harvestStore" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch, defineAsyncComponent } from 'vue';
 import { useHarvestStore } from '../../stores/harvestStore';
+
+const BoardSizeDropdown = defineAsyncComponent(() => import('../shared/BoardSizeDropdown.vue'));
 
 const harvestStore = useHarvestStore();
 
@@ -169,7 +137,6 @@ const modes = [
 const availableSizes = [4, 5, 6, 7, 8];
 
 const tooltipOpen = ref<string | null>(null);
-const sizeDropdownOpen = ref(false);
 const modeDropdownOpen = ref(false);
 
 function getCurrentModeIcon(): string {
@@ -182,7 +149,6 @@ function toggleModeDropdown() {
   // Close other dropdowns when opening mode dropdown
   if (modeDropdownOpen.value) {
     tooltipOpen.value = null;
-    sizeDropdownOpen.value = false;
   }
 }
 
@@ -195,28 +161,6 @@ function toggleTooltip(modeValue: string) {
   tooltipOpen.value = tooltipOpen.value === modeValue ? null : modeValue;
 }
 
-function toggleSizeDropdown() {
-  sizeDropdownOpen.value = !sizeDropdownOpen.value;
-  // Close other dropdowns when opening size dropdown
-  if (sizeDropdownOpen.value) {
-    tooltipOpen.value = null;
-    modeDropdownOpen.value = false;
-  }
-}
-
-function selectSize(size: number) {
-  if (size !== harvestStore.gridSize) {
-    harvestStore.setGridSize(size);
-    // Restart the game with the new size
-    if (harvestStore.isTrainingDay) {
-      harvestStore.resetTraining();
-    } else {
-      harvestStore.restartGame();
-    }
-  }
-  sizeDropdownOpen.value = false;
-}
-
 function undoLastFlag() {
   harvestStore.undoLastFlag();
   tooltipOpen.value = null;
@@ -226,7 +170,6 @@ function handleClickOutside(event: MouseEvent) {
   const toolSelector = document.querySelector('.bg-slate-800');
   if (toolSelector && !toolSelector.contains(event.target as Node)) {
     tooltipOpen.value = null;
-    sizeDropdownOpen.value = false;
     modeDropdownOpen.value = false;
   }
 }
@@ -249,14 +192,6 @@ watch(
   () => harvestStore.uiState.autoFlagging,
   () => {
     if (tooltipOpen.value === 'autoFlag') tooltipOpen.value = null;
-  }
-);
-
-// Close size dropdown when grid size changes
-watch(
-  () => harvestStore.gridSize,
-  () => {
-    sizeDropdownOpen.value = false;
   }
 );
 </script>
