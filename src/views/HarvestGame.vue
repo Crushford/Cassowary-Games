@@ -26,6 +26,7 @@
 <script setup lang="ts">
 import { onMounted, watch, defineAsyncComponent } from 'vue';
 import { useHarvestStore } from '../stores/harvestStore';
+import { useDialogueStore } from '../stores/dialogueStore';
 
 const Story = defineAsyncComponent(() => import('../components/shared/Story.vue'));
 const GameHUD = defineAsyncComponent(() => import('../components/harvest-game/GameHUD.vue'));
@@ -42,8 +43,12 @@ const PuzzleCompletionModal = defineAsyncComponent(
 );
 
 const harvestStore = useHarvestStore();
+const dialogueStore = useDialogueStore();
 
 onMounted(() => {
+  // Set the current game for dialogue actions
+  dialogueStore.setCurrentGame('harvest');
+
   // Load user configuration first
   harvestStore.loadUserConfiguration();
 

@@ -27,6 +27,7 @@
 <script setup lang="ts">
 import { onMounted, defineAsyncComponent } from 'vue';
 import { usePlantStore } from '../stores/plantStore';
+import { useDialogueStore } from '../stores/dialogueStore';
 
 const Story = defineAsyncComponent(() => import('../components/shared/Story.vue'));
 const PlantTools = defineAsyncComponent(() => import('../components/plant-game/PlantTools.vue'));
@@ -42,8 +43,12 @@ const PuzzleCompletionModal = defineAsyncComponent(
 );
 
 const plantStore = usePlantStore();
+const dialogueStore = useDialogueStore();
 
 onMounted(() => {
+  // Set the current game for dialogue actions
+  dialogueStore.setCurrentGame('plant');
+
   plantStore.loadUserConfiguration();
 });
 
