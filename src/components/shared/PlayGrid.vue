@@ -14,7 +14,7 @@
         <div
           v-for="(cell, colIndex) in row"
           :key="colIndex"
-          class="flex-1 aspect-square relative w-full h-full"
+          class="flex-1 relative w-full h-full"
           :data-row="rowIndex"
           :data-col="colIndex"
         >
