@@ -1,16 +1,19 @@
 <template>
   <div
-    class="h-dvh w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden"
+    :class="[
+      'w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden',
+      isGameOnly ? 'h-full' : 'h-dvh',
+    ]"
   >
     <!-- Dialogue -->
-    <Story class="h-[35%] flex-none" />
+    <Story v-if="!isGameOnly" class="h-[35%] flex-none" />
 
     <!-- HUD -->
-    <GameHUD class="h-[10%] flex-none" />
+    <GameHUD v-if="!isGameOnly" class="h-[10%] flex-none" />
 
     <!-- Grid -->
     <PlayGrid
-      class="aspect-square max-h-[45vh] max-w-full"
+      :class="isGameOnly ? 'aspect-square' : 'aspect-square max-h-[45vh] max-w-full'"
       :store="harvestStore"
       :enable-touch="true"
     >
@@ -18,12 +21,13 @@
         <FarmSquare :row-index="rowIndex" :col-index="colIndex" :store="store" />
       </template>
     </PlayGrid>
+
     <!-- Tool Selector -->
     <ToolSelector class="h-[10%] flex-none border-t border-gray-700" />
 
     <!-- Modals -->
-    <HarvestRulesModal :store="harvestStore" />
-    <PuzzleCompletionModal :is-visible="harvestStore.isComplete" />
+    <HarvestRulesModal v-if="!isGameOnly" :store="harvestStore" />
+    <PuzzleCompletionModal v-if="!isGameOnly" :is-visible="harvestStore.isComplete" />
   </div>
 </template>
 
@@ -31,6 +35,16 @@
 import { onMounted, watch, defineAsyncComponent } from 'vue';
 import { useHarvestStore } from '../stores/harvestStore';
 import { useDialogueStore } from '../stores/dialogueStore';
+
+interface Props {
+  isGameOnly?: boolean;
+  puzzleData?: any;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  isGameOnly: false,
+  puzzleData: undefined,
+});
 
 const Story = defineAsyncComponent(() => import('../components/shared/Story.vue'));
 const GameHUD = defineAsyncComponent(() => import('../components/harvest-game/GameHUD.vue'));
@@ -56,18 +70,27 @@ onMounted(() => {
   // Load user configuration first
   harvestStore.loadUserConfiguration();
 
-  harvestStore.findValidPuzzleWithSteps();
-  harvestStore.loadHighScore();
-  harvestStore.loadCurrentDay();
-
-  // If we're at day 0, ensure we're in training mode
-  if (harvestStore.currentDay === 0) {
-    harvestStore.isTrainingDay = true;
+  // If puzzle data is provided, load it instead of finding a random puzzle
+  if (props.puzzleData) {
+    harvestStore.parsePuzzleData(props.puzzleData);
+  } else {
+    harvestStore.findValidPuzzleWithSteps();
   }
 
-  // Show rules on first visit if user hasn't seen them before
-  if (!harvestStore.hasSeenRules()) {
-    harvestStore.showGameRules = true;
+  // Only load high score and current day if not in game-only mode
+  if (!props.isGameOnly) {
+    harvestStore.loadHighScore();
+    harvestStore.loadCurrentDay();
+
+    // If we're at day 0, ensure we're in training mode
+    if (harvestStore.currentDay === 0) {
+      harvestStore.isTrainingDay = true;
+    }
+
+    // Show rules on first visit if user hasn't seen them before
+    if (!harvestStore.hasSeenRules()) {
+      harvestStore.showGameRules = true;
+    }
   }
 });
 

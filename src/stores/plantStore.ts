@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { rulesStorage } from '../utils/rulesStorage';
-import { COLOR_PALETTE } from '../utils/colorPalette';
+import { COLOR_PALETTE, COLOR_SYMBOLS } from '../utils/colorPalette';
 
 // Configuration keys for localStorage
 const CONFIG_KEYS = {
@@ -12,6 +12,7 @@ export const usePlantStore = defineStore('plant', {
     // Basic game state
     isComplete: false,
     showGameRules: false,
+    showValidationModal: false,
     gridSize: 4, // Default grid size
 
     // Puzzle step management
@@ -190,6 +191,14 @@ export const usePlantStore = defineStore('plant', {
     closeRulesModal() {
       this.markRulesAsSeen();
       this.showGameRules = false;
+    },
+
+    openValidationModal() {
+      this.showValidationModal = true;
+    },
+
+    closeValidationModal() {
+      this.showValidationModal = false;
     },
 
     setGridSize(size: number) {
@@ -487,5 +496,86 @@ export const usePlantStore = defineStore('plant', {
     },
 
     // Add more actions as needed
+
+    // Export current puzzle state in the required JSON format
+    exportPuzzleData(): { id: string; layout: string; queens: string; createdAt: string } {
+      // Generate a unique ID (you might want to make this more sophisticated)
+      const id = `plant-${Date.now()}`;
+
+      let layout = '';
+      let queens = '';
+
+      // Encode the grid into layout and queens strings
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          const cell = this.grid[row][col];
+
+          // Encode queen position (honey pots are the "queens" in plant game)
+          queens += cell.base === 'honey' ? 'Q' : '.';
+
+          // Encode color using COLOR_SYMBOLS mapping
+          if (cell.groupColor) {
+            layout += COLOR_SYMBOLS[cell.groupColor as keyof typeof COLOR_SYMBOLS];
+          } else {
+            layout += COLOR_SYMBOLS['undefined'];
+          }
+        }
+      }
+
+      return {
+        id,
+        layout,
+        queens,
+        createdAt: new Date().toISOString(),
+      };
+    },
+
+    // Parse puzzle data from JSON format (for validation)
+    parsePuzzleData(puzzleData: any) {
+      const gridSize = Math.sqrt(puzzleData.layout.length);
+      const layout = puzzleData.layout;
+      const queens = puzzleData.queens;
+
+      // Create reverse mapping from symbols to color names
+      const SYMBOL_TO_COLOR: Record<string, string> = Object.entries(COLOR_SYMBOLS).reduce(
+        (acc, [color, symbol]) => {
+          if (color !== 'undefined') {
+            acc[symbol] = color;
+          }
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+
+      // Initialize grid
+      this.initializeGrid();
+
+      // Parse layout (color groups) using SYMBOL_TO_COLOR mapping
+      for (let i = 0; i < layout.length; i++) {
+        const row = Math.floor(i / gridSize);
+        const col = i % gridSize;
+        const symbol = layout[i];
+
+        if (symbol !== '.') {
+          const colorName = SYMBOL_TO_COLOR[symbol];
+          if (colorName) {
+            this.grid[row][col].groupColor = colorName;
+          }
+        }
+      }
+
+      // Parse queens (honey pot positions)
+      for (let i = 0; i < queens.length; i++) {
+        const row = Math.floor(i / gridSize);
+        const col = i % gridSize;
+
+        if (queens[i] === 'Q') {
+          this.grid[row][col].base = 'honey';
+        }
+      }
+
+      // Recalculate ant positions based on honey pot placements
+      this.recalculateAntPositions();
+    },
   },
 });
