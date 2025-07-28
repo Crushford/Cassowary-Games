@@ -138,7 +138,7 @@ defineOptions({
     transform: rotateY(90deg);
   }
   100% {
-    transform: rotateY(180deg);
+    transform: rotateY(0deg);
   }
 }
 </style>

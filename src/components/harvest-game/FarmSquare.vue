@@ -6,16 +6,20 @@
       alt="cell background"
     />
 
-    <!-- Emoji overlay -->
+    <!-- Content overlay -->
     <div class="relative z-10 flex items-center justify-center w-full h-full">
-      <span v-if="shouldShowQueen()" :class="getEmojiSizeClass()">🍯</span>
-      <span v-else-if="shouldShowFlag()" :class="getEmojiSizeClass()">🚧</span>
+      <span v-if="shouldShowFlag()" :class="getEmojiSizeClass()">🚧</span>
       <div
-        v-else-if="shouldShowInvalid()"
-        class="flex items-center justify-center leading-none w-full h-full"
-        :class="getEmojiSizeClass()"
+        v-else-if="shouldShowQueen() || shouldShowInvalid()"
+        class="w-full h-full relative card-flip"
+        :class="{ flipping: shouldFlip }"
       >
-        <span>🐜</span>
+        <img
+          v-if="cardImageSrc"
+          :src="cardImageSrc"
+          class="absolute inset-0 w-full h-full object-cover"
+          alt=""
+        />
       </div>
       <span v-else class="invisible">.</span>
     </div>
@@ -37,12 +41,59 @@ interface Props {
   store: any;
 }
 
+const props = defineProps<Props>();
+const harvestStore = useHarvestStore();
+
+// Track if this card should flip
+const shouldFlip = ref(false);
+const isFlipping = ref(false);
+
 const gridCell = computed(() => {
   return props.store.grid[props.rowIndex]?.[props.colIndex];
 });
 
-const props = defineProps<Props>();
-const harvestStore = useHarvestStore();
+// Computed property for the card image source
+const cardImageSrc = computed(() => {
+  // During flip animation, show no image (background only)
+  if (isFlipping.value) {
+    return '';
+  }
+
+  // Handle queen (honey pot)
+  if (shouldShowQueen()) {
+    return '/assets/card-backs/honey.png';
+  }
+
+  // Handle invalid (ant)
+  if (shouldShowInvalid()) {
+    return '/assets/card-backs/ant.png';
+  }
+
+  return '';
+});
+
+// Watch for changes in player marks to trigger flip animation
+watch(
+  () => harvestStore.playerMarks[props.rowIndex][props.colIndex],
+  (newMark, oldMark) => {
+    // Trigger flip when transitioning to queen or invalid (regardless of previous state)
+    if (newMark === 'queen' || newMark === 'invalid') {
+      shouldFlip.value = true;
+      isFlipping.value = true;
+
+      // Change the image mid-flip (at 50% of animation)
+      setTimeout(() => {
+        isFlipping.value = false;
+      }, 300); // Half of the 600ms animation
+
+      // Reset flip state after animation completes
+      setTimeout(() => {
+        shouldFlip.value = false;
+      }, 600); // Match the CSS animation duration
+    }
+  },
+  { immediate: false }
+);
 
 function handleClick() {
   harvestStore.handleSquareClick(props.rowIndex, props.colIndex);
@@ -134,3 +185,28 @@ export default {
   name: 'FarmSquare',
 };
 </script>
+
+<style scoped>
+/* 3D flip animation */
+.card-flip {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease-in-out;
+}
+
+.card-flip.flipping {
+  animation: flip 0.6s ease-in-out;
+}
+
+@keyframes flip {
+  0% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(90deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+</style>
