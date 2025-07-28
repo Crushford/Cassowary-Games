@@ -34,11 +34,29 @@
     >
       Next Step
     </button>
+
+    <!-- Preview Puzzle Button -->
+    <button
+      v-if="plantStore.isColorCardStep"
+      @click="plantStore.openValidationModal()"
+      class="px-4 py-2 bg-green-500 text-white rounded-md font-medium hover:bg-green-600 transition-colors text-sm"
+    >
+      Validate
+    </button>
   </div>
+
+  <!-- Validation Modal -->
+  <PuzzleValidationModal
+    :is-visible="plantStore.showValidationModal"
+    @close="plantStore.closeValidationModal()"
+  />
 </template>
 
 <script setup lang="ts">
+import { defineAsyncComponent } from 'vue';
 import { usePlantStore } from '../../stores/plantStore';
+
+const PuzzleValidationModal = defineAsyncComponent(() => import('./PuzzleValidationModal.vue'));
 
 const plantStore = usePlantStore();
 </script>
