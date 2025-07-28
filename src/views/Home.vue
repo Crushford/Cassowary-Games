@@ -19,7 +19,7 @@
             to="/plant"
             class="block p-6 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
           >
-            <h3 class="text-xl font-bold mb-2">Planting Game</h3>
+            <h3 class="text-xl font-bold mb-2">(Under construction) Planting Game</h3>
             <p>In this game you plant the honey pot ant farms</p>
           </router-link>
         </div>

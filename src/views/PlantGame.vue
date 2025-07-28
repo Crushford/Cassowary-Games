@@ -10,8 +10,8 @@
 
     <!-- PlayGrid - Flex to fill available space -->
     <PlayGrid class="flex-1 max-w-full p-2 h-[35%]" :store="plantStore">
-      <template #default="{ cell, rowIndex, colIndex, store }">
-        <PlantSquare :cell="cell" :row-index="rowIndex" :col-index="colIndex" :store="store" />
+      <template #default="{ rowIndex, colIndex, store }">
+        <PlantSquare :row-index="rowIndex" :col-index="colIndex" :store="store" />
       </template>
     </PlayGrid>
 
@@ -19,7 +19,7 @@
     <BottomMenu class="h-[15%]" />
 
     <!-- Modals -->
-    <RulesModal :store="plantStore" />
+    <PlantRulesModal :store="plantStore" />
     <PuzzleCompletionModal :is-visible="plantStore.isComplete" />
   </div>
 </template>
@@ -34,7 +34,9 @@ const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGri
 const PlantSquare = defineAsyncComponent(() => import('../components/plant-game/PlantSquare.vue'));
 const BottomMenu = defineAsyncComponent(() => import('../components/plant-game/BottomMenu.vue'));
 
-const RulesModal = defineAsyncComponent(() => import('../components/shared/RulesModal.vue'));
+const PlantRulesModal = defineAsyncComponent(
+  () => import('../components/plant-game/PlantRulesModal.vue')
+);
 const PuzzleCompletionModal = defineAsyncComponent(
   () => import('../components/shared/PuzzleCompletionModal.vue')
 );

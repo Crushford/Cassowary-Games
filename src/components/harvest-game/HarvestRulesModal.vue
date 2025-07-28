@@ -52,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import Modal from './Modal.vue';
+import Modal from '../shared/Modal.vue';
 
 interface Props {
   store: {
@@ -70,6 +70,6 @@ const onClose = () => {
 
 <script lang="ts">
 export default {
-  name: 'RulesModal',
+  name: 'HarvestRulesModal',
 };
 </script>

@@ -22,7 +22,7 @@
     <ToolSelector class="h-[10%] flex-none border-t border-gray-700" />
 
     <!-- Modals -->
-    <RulesModal :store="harvestStore" />
+    <HarvestRulesModal :store="harvestStore" />
     <PuzzleCompletionModal :is-visible="harvestStore.isComplete" />
   </div>
 </template>
@@ -38,7 +38,9 @@ const FarmSquare = defineAsyncComponent(() => import('../components/harvest-game
 const ToolSelector = defineAsyncComponent(
   () => import('../components/harvest-game/ToolSelector.vue')
 );
-const RulesModal = defineAsyncComponent(() => import('../components/shared/RulesModal.vue'));
+const HarvestRulesModal = defineAsyncComponent(
+  () => import('../components/harvest-game/HarvestRulesModal.vue')
+);
 const PuzzleCompletionModal = defineAsyncComponent(
   () => import('../components/shared/PuzzleCompletionModal.vue')
 );
