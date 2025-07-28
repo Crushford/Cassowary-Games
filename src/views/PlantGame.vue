@@ -9,7 +9,7 @@
     <PlantTools class="h-[15%] flex-none" />
 
     <!-- PlayGrid - Flex to fill available space -->
-    <PlayGrid class="flex-1 max-w-full p-2 h-[35%]" :store="plantStore">
+    <PlayGrid class="w-full aspect-square max-h-[45vh]" :store="plantStore">
       <template #default="{ rowIndex, colIndex, store }">
         <PlantSquare :row-index="rowIndex" :col-index="colIndex" :store="store" />
       </template>
