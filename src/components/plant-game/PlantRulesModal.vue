@@ -1,6 +1,6 @@
 <template>
   <Modal :is-visible="plantStore.showGameRules">
-    <div class="bg-purple-900 text-white p-4 rounded-xl max-w-md mx-auto space-y-2 text-base">
+    <div class="bg-slate-800 text-white p-4 rounded-xl max-w-md mx-auto space-y-2 text-base">
       <h2 class="text-green-400 font-bold text-xl">How to Plant</h2>
 
       <div class="space-y-1">
@@ -8,7 +8,7 @@
         <p>Choose nest locations, assign colors, and test your puzzle for solvability.</p>
       </div>
 
-      <div class="bg-purple-800 p-4 rounded-lg space-y-1">
+      <div class="bg-slate-700 p-4 rounded-lg space-y-1">
         <h3 class="font-semibold text-white">Step 1: Place Honey Pots</h3>
         <ul class="list-disc list-inside space-y-1">
           <li>🍯 Place exactly {{ plantStore.gridSize }} honey pots on the grid</li>
@@ -19,7 +19,7 @@
         </ul>
       </div>
 
-      <div class="bg-purple-800 p-4 rounded-lg space-y-1">
+      <div class="bg-slate-700 p-4 rounded-lg space-y-1">
         <h3 class="font-semibold text-white">Step 2: Color the Nests</h3>
         <ul class="list-disc list-inside space-y-1">
           <li>🎨 Each honey pot belongs to a nest with a unique grass color</li>
@@ -29,7 +29,7 @@
         </ul>
       </div>
 
-      <!-- <div class="bg-purple-800 p-4 rounded-lg space-y-1">
+      <!-- <div class="bg-slate-700 p-4 rounded-lg space-y-1">
         <h3 class="font-semibold text-white">Step 3: Test Your Puzzle</h3>
         <ul class="list-disc list-inside space-y-1">
           <li>🧠 The game will check if your setup is solvable</li>
@@ -42,7 +42,7 @@
         </ul>
       </div>
 
-      <div class="bg-purple-800 p-4 rounded-lg space-y-1">
+      <div class="bg-slate-700 p-4 rounded-lg space-y-1">
         <h3 class="font-semibold text-white">Controls:</h3>
         <ul class="list-disc list-inside space-y-1">
           <li>Select a honey pot or color tile from the toolbar</li>
