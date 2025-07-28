@@ -1,8 +1,8 @@
 <template>
   <button class="h-full w-full" @click="handleClick">
     <img
-      :src="getCellImage()"
-      class="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      :src="cellImageSrc"
+      class="absolute w-full h-full pointer-events-none"
       alt="cell background"
     />
 
@@ -21,7 +21,6 @@
           alt=""
         />
       </div>
-      <span v-else class="invisible">.</span>
     </div>
 
     <!-- Border overlay -->
@@ -33,6 +32,7 @@
 import { computed, ref, watch } from 'vue';
 
 import { useHarvestStore } from '../../stores/harvestStore';
+import { COLOR_IMAGE_URLS } from '../../utils/colorPalette';
 import type { ColorName } from '../../types/types';
 
 interface Props {
@@ -72,6 +72,17 @@ const cardImageSrc = computed(() => {
   return '';
 });
 
+// Computed property for the cell background image
+const cellImageSrc = computed(() => {
+  if (gridCell.value.groupColor) {
+    return (
+      COLOR_IMAGE_URLS[gridCell.value.groupColor as keyof typeof COLOR_IMAGE_URLS] ||
+      '/assets/ant-nest-colors/cell-background.png'
+    );
+  }
+  return '/assets/ant-nest-colors/cell-background.png';
+});
+
 // Watch for changes in player marks to trigger flip animation
 watch(
   () => harvestStore.playerMarks[props.rowIndex][props.colIndex],
@@ -97,13 +108,6 @@ watch(
 
 function handleClick() {
   harvestStore.handleSquareClick(props.rowIndex, props.colIndex);
-}
-
-function getCellImage() {
-  if (gridCell.value.groupColor) {
-    return `/assets/ant-nest-colors/${gridCell.value.groupColor}.png`;
-  }
-  return '/assets/ant-nest-colors/cell-background.png';
 }
 
 function shouldShowQueen(): boolean {
