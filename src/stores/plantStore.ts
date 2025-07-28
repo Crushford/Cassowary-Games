@@ -160,6 +160,11 @@ export const usePlantStore = defineStore('plant', {
       if (this.currentStep === 1) {
         this.selectHoneyPot();
       }
+
+      // Show rules if user hasn't seen them before
+      if (!this.hasSeenRules()) {
+        this.showGameRules = true;
+      }
     },
 
     saveUserConfiguration() {

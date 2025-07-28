@@ -19,7 +19,7 @@
     <BottomMenu class="h-[15%]" />
 
     <!-- Modals -->
-    <PlantRulesModal :store="plantStore" />
+    <PlantRulesModal />
     <PuzzleCompletionModal :is-visible="plantStore.isComplete" />
   </div>
 </template>
@@ -45,10 +45,6 @@ const plantStore = usePlantStore();
 
 onMounted(() => {
   plantStore.loadUserConfiguration();
-
-  if (!plantStore.hasSeenRules()) {
-    plantStore.showGameRules = true;
-  }
 });
 
 defineOptions({
