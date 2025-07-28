@@ -1,23 +1,25 @@
 <template>
-  <div
-    class="flex flex-col h-full w-full"
-    @touchstart="handleTouchStart"
-    @touchmove="handleTouchMove"
-    @touchend="handleTouchEnd"
-  >
+  <div>
     <div
-      v-for="(row, rowIndex) in store.grid"
-      :key="rowIndex"
-      class="flex flex-1 max-w-full justify-center w-full h-full"
+      class="flex flex-col h-full w-full"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
     >
       <div
-        v-for="(cell, colIndex) in row"
-        :key="colIndex"
-        class="flex-1 aspect-square relative w-full h-full"
-        :data-row="rowIndex"
-        :data-col="colIndex"
+        v-for="(row, rowIndex) in store.grid"
+        :key="rowIndex"
+        class="flex flex-1 max-w-full justify-center w-full h-full"
       >
-        <slot :row-index="rowIndex" :col-index="colIndex" :store="store" />
+        <div
+          v-for="(cell, colIndex) in row"
+          :key="colIndex"
+          class="flex-1 aspect-square relative w-full h-full"
+          :data-row="rowIndex"
+          :data-col="colIndex"
+        >
+          <slot :row-index="rowIndex" :col-index="colIndex" :store="store" />
+        </div>
       </div>
     </div>
   </div>
