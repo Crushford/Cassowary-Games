@@ -9,11 +9,7 @@
     <GameHUD class="h-[10%] flex-none" />
 
     <!-- Grid -->
-    <PlayGrid
-      class="max-w-full aspect-square max-h-[45vh] overflow-hidden"
-      :store="harvestStore"
-      :enable-touch="true"
-    >
+    <PlayGrid class="w-full aspect-square max-h-[45vh]" :store="harvestStore" :enable-touch="true">
       <template #default="{ rowIndex, colIndex, store }">
         <FarmSquare :row-index="rowIndex" :col-index="colIndex" :store="store" />
       </template>
