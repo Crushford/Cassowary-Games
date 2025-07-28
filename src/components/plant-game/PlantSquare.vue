@@ -8,15 +8,13 @@
       <div v-if="!gridCell.base" class="text-xs text-gray-500 opacity-50">
         {{ rowIndex }},{{ colIndex }}
       </div>
-      <div v-else class="w-full h-full flex items-center justify-center">
-        <!-- Card with Flip Animation -->
-        <div
-          v-if="gridCell.base"
-          class="w-full h-full bg-cover bg-center card-flip"
-          :class="{ flipping: shouldFlip }"
-          :style="getCardBackgroundStyle()"
-        />
-      </div>
+      <!-- Card with Flip Animation -->
+      <div
+        v-else
+        class="w-full h-full bg-cover bg-center card-flip"
+        :class="{ flipping: shouldFlip }"
+        :style="getCardBackgroundStyle()"
+      />
     </div>
   </button>
 </template>
@@ -26,7 +24,6 @@ import { computed, ref, watch } from 'vue';
 import { COLOR_BG_IMAGES } from '../../utils/colorPalette';
 
 interface Props {
-  cell: any;
   rowIndex: number;
   colIndex: number;
   store: any;
@@ -40,7 +37,7 @@ const isFlipping = ref(false);
 
 // Get the cell directly from the grid to ensure reactivity
 const gridCell = computed(() => {
-  return props.store.grid[props.rowIndex]?.[props.colIndex] || props.cell;
+  return props.store.grid[props.rowIndex]?.[props.colIndex];
 });
 
 // Watch for step changes to trigger flip animation

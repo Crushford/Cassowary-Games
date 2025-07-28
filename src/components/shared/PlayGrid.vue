@@ -17,7 +17,7 @@
         :data-row="rowIndex"
         :data-col="colIndex"
       >
-        <slot :cell="cell" :row-index="rowIndex" :col-index="colIndex" :store="store" />
+        <slot :row-index="rowIndex" :col-index="colIndex" :store="store" />
       </div>
     </div>
   </div>

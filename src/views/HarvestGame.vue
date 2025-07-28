@@ -14,8 +14,8 @@
       :store="harvestStore"
       :enable-touch="true"
     >
-      <template #default="{ cell, rowIndex, colIndex }">
-        <FarmSquare :cell="cell" :row-index="rowIndex" :col-index="colIndex" />
+      <template #default="{ rowIndex, colIndex, store }">
+        <FarmSquare :row-index="rowIndex" :col-index="colIndex" :store="store" />
       </template>
     </PlayGrid>
     <!-- Tool Selector -->

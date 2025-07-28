@@ -1,17 +1,17 @@
 <template>
   <button class="h-full w-full" @click="handleClick">
     <img
-      :src="getCellImage(cell)"
+      :src="getCellImage()"
       class="absolute inset-0 w-full h-full object-cover pointer-events-none"
       alt="cell background"
     />
 
     <!-- Emoji overlay -->
     <div class="relative z-10 flex items-center justify-center w-full h-full">
-      <span v-if="shouldShowQueen(rowIndex, colIndex)" :class="getEmojiSizeClass()">🍯</span>
-      <span v-else-if="shouldShowFlag(rowIndex, colIndex)" :class="getEmojiSizeClass()">🚧</span>
+      <span v-if="shouldShowQueen()" :class="getEmojiSizeClass()">🍯</span>
+      <span v-else-if="shouldShowFlag()" :class="getEmojiSizeClass()">🚧</span>
       <div
-        v-else-if="shouldShowInvalid(rowIndex, colIndex)"
+        v-else-if="shouldShowInvalid()"
         class="flex items-center justify-center leading-none w-full h-full"
         :class="getEmojiSizeClass()"
       >
@@ -21,22 +21,25 @@
     </div>
 
     <!-- Border overlay -->
-    <div
-      class="absolute inset-0 pointer-events-none z-20"
-      :class="getWrapperBorderClasses(cell, rowIndex, colIndex)"
-    />
+    <div class="absolute inset-0 pointer-events-none z-20" :class="getWrapperBorderClasses()" />
   </button>
 </template>
 
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue';
+
 import { useHarvestStore } from '../../stores/harvestStore';
 import type { ColorName } from '../../types/types';
 
 interface Props {
-  cell: { groupColor?: string };
   rowIndex: number;
   colIndex: number;
+  store: any;
 }
+
+const gridCell = computed(() => {
+  return props.store.grid[props.rowIndex]?.[props.colIndex];
+});
 
 const props = defineProps<Props>();
 const harvestStore = useHarvestStore();
@@ -45,34 +48,34 @@ function handleClick() {
   harvestStore.handleSquareClick(props.rowIndex, props.colIndex);
 }
 
-function getCellImage(cell: { groupColor?: string }) {
-  if (cell.groupColor) {
-    return `/assets/ant-nest-colors/${cell.groupColor}.png`;
+function getCellImage() {
+  if (gridCell.value.groupColor) {
+    return `/assets/ant-nest-colors/${gridCell.value.groupColor}.png`;
   }
   return '/assets/ant-nest-colors/cell-background.png';
 }
 
-function shouldShowQueen(row: number, col: number): boolean {
-  return harvestStore.playerMarks[row][col] === 'queen';
+function shouldShowQueen(): boolean {
+  return harvestStore.playerMarks[props.rowIndex][props.colIndex] === 'queen';
 }
 
-function shouldShowFlag(row: number, col: number): boolean {
-  return harvestStore.playerMarks[row][col] === 'flag';
+function shouldShowFlag(): boolean {
+  return harvestStore.playerMarks[props.rowIndex][props.colIndex] === 'flag';
 }
 
-function shouldShowInvalid(row: number, col: number): boolean {
-  return harvestStore.playerMarks[row][col] === 'invalid';
+function shouldShowInvalid(): boolean {
+  return harvestStore.playerMarks[props.rowIndex][props.colIndex] === 'invalid';
 }
 
-function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col: number) {
+function getWrapperBorderClasses() {
   const classes: string[] = [];
   const grid = harvestStore.grid;
   const maxRow = grid.length - 1;
   const maxCol = grid[0].length - 1;
 
   // Check right neighbor
-  if (col < maxCol) {
-    if (grid[row][col + 1].groupColor !== cell.groupColor) {
+  if (props.colIndex < maxCol) {
+    if (grid[props.rowIndex][props.colIndex + 1].groupColor !== gridCell.value.groupColor) {
       classes.push('border-r-2 border-r-blue-700');
     } else {
       classes.push('border-r-2 border-r-green-500/10');
@@ -82,8 +85,8 @@ function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col
   }
 
   // Check left neighbor
-  if (col > 0) {
-    if (grid[row][col - 1].groupColor !== cell.groupColor) {
+  if (props.colIndex > 0) {
+    if (grid[props.rowIndex][props.colIndex - 1].groupColor !== gridCell.value.groupColor) {
       classes.push('border-l-2 border-l-blue-700');
     } else {
       classes.push('border-l-2 border-l-green-500/10');
@@ -93,8 +96,8 @@ function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col
   }
 
   // Check bottom neighbor
-  if (row < maxRow) {
-    if (grid[row + 1][col].groupColor !== cell.groupColor) {
+  if (props.rowIndex < maxRow) {
+    if (grid[props.rowIndex + 1][props.colIndex].groupColor !== gridCell.value.groupColor) {
       classes.push('border-b-2 border-b-blue-700');
     } else {
       classes.push('border-b-2 border-b-green-500/10');
@@ -104,8 +107,8 @@ function getWrapperBorderClasses(cell: { groupColor?: string }, row: number, col
   }
 
   // Check top neighbor
-  if (row > 0) {
-    if (grid[row - 1][col].groupColor !== cell.groupColor) {
+  if (props.rowIndex > 0) {
+    if (grid[props.rowIndex - 1][props.colIndex].groupColor !== gridCell.value.groupColor) {
       classes.push('border-t-2 border-t-blue-700');
     } else {
       classes.push('border-t-2 border-t-green-500/10');
