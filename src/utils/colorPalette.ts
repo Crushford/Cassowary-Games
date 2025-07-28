@@ -118,19 +118,27 @@ export const COLOR_BG_HOVER_CLASSES: Record<ColorName, string> = {
   amber: 'hover:brightness-110',
 };
 
-// Background image styles for each color
-export const COLOR_BG_IMAGES: Record<ColorName, string> = {
-  red: 'background-image: url("/assets/ant-nest-colors/red.png");',
-  blue: 'background-image: url("/assets/ant-nest-colors/blue.png");',
-  green: 'background-image: url("/assets/ant-nest-colors/green.png");',
-  yellow: 'background-image: url("/assets/ant-nest-colors/yellow.png");',
-  purple: 'background-image: url("/assets/ant-nest-colors/purple.png");',
-  pink: 'background-image: url("/assets/ant-nest-colors/pink.png");',
-  orange: 'background-image: url("/assets/ant-nest-colors/orange.png");',
-  teal: 'background-image: url("/assets/ant-nest-colors/teal.png");',
-  indigo: 'background-image: url("/assets/ant-nest-colors/indigo.png");',
-  amber: 'background-image: url("/assets/ant-nest-colors/amber.png");',
+// Image URLs for each color (for img src attributes)
+export const COLOR_IMAGE_URLS: Record<ColorName, string> = {
+  red: '/assets/ant-nest-colors/red.png',
+  blue: '/assets/ant-nest-colors/blue.png',
+  green: '/assets/ant-nest-colors/green.png',
+  yellow: '/assets/ant-nest-colors/yellow.png',
+  purple: '/assets/ant-nest-colors/purple.png',
+  pink: '/assets/ant-nest-colors/pink.png',
+  orange: '/assets/ant-nest-colors/orange.png',
+  teal: '/assets/ant-nest-colors/teal.png',
+  indigo: '/assets/ant-nest-colors/indigo.png',
+  amber: '/assets/ant-nest-colors/amber.png',
 };
+
+// Background image styles for each color (derived from COLOR_IMAGE_URLS)
+export const COLOR_BG_IMAGES: Record<ColorName, string> = Object.fromEntries(
+  Object.entries(COLOR_IMAGE_URLS).map(([color, url]) => [
+    color,
+    `background-image: url("${url}");`,
+  ])
+) as Record<ColorName, string>;
 
 // Get a subset of the main palette with a specific size
 export function getColorPalette(size = 10): ColorName[] {

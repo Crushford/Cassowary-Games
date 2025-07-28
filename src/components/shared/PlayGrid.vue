@@ -8,12 +8,12 @@
     <div
       v-for="(row, rowIndex) in store.grid"
       :key="rowIndex"
-      class="flex flex-1 max-w-full justify-center"
+      class="flex flex-1 max-w-full justify-center w-full h-full"
     >
       <div
         v-for="(cell, colIndex) in row"
         :key="colIndex"
-        class="flex-1 aspect-square relative"
+        class="flex-1 aspect-square relative w-full h-full"
         :data-row="rowIndex"
         :data-col="colIndex"
       >

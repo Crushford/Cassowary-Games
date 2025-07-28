@@ -9,19 +9,21 @@
         {{ rowIndex }},{{ colIndex }}
       </div>
       <!-- Card with Flip Animation -->
-      <div
-        v-else
-        class="w-full h-full bg-cover bg-center card-flip"
-        :class="{ flipping: shouldFlip }"
-        :style="getCardBackgroundStyle()"
-      />
+      <div class="w-full h-full relative card-flip" :class="{ flipping: shouldFlip }">
+        <img
+          v-if="cardImageSrc"
+          :src="cardImageSrc"
+          class="absolute inset-0 w-full h-full object-cover"
+          alt=""
+        />
+      </div>
     </div>
   </button>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { COLOR_BG_IMAGES } from '../../utils/colorPalette';
+import { COLOR_IMAGE_URLS } from '../../utils/colorPalette';
 
 interface Props {
   rowIndex: number;
@@ -66,45 +68,36 @@ watch(
   }
 );
 
-// Get the background image style for a cell
-const getColorBackgroundStyle = (gridCell: any, store: any) => {
-  if (store.currentStep === 2 && gridCell.groupColor) {
-    return COLOR_BG_IMAGES[gridCell.groupColor as keyof typeof COLOR_BG_IMAGES] || '';
+// Computed property for the card image source
+const cardImageSrc = computed(() => {
+  const cell = gridCell.value;
+
+  // During flip animation, show the old image
+  if (isFlipping.value) {
+    if (cell.base === 'honey') return '/assets/card-backs/honey.png';
+    if (cell.base === 'ant') return '/assets/card-backs/ant.png';
   }
 
-  if (gridCell.base === 'honey') {
-    return "background-image: url('/assets/card-backs/honey.png');";
+  // Handle group colors (both step 2 and regular)
+  if (cell.groupColor) {
+    return COLOR_IMAGE_URLS[cell.groupColor as keyof typeof COLOR_IMAGE_URLS] || '';
   }
 
-  if (gridCell.base === 'ant') {
-    // In step 2, ants become blank (no background image)
-    if (store.currentStep === 2 && gridCell.groupColor === null) {
+  // Handle base types
+  if (cell.base === 'honey') {
+    return '/assets/card-backs/honey.png';
+  }
+
+  if (cell.base === 'ant') {
+    // In step 2, ants without group color become blank
+    if (props.store.currentStep === 2 && cell.groupColor === null) {
       return '';
     }
-    return "background-image: url('/assets/card-backs/ant.png');";
-  }
-
-  if (gridCell.groupColor) {
-    return "background-image: url('/assets/ant-nest-colors/" + gridCell.groupColor + ".png');";
+    return '/assets/card-backs/ant.png';
   }
 
   return '';
-};
-
-// Get the appropriate background style for the card
-const getCardBackgroundStyle = () => {
-  // During the first half of flip animation, show original image
-  if (isFlipping.value) {
-    if (gridCell.value.base === 'honey') {
-      return "background-image: url('/assets/card-backs/honey.png');";
-    }
-    if (gridCell.value.base === 'ant') {
-      return "background-image: url('/assets/card-backs/ant.png');";
-    }
-  }
-
-  return getColorBackgroundStyle(gridCell.value, props.store);
-};
+});
 
 const handleClick = () => {
   if (props.store.currentStep === 1) {
