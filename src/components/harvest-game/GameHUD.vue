@@ -2,18 +2,20 @@
   <div class="flex justify-between items-center px-4">
     <div class="flex items-center space-x-2">
       <span class="text-amber-400">🍯</span>
-      <span>{{ gameStore.honeyPots }}</span>
-      <span v-if="gameStore.isTrainingDay" class="text-green-400 text-sm ml-2"> (Training) </span>
+      <span>{{ harvestStore.honeyPots }}</span>
+      <span v-if="harvestStore.isTrainingDay" class="text-green-400 text-sm ml-2">
+        (Training)
+      </span>
     </div>
     <BitesDisplay />
   </div>
 </template>
 
 <script setup lang="ts">
-import { useGameStore } from '../../stores/gameStore';
+import { useHarvestStore } from '../../stores/harvestStore';
 import BitesDisplay from './BitesDisplay.vue';
 
-const gameStore = useGameStore();
+const harvestStore = useHarvestStore();
 </script>
 
 <script lang="ts">

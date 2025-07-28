@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { rulesStorage } from '../utils/rulesStorage';
 import type {
   GridSquare,
   Pos,
@@ -47,7 +48,6 @@ const CONFIG_KEYS = {
   GRID_SIZE: 'honey-pot-ant-farming-grid-size',
   DIGGING_MODE: 'honey-pot-ant-farming-digging-mode',
   AUTO_FLAGGING: 'honey-pot-ant-farming-auto-flagging',
-  RULES_SEEN: 'honey-pot-ant-farming-rules-seen',
 } as const;
 
 // Create reverse mapping from symbols to color names
@@ -61,7 +61,7 @@ const SYMBOL_TO_COLOR: Record<string, ColorName> = Object.entries(COLOR_SYMBOLS)
   {} as Record<string, ColorName>
 );
 
-export const useGameStore = defineStore('game', {
+export const useHarvestStore = defineStore('game', {
   state: (): GameState => ({
     // Core game state
     grid: createEmptyGrid(DEFAULT_GRID_SIZE),
@@ -251,28 +251,20 @@ export const useGameStore = defineStore('game', {
     },
 
     markRulesAsSeen() {
-      try {
-        localStorage.setItem(CONFIG_KEYS.RULES_SEEN, 'true');
-      } catch (error) {
-        console.warn('Failed to save rules seen state:', error);
-      }
+      rulesStorage.markRulesAsSeen('harvest');
     },
 
     hasSeenRules(): boolean {
-      try {
-        return localStorage.getItem(CONFIG_KEYS.RULES_SEEN) === 'true';
-      } catch (error) {
-        console.warn('Failed to load rules seen state:', error);
-        return false;
-      }
+      return rulesStorage.hasSeenRules('harvest');
     },
 
     resetRulesSeen() {
-      try {
-        localStorage.removeItem(CONFIG_KEYS.RULES_SEEN);
-      } catch (error) {
-        console.warn('Failed to reset rules seen state:', error);
-      }
+      rulesStorage.resetRulesSeen('harvest');
+    },
+
+    closeRulesModal() {
+      this.markRulesAsSeen();
+      this.showGameRules = false;
     },
 
     toggleAutoFlagging() {

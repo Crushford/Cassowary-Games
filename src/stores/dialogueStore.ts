@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
-import { useGameStore } from './gameStore';
+import { useHarvestStore } from './harvestStore';
+import { usePlantStore } from './plantStore';
 
 export interface DialogueTopic {
   id: string;
@@ -24,6 +25,8 @@ export interface DialogueState {
   isAnimating: boolean;
   // Conversation history per character
   conversationHistory: Record<string, Set<string>>;
+  // Track which game is currently active
+  currentGame: 'harvest' | 'plant' | null;
 }
 
 export const useDialogueStore = defineStore('dialogue', {
@@ -32,6 +35,7 @@ export const useDialogueStore = defineStore('dialogue', {
     currentTopicId: null,
     isAnimating: false,
     conversationHistory: {},
+    currentGame: null,
   }),
 
   getters: {
@@ -94,12 +98,17 @@ export const useDialogueStore = defineStore('dialogue', {
     },
 
     handleAction(action: string) {
-      const gameStore = useGameStore();
+      const harvestStore = useHarvestStore();
+      const plantStore = usePlantStore();
 
       switch (action) {
         case 'show_rules':
-          gameStore.showGameRules = true;
-          break;
+          // Use the currentGame property to determine which game is active
+          if (this.currentGame === 'plant') {
+            plantStore.showGameRules = true;
+          } else if (this.currentGame === 'harvest') {
+            harvestStore.showGameRules = true;
+          }
         default:
           console.warn(`Unknown action: ${action}`);
       }
@@ -113,6 +122,10 @@ export const useDialogueStore = defineStore('dialogue', {
       this.currentCharacter = null;
       this.currentTopicId = null;
       this.isAnimating = false;
+    },
+
+    setCurrentGame(game: 'harvest' | 'plant' | null) {
+      this.currentGame = game;
     },
 
     hasSeenTopic(topicId: string): boolean {

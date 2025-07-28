@@ -1,52 +1,50 @@
 <template>
-  <div
-    class="flex flex-col"
-    @touchstart="handleTouchStart"
-    @touchmove="handleTouchMove"
-    @touchend="handleTouchEnd"
-  >
+  <div>
     <div
-      v-for="(row, rowIndex) in gameStore.grid"
-      :key="rowIndex"
-      class="flex flex-1 max-w-full justify-center"
+      class="flex flex-col h-full w-full"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
     >
       <div
-        v-for="(cell, colIndex) in row"
-        :key="colIndex"
-        class="h-full aspect-square relative"
-        @click="handleCellClick(rowIndex, colIndex)"
-        :data-row="rowIndex"
-        :data-col="colIndex"
+        v-for="(row, rowIndex) in store.grid"
+        :key="rowIndex"
+        class="flex flex-1 max-w-full justify-center w-full h-full"
       >
-        <FarmSquare :cell="cell" :row-index="rowIndex" :col-index="colIndex" />
+        <div
+          v-for="(cell, colIndex) in row"
+          :key="colIndex"
+          class="flex-1 aspect-square relative w-full h-full"
+          :data-row="rowIndex"
+          :data-col="colIndex"
+        >
+          <slot :row-index="rowIndex" :col-index="colIndex" :store="store" />
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useGameStore } from '../../stores/gameStore';
 import { onMounted, ref } from 'vue';
-import FarmSquare from './FarmSquare.vue';
 
-const gameStore = useGameStore();
+interface Props {
+  store: any;
+  enableTouch?: boolean;
+}
 
-// Swipe tracking state
+const props = withDefaults(defineProps<Props>(), {
+  enableTouch: false,
+});
+
+// Swipe tracking state (only used if touch is enabled)
 const isSwiping = ref(false);
 const swipeStartPos = ref<{ x: number; y: number } | null>(null);
 const swipedCells = ref<Set<string>>(new Set());
 
-onMounted(() => {
-  gameStore.clearMarkers();
-});
-
-function handleCellClick(row: number, col: number) {
-  gameStore.handleSquareClick(row, col);
-}
-
-// Touch event handlers for swipe functionality
+// Touch event handlers for swipe functionality (only if enabled)
 function handleTouchStart(event: TouchEvent) {
-  if (event.touches.length !== 1) return;
+  if (!props.enableTouch || event.touches.length !== 1) return;
 
   const touch = event.touches[0];
   const element = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -60,12 +58,11 @@ function handleTouchStart(event: TouchEvent) {
     const row = parseInt(cellElement.getAttribute('data-row')!);
     const col = parseInt(cellElement.getAttribute('data-col')!);
     swipedCells.value.add(`${row},${col}`);
-    // Do not place a flag yet — we wait to see if the user moves
   }
 }
 
 function handleTouchMove(event: TouchEvent) {
-  if (!isSwiping.value || event.touches.length !== 1) return;
+  if (!props.enableTouch || !isSwiping.value || event.touches.length !== 1) return;
   event.preventDefault();
 
   const touch = event.touches[0];
@@ -84,14 +81,14 @@ function handleTouchMove(event: TouchEvent) {
         // Just confirmed a swipe, flag all visited so far
         for (const key of swipedCells.value) {
           const [r, c] = key.split(',').map(Number);
-          if (gameStore.playerMarks[r][c] === null) {
-            gameStore.placeFlag(r, c);
+          if (props.store.playerMarks && props.store.playerMarks[r][c] === null) {
+            props.store.placeFlag(r, c);
           }
         }
       } else if (swipedCells.value.size > 2) {
         // Normal swipe continuation
-        if (gameStore.playerMarks[row][col] === null) {
-          gameStore.placeFlag(row, col);
+        if (props.store.playerMarks && props.store.playerMarks[row][col] === null) {
+          props.store.placeFlag(row, col);
         }
       }
     }
@@ -99,6 +96,8 @@ function handleTouchMove(event: TouchEvent) {
 }
 
 function handleTouchEnd(event: TouchEvent) {
+  if (!props.enableTouch) return;
+
   isSwiping.value = false;
   swipeStartPos.value = null;
   swipedCells.value.clear();
@@ -124,10 +123,8 @@ function findParentCellElement(element: Element | null): Element | null {
 
   return null;
 }
-</script>
 
-<script lang="ts">
-export default {
+defineOptions({
   name: 'PlayGrid',
-};
+});
 </script>
