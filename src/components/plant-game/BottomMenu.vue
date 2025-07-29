@@ -1,5 +1,10 @@
 <template>
-  <div class="border-t border-gray-700 flex items-center justify-center gap-3 px-2 py-1">
+  <div
+    :class="[
+      'border-t border-gray-700 flex items-center justify-center gap-3 px-2 py-1',
+      $attrs.class,
+    ]"
+  >
     <!-- Undo Button -->
     <button
       @click="plantStore.undo()"
@@ -43,13 +48,13 @@
     >
       Validate
     </button>
-  </div>
 
-  <!-- Validation Modal -->
-  <PuzzleValidationModal
-    :is-visible="plantStore.showValidationModal"
-    @close="plantStore.closeValidationModal()"
-  />
+    <!-- Validation Modal -->
+    <PuzzleValidationModal
+      :is-visible="plantStore.showValidationModal"
+      @close="plantStore.closeValidationModal()"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
