@@ -90,9 +90,9 @@ export const usePlantStore = defineStore('plant', {
       return this.currentStep === 2;
     },
 
-    // Check if undo is available
+    // Check if undo is available (only for flower tile placements)
     canUndo(): boolean {
-      return this.placementHistory.length > 0;
+      return this.placementHistory.some((placement) => placement.step === 2);
     },
 
     // Check if a color is currently selected in step 2
@@ -468,18 +468,33 @@ export const usePlantStore = defineStore('plant', {
       }
     },
 
-    // Undo the last placement
+    // Undo the last placed flower tile (color card placement only)
     undo() {
       if (this.placementHistory.length > 0 && this.grid) {
-        const lastPlacement = this.placementHistory.pop()!;
+        // Find the last flower tile placement (step 2) from the end of the history
+        let lastFlowerPlacementIndex = -1;
+        for (let i = this.placementHistory.length - 1; i >= 0; i--) {
+          if (this.placementHistory[i].step === 2) {
+            lastFlowerPlacementIndex = i;
+            break;
+          }
+        }
+
+        // If no flower tile placement found, do nothing
+        if (lastFlowerPlacementIndex === -1) {
+          return;
+        }
+
+        // Remove the last flower tile placement from history
+        const lastFlowerPlacement = this.placementHistory.splice(lastFlowerPlacementIndex, 1)[0];
 
         // Restore the previous state
-        if (this.grid[lastPlacement.row] && this.grid[lastPlacement.row][lastPlacement.col]) {
-          this.grid[lastPlacement.row][lastPlacement.col] = lastPlacement.previousState;
-
-          // Always recalculate ant positions after any undo operation
-          // This ensures ants are properly placed based on current honey pot positions
-          this.recalculateAntPositions();
+        if (
+          this.grid[lastFlowerPlacement.row] &&
+          this.grid[lastFlowerPlacement.row][lastFlowerPlacement.col]
+        ) {
+          this.grid[lastFlowerPlacement.row][lastFlowerPlacement.col] =
+            lastFlowerPlacement.previousState;
         }
       }
     },
