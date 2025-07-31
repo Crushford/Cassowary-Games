@@ -20,7 +20,7 @@
 
     <!-- Reset Button -->
     <button
-      @click="plantStore.resetGame()"
+      @click="plantStore.resetCurrentStep()"
       class="px-3 py-2 bg-red-500 text-white rounded-md font-medium hover:bg-red-600 transition-colors text-sm"
     >
       Reset

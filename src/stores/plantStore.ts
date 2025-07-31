@@ -40,6 +40,9 @@ export const usePlantStore = defineStore('plant', {
       previousState: any;
       step: number;
     }>,
+
+    // Initial step 2 grid state (saved when transitioning to step 2)
+    initialColorPlacements: null as any,
   }),
 
   getters: {
@@ -263,6 +266,8 @@ export const usePlantStore = defineStore('plant', {
           // Delay by 300ms to allow flip animation to start
           setTimeout(() => {
             this.assignColorsToHoneyPots();
+            // Save the initial step 2 grid state after assigning colors
+            this.initialColorPlacements = JSON.parse(JSON.stringify(this.grid));
           }, 300);
         }
       }
@@ -279,13 +284,9 @@ export const usePlantStore = defineStore('plant', {
           }
         }
       }
-
-      // Use all available colors and shuffle them
-      const shuffledColors = [...this.availableColors].sort(() => Math.random() - 0.5);
-
       // Assign a unique color to each honey pot
       honeyPotPositions.forEach((pos, index) => {
-        const color = shuffledColors[index];
+        const color = this.availableColors[index];
         // Set the groupColor on the grid cell (this is what PlantSquare will read)
         this.grid[pos.row][pos.col].groupColor = color;
       });
@@ -499,19 +500,23 @@ export const usePlantStore = defineStore('plant', {
       }
     },
 
-    // Reset the game
-    resetGame() {
-      this.initializeGrid();
-      this.initializeCardDeck();
-      this.isComplete = false;
-      this.currentStep = 1;
-      this.placementHistory = []; // Clear placement history on reset
-      // Auto-select honey pot card when starting at step 1
-      this.selectHoneyPot();
+    // Reset the current step only
+    resetCurrentStep() {
+      if (this.currentStep === 1) {
+        // Reset step 1: Clear all honey pots and ants
+        this.initializeGrid();
+        this.placementHistory = [];
+        this.initialColorPlacements = null; // Clear the saved step 2 state
+        this.selectHoneyPot();
+      } else if (this.currentStep === 2) {
+        // Reset step 2: Restore to the initial step 2 grid state
+        if (this.initialColorPlacements) {
+          this.grid = JSON.parse(JSON.stringify(this.initialColorPlacements));
+        }
+        // Remove all step 2 placements from history
+        this.placementHistory = this.placementHistory.filter((placement) => placement.step === 1);
+      }
     },
-
-    // Add more actions as needed
-
     // Export current puzzle state in the required JSON format
     exportPuzzleData(): { id: string; layout: string; queens: string; createdAt: string } {
       // Generate a unique ID (you might want to make this more sophisticated)
