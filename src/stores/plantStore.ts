@@ -98,14 +98,69 @@ export const usePlantStore = defineStore('plant', {
       return this.placementHistory.some((placement) => placement.step === 2);
     },
 
-    // Check if a color is currently selected in step 2
-    hasSelectedColor(): boolean {
-      return this.selectedCard && this.selectedCard.colorGroup && this.currentStep === 2;
-    },
-
     // Get the currently selected color
     selectedColor(): string | null {
       return this.selectedCard?.colorGroup || null;
+    },
+
+    // Get a boolean grid indicating valid placements for the currently selected color
+    validPlacements(): boolean[][] {
+      const validGrid: boolean[][] = [];
+
+      // Initialize the grid with false values
+      for (let row = 0; row < this.gridSize; row++) {
+        validGrid[row] = [];
+        for (let col = 0; col < this.gridSize; col++) {
+          validGrid[row][col] = false;
+        }
+      }
+
+      // Only calculate valid placements if we're in step 2 and have a selected color
+      if (this.currentStep === 2 && this.selectedColor) {
+        const selectedColor = this.selectedColor;
+
+        for (let row = 0; row < this.gridSize; row++) {
+          for (let col = 0; col < this.gridSize; col++) {
+            // Check if position is valid
+            if (row < 0 || row >= this.gridSize || col < 0 || col >= this.gridSize) {
+              continue;
+            }
+
+            // Check if there's already a color placed at this position
+            if (this.grid[row][col].groupColor) {
+              continue;
+            }
+
+            // Check if there's a honey pot at this position (can't place colors on honey pots)
+            if (this.grid[row][col].base === 'honey') {
+              continue;
+            }
+
+            // Check if the position is adjacent (directly vertical or horizontal) to a square with the same color
+            const adjacentPositions = [
+              { row: row - 1, col: col }, // top
+              { row: row + 1, col: col }, // bottom
+              { row: row, col: col - 1 }, // left
+              { row: row, col: col + 1 }, // right
+            ];
+
+            for (const pos of adjacentPositions) {
+              if (
+                pos.row >= 0 &&
+                pos.row < this.gridSize &&
+                pos.col >= 0 &&
+                pos.col < this.gridSize &&
+                this.grid[pos.row][pos.col].groupColor === selectedColor
+              ) {
+                validGrid[row][col] = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      return validGrid;
     },
 
     // Check if honey pot is currently selected in step 1
@@ -268,6 +323,7 @@ export const usePlantStore = defineStore('plant', {
             this.assignColorsToHoneyPots();
             // Save the initial step 2 grid state after assigning colors
             this.initialColorPlacements = JSON.parse(JSON.stringify(this.grid));
+            this.selectCard(this.availableColors[0]);
           }, 300);
         }
       }

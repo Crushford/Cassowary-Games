@@ -1,6 +1,7 @@
 <template>
   <button
-    class="h-full w-full border border-black transition-colors duration-150 cursor-pointer bg-gray-800 hover:bg-gray-700"
+    class="h-full w-full border border-black transition-colors duration-150 cursor-pointer"
+    :class="buttonClasses"
     @click="handleClick"
   >
     <!-- Cell content -->
@@ -67,6 +68,20 @@ watch(
     }
   }
 );
+
+// Computed property for button classes
+const buttonClasses = computed(() => {
+  // In step 2, show validation feedback for empty cells
+  if (props.store.currentStep === 2 && props.store.selectedColor) {
+    const isValid = props.store.validPlacements[props.rowIndex]?.[props.colIndex];
+    if (isValid) {
+      return 'bg-green-800 hover:bg-green-700';
+    }
+  }
+
+  // Default styling
+  return 'bg-gray-800 hover:bg-gray-700';
+});
 
 // Computed property for the card image source
 const cardImageSrc = computed(() => {
