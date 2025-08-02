@@ -1,13 +1,18 @@
 <template>
-  <div class="border-t border-gray-700 flex items-center justify-center gap-3 px-2 py-1">
+  <div
+    :class="[
+      'border-t border-gray-700 flex items-center justify-center gap-3 px-2 py-1',
+      $attrs.class,
+    ]"
+  >
     <!-- Undo Button -->
     <button
       @click="plantStore.undo()"
       :disabled="!plantStore.canUndo"
-      class="px-3 py-2 bg-yellow-500 text-white rounded-md font-medium transition-colors text-sm"
+      class="px-3 py-2 text-white rounded-md font-medium transition-colors text-sm"
       :class="{
         'bg-yellow-500 hover:bg-yellow-600': plantStore.canUndo,
-        'bg-gray-300 cursor-not-allowed': !plantStore.canUndo,
+        'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60': !plantStore.canUndo,
       }"
     >
       Undo
@@ -15,7 +20,7 @@
 
     <!-- Reset Button -->
     <button
-      @click="plantStore.resetGame()"
+      @click="plantStore.resetCurrentStep()"
       class="px-3 py-2 bg-red-500 text-white rounded-md font-medium hover:bg-red-600 transition-colors text-sm"
     >
       Reset
@@ -26,10 +31,10 @@
       v-if="plantStore.isHoneyPotStep"
       @click="plantStore.nextStep()"
       :disabled="!plantStore.canProceedToNextStep"
-      class="px-4 py-2 bg-blue-500 text-white rounded-md font-medium transition-colors text-sm"
+      class="px-4 py-2 text-white rounded-md font-medium transition-colors text-sm"
       :class="{
         'bg-blue-500 hover:bg-blue-600': plantStore.canProceedToNextStep,
-        'bg-gray-300 cursor-not-allowed': !plantStore.canProceedToNextStep,
+        'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60': !plantStore.canProceedToNextStep,
       }"
     >
       Next Step
@@ -43,13 +48,13 @@
     >
       Validate
     </button>
-  </div>
 
-  <!-- Validation Modal -->
-  <PuzzleValidationModal
-    :is-visible="plantStore.showValidationModal"
-    @close="plantStore.closeValidationModal()"
-  />
+    <!-- Validation Modal -->
+    <PuzzleValidationModal
+      :is-visible="plantStore.showValidationModal"
+      @close="plantStore.closeValidationModal()"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">

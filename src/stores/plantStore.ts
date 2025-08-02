@@ -40,6 +40,9 @@ export const usePlantStore = defineStore('plant', {
       previousState: any;
       step: number;
     }>,
+
+    // Initial step 2 grid state (saved when transitioning to step 2)
+    initialColorPlacements: null as any,
   }),
 
   getters: {
@@ -90,19 +93,74 @@ export const usePlantStore = defineStore('plant', {
       return this.currentStep === 2;
     },
 
-    // Check if undo is available
+    // Check if undo is available (only for flower tile placements)
     canUndo(): boolean {
-      return this.placementHistory.length > 0;
-    },
-
-    // Check if a color is currently selected in step 2
-    hasSelectedColor(): boolean {
-      return this.selectedCard && this.selectedCard.colorGroup && this.currentStep === 2;
+      return this.placementHistory.some((placement) => placement.step === 2);
     },
 
     // Get the currently selected color
     selectedColor(): string | null {
       return this.selectedCard?.colorGroup || null;
+    },
+
+    // Get a boolean grid indicating valid placements for the currently selected color
+    validPlacements(): boolean[][] {
+      const validGrid: boolean[][] = [];
+
+      // Initialize the grid with false values
+      for (let row = 0; row < this.gridSize; row++) {
+        validGrid[row] = [];
+        for (let col = 0; col < this.gridSize; col++) {
+          validGrid[row][col] = false;
+        }
+      }
+
+      // Only calculate valid placements if we're in step 2 and have a selected color
+      if (this.currentStep === 2 && this.selectedColor) {
+        const selectedColor = this.selectedColor;
+
+        for (let row = 0; row < this.gridSize; row++) {
+          for (let col = 0; col < this.gridSize; col++) {
+            // Check if position is valid
+            if (row < 0 || row >= this.gridSize || col < 0 || col >= this.gridSize) {
+              continue;
+            }
+
+            // Check if there's already a color placed at this position
+            if (this.grid[row][col].groupColor) {
+              continue;
+            }
+
+            // Check if there's a honey pot at this position (can't place colors on honey pots)
+            if (this.grid[row][col].base === 'honey') {
+              continue;
+            }
+
+            // Check if the position is adjacent (directly vertical or horizontal) to a square with the same color
+            const adjacentPositions = [
+              { row: row - 1, col: col }, // top
+              { row: row + 1, col: col }, // bottom
+              { row: row, col: col - 1 }, // left
+              { row: row, col: col + 1 }, // right
+            ];
+
+            for (const pos of adjacentPositions) {
+              if (
+                pos.row >= 0 &&
+                pos.row < this.gridSize &&
+                pos.col >= 0 &&
+                pos.col < this.gridSize &&
+                this.grid[pos.row][pos.col].groupColor === selectedColor
+              ) {
+                validGrid[row][col] = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      return validGrid;
     },
 
     // Check if honey pot is currently selected in step 1
@@ -263,6 +321,9 @@ export const usePlantStore = defineStore('plant', {
           // Delay by 300ms to allow flip animation to start
           setTimeout(() => {
             this.assignColorsToHoneyPots();
+            // Save the initial step 2 grid state after assigning colors
+            this.initialColorPlacements = JSON.parse(JSON.stringify(this.grid));
+            this.selectCard(this.availableColors[0]);
           }, 300);
         }
       }
@@ -279,13 +340,9 @@ export const usePlantStore = defineStore('plant', {
           }
         }
       }
-
-      // Use all available colors and shuffle them
-      const shuffledColors = [...this.availableColors].sort(() => Math.random() - 0.5);
-
       // Assign a unique color to each honey pot
       honeyPotPositions.forEach((pos, index) => {
-        const color = shuffledColors[index];
+        const color = this.availableColors[index];
         // Set the groupColor on the grid cell (this is what PlantSquare will read)
         this.grid[pos.row][pos.col].groupColor = color;
       });
@@ -468,35 +525,54 @@ export const usePlantStore = defineStore('plant', {
       }
     },
 
-    // Undo the last placement
+    // Undo the last placed flower tile (color card placement only)
     undo() {
       if (this.placementHistory.length > 0 && this.grid) {
-        const lastPlacement = this.placementHistory.pop()!;
+        // Find the last flower tile placement (step 2) from the end of the history
+        let lastFlowerPlacementIndex = -1;
+        for (let i = this.placementHistory.length - 1; i >= 0; i--) {
+          if (this.placementHistory[i].step === 2) {
+            lastFlowerPlacementIndex = i;
+            break;
+          }
+        }
+
+        // If no flower tile placement found, do nothing
+        if (lastFlowerPlacementIndex === -1) {
+          return;
+        }
+
+        // Remove the last flower tile placement from history
+        const lastFlowerPlacement = this.placementHistory.splice(lastFlowerPlacementIndex, 1)[0];
 
         // Restore the previous state
-        if (this.grid[lastPlacement.row] && this.grid[lastPlacement.row][lastPlacement.col]) {
-          this.grid[lastPlacement.row][lastPlacement.col] = lastPlacement.previousState;
-
-          // Always recalculate ant positions after any undo operation
-          // This ensures ants are properly placed based on current honey pot positions
-          this.recalculateAntPositions();
+        if (
+          this.grid[lastFlowerPlacement.row] &&
+          this.grid[lastFlowerPlacement.row][lastFlowerPlacement.col]
+        ) {
+          this.grid[lastFlowerPlacement.row][lastFlowerPlacement.col] =
+            lastFlowerPlacement.previousState;
         }
       }
     },
 
-    // Reset the game
-    resetGame() {
-      this.initializeGrid();
-      this.initializeCardDeck();
-      this.isComplete = false;
-      this.currentStep = 1;
-      this.placementHistory = []; // Clear placement history on reset
-      // Auto-select honey pot card when starting at step 1
-      this.selectHoneyPot();
+    // Reset the current step only
+    resetCurrentStep() {
+      if (this.currentStep === 1) {
+        // Reset step 1: Clear all honey pots and ants
+        this.initializeGrid();
+        this.placementHistory = [];
+        this.initialColorPlacements = null; // Clear the saved step 2 state
+        this.selectHoneyPot();
+      } else if (this.currentStep === 2) {
+        // Reset step 2: Restore to the initial step 2 grid state
+        if (this.initialColorPlacements) {
+          this.grid = JSON.parse(JSON.stringify(this.initialColorPlacements));
+        }
+        // Remove all step 2 placements from history
+        this.placementHistory = this.placementHistory.filter((placement) => placement.step === 1);
+      }
     },
-
-    // Add more actions as needed
-
     // Export current puzzle state in the required JSON format
     exportPuzzleData(): { id: string; layout: string; queens: string; createdAt: string } {
       // Generate a unique ID (you might want to make this more sophisticated)
