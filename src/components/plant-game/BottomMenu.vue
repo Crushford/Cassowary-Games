@@ -40,7 +40,7 @@
       Next Step
     </button>
 
-    <!-- Preview Puzzle Button -->
+    <!-- Validate Puzzle Button -->
     <button
       v-if="plantStore.isColorCardStep"
       @click="plantStore.openValidationModal()"
@@ -52,7 +52,15 @@
     <!-- Validation Modal -->
     <PuzzleValidationModal
       :is-visible="plantStore.showValidationModal"
+      mode="validation"
       @close="plantStore.closeValidationModal()"
+    />
+
+    <!-- Save Modal -->
+    <PuzzleValidationModal
+      :is-visible="plantStore.showSaveModal"
+      mode="save"
+      @close="plantStore.closeSaveModal()"
     />
   </div>
 </template>

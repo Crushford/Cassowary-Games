@@ -70,8 +70,8 @@ const summary: Summary = {
 
 import fs from 'fs';
 import type { GridSquare, MarkType, Pos, ColorName } from '../src/types/types';
-import { PuzzleDatabase } from './puzzleDatabase.ts';
-import { COLOR_PALETTE, COLOR_SYMBOLS } from '../src/utils/colorPalette.ts';
+import { PuzzleDatabase } from './puzzleDatabase';
+import { COLOR_PALETTE, COLOR_SYMBOLS } from '../src/utils/colorPalette';
 
 const puzzleDatabase = new PuzzleDatabase('../public/puzzles.json');
 

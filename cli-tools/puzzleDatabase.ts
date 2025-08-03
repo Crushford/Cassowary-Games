@@ -7,13 +7,14 @@
 
 import fs from 'fs';
 import type { GridSquare, ColorName } from '../src/types/types';
-import { COLOR_SYMBOLS } from '../src/utils/colorPalette.ts';
+import { COLOR_SYMBOLS } from '../src/utils/colorPalette';
 
 // === Types ===
 export interface PuzzleStringFormat {
   id: string; // Unique alphanumeric identifier (e.g. 'pz-0012')
   layout: string; // One character per tile representing groupColor
   queens: string; // One character per tile: 'Q' for queen, '.' for empty
+  name?: string; // Optional user-provided name for the puzzle
   createdAt: string; // ISO timestamp when the puzzle was generated
 }
 
@@ -201,7 +202,7 @@ export class PuzzleDatabase {
    * Add a puzzle to the database (including all 16 variants)
    * Returns true if any new puzzles were added, false if all were duplicates
    */
-  addPuzzle(grid: GridSquare[][]): boolean {
+  addPuzzle(grid: GridSquare[][], name?: string): boolean {
     const variants: [GridSquare[][], string][] = this.generateAllVariants(grid);
     const baseId = this.generateNextId();
     let addedCount = 0;
@@ -238,6 +239,7 @@ export class PuzzleDatabase {
         id,
         layout: encoded.layout,
         queens: encoded.queens,
+        name: name || undefined,
         createdAt: new Date().toISOString(),
       };
 

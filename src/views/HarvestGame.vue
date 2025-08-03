@@ -6,10 +6,10 @@
     ]"
   >
     <!-- Dialogue -->
-    <Story v-if="!isGameOnly" class="h-[35%] flex-none" />
+    <Story v-if="!isGameOnly" class="h-[35vh] flex-none" />
 
     <!-- HUD -->
-    <GameHUD v-if="!isGameOnly" class="h-[10%] flex-none" />
+    <GameHUD v-if="!isGameOnly" class="h-[10vh] flex-none" />
 
     <!-- Grid -->
     <PlayGrid
@@ -23,7 +23,7 @@
     </PlayGrid>
 
     <!-- Tool Selector -->
-    <ToolSelector class="h-[10%] flex-none border-t border-gray-700" />
+    <ToolSelector class="h-[10vh] flex-none border-t border-gray-700" />
 
     <!-- Modals -->
     <HarvestRulesModal v-if="!isGameOnly" :store="harvestStore" />

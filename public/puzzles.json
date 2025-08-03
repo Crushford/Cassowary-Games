@@ -1685,6 +1685,62 @@
       "layout": "IIOOAIIOAATOATTT",
       "queens": ".Q.....QQ.....Q.",
       "createdAt": "2025-07-24T21:29:02.096Z"
+    },
+    {
+      "id": "pz-0041-0",
+      "layout": "BBRBBBBBBBBGBYBB",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-1",
+      "createdAt": "2025-08-03T15:12:59.973Z"
+    },
+    {
+      "id": "pz-0041-0V",
+      "layout": "BYBBBBBGBBBBBBRB",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-1",
+      "createdAt": "2025-08-03T15:12:59.973Z"
+    },
+    {
+      "id": "pz-0041-0H",
+      "layout": "BRBBBBBBGBBBBBYB",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-1",
+      "createdAt": "2025-08-03T15:12:59.973Z"
+    },
+    {
+      "id": "pz-0041-0VH",
+      "layout": "BBYBGBBBBBBBBRBB",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-1",
+      "createdAt": "2025-08-03T15:12:59.973Z"
+    },
+    {
+      "id": "pz-0041-90",
+      "layout": "BBBBYBBBBBBRBGBB",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-1",
+      "createdAt": "2025-08-03T15:12:59.973Z"
+    },
+    {
+      "id": "pz-0041-90V",
+      "layout": "BGBBBBBRYBBBBBBB",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-1",
+      "createdAt": "2025-08-03T15:12:59.973Z"
+    },
+    {
+      "id": "pz-0041-90H",
+      "layout": "BBBBBBBYRBBBBBGB",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-1",
+      "createdAt": "2025-08-03T15:12:59.973Z"
+    },
+    {
+      "id": "pz-0041-90VH",
+      "layout": "BBGBRBBBBBBYBBBB",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-1",
+      "createdAt": "2025-08-03T15:12:59.973Z"
     }
   ],
   "8x8": [

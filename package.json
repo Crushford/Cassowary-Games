@@ -10,7 +10,9 @@
     "lint": "eslint --ext .js,.ts,.vue --ignore-path .gitignore --fix src",
     "format": "prettier --write \"src/**/*.{ts,vue}\"",
     "generate": "cd cli-tools && yarn generate",
-    "puzzle-db": "cd cli-tools && yarn puzzle-db"
+    "puzzle-db": "cd cli-tools && yarn puzzle-db",
+    "server": "cd cli-tools && yarn server",
+    "dev:server": "cd cli-tools && yarn dev:server"
   },
   "dependencies": {
     "pinia": "^3.0.1",
