@@ -13,6 +13,7 @@ export const usePlantStore = defineStore('plant', {
     isComplete: false,
     showGameRules: false,
     showValidationModal: false,
+    showSaveModal: false,
     gridSize: 4, // Default grid size
 
     // Puzzle step management
@@ -257,6 +258,14 @@ export const usePlantStore = defineStore('plant', {
 
     closeValidationModal() {
       this.showValidationModal = false;
+    },
+
+    openSaveModal() {
+      this.showSaveModal = true;
+    },
+
+    closeSaveModal() {
+      this.showSaveModal = false;
     },
 
     setGridSize(size: number) {

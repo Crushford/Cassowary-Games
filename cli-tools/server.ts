@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { PuzzleDatabase } from './puzzleDatabase.js';
+import { PuzzleDatabase } from './puzzleDatabase';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -34,8 +34,12 @@ app.get('/api/puzzles/size/:size', (req, res) => {
       return res.status(400).json({ error: 'Invalid grid size' });
     }
 
-    const puzzles = db.getPuzzlesBySize(size);
-    res.json({ puzzles, size });
+    const allPuzzles = db.getPuzzlesBySize(size);
+    const validPuzzles = allPuzzles.filter((puzzle) =>
+      isValidPuzzle(puzzle.layout, puzzle.queens, size)
+    );
+
+    res.json({ puzzles: validPuzzles, size, total: allPuzzles.length, valid: validPuzzles.length });
   } catch (error) {
     console.error('Error fetching puzzles by size:', error);
     res.status(500).json({ error: 'Failed to fetch puzzles' });
@@ -49,10 +53,19 @@ app.get('/api/puzzles/random/:size', (req, res) => {
       return res.status(400).json({ error: 'Invalid grid size' });
     }
 
-    const puzzle = db.getRandomPuzzleBySize(size);
-    if (!puzzle) {
-      return res.status(404).json({ error: `No ${size}x${size} puzzles found` });
+    // Get all puzzles for this size and filter out invalid ones
+    const allPuzzles = db.getPuzzlesBySize(size);
+    const validPuzzles = allPuzzles.filter((puzzle) =>
+      isValidPuzzle(puzzle.layout, puzzle.queens, size)
+    );
+
+    if (validPuzzles.length === 0) {
+      return res.status(404).json({ error: `No valid ${size}x${size} puzzles found` });
     }
+
+    // Pick a random valid puzzle
+    const randomIndex = Math.floor(Math.random() * validPuzzles.length);
+    const puzzle = validPuzzles[randomIndex];
 
     res.json({ puzzle });
   } catch (error) {
@@ -82,6 +95,13 @@ app.post('/api/puzzles/save', (req, res) => {
     if (layout.length !== expectedLength || queens.length !== expectedLength) {
       return res.status(400).json({
         error: `Invalid string lengths. Expected ${expectedLength} characters for ${size}x${size} grid`,
+      });
+    }
+
+    // Validate puzzle content
+    if (!isValidPuzzle(layout, queens, size)) {
+      return res.status(400).json({
+        error: 'Invalid puzzle: must have exactly gridSize queens and sufficient color groups',
       });
     }
 
@@ -125,6 +145,23 @@ app.get('/api/stats', (req, res) => {
     res.status(500).json({ error: 'Failed to fetch stats' });
   }
 });
+
+// Helper function to validate puzzle data
+function isValidPuzzle(layout: string, queens: string, gridSize: number): boolean {
+  // Check if queens string has exactly gridSize queens
+  const queenCount = (queens.match(/Q/g) || []).length;
+  if (queenCount !== gridSize) {
+    return false;
+  }
+
+  // Check if layout has at least gridSize different colors (one per queen)
+  const colors = new Set(layout.replace(/\./g, ''));
+  if (colors.size < gridSize) {
+    return false;
+  }
+
+  return true;
+}
 
 // Helper function to convert string format to grid format
 function convertStringToGrid(layout: string, queens: string, gridSize: number) {
