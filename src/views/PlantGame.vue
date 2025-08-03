@@ -1,22 +1,22 @@
 <template>
   <div
-    class="h-dvh w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden"
+    class="h-svh w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden"
   >
     <!-- Dialogue -->
-    <Story class="h-[35vh] flex-none" />
+    <Story class="basis-[35%] flex-none" />
 
     <!-- Plant Tools - Reduced height -->
-    <PlantTools class="h-[15vh] flex-none" />
+    <PlantTools class="basis-[15%] flex-none" />
 
     <!-- PlayGrid - Flex to fill available space -->
-    <PlayGrid class="w-full aspect-square max-h-[45vh]" :store="plantStore">
+    <PlayGrid class="w-full aspect-square max-h-[45%]" :store="plantStore">
       <template #default="{ rowIndex, colIndex, store }">
         <PlantSquare :row-index="rowIndex" :col-index="colIndex" :store="store" />
       </template>
     </PlayGrid>
 
     <!-- Bottom Menu -->
-    <BottomMenu class="h-[15vh]" />
+    <BottomMenu class="basis-[15%]" />
 
     <!-- Modals -->
     <PlantRulesModal />

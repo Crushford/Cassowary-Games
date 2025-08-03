@@ -2,18 +2,18 @@
   <div
     :class="[
       'w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden',
-      isGameOnly ? 'h-full' : 'h-dvh',
+      isGameOnly ? 'h-svh' : 'h-dvh',
     ]"
   >
     <!-- Dialogue -->
-    <Story v-if="!isGameOnly" class="h-[35vh] flex-none" />
+    <Story v-if="!isGameOnly" class="basis-[35%] flex-none" />
 
     <!-- HUD -->
-    <GameHUD v-if="!isGameOnly" class="h-[10vh] flex-none" />
+    <GameHUD v-if="!isGameOnly" class="basis-[10%] flex-none" />
 
     <!-- Grid -->
     <PlayGrid
-      :class="isGameOnly ? 'aspect-square' : 'aspect-square max-h-[45vh] max-w-full'"
+      :class="isGameOnly ? 'aspect-square' : 'aspect-square max-h-[45%] max-w-full'"
       :store="harvestStore"
       :enable-touch="true"
     >
@@ -23,7 +23,7 @@
     </PlayGrid>
 
     <!-- Tool Selector -->
-    <ToolSelector class="h-[10vh] flex-none border-t border-gray-700" />
+    <ToolSelector class="basis-[10%] flex-none border-t border-gray-700" />
 
     <!-- Modals -->
     <HarvestRulesModal v-if="!isGameOnly" :store="harvestStore" />
