@@ -3,10 +3,10 @@
     class="h-dvh w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden"
   >
     <!-- Dialogue -->
-    <Story class="h-[35%] flex-none" />
+    <Story class="h-[35vh] flex-none" />
 
     <!-- Plant Tools - Reduced height -->
-    <PlantTools class="h-[15%] flex-none" />
+    <PlantTools class="h-[15vh] flex-none" />
 
     <!-- PlayGrid - Flex to fill available space -->
     <PlayGrid class="w-full aspect-square max-h-[45vh]" :store="plantStore">
@@ -16,7 +16,7 @@
     </PlayGrid>
 
     <!-- Bottom Menu -->
-    <BottomMenu class="h-[15%]" />
+    <BottomMenu class="h-[15vh]" />
 
     <!-- Modals -->
     <PlantRulesModal />
