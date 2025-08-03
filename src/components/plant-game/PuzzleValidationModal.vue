@@ -338,21 +338,26 @@ const savePuzzle = async () => {
     return;
   }
 
+  // Validate the puzzle before saving
+  const validation = plantStore.validatePuzzleForSaving();
+  if (!validation.isValid) {
+    showSaveMessage('error', `Puzzle validation failed: ${validation.errors.join(', ')}`);
+    return;
+  }
+
   isSaving.value = true;
   saveMessage.value = null;
 
   try {
+    // Convert to API format (string format) with name
+    const apiData = plantStore.convertToApiFormat(puzzleName.value);
+
     const response = await fetch('http://localhost:3001/api/puzzles/save', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        layout: currentPuzzleData.value.layout,
-        queens: currentPuzzleData.value.queens,
-        gridSize: plantStore.gridSize,
-        name: puzzleName.value.trim() || undefined, // Only send if not empty
-      }),
+      body: JSON.stringify(apiData),
     });
 
     const result = await response.json();

@@ -76,7 +76,7 @@ app.get('/api/puzzles/random/:size', (req, res) => {
 
 app.post('/api/puzzles/save', (req, res) => {
   try {
-    const { layout, queens, gridSize } = req.body;
+    const { layout, queens, gridSize, name } = req.body;
 
     if (!layout || !queens || !gridSize) {
       return res.status(400).json({
@@ -110,6 +110,7 @@ app.post('/api/puzzles/save', (req, res) => {
       id: `user-${Date.now()}`,
       layout,
       queens,
+      name: name || undefined,
       createdAt: new Date().toISOString(),
     };
 
@@ -117,7 +118,7 @@ app.post('/api/puzzles/save', (req, res) => {
     const grid = convertStringToGrid(layout, queens, size);
 
     // Add to database
-    const success = db.addPuzzle(grid);
+    const success = db.addPuzzle(grid, name);
 
     if (success) {
       res.json({
@@ -173,7 +174,7 @@ function convertStringToGrid(layout: string, queens: string, gridSize: number) {
         .map((_, col) => ({
           position: { row, col },
           groupColor: undefined as string | undefined,
-          base: null as 'honey' | 'ant' | null,
+          isSolutionQueen: false,
         }))
     );
 
@@ -216,13 +217,13 @@ function convertStringToGrid(layout: string, queens: string, gridSize: number) {
     }
   }
 
-  // Parse queens (honey pot positions)
+  // Parse queens (solution queen positions)
   for (let i = 0; i < queens.length; i++) {
     const row = Math.floor(i / gridSize);
     const col = i % gridSize;
 
     if (queens[i] === 'Q') {
-      grid[row][col].base = 'honey';
+      grid[row][col].isSolutionQueen = true;
     }
   }
 

@@ -615,6 +615,81 @@ export const usePlantStore = defineStore('plant', {
       };
     },
 
+    // Validate that the puzzle is complete and solvable
+    validatePuzzleForSaving(): { isValid: boolean; errors: string[] } {
+      const errors: string[] = [];
+
+      // Check if we have the correct number of honey pots (queens)
+      const honeyPotCount = this.honeyPotsPlaced;
+      if (honeyPotCount !== this.gridSize) {
+        errors.push(`Expected ${this.gridSize} honey pots, found ${honeyPotCount}`);
+      }
+
+      // Check if all cells have color groups
+      let uncoloredCells = 0;
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (!this.grid[row][col].groupColor) {
+            uncoloredCells++;
+          }
+        }
+      }
+      if (uncoloredCells > 0) {
+        errors.push(`${uncoloredCells} cells are missing color groups`);
+      }
+
+      // Check if each honey pot has a unique color
+      const honeyPotColors = new Set<string>();
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          const cell = this.grid[row][col];
+          if (cell.base === 'honey' && cell.groupColor) {
+            honeyPotColors.add(cell.groupColor);
+          }
+        }
+      }
+      if (honeyPotColors.size !== this.gridSize) {
+        errors.push(
+          `Expected ${this.gridSize} unique colors for honey pots, found ${honeyPotColors.size}`
+        );
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors,
+      };
+    },
+
+    // Convert plant game grid to API format (string format)
+    convertToApiFormat(name?: string): {
+      layout: string;
+      queens: string;
+      gridSize: number;
+      name?: string;
+    } {
+      const puzzleData = this.exportPuzzleData();
+
+      // Debug: Log the grid state
+      console.log('Grid state when saving:');
+      for (let row = 0; row < this.gridSize; row++) {
+        let rowStr = '';
+        for (let col = 0; col < this.gridSize; col++) {
+          const cell = this.grid[row][col];
+          rowStr += cell.base === 'honey' ? 'H' : '.';
+        }
+        console.log(`Row ${row}: ${rowStr}`);
+      }
+      console.log('Queens string:', puzzleData.queens);
+      console.log('Layout string:', puzzleData.layout);
+
+      return {
+        layout: puzzleData.layout,
+        queens: puzzleData.queens,
+        gridSize: this.gridSize,
+        name: name?.trim() || undefined,
+      };
+    },
+
     // Parse puzzle data from JSON format (for validation)
     parsePuzzleData(puzzleData: any) {
       const gridSize = Math.sqrt(puzzleData.layout.length);
