@@ -34,7 +34,7 @@
       <!-- Step 2: Color Card Placement -->
       <div v-if="plantStore.isColorCardStep" class="flex flex-col gap-4">
         <!-- Color Cards -->
-        <div class="flex flex-wrap gap-4 justify-center">
+        <div class="flex flex-wrap gap-2 sm:gap-3 md:gap-4 justify-center">
           <CardStack
             v-for="color in plantStore.availableColors"
             :key="color"

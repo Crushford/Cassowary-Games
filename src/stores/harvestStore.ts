@@ -12,12 +12,9 @@ import { COLOR_SYMBOLS } from '../utils/colorPalette';
 // Import utility functions
 import {
   createEmptyGrid,
-  getQueenPositions,
-  computeAvailableMoves,
   clearMarkers,
   validatePuzzleState,
   isValidPosition,
-  queenAttacks,
   countEmptyCells,
   countCellsWithState,
   getColorDistribution,
