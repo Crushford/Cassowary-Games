@@ -22,6 +22,14 @@
             <h3 class="text-xl font-bold mb-2">(Under construction) Planting Game</h3>
             <p>In this game you plant the honey pot ant farms</p>
           </router-link>
+
+          <router-link
+            to="/casino"
+            class="block p-6 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors"
+          >
+            <h3 class="text-xl font-bold mb-2">(Under construction) Cassowary Casino</h3>
+            <p>Play the honeypot tables</p>
+          </router-link>
         </div>
       </div>
 

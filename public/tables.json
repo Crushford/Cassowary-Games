@@ -1,0 +1,22 @@
+[
+  {
+    "id": "table-001",
+    "name": "Beginner's Luck",
+    "buyIn": 0,
+    "maxPayout": 40,
+    "boardSize": "4x4",
+    "puzzles": [
+      "level-1",
+      "level-2",
+      "level-3",
+      "level-4",
+      "level-5",
+      "level-6",
+      "level-7",
+      "level-8",
+      "level-9",
+      "level-10"
+    ],
+    "puzzleFilter": "^pz-"
+  }
+]
