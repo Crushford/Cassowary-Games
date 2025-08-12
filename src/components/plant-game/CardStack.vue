@@ -2,7 +2,7 @@
   <div class="relative group">
     <!-- Card Stack -->
     <div
-      class="relative cursor-pointer transition-transform hover:scale-105 w-16 h-16"
+      class="relative cursor-pointer transition-transform hover:scale-105 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16"
       :class="{
         'ring-2 ring-yellow-400 ring-offset-1 ring-offset-slate-900': isSelected,
       }"
