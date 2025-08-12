@@ -12,6 +12,9 @@
       </template>
     </PlayGrid>
 
+    <!-- Tool Drawer at bottom -->
+    <ToolDrawer class="basis-[10%] flex-none" />
+
     <!-- End game modals -->
     <CasinoWinModal
       v-if="roundStore.status === 'won'"
@@ -32,6 +35,7 @@ import { useGlobalStore } from '../../stores/global';
 import { useRoundStore } from '../../stores/round';
 
 const CasinoHUD = defineAsyncComponent(() => import('./CasinoHUD.vue'));
+const ToolDrawer = defineAsyncComponent(() => import('./ToolDrawer.vue'));
 const CasinoRulesModal = defineAsyncComponent(() => import('./CasinoRulesModal.vue'));
 const CasinoWinModal = defineAsyncComponent(() => import('./CasinoWinModal.vue'));
 const CasinoBustModal = defineAsyncComponent(() => import('./CasinoBustModal.vue'));

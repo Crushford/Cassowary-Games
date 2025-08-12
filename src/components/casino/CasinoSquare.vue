@@ -8,8 +8,12 @@
 
     <!-- Content overlay -->
     <div class="relative z-10 flex items-center justify-center w-full h-full">
-      <!-- Card with Flip Animation -->
-      <div class="w-full h-full relative card-flip" :class="{ flipping: shouldFlip }">
+      <span v-if="shouldShowFlag()" :class="getEmojiSizeClass()">🚧</span>
+      <div
+        v-else-if="shouldShowQueen() || shouldShowInvalid()"
+        class="w-full h-full relative card-flip"
+        :class="{ flipping: shouldFlip }"
+      >
         <img
           v-if="cardImageSrc"
           :src="cardImageSrc"
@@ -103,6 +107,26 @@ const cardImageSrc = computed(() => {
 
 function handleClick() {
   props.store.handleSquareClick(props.rowIndex, props.colIndex);
+}
+
+function shouldShowQueen(): boolean {
+  return props.store.grid[props.rowIndex][props.colIndex].playerMark === 'queen';
+}
+
+function shouldShowFlag(): boolean {
+  return props.store.grid[props.rowIndex][props.colIndex].playerMark === 'flag';
+}
+
+function shouldShowInvalid(): boolean {
+  return props.store.grid[props.rowIndex][props.colIndex].playerMark === 'invalid';
+}
+
+function getEmojiSizeClass() {
+  const size = props.store.gridSize;
+  if (size <= 4) return 'text-3xl';
+  if (size <= 6) return 'text-2xl';
+  if (size <= 8) return 'text-xl';
+  return 'text-lg';
 }
 
 function getWrapperBorderClasses() {

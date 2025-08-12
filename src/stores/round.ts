@@ -3,6 +3,12 @@ import { useGlobalStore } from './global';
 import type { GridSquare } from '../types/types';
 import { COLOR_SYMBOLS } from '../utils/colorPalette';
 
+// Configuration keys for localStorage
+const CONFIG_KEYS = {
+  FLIPPING_MODE: 'honey-pot-ant-farming-casino-flipping-mode',
+  AUTO_FLAGGING: 'honey-pot-ant-farming-casino-auto-flagging',
+} as const;
+
 // Create reverse mapping from symbols to color names
 const SYMBOL_TO_COLOR: Record<string, string> = Object.entries(COLOR_SYMBOLS).reduce(
   (acc, [color, symbol]) => {
@@ -56,6 +62,15 @@ interface RoundState {
 
   // Log
   actionLog: Array<{ t: number; type: string; payload: any }>;
+
+  // UI state
+  uiState: {
+    flippingMode: 'auto' | 'flip' | 'flag';
+    autoFlagging: boolean;
+  };
+
+  // Flag history for undo
+  flagHistory: Array<{ row: number; col: number; timestamp: number }>;
 }
 
 export const useRoundStore = defineStore('round', {
@@ -73,11 +88,47 @@ export const useRoundStore = defineStore('round', {
     antsFound: 0,
     status: 'playing',
     actionLog: [],
+    uiState: {
+      flippingMode: 'auto',
+      autoFlagging: false,
+    },
+    flagHistory: [],
   }),
 
   actions: {
+    // Configuration management
+    loadUserConfiguration() {
+      try {
+        // Load flipping mode
+        const savedFlippingMode = localStorage.getItem(CONFIG_KEYS.FLIPPING_MODE);
+        if (savedFlippingMode && ['auto', 'flip', 'flag'].includes(savedFlippingMode)) {
+          this.uiState.flippingMode = savedFlippingMode as 'auto' | 'flip' | 'flag';
+        }
+
+        // Load auto-flagging preference
+        const savedAutoFlagging = localStorage.getItem(CONFIG_KEYS.AUTO_FLAGGING);
+        if (savedAutoFlagging !== null) {
+          this.uiState.autoFlagging = savedAutoFlagging === 'true';
+        }
+      } catch (error) {
+        console.warn('Failed to load user configuration:', error);
+      }
+    },
+
+    saveUserConfiguration() {
+      try {
+        localStorage.setItem(CONFIG_KEYS.FLIPPING_MODE, this.uiState.flippingMode);
+        localStorage.setItem(CONFIG_KEYS.AUTO_FLAGGING, this.uiState.autoFlagging.toString());
+      } catch (error) {
+        console.warn('Failed to save user configuration:', error);
+      }
+    },
+
     async startRound(seed?: string) {
       const globalStore = useGlobalStore();
+
+      // Load user configuration first
+      this.loadUserConfiguration();
 
       // Set round identity
       this.roundId = `round_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -191,8 +242,27 @@ export const useRoundStore = defineStore('round', {
     // Handle square click - this is what PlayGrid will call
     handleSquareClick(row: number, col: number) {
       if (this.status !== 'playing') return;
-      if (this.grid[row][col].playerMark !== null) return; // Already marked
 
+      // Don't allow interaction with already revealed squares (queen or invalid)
+      if (
+        this.grid[row][col].playerMark === 'queen' ||
+        this.grid[row][col].playerMark === 'invalid'
+      ) {
+        return;
+      }
+
+      const mode = this.uiState.flippingMode;
+      if (mode === 'flip') {
+        this.flipSquare(row, col);
+      } else if (mode === 'flag') {
+        this.flagSquare(row, col);
+      } else {
+        this.autoSquare(row, col);
+      }
+    },
+
+    // Flip action - reveal the square
+    flipSquare(row: number, col: number) {
       const globalStore = useGlobalStore();
 
       if (this.grid[row][col].isSolutionQueen) {
@@ -233,6 +303,26 @@ export const useRoundStore = defineStore('round', {
       }
     },
 
+    // Flag action - place or remove flag
+    flagSquare(row: number, col: number) {
+      const state = this.grid[row][col].playerMark;
+      if (state === null) {
+        this.placeFlag(row, col);
+      } else if (state === 'flag') {
+        this.removeFlag(row, col);
+      }
+    },
+
+    // Auto mode: first click flags, second click flips
+    autoSquare(row: number, col: number) {
+      const state = this.grid[row][col].playerMark;
+      if (state === null) {
+        this.flagSquare(row, col);
+      } else if (state === 'flag') {
+        this.flipSquare(row, col);
+      }
+    },
+
     countSolutionQueens(): number {
       let count = 0;
       for (let row = 0; row < this.gridSize; row++) {
@@ -253,6 +343,48 @@ export const useRoundStore = defineStore('round', {
       this.status = 'playing';
       this.grid = [];
       this.actionLog = [];
+    },
+
+    // UI state management
+    toggleAutoFlagging() {
+      this.uiState.autoFlagging = !this.uiState.autoFlagging;
+      this.saveUserConfiguration();
+    },
+
+    setFlippingMode(mode: 'auto' | 'flip' | 'flag') {
+      this.uiState.flippingMode = mode;
+      this.saveUserConfiguration();
+    },
+
+    // Flag management
+    placeFlag(row: number, col: number) {
+      if (this.grid[row][col].playerMark === null) {
+        this.grid[row][col].playerMark = 'flag';
+        this.flagHistory.push({
+          row,
+          col,
+          timestamp: Date.now(),
+        });
+      }
+    },
+
+    removeFlag(row: number, col: number) {
+      if (this.grid[row][col].playerMark === 'flag') {
+        this.grid[row][col].playerMark = null;
+        // Remove from flag history
+        this.flagHistory = this.flagHistory.filter(
+          (flag) => !(flag.row === row && flag.col === col)
+        );
+      }
+    },
+
+    undoLastFlag() {
+      if (this.flagHistory.length > 0) {
+        const lastFlag = this.flagHistory.pop();
+        if (lastFlag) {
+          this.removeFlag(lastFlag.row, lastFlag.col);
+        }
+      }
     },
   },
 });
