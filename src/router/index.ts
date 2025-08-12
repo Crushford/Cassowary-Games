@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HarvestGame from '../views/HarvestGame.vue';
 import PlantGame from '../views/PlantGame.vue';
 import LevelBuilder from '../views/LevelBuilder.vue';
+import CasinoTable from '../components/casino/CasinoTable.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +27,11 @@ const router = createRouter({
       path: '/plant',
       name: 'plant',
       component: PlantGame,
+    },
+    {
+      path: '/casino',
+      name: 'casino',
+      component: CasinoTable,
     },
     {
       path: '/:pathMatch(.*)*',
