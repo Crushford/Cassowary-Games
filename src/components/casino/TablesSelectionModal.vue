@@ -31,7 +31,7 @@
             <h3 class="text-xl font-bold text-yellow-100 mb-2">{{ table.name }}</h3>
             <div class="space-y-2 text-yellow-200 text-sm">
               <div class="flex justify-between">
-                <span>Buy-in:</span>
+                <span>Min Balance:</span>
                 <span class="font-semibold text-yellow-300">{{ table.buyIn }} chips</span>
               </div>
               <div class="flex justify-between">

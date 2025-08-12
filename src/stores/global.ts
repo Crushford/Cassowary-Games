@@ -95,8 +95,8 @@ export const useGlobalStore = defineStore('global', {
         roundStore.leaveTable();
       }
 
-      // Start fresh round
-      roundStore.startRound();
+      // Clear round state - no need to start a new round until player sits at a table
+      roundStore.endRound();
     },
 
     applyConfigPatch(patch: Partial<Config>) {

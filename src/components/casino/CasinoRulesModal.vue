@@ -5,11 +5,14 @@
         <h2 class="text-yellow-400 font-bold text-xl">How this table works</h2>
 
         <div class="space-y-1">
-          <p>Start with 20 gold.</p>
+          <p>Use your current bank balance to play.</p>
           <p>Flip honeypots to earn +1 gold each.</p>
           <p>Flip ants to lose 5 gold each.</p>
           <p>The puzzle logic matches the Harvest (Queens) rules.</p>
           <p>The round ends when you solve the puzzle or when you run out of gold.</p>
+          <p v-if="tableStore.maxPayout > 0" class="text-yellow-300 font-medium">
+            Max you can win at this table: {{ tableStore.maxPayout }}.
+          </p>
         </div>
 
         <div class="bg-gray-700 p-4 rounded-lg space-y-1">
@@ -56,9 +59,13 @@
 
 <script setup lang="ts">
 import { useGlobalStore } from '../../stores/global';
+import { useRoundStore } from '../../stores/round';
+import { useTableStore } from '../../stores/table';
 import Modal from '../shared/Modal.vue';
 
 const globalStore = useGlobalStore();
+const roundStore = useRoundStore();
+const tableStore = useTableStore();
 
 const onClose = () => {
   globalStore.setShowRules(false);

@@ -1,13 +1,5 @@
 <template>
   <div class="px-4 py-3 bg-gray-900 border-b border-gray-700 relative">
-    <!-- Buy-in Display (top left) -->
-    <div
-      v-if="roundStore.tableId"
-      class="absolute top-3 left-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white px-3 py-2 rounded-lg font-semibold z-10"
-    >
-      Buy-in: {{ tableStore.buyIn }}
-    </div>
-
     <!-- Cash Out Button (top right) -->
     <button
       v-if="roundStore.tableId"

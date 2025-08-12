@@ -43,8 +43,8 @@ interface RoundState {
   seed: string;
   startedAt: number;
 
-  // Table
-  tableStack: number;
+  // Table context
+  tableId: string | null;
 
   // Puzzle - using combined grid structure
   grid: GridSquare[][];
@@ -56,9 +56,6 @@ interface RoundState {
   flipsMade: number;
   queensFound: number;
   antsFound: number;
-
-  // Status
-  status: 'playing' | 'won' | 'busted';
 
   // Log
   actionLog: Array<{ t: number; type: string; payload: any }>;
@@ -78,7 +75,7 @@ export const useRoundStore = defineStore('round', {
     roundId: '',
     seed: '',
     startedAt: 0,
-    tableStack: 0,
+    tableId: null,
     grid: [],
     gridSize: 4,
     hiddenMapHash: '',
@@ -86,7 +83,6 @@ export const useRoundStore = defineStore('round', {
     flipsMade: 0,
     queensFound: 0,
     antsFound: 0,
-    status: 'playing',
     actionLog: [],
     uiState: {
       flippingMode: 'auto',
@@ -124,28 +120,29 @@ export const useRoundStore = defineStore('round', {
       }
     },
 
-    async startRound(seed?: string) {
-      const globalStore = useGlobalStore();
-
+    async startRound(tableId: string, puzzleData?: any) {
       // Load user configuration first
       this.loadUserConfiguration();
 
       // Set round identity
       this.roundId = `round_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      this.seed = seed || Math.random().toString(36).substr(2, 9);
+      this.seed = Math.random().toString(36).substr(2, 9);
       this.startedAt = Date.now();
 
-      // Set table stack from config
-      this.tableStack = globalStore.config.startGold;
+      // Set table context (no separate table stack needed)
+      this.tableId = tableId;
 
-      // Load puzzle from puzzles.json
-      await this.loadRandomPuzzle();
+      // Parse puzzle data if provided, otherwise load random puzzle
+      if (puzzleData) {
+        this.parsePuzzleData(puzzleData);
+      } else {
+        await this.loadRandomPuzzle();
+      }
 
       // Reset counters and status
       this.flipsMade = 0;
       this.queensFound = 0;
       this.antsFound = 0;
-      this.status = 'playing';
       this.actionLog = [];
     },
 
@@ -241,8 +238,6 @@ export const useRoundStore = defineStore('round', {
 
     // Handle square click - this is what PlayGrid will call
     handleSquareClick(row: number, col: number) {
-      if (this.status !== 'playing') return;
-
       // Don't allow interaction with already revealed squares (queen or invalid)
       if (
         this.grid[row][col].playerMark === 'queen' ||
@@ -261,6 +256,21 @@ export const useRoundStore = defineStore('round', {
       }
     },
 
+    // Check if table cap has been reached
+    checkTableCap() {
+      if (!this.tableId) return;
+
+      const globalStore = useGlobalStore();
+      const totalProfitSoFar = globalStore.tablesProgress[this.tableId]?.totalProfit ?? 0;
+
+      // Return the cap status for parent to handle
+      return {
+        totalProfitSoFar,
+        sessionNet: 0,
+        isCapped: false,
+      };
+    },
+
     // Flip action - reveal the square
     flipSquare(row: number, col: number) {
       const globalStore = useGlobalStore();
@@ -268,37 +278,44 @@ export const useRoundStore = defineStore('round', {
       if (this.grid[row][col].isSolutionQueen) {
         // Found honeypot
         this.grid[row][col].playerMark = 'queen';
-        this.tableStack += globalStore.config.payoutPerHoneypot;
+        globalStore.grantChips(globalStore.config.payoutPerHoneypot);
         this.queensFound++;
         this.flipsMade++;
 
         this.actionLog.push({
           t: Date.now(),
           type: 'honeypot_found',
-          payload: { row, col, gold: this.tableStack },
+          payload: { row, col, gold: globalStore.player.totalChips },
         });
 
         // Check if all honeypots found
         const totalHoneypots = this.countSolutionQueens();
         if (this.queensFound >= totalHoneypots) {
-          this.status = 'won';
+          const { useTableStore } = require('./table');
+          const tableStore = useTableStore();
+          tableStore.status = 'won';
         }
+
+        // Check table cap after positive balance change
+        this.checkTableCap();
       } else {
         // Found ant
         this.grid[row][col].playerMark = 'invalid';
-        this.tableStack -= globalStore.config.penaltyPerAnt;
+        globalStore.spendChips(globalStore.config.penaltyPerAnt);
         this.antsFound++;
         this.flipsMade++;
 
         this.actionLog.push({
           t: Date.now(),
           type: 'ant_found',
-          payload: { row, col, gold: this.tableStack },
+          payload: { row, col, gold: globalStore.player.totalChips },
         });
 
         // Check if out of gold
-        if (this.tableStack <= 0) {
-          this.status = 'busted';
+        if (globalStore.player.totalChips <= 0) {
+          const { useTableStore } = require('./table');
+          const tableStore = useTableStore();
+          tableStore.status = 'busted';
         }
       }
     },
@@ -335,12 +352,24 @@ export const useRoundStore = defineStore('round', {
       return count;
     },
 
-    restart() {
-      this.startRound();
+    autoCashOut(reason: 'leave' | 'capped' | 'end') {
+      if (!this.tableId) return;
+
+      const globalStore = useGlobalStore();
+
+      // No separate table stack to cash out - player keeps their bank balance
+      // Just clear table context
+      this.tableId = null;
+
+      this.grid = [];
+      this.actionLog = [];
+    },
+
+    leaveTable() {
+      this.autoCashOut('leave');
     },
 
     endRound() {
-      this.status = 'playing';
       this.grid = [];
       this.actionLog = [];
     },
