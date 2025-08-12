@@ -65,13 +65,28 @@
         <span class="text-green-300 font-semibold">+1 gold</span>
       </div>
     </div>
+
+    <!-- Max payout info -->
+    <div
+      v-if="tableStore.maxPayout > 0"
+      class="mt-3 pt-3 border-t border-[#d4af37] border-opacity-30"
+    >
+      <div
+        class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-center"
+      >
+        Max you can win at this table:
+        <span class="text-yellow-300 font-semibold">{{ tableStore.maxPayout }}</span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useGlobalStore } from '../../stores/global';
+import { useTableStore } from '../../stores/table';
 
 const globalStore = useGlobalStore();
+const tableStore = useTableStore();
 
 defineOptions({
   name: 'RulesPlaque',

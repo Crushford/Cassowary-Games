@@ -15,44 +15,70 @@
     <!-- Tool Drawer at bottom -->
     <ToolDrawer class="basis-[10%] flex-none" />
 
-    <!-- End game modals -->
-    <CasinoWinModal
-      v-if="roundStore.status === 'won'"
-      :final-gold="roundStore.tableStack"
-      @restart="roundStore.restart()"
-    />
+    <!-- Round complete modal -->
+    <RoundCompleteModal v-if="tableStore.showRoundComplete" />
 
-    <CasinoBustModal v-if="roundStore.status === 'busted'" @restart="roundStore.restart()" />
+    <!-- Cap reached modal -->
+    <CapReachedModal v-if="tableStore.status === 'capped'" />
 
     <!-- Rules modal -->
     <CasinoRulesModal />
+
+    <!-- Cash-out summary modal -->
+    <CashOutSummary v-if="tableStore.showCashOutSummary" />
+
+    <!-- Tables selection modal -->
+    <TablesSelectionModal v-if="!roundStore.tableId" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, defineAsyncComponent } from 'vue';
+import { onMounted, onBeforeUnmount, ref, computed, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { useGlobalStore } from '../../stores/global';
+import { useTableStore } from '../../stores/table';
 import { useRoundStore } from '../../stores/round';
+import { defineAsyncComponent } from 'vue';
 
 const CasinoHUD = defineAsyncComponent(() => import('./CasinoHUD.vue'));
 const ToolDrawer = defineAsyncComponent(() => import('./ToolDrawer.vue'));
 const CasinoRulesModal = defineAsyncComponent(() => import('./CasinoRulesModal.vue'));
-const CasinoWinModal = defineAsyncComponent(() => import('./CasinoWinModal.vue'));
-const CasinoBustModal = defineAsyncComponent(() => import('./CasinoBustModal.vue'));
 const PlayGrid = defineAsyncComponent(() => import('../shared/PlayGrid.vue'));
 const CasinoSquare = defineAsyncComponent(() => import('./CasinoSquare.vue'));
+const CashOutSummary = defineAsyncComponent(() => import('./CashOutSummary.vue'));
+const CapReachedModal = defineAsyncComponent(() => import('./CapReachedModal.vue'));
+const TablesSelectionModal = defineAsyncComponent(() => import('./TablesSelectionModal.vue'));
+const RoundCompleteModal = defineAsyncComponent(() => import('./RoundCompleteModal.vue'));
 
+const router = useRouter();
 const globalStore = useGlobalStore();
+const tableStore = useTableStore();
 const roundStore = useRoundStore();
 
-onMounted(() => {
+onMounted(async () => {
   // Rehydrate global store
   globalStore.rehydrate();
 
-  // Start round if not active
-  if (roundStore.status !== 'playing' || roundStore.grid.length === 0) {
-    roundStore.startRound();
+  // Load tables if not loaded
+  if (!tableStore.loaded) {
+    try {
+      await tableStore.loadTables();
+    } catch (error) {
+      console.error('Failed to load tables:', error);
+    }
   }
+});
+
+// Watch for status changes to handle cap and cash-out
+watch(
+  () => tableStore.status,
+  (newStatus) => {
+    tableStore.handleStatusChange(newStatus);
+  }
+);
+
+onBeforeUnmount(() => {
+  tableStore.handleBeforeRouteLeave();
 });
 
 defineOptions({

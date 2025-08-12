@@ -22,6 +22,7 @@ interface GlobalState {
   player: Player;
   config: Config;
   ui: UI;
+  tablesProgress: Record<string, { totalProfit: number }>;
 }
 
 export const useGlobalStore = defineStore('global', {
@@ -31,7 +32,7 @@ export const useGlobalStore = defineStore('global', {
     player: {
       id: 'local-guest',
       displayName: 'Guest',
-      totalChips: 0,
+      totalChips: 20,
     },
     config: {
       startGold: 20,
@@ -41,6 +42,7 @@ export const useGlobalStore = defineStore('global', {
     ui: {
       showRules: false,
     },
+    tablesProgress: {},
   }),
 
   actions: {
@@ -61,6 +63,40 @@ export const useGlobalStore = defineStore('global', {
         return true;
       }
       return false;
+    },
+
+    addTableProfit(tableId: string, delta: number) {
+      if (!this.tablesProgress[tableId]) {
+        this.tablesProgress[tableId] = { totalProfit: 0 };
+      }
+      this.tablesProgress[tableId].totalProfit = Math.max(
+        0,
+        this.tablesProgress[tableId].totalProfit + delta
+      );
+      this.persist();
+    },
+
+    async sitAtTable(tableId: string) {
+      const { useTableStore } = await import('./table');
+      const tableStore = useTableStore();
+      await tableStore.sitAtTable(tableId, this);
+    },
+
+    restart() {
+      // Reset bank to initial chips
+      this.player.totalChips = 20;
+      this.persist();
+
+      // Clear table context if we're at a table
+      const { useRoundStore } = require('./round');
+      const roundStore = useRoundStore();
+
+      if (roundStore.tableId) {
+        roundStore.leaveTable();
+      }
+
+      // Start fresh round
+      roundStore.startRound();
     },
 
     applyConfigPatch(patch: Partial<Config>) {

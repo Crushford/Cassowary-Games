@@ -1,5 +1,22 @@
 <template>
-  <div class="px-4 py-3 bg-gray-900 border-b border-gray-700">
+  <div class="px-4 py-3 bg-gray-900 border-b border-gray-700 relative">
+    <!-- Buy-in Display (top left) -->
+    <div
+      v-if="roundStore.tableId"
+      class="absolute top-3 left-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white px-3 py-2 rounded-lg font-semibold z-10"
+    >
+      Buy-in: {{ tableStore.buyIn }}
+    </div>
+
+    <!-- Cash Out Button (top right) -->
+    <button
+      v-if="roundStore.tableId"
+      @click="handleCashOut"
+      class="absolute top-3 right-4 bg-gradient-to-r from-amber-600 to-amber-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-amber-500 hover:to-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl z-10"
+    >
+      Cash Out
+    </button>
+
     <!-- Gold Display -->
     <div class="mb-3">
       <GoldDisplay />
@@ -12,11 +29,19 @@
 
 <script setup lang="ts">
 import { defineAsyncComponent } from 'vue';
-import { useGlobalStore } from '../../stores/global';
+import { useRoundStore } from '../../stores/round';
+import { useTableStore } from '../../stores/table';
 
 const GoldDisplay = defineAsyncComponent(() => import('./GoldDisplay.vue'));
 const RulesPlaque = defineAsyncComponent(() => import('./RulesPlaque.vue'));
-const globalStore = useGlobalStore();
+const roundStore = useRoundStore();
+const tableStore = useTableStore();
+
+const handleCashOut = () => {
+  if (roundStore.tableId) {
+    roundStore.leaveTable();
+  }
+};
 
 defineOptions({
   name: 'CasinoHUD',
