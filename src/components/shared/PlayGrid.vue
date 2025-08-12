@@ -81,13 +81,13 @@ function handleTouchMove(event: TouchEvent) {
         // Just confirmed a swipe, flag all visited so far
         for (const key of swipedCells.value) {
           const [r, c] = key.split(',').map(Number);
-          if (props.store.playerMarks && props.store.playerMarks[r][c] === null) {
+          if (canPlaceFlag(r, c)) {
             props.store.placeFlag(r, c);
           }
         }
       } else if (swipedCells.value.size > 2) {
         // Normal swipe continuation
-        if (props.store.playerMarks && props.store.playerMarks[row][col] === null) {
+        if (canPlaceFlag(row, col)) {
           props.store.placeFlag(row, col);
         }
       }
@@ -101,6 +101,22 @@ function handleTouchEnd(event: TouchEvent) {
   isSwiping.value = false;
   swipeStartPos.value = null;
   swipedCells.value.clear();
+}
+
+// Helper function to check if a flag can be placed at the given position
+function canPlaceFlag(row: number, col: number): boolean {
+  // Check if the store has the harvest game structure (playerMarks array)
+  if (props.store.playerMarks) {
+    return props.store.playerMarks[row][col] === null;
+  }
+
+  // Check if the store has the casino game structure (playerMark property in grid cells)
+  if (props.store.grid && props.store.grid[row] && props.store.grid[row][col]) {
+    const playerMark = props.store.grid[row][col].playerMark;
+    return playerMark === null;
+  }
+
+  return false;
 }
 
 // Helper function to find the parent cell element with data attributes
