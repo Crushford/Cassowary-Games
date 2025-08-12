@@ -291,9 +291,8 @@ export const useRoundStore = defineStore('round', {
         // Check if all honeypots found
         const totalHoneypots = this.countSolutionQueens();
         if (this.queensFound >= totalHoneypots) {
-          const { useTableStore } = require('./table');
-          const tableStore = useTableStore();
-          tableStore.status = 'won';
+          // Use a different approach for synchronous access
+          this.handleWin();
         }
 
         // Check table cap after positive balance change
@@ -301,7 +300,7 @@ export const useRoundStore = defineStore('round', {
       } else {
         // Found ant
         this.grid[row][col].playerMark = 'invalid';
-        globalStore.spendChips(globalStore.config.penaltyPerAnt);
+        globalStore.applyPenalty(globalStore.config.penaltyPerAnt);
         this.antsFound++;
         this.flipsMade++;
 
@@ -311,13 +310,18 @@ export const useRoundStore = defineStore('round', {
           payload: { row, col, gold: globalStore.player.totalChips },
         });
 
-        // Check if out of gold
-        if (globalStore.player.totalChips <= 0) {
-          const { useTableStore } = require('./table');
-          const tableStore = useTableStore();
-          tableStore.status = 'busted';
-        }
+        // Bust handling is now done in globalStore.applyPenalty()
       }
+    },
+
+    // Helper method to handle win
+    handleWin() {
+      // We'll need to handle this asynchronously
+      setTimeout(async () => {
+        const { useTableStore } = await import('./table');
+        const tableStore = useTableStore();
+        tableStore.status = 'won';
+      }, 0);
     },
 
     // Flag action - place or remove flag
@@ -372,6 +376,23 @@ export const useRoundStore = defineStore('round', {
     endRound() {
       this.grid = [];
       this.actionLog = [];
+    },
+
+    // Reset round state completely
+    resetRoundState() {
+      this.roundId = '';
+      this.seed = '';
+      this.startedAt = 0;
+      this.tableId = null;
+      this.grid = [];
+      this.gridSize = 4;
+      this.hiddenMapHash = '';
+      this.puzzleFamily = 'classicQueens';
+      this.flipsMade = 0;
+      this.queensFound = 0;
+      this.antsFound = 0;
+      this.actionLog = [];
+      this.flagHistory = [];
     },
 
     // UI state management

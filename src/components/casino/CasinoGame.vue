@@ -24,9 +24,6 @@
     <!-- Rules modal -->
     <CasinoRulesModal />
 
-    <!-- Cash-out summary modal -->
-    <CashOutSummary v-if="tableStore.showCashOutSummary" />
-
     <!-- Tables selection modal -->
     <TablesSelectionModal v-if="!roundStore.tableId" />
   </div>
@@ -45,7 +42,6 @@ const ToolDrawer = defineAsyncComponent(() => import('./ToolDrawer.vue'));
 const CasinoRulesModal = defineAsyncComponent(() => import('./CasinoRulesModal.vue'));
 const PlayGrid = defineAsyncComponent(() => import('../shared/PlayGrid.vue'));
 const CasinoSquare = defineAsyncComponent(() => import('./CasinoSquare.vue'));
-const CashOutSummary = defineAsyncComponent(() => import('./CashOutSummary.vue'));
 const CapReachedModal = defineAsyncComponent(() => import('./CapReachedModal.vue'));
 const TablesSelectionModal = defineAsyncComponent(() => import('./TablesSelectionModal.vue'));
 const RoundCompleteModal = defineAsyncComponent(() => import('./RoundCompleteModal.vue'));
@@ -72,13 +68,13 @@ onMounted(async () => {
 // Watch for status changes to handle cap and cash-out
 watch(
   () => tableStore.status,
-  (newStatus) => {
-    tableStore.handleStatusChange(newStatus);
+  async (newStatus) => {
+    await tableStore.handleStatusChange(newStatus);
   }
 );
 
-onBeforeUnmount(() => {
-  tableStore.handleBeforeRouteLeave();
+onBeforeUnmount(async () => {
+  await tableStore.handleBeforeRouteLeave();
 });
 
 defineOptions({

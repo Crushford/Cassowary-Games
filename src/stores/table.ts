@@ -28,8 +28,6 @@ interface TableState {
   usedPuzzleIds: Set<string>;
   currentPuzzleIdOrName: string | null;
   // Modal state
-  showCashOutSummary: boolean;
-  cashOutTitle: string;
   showRoundComplete: boolean;
 }
 
@@ -44,8 +42,6 @@ export const useTableStore = defineStore('table', {
     usedPuzzleIds: new Set<string>(),
     currentPuzzleIdOrName: null,
     // Modal state
-    showCashOutSummary: false,
-    cashOutTitle: '',
     showRoundComplete: false,
   }),
 
@@ -140,10 +136,6 @@ export const useTableStore = defineStore('table', {
       const filteredPool: PuzzleRecord[] = [];
       const sizePuzzles = puzzlesData[table.boardSize] || [];
 
-      console.log(
-        `Building filtered pool from ${sizePuzzles.length} puzzles for size ${table.boardSize}`
-      );
-
       for (const puzzle of sizePuzzles) {
         // Skip if already used
         if (history.usedIds.has(puzzle.id)) {
@@ -169,8 +161,6 @@ export const useTableStore = defineStore('table', {
           size: table.boardSize,
         });
       }
-
-      console.log(`Filtered pool has ${filteredPool.length} puzzles`);
 
       if (filteredPool.length === 0) {
         throw new Error(`No available puzzles for table ${tableId}`);
@@ -231,10 +221,6 @@ export const useTableStore = defineStore('table', {
         const { useRoundStore } = await import('./round');
         const roundStore = useRoundStore();
         roundStore.autoCashOut('capped');
-
-        // Show cash-out summary
-        this.cashOutTitle = 'Table cap reached';
-        this.showCashOutSummary = true;
       } else if (newStatus === 'won' || newStatus === 'busted') {
         // Show round complete modal
         this.showRoundComplete = true;
@@ -248,15 +234,10 @@ export const useTableStore = defineStore('table', {
       if (roundStore.tableId && this.status === 'playing') {
         // Auto cash-out when leaving
         roundStore.leaveTable();
-
-        // Show cash-out summary
-        this.cashOutTitle = 'Cashed out';
-        this.showCashOutSummary = true;
       }
     },
 
     async goToTables() {
-      this.showCashOutSummary = false;
       this.showRoundComplete = false; // Reset round complete modal state
       // Clear table context to show tables modal
       const { useRoundStore } = await import('./round');
@@ -265,7 +246,6 @@ export const useTableStore = defineStore('table', {
     },
 
     async handlePlayAgain() {
-      this.showCashOutSummary = false;
       const { useRoundStore } = await import('./round');
       const { useGlobalStore } = await import('./global');
       const roundStore = useRoundStore();
@@ -279,6 +259,16 @@ export const useTableStore = defineStore('table', {
           console.error('Failed to sit at table:', error);
         }
       }
+    },
+
+    // Reset table session state completely
+    resetTableState() {
+      this.status = 'playing';
+      this.showRoundComplete = false;
+      this.maxPayout = 0;
+      this.puzzleQueueIndex = 0;
+      this.usedPuzzleIds = new Set<string>();
+      this.currentPuzzleIdOrName = null;
     },
   },
 });

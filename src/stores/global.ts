@@ -56,13 +56,37 @@ export const useGlobalStore = defineStore('global', {
       this.persist();
     },
 
-    spendChips(amount: number): boolean {
+    applyPenalty(amount: number): boolean {
       if (this.player.totalChips >= amount) {
         this.player.totalChips -= amount;
         this.persist();
+
+        // Check for bust after applying penalty
+        this.checkForBust();
+
         return true;
+      } else {
+        // Not enough chips - player is busted
+        this.player.totalChips = 0; // Set to 0 since they can't pay
+        this.persist();
+        this.handleBust();
+        return false;
       }
-      return false;
+    },
+
+    // Check if player is busted (no chips left)
+    checkForBust() {
+      if (this.player.totalChips <= 0) {
+        this.handleBust();
+      }
+    },
+
+    // Handle bust logic
+    async handleBust() {
+      // Set table status to busted
+      const { useTableStore } = await import('./table');
+      const tableStore = useTableStore();
+      tableStore.status = 'busted';
     },
 
     addTableProfit(tableId: string, delta: number) {
@@ -80,23 +104,6 @@ export const useGlobalStore = defineStore('global', {
       const { useTableStore } = await import('./table');
       const tableStore = useTableStore();
       await tableStore.sitAtTable(tableId, this);
-    },
-
-    restart() {
-      // Reset bank to initial chips
-      this.player.totalChips = 20;
-      this.persist();
-
-      // Clear table context if we're at a table
-      const { useRoundStore } = require('./round');
-      const roundStore = useRoundStore();
-
-      if (roundStore.tableId) {
-        roundStore.leaveTable();
-      }
-
-      // Clear round state - no need to start a new round until player sits at a table
-      roundStore.endRound();
     },
 
     applyConfigPatch(patch: Partial<Config>) {
@@ -126,6 +133,31 @@ export const useGlobalStore = defineStore('global', {
           console.error('Failed to rehydrate global store:', error);
         }
       }
+    },
+
+    async restart() {
+      // Completely reset the global state to initial values
+      this.$reset();
+
+      // Clear table context if we're at a table
+      const { useRoundStore } = await import('./round');
+      const { useTableStore } = await import('./table');
+      const roundStore = useRoundStore();
+      const tableStore = useTableStore();
+
+      // Clear all table and round state
+      if (roundStore.tableId) {
+        roundStore.leaveTable();
+      }
+
+      // Clear round state completely
+      roundStore.resetRoundState();
+
+      // Reset table store state
+      tableStore.resetTableState();
+
+      // Persist the reset state
+      this.persist();
     },
   },
 });

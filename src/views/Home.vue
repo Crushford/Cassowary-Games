@@ -27,7 +27,7 @@
             to="/casino"
             class="block p-6 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors"
           >
-            <h3 class="text-xl font-bold mb-2">Cassowary Casino</h3>
+            <h3 class="text-xl font-bold mb-2">(Under construction) Cassowary Casino</h3>
             <p>Play the honeypot tables</p>
           </router-link>
         </div>
