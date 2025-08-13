@@ -91,6 +91,58 @@ export const useRoundStore = defineStore('round', {
     flagHistory: [],
   }),
 
+  getters: {
+    // Add isValidMove getter to check if a position is valid for placing a queen
+    isValidMove: (state) => (row: number, col: number) => {
+      // Check if there's a queen in the same row or column
+      for (let i = 0; i < state.gridSize; i++) {
+        if (
+          state.grid[row][i].playerMark === 'queen' ||
+          state.grid[i][col].playerMark === 'queen'
+        ) {
+          return false;
+        }
+      }
+
+      // Check diagonally adjacent squares (one square away)
+      const diagonalPositions = [
+        { r: row - 1, c: col - 1 }, // top-left
+        { r: row - 1, c: col + 1 }, // top-right
+        { r: row + 1, c: col - 1 }, // bottom-left
+        { r: row + 1, c: col + 1 }, // bottom-right
+      ];
+
+      for (const pos of diagonalPositions) {
+        if (
+          pos.r >= 0 &&
+          pos.r < state.gridSize &&
+          pos.c >= 0 &&
+          pos.c < state.gridSize &&
+          state.grid[pos.r][pos.c].playerMark === 'queen'
+        ) {
+          return false;
+        }
+      }
+
+      // Check color group (if the square has a group color)
+      const square = state.grid[row][col];
+      if (square.groupColor) {
+        for (let r = 0; r < state.gridSize; r++) {
+          for (let c = 0; c < state.gridSize; c++) {
+            if (
+              state.grid[r][c].playerMark === 'queen' &&
+              state.grid[r][c].groupColor === square.groupColor
+            ) {
+              return false;
+            }
+          }
+        }
+      }
+
+      return true;
+    },
+  },
+
   actions: {
     // Configuration management
     loadUserConfiguration() {
@@ -302,6 +354,11 @@ export const useRoundStore = defineStore('round', {
           payload: { row, col, gold: globalStore.player.totalChips },
         });
 
+        // Auto-flag blocked positions if enabled
+        if (this.uiState.autoFlagging) {
+          this.updateBlockedMoves();
+        }
+
         // Check if all honeypots found
         const totalHoneypots = this.countSolutionQueens();
         if (this.queensFound >= totalHoneypots) {
@@ -331,6 +388,19 @@ export const useRoundStore = defineStore('round', {
         });
 
         // Bust handling is now done in globalStore.applyPenalty()
+      }
+    },
+
+    // Add updateBlockedMoves method for auto flagging
+    updateBlockedMoves() {
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].playerMark === null) {
+            if (!this.isValidMove(row, col)) {
+              this.placeFlag(row, col);
+            }
+          }
+        }
       }
     },
 
