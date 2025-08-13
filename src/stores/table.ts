@@ -3,8 +3,9 @@ import { defineStore } from 'pinia';
 export interface TableConfig {
   id: string;
   name: string;
-  buyIn: number; // Now just minimum balance requirement
+  minimumBuyIn: number; // Minimum balance requirement to play at this table
   maxPayout: number;
+  payoutMultiplier: number; // Multiplier for base payouts from global config
   boardSize: string;
   puzzles: string[];
   puzzleFilter?: string;
@@ -188,9 +189,9 @@ export const useTableStore = defineStore('table', {
       }
 
       // Verify player has enough chips for minimum balance requirement
-      if (globalStore.player.totalChips < table.buyIn) {
+      if (globalStore.player.totalChips < table.minimumBuyIn) {
         throw new Error(
-          `Insufficient chips. Need at least ${table.buyIn}, have ${globalStore.player.totalChips}`
+          `Insufficient chips. Need at least ${table.minimumBuyIn}, have ${globalStore.player.totalChips}`
         );
       }
 

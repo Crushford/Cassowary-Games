@@ -133,7 +133,7 @@ const canPlayAgain = computed(() => {
   if (!roundStore.tableId) return false;
   const table = tableStore.getTable(roundStore.tableId);
   if (!table) return false;
-  return globalStore.player.totalChips >= table.buyIn;
+  return globalStore.player.totalChips >= table.minimumBuyIn;
 });
 
 defineOptions({

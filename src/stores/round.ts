@@ -237,7 +237,7 @@ export const useRoundStore = defineStore('round', {
     },
 
     // Handle square click - this is what PlayGrid will call
-    handleSquareClick(row: number, col: number) {
+    async handleSquareClick(row: number, col: number) {
       // Don't allow interaction with already revealed squares (queen or invalid)
       if (
         this.grid[row][col].playerMark === 'queen' ||
@@ -248,11 +248,11 @@ export const useRoundStore = defineStore('round', {
 
       const mode = this.uiState.flippingMode;
       if (mode === 'flip') {
-        this.flipSquare(row, col);
+        await this.flipSquare(row, col);
       } else if (mode === 'flag') {
         this.flagSquare(row, col);
       } else {
-        this.autoSquare(row, col);
+        await this.autoSquare(row, col);
       }
     },
 
@@ -272,17 +272,25 @@ export const useRoundStore = defineStore('round', {
     },
 
     // Flip action - reveal the square
-    flipSquare(row: number, col: number) {
+    async flipSquare(row: number, col: number) {
       const globalStore = useGlobalStore();
+      const { useTableStore } = await import('./table');
+      const tableStore = useTableStore();
+
+      // Get table-specific payout multiplier
+      const table = tableStore.getTable(this.tableId!);
+      const multiplier = table?.payoutMultiplier ?? 1.0;
+      const honeypotPayout = Math.round(globalStore.config.payoutPerHoneypot * multiplier);
+      const antPenalty = Math.round(globalStore.config.penaltyPerAnt * multiplier);
 
       if (this.grid[row][col].isSolutionQueen) {
         // Found honeypot
         this.grid[row][col].playerMark = 'queen';
-        globalStore.grantChips(globalStore.config.payoutPerHoneypot);
+        globalStore.grantChips(honeypotPayout);
 
         // Update table profit
         if (this.tableId) {
-          globalStore.addTableProfit(this.tableId, globalStore.config.payoutPerHoneypot);
+          globalStore.addTableProfit(this.tableId, honeypotPayout);
         }
 
         this.queensFound++;
@@ -306,11 +314,11 @@ export const useRoundStore = defineStore('round', {
       } else {
         // Found ant
         this.grid[row][col].playerMark = 'invalid';
-        globalStore.applyPenalty(globalStore.config.penaltyPerAnt);
+        globalStore.applyPenalty(antPenalty);
 
         // Update table profit (negative)
         if (this.tableId) {
-          globalStore.addTableProfit(this.tableId, -globalStore.config.penaltyPerAnt);
+          globalStore.addTableProfit(this.tableId, -antPenalty);
         }
 
         this.antsFound++;
@@ -347,12 +355,12 @@ export const useRoundStore = defineStore('round', {
     },
 
     // Auto mode: first click flags, second click flips
-    autoSquare(row: number, col: number) {
+    async autoSquare(row: number, col: number) {
       const state = this.grid[row][col].playerMark;
       if (state === null) {
         this.flagSquare(row, col);
       } else if (state === 'flag') {
-        this.flipSquare(row, col);
+        await this.flipSquare(row, col);
       }
     },
 

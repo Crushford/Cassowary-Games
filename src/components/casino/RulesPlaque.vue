@@ -55,7 +55,7 @@
           class="flex items-center justify-center px-3 py-2 bg-[#4a1111] border border-[#a33] rounded-full"
         >
           <img src="/assets/card-backs/ant.png" alt="ant" class="w-8 h-8 mr-4" />
-          <span class="text-red-300 font-semibold">–5 gold</span>
+          <span class="text-red-300 font-semibold">–{{ tablePayouts.ant }} gold</span>
         </div>
 
         <!-- Win capsule -->
@@ -63,7 +63,7 @@
           class="flex items-center justify-center px-3 py-2 bg-[#144b1a] border border-[#2d8b3a] rounded-full"
         >
           <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-8 h-8 mr-4" />
-          <span class="text-green-300 font-semibold">+1 gold</span>
+          <span class="text-green-300 font-semibold">+{{ tablePayouts.honeypot }} gold</span>
         </div>
       </div>
 
@@ -84,11 +84,23 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useGlobalStore } from '../../stores/global';
 import { useTableStore } from '../../stores/table';
+import { useRoundStore } from '../../stores/round';
 
 const globalStore = useGlobalStore();
 const tableStore = useTableStore();
+const roundStore = useRoundStore();
+
+const tablePayouts = computed(() => {
+  const table = tableStore.getTable(roundStore.tableId!);
+  const multiplier = table?.payoutMultiplier ?? 1.0;
+  return {
+    honeypot: Math.round(globalStore.config.payoutPerHoneypot * multiplier),
+    ant: Math.round(globalStore.config.penaltyPerAnt * multiplier),
+  };
+});
 
 defineOptions({
   name: 'RulesPlaque',
