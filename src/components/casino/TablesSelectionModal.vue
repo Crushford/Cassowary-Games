@@ -100,10 +100,12 @@
               <div class="mt-4">
                 <button
                   @click="playTable(table.id)"
-                  :disabled="!isTableAccessible(table)"
+                  :disabled="
+                    !globalStore.isTableAccessible(table.id, table.minimumBuyIn, table.maxPayout)
+                  "
                   class="w-full py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   :class="
-                    isTableAccessible(table)
+                    globalStore.isTableAccessible(table.id, table.minimumBuyIn, table.maxPayout)
                       ? 'bg-gradient-to-r from-yellow-500 to-yellow-400 text-amber-900 hover:from-yellow-400 hover:to-yellow-300 shadow-lg hover:shadow-xl'
                       : 'bg-gray-600 text-gray-300'
                   "
@@ -188,7 +190,9 @@ const filteredTables = computed(() => {
     return allTables;
   }
 
-  return allTables.filter((table) => isTableAccessible(table));
+  return allTables.filter((table) =>
+    globalStore.isTableAccessible(table.id, table.minimumBuyIn, table.maxPayout)
+  );
 });
 
 const getTablePayouts = (table: TableConfig) => {
@@ -199,17 +203,6 @@ const getTablePayouts = (table: TableConfig) => {
   };
 };
 
-const isTableAccessible = (table: TableConfig) => {
-  // Check if table has reached its limit
-  const tableProgress = globalStore.tablesProgress[table.id];
-  if (tableProgress && tableProgress.totalProfit >= table.maxPayout) {
-    return false;
-  }
-
-  // Table is accessible if player has enough chips OR if table has been unlocked before
-  return globalStore.isTableAccessible(table.id, table.minimumBuyIn);
-};
-
 const getTableButtonText = (table: TableConfig) => {
   // Check if table has reached its limit
   const tableProgress = globalStore.tablesProgress[table.id];
@@ -217,13 +210,10 @@ const getTableButtonText = (table: TableConfig) => {
     return 'Table Complete';
   }
 
-  if (globalStore.player.totalChips >= table.minimumBuyIn) {
+  if (globalStore.isTableAccessible(table.id, table.minimumBuyIn, table.maxPayout)) {
     return 'Play';
-  } else if (globalStore.unlockedTables.has(table.id)) {
-    return 'Need More Chips';
-  } else {
-    return 'Insufficient Chips';
   }
+  return 'Insufficient Chips';
 };
 
 const playTable = async (tableId: string) => {
