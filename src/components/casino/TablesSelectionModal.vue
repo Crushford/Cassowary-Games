@@ -32,7 +32,7 @@
             <div class="space-y-2 text-yellow-200 text-sm">
               <div class="flex justify-between">
                 <span>Min Balance:</span>
-                <span class="font-semibold text-yellow-300">{{ table.buyIn }} chips</span>
+                <span class="font-semibold text-yellow-300">{{ table.minimumBuyIn }} chips</span>
               </div>
               <div class="flex justify-between">
                 <span>Max Payout:</span>
@@ -42,20 +42,40 @@
                 <span>Board Size:</span>
                 <span class="font-semibold text-yellow-300">{{ table.boardSize }}</span>
               </div>
+              <div class="flex justify-between">
+                <span>Multiplier:</span>
+                <span class="font-semibold text-purple-300">{{ table.payoutMultiplier }}x</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Honeypot Reward:</span>
+                <span class="font-semibold text-green-300"
+                  >+{{ getTablePayouts(table).honeypot }} gold</span
+                >
+              </div>
+              <div class="flex justify-between">
+                <span>Ant Penalty:</span>
+                <span class="font-semibold text-red-300"
+                  >-{{ getTablePayouts(table).ant }} gold</span
+                >
+              </div>
             </div>
 
             <div class="mt-4">
               <button
                 @click="playTable(table.id)"
-                :disabled="globalStore.player.totalChips < table.buyIn"
+                :disabled="globalStore.player.totalChips < table.minimumBuyIn"
                 class="w-full py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 :class="
-                  globalStore.player.totalChips >= table.buyIn
+                  globalStore.player.totalChips >= table.minimumBuyIn
                     ? 'bg-gradient-to-r from-yellow-500 to-yellow-400 text-amber-900 hover:from-yellow-400 hover:to-yellow-300 shadow-lg hover:shadow-xl'
                     : 'bg-gray-600 text-gray-300'
                 "
               >
-                {{ globalStore.player.totalChips >= table.buyIn ? 'Play' : 'Insufficient Chips' }}
+                {{
+                  globalStore.player.totalChips >= table.minimumBuyIn
+                    ? 'Play'
+                    : 'Insufficient Chips'
+                }}
               </button>
             </div>
 
@@ -64,6 +84,11 @@
               <div class="flex justify-between mb-1">
                 <span>Progress:</span>
                 <span
+                  :class="
+                    globalStore.tablesProgress[table.id].totalProfit < 0
+                      ? 'text-red-300'
+                      : 'text-yellow-300'
+                  "
                   >{{ globalStore.tablesProgress[table.id].totalProfit }} /
                   {{ table.maxPayout }}</span
                 >
@@ -72,9 +97,34 @@
                 <div
                   class="bg-yellow-400 h-1 rounded-full transition-all duration-300"
                   :style="{
-                    width: `${Math.min(100, (globalStore.tablesProgress[table.id].totalProfit / table.maxPayout) * 100)}%`,
+                    width: `${Math.max(0, Math.min(100, (globalStore.tablesProgress[table.id].totalProfit / table.maxPayout) * 100))}%`,
                   }"
                 ></div>
+              </div>
+
+              <!-- Rounds Complete -->
+              <div class="mt-2 space-y-1">
+                <div class="flex justify-between">
+                  <span>Rounds Complete:</span>
+                  <span class="text-green-300 font-semibold">{{
+                    globalStore.tablesProgress[table.id].roundsComplete
+                  }}</span>
+                </div>
+                <div
+                  v-if="globalStore.tablesProgress[table.id].currentPuzzleIdOrName"
+                  class="flex justify-between"
+                >
+                  <span>Current Puzzle:</span>
+                  <span class="text-blue-300 font-semibold text-xs truncate">
+                    {{ globalStore.tablesProgress[table.id].currentPuzzleIdOrName }}
+                  </span>
+                </div>
+                <div
+                  v-if="globalStore.tablesProgress[table.id].isUsingRegex"
+                  class="text-center text-purple-300 text-xs"
+                >
+                  Using Regex Filter
+                </div>
               </div>
             </div>
           </div>
@@ -87,9 +137,18 @@
 <script setup lang="ts">
 import { useGlobalStore } from '../../stores/global';
 import { useTableStore } from '../../stores/table';
+import type { TableConfig } from '../../stores/table';
 
 const globalStore = useGlobalStore();
 const tableStore = useTableStore();
+
+const getTablePayouts = (table: TableConfig) => {
+  const multiplier = table.payoutMultiplier ?? 1.0;
+  return {
+    honeypot: Math.round(globalStore.config.payoutPerHoneypot * multiplier),
+    ant: Math.round(globalStore.config.penaltyPerAnt * multiplier),
+  };
+};
 
 const playTable = async (tableId: string) => {
   const { useGlobalStore } = await import('../../stores/global');

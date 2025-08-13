@@ -2,8 +2,9 @@
   {
     "id": "table-001",
     "name": "Beginner's Luck",
-    "buyIn": 0,
+    "minimumBuyIn": 0,
     "maxPayout": 40,
+    "payoutMultiplier": 1.0,
     "boardSize": "4x4",
     "puzzles": [
       "level-1",
@@ -17,6 +18,87 @@
       "level-9",
       "level-10"
     ],
-    "puzzleFilter": "^pz-"
+    "puzzleFilter": "-0$"
+  },
+  {
+    "id": "table-002",
+    "name": "Copper Corner",
+    "minimumBuyIn": 30,
+    "maxPayout": 80,
+    "payoutMultiplier": 2,
+    "boardSize": "4x4",
+    "puzzleFilter": "-0$"
+  },
+  {
+    "id": "table-003",
+    "name": "Silver Street",
+    "minimumBuyIn": 60,
+    "maxPayout": 150,
+    "payoutMultiplier": 4,
+    "boardSize": "5x5",
+    "puzzleFilter": "-0$"
+  },
+  {
+    "id": "table-004",
+    "name": "Gold Rush",
+    "minimumBuyIn": 120,
+    "maxPayout": 300,
+    "payoutMultiplier": 8,
+    "boardSize": "5x5",
+    "puzzleFilter": "-0$"
+  },
+  {
+    "id": "table-005",
+    "name": "Platinum Palace",
+    "minimumBuyIn": 250,
+    "maxPayout": 600,
+    "payoutMultiplier": 16,
+    "boardSize": "6x6",
+    "puzzleFilter": "-0$"
+  },
+  {
+    "id": "table-006",
+    "name": "Diamond District",
+    "minimumBuyIn": 400,
+    "maxPayout": 1200,
+    "payoutMultiplier": 32,
+    "boardSize": "6x6",
+    "puzzleFilter": "-0$"
+  },
+  {
+    "id": "table-007",
+    "name": "Royal Flush",
+    "minimumBuyIn": 500,
+    "maxPayout": 3000,
+    "payoutMultiplier": 64,
+    "boardSize": "7x7",
+    "puzzleFilter": "-0$"
+  },
+  {
+    "id": "table-008",
+    "name": "Emperor's Table",
+    "minimumBuyIn": 1000,
+    "maxPayout": 6000,
+    "payoutMultiplier": 128,
+    "boardSize": "7x7",
+    "puzzleFilter": "-0$"
+  },
+  {
+    "id": "table-009",
+    "name": "Legendary Lair",
+    "minimumBuyIn": 4000,
+    "maxPayout": 15000,
+    "payoutMultiplier": 256,
+    "boardSize": "8x8",
+    "puzzleFilter": "-0$"
+  },
+  {
+    "id": "table-010",
+    "name": "Mythic Mastery",
+    "minimumBuyIn": 5000,
+    "maxPayout": 30000,
+    "payoutMultiplier": 512,
+    "boardSize": "8x8",
+    "puzzleFilter": "-0$"
   }
 ]

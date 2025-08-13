@@ -16,41 +16,80 @@
             >
           </div>
 
+          <!-- Round winnings -->
           <div
-            v-if="roundStore.tableId && tableStore.maxPayout && isWon"
+            v-if="roundStore.tableId && globalStore.tablesProgress[roundStore.tableId]"
+            class="flex justify-between"
+          >
+            <span class="text-lg">Winnings this round:</span>
+            <span
+              class="font-semibold"
+              :class="roundWinnings < 0 ? 'text-red-300' : 'text-green-300'"
+              >{{ roundWinnings > 0 ? '+' : '' }}{{ roundWinnings }} chips</span
+            >
+          </div>
+
+          <div
+            v-if="roundStore.tableId && tableStore.maxPayout"
             class="pt-4 border-t border-amber-600"
           >
             <div class="flex justify-between mb-2">
               <span>Progress on this table:</span>
-              <span class="font-semibold text-yellow-300"
+              <span
+                class="font-semibold"
+                :class="totalProfit < 0 ? 'text-red-300' : 'text-yellow-300'"
                 >{{ totalProfit }} / {{ tableStore.maxPayout }}</span
               >
             </div>
             <div class="w-full bg-amber-900 rounded-full h-3">
               <div
                 class="bg-yellow-400 h-3 rounded-full transition-all duration-300"
-                :style="{ width: `${Math.min(100, (totalProfit / tableStore.maxPayout) * 100)}%` }"
+                :style="{
+                  width: `${Math.max(0, Math.min(100, (totalProfit / tableStore.maxPayout) * 100))}%`,
+                }"
               ></div>
+            </div>
+
+            <!-- Rounds Complete -->
+            <div
+              v-if="roundStore.tableId && globalStore.tablesProgress[roundStore.tableId]"
+              class="mt-4 space-y-2 text-sm"
+            >
+              <div class="flex justify-between">
+                <span>Rounds Complete:</span>
+                <span class="text-green-300 font-semibold">{{
+                  globalStore.tablesProgress[roundStore.tableId].roundsComplete
+                }}</span>
+              </div>
+              <div
+                v-if="globalStore.tablesProgress[roundStore.tableId].currentPuzzleIdOrName"
+                class="flex justify-between"
+              >
+                <span>Current Puzzle:</span>
+                <span class="text-blue-300 font-semibold text-xs truncate">
+                  {{ globalStore.tablesProgress[roundStore.tableId].currentPuzzleIdOrName }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="flex flex-col sm:flex-row gap-4">
-          <!-- Show Cash Out and Play Again for winners -->
+        <div class="flex gap-4">
+          <!-- Show Cash Out and Next Round for winners -->
           <template v-if="isWon">
             <button
               @click="async () => await tableStore.goToTables()"
               class="flex-1 bg-gradient-to-r from-amber-600 to-amber-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-amber-500 hover:to-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
-              Cash Out
+              Cash Out and Go Back to Tables
             </button>
 
             <button
               v-if="canPlayAgain"
-              @click="tableStore.handlePlayAgain"
-              class="flex-1 bg-gradient-to-r from-yellow-500 to-yellow-400 text-amber-900 py-3 px-6 rounded-lg font-semibold hover:from-yellow-400 hover:to-yellow-300 transition-all duration-200 shadow-lg hover:shadow-xl"
+              @click="tableStore.handleNextRound"
+              class="flex-1 bg-[#144b1a] border border-[#2d8b3a] text-green-300 py-3 px-6 rounded-lg font-semibold hover:bg-[#1a5a22] hover:border-[#3a9b4a] transition-all duration-200 shadow-lg hover:shadow-xl"
             >
-              Play Again
+              Next Round
             </button>
           </template>
 
@@ -84,12 +123,17 @@ const totalProfit = computed(() => {
   return globalStore.tablesProgress[roundStore.tableId]?.totalProfit ?? 0;
 });
 
+const roundWinnings = computed(() => {
+  if (!roundStore.tableId) return 0;
+  return globalStore.tablesProgress[roundStore.tableId]?.roundWinnings ?? 0;
+});
+
 const isWon = computed(() => tableStore.status === 'won');
 const canPlayAgain = computed(() => {
   if (!roundStore.tableId) return false;
   const table = tableStore.getTable(roundStore.tableId);
   if (!table) return false;
-  return globalStore.player.totalChips >= table.buyIn;
+  return globalStore.player.totalChips >= table.minimumBuyIn;
 });
 
 defineOptions({

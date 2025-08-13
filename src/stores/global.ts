@@ -16,13 +16,21 @@ interface UI {
   showRules: boolean;
 }
 
+interface TableProgress {
+  totalProfit: number;
+  roundsComplete: number;
+  currentPuzzleIdOrName: string | null;
+  isUsingRegex: boolean;
+  roundWinnings: number;
+}
+
 interface GlobalState {
   schemaVersion: number;
   updatedAt: string;
   player: Player;
   config: Config;
   ui: UI;
-  tablesProgress: Record<string, { totalProfit: number }>;
+  tablesProgress: Record<string, TableProgress>;
 }
 
 export const useGlobalStore = defineStore('global', {
@@ -91,12 +99,48 @@ export const useGlobalStore = defineStore('global', {
 
     addTableProfit(tableId: string, delta: number) {
       if (!this.tablesProgress[tableId]) {
-        this.tablesProgress[tableId] = { totalProfit: 0 };
+        this.tablesProgress[tableId] = {
+          totalProfit: 0,
+          roundsComplete: 0,
+          currentPuzzleIdOrName: null,
+          isUsingRegex: false,
+          roundWinnings: 0,
+        };
       }
-      this.tablesProgress[tableId].totalProfit = Math.max(
-        0,
-        this.tablesProgress[tableId].totalProfit + delta
-      );
+
+      this.tablesProgress[tableId].totalProfit += delta;
+      this.tablesProgress[tableId].roundWinnings += delta;
+      this.persist();
+    },
+
+    recordTableWin(tableId: string) {
+      if (!this.tablesProgress[tableId]) {
+        this.tablesProgress[tableId] = {
+          totalProfit: 0,
+          roundsComplete: 0,
+          currentPuzzleIdOrName: null,
+          isUsingRegex: false,
+          roundWinnings: 0,
+        };
+      }
+      this.tablesProgress[tableId].roundsComplete++;
+      this.persist();
+    },
+
+    updateTablePuzzleInfo(tableId: string, puzzleIdOrName: string | null, isUsingRegex: boolean) {
+      if (!this.tablesProgress[tableId]) {
+        this.tablesProgress[tableId] = {
+          totalProfit: 0,
+          roundsComplete: 0,
+          currentPuzzleIdOrName: null,
+          isUsingRegex: false,
+          roundWinnings: 0,
+        };
+      }
+      this.tablesProgress[tableId].currentPuzzleIdOrName = puzzleIdOrName;
+      this.tablesProgress[tableId].isUsingRegex = isUsingRegex;
+      // Reset round winnings when starting a new round
+      this.tablesProgress[tableId].roundWinnings = 0;
       this.persist();
     },
 
@@ -124,6 +168,24 @@ export const useGlobalStore = defineStore('global', {
 
           // Handle schema migrations if needed
           if (data.schemaVersion === 1) {
+            // Migrate old table progress format to new format
+            if (data.tablesProgress) {
+              for (const tableId in data.tablesProgress) {
+                const progress = data.tablesProgress[tableId];
+                if (typeof progress === 'object' && 'totalProfit' in progress) {
+                  // Check if it's the old format (just totalProfit)
+                  if (!('wins' in progress)) {
+                    data.tablesProgress[tableId] = {
+                      totalProfit: progress.totalProfit || 0,
+                      roundsComplete: 0,
+                      currentPuzzleIdOrName: null,
+                      isUsingRegex: false,
+                      roundWinnings: 0,
+                    };
+                  }
+                }
+              }
+            }
             this.$patch(data);
           } else {
             // Future schema migrations would go here

@@ -6,8 +6,8 @@
 
         <div class="space-y-1">
           <p>Use your current bank balance to play.</p>
-          <p>Flip honeypots to earn +1 gold each.</p>
-          <p>Flip ants to lose 5 gold each.</p>
+          <p>Flip honeypots to earn +{{ tablePayouts.honeypot }} gold each.</p>
+          <p>Flip ants to lose {{ tablePayouts.ant }} gold each.</p>
           <p>The puzzle logic matches the Harvest (Queens) rules.</p>
           <p>The round ends when you solve the puzzle or when you run out of gold.</p>
           <p v-if="tableStore.maxPayout > 0" class="text-yellow-300 font-medium">
@@ -44,7 +44,8 @@
         </div>
 
         <p class="text-red-300 font-medium">
-          ⚠️ Dig wrong and you'll lose 5 gold. Run out of gold and you're busted!
+          ⚠️ Dig wrong and you'll lose {{ tablePayouts.ant }} gold. Run out of gold and you're
+          busted!
         </p>
       </div>
       <button
@@ -58,6 +59,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useGlobalStore } from '../../stores/global';
 import { useRoundStore } from '../../stores/round';
 import { useTableStore } from '../../stores/table';
@@ -66,6 +68,15 @@ import Modal from '../shared/Modal.vue';
 const globalStore = useGlobalStore();
 const roundStore = useRoundStore();
 const tableStore = useTableStore();
+
+const tablePayouts = computed(() => {
+  const table = tableStore.getTable(roundStore.tableId!);
+  const multiplier = table?.payoutMultiplier ?? 1.0;
+  return {
+    honeypot: Math.round(globalStore.config.payoutPerHoneypot * multiplier),
+    ant: Math.round(globalStore.config.penaltyPerAnt * multiplier),
+  };
+});
 
 const onClose = () => {
   globalStore.setShowRules(false);
