@@ -31,6 +31,7 @@ interface GlobalState {
   config: Config;
   ui: UI;
   tablesProgress: Record<string, TableProgress>;
+  totalRoundsComplete: number;
 }
 
 export const useGlobalStore = defineStore('global', {
@@ -51,6 +52,7 @@ export const useGlobalStore = defineStore('global', {
       showRules: false,
     },
     tablesProgress: {},
+    totalRoundsComplete: 0,
   }),
 
   actions: {
@@ -124,6 +126,7 @@ export const useGlobalStore = defineStore('global', {
         };
       }
       this.tablesProgress[tableId].roundsComplete++;
+      this.totalRoundsComplete++;
       this.persist();
     },
 
@@ -206,6 +209,21 @@ export const useGlobalStore = defineStore('global', {
                   }
                 }
               }
+            }
+
+            // Ensure totalRoundsComplete exists for existing data
+            if (data.totalRoundsComplete === undefined) {
+              // Calculate total rounds from existing table data
+              let calculatedTotal = 0;
+              if (data.tablesProgress) {
+                for (const tableId in data.tablesProgress) {
+                  const progress = data.tablesProgress[tableId];
+                  if (progress && typeof progress.roundsComplete === 'number') {
+                    calculatedTotal += progress.roundsComplete;
+                  }
+                }
+              }
+              data.totalRoundsComplete = calculatedTotal;
             }
 
             this.$patch(data);
