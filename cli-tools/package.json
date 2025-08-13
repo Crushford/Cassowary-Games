@@ -4,7 +4,7 @@
   "description": "CLI tools for honey pot ant puzzle generation and database management",
   "type": "module",
   "scripts": {
-    "generate": "tsx generate.ts",
+    "generate": "tsx generate-cli.ts",
     "puzzle-db": "tsx puzzleDbCli.ts",
     "server": "tsx server.ts",
     "dev:server": "tsx --watch server.ts"
