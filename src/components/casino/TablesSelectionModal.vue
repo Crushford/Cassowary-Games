@@ -15,98 +15,149 @@
         </div>
       </div>
 
+      <!-- Toggle for hiding unavailable tables -->
+      <div class="flex justify-center mb-4">
+        <div class="flex items-center space-x-4">
+          <label class="flex items-center space-x-3 text-yellow-200 cursor-pointer">
+            <div class="relative">
+              <input v-model="hideUnavailableTables" type="checkbox" class="sr-only" />
+              <div
+                class="w-12 h-6 bg-amber-900 border-2 border-amber-600 rounded-full transition-colors duration-200"
+                :class="hideUnavailableTables ? 'bg-amber-600 border-amber-500' : ''"
+              ></div>
+              <div
+                class="absolute top-0.5 left-0.5 w-5 h-5 bg-yellow-300 rounded-full transition-transform duration-200 shadow-md"
+                :class="hideUnavailableTables ? 'transform translate-x-6' : ''"
+              ></div>
+            </div>
+            <span class="text-sm font-medium">Hide unavailable tables</span>
+          </label>
+          <span class="text-yellow-300 text-sm">
+            {{ filteredTables.length }} of {{ Object.values(tableStore.tables).length }} tables
+          </span>
+        </div>
+      </div>
+
       <!-- Loading state -->
       <div v-if="!tableStore.loaded" class="text-center py-12">
         <div class="text-yellow-200 text-xl">Loading tables...</div>
       </div>
 
       <!-- Tables grid -->
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div
-          v-for="table in Object.values(tableStore.tables)"
-          :key="table.id"
-          class="bg-gradient-to-br from-amber-800 to-amber-700 rounded-lg p-4 shadow-lg border-2 border-amber-600 hover:border-amber-400 transition-all duration-200"
-        >
-          <div class="text-center">
-            <div class="flex items-center justify-center gap-2 mb-2">
-              <h3 class="text-xl font-bold text-yellow-100">{{ table.name }}</h3>
-            </div>
-            <div class="space-y-2 text-yellow-200 text-sm">
-              <div class="flex justify-between">
-                <span>Min Balance:</span>
-                <span class="font-semibold text-yellow-300">{{ table.minimumBuyIn }} chips</span>
-              </div>
-              <div class="flex justify-between">
-                <span>Max Payout:</span>
-                <span class="font-semibold text-yellow-300">{{ table.maxPayout }} chips</span>
-              </div>
-              <div class="flex justify-between">
-                <span>Board Size:</span>
-                <span class="font-semibold text-yellow-300">{{ table.boardSize }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span>Multiplier:</span>
-                <span class="font-semibold text-purple-300">{{ table.payoutMultiplier }}x</span>
-              </div>
-              <div class="flex justify-between">
-                <span>Honeypot Reward:</span>
-                <span class="font-semibold text-green-300"
-                  >+{{ getTablePayouts(table).honeypot }} gold</span
-                >
-              </div>
-              <div class="flex justify-between">
-                <span>Ant Penalty:</span>
-                <span class="font-semibold text-red-300"
-                  >-{{ getTablePayouts(table).ant }} gold</span
-                >
-              </div>
-            </div>
+      <div v-else>
+        <!-- No tables available message -->
+        <div v-if="filteredTables.length === 0" class="text-center py-12">
+          <div class="text-yellow-200 text-xl mb-4">
+            {{ hideUnavailableTables ? 'No available tables found' : 'No tables available' }}
+          </div>
+          <div v-if="hideUnavailableTables" class="text-yellow-300 text-sm">
+            Try unchecking "Hide unavailable tables" to see all tables
+          </div>
+        </div>
 
-            <div class="mt-4">
-              <button
-                @click="playTable(table.id)"
-                :disabled="!isTableAccessible(table)"
-                class="w-full py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                :class="
-                  isTableAccessible(table)
-                    ? 'bg-gradient-to-r from-yellow-500 to-yellow-400 text-amber-900 hover:from-yellow-400 hover:to-yellow-300 shadow-lg hover:shadow-xl'
-                    : 'bg-gray-600 text-gray-300'
-                "
-              >
-                {{ getTableButtonText(table) }}
-              </button>
-            </div>
-
-            <!-- Progress indicator -->
-            <div v-if="globalStore.tablesProgress[table.id]" class="mt-3 text-xs text-yellow-200">
-              <div class="flex justify-between mb-1">
-                <span>Progress:</span>
-                <span
-                  :class="
-                    globalStore.tablesProgress[table.id].totalProfit < 0
-                      ? 'text-red-300'
-                      : 'text-yellow-300'
-                  "
-                  >{{ globalStore.tablesProgress[table.id].totalProfit }} /
-                  {{ table.maxPayout }}</span
-                >
+        <!-- Tables grid -->
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div
+            v-for="table in filteredTables"
+            :key="table.id"
+            class="bg-gradient-to-br from-amber-800 to-amber-700 rounded-lg p-4 shadow-lg border-2 border-amber-600 hover:border-amber-400 transition-all duration-200"
+          >
+            <div class="text-center">
+              <div class="flex items-center justify-center gap-2 mb-2">
+                <h3 class="text-xl font-bold text-yellow-100">{{ table.name }}</h3>
               </div>
-              <div class="w-full bg-amber-900 rounded-full h-1">
-                <div
-                  class="bg-yellow-400 h-1 rounded-full transition-all duration-300"
-                  :style="{
-                    width: `${Math.max(0, Math.min(100, (globalStore.tablesProgress[table.id].totalProfit / table.maxPayout) * 100))}%`,
-                  }"
-                ></div>
-              </div>
-
-              <!-- Rounds Complete -->
-              <div class="mt-2 space-y-1">
+              <div class="space-y-2 text-yellow-200 text-sm">
                 <div class="flex justify-between">
-                  <span>Rounds Complete:</span>
-                  <span class="text-green-300 font-semibold">{{
-                    globalStore.tablesProgress[table.id].roundsComplete
-                  }}</span>
+                  <span>Min Balance:</span>
+                  <span class="font-semibold text-yellow-300">{{ table.minimumBuyIn }} chips</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Max Payout:</span>
+                  <span class="font-semibold text-yellow-300">{{ table.maxPayout }} chips</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Board Size:</span>
+                  <span class="font-semibold text-yellow-300">{{ table.boardSize }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Multiplier:</span>
+                  <span class="font-semibold text-purple-300">{{ table.payoutMultiplier }}x</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Honeypot Reward:</span>
+                  <span class="font-semibold text-green-300"
+                    >+{{ getTablePayouts(table).honeypot }} gold</span
+                  >
+                </div>
+                <div class="flex justify-between">
+                  <span>Ant Penalty:</span>
+                  <span class="font-semibold text-red-300"
+                    >-{{ getTablePayouts(table).ant }} gold</span
+                  >
+                </div>
+              </div>
+
+              <div class="mt-4">
+                <button
+                  @click="playTable(table.id)"
+                  :disabled="!isTableAccessible(table)"
+                  class="w-full py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  :class="
+                    isTableAccessible(table)
+                      ? 'bg-gradient-to-r from-yellow-500 to-yellow-400 text-amber-900 hover:from-yellow-400 hover:to-yellow-300 shadow-lg hover:shadow-xl'
+                      : 'bg-gray-600 text-gray-300'
+                  "
+                >
+                  {{ getTableButtonText(table) }}
+                </button>
+              </div>
+
+              <!-- Progress indicator -->
+              <div v-if="globalStore.tablesProgress[table.id]" class="mt-3 text-xs text-yellow-200">
+                <div class="flex justify-between mb-1">
+                  <span>Progress:</span>
+                  <span
+                    :class="
+                      globalStore.tablesProgress[table.id].totalProfit < 0
+                        ? 'text-red-300'
+                        : globalStore.tablesProgress[table.id].totalProfit >= table.maxPayout
+                          ? 'text-green-300'
+                          : 'text-yellow-300'
+                    "
+                    >{{ globalStore.tablesProgress[table.id].totalProfit }} /
+                    {{ table.maxPayout }}</span
+                  >
+                </div>
+                <div class="w-full bg-amber-900 rounded-full h-1">
+                  <div
+                    :class="
+                      globalStore.tablesProgress[table.id].totalProfit >= table.maxPayout
+                        ? 'bg-green-400'
+                        : 'bg-yellow-400'
+                    "
+                    class="h-1 rounded-full transition-all duration-300"
+                    :style="{
+                      width: `${Math.max(0, Math.min(100, (globalStore.tablesProgress[table.id].totalProfit / table.maxPayout) * 100))}%`,
+                    }"
+                  ></div>
+                </div>
+
+                <!-- Table Complete indicator -->
+                <div
+                  v-if="globalStore.tablesProgress[table.id].totalProfit >= table.maxPayout"
+                  class="mt-2 text-center text-green-300 font-semibold text-xs"
+                >
+                  ✓ Table Complete
+                </div>
+
+                <!-- Rounds Complete -->
+                <div class="mt-2 space-y-1">
+                  <div class="flex justify-between">
+                    <span>Rounds Complete:</span>
+                    <span class="text-green-300 font-semibold">{{
+                      globalStore.tablesProgress[table.id].roundsComplete
+                    }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -118,12 +169,27 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue';
 import { useGlobalStore } from '../../stores/global';
 import { useTableStore } from '../../stores/table';
 import type { TableConfig } from '../../stores/table';
 
 const globalStore = useGlobalStore();
 const tableStore = useTableStore();
+
+// Toggle for hiding unavailable tables
+const hideUnavailableTables = ref(false);
+
+// Computed property to filter tables based on toggle
+const filteredTables = computed(() => {
+  const allTables = Object.values(tableStore.tables);
+
+  if (!hideUnavailableTables.value) {
+    return allTables;
+  }
+
+  return allTables.filter((table) => isTableAccessible(table));
+});
 
 const getTablePayouts = (table: TableConfig) => {
   const multiplier = table.payoutMultiplier ?? 1.0;
@@ -134,11 +200,23 @@ const getTablePayouts = (table: TableConfig) => {
 };
 
 const isTableAccessible = (table: TableConfig) => {
+  // Check if table has reached its limit
+  const tableProgress = globalStore.tablesProgress[table.id];
+  if (tableProgress && tableProgress.totalProfit >= table.maxPayout) {
+    return false;
+  }
+
   // Table is accessible if player has enough chips OR if table has been unlocked before
   return globalStore.isTableAccessible(table.id, table.minimumBuyIn);
 };
 
 const getTableButtonText = (table: TableConfig) => {
+  // Check if table has reached its limit
+  const tableProgress = globalStore.tablesProgress[table.id];
+  if (tableProgress && tableProgress.totalProfit >= table.maxPayout) {
+    return 'Table Complete';
+  }
+
   if (globalStore.player.totalChips >= table.minimumBuyIn) {
     return 'Play';
   } else if (globalStore.unlockedTables.has(table.id)) {

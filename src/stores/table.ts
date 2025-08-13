@@ -30,6 +30,7 @@ interface TableState {
   currentPuzzleIdOrName: string | null;
   // Modal state
   showRoundComplete: boolean;
+  showTableLimitReached: boolean;
 }
 
 export const useTableStore = defineStore('table', {
@@ -44,6 +45,7 @@ export const useTableStore = defineStore('table', {
     currentPuzzleIdOrName: null,
     // Modal state
     showRoundComplete: false,
+    showTableLimitReached: false,
   }),
 
   getters: {
@@ -117,6 +119,19 @@ export const useTableStore = defineStore('table', {
 
     getTable(id: string): TableConfig | undefined {
       return this.tables[id];
+    },
+
+    async isTableLimitReached(tableId: string): Promise<boolean> {
+      const { useGlobalStore } = await import('./global');
+      const globalStore = useGlobalStore();
+      const table = this.getTable(tableId);
+
+      if (!table) return false;
+
+      const tableProgress = globalStore.tablesProgress[tableId];
+      if (!tableProgress) return false;
+
+      return tableProgress.totalProfit >= table.maxPayout;
     },
 
     async resolveNextPuzzle(
@@ -272,6 +287,16 @@ export const useTableStore = defineStore('table', {
           }
         }
 
+        // Check if table limit has been reached
+        if (roundStore.tableId && newStatus === 'won') {
+          const tableProgress = globalStore.tablesProgress[roundStore.tableId];
+          if (tableProgress && tableProgress.totalProfit >= this.maxPayout) {
+            // Table limit reached - show table limit reached modal
+            this.showTableLimitReached = true;
+            return;
+          }
+        }
+
         // Show round complete modal
         this.showRoundComplete = true;
       }
@@ -289,6 +314,7 @@ export const useTableStore = defineStore('table', {
 
     async goToTables() {
       this.showRoundComplete = false; // Reset round complete modal state
+      this.showTableLimitReached = false; // Reset table limit reached modal state
       // Clear table context to show tables modal
       const { useRoundStore } = await import('./round');
       const roundStore = useRoundStore();
@@ -323,6 +349,7 @@ export const useTableStore = defineStore('table', {
     resetTableState() {
       this.status = 'playing';
       this.showRoundComplete = false;
+      this.showTableLimitReached = false;
       this.maxPayout = 0;
       this.puzzleQueueIndex = 0;
       this.usedPuzzleIds = new Set<string>();
