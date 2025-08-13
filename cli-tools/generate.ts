@@ -294,6 +294,8 @@ function placeAllQueens(state: GeneratorState, size: number): void {
         state.grid[row][col].isSolutionQueen = true;
       }
     });
+  } else {
+    throw new Error(`Failed to place all ${size} queens after ${maxAttempts} attempts`);
   }
 }
 
@@ -997,6 +999,15 @@ function experimentCreateValidBoard(size: number = SIZE, maxRetries: number = RE
 
       // Check if this is an expandColorGridSafely failure
       if (errorMessage.includes('expandColorGridSafely failed')) {
+        console.log(`Attempt ${attempt}: ${errorMessage} - retrying...`);
+        // Reset the grid for the next attempt
+        state.grid = createEmptyGrid(size);
+        state.autoTestMarks = Array.from({ length: size }, () => Array(size).fill(null));
+        continue; // Skip to next attempt
+      }
+
+      // Check if this is a queen placement failure
+      if (errorMessage.includes('Failed to place all') && errorMessage.includes('queens')) {
         console.log(`Attempt ${attempt}: ${errorMessage} - retrying...`);
         // Reset the grid for the next attempt
         state.grid = createEmptyGrid(size);
