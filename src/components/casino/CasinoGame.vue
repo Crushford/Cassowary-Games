@@ -3,7 +3,9 @@
     class="h-svh w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden"
   >
     <!-- Header -->
-    <CasinoHUD class="basis-[15%]" />
+    <CasinoHUD class="basis-[5%]" />
+
+    <RulesPlaque class="basis-[35%]" />
 
     <!-- Grid area -->
     <PlayGrid class="w-full aspect-square max-h-[45%]" :store="roundStore" :enable-touch="true">
@@ -38,6 +40,7 @@ import { useRoundStore } from '../../stores/round';
 import { defineAsyncComponent } from 'vue';
 
 const CasinoHUD = defineAsyncComponent(() => import('./CasinoHUD.vue'));
+const RulesPlaque = defineAsyncComponent(() => import('./RulesPlaque.vue'));
 const ToolDrawer = defineAsyncComponent(() => import('./ToolDrawer.vue'));
 const CasinoRulesModal = defineAsyncComponent(() => import('./CasinoRulesModal.vue'));
 const PlayGrid = defineAsyncComponent(() => import('../shared/PlayGrid.vue'));
