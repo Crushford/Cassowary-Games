@@ -279,6 +279,12 @@ export const useRoundStore = defineStore('round', {
         // Found honeypot
         this.grid[row][col].playerMark = 'queen';
         globalStore.grantChips(globalStore.config.payoutPerHoneypot);
+
+        // Update table profit
+        if (this.tableId) {
+          globalStore.addTableProfit(this.tableId, globalStore.config.payoutPerHoneypot);
+        }
+
         this.queensFound++;
         this.flipsMade++;
 
@@ -301,6 +307,12 @@ export const useRoundStore = defineStore('round', {
         // Found ant
         this.grid[row][col].playerMark = 'invalid';
         globalStore.applyPenalty(globalStore.config.penaltyPerAnt);
+
+        // Update table profit (negative)
+        if (this.tableId) {
+          globalStore.addTableProfit(this.tableId, -globalStore.config.penaltyPerAnt);
+        }
+
         this.antsFound++;
         this.flipsMade++;
 

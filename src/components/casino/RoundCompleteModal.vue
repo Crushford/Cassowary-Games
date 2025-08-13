@@ -16,21 +16,60 @@
             >
           </div>
 
+          <!-- Round winnings -->
           <div
-            v-if="roundStore.tableId && tableStore.maxPayout && isWon"
+            v-if="roundStore.tableId && globalStore.tablesProgress[roundStore.tableId]"
+            class="flex justify-between"
+          >
+            <span class="text-lg">Winnings this round:</span>
+            <span
+              class="font-semibold"
+              :class="roundWinnings < 0 ? 'text-red-300' : 'text-green-300'"
+              >{{ roundWinnings > 0 ? '+' : '' }}{{ roundWinnings }} chips</span
+            >
+          </div>
+
+          <div
+            v-if="roundStore.tableId && tableStore.maxPayout"
             class="pt-4 border-t border-amber-600"
           >
             <div class="flex justify-between mb-2">
               <span>Progress on this table:</span>
-              <span class="font-semibold text-yellow-300"
+              <span
+                class="font-semibold"
+                :class="totalProfit < 0 ? 'text-red-300' : 'text-yellow-300'"
                 >{{ totalProfit }} / {{ tableStore.maxPayout }}</span
               >
             </div>
             <div class="w-full bg-amber-900 rounded-full h-3">
               <div
                 class="bg-yellow-400 h-3 rounded-full transition-all duration-300"
-                :style="{ width: `${Math.min(100, (totalProfit / tableStore.maxPayout) * 100)}%` }"
+                :style="{
+                  width: `${Math.max(0, Math.min(100, (totalProfit / tableStore.maxPayout) * 100))}%`,
+                }"
               ></div>
+            </div>
+
+            <!-- Rounds Complete -->
+            <div
+              v-if="roundStore.tableId && globalStore.tablesProgress[roundStore.tableId]"
+              class="mt-4 space-y-2 text-sm"
+            >
+              <div class="flex justify-between">
+                <span>Rounds Complete:</span>
+                <span class="text-green-300 font-semibold">{{
+                  globalStore.tablesProgress[roundStore.tableId].roundsComplete
+                }}</span>
+              </div>
+              <div
+                v-if="globalStore.tablesProgress[roundStore.tableId].currentPuzzleIdOrName"
+                class="flex justify-between"
+              >
+                <span>Current Puzzle:</span>
+                <span class="text-blue-300 font-semibold text-xs truncate">
+                  {{ globalStore.tablesProgress[roundStore.tableId].currentPuzzleIdOrName }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -82,6 +121,11 @@ const globalStore = useGlobalStore();
 const totalProfit = computed(() => {
   if (!roundStore.tableId) return 0;
   return globalStore.tablesProgress[roundStore.tableId]?.totalProfit ?? 0;
+});
+
+const roundWinnings = computed(() => {
+  if (!roundStore.tableId) return 0;
+  return globalStore.tablesProgress[roundStore.tableId]?.roundWinnings ?? 0;
 });
 
 const isWon = computed(() => tableStore.status === 'won');

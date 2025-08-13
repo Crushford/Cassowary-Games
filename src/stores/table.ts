@@ -207,13 +207,20 @@ export const useTableStore = defineStore('table', {
 
     async startRound(tableId: string) {
       const { useRoundStore } = await import('./round');
+      const { useGlobalStore } = await import('./global');
       const roundStore = useRoundStore();
+      const globalStore = useGlobalStore();
 
       // Resolve next puzzle first
       const puzzle = await this.resolveNextPuzzle(tableId, {
         usedIds: this.usedPuzzleIds,
       });
       this.currentPuzzleIdOrName = puzzle.id;
+
+      // Update puzzle info in global store
+      const table = this.getTable(tableId);
+      const isUsingRegex = table?.puzzleFilter ? true : false;
+      globalStore.updateTablePuzzleInfo(tableId, puzzle.id, isUsingRegex);
 
       // Start the round with puzzle data
       await roundStore.startRound(tableId, puzzle);
@@ -226,6 +233,18 @@ export const useTableStore = defineStore('table', {
         const roundStore = useRoundStore();
         roundStore.autoCashOut('capped');
       } else if (newStatus === 'won' || newStatus === 'busted') {
+        // Record win/loss in global store
+        const { useGlobalStore } = await import('./global');
+        const { useRoundStore } = await import('./round');
+        const globalStore = useGlobalStore();
+        const roundStore = useRoundStore();
+
+        if (roundStore.tableId) {
+          if (newStatus === 'won') {
+            globalStore.recordTableWin(roundStore.tableId);
+          }
+        }
+
         // Show round complete modal
         this.showRoundComplete = true;
       }

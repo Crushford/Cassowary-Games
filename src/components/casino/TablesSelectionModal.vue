@@ -64,6 +64,11 @@
               <div class="flex justify-between mb-1">
                 <span>Progress:</span>
                 <span
+                  :class="
+                    globalStore.tablesProgress[table.id].totalProfit < 0
+                      ? 'text-red-300'
+                      : 'text-yellow-300'
+                  "
                   >{{ globalStore.tablesProgress[table.id].totalProfit }} /
                   {{ table.maxPayout }}</span
                 >
@@ -72,9 +77,34 @@
                 <div
                   class="bg-yellow-400 h-1 rounded-full transition-all duration-300"
                   :style="{
-                    width: `${Math.min(100, (globalStore.tablesProgress[table.id].totalProfit / table.maxPayout) * 100)}%`,
+                    width: `${Math.max(0, Math.min(100, (globalStore.tablesProgress[table.id].totalProfit / table.maxPayout) * 100))}%`,
                   }"
                 ></div>
+              </div>
+
+              <!-- Rounds Complete -->
+              <div class="mt-2 space-y-1">
+                <div class="flex justify-between">
+                  <span>Rounds Complete:</span>
+                  <span class="text-green-300 font-semibold">{{
+                    globalStore.tablesProgress[table.id].roundsComplete
+                  }}</span>
+                </div>
+                <div
+                  v-if="globalStore.tablesProgress[table.id].currentPuzzleIdOrName"
+                  class="flex justify-between"
+                >
+                  <span>Current Puzzle:</span>
+                  <span class="text-blue-300 font-semibold text-xs truncate">
+                    {{ globalStore.tablesProgress[table.id].currentPuzzleIdOrName }}
+                  </span>
+                </div>
+                <div
+                  v-if="globalStore.tablesProgress[table.id].isUsingRegex"
+                  class="text-center text-purple-300 text-xs"
+                >
+                  Using Regex Filter
+                </div>
               </div>
             </div>
           </div>
