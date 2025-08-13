@@ -1741,6 +1741,286 @@
       "queens": "..Q.Q......Q.Q..",
       "name": "level-1",
       "createdAt": "2025-08-03T15:12:59.973Z"
+    },
+    {
+      "id": "pz-0042-0",
+      "layout": "RRRRBBRGRRRGRYRR",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-2",
+      "createdAt": "2025-08-13T20:27:30.694Z"
+    },
+    {
+      "id": "pz-0042-0V",
+      "layout": "RYRRRRRGBBRGRRRR",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-2",
+      "createdAt": "2025-08-13T20:27:30.694Z"
+    },
+    {
+      "id": "pz-0042-0H",
+      "layout": "RRRRGRBBGRRRRRYR",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-2",
+      "createdAt": "2025-08-13T20:27:30.695Z"
+    },
+    {
+      "id": "pz-0042-0VH",
+      "layout": "RRYRGRRRGRBBRRRR",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-2",
+      "createdAt": "2025-08-13T20:27:30.695Z"
+    },
+    {
+      "id": "pz-0042-90",
+      "layout": "RRBRYRBRRRRRRGGR",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-2",
+      "createdAt": "2025-08-13T20:27:30.695Z"
+    },
+    {
+      "id": "pz-0042-90V",
+      "layout": "RGGRRRRRYRBRRRBR",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-2",
+      "createdAt": "2025-08-13T20:27:30.695Z"
+    },
+    {
+      "id": "pz-0042-90H",
+      "layout": "RBRRRBRYRRRRRGGR",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-2",
+      "createdAt": "2025-08-13T20:27:30.695Z"
+    },
+    {
+      "id": "pz-0042-90VH",
+      "layout": "RGGRRRRRRBRYRBRR",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-2",
+      "createdAt": "2025-08-13T20:27:30.695Z"
+    },
+    {
+      "id": "pz-0043-0",
+      "layout": "BRRRBRRGRRRGYYRR",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-3",
+      "createdAt": "2025-08-13T20:28:35.367Z"
+    },
+    {
+      "id": "pz-0043-0V",
+      "layout": "YYRRRRRGBRRGBRRR",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-3",
+      "createdAt": "2025-08-13T20:28:35.367Z"
+    },
+    {
+      "id": "pz-0043-0H",
+      "layout": "RRRBGRRBGRRRRRYY",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-3",
+      "createdAt": "2025-08-13T20:28:35.368Z"
+    },
+    {
+      "id": "pz-0043-0VH",
+      "layout": "RRYYGRRRGRRBRRRB",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-3",
+      "createdAt": "2025-08-13T20:28:35.368Z"
+    },
+    {
+      "id": "pz-0043-90",
+      "layout": "YRBBYRRRRRRRRGGR",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-3",
+      "createdAt": "2025-08-13T20:28:35.368Z"
+    },
+    {
+      "id": "pz-0043-90V",
+      "layout": "RGGRRRRRYRRRYRBB",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-3",
+      "createdAt": "2025-08-13T20:28:35.368Z"
+    },
+    {
+      "id": "pz-0043-90H",
+      "layout": "BBRYRRRYRRRRRGGR",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-3",
+      "createdAt": "2025-08-13T20:28:35.368Z"
+    },
+    {
+      "id": "pz-0043-90VH",
+      "layout": "RGGRRRRRRRRYBBRY",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-3",
+      "createdAt": "2025-08-13T20:28:35.368Z"
+    },
+    {
+      "id": "pz-0044-0",
+      "layout": "RRRBGGRBGRRBRRYY",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-4",
+      "createdAt": "2025-08-13T20:29:38.480Z"
+    },
+    {
+      "id": "pz-0044-0V",
+      "layout": "RRYYGRRBGGRBRRRB",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-4",
+      "createdAt": "2025-08-13T20:29:38.480Z"
+    },
+    {
+      "id": "pz-0044-0H",
+      "layout": "BRRRBRGGBRRGYYRR",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-4",
+      "createdAt": "2025-08-13T20:29:38.480Z"
+    },
+    {
+      "id": "pz-0044-0VH",
+      "layout": "YYRRBRRGBRGGBRRR",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-4",
+      "createdAt": "2025-08-13T20:29:38.480Z"
+    },
+    {
+      "id": "pz-0044-90",
+      "layout": "RGGRRRGRYRRRYBBB",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-4",
+      "createdAt": "2025-08-13T20:29:38.480Z"
+    },
+    {
+      "id": "pz-0044-90V",
+      "layout": "YBBBYRRRRRGRRGGR",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-4",
+      "createdAt": "2025-08-13T20:29:38.480Z"
+    },
+    {
+      "id": "pz-0044-90H",
+      "layout": "RGGRRGRRRRRYBBBY",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-4",
+      "createdAt": "2025-08-13T20:29:38.480Z"
+    },
+    {
+      "id": "pz-0044-90VH",
+      "layout": "BBBYRRRYRGRRRGGR",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-4",
+      "createdAt": "2025-08-13T20:29:38.480Z"
+    },
+    {
+      "id": "pz-0045-0",
+      "layout": "RRRBRRRBGGRBGYYY",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-5",
+      "createdAt": "2025-08-13T20:30:41.344Z"
+    },
+    {
+      "id": "pz-0045-0V",
+      "layout": "GYYYGGRBRRRBRRRB",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-5",
+      "createdAt": "2025-08-13T20:30:41.344Z"
+    },
+    {
+      "id": "pz-0045-0H",
+      "layout": "BRRRBRRRBRGGYYYG",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-5",
+      "createdAt": "2025-08-13T20:30:41.344Z"
+    },
+    {
+      "id": "pz-0045-0VH",
+      "layout": "YYYGBRGGBRRRBRRR",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-5",
+      "createdAt": "2025-08-13T20:30:41.344Z"
+    },
+    {
+      "id": "pz-0045-90",
+      "layout": "GGRRYGRRYRRRYBBB",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-5",
+      "createdAt": "2025-08-13T20:30:41.344Z"
+    },
+    {
+      "id": "pz-0045-90V",
+      "layout": "YBBBYRRRYGRRGGRR",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-5",
+      "createdAt": "2025-08-13T20:30:41.344Z"
+    },
+    {
+      "id": "pz-0045-90H",
+      "layout": "RRGGRRGYRRRYBBBY",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-5",
+      "createdAt": "2025-08-13T20:30:41.344Z"
+    },
+    {
+      "id": "pz-0045-90VH",
+      "layout": "BBBYRRRYRRGYRRGG",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-5",
+      "createdAt": "2025-08-13T20:30:41.345Z"
+    },
+    {
+      "id": "pz-0046-0",
+      "layout": "RRRRRRBBGRYBGGYY",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-6",
+      "createdAt": "2025-08-13T20:33:22.482Z"
+    },
+    {
+      "id": "pz-0046-0V",
+      "layout": "GGYYGRYBRRBBRRRR",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-6",
+      "createdAt": "2025-08-13T20:33:22.482Z"
+    },
+    {
+      "id": "pz-0046-0H",
+      "layout": "RRRRBBRRBYRGYYGG",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-6",
+      "createdAt": "2025-08-13T20:33:22.482Z"
+    },
+    {
+      "id": "pz-0046-0VH",
+      "layout": "YYGGBYRGBBRRRRRR",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-6",
+      "createdAt": "2025-08-13T20:33:22.482Z"
+    },
+    {
+      "id": "pz-0046-90",
+      "layout": "GGRRGRRRYYBRYBBR",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-6",
+      "createdAt": "2025-08-13T20:33:22.482Z"
+    },
+    {
+      "id": "pz-0046-90V",
+      "layout": "YBBRYYBRGRRRGGRR",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-6",
+      "createdAt": "2025-08-13T20:33:22.482Z"
+    },
+    {
+      "id": "pz-0046-90H",
+      "layout": "RRGGRRRGRBYYRBBY",
+      "queens": "..Q.Q......Q.Q..",
+      "name": "level-6",
+      "createdAt": "2025-08-13T20:33:22.482Z"
+    },
+    {
+      "id": "pz-0046-90VH",
+      "layout": "RBBYRBYYRRRGRRGG",
+      "queens": ".Q.....QQ.....Q.",
+      "name": "level-6",
+      "createdAt": "2025-08-13T20:33:22.482Z"
     }
   ],
   "8x8": [
