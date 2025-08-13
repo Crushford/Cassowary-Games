@@ -46,6 +46,7 @@ interface Summary {
   expandColorGridFailures: number;
 }
 
+// Constants
 const SIZE = 8; // grid width/height
 const RETRIES = 30000; // max generation attempts
 const BATCH = 1; // number of puzzles to generate
@@ -141,7 +142,7 @@ function validateSolvableAndFull(state: GeneratorState): void {
     throw new Error('Board is not fully solvable');
   }
 
-  const { queenCountValid, colorGroupsValid } = validatePuzzleState(state.grid, SIZE);
+  const { queenCountValid, colorGroupsValid } = validatePuzzleState(state.grid, state.grid.length);
   const allColored = state.grid.every((r) => r.every((c) => !!c.groupColor));
   if (!queenCountValid || !colorGroupsValid || !allColored) {
     throw new Error('Board is not fully solvable and colored');
@@ -204,9 +205,9 @@ function validatePuzzleState(
 }
 
 // === Helpers ===
-function initializeGrid(): GeneratorState {
-  const grid = createEmptyGrid(SIZE);
-  const autoTestMarks: MarkType[][] = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+function initializeGrid(size: number = SIZE): GeneratorState {
+  const grid = createEmptyGrid(size);
+  const autoTestMarks: MarkType[][] = Array.from({ length: size }, () => Array(size).fill(null));
   return { grid, autoTestMarks };
 }
 
@@ -216,7 +217,8 @@ function isValidMoveWithMarks(
   marks: MarkType[][],
   grid: GridSquare[][]
 ): boolean {
-  for (let i = 0; i < SIZE; i++) {
+  const size = grid.length;
+  for (let i = 0; i < size; i++) {
     if (marks[row][i] === 'queen' || marks[i][col] === 'queen') {
       return false;
     }
@@ -230,9 +232,9 @@ function isValidMoveWithMarks(
   for (const pos of diagonalPositions) {
     if (
       pos.r >= 0 &&
-      pos.r < SIZE &&
+      pos.r < size &&
       pos.c >= 0 &&
-      pos.c < SIZE &&
+      pos.c < size &&
       marks[pos.r][pos.c] === 'queen'
     ) {
       return false;
@@ -240,8 +242,8 @@ function isValidMoveWithMarks(
   }
   const square = grid[row][col];
   if (square.groupColor) {
-    for (let r = 0; r < SIZE; r++) {
-      for (let c = 0; c < SIZE; c++) {
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
         if (marks[r][c] === 'queen' && grid[r][c].groupColor === square.groupColor) {
           return false;
         }
@@ -251,30 +253,30 @@ function isValidMoveWithMarks(
   return true;
 }
 
-function placeAllQueens(state: GeneratorState): void {
+function placeAllQueens(state: GeneratorState, size: number): void {
   function countQueensInMarks(marks: MarkType[][]): number {
     let count = 0;
-    forEveryCell(SIZE, (row, col) => {
+    forEveryCell(size, (row, col) => {
       if (marks[row][col] === 'queen') count++;
     });
     return count;
   }
   function clearTempMarks(marks: MarkType[][]): void {
-    forEveryCell(SIZE, (row, col) => {
+    forEveryCell(size, (row, col) => {
       marks[row][col] = null;
     });
   }
-  forEveryCell(SIZE, (row, col) => {
+  forEveryCell(size, (row, col) => {
     state.grid[row][col].isSolutionQueen = false;
   });
-  const tempQueenMarks: MarkType[][] = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+  const tempQueenMarks: MarkType[][] = Array.from({ length: size }, () => Array(size).fill(null));
   let attempts = 0;
   const maxAttempts = 100;
   let consecutiveFailures = 0;
   const maxConsecutiveFailures = 5;
-  while (countQueensInMarks(tempQueenMarks) < SIZE && attempts < maxAttempts) {
+  while (countQueensInMarks(tempQueenMarks) < size && attempts < maxAttempts) {
     attempts++;
-    const success = placeRandomQueen(tempQueenMarks, state.grid);
+    const success = placeRandomQueen(tempQueenMarks, state.grid, size);
     if (!success) {
       consecutiveFailures++;
       if (consecutiveFailures >= maxConsecutiveFailures) {
@@ -286,26 +288,32 @@ function placeAllQueens(state: GeneratorState): void {
     }
   }
   const finalQueenCount = countQueensInMarks(tempQueenMarks);
-  if (finalQueenCount === SIZE) {
-    forEveryCell(SIZE, (row, col) => {
+  if (finalQueenCount === size) {
+    forEveryCell(size, (row, col) => {
       if (tempQueenMarks[row][col] === 'queen') {
         state.grid[row][col].isSolutionQueen = true;
       }
     });
+  } else {
+    throw new Error(`Failed to place all ${size} queens after ${maxAttempts} attempts`);
   }
 }
 
-function placeRandomQueen(tempQueenMarks: MarkType[][], grid: GridSquare[][]): boolean {
+function placeRandomQueen(
+  tempQueenMarks: MarkType[][],
+  grid: GridSquare[][],
+  size: number
+): boolean {
   const maxAttempts = 1000;
   let attempts = 0;
   function getValidMoves(preferKnight: boolean): Pos[] {
     const moves: Pos[] = [];
     const knightMoves: Pos[] = [];
     let lastQueen: Pos | null = null;
-    forEveryCell(SIZE, (r, c) => {
+    forEveryCell(size, (r, c) => {
       if (tempQueenMarks[r][c] === 'queen') lastQueen = { row: r, col: c };
     });
-    forEveryCell(SIZE, (row, col) => {
+    forEveryCell(size, (row, col) => {
       if (
         tempQueenMarks[row][col] === null &&
         isValidMoveWithMarks(row, col, tempQueenMarks, grid)
@@ -326,7 +334,7 @@ function placeRandomQueen(tempQueenMarks: MarkType[][], grid: GridSquare[][]): b
     return marks.map((row) => [...row]);
   }
   function backtrack(queensPlaced: number): boolean {
-    if (queensPlaced === SIZE) return true;
+    if (queensPlaced === size) return true;
     if (++attempts > maxAttempts) return false;
     const moves = getValidMoves(true);
     if (moves.length === 0) return false;
@@ -338,13 +346,13 @@ function placeRandomQueen(tempQueenMarks: MarkType[][], grid: GridSquare[][]): b
       const prevMarks = cloneMarks(tempQueenMarks);
       tempQueenMarks[row][col] = 'queen';
       if (backtrack(queensPlaced + 1)) return true;
-      forEveryCell(SIZE, (r, c) => {
+      forEveryCell(size, (r, c) => {
         tempQueenMarks[r][c] = prevMarks[r][c];
       });
     }
     return false;
   }
-  forEveryCell(SIZE, (row, col) => {
+  forEveryCell(size, (row, col) => {
     tempQueenMarks[row][col] = null;
   });
   let success = backtrack(0);
@@ -352,16 +360,17 @@ function placeRandomQueen(tempQueenMarks: MarkType[][], grid: GridSquare[][]): b
 }
 
 function assignInitialColorsToState(state: GeneratorState): void {
+  const size = state.grid.length;
   const queenPositions: Pos[] = [];
-  forEveryCell(SIZE, (row, col) => {
+  forEveryCell(size, (row, col) => {
     if (state.grid[row][col].isSolutionQueen) {
       queenPositions.push({ row, col });
     }
   });
 
   // Reset all colors
-  for (let r = 0; r < SIZE; r++) {
-    for (let c = 0; c < SIZE; c++) {
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
       state.grid[r][c].groupColor = undefined;
     }
   }
@@ -453,6 +462,7 @@ function expandColorGridSafely(state: GeneratorState): boolean {
 
 // === Auto-test solver loop and helpers ===
 function placeQueen(state: GeneratorState, row: number, col: number): void {
+  const size = state.grid.length;
   // Validate that this is actually a solution queen
   if (!state.grid[row][col].isSolutionQueen) {
     debugger;
@@ -464,8 +474,8 @@ function placeQueen(state: GeneratorState, row: number, col: number): void {
   state.autoTestMarks[row][col] = 'queen';
 
   // Update blocked moves (flag squares that are no longer valid)
-  for (let r = 0; r < SIZE; r++) {
-    for (let c = 0; c < SIZE; c++) {
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
       if (state.autoTestMarks[r][c] === null) {
         if (!isValidMoveWithMarks(r, c, state.autoTestMarks, state.grid)) {
           placeFlag(
@@ -521,28 +531,32 @@ function runAllSolverSteps(state: GeneratorState): void {
   }
 }
 function clearAutoTestMarks(state: GeneratorState) {
-  forEveryCell(SIZE, (row, col) => {
+  const size = state.grid.length;
+  forEveryCell(size, (row, col) => {
     state.autoTestMarks[row][col] = null;
   });
   flagSquaresWithoutColorGroups(state);
 }
 function countAutoTestFlags(state: GeneratorState) {
+  const size = state.grid.length;
   let count = 0;
-  forEveryCell(SIZE, (row, col) => {
+  forEveryCell(size, (row, col) => {
     if (state.autoTestMarks[row][col] === 'flag') count++;
   });
   return count;
 }
 function flagSquaresWithoutColorGroups(state: GeneratorState) {
-  forEveryCell(SIZE, (row, col) => {
+  const size = state.grid.length;
+  forEveryCell(size, (row, col) => {
     if (!state.grid[row][col].groupColor && state.autoTestMarks[row][col] === null) {
       placeFlag(state, row, col, 'flagSquaresWithoutColorGroups', 'square has no color group');
     }
   });
 }
 function placeLastFreeQueens(state: GeneratorState) {
+  const size = state.grid.length;
   const colorGroups = new Map();
-  forEveryCell(SIZE, (row, col) => {
+  forEveryCell(size, (row, col) => {
     const color = state.grid[row][col].groupColor;
     if (color) {
       if (!colorGroups.has(color)) colorGroups.set(color, []);
@@ -559,9 +573,9 @@ function placeLastFreeQueens(state: GeneratorState) {
       summary.queensDug++;
     }
   }
-  for (let row = 0; row < SIZE; row++) {
+  for (let row = 0; row < size; row++) {
     let unflagged: number[] = [];
-    for (let col = 0; col < SIZE; col++) {
+    for (let col = 0; col < size; col++) {
       if (state.autoTestMarks[row][col] !== 'flag') unflagged.push(col);
     }
     if (unflagged.length === 1) {
@@ -569,9 +583,9 @@ function placeLastFreeQueens(state: GeneratorState) {
       summary.queensDug++;
     }
   }
-  for (let col = 0; col < SIZE; col++) {
+  for (let col = 0; col < size; col++) {
     let unflagged: number[] = [];
-    for (let row = 0; row < SIZE; row++) {
+    for (let row = 0; row < size; row++) {
       if (state.autoTestMarks[row][col] !== 'flag') unflagged.push(row);
     }
     if (unflagged.length === 1) {
@@ -581,18 +595,19 @@ function placeLastFreeQueens(state: GeneratorState) {
   }
 }
 function flagBlockingSquares(state: GeneratorState) {
-  forEveryCell(SIZE, (row, col) => {
+  const size = state.grid.length;
+  forEveryCell(size, (row, col) => {
     if (state.autoTestMarks[row][col] !== null) return;
     const simulatedMarks = state.autoTestMarks.map((r) => [...r]);
     simulatedMarks[row][col] = 'queen';
-    forEveryCell(SIZE, (r, c) => {
+    forEveryCell(size, (r, c) => {
       if (simulatedMarks[r][c] !== null) return;
       if (!isValidMoveWithMarks(r, c, simulatedMarks, state.grid)) {
         simulatedMarks[r][c] = 'flag';
       }
     });
     const isLineFullyBlocked = (getterFn: (index: number) => MarkType[]) => {
-      for (let i = 0; i < SIZE; i++) {
+      for (let i = 0; i < size; i++) {
         const line = getterFn(i);
         if (line.every((mark) => mark === 'flag')) return true;
       }
@@ -601,7 +616,7 @@ function flagBlockingSquares(state: GeneratorState) {
     const rowFullyBlocked = isLineFullyBlocked((r) => simulatedMarks[r]);
     const colFullyBlocked = isLineFullyBlocked((c) => simulatedMarks.map((r) => r[c]));
     const colorGroups = new Map();
-    forEveryCell(SIZE, (r, c) => {
+    forEveryCell(size, (r, c) => {
       const color = state.grid[r][c].groupColor;
       if (color) {
         if (!colorGroups.has(color)) colorGroups.set(color, []);
@@ -636,9 +651,10 @@ function eliminateConstrainedColumns(state: GeneratorState) {
   eliminateConstrainedLines(state, true);
 }
 function eliminateConstrainedLines(state: GeneratorState, isColumn: boolean) {
+  const size = state.grid.length;
   // step 1: map each color to the set of rows or columns (depending on axis) where it has unmarked squares
   const colorToAxisMap = new Map();
-  forEveryCell(SIZE, (row, col) => {
+  forEveryCell(size, (row, col) => {
     const color = state.grid[row][col].groupColor;
     const mark = state.autoTestMarks[row][col];
     if (mark === null && color) {
@@ -667,7 +683,7 @@ function eliminateConstrainedLines(state: GeneratorState, isColumn: boolean) {
     if (axisValues !== allowedColors.size) continue;
 
     for (const primaryIndex of axisValues) {
-      for (let secondaryIndex = 0; secondaryIndex < SIZE; secondaryIndex++) {
+      for (let secondaryIndex = 0; secondaryIndex < size; secondaryIndex++) {
         const row = isColumn ? secondaryIndex : primaryIndex;
         const col = isColumn ? primaryIndex : secondaryIndex;
         const squareColor = state.grid[row][col].groupColor;
@@ -707,16 +723,17 @@ function countColoredSquares(grid: GridSquare[][]): number {
   return count;
 }
 
-function isValidPosition(row: number, col: number): boolean {
-  return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
+function isValidPosition(row: number, col: number, size: number): boolean {
+  return row >= 0 && row < size && col >= 0 && col < size;
 }
 
 function eliminateConstrainedLinesForExpansion(
   grid: GridSquare[][],
   isColumn: boolean
 ): Array<{ row: number; col: number; responsibleColors: string[] }> {
+  const size = grid.length;
   const colorToAxisMap = new Map();
-  forEveryCell(SIZE, (row, col) => {
+  forEveryCell(size, (row, col) => {
     const color = grid[row][col].groupColor;
     if (color) {
       const coord = isColumn ? col : row;
@@ -737,7 +754,7 @@ function eliminateConstrainedLinesForExpansion(
     if (allowedColors.size < 2) continue;
     const axisValues = axisKey.split(',').map(Number);
     for (const primaryIndex of axisValues) {
-      for (let secondaryIndex = 0; secondaryIndex < SIZE; secondaryIndex++) {
+      for (let secondaryIndex = 0; secondaryIndex < size; secondaryIndex++) {
         const row = isColumn ? secondaryIndex : primaryIndex;
         const col = isColumn ? primaryIndex : secondaryIndex;
         const squareColor = grid[row][col].groupColor;
@@ -757,13 +774,14 @@ function eliminateConstrainedLinesForExpansion(
 }
 
 function printDebugState(state: GeneratorState, errorMsg?: string) {
+  const size = state.grid.length;
   console.error('--- Debug State ---');
   if (errorMsg) console.error('Error:', errorMsg);
   // Print grid colors
   console.error('Grid colors:');
-  for (let row = 0; row < SIZE; row++) {
+  for (let row = 0; row < size; row++) {
     let line = '';
-    for (let col = 0; col < SIZE; col++) {
+    for (let col = 0; col < size; col++) {
       const cell = state.grid[row][col];
       const colorKey = cell.groupColor || 'undefined';
       line += COLOR_SYMBOLS[colorKey as ColorName | 'undefined'] + ' ';
@@ -772,9 +790,9 @@ function printDebugState(state: GeneratorState, errorMsg?: string) {
   }
   // Print queen positions
   console.error('Queen positions:');
-  for (let row = 0; row < SIZE; row++) {
+  for (let row = 0; row < size; row++) {
     let line = '';
-    for (let col = 0; col < SIZE; col++) {
+    for (let col = 0; col < size; col++) {
       line += (state.grid[row][col].isSolutionQueen ? 'Q' : '.') + ' ';
     }
     console.error(line);
@@ -803,10 +821,11 @@ function expandIntoBlockedSquares(state: GeneratorState): void {
   // Track failed expansion attempts to avoid repeating them
   const failedAttempts = new Set<string>(); // Format: "row,col,color"
 
+  const size = state.grid.length;
   // Keep expanding eligible blocked squares until no more can be expanded or board is full
   let keepExpanding = true;
   let expansionCount = 0;
-  const maxExpansions = SIZE * SIZE; // Prevent infinite loops
+  const maxExpansions = size * size; // Prevent infinite loops
 
   while (keepExpanding && expansionCount < maxExpansions) {
     keepExpanding = false;
@@ -819,7 +838,7 @@ function expandIntoBlockedSquares(state: GeneratorState): void {
     ];
 
     // If board is full, stop
-    const totalSquares = SIZE * SIZE;
+    const totalSquares = size * size;
     const coloredSquares = countColoredSquares(state.grid);
     if (coloredSquares === totalSquares) {
       console.log('Board is now full after expansions.');
@@ -840,7 +859,7 @@ function expandIntoBlockedSquares(state: GeneratorState): void {
       for (const { dr, dc } of directions) {
         const nRow = row + dr;
         const nCol = col + dc;
-        if (!isValidPosition(nRow, nCol)) continue;
+        if (!isValidPosition(nRow, nCol, size)) continue;
 
         const neighborColor = state.grid[nRow][nCol].groupColor;
         if (!neighborColor || responsibleColors.includes(neighborColor)) continue;
@@ -882,7 +901,7 @@ function expandIntoBlockedSquares(state: GeneratorState): void {
   runAllSolverSteps(state);
 
   // Validate that Step 5 actually filled the board
-  const totalSquares = SIZE * SIZE;
+  const totalSquares = state.grid.length * state.grid.length;
   const coloredSquares = countColoredSquares(state.grid);
   if (coloredSquares < totalSquares) {
     console.log(
@@ -894,19 +913,19 @@ function expandIntoBlockedSquares(state: GeneratorState): void {
   }
 }
 
-function experimentCreateValidBoard() {
-  const state = initializeGrid();
+function experimentCreateValidBoard(size: number = SIZE, maxRetries: number = RETRIES) {
+  const state = initializeGrid(size);
   const diagnosticsPerAttempt: { iterations: number; flags: number; marks: string }[] = [];
-  for (let attempt = 1; attempt <= RETRIES; attempt++) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
     summary.attempts++;
     try {
       // Step 1: Place all queens
-      placeAllQueens(state);
-      validateQueenCount(state.grid, SIZE);
+      placeAllQueens(state, size);
+      validateQueenCount(state.grid, size);
       console.log('Step 1 complete');
       // Step 2: Assign initial colors to queens
       assignInitialColorsToState(state);
-      validateUniqueQueenColors(state.grid, SIZE);
+      validateUniqueQueenColors(state.grid, size);
       console.log('Step 2 complete');
       if (!isSolvable(state)) {
         debugger;
@@ -959,7 +978,7 @@ function experimentCreateValidBoard() {
       if (!isFull) {
         summary.notFullCount++;
       } else {
-        const { queenCountValid, colorGroupsValid } = validatePuzzleState(state.grid, SIZE);
+        const { queenCountValid, colorGroupsValid } = validatePuzzleState(state.grid, size);
         if (!(queenCountValid && colorGroupsValid)) {
           summary.unsolvableCount++;
         }
@@ -973,8 +992,8 @@ function experimentCreateValidBoard() {
       if (errorMessage.includes('Group size validation failed')) {
         console.log(`Attempt ${attempt}: ${errorMessage} - retrying...`);
         // Reset the grid for the next attempt
-        state.grid = createEmptyGrid(SIZE);
-        state.autoTestMarks = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+        state.grid = createEmptyGrid(size);
+        state.autoTestMarks = Array.from({ length: size }, () => Array(size).fill(null));
         continue; // Skip to next attempt
       }
 
@@ -982,8 +1001,17 @@ function experimentCreateValidBoard() {
       if (errorMessage.includes('expandColorGridSafely failed')) {
         console.log(`Attempt ${attempt}: ${errorMessage} - retrying...`);
         // Reset the grid for the next attempt
-        state.grid = createEmptyGrid(SIZE);
-        state.autoTestMarks = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+        state.grid = createEmptyGrid(size);
+        state.autoTestMarks = Array.from({ length: size }, () => Array(size).fill(null));
+        continue; // Skip to next attempt
+      }
+
+      // Check if this is a queen placement failure
+      if (errorMessage.includes('Failed to place all') && errorMessage.includes('queens')) {
+        console.log(`Attempt ${attempt}: ${errorMessage} - retrying...`);
+        // Reset the grid for the next attempt
+        state.grid = createEmptyGrid(size);
+        state.autoTestMarks = Array.from({ length: size }, () => Array(size).fill(null));
         continue; // Skip to next attempt
       }
 
@@ -1011,6 +1039,28 @@ function main() {
   const args = process.argv.slice(2);
   const command = args[0];
 
+  // Parse arguments
+  let size = SIZE;
+  let batchSize = BATCH;
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
+    if (arg === '--size' && i + 1 < args.length) {
+      const sizeValue = parseInt(args[i + 1]);
+      if (!isNaN(sizeValue) && sizeValue >= 3 && sizeValue <= 12) {
+        size = sizeValue;
+      }
+      i++; // Skip next argument
+    } else if (command === 'generate' && i === 1) {
+      // The second argument after 'generate' is the batch size
+      const batchValue = parseInt(arg);
+      if (!isNaN(batchValue) && batchValue > 0) {
+        batchSize = batchValue;
+      }
+    }
+  }
+
   if (command === 'list') {
     puzzleDatabase.listPuzzles();
     return;
@@ -1021,19 +1071,46 @@ function main() {
     return;
   }
 
-  if (command === 'export' && args[1]) {
-    puzzleDatabase.exportPuzzle(args[1]);
+  if (command === 'export') {
+    // Find the puzzle ID argument (skip --size and its value)
+    let puzzleId = null;
+    for (let i = 1; i < args.length; i++) {
+      if (args[i] === '--size') {
+        i++; // Skip the size value
+      } else if (args[i] && !args[i].startsWith('-')) {
+        puzzleId = args[i];
+        break;
+      }
+    }
+    if (puzzleId) {
+      puzzleDatabase.exportPuzzle(puzzleId);
+    } else {
+      console.error('Error: export command requires a puzzle ID');
+    }
     return;
   }
 
-  if (command === 'delete' && args[1]) {
-    puzzleDatabase.deletePuzzle(args[1]);
+  if (command === 'delete') {
+    // Find the puzzle ID argument (skip --size and its value)
+    let puzzleId = null;
+    for (let i = 1; i < args.length; i++) {
+      if (args[i] === '--size') {
+        i++; // Skip the size value
+      } else if (args[i] && !args[i].startsWith('-')) {
+        puzzleId = args[i];
+        break;
+      }
+    }
+    if (puzzleId) {
+      puzzleDatabase.deletePuzzle(puzzleId);
+    } else {
+      console.error('Error: delete command requires a puzzle ID');
+    }
     return;
   }
 
   if (command === 'generate') {
-    const batchSize = parseInt(args[1]) || BATCH;
-    console.log(`Generating ${batchSize} new puzzles...`);
+    console.log(`Generating ${batchSize} new puzzles (${size}x${size})...`);
 
     type Result = {
       success: boolean;
@@ -1052,7 +1129,7 @@ function main() {
 
     for (let i = 0; i < batchSize; i++) {
       console.log(`\n--- Generating puzzle ${i + 1}/${batchSize} ---`);
-      const { success, grid, error, diagnostics } = experimentCreateValidBoard();
+      const { success, grid, error, diagnostics } = experimentCreateValidBoard(size);
       results.push({ success, grid, error, diagnostics });
       if (diagnostics) {
         diagnostics.forEach((diag, j) => {
@@ -1094,7 +1171,7 @@ function main() {
 
     // Output summary
     const output = {
-      params: { size: SIZE, retries: RETRIES, batch: batchSize },
+      params: { size, retries: RETRIES, batch: batchSize },
       summary,
       puzzlesGenerated: successfulPuzzles.length,
       puzzlesAdded: successfulPuzzles.length,
@@ -1112,7 +1189,7 @@ function main() {
   }
 
   // Default behavior: generate one puzzle
-  console.log('Generating 1 puzzle (default behavior)...');
+  console.log(`Generating 1 puzzle (${size}x${size}) (default behavior)...`);
   console.log('\nAvailable commands:');
   console.log('  yarn generate                    - Generate 1 puzzle');
   console.log('  yarn generate generate [number]  - Generate multiple puzzles');
@@ -1121,7 +1198,7 @@ function main() {
   console.log('  yarn puzzle-db export <puzzleId> - Export a specific puzzle');
   console.log('  yarn puzzle-db delete <puzzleId> - Delete a puzzle from database');
 
-  const { success, grid, error, diagnostics } = experimentCreateValidBoard();
+  const { success, grid, error, diagnostics } = experimentCreateValidBoard(size);
 
   if (success && grid) {
     const wasAdded = puzzleDatabase.addPuzzle(grid);

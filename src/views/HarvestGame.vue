@@ -2,7 +2,7 @@
   <div
     :class="[
       'w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden',
-      isGameOnly ? 'h-svh' : 'h-dvh',
+      isGameOnly ? 'h-auto' : 'h-dvh',
     ]"
   >
     <!-- Dialogue -->
@@ -23,7 +23,10 @@
     </PlayGrid>
 
     <!-- Tool Selector -->
-    <ToolSelector class="basis-[10%] flex-none border-t border-gray-700" />
+    <ToolSelector
+      :is-game-only="isGameOnly"
+      class="basis-[10%] flex-none border-t border-gray-700"
+    />
 
     <!-- Modals -->
     <HarvestRulesModal v-if="!isGameOnly" :store="harvestStore" />
@@ -69,6 +72,11 @@ onMounted(() => {
 
   // Load user configuration first
   harvestStore.loadUserConfiguration();
+
+  // In game-only mode, enable auto-flagging by default
+  if (props.isGameOnly) {
+    harvestStore.uiState.autoFlagging = true;
+  }
 
   // If puzzle data is provided, load it instead of finding a random puzzle
   if (props.puzzleData) {
