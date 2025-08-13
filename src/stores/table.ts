@@ -3,11 +3,11 @@ import { defineStore } from 'pinia';
 export interface TableConfig {
   id: string;
   name: string;
-  minimumBuyIn: number; // Minimum balance requirement to play at this table
-  maxPayout: number;
+  minimumBuyIn: number; // Minimum balance requirement to play at this table (calculated automatically)
+  maxPayout: number; // Maximum payout (calculated automatically, equals minimumBuyIn)
   payoutMultiplier: number; // Multiplier for base payouts from global config
   boardSize: string;
-  puzzles: string[];
+  puzzles?: string[];
   puzzleFilter?: string;
 }
 
@@ -74,8 +74,33 @@ export const useTableStore = defineStore('table', {
 
         const tablesArray: TableConfig[] = await response.json();
 
+        // Calculate buy-in amounts and max payouts based on previous table
+        let previousTableTotal = 0; // For the first table, start with 0
+        const processedTables = tablesArray.map((table, index) => {
+          if (index === 0) {
+            // First table keeps its original minimumBuyIn, maxPayout = minimumBuyIn
+            const firstTableBuyIn = table.minimumBuyIn ?? 0;
+            const updatedTable = {
+              ...table,
+              minimumBuyIn: firstTableBuyIn,
+              maxPayout: firstTableBuyIn,
+            };
+            previousTableTotal = firstTableBuyIn + firstTableBuyIn; // minimumBuyIn + maxPayout
+            return updatedTable;
+          } else {
+            // Subsequent tables: minimumBuyIn = previous table's total, maxPayout = minimumBuyIn
+            const updatedTable = {
+              ...table,
+              minimumBuyIn: previousTableTotal,
+              maxPayout: previousTableTotal,
+            };
+            previousTableTotal = previousTableTotal + previousTableTotal; // minimumBuyIn + maxPayout
+            return updatedTable;
+          }
+        });
+
         // Normalize into tables object
-        this.tables = tablesArray.reduce(
+        this.tables = processedTables.reduce(
           (acc, table) => {
             acc[table.id] = table;
             return acc;
