@@ -73,6 +73,11 @@ onMounted(() => {
   // Load user configuration first
   harvestStore.loadUserConfiguration();
 
+  // In game-only mode, enable auto-flagging by default
+  if (props.isGameOnly) {
+    harvestStore.uiState.autoFlagging = true;
+  }
+
   // If puzzle data is provided, load it instead of finding a random puzzle
   if (props.puzzleData) {
     harvestStore.parsePuzzleData(props.puzzleData);
