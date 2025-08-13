@@ -81,7 +81,7 @@
               @click="async () => await tableStore.goToTables()"
               class="flex-1 bg-gradient-to-r from-amber-600 to-amber-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-amber-500 hover:to-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
-              Cash Out and Go Back to Tables
+              Back to Tables
             </button>
 
             <button
