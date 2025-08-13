@@ -58,7 +58,7 @@
               <div class="flex justify-between">
                 <span>Rounds Complete:</span>
                 <span class="text-green-300 font-semibold">{{
-                  globalStore.tablesProgress[roundStore.tableId].roundsComplete
+                  globalStore.totalRoundsComplete
                 }}</span>
               </div>
               <div

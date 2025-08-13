@@ -228,9 +228,8 @@ export const useTableStore = defineStore('table', {
         throw new Error(`Table ${tableId} not found`);
       }
 
-      // Check if table is accessible (has enough chips OR has been unlocked before)
-      const isUnlocked = globalStore.unlockedTables.has(tableId);
-      if (globalStore.player.totalChips < table.minimumBuyIn && !isUnlocked) {
+      // Check if table is accessible (has enough chips OR is in progress)
+      if (!globalStore.isTableAccessible(tableId, table.minimumBuyIn, table.maxPayout)) {
         throw new Error(
           `Insufficient chips. Need at least ${table.minimumBuyIn}, have ${globalStore.player.totalChips}`
         );

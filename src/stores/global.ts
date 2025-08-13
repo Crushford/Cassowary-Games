@@ -31,7 +31,7 @@ interface GlobalState {
   config: Config;
   ui: UI;
   tablesProgress: Record<string, TableProgress>;
-  unlockedTables: Set<string>;
+  totalRoundsComplete: number;
 }
 
 export const useGlobalStore = defineStore('global', {
@@ -52,7 +52,7 @@ export const useGlobalStore = defineStore('global', {
       showRules: false,
     },
     tablesProgress: {},
-    unlockedTables: new Set(),
+    totalRoundsComplete: 0,
   }),
 
   actions: {
@@ -126,6 +126,7 @@ export const useGlobalStore = defineStore('global', {
         };
       }
       this.tablesProgress[tableId].roundsComplete++;
+      this.totalRoundsComplete++;
       this.persist();
     },
 
@@ -150,12 +151,27 @@ export const useGlobalStore = defineStore('global', {
       const { useTableStore } = await import('./table');
       const tableStore = useTableStore();
       await tableStore.sitAtTable(tableId, this);
-      this.unlockedTables.add(tableId);
       this.persist();
     },
 
-    isTableAccessible(tableId: string, minimumBuyIn: number): boolean {
-      return this.player.totalChips >= minimumBuyIn || this.unlockedTables.has(tableId);
+    isTableAccessible(tableId: string, minimumBuyIn: number, maxPayout?: number): boolean {
+      // Check if table is completed (reached max payout)
+      const tableProgress = this.tablesProgress[tableId];
+      if (tableProgress && maxPayout && tableProgress.totalProfit >= maxPayout) {
+        return false;
+      }
+
+      // Check if player has enough chips
+      if (this.player.totalChips >= minimumBuyIn) {
+        return true;
+      }
+
+      // Check if table is in progress (has currentPuzzleIdOrName)
+      if (tableProgress && tableProgress.currentPuzzleIdOrName !== null) {
+        return true;
+      }
+
+      return false;
     },
 
     applyConfigPatch(patch: Partial<Config>) {
@@ -165,12 +181,7 @@ export const useGlobalStore = defineStore('global', {
 
     persist() {
       this.updatedAt = new Date().toISOString();
-      // Convert Set to array for JSON serialization
-      const stateToPersist = {
-        ...this.$state,
-        unlockedTables: Array.from(this.unlockedTables),
-      };
-      localStorage.setItem('cw.global', JSON.stringify(stateToPersist));
+      localStorage.setItem('cw.global', JSON.stringify(this.$state));
     },
 
     rehydrate() {
@@ -200,11 +211,19 @@ export const useGlobalStore = defineStore('global', {
               }
             }
 
-            // Handle unlockedTables migration
-            if (data.unlockedTables && Array.isArray(data.unlockedTables)) {
-              data.unlockedTables = new Set(data.unlockedTables);
-            } else if (!data.unlockedTables) {
-              data.unlockedTables = new Set();
+            // Ensure totalRoundsComplete exists for existing data
+            if (data.totalRoundsComplete === undefined) {
+              // Calculate total rounds from existing table data
+              let calculatedTotal = 0;
+              if (data.tablesProgress) {
+                for (const tableId in data.tablesProgress) {
+                  const progress = data.tablesProgress[tableId];
+                  if (progress && typeof progress.roundsComplete === 'number') {
+                    calculatedTotal += progress.roundsComplete;
+                  }
+                }
+              }
+              data.totalRoundsComplete = calculatedTotal;
             }
 
             this.$patch(data);
@@ -219,14 +238,8 @@ export const useGlobalStore = defineStore('global', {
     },
 
     async restart() {
-      // Save unlocked tables before reset
-      const unlockedTables = new Set(this.unlockedTables);
-
       // Completely reset the global state to initial values
       this.$reset();
-
-      // Restore unlocked tables - they should persist forever
-      this.unlockedTables = unlockedTables;
 
       // Clear table context if we're at a table
       const { useRoundStore } = await import('./round');
