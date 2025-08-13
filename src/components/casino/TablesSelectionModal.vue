@@ -30,9 +30,6 @@
           <div class="text-center">
             <div class="flex items-center justify-center gap-2 mb-2">
               <h3 class="text-xl font-bold text-yellow-100">{{ table.name }}</h3>
-              <div v-if="globalStore.unlockedTables.has(table.id)" class="text-green-400 text-sm">
-                ✓ Unlocked
-              </div>
             </div>
             <div class="space-y-2 text-yellow-200 text-sm">
               <div class="flex justify-between">
@@ -110,21 +107,6 @@
                   <span class="text-green-300 font-semibold">{{
                     globalStore.tablesProgress[table.id].roundsComplete
                   }}</span>
-                </div>
-                <div
-                  v-if="globalStore.tablesProgress[table.id].currentPuzzleIdOrName"
-                  class="flex justify-between"
-                >
-                  <span>Current Puzzle:</span>
-                  <span class="text-blue-300 font-semibold text-xs truncate">
-                    {{ globalStore.tablesProgress[table.id].currentPuzzleIdOrName }}
-                  </span>
-                </div>
-                <div
-                  v-if="globalStore.tablesProgress[table.id].isUsingRegex"
-                  class="text-center text-purple-300 text-xs"
-                >
-                  Using Regex Filter
                 </div>
               </div>
             </div>
