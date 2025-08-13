@@ -109,30 +109,34 @@ export const useTableStore = defineStore('table', {
       }
       const puzzlesData: Record<string, any[]> = await response.json();
 
-      // First, try to use puzzles from the curated list
-      if (table.puzzles && table.puzzles.length > 0) {
-        for (const puzzleIdOrName of table.puzzles) {
-          // Look for exact match by id or name
-          for (const [size, puzzles] of Object.entries(puzzlesData)) {
-            if (size === table.boardSize) {
-              const puzzle = puzzles.find(
-                (p: any) => p.id === puzzleIdOrName || p.name === puzzleIdOrName
-              );
-              if (puzzle && !history.usedIds.has(puzzle.id)) {
-                return {
-                  id: puzzle.id,
-                  name: puzzle.name,
-                  layout: puzzle.layout,
-                  queens: puzzle.queens,
-                  size: size,
-                };
-              }
+      // First, try to use puzzles from the curated list based on puzzleQueueIndex
+      if (
+        table.puzzles &&
+        table.puzzles.length > 0 &&
+        this.puzzleQueueIndex < table.puzzles.length
+      ) {
+        const puzzleIdOrName = table.puzzles[this.puzzleQueueIndex];
+
+        // Look for exact match by id or name
+        for (const [size, puzzles] of Object.entries(puzzlesData)) {
+          if (size === table.boardSize) {
+            const puzzle = puzzles.find(
+              (p: any) => p.id === puzzleIdOrName || p.name === puzzleIdOrName
+            );
+            if (puzzle && !history.usedIds.has(puzzle.id)) {
+              return {
+                id: puzzle.id,
+                name: puzzle.name,
+                layout: puzzle.layout,
+                queens: puzzle.queens,
+                size: size,
+              };
             }
           }
         }
       }
 
-      // If no curated puzzles available, build filtered pool
+      // If no curated puzzles available or we've exhausted the list, build filtered pool
       const filteredPool: PuzzleRecord[] = [];
       const sizePuzzles = puzzlesData[table.boardSize] || [];
 
@@ -245,18 +249,26 @@ export const useTableStore = defineStore('table', {
       roundStore.tableId = null;
     },
 
-    async handlePlayAgain() {
+    async handleNextRound() {
       const { useRoundStore } = await import('./round');
-      const { useGlobalStore } = await import('./global');
       const roundStore = useRoundStore();
-      const globalStore = useGlobalStore();
 
       const tableId = roundStore.tableId;
       if (tableId) {
         try {
-          await globalStore.sitAtTable(tableId);
+          // Hide the round complete modal
+          this.showRoundComplete = false;
+
+          // Reset status to playing
+          this.status = 'playing';
+
+          // Advance to next puzzle in the queue
+          this.puzzleQueueIndex++;
+
+          // Start a new round with the same table
+          await this.startRound(tableId);
         } catch (error) {
-          console.error('Failed to sit at table:', error);
+          console.error('Failed to start next round:', error);
         }
       }
     },

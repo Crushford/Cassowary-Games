@@ -47,7 +47,7 @@
 
             <button
               v-if="canPlayAgain"
-              @click="tableStore.handlePlayAgain"
+              @click="tableStore.handleNextRound"
               class="flex-1 bg-[#144b1a] border border-[#2d8b3a] text-green-300 py-3 px-6 rounded-lg font-semibold hover:bg-[#1a5a22] hover:border-[#3a9b4a] transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               Next Round
