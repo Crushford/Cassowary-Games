@@ -20,6 +20,9 @@
     <!-- Round complete modal -->
     <RoundCompleteModal v-if="tableStore.showRoundComplete" />
 
+    <!-- Table limit reached modal -->
+    <TableLimitReachedModal v-if="tableStore.showTableLimitReached" />
+
     <!-- Cap reached modal -->
     <CapReachedModal v-if="tableStore.status === 'capped'" />
 
@@ -48,6 +51,7 @@ const CasinoSquare = defineAsyncComponent(() => import('./CasinoSquare.vue'));
 const CapReachedModal = defineAsyncComponent(() => import('./CapReachedModal.vue'));
 const TablesSelectionModal = defineAsyncComponent(() => import('./TablesSelectionModal.vue'));
 const RoundCompleteModal = defineAsyncComponent(() => import('./RoundCompleteModal.vue'));
+const TableLimitReachedModal = defineAsyncComponent(() => import('./TableLimitReachedModal.vue'));
 
 const router = useRouter();
 const globalStore = useGlobalStore();
