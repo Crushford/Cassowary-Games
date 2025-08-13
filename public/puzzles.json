@@ -2263,6 +2263,102 @@
       "layout": "AAAAOPPPAAOOOPPPAATOPPYYAATIIYYYAATIIIYGAIIIKGGGAAIIKKGGAAIIIKKK",
       "queens": ".....Q.....Q..........Q...Q............Q.Q..........Q...Q.......",
       "createdAt": "2025-07-24T21:39:32.535Z"
+    },
+    {
+      "id": "pz-0047-0",
+      "layout": "BBBBBBBBIIIIBBBBIIITBBBBTTTTOOBKTTTTOPKKTGTTPPKYGGTTTPYYGGGGTTTT",
+      "queens": "..Q.....Q..........Q.........Q.........Q....Q.........Q..Q......",
+      "createdAt": "2025-08-13T20:36:17.284Z"
+    },
+    {
+      "id": "pz-0047-0V",
+      "layout": "GGGGTTTTGGTTTPYYTGTTPPKYTTTTOPKKTTTTOOBKIIITBBBBIIIIBBBBBBBBBBBB",
+      "queens": ".Q............Q.....Q..........Q.....Q.....Q....Q.........Q.....",
+      "createdAt": "2025-08-13T20:36:17.285Z"
+    },
+    {
+      "id": "pz-0047-0H",
+      "layout": "BBBBBBBBBBBBIIIIBBBBTIIIKBOOTTTTKKPOTTTTYKPPTTGTYYPTTTGGTTTTGGGG",
+      "queens": ".....Q.........Q....Q.....Q.....Q..........Q.....Q............Q.",
+      "createdAt": "2025-08-13T20:36:17.285Z"
+    },
+    {
+      "id": "pz-0047-0VH",
+      "layout": "TTTTGGGGYYPTTTGGYKPPTTGTKKPOTTTTKBOOTTTTBBBBTIIIBBBBIIIIBBBBBBBB",
+      "queens": "......Q..Q.........Q....Q.........Q.........Q..........Q.....Q..",
+      "createdAt": "2025-08-13T20:36:17.285Z"
+    },
+    {
+      "id": "pz-0047-90",
+      "layout": "GGTTTIIBGGGTTIIBGTTTTIIBGTTTTTIBTTPOOBBBTPPPOBBBTYKKBBBBTYYKKBBB",
+      "queens": "......Q.Q..............Q.....Q....Q.........Q....Q.........Q....",
+      "createdAt": "2025-08-13T20:36:17.285Z"
+    },
+    {
+      "id": "pz-0047-90V",
+      "layout": "TYYKKBBBTYKKBBBBTPPPOBBBTTPOOBBBGTTTTTIBGTTTTIIBGGGTTIIBGGTTTIIB",
+      "queens": "...Q.....Q..........Q.....Q..........Q.........QQ.............Q.",
+      "createdAt": "2025-08-13T20:36:17.285Z"
+    },
+    {
+      "id": "pz-0047-90H",
+      "layout": "BIITTTGGBIITTGGGBIITTTTGBITTTTTGBBBOOPTTBBBOPPPTBBBBKKYTBBBKKYYT",
+      "queens": ".Q.............QQ.........Q..........Q.....Q..........Q.....Q...",
+      "createdAt": "2025-08-13T20:36:17.285Z"
+    },
+    {
+      "id": "pz-0047-90VH",
+      "layout": "BBBKKYYTBBBBKKYTBBBOPPPTBBBOOPTTBITTTTTGBIITTTTGBIITTGGGBIITTTGG",
+      "queens": "....Q.........Q....Q.........Q....Q.....Q..............Q.Q......",
+      "createdAt": "2025-08-13T20:36:17.285Z"
+    },
+    {
+      "id": "pz-0048-0",
+      "layout": "BBBBITTTBBTBIITTTTTTTTTTOOOTTKTTPPOKKKKTGPOKKKTTGPOOYKKKGGOOYYKK",
+      "queens": "...Q.........Q.........Q..Q...........Q..Q..........Q...Q.......",
+      "createdAt": "2025-08-13T20:36:25.124Z"
+    },
+    {
+      "id": "pz-0048-0V",
+      "layout": "GGOOYYKKGPOOYKKKGPOKKKTTPPOKKKKTOOOTTKTTTTTTTTTTBBTBIITTBBBBITTT",
+      "queens": "Q...........Q....Q............Q...Q............Q.....Q.....Q....",
+      "createdAt": "2025-08-13T20:36:25.124Z"
+    },
+    {
+      "id": "pz-0048-0H",
+      "layout": "TTTIBBBBTTIIBTBBTTTTTTTTTTKTTOOOTKKKKOPPTTKKKOPGKKKYOOPGKKYYOOGG",
+      "queens": "....Q.....Q.....Q............Q...Q............Q....Q...........Q",
+      "createdAt": "2025-08-13T20:36:25.124Z"
+    },
+    {
+      "id": "pz-0048-0VH",
+      "layout": "KKYYOOGGKKKYOOPGTTKKKOPGTKKKKOPPTTKTTOOOTTTTTTTTTTIIBTBBTTTIBBBB",
+      "queens": ".......Q...Q..........Q..Q...........Q..Q.........Q.........Q...",
+      "createdAt": "2025-08-13T20:36:25.124Z"
+    },
+    {
+      "id": "pz-0048-90",
+      "layout": "GGGPOTBBGPPPOTBBOOOOOTTBOOKKTTBBYYKKTTIIYKKKKTITKKTKTTTTKKTTTTTT",
+      "queens": "Q.........Q.........Q..........Q.Q............Q....Q.........Q..",
+      "createdAt": "2025-08-13T20:36:25.124Z"
+    },
+    {
+      "id": "pz-0048-90V",
+      "layout": "KKTTTTTTKKTKTTTTYKKKKTITYYKKTTIIOOKKTTBBOOOOOTTBGPPPOTBBGGGPOTBB",
+      "queens": ".....Q.....Q..........Q..Q.............Q....Q.....Q.....Q.......",
+      "createdAt": "2025-08-13T20:36:25.124Z"
+    },
+    {
+      "id": "pz-0048-90H",
+      "layout": "BBTOPGGGBBTOPPPGBTTOOOOOBBTTKKOOIITTKKYYTITKKKKYTTTTKTKKTTTTTTKK",
+      "queens": ".......Q.....Q.....Q....Q.............Q..Q..........Q.....Q.....",
+      "createdAt": "2025-08-13T20:36:25.124Z"
+    },
+    {
+      "id": "pz-0048-90VH",
+      "layout": "TTTTTTKKTTTTKTKKTITKKKKYIITTKKYYBBTTKKOOBTTOOOOOBBTOPPPGBBTOPGGG",
+      "queens": "..Q.........Q....Q............Q.Q..........Q.........Q.........Q",
+      "createdAt": "2025-08-13T20:36:25.124Z"
     }
   ]
 }
