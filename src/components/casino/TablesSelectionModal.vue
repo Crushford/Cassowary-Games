@@ -28,7 +28,12 @@
           class="bg-gradient-to-br from-amber-800 to-amber-700 rounded-lg p-4 shadow-lg border-2 border-amber-600 hover:border-amber-400 transition-all duration-200"
         >
           <div class="text-center">
-            <h3 class="text-xl font-bold text-yellow-100 mb-2">{{ table.name }}</h3>
+            <div class="flex items-center justify-center gap-2 mb-2">
+              <h3 class="text-xl font-bold text-yellow-100">{{ table.name }}</h3>
+              <div v-if="globalStore.unlockedTables.has(table.id)" class="text-green-400 text-sm">
+                ✓ Unlocked
+              </div>
+            </div>
             <div class="space-y-2 text-yellow-200 text-sm">
               <div class="flex justify-between">
                 <span>Min Balance:</span>
@@ -63,19 +68,15 @@
             <div class="mt-4">
               <button
                 @click="playTable(table.id)"
-                :disabled="globalStore.player.totalChips < table.minimumBuyIn"
+                :disabled="!isTableAccessible(table)"
                 class="w-full py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 :class="
-                  globalStore.player.totalChips >= table.minimumBuyIn
+                  isTableAccessible(table)
                     ? 'bg-gradient-to-r from-yellow-500 to-yellow-400 text-amber-900 hover:from-yellow-400 hover:to-yellow-300 shadow-lg hover:shadow-xl'
                     : 'bg-gray-600 text-gray-300'
                 "
               >
-                {{
-                  globalStore.player.totalChips >= table.minimumBuyIn
-                    ? 'Play'
-                    : 'Insufficient Chips'
-                }}
+                {{ getTableButtonText(table) }}
               </button>
             </div>
 
@@ -148,6 +149,21 @@ const getTablePayouts = (table: TableConfig) => {
     honeypot: Math.round(globalStore.config.payoutPerHoneypot * multiplier),
     ant: Math.round(globalStore.config.penaltyPerAnt * multiplier),
   };
+};
+
+const isTableAccessible = (table: TableConfig) => {
+  // Table is accessible if player has enough chips OR if table has been unlocked before
+  return globalStore.isTableAccessible(table.id, table.minimumBuyIn);
+};
+
+const getTableButtonText = (table: TableConfig) => {
+  if (globalStore.player.totalChips >= table.minimumBuyIn) {
+    return 'Play';
+  } else if (globalStore.unlockedTables.has(table.id)) {
+    return 'Need More Chips';
+  } else {
+    return 'Insufficient Chips';
+  }
 };
 
 const playTable = async (tableId: string) => {

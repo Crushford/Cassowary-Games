@@ -81,11 +81,10 @@
               @click="async () => await tableStore.goToTables()"
               class="flex-1 bg-gradient-to-r from-amber-600 to-amber-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-amber-500 hover:to-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
-              Cash Out and Go Back to Tables
+              Back to Tables
             </button>
 
             <button
-              v-if="canPlayAgain"
               @click="tableStore.handleNextRound"
               class="flex-1 bg-[#144b1a] border border-[#2d8b3a] text-green-300 py-3 px-6 rounded-lg font-semibold hover:bg-[#1a5a22] hover:border-[#3a9b4a] transition-all duration-200 shadow-lg hover:shadow-xl"
             >
@@ -129,12 +128,6 @@ const roundWinnings = computed(() => {
 });
 
 const isWon = computed(() => tableStore.status === 'won');
-const canPlayAgain = computed(() => {
-  if (!roundStore.tableId) return false;
-  const table = tableStore.getTable(roundStore.tableId);
-  if (!table) return false;
-  return globalStore.player.totalChips >= table.minimumBuyIn;
-});
 
 defineOptions({
   name: 'RoundCompleteModal',

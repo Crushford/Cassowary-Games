@@ -31,6 +31,7 @@ interface GlobalState {
   config: Config;
   ui: UI;
   tablesProgress: Record<string, TableProgress>;
+  unlockedTables: Set<string>;
 }
 
 export const useGlobalStore = defineStore('global', {
@@ -51,6 +52,7 @@ export const useGlobalStore = defineStore('global', {
       showRules: false,
     },
     tablesProgress: {},
+    unlockedTables: new Set(),
   }),
 
   actions: {
@@ -148,6 +150,12 @@ export const useGlobalStore = defineStore('global', {
       const { useTableStore } = await import('./table');
       const tableStore = useTableStore();
       await tableStore.sitAtTable(tableId, this);
+      this.unlockedTables.add(tableId);
+      this.persist();
+    },
+
+    isTableAccessible(tableId: string, minimumBuyIn: number): boolean {
+      return this.player.totalChips >= minimumBuyIn || this.unlockedTables.has(tableId);
     },
 
     applyConfigPatch(patch: Partial<Config>) {
@@ -157,7 +165,12 @@ export const useGlobalStore = defineStore('global', {
 
     persist() {
       this.updatedAt = new Date().toISOString();
-      localStorage.setItem('cw.global', JSON.stringify(this.$state));
+      // Convert Set to array for JSON serialization
+      const stateToPersist = {
+        ...this.$state,
+        unlockedTables: Array.from(this.unlockedTables),
+      };
+      localStorage.setItem('cw.global', JSON.stringify(stateToPersist));
     },
 
     rehydrate() {
@@ -186,6 +199,14 @@ export const useGlobalStore = defineStore('global', {
                 }
               }
             }
+
+            // Handle unlockedTables migration
+            if (data.unlockedTables && Array.isArray(data.unlockedTables)) {
+              data.unlockedTables = new Set(data.unlockedTables);
+            } else if (!data.unlockedTables) {
+              data.unlockedTables = new Set();
+            }
+
             this.$patch(data);
           } else {
             // Future schema migrations would go here
@@ -198,8 +219,14 @@ export const useGlobalStore = defineStore('global', {
     },
 
     async restart() {
+      // Save unlocked tables before reset
+      const unlockedTables = new Set(this.unlockedTables);
+
       // Completely reset the global state to initial values
       this.$reset();
+
+      // Restore unlocked tables - they should persist forever
+      this.unlockedTables = unlockedTables;
 
       // Clear table context if we're at a table
       const { useRoundStore } = await import('./round');
