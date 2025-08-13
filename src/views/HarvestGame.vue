@@ -23,7 +23,10 @@
     </PlayGrid>
 
     <!-- Tool Selector -->
-    <ToolSelector class="basis-[10%] flex-none border-t border-gray-700" />
+    <ToolSelector
+      :is-game-only="isGameOnly"
+      class="basis-[10%] flex-none border-t border-gray-700"
+    />
 
     <!-- Modals -->
     <HarvestRulesModal v-if="!isGameOnly" :store="harvestStore" />

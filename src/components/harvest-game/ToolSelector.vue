@@ -108,16 +108,24 @@
     </div>
 
     <!-- Divider -->
-    <div class="mx-3 h-10 border-l border-slate-500"></div>
+    <div v-if="!isGameOnly" class="mx-3 h-10 border-l border-slate-500"></div>
 
     <!-- Size selector -->
-    <BoardSizeDropdown :store="harvestStore" />
+    <BoardSizeDropdown v-if="!isGameOnly" :store="harvestStore" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch, defineAsyncComponent } from 'vue';
 import { useHarvestStore } from '../../stores/harvestStore';
+
+interface Props {
+  isGameOnly?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  isGameOnly: false,
+});
 
 const BoardSizeDropdown = defineAsyncComponent(() => import('../shared/BoardSizeDropdown.vue'));
 

@@ -1,6 +1,6 @@
 <template>
   <Modal :is-visible="isVisible" @close="closeModal">
-    <div class="relative w-full h-full max-w-4xl mx-auto flex items-center justify-center p-6">
+    <div class="relative w-full h-full mx-auto flex items-center justify-center">
       <!-- Close Button -->
       <button
         @click="closeModal"
