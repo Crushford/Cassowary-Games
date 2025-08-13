@@ -2,7 +2,7 @@
   <div
     :class="[
       'w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden',
-      isGameOnly ? 'h-svh' : 'h-dvh',
+      isGameOnly ? 'h-auto' : 'h-dvh',
     ]"
   >
     <!-- Dialogue -->
