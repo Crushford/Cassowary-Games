@@ -35,22 +35,22 @@
           </div>
         </div>
 
-        <div class="flex flex-col sm:flex-row gap-4">
-          <!-- Show Cash Out and Play Again for winners -->
+        <div class="flex gap-4">
+          <!-- Show Cash Out and Next Round for winners -->
           <template v-if="isWon">
             <button
               @click="async () => await tableStore.goToTables()"
               class="flex-1 bg-gradient-to-r from-amber-600 to-amber-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-amber-500 hover:to-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
-              Cash Out
+              Cash Out and Go Back to Tables
             </button>
 
             <button
               v-if="canPlayAgain"
               @click="tableStore.handlePlayAgain"
-              class="flex-1 bg-gradient-to-r from-yellow-500 to-yellow-400 text-amber-900 py-3 px-6 rounded-lg font-semibold hover:from-yellow-400 hover:to-yellow-300 transition-all duration-200 shadow-lg hover:shadow-xl"
+              class="flex-1 bg-[#144b1a] border border-[#2d8b3a] text-green-300 py-3 px-6 rounded-lg font-semibold hover:bg-[#1a5a22] hover:border-[#3a9b4a] transition-all duration-200 shadow-lg hover:shadow-xl"
             >
-              Play Again
+              Next Round
             </button>
           </template>
 
