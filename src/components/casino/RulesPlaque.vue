@@ -3,10 +3,10 @@
     <div
       role="region"
       aria-labelledby="rules-title"
-      class="w-full max-h-full bg-[#0f3b2e] border-[1.5px] border-[#d4af37] rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.35)] p-4 sm:p-4 p-3 transition-all duration-120 ease-out transform scale-100 hover:scale-[1.02] motion-reduce:transition-none motion-reduce:hover:scale-100 overflow-y-auto"
+      class="w-full max-h-full bg-[#0f3b2e] border-[1.5px] border-[#d4af37] rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.35)] px-4 py-2 transition-all duration-120 ease-out transform scale-100 hover:scale-[1.02] motion-reduce:transition-none motion-reduce:hover:scale-100 overflow-y-auto"
     >
       <!-- Title row -->
-      <div class="flex justify-between items-center mb-3">
+      <div class="flex justify-between items-center mb-2">
         <h2
           id="rules-title"
           class="text-[#f2f1ea] text-opacity-90 font-semibold tracking-wider text-shadow-[0_1px_0_rgba(0,0,0,0.35)]"
@@ -24,25 +24,25 @@
       </div>
 
       <!-- Rules list with inline icons -->
-      <div class="space-y-2 mb-3">
-        <div class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)]">
+      <div class="space-y-1 mb-2">
+        <div class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm">
           There is only 1
           <span class="inline-flex items-center mx-1">
-            <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-6 h-6" />
+            <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-5 h-5" />
           </span>
           honeypot per column.
         </div>
-        <div class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)]">
+        <div class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm">
           There is only 1
           <span class="inline-flex items-center mx-1">
-            <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-6 h-6" />
+            <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-5 h-5" />
           </span>
           honeypot per row.
         </div>
-        <div class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)]">
+        <div class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm">
           There is only 1
           <span class="inline-flex items-center mx-1">
-            <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-6 h-6" />
+            <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-5 h-5" />
           </span>
           honeypot per color group.
         </div>
@@ -70,13 +70,39 @@
       <!-- Max payout info -->
       <div
         v-if="tableStore.maxPayout > 0"
-        class="mt-3 pt-3 border-t border-[#d4af37] border-opacity-30"
+        class="mt-2 pt-2 border-t border-[#d4af37] border-opacity-30"
       >
         <div
-          class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-center"
+          class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-center mb-2"
         >
           Max you can win at this table:
           <span class="text-yellow-300 font-semibold">{{ tableStore.maxPayout }}</span>
+        </div>
+
+        <!-- Progress bar -->
+        <div
+          v-if="roundStore.tableId && globalStore.tablesProgress[roundStore.tableId]"
+          class="space-y-1"
+        >
+          <div class="flex justify-between text-xs text-[#f2f1ea] text-opacity-80">
+            <span>Progress:</span>
+            <span
+              class="font-semibold"
+              :class="currentProgress < 0 ? 'text-red-300' : 'text-yellow-300'"
+            >
+              {{ currentProgress }} / {{ tableStore.maxPayout }}
+            </span>
+          </div>
+          <div
+            class="w-full bg-[#0f3b2e] border border-[#d4af37] border-opacity-30 rounded-full h-2"
+          >
+            <div
+              class="bg-yellow-400 h-2 rounded-full transition-all duration-300"
+              :style="{
+                width: `${Math.max(0, Math.min(100, (currentProgress / tableStore.maxPayout) * 100))}%`,
+              }"
+            ></div>
+          </div>
         </div>
       </div>
     </div>
@@ -100,6 +126,11 @@ const tablePayouts = computed(() => {
     honeypot: Math.round(globalStore.config.payoutPerHoneypot * multiplier),
     ant: Math.round(globalStore.config.penaltyPerAnt * multiplier),
   };
+});
+
+const currentProgress = computed(() => {
+  if (!roundStore.tableId) return 0;
+  return globalStore.tablesProgress[roundStore.tableId]?.totalProfit ?? 0;
 });
 
 defineOptions({
