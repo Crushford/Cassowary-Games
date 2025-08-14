@@ -5,7 +5,7 @@
     <!-- Header -->
     <CasinoHUD class="basis-[5%]" />
 
-    <RulesPlaque class="basis-[35%]" />
+    <RulesPlaque class="basis-[30%]" />
 
     <!-- Grid area -->
     <PlayGrid class="w-full aspect-square max-h-[45%]" :store="roundStore" :enable-touch="true">
