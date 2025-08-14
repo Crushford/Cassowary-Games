@@ -171,6 +171,11 @@ export const useGlobalStore = defineStore('global', {
         return true;
       }
 
+      // Check if player has made progress on this table
+      if (tableProgress) {
+        return true;
+      }
+
       return false;
     },
 
