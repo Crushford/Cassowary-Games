@@ -10,6 +10,11 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      name: 'main-game',
+      component: CasinoGame,
+    },
+    {
+      path: '/menu',
       name: 'home',
       component: () => import('../views/Home.vue'),
     },
