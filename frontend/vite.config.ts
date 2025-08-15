@@ -5,8 +5,8 @@ import path from 'path';
 export default defineConfig({
   base: '/',
   build: {
-    outDir: 'public',
-    assetsDir: 'assets',
+    outDir: 'dist',
+    assetsDir: 'public',
     emptyOutDir: true,
   },
   plugins: [vue()],
