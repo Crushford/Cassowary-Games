@@ -7,11 +7,12 @@ stages:
 build:
   stage: build
   script:
+    - cd frontend
     - yarn install --immutable
     - yarn build
   artifacts:
     paths:
-      - public
+      - frontend/dist
 
 pages:
   stage: deploy
@@ -19,6 +20,6 @@ pages:
     - echo 'Pages deployment job'
   artifacts:
     paths:
-      - public
+      - frontend/dist
   only:
     - main
