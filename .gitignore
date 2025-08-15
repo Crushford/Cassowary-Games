@@ -1,0 +1,39 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Yarn 4 state (commit install-state.gz and cache, ignore the rest)
+.yarn/*
+!.yarn/releases
+!.yarn/cache
+!.yarn/install-state.gz
+
+# Build output
+/dist
+
+# TypeScript build info
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+vite.config.d.ts
