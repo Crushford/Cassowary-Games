@@ -69,7 +69,7 @@
                   height: `${gridSize * 60}px`,
                 }"
               >
-                <template v-for="rowIndex in gridSize" :key="`row-${rowIndex}`">
+                <template v-for="rowIndex in gridSize">
                   <div
                     v-for="colIndex in gridSize"
                     :key="`${rowIndex}-${colIndex}`"
