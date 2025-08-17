@@ -24,29 +24,35 @@
       </div>
 
       <!-- Rules list with inline icons -->
-      <div class="space-y-1 mb-2">
-        <div class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm">
+      <ul class="space-y-1 mb-2">
+        <li class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm">
           There is only 1
           <span class="inline-flex items-center mx-1">
             <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-5 h-5" />
           </span>
           honeypot per column.
-        </div>
-        <div class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm">
+        </li>
+        <li class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm">
           There is only 1
           <span class="inline-flex items-center mx-1">
             <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-5 h-5" />
           </span>
           honeypot per row.
-        </div>
-        <div class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm">
+        </li>
+        <li class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm">
           There is only 1
           <span class="inline-flex items-center mx-1">
             <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-5 h-5" />
           </span>
           honeypot per color group.
-        </div>
-      </div>
+        </li>
+        <li class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm">
+          <span class="inline-flex items-center mx-1">
+            <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-5 h-5" />
+          </span>
+          honeypot's never touch diagonally.
+        </li>
+      </ul>
 
       <!-- Payout row -->
       <div class="flex flex-row gap-2 justify-center">
