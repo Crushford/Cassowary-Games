@@ -1,3 +1,5 @@
+import '../src/style.css';
+
 const preview = {
   parameters: {
     docs: {

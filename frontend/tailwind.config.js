@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
+  content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}', './.storybook/**/*.{js,ts}', './src/stories/**/*.{js,ts}'],
   safelist: [
     // Add color groups to safelist to ensure dynamic classes are preserved
     'bg-group-red-700',
