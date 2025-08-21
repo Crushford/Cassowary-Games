@@ -5,13 +5,7 @@ module.exports = {
     node: true,
     es2021: true,
   },
-  extends: [
-    'plugin:vue/vue3-recommended',
-    'eslint:recommended',
-    '@typescript-eslint/recommended',
-    'prettier',
-    'plugin:prettier/recommended',
-  ],
+  extends: ['plugin:vue/vue3-recommended', 'eslint:recommended', '@typescript-eslint/recommended', 'prettier', 'plugin:prettier/recommended', 'plugin:storybook/recommended'],
   parserOptions: {
     ecmaVersion: 2021,
     parser: '@typescript-eslint/parser',
