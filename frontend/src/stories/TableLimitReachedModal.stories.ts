@@ -32,7 +32,13 @@ const createStoryWithPinia = (
     const roundStore = useRoundStore();
 
     globalStore.player.totalChips = initialChips;
-    globalStore.tablesProgress[tableId] = { totalProfit };
+    globalStore.tablesProgress[tableId] = {
+      totalProfit,
+      roundsComplete: 0,
+      currentPuzzleIdOrName: null,
+      isUsingRegex: false,
+      roundWinnings: 0,
+    };
     tableStore.maxPayout = maxPayout;
     tableStore.showTableLimitReached = true;
     roundStore.tableId = tableId;

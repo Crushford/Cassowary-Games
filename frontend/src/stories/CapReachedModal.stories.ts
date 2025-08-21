@@ -16,21 +16,32 @@ export default meta;
 
 type Story = StoryObj<typeof CapReachedModal>;
 
-const createStoryWithPinia = (initialChips: number, tableId: string, maxPayout: number, totalProfit: number) => ({
+const createStoryWithPinia = (
+  initialChips: number,
+  tableId: string,
+  maxPayout: number,
+  totalProfit: number
+) => ({
   components: { CapReachedModal },
   setup() {
     const pinia = createPinia();
     setActivePinia(pinia);
-    
+
     const globalStore = useGlobalStore();
     const tableStore = useTableStore();
     const roundStore = useRoundStore();
-    
+
     globalStore.player.totalChips = initialChips;
-    globalStore.tablesProgress[tableId] = { totalProfit };
+    globalStore.tablesProgress[tableId] = {
+      totalProfit,
+      roundsComplete: 0,
+      currentPuzzleIdOrName: null,
+      isUsingRegex: false,
+      roundWinnings: 0,
+    };
     tableStore.maxPayout = maxPayout;
     roundStore.tableId = tableId;
-    
+
     return {};
   },
   template: '<CapReachedModal />',

@@ -29,7 +29,13 @@ const createStoryWithPinia = (tableId?: string, totalProfit?: number, maxPayout?
     if (tableId) {
       roundStore.tableId = tableId;
       if (totalProfit !== undefined) {
-        globalStore.tablesProgress[tableId] = { totalProfit };
+        globalStore.tablesProgress[tableId] = {
+          totalProfit,
+          roundsComplete: 0,
+          currentPuzzleIdOrName: null,
+          isUsingRegex: false,
+          roundWinnings: 0,
+        };
       }
     }
 

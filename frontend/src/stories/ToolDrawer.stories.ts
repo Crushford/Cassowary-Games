@@ -14,7 +14,7 @@ export default meta;
 
 type Story = StoryObj<typeof ToolDrawer>;
 
-const createStoryWithPinia = (flippingMode?: string, autoFlagging?: boolean) => ({
+const createStoryWithPinia = (flippingMode?: 'auto' | 'flip' | 'flag', autoFlagging?: boolean) => ({
   components: { ToolDrawer },
   setup() {
     const pinia = createPinia();

@@ -17,7 +17,7 @@ export default meta;
 type Story = StoryObj<typeof RoundCompleteModal>;
 
 const createStoryWithPinia = (
-  status: string,
+  status: 'playing' | 'won' | 'busted' | 'capped',
   initialChips: number,
   tableId: string,
   totalProfit: number,
@@ -33,7 +33,13 @@ const createStoryWithPinia = (
     const roundStore = useRoundStore();
 
     globalStore.player.totalChips = initialChips;
-    globalStore.tablesProgress[tableId] = { totalProfit, roundWinnings };
+    globalStore.tablesProgress[tableId] = {
+      totalProfit,
+      roundWinnings,
+      roundsComplete: 0,
+      currentPuzzleIdOrName: null,
+      isUsingRegex: false,
+    };
     globalStore.totalRoundsComplete = 5;
     tableStore.status = status;
     tableStore.showRoundComplete = true;
