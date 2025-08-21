@@ -39,6 +39,10 @@ const router = createRouter({
       component: CasinoGame,
     },
     {
+      path: '/storybook',
+      redirect: '/storybook-static/index.html',
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: '/',
     },
