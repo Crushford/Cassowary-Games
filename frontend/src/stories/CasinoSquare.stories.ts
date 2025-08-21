@@ -25,28 +25,38 @@ const createStoryWithPinia = (rowIndex: number, colIndex: number) => ({
     // Initialize a simple 3x3 grid for testing
     roundStore.grid = [
       [
-        { groupColor: 'red', playerMark: null },
-        { groupColor: 'red', playerMark: 'flag' },
-        { groupColor: 'blue', playerMark: 'queen' },
+        { position: { row: 0, col: 0 }, groupColor: 'red', playerMark: null },
+        { position: { row: 0, col: 1 }, groupColor: 'red', playerMark: 'flag' },
+        { position: { row: 0, col: 2 }, groupColor: 'blue', playerMark: 'queen' },
       ],
       [
-        { groupColor: 'green', playerMark: 'invalid' },
-        { groupColor: 'green', playerMark: null },
-        { groupColor: 'blue', playerMark: null },
+        { position: { row: 1, col: 0 }, groupColor: 'green', playerMark: 'invalid' },
+        { position: { row: 1, col: 1 }, groupColor: 'green', playerMark: null },
+        { position: { row: 1, col: 2 }, groupColor: 'blue', playerMark: null },
       ],
       [
-        { groupColor: 'yellow', playerMark: null },
-        { groupColor: 'yellow', playerMark: null },
-        { groupColor: 'purple', playerMark: null },
+        { position: { row: 2, col: 0 }, groupColor: 'yellow', playerMark: null },
+        { position: { row: 2, col: 1 }, groupColor: 'yellow', playerMark: null },
+        { position: { row: 2, col: 2 }, groupColor: 'purple', playerMark: null },
       ],
     ];
 
     roundStore.gridSize = 3;
 
-    return {};
+    // Ensure the store has the handleSquareClick method
+    if (!roundStore.handleSquareClick) {
+      roundStore.handleSquareClick = async (row: number, col: number) => {
+        console.log(`Square clicked: ${row}, ${col}`);
+      };
+    }
+
+    return { roundStore };
   },
-  template:
-    '<div class="w-20 h-20"><CasinoSquare :row-index="0" :col-index="0" :store="roundStore" /></div>',
+  template: `
+    <div class="w-32 h-32 border border-gray-300 rounded-lg overflow-hidden relative">
+      <CasinoSquare :row-index="0" :col-index="0" :store="roundStore" />
+    </div>
+  `,
 });
 
 export const Default: Story = {
@@ -66,18 +76,38 @@ export const WithFlag: Story = {
 
       roundStore.grid = [
         [
-          { groupColor: 'red', playerMark: 'flag' },
-          { groupColor: 'blue', playerMark: null },
-          { groupColor: 'green', playerMark: null },
+          { position: { row: 0, col: 0 }, groupColor: 'red', playerMark: 'flag' },
+          { position: { row: 0, col: 1 }, groupColor: 'blue', playerMark: null },
+          { position: { row: 0, col: 2 }, groupColor: 'green', playerMark: null },
+        ],
+        [
+          { position: { row: 1, col: 0 }, groupColor: 'yellow', playerMark: null },
+          { position: { row: 1, col: 1 }, groupColor: 'purple', playerMark: null },
+          { position: { row: 1, col: 2 }, groupColor: 'pink', playerMark: null },
+        ],
+        [
+          { position: { row: 2, col: 0 }, groupColor: 'teal', playerMark: null },
+          { position: { row: 2, col: 1 }, groupColor: 'orange', playerMark: null },
+          { position: { row: 2, col: 2 }, groupColor: 'indigo', playerMark: null },
         ],
       ];
 
       roundStore.gridSize = 3;
 
-      return {};
+      // Ensure the store has the handleSquareClick method
+      if (!roundStore.handleSquareClick) {
+        roundStore.handleSquareClick = async (row: number, col: number) => {
+          console.log(`Square clicked: ${row}, ${col}`);
+        };
+      }
+
+      return { roundStore };
     },
-    template:
-      '<div class="w-20 h-20"><CasinoSquare :row-index="0" :col-index="0" :store="roundStore" /></div>',
+    template: `
+      <div class="w-32 h-32 border border-gray-300 rounded-lg overflow-hidden relative">
+        <CasinoSquare :row-index="0" :col-index="0" :store="roundStore" />
+      </div>
+    `,
   }),
 };
 
@@ -93,18 +123,38 @@ export const WithQueen: Story = {
 
       roundStore.grid = [
         [
-          { groupColor: 'red', playerMark: 'queen' },
-          { groupColor: 'blue', playerMark: null },
-          { groupColor: 'green', playerMark: null },
+          { position: { row: 0, col: 0 }, groupColor: 'red', playerMark: 'queen' },
+          { position: { row: 0, col: 1 }, groupColor: 'blue', playerMark: null },
+          { position: { row: 0, col: 2 }, groupColor: 'green', playerMark: null },
+        ],
+        [
+          { position: { row: 1, col: 0 }, groupColor: 'yellow', playerMark: null },
+          { position: { row: 1, col: 1 }, groupColor: 'purple', playerMark: null },
+          { position: { row: 1, col: 2 }, groupColor: 'pink', playerMark: null },
+        ],
+        [
+          { position: { row: 2, col: 0 }, groupColor: 'teal', playerMark: null },
+          { position: { row: 2, col: 1 }, groupColor: 'orange', playerMark: null },
+          { position: { row: 2, col: 2 }, groupColor: 'indigo', playerMark: null },
         ],
       ];
 
       roundStore.gridSize = 3;
 
-      return {};
+      // Ensure the store has the handleSquareClick method
+      if (!roundStore.handleSquareClick) {
+        roundStore.handleSquareClick = async (row: number, col: number) => {
+          console.log(`Square clicked: ${row}, ${col}`);
+        };
+      }
+
+      return { roundStore };
     },
-    template:
-      '<div class="w-20 h-20"><CasinoSquare :row-index="0" :col-index="0" :store="roundStore" /></div>',
+    template: `
+      <div class="w-32 h-32 border border-gray-300 rounded-lg overflow-hidden relative">
+        <CasinoSquare :row-index="0" :col-index="0" :store="roundStore" />
+      </div>
+    `,
   }),
 };
 
@@ -120,17 +170,37 @@ export const WithInvalid: Story = {
 
       roundStore.grid = [
         [
-          { groupColor: 'red', playerMark: 'invalid' },
-          { groupColor: 'blue', playerMark: null },
-          { groupColor: 'green', playerMark: null },
+          { position: { row: 0, col: 0 }, groupColor: 'red', playerMark: 'invalid' },
+          { position: { row: 0, col: 1 }, groupColor: 'blue', playerMark: null },
+          { position: { row: 0, col: 2 }, groupColor: 'green', playerMark: null },
+        ],
+        [
+          { position: { row: 1, col: 0 }, groupColor: 'yellow', playerMark: null },
+          { position: { row: 1, col: 1 }, groupColor: 'purple', playerMark: null },
+          { position: { row: 1, col: 2 }, groupColor: 'pink', playerMark: null },
+        ],
+        [
+          { position: { row: 2, col: 0 }, groupColor: 'teal', playerMark: null },
+          { position: { row: 2, col: 1 }, groupColor: 'orange', playerMark: null },
+          { position: { row: 2, col: 2 }, groupColor: 'indigo', playerMark: null },
         ],
       ];
 
       roundStore.gridSize = 3;
 
-      return {};
+      // Ensure the store has the handleSquareClick method
+      if (!roundStore.handleSquareClick) {
+        roundStore.handleSquareClick = async (row: number, col: number) => {
+          console.log(`Square clicked: ${row}, ${col}`);
+        };
+      }
+
+      return { roundStore };
     },
-    template:
-      '<div class="w-20 h-20"><CasinoSquare :row-index="0" :col-index="0" :store="roundStore" /></div>',
+    template: `
+      <div class="w-32 h-32 border border-gray-300 rounded-lg overflow-hidden relative">
+        <CasinoSquare :row-index="0" :col-index="0" :store="roundStore" />
+      </div>
+    `,
   }),
 };
