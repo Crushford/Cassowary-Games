@@ -15,7 +15,8 @@
     "dev:server": "cd cli-tools && yarn dev:server",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "build:all": "yarn build && yarn build-storybook"
+    "build:all": "yarn build && yarn build-storybook",
+    "chromatic": "npx chromatic --project-token=chpt_21e63b4cf6a8756"
   },
   "dependencies": {
     "pinia": "^3.0.3",
@@ -42,6 +43,7 @@
     "@vitest/coverage-v8": "^3.2.4",
     "@vue/tsconfig": "^0.7.0",
     "autoprefixer": "^10.4.17",
+    "chromatic": "^13.2.0",
     "eslint": "^9.22.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.3",
