@@ -2456,6 +2456,7 @@ __metadata:
     "@vitest/coverage-v8": "npm:^3.2.4"
     "@vue/tsconfig": "npm:^0.7.0"
     autoprefixer: "npm:^10.4.17"
+    chromatic: "npm:^13.2.0"
     eslint: "npm:^9.22.0"
     eslint-config-prettier: "npm:^10.1.1"
     eslint-plugin-prettier: "npm:^5.2.3"
@@ -2559,6 +2560,25 @@ __metadata:
     chromatic: dist/bin.js
     chromatic-cli: dist/bin.js
   checksum: 10c0/c40c977c589fe03d788103281c3e000224049c65932f67293e9825faadccc654931f1b68ec442beb516d87449d00420d73e3984103b49faca42ead1c12867932
+  languageName: node
+  linkType: hard
+
+"chromatic@npm:^13.2.0":
+  version: 13.2.0
+  resolution: "chromatic@npm:13.2.0"
+  peerDependencies:
+    "@chromatic-com/cypress": ^0.*.* || ^1.0.0
+    "@chromatic-com/playwright": ^0.*.* || ^1.0.0
+  peerDependenciesMeta:
+    "@chromatic-com/cypress":
+      optional: true
+    "@chromatic-com/playwright":
+      optional: true
+  bin:
+    chroma: dist/bin.js
+    chromatic: dist/bin.js
+    chromatic-cli: dist/bin.js
+  checksum: 10c0/0f3419b45c648746ce4bb332a8c00548a41d0981a83c44f259fccced83245109448f1f713dd0379af4f386f0e614b11a52be5c0693ec71a99edc8aaed477c5bc
   languageName: node
   linkType: hard
 
