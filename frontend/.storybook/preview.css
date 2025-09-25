@@ -1,0 +1,12 @@
+/* Storybook-only overrides: re-enable selection and default touch behavior */
+html,
+body {
+  /* Restore default touch behavior in Storybook */
+  touch-action: auto !important;
+
+  /* Allow text selection in Storybook */
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+}
