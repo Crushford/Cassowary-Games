@@ -18,14 +18,18 @@
         class="absolute inset-0 w-full h-full object-cover"
         alt=""
       />
-      <!-- Coin emoji overlay for honeypots that earned coins -->
-      <div
-        v-if="earnedCoin && isHoneypot"
-        class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"
-      >
-        <span class="text-4xl">🪙</span>
-      </div>
     </div>
+
+    <!-- Popup for score display -->
+    <Transition name="popup">
+      <div
+        v-if="showPopup"
+        class="absolute -top-12 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
+        :class="popupClasses"
+      >
+        <span class="text-3xl font-bold">{{ popupValue }}</span>
+      </div>
+    </Transition>
   </button>
 </template>
 
@@ -70,6 +74,21 @@ const isHoneypot = computed(() => {
 
 const earnedCoin = computed(() => {
   return props.store.earnedCoin(props.rowIndex, props.colIndex);
+});
+
+const showPopup = computed(() => {
+  return props.store.isShowingPopup(props.rowIndex, props.colIndex);
+});
+
+const popupValue = computed(() => {
+  return props.store.getPopupValue(props.rowIndex, props.colIndex);
+});
+
+const popupClasses = computed(() => {
+  const value = popupValue.value;
+  if (value === null) return '';
+  // Red for 0 (ant), green for positive values (honeypot)
+  return value === 0 ? 'text-red-500' : 'text-green-400';
 });
 
 // Watch for flip state changes to trigger animation
@@ -166,6 +185,38 @@ defineOptions({
   }
   100% {
     transform: rotateY(0deg);
+  }
+}
+
+/* Popup animation */
+.popup-enter-active {
+  transition: all 0.3s ease-out;
+  animation: popupFloat 1s ease-out;
+}
+
+.popup-leave-active {
+  transition: all 0.3s ease-in;
+}
+
+.popup-enter-from {
+  opacity: 0;
+  transform: translateX(-50%) translateY(0);
+}
+
+.popup-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-20px);
+}
+
+@keyframes popupFloat {
+  0% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-10px);
+  }
+  100% {
+    transform: translateX(-50%) translateY(-20px);
   }
 }
 </style>

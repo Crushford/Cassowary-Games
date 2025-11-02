@@ -45,6 +45,8 @@ interface KenoState {
   waitingForNextTurn: boolean; // Whether waiting for user to click "Next Turn" button
   showMaxReachedToast: boolean; // Whether to show the max selections reached toast
   shouldShake: boolean; // Whether to trigger screen shake animation
+  activePopups: Map<string, number>; // Maps "row,col" to popup value (0 for ant, payout for honeypot)
+  isFlippingCards: boolean; // Whether cards are currently being flipped
 }
 
 // Calculate fair payout for k matches out of g selections
@@ -71,6 +73,8 @@ export const useKenoStore = defineStore('keno', {
     waitingForNextTurn: false,
     showMaxReachedToast: false,
     shouldShake: false,
+    activePopups: new Map(),
+    isFlippingCards: false,
   }),
 
   getters: {
@@ -105,13 +109,18 @@ export const useKenoStore = defineStore('keno', {
       return payouts[1] || 0; // Show payout for 1 match
     },
     canSelectMore: (state) => {
-      // Can select up to 5 squares, but not if already flipped
-      if (state.waitingForNextTurn || state.gameOver) return false;
+      // Can select up to 5 squares, but not if already flipped or cards are being flipped
+      if (state.waitingForNextTurn || state.gameOver || state.isFlippingCards) return false;
       return state.selectedSquares.size < 5;
     },
     canEndTurn: (state) => {
-      // Can end turn if at least 1 square is selected
-      return state.selectedSquares.size >= 1 && !state.gameOver && !state.waitingForNextTurn;
+      // Can end turn if at least 1 square is selected and cards are not being flipped
+      return (
+        state.selectedSquares.size >= 1 &&
+        !state.gameOver &&
+        !state.waitingForNextTurn &&
+        !state.isFlippingCards
+      );
     },
     oddsRowsForCurrentSelection(
       state
@@ -119,6 +128,14 @@ export const useKenoStore = defineStore('keno', {
       const g = state.selectedSquares.size;
       if (g === 0) return [];
       return buildOddsRowsInteger(g);
+    },
+    isShowingPopup: (state) => (row: number, col: number) => {
+      const key = `${row},${col}`;
+      return state.activePopups.has(key);
+    },
+    getPopupValue: (state) => (row: number, col: number) => {
+      const key = `${row},${col}`;
+      return state.activePopups.get(key) ?? null;
     },
   },
 
@@ -201,6 +218,8 @@ export const useKenoStore = defineStore('keno', {
       this.waitingForNextTurn = false;
       this.showMaxReachedToast = false;
       this.shouldShake = false;
+      this.activePopups.clear();
+      this.isFlippingCards = false;
       // Note: coins persist across rounds
 
       console.log('Parsed puzzle:', {
@@ -280,38 +299,68 @@ export const useKenoStore = defineStore('keno', {
       }, 3000);
     },
 
-    endTurn() {
+    async endTurn() {
       if (this.selectedSquares.size === 0) return;
+      if (this.isFlippingCards) return; // Prevent multiple calls
 
+      this.isFlippingCards = true;
       const g = this.selectedSquares.size;
+      const payouts = fairPayoutsTo1Integer(g);
       let matchesFound = 0;
 
-      // Flip all selected squares and count matches
-      for (const key of this.selectedSquares) {
+      // Convert selected squares to array for sequential processing
+      const squaresToFlip = Array.from(this.selectedSquares);
+
+      // Clear any existing popups
+      this.activePopups.clear();
+
+      // Flip each square one at a time with 0.5s delay
+      for (let i = 0; i < squaresToFlip.length; i++) {
+        const key = squaresToFlip[i];
         const [row, col] = key.split(',').map(Number);
 
-        // Flip the square if not already flipped
-        if (!this.flippedSquares.has(key)) {
-          this.flippedSquares.add(key);
+        // Skip if already flipped
+        if (this.flippedSquares.has(key)) {
+          continue;
+        }
 
-          // Count matches (honeypots found)
-          if (this.grid[row][col].isSolutionQueen) {
-            matchesFound++;
-            // Track this square as earning coins (for coin emoji display)
-            this.coinsEarnedSquares.add(key);
-          }
+        // Flip the square
+        this.flippedSquares.add(key);
+
+        // Check if it's a honeypot
+        const isHoneypot = this.grid[row][col].isSolutionQueen;
+        let popupValue = 0;
+
+        if (isHoneypot) {
+          matchesFound++;
+          // Calculate incremental payout: payout for k matches minus payout for k-1 matches
+          const payoutForK = payouts[matchesFound] || 0;
+          const payoutForKMinus1 = matchesFound > 1 ? payouts[matchesFound - 1] || 0 : 0;
+          popupValue = payoutForK - payoutForKMinus1;
+
+          this.coinsEarnedSquares.add(key);
+          this.coins += popupValue;
+        }
+
+        // Show popup
+        this.activePopups.set(key, popupValue);
+
+        // Hide popup after animation (1 second)
+        setTimeout(() => {
+          this.activePopups.delete(key);
+        }, 1000);
+
+        // Wait 0.5 seconds before flipping next card (except for the last one)
+        if (i < squaresToFlip.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
       }
 
-      // Integer, floored fair payout; k=0 => 0
-      const payouts = fairPayoutsTo1Integer(g);
-      const fairPayout = payouts[matchesFound] || 0;
-      this.coins += fairPayout;
-
-      // Clear selections after ending turn
+      // Clear selections after all cards are flipped
       this.selectedSquares.clear();
       // Clear toast notification
       this.showMaxReachedToast = false;
+      this.isFlippingCards = false;
 
       // Move to next turn
       this.currentTurn++;
@@ -363,6 +412,8 @@ export const useKenoStore = defineStore('keno', {
       this.waitingForNextTurn = false;
       this.showMaxReachedToast = false;
       this.shouldShake = false;
+      this.activePopups.clear();
+      this.isFlippingCards = false;
       // Note: coins persist across resets
     },
   },
