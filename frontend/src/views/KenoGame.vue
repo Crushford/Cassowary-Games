@@ -4,31 +4,11 @@
     :class="{ shake: kenoStore.shouldShake }"
   >
     <!-- Game Info Display -->
-    <div class="flex-none p-4 text-center space-y-2">
-      <div class="flex justify-center items-center gap-6">
-        <div class="text-2xl font-bold">
-          <span class="text-gray-300">Turn: </span>
-          <span class="text-green-400">{{ kenoStore.currentTurn }}</span>
-          <span class="text-gray-500"> / {{ kenoStore.maxTurns }}</span>
-        </div>
-        <div class="text-2xl font-bold">
-          <span class="text-gray-300">Coins: </span>
-          <span class="text-yellow-400">🪙 {{ kenoStore.coins }}</span>
-        </div>
-      </div>
-      <div v-if="kenoStore.selectedCount > 0" class="text-lg">
-        <span class="text-gray-300">Selected: </span>
-        <span class="text-green-400 font-bold">{{ kenoStore.selectedCount }} / 5</span>
-        <span class="text-gray-300"> • </span>
-        <span class="text-yellow-400 font-bold">Fair payout (to-1) shown in table below</span>
-      </div>
-      <div v-else-if="!kenoStore.waitingForNextTurn" class="text-lg text-yellow-400">
-        Select squares to begin (1-5 squares)
-      </div>
-      <div v-if="kenoStore.gameOver" class="text-lg text-yellow-400">
+    <div class="flex-none p-4">
+      <KenoHeader class="mb-3" />
+      <div v-if="kenoStore.gameOver" class="text-sm text-yellow-400 text-center mt-2">
         Game Over - All cards revealed!
       </div>
-      <PayoutTable class="mt-3" />
     </div>
 
     <!-- PlayGrid - Flex to fill available space with max-width constraint -->
@@ -49,15 +29,6 @@
           @click="handleEndTurn"
         >
           End Turn
-        </button>
-      </div>
-      <!-- Next Turn Button -->
-      <div v-if="kenoStore.waitingForNextTurn && !kenoStore.gameOver" class="flex justify-center">
-        <button
-          class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-lg transition-colors duration-200 w-full max-w-xs"
-          @click="handleStartNextTurn"
-        >
-          Next Turn
         </button>
       </div>
       <KenoControls @show-rules="showRules = true" @show-payout-tables="showPayoutTables = true" />
@@ -90,7 +61,7 @@ const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGri
 const KenoSquare = defineAsyncComponent(() => import('../components/keno/KenoSquare.vue'));
 const KenoControls = defineAsyncComponent(() => import('../components/keno/KenoControls.vue'));
 const KenoRulesModal = defineAsyncComponent(() => import('../components/keno/KenoRulesModal.vue'));
-const PayoutTable = defineAsyncComponent(() => import('../components/keno/PayoutTable.vue'));
+const KenoHeader = defineAsyncComponent(() => import('../components/keno/KenoHeader.vue'));
 const PayoutTablesModal = defineAsyncComponent(
   () => import('../components/keno/PayoutTablesModal.vue')
 );
@@ -101,10 +72,6 @@ const showPayoutTables = ref(false);
 
 function handleEndTurn() {
   kenoStore.endTurn();
-}
-
-function handleStartNextTurn() {
-  kenoStore.startNextTurn();
 }
 
 onMounted(async () => {

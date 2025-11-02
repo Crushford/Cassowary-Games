@@ -42,7 +42,6 @@ interface KenoState {
   maxTurns: number;
   gameOver: boolean;
   coins: number;
-  waitingForNextTurn: boolean; // Whether waiting for user to click "Next Turn" button
   showMaxReachedToast: boolean; // Whether to show the max selections reached toast
   shouldShake: boolean; // Whether to trigger screen shake animation
   activePopups: Map<string, number>; // Maps "row,col" to popup value (0 for ant, payout for honeypot)
@@ -70,7 +69,6 @@ export const useKenoStore = defineStore('keno', {
     maxTurns: 5,
     gameOver: false,
     coins: 0,
-    waitingForNextTurn: false,
     showMaxReachedToast: false,
     shouldShake: false,
     activePopups: new Map(),
@@ -110,17 +108,12 @@ export const useKenoStore = defineStore('keno', {
     },
     canSelectMore: (state) => {
       // Can select up to 5 squares, but not if already flipped or cards are being flipped
-      if (state.waitingForNextTurn || state.gameOver || state.isFlippingCards) return false;
+      if (state.gameOver || state.isFlippingCards) return false;
       return state.selectedSquares.size < 5;
     },
     canEndTurn: (state) => {
       // Can end turn if at least 1 square is selected and cards are not being flipped
-      return (
-        state.selectedSquares.size >= 1 &&
-        !state.gameOver &&
-        !state.waitingForNextTurn &&
-        !state.isFlippingCards
-      );
+      return state.selectedSquares.size >= 1 && !state.gameOver && !state.isFlippingCards;
     },
     oddsRowsForCurrentSelection(
       state
@@ -215,7 +208,6 @@ export const useKenoStore = defineStore('keno', {
       // Reset turns
       this.currentTurn = 1;
       this.gameOver = false;
-      this.waitingForNextTurn = false;
       this.showMaxReachedToast = false;
       this.shouldShake = false;
       this.activePopups.clear();
@@ -265,8 +257,8 @@ export const useKenoStore = defineStore('keno', {
         return;
       }
 
-      // Don't allow selection if waiting for next turn or game over
-      if (this.waitingForNextTurn || this.gameOver) {
+      // Don't allow selection if game over or cards are being flipped
+      if (this.gameOver || this.isFlippingCards) {
         return;
       }
 
@@ -362,21 +354,14 @@ export const useKenoStore = defineStore('keno', {
       this.showMaxReachedToast = false;
       this.isFlippingCards = false;
 
-      // Move to next turn
+      // Move to next turn automatically
       this.currentTurn++;
 
       // If all turns are complete, flip all remaining cards
       if (this.currentTurn > this.maxTurns) {
         this.flipAllRemainingCards();
-      } else {
-        // Wait for user to click "Next Turn" before allowing new selections
-        this.waitingForNextTurn = true;
       }
-    },
-
-    startNextTurn() {
-      // Called when user clicks "Next Turn" button
-      this.waitingForNextTurn = false;
+      // Otherwise, automatically proceed to next turn (no waiting needed)
     },
 
     flipSquare(row: number, col: number) {
@@ -409,7 +394,6 @@ export const useKenoStore = defineStore('keno', {
       this.coinsEarnedSquares.clear();
       this.currentTurn = 1;
       this.gameOver = false;
-      this.waitingForNextTurn = false;
       this.showMaxReachedToast = false;
       this.shouldShake = false;
       this.activePopups.clear();

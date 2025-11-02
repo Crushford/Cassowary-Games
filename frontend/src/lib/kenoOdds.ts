@@ -72,3 +72,12 @@ export function buildOddsRowsInteger(g: number, Ntot = N, Wwin = W) {
     }))
     .filter((row) => row.k > 0); // Remove k=0 row
 }
+
+// Build exactly 5 integer payouts (for payout chips)
+export function buildIntegerPayoutRowOfFive(g: number, Ntot = N, Wwin = W): number[] {
+  const payouts = fairPayoutsTo1Integer(g, Ntot, Wwin);
+  const row = new Array(5).fill(0);
+  const maxK = Math.min(5, payouts.length - 1);
+  for (let k = 1; k <= maxK; k++) row[k - 1] = payouts[k] ?? 0;
+  return row;
+}
