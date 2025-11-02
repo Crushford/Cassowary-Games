@@ -1,9 +1,9 @@
 <template>
   <button
-    class="w-full h-full aspect-square border border-black bg-gray-800 hover:bg-gray-700 transition-colors duration-150 cursor-pointer flex items-center justify-center relative"
+    class="w-full h-full aspect-square border border-black transition-colors duration-150 cursor-pointer flex items-center justify-center relative"
     :class="buttonClasses"
     @click="handleClick"
-    :disabled="isFlipped || canFlip === false"
+    :disabled="isFlipped || gameOver"
   >
     <!-- Number display (before flip) -->
     <div v-if="!isFlipped" class="w-full h-full flex items-center justify-center relative">
@@ -18,6 +18,13 @@
         class="absolute inset-0 w-full h-full object-cover"
         alt=""
       />
+      <!-- Coin emoji overlay for honeypots that earned coins -->
+      <div
+        v-if="earnedCoin && isHoneypot"
+        class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"
+      >
+        <span class="text-4xl">🪙</span>
+      </div>
     </div>
   </button>
 </template>
@@ -49,8 +56,20 @@ const isFlipped = computed(() => {
   return props.store.isFlipped(props.rowIndex, props.colIndex);
 });
 
-const canFlip = computed(() => {
-  return !props.store.gameOver && props.store.turnsRemaining > 0;
+const gameOver = computed(() => {
+  return props.store.gameOver;
+});
+
+const isSelected = computed(() => {
+  return props.store.isSelected(props.rowIndex, props.colIndex);
+});
+
+const isHoneypot = computed(() => {
+  return gridCell.value.isSolutionQueen;
+});
+
+const earnedCoin = computed(() => {
+  return props.store.earnedCoin(props.rowIndex, props.colIndex);
 });
 
 // Watch for flip state changes to trigger animation
@@ -93,16 +112,31 @@ const cardImageSrc = computed(() => {
 
 // Computed property for button classes
 const buttonClasses = computed(() => {
-  // Disable hover when flipped or game over
-  if (isFlipped.value || !canFlip.value) {
+  if (isFlipped.value) {
     return 'bg-gray-800 cursor-default';
   }
-  return 'bg-gray-800 hover:bg-gray-700';
+
+  if (gameOver.value) {
+    return 'bg-gray-800 cursor-default';
+  }
+
+  // Show green background when selected
+  if (isSelected.value) {
+    return 'bg-green-600 hover:bg-green-700';
+  }
+
+  // Default state - can be selected
+  if (props.store.canSelectMore) {
+    return 'bg-gray-800 hover:bg-gray-700';
+  }
+
+  // Can't select more
+  return 'bg-gray-800 cursor-default';
 });
 
 function handleClick() {
-  if (!isFlipped.value && canFlip.value) {
-    props.store.flipSquare(props.rowIndex, props.colIndex);
+  if (!isFlipped.value && !gameOver.value) {
+    props.store.selectSquare(props.rowIndex, props.colIndex);
   }
 }
 

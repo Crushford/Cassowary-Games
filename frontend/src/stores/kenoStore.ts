@@ -35,11 +35,16 @@ interface KenoState {
   gridSize: number;
   squareNumbers: Map<string, number>; // Maps "row,col" to number 1-25
   flippedSquares: Set<string>; // Tracks flipped squares by "row,col"
-  turnsRemaining: number;
+  selectedSquares: Set<string>; // Tracks selected squares by "row,col"
+  coinsEarnedSquares: Set<string>; // Tracks squares that earned coins (for coin emoji display)
+  currentTurn: number; // Current turn number (1-based)
   maxTurns: number;
   gameOver: boolean;
-  honeypotsFound: number;
+  coins: number;
 }
+
+// Selections required per turn: [10, 5, 3, 2, 1]
+const SELECTIONS_PER_TURN = [5, 3, 2, 1];
 
 export const useKenoStore = defineStore('keno', {
   state: (): KenoState => ({
@@ -47,10 +52,12 @@ export const useKenoStore = defineStore('keno', {
     gridSize: 5,
     squareNumbers: new Map(),
     flippedSquares: new Set(),
-    turnsRemaining: 10,
-    maxTurns: 10,
+    selectedSquares: new Set(),
+    coinsEarnedSquares: new Set(),
+    currentTurn: 1,
+    maxTurns: 5,
     gameOver: false,
-    honeypotsFound: 0,
+    coins: 0,
   }),
 
   getters: {
@@ -61,6 +68,33 @@ export const useKenoStore = defineStore('keno', {
     isFlipped: (state) => (row: number, col: number) => {
       const key = `${row},${col}`;
       return state.flippedSquares.has(key);
+    },
+    isSelected: (state) => (row: number, col: number) => {
+      const key = `${row},${col}`;
+      return state.selectedSquares.has(key);
+    },
+    earnedCoin: (state) => (row: number, col: number) => {
+      const key = `${row},${col}`;
+      return state.coinsEarnedSquares.has(key);
+    },
+    selectedCount: (state) => {
+      return state.selectedSquares.size;
+    },
+    requiredSelections: (state) => {
+      // Turn numbers are 1-based, so subtract 1 for array index
+      const turnIndex = state.currentTurn - 1;
+      if (turnIndex >= 0 && turnIndex < SELECTIONS_PER_TURN.length) {
+        return SELECTIONS_PER_TURN[turnIndex];
+      }
+      return 0;
+    },
+    canSelectMore: (state) => {
+      const required = SELECTIONS_PER_TURN[state.currentTurn - 1] || 0;
+      return state.selectedSquares.size < required;
+    },
+    canCompleteRound: (state) => {
+      const required = SELECTIONS_PER_TURN[state.currentTurn - 1] || 0;
+      return state.selectedSquares.size === required && !state.gameOver;
     },
   },
 
@@ -135,11 +169,12 @@ export const useKenoStore = defineStore('keno', {
 
       // Reset flipped squares when loading a new puzzle
       this.flippedSquares.clear();
+      this.selectedSquares.clear();
+      this.coinsEarnedSquares.clear();
       // Reset turns
-      this.turnsRemaining = this.maxTurns;
+      this.currentTurn = 1;
       this.gameOver = false;
-      // Reset honeypot count
-      this.honeypotsFound = 0;
+      // Note: coins persist across rounds
 
       console.log('Parsed puzzle:', {
         id: puzzleData.id,
@@ -163,33 +198,72 @@ export const useKenoStore = defineStore('keno', {
       }
     },
 
-    flipSquare(row: number, col: number) {
-      // Don't allow flipping if game is over or no turns remaining
-      if (this.gameOver || this.turnsRemaining <= 0) {
+    selectSquare(row: number, col: number) {
+      // Don't allow selection if game is over
+      if (this.gameOver) {
         return;
       }
 
       const key = `${row},${col}`;
-      if (this.flippedSquares.has(key)) {
-        // Already flipped, do nothing
+
+      // If already selected, deselect it
+      if (this.selectedSquares.has(key)) {
+        this.selectedSquares.delete(key);
         return;
       }
 
-      // Flip the square
-      this.flippedSquares.add(key);
-
-      // Count honeypot if this is a solution queen
-      if (this.grid[row][col].isSolutionQueen) {
-        this.honeypotsFound++;
+      // If already flipped, can't select
+      if (this.flippedSquares.has(key)) {
+        return;
       }
 
-      // Decrement turns
-      this.turnsRemaining--;
+      // Can only select up to the required number for current turn
+      const required = SELECTIONS_PER_TURN[this.currentTurn - 1] || 0;
+      if (this.selectedSquares.size >= required) {
+        return;
+      }
 
-      // If turns are exhausted, flip all remaining cards
-      if (this.turnsRemaining === 0) {
+      // Select the square
+      this.selectedSquares.add(key);
+    },
+
+    completeRound() {
+      // Flip all selected squares
+      for (const key of this.selectedSquares) {
+        const [row, col] = key.split(',').map(Number);
+
+        // Flip the square if not already flipped
+        if (!this.flippedSquares.has(key)) {
+          this.flippedSquares.add(key);
+
+          // Award coin if this is a honeypot (solution queen)
+          if (this.grid[row][col].isSolutionQueen) {
+            this.coins++;
+            // Track this square as earning a coin (for coin emoji display)
+            this.coinsEarnedSquares.add(key);
+          }
+        }
+      }
+
+      // Clear selections after completing round
+      this.selectedSquares.clear();
+
+      // Move to next turn
+      this.currentTurn++;
+
+      // If all turns are complete, flip all remaining cards
+      if (this.currentTurn > this.maxTurns) {
         this.flipAllRemainingCards();
       }
+    },
+
+    flipSquare(row: number, col: number) {
+      // Internal method to flip a square (used by flipAllRemainingCards)
+      const key = `${row},${col}`;
+      if (this.flippedSquares.has(key)) {
+        return;
+      }
+      this.flippedSquares.add(key);
     },
 
     flipAllRemainingCards() {
@@ -199,10 +273,7 @@ export const useKenoStore = defineStore('keno', {
           const key = `${row},${col}`;
           if (!this.flippedSquares.has(key)) {
             this.flippedSquares.add(key);
-            // Count honeypots when auto-flipping
-            if (this.grid[row][col].isSolutionQueen) {
-              this.honeypotsFound++;
-            }
+            // Note: No coins awarded for auto-flipped cards at game end
           }
         }
       }
@@ -212,9 +283,11 @@ export const useKenoStore = defineStore('keno', {
     resetGame() {
       // Reset game state without loading a new puzzle
       this.flippedSquares.clear();
-      this.turnsRemaining = this.maxTurns;
+      this.selectedSquares.clear();
+      this.coinsEarnedSquares.clear();
+      this.currentTurn = 1;
       this.gameOver = false;
-      this.honeypotsFound = 0;
+      // Note: coins persist across resets
     },
   },
 });
