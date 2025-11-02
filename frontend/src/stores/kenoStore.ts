@@ -41,10 +41,26 @@ interface KenoState {
   maxTurns: number;
   gameOver: boolean;
   coins: number;
+  waitingForNextTurn: boolean; // Whether waiting for user to click "Next Turn" button
 }
 
-// Selections required per turn: [10, 5, 3, 2, 1]
-const SELECTIONS_PER_TURN = [5, 3, 2, 1];
+// Calculate payout per honeypot based on number of selections
+// More selections = lower payout per honeypot
+export function getPayoutForSelectionCount(selectionCount: number): number {
+  if (selectionCount <= 0) return 0;
+
+  // Payout structure:
+  // 1 selection = 10 coins per honeypot
+  // 2-3 selections = 5 coins per honeypot
+  // 4-5 selections = 3 coins per honeypot
+  // 6-7 selections = 2 coins per honeypot
+  // 8-10 selections = 1 coin per honeypot
+  if (selectionCount === 1) return 10;
+  if (selectionCount <= 3) return 5;
+  if (selectionCount <= 5) return 3;
+  if (selectionCount <= 7) return 2;
+  return 1;
+}
 
 export const useKenoStore = defineStore('keno', {
   state: (): KenoState => ({
@@ -58,6 +74,7 @@ export const useKenoStore = defineStore('keno', {
     maxTurns: 5,
     gameOver: false,
     coins: 0,
+    waitingForNextTurn: false,
   }),
 
   getters: {
@@ -81,20 +98,18 @@ export const useKenoStore = defineStore('keno', {
       return state.selectedSquares.size;
     },
     requiredSelections: (state) => {
-      // Turn numbers are 1-based, so subtract 1 for array index
-      const turnIndex = state.currentTurn - 1;
-      if (turnIndex >= 0 && turnIndex < SELECTIONS_PER_TURN.length) {
-        return SELECTIONS_PER_TURN[turnIndex];
-      }
-      return 0;
+      return state.selectedSquares.size;
+    },
+    currentPayout: (state) => {
+      return getPayoutForSelectionCount(state.selectedSquares.size);
     },
     canSelectMore: (state) => {
-      const required = SELECTIONS_PER_TURN[state.currentTurn - 1] || 0;
-      return state.selectedSquares.size < required;
+      // Can select up to 10 squares, but not if already flipped
+      return state.selectedSquares.size < 10 && !state.gameOver && !state.waitingForNextTurn;
     },
-    canCompleteRound: (state) => {
-      const required = SELECTIONS_PER_TURN[state.currentTurn - 1] || 0;
-      return state.selectedSquares.size === required && !state.gameOver;
+    canEndTurn: (state) => {
+      // Can end turn if at least 1 square is selected
+      return state.selectedSquares.size >= 1 && !state.gameOver && !state.waitingForNextTurn;
     },
   },
 
@@ -174,6 +189,7 @@ export const useKenoStore = defineStore('keno', {
       // Reset turns
       this.currentTurn = 1;
       this.gameOver = false;
+      this.waitingForNextTurn = false;
       // Note: coins persist across rounds
 
       console.log('Parsed puzzle:', {
@@ -217,9 +233,13 @@ export const useKenoStore = defineStore('keno', {
         return;
       }
 
-      // Can only select up to the required number for current turn
-      const required = SELECTIONS_PER_TURN[this.currentTurn - 1] || 0;
-      if (this.selectedSquares.size >= required) {
+      // Don't allow selection if waiting for next turn or game over
+      if (this.waitingForNextTurn || this.gameOver) {
+        return;
+      }
+
+      // Can only select up to 10 squares
+      if (this.selectedSquares.size >= 10) {
         return;
       }
 
@@ -227,7 +247,12 @@ export const useKenoStore = defineStore('keno', {
       this.selectedSquares.add(key);
     },
 
-    completeRound() {
+    endTurn() {
+      if (this.selectedSquares.size === 0) return;
+
+      // Get payout multiplier for current selection count
+      const payoutPerHoneypot = getPayoutForSelectionCount(this.selectedSquares.size);
+
       // Flip all selected squares
       for (const key of this.selectedSquares) {
         const [row, col] = key.split(',').map(Number);
@@ -236,16 +261,16 @@ export const useKenoStore = defineStore('keno', {
         if (!this.flippedSquares.has(key)) {
           this.flippedSquares.add(key);
 
-          // Award coin if this is a honeypot (solution queen)
+          // Award coins if this is a honeypot (solution queen)
           if (this.grid[row][col].isSolutionQueen) {
-            this.coins++;
-            // Track this square as earning a coin (for coin emoji display)
+            this.coins += payoutPerHoneypot;
+            // Track this square as earning coins (for coin emoji display)
             this.coinsEarnedSquares.add(key);
           }
         }
       }
 
-      // Clear selections after completing round
+      // Clear selections after ending turn
       this.selectedSquares.clear();
 
       // Move to next turn
@@ -254,7 +279,15 @@ export const useKenoStore = defineStore('keno', {
       // If all turns are complete, flip all remaining cards
       if (this.currentTurn > this.maxTurns) {
         this.flipAllRemainingCards();
+      } else {
+        // Wait for user to click "Next Turn" before allowing new selections
+        this.waitingForNextTurn = true;
       }
+    },
+
+    startNextTurn() {
+      // Called when user clicks "Next Turn" button
+      this.waitingForNextTurn = false;
     },
 
     flipSquare(row: number, col: number) {
@@ -287,6 +320,7 @@ export const useKenoStore = defineStore('keno', {
       this.coinsEarnedSquares.clear();
       this.currentTurn = 1;
       this.gameOver = false;
+      this.waitingForNextTurn = false;
       // Note: coins persist across resets
     },
   },

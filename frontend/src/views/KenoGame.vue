@@ -15,16 +15,16 @@
           <span class="text-yellow-400">🪙 {{ kenoStore.coins }}</span>
         </div>
       </div>
-      <div class="text-lg">
-        <span class="text-gray-300">Turn {{ kenoStore.currentTurn }}: Must select </span>
-        <span class="text-yellow-400 font-bold">{{ kenoStore.requiredSelections }}</span>
-        <span class="text-gray-300"> squares</span>
-      </div>
-      <div class="text-lg">
+      <div v-if="kenoStore.selectedCount > 0" class="text-lg">
         <span class="text-gray-300">Selected: </span>
-        <span class="text-green-400 font-bold"
-          >{{ kenoStore.selectedCount }} / {{ kenoStore.requiredSelections }}</span
+        <span class="text-green-400 font-bold">{{ kenoStore.selectedCount }} / 10</span>
+        <span class="text-gray-300"> • </span>
+        <span class="text-yellow-400 font-bold"
+          >🪙 ×{{ kenoStore.currentPayout }} per honeypot</span
         >
+      </div>
+      <div v-else-if="!kenoStore.waitingForNextTurn" class="text-lg text-yellow-400">
+        Select squares to begin (1-10 squares)
       </div>
       <div v-if="kenoStore.gameOver" class="text-lg text-yellow-400">
         Game Over - All cards revealed!
@@ -42,32 +42,50 @@
 
     <!-- Controls at the bottom -->
     <div class="flex-none p-4 space-y-3">
-      <!-- Complete Round Button -->
-      <div v-if="kenoStore.canCompleteRound" class="flex justify-center">
+      <!-- End Turn Button -->
+      <div v-if="kenoStore.canEndTurn" class="flex justify-center">
         <button
           class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold text-lg rounded-lg transition-colors duration-200 w-full max-w-xs"
-          @click="handleCompleteRound"
+          @click="handleEndTurn"
         >
-          Complete Round
+          End Turn
         </button>
       </div>
-      <KenoControls />
+      <!-- Next Turn Button -->
+      <div v-if="kenoStore.waitingForNextTurn && !kenoStore.gameOver" class="flex justify-center">
+        <button
+          class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-lg transition-colors duration-200 w-full max-w-xs"
+          @click="handleStartNextTurn"
+        >
+          Next Turn
+        </button>
+      </div>
+      <KenoControls @show-rules="showRules = true" />
     </div>
+
+    <!-- Rules Modal -->
+    <KenoRulesModal :is-visible="showRules" @close="showRules = false" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, defineAsyncComponent } from 'vue';
+import { ref, onMounted, defineAsyncComponent } from 'vue';
 import { useKenoStore } from '../stores/kenoStore';
 
 const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
 const KenoSquare = defineAsyncComponent(() => import('../components/keno/KenoSquare.vue'));
 const KenoControls = defineAsyncComponent(() => import('../components/keno/KenoControls.vue'));
+const KenoRulesModal = defineAsyncComponent(() => import('../components/keno/KenoRulesModal.vue'));
 
 const kenoStore = useKenoStore();
+const showRules = ref(false);
 
-function handleCompleteRound() {
-  kenoStore.completeRound();
+function handleEndTurn() {
+  kenoStore.endTurn();
+}
+
+function handleStartNextTurn() {
+  kenoStore.startNextTurn();
 }
 
 onMounted(async () => {
