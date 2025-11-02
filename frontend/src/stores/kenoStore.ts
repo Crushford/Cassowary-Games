@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import type { GridSquare } from '../types/types';
 import { COLOR_SYMBOLS } from '../utils/colorPalette';
+import { buildOddsRowsInteger, fairPayoutsTo1Integer } from '../lib/kenoOdds';
 
 // Create reverse mapping from symbols to color names
 const SYMBOL_TO_COLOR: Record<string, string> = Object.entries(COLOR_SYMBOLS).reduce(
@@ -42,24 +43,17 @@ interface KenoState {
   gameOver: boolean;
   coins: number;
   waitingForNextTurn: boolean; // Whether waiting for user to click "Next Turn" button
+  showMaxReachedToast: boolean; // Whether to show the max selections reached toast
+  shouldShake: boolean; // Whether to trigger screen shake animation
 }
 
-// Calculate payout per honeypot based on number of selections
-// More selections = lower payout per honeypot
-export function getPayoutForSelectionCount(selectionCount: number): number {
-  if (selectionCount <= 0) return 0;
-
-  // Payout structure:
-  // 1 selection = 10 coins per honeypot
-  // 2-3 selections = 5 coins per honeypot
-  // 4-5 selections = 3 coins per honeypot
-  // 6-7 selections = 2 coins per honeypot
-  // 8-10 selections = 1 coin per honeypot
-  if (selectionCount === 1) return 10;
-  if (selectionCount <= 3) return 5;
-  if (selectionCount <= 5) return 3;
-  if (selectionCount <= 7) return 2;
-  return 1;
+// Calculate fair payout for k matches out of g selections
+// Returns the integer, floored fair payout (to-1) based on hypergeometric odds
+// Returns 0 for 0 matches (no payout)
+export function getFairPayoutForMatches(g: number, k: number): number {
+  if (g <= 0 || k <= 0) return 0; // No payout for 0 matches
+  const payouts = fairPayoutsTo1Integer(g);
+  return payouts[k] || 0;
 }
 
 export const useKenoStore = defineStore('keno', {
@@ -75,6 +69,8 @@ export const useKenoStore = defineStore('keno', {
     gameOver: false,
     coins: 0,
     waitingForNextTurn: false,
+    showMaxReachedToast: false,
+    shouldShake: false,
   }),
 
   getters: {
@@ -101,15 +97,28 @@ export const useKenoStore = defineStore('keno', {
       return state.selectedSquares.size;
     },
     currentPayout: (state) => {
-      return getPayoutForSelectionCount(state.selectedSquares.size);
+      // For display purposes, show the fair payout for 1 match (integer, floored)
+      // The actual payout will depend on how many matches are found
+      const g = state.selectedSquares.size;
+      if (g === 0) return 0;
+      const payouts = fairPayoutsTo1Integer(g);
+      return payouts[1] || 0; // Show payout for 1 match
     },
     canSelectMore: (state) => {
-      // Can select up to 10 squares, but not if already flipped
-      return state.selectedSquares.size < 10 && !state.gameOver && !state.waitingForNextTurn;
+      // Can select up to 5 squares, but not if already flipped
+      if (state.waitingForNextTurn || state.gameOver) return false;
+      return state.selectedSquares.size < 5;
     },
     canEndTurn: (state) => {
       // Can end turn if at least 1 square is selected
       return state.selectedSquares.size >= 1 && !state.gameOver && !state.waitingForNextTurn;
+    },
+    oddsRowsForCurrentSelection(
+      state
+    ): { k: number; probability: number; oneIn: number; fairPayoutTo1: number }[] {
+      const g = state.selectedSquares.size;
+      if (g === 0) return [];
+      return buildOddsRowsInteger(g);
     },
   },
 
@@ -190,6 +199,8 @@ export const useKenoStore = defineStore('keno', {
       this.currentTurn = 1;
       this.gameOver = false;
       this.waitingForNextTurn = false;
+      this.showMaxReachedToast = false;
+      this.shouldShake = false;
       // Note: coins persist across rounds
 
       console.log('Parsed puzzle:', {
@@ -225,6 +236,8 @@ export const useKenoStore = defineStore('keno', {
       // If already selected, deselect it
       if (this.selectedSquares.has(key)) {
         this.selectedSquares.delete(key);
+        // Hide toast when deselecting
+        this.showMaxReachedToast = false;
         return;
       }
 
@@ -238,22 +251,42 @@ export const useKenoStore = defineStore('keno', {
         return;
       }
 
-      // Can only select up to 10 squares
-      if (this.selectedSquares.size >= 10) {
+      // Can only select up to 5 squares
+      if (this.selectedSquares.size >= 5) {
+        // Trigger shake and toast
+        this.triggerMaxReached();
         return;
       }
 
       // Select the square
       this.selectedSquares.add(key);
+      // Hide toast if it was showing
+      this.showMaxReachedToast = false;
+    },
+
+    triggerMaxReached() {
+      // Trigger shake animation
+      this.shouldShake = true;
+      // Reset shake after animation completes
+      setTimeout(() => {
+        this.shouldShake = false;
+      }, 500);
+
+      // Show toast
+      this.showMaxReachedToast = true;
+      // Auto-hide toast after 3 seconds
+      setTimeout(() => {
+        this.showMaxReachedToast = false;
+      }, 3000);
     },
 
     endTurn() {
       if (this.selectedSquares.size === 0) return;
 
-      // Get payout multiplier for current selection count
-      const payoutPerHoneypot = getPayoutForSelectionCount(this.selectedSquares.size);
+      const g = this.selectedSquares.size;
+      let matchesFound = 0;
 
-      // Flip all selected squares
+      // Flip all selected squares and count matches
       for (const key of this.selectedSquares) {
         const [row, col] = key.split(',').map(Number);
 
@@ -261,17 +294,24 @@ export const useKenoStore = defineStore('keno', {
         if (!this.flippedSquares.has(key)) {
           this.flippedSquares.add(key);
 
-          // Award coins if this is a honeypot (solution queen)
+          // Count matches (honeypots found)
           if (this.grid[row][col].isSolutionQueen) {
-            this.coins += payoutPerHoneypot;
+            matchesFound++;
             // Track this square as earning coins (for coin emoji display)
             this.coinsEarnedSquares.add(key);
           }
         }
       }
 
+      // Integer, floored fair payout; k=0 => 0
+      const payouts = fairPayoutsTo1Integer(g);
+      const fairPayout = payouts[matchesFound] || 0;
+      this.coins += fairPayout;
+
       // Clear selections after ending turn
       this.selectedSquares.clear();
+      // Clear toast notification
+      this.showMaxReachedToast = false;
 
       // Move to next turn
       this.currentTurn++;
@@ -321,6 +361,8 @@ export const useKenoStore = defineStore('keno', {
       this.currentTurn = 1;
       this.gameOver = false;
       this.waitingForNextTurn = false;
+      this.showMaxReachedToast = false;
+      this.shouldShake = false;
       // Note: coins persist across resets
     },
   },

@@ -11,7 +11,7 @@
         <div class="bg-gray-700 p-4 rounded-lg space-y-1">
           <h3 class="font-semibold text-white">How to Play:</h3>
           <ul class="list-disc list-inside space-y-1">
-            <li>Select 1-10 squares by clicking on them (they will highlight green)</li>
+            <li>Select 1-5 squares by clicking on them (they will highlight green)</li>
             <li>The payout rate is shown as you select squares</li>
             <li>Click "End Turn" when ready to reveal your selections</li>
             <li>All selected squares will flip over showing honeypots or ants</li>
@@ -21,13 +21,11 @@
         </div>
 
         <div class="bg-gray-700 p-4 rounded-lg space-y-1">
-          <h3 class="font-semibold text-white">Payouts (per honeypot found):</h3>
+          <h3 class="font-semibold text-white">Payouts:</h3>
           <ul class="list-disc list-inside space-y-1">
-            <li><strong>1 square:</strong> 10 coins</li>
-            <li><strong>2-3 squares:</strong> 5 coins</li>
-            <li><strong>4-5 squares:</strong> 3 coins</li>
-            <li><strong>6-7 squares:</strong> 2 coins</li>
-            <li><strong>8-10 squares:</strong> 1 coin</li>
+            <li>Payouts are fair odds rounded down to whole numbers (to-1 format)</li>
+            <li>0 matches pay 0</li>
+            <li>View the payout tables for exact odds and payouts</li>
           </ul>
           <p class="text-sm text-gray-300 mt-2">
             The more squares you select, the lower the payout per honeypot!
@@ -38,7 +36,7 @@
           <h3 class="font-semibold text-white">Game Rules:</h3>
           <ul class="list-disc list-inside space-y-1">
             <li>You have 5 turns to find all the honeypots</li>
-            <li>Select 1-10 squares per turn</li>
+            <li>You may select up to 5 squares per turn</li>
             <li>Once flipped, squares cannot be selected again</li>
             <li>Coins persist across all turns and rounds</li>
             <li>Review your results before clicking "Next Turn"</li>
