@@ -15,7 +15,9 @@
     "dev:server": "cd cli-tools && yarn dev:server",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "build:all": "yarn build && yarn build-storybook"
+    "build:all": "yarn build && yarn build-storybook",
+    "chromatic": "npx chromatic --project-token=chpt_21e63b4cf6a8756",
+    "print:odds": "tsx scripts/printOddsTables.ts"
   },
   "dependencies": {
     "pinia": "^3.0.3",
@@ -27,6 +29,7 @@
     "@pinia/testing": "^1.0.2",
     "@storybook/addon-a11y": "^9.1.2",
     "@storybook/addon-docs": "^9.1.2",
+    "@storybook/addon-links": "^9.1.2",
     "@storybook/addon-onboarding": "^9.1.2",
     "@storybook/addon-vitest": "^9.1.2",
     "@storybook/vue3": "^9.1.2",
@@ -41,6 +44,7 @@
     "@vitest/coverage-v8": "^3.2.4",
     "@vue/tsconfig": "^0.7.0",
     "autoprefixer": "^10.4.17",
+    "chromatic": "^13.2.0",
     "eslint": "^9.22.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.3",
@@ -51,6 +55,7 @@
     "prettier": "^3.5.3",
     "storybook": "^9.1.2",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.20.6",
     "typescript": "~5.7.2",
     "vite": "^6.2.0",
     "vite-plugin-eslint": "^1.8.1",

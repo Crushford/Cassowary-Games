@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import RulesPlaque from '../components/casino/RulesPlaque.vue';
+import RulesPlaque from '@/components/casino/RulesPlaque.vue';
 import { useGlobalStore } from '../stores/global';
 import { useTableStore } from '../stores/table';
 import { useRoundStore } from '../stores/round';
