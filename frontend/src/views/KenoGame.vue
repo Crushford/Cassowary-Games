@@ -12,7 +12,7 @@
     </div>
 
     <!-- PlayGrid - Flex to fill available space with max-width constraint -->
-    <div class="flex-1 flex items-center justify-center overflow-hidden px-4 pb-4">
+    <div class="flex-1 flex items-center justify-center">
       <PlayGrid class="w-full max-w-full aspect-square" :store="kenoStore">
         <template #default="{ rowIndex, colIndex, store }">
           <KenoSquare :row-index="rowIndex" :col-index="colIndex" :store="store" />
@@ -22,23 +22,25 @@
 
     <!-- Controls at the bottom -->
     <div class="flex-none p-4 space-y-3">
-      <!-- End Turn Button -->
-      <div v-if="kenoStore.canEndTurn" class="flex justify-center">
+      <!-- End Turn Button - Always visible but disabled when no selections -->
+      <div class="flex justify-center">
         <button
-          class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold text-lg rounded-lg transition-colors duration-200 w-full max-w-xs"
+          class="px-6 py-3 text-white font-bold text-lg rounded-lg transition-colors duration-200 w-full max-w-xs"
+          :class="
+            kenoStore.canEndTurn
+              ? 'bg-green-600 hover:bg-green-700 cursor-pointer'
+              : 'bg-gray-600 cursor-not-allowed opacity-50'
+          "
+          :disabled="!kenoStore.canEndTurn"
           @click="handleEndTurn"
         >
           End Turn
         </button>
       </div>
-      <KenoControls @show-rules="showRules = true" @show-payout-tables="showPayoutTables = true" />
     </div>
 
-    <!-- Rules Modal -->
-    <KenoRulesModal :is-visible="showRules" @close="showRules = false" />
-
-    <!-- Payout Tables Modal -->
-    <PayoutTablesModal :is-visible="showPayoutTables" @close="showPayoutTables = false" />
+    <!-- End of Round Modal -->
+    <EndOfRoundModal :is-visible="kenoStore.roundComplete" />
 
     <!-- Toast Notification -->
     <Transition name="toast">
@@ -54,21 +56,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, defineAsyncComponent } from 'vue';
+import { onMounted, defineAsyncComponent } from 'vue';
 import { useKenoStore } from '../stores/kenoStore';
 
 const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
 const KenoSquare = defineAsyncComponent(() => import('../components/keno/KenoSquare.vue'));
-const KenoControls = defineAsyncComponent(() => import('../components/keno/KenoControls.vue'));
-const KenoRulesModal = defineAsyncComponent(() => import('../components/keno/KenoRulesModal.vue'));
 const KenoHeader = defineAsyncComponent(() => import('../components/keno/KenoHeader.vue'));
-const PayoutTablesModal = defineAsyncComponent(
-  () => import('../components/keno/PayoutTablesModal.vue')
+const EndOfRoundModal = defineAsyncComponent(
+  () => import('../components/keno/EndOfRoundModal.vue')
 );
 
 const kenoStore = useKenoStore();
-const showRules = ref(false);
-const showPayoutTables = ref(false);
 
 function handleEndTurn() {
   kenoStore.endTurn();

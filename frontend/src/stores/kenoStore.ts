@@ -31,6 +31,12 @@ function createEmptyGrid(size: number): GridSquare[][] {
     );
 }
 
+interface TurnHistory {
+  turn: number;
+  selections: number;
+  coinsEarned: number;
+}
+
 interface KenoState {
   grid: GridSquare[][];
   gridSize: number;
@@ -46,6 +52,9 @@ interface KenoState {
   shouldShake: boolean; // Whether to trigger screen shake animation
   activePopups: Map<string, number>; // Maps "row,col" to popup value (0 for ant, payout for honeypot)
   isFlippingCards: boolean; // Whether cards are currently being flipped
+  turnHistory: TurnHistory[]; // History of each turn
+  roundComplete: boolean; // Whether the round is complete
+  highScore: number; // High score from localStorage
 }
 
 // Calculate fair payout for k matches out of g selections
@@ -73,6 +82,9 @@ export const useKenoStore = defineStore('keno', {
     shouldShake: false,
     activePopups: new Map(),
     isFlippingCards: false,
+    turnHistory: [],
+    roundComplete: false,
+    highScore: 0,
   }),
 
   getters: {
@@ -208,11 +220,16 @@ export const useKenoStore = defineStore('keno', {
       // Reset turns
       this.currentTurn = 1;
       this.gameOver = false;
+      this.roundComplete = false;
       this.showMaxReachedToast = false;
       this.shouldShake = false;
       this.activePopups.clear();
       this.isFlippingCards = false;
-      // Note: coins persist across rounds
+      this.turnHistory = [];
+      this.coins = 0;
+      // Load high score from localStorage
+      this.loadHighScore();
+      // Note: highScore persists across rounds
 
       console.log('Parsed puzzle:', {
         id: puzzleData.id,
@@ -300,6 +317,9 @@ export const useKenoStore = defineStore('keno', {
       const payouts = fairPayoutsTo1Integer(g);
       let matchesFound = 0;
 
+      // Track coins earned this turn
+      let coinsEarnedThisTurn = 0;
+
       // Convert selected squares to array for sequential processing
       const squaresToFlip = Array.from(this.selectedSquares);
 
@@ -332,6 +352,7 @@ export const useKenoStore = defineStore('keno', {
 
           this.coinsEarnedSquares.add(key);
           this.coins += popupValue;
+          coinsEarnedThisTurn += popupValue;
         }
 
         // Show popup
@@ -348,20 +369,78 @@ export const useKenoStore = defineStore('keno', {
         }
       }
 
+      // Record turn history
+      this.turnHistory.push({
+        turn: this.currentTurn,
+        selections: g,
+        coinsEarned: coinsEarnedThisTurn,
+      });
+
       // Clear selections after all cards are flipped
       this.selectedSquares.clear();
       // Clear toast notification
       this.showMaxReachedToast = false;
       this.isFlippingCards = false;
 
+      // Check if all honeypots found
+      const totalHoneypotsFound = this.countHoneypotsFound();
+      if (totalHoneypotsFound >= 5) {
+        this.completeRound();
+        return;
+      }
+
       // Move to next turn automatically
       this.currentTurn++;
 
-      // If all turns are complete, flip all remaining cards
+      // If all turns are complete, end the round
       if (this.currentTurn > this.maxTurns) {
-        this.flipAllRemainingCards();
+        this.completeRound();
       }
       // Otherwise, automatically proceed to next turn (no waiting needed)
+    },
+
+    countHoneypotsFound(): number {
+      let count = 0;
+      for (const key of this.flippedSquares) {
+        const [row, col] = key.split(',').map(Number);
+        if (this.grid[row]?.[col]?.isSolutionQueen) {
+          count++;
+        }
+      }
+      return count;
+    },
+
+    completeRound() {
+      // Flip all remaining cards
+      this.flipAllRemainingCards();
+
+      // Save high score if this is a new record
+      if (this.coins > this.highScore) {
+        this.highScore = this.coins;
+        this.saveHighScore();
+      }
+
+      // Mark round as complete
+      this.roundComplete = true;
+    },
+
+    saveHighScore() {
+      try {
+        localStorage.setItem('keno-high-score', this.highScore.toString());
+      } catch (error) {
+        console.warn('Failed to save high score:', error);
+      }
+    },
+
+    loadHighScore() {
+      try {
+        const saved = localStorage.getItem('keno-high-score');
+        if (saved) {
+          this.highScore = parseInt(saved, 10);
+        }
+      } catch (error) {
+        console.warn('Failed to load high score:', error);
+      }
     },
 
     flipSquare(row: number, col: number) {
@@ -394,11 +473,20 @@ export const useKenoStore = defineStore('keno', {
       this.coinsEarnedSquares.clear();
       this.currentTurn = 1;
       this.gameOver = false;
+      this.roundComplete = false;
       this.showMaxReachedToast = false;
       this.shouldShake = false;
       this.activePopups.clear();
       this.isFlippingCards = false;
-      // Note: coins persist across resets
+      this.turnHistory = [];
+      this.coins = 0;
+      // Note: highScore persists across resets
+    },
+
+    restartGame() {
+      // Reset game and load a new puzzle
+      this.resetGame();
+      this.loadRandomPuzzle();
     },
   },
 });
