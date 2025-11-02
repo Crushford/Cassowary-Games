@@ -3,6 +3,7 @@ import HarvestGame from '../views/HarvestGame.vue';
 import PlantGame from '../views/PlantGame.vue';
 import LevelBuilder from '../views/LevelBuilder.vue';
 import CasinoGame from '../components/casino/CasinoGame.vue';
+import KenoGame from '../views/KenoGame.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -37,6 +38,11 @@ const router = createRouter({
       path: '/casino',
       name: 'casino',
       component: CasinoGame,
+    },
+    {
+      path: '/keno',
+      name: 'keno',
+      component: KenoGame,
     },
     {
       path: '/storybook',

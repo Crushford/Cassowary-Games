@@ -37,3 +37,6 @@ dist-ssr
 tsconfig.tsbuildinfo
 
 vite.config.d.ts
+
+# Playwright/MCP screenshots
+.playwright-mcp/
