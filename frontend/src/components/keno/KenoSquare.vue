@@ -1,4 +1,5 @@
 <template>
+  <!-- KenoSquare -->
   <button
     class="w-full h-full aspect-square border border-black transition-colors duration-150 cursor-pointer flex items-center justify-center relative"
     :class="buttonClasses"
@@ -8,6 +9,13 @@
     <!-- Number display (before flip) -->
     <div v-if="!isFlipped" class="w-full h-full flex items-center justify-center relative">
       <span class="text-2xl font-bold text-white">{{ squareNumber }}</span>
+      <!-- Solution overlay when showBoard is true -->
+      <div
+        v-if="showBoard && isHoneypot"
+        class="absolute inset-0 flex items-center justify-center bg-green-500 bg-opacity-50 z-10"
+      >
+        <img src="/assets/card-backs/honey.png" class="w-8 h-8 object-cover" alt="Honeypot" />
+      </div>
     </div>
 
     <!-- Card flip animation and image (after flip) -->
@@ -62,6 +70,10 @@ const isFlipped = computed(() => {
 
 const gameOver = computed(() => {
   return props.store.gameOver;
+});
+
+const showBoard = computed(() => {
+  return props.store.showBoard;
 });
 
 const isSelected = computed(() => {

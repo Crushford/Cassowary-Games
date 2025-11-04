@@ -1,5 +1,6 @@
 <template>
-  <div class="space-y-1">
+  <!-- KenoHeader -->
+  <div class="space-y-1 mb-3 max-w-md">
     <!-- summary row -->
     <div class="flex items-center justify-between text-sm">
       <div>

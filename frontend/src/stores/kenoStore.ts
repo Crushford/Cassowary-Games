@@ -40,6 +40,7 @@ interface TurnHistory {
 interface KenoState {
   grid: GridSquare[][];
   gridSize: number;
+  puzzleSize: string; // Puzzle size key like "4x4", "5x5", etc.
   squareNumbers: Map<string, number>; // Maps "row,col" to number 1-25
   flippedSquares: Set<string>; // Tracks flipped squares by "row,col"
   selectedSquares: Set<string>; // Tracks selected squares by "row,col"
@@ -55,6 +56,7 @@ interface KenoState {
   turnHistory: TurnHistory[]; // History of each turn
   roundComplete: boolean; // Whether the round is complete
   highScore: number; // High score from localStorage
+  showBoard: boolean; // Whether to show the solution board overlay
 }
 
 // Calculate fair payout for k matches out of g selections
@@ -70,6 +72,7 @@ export const useKenoStore = defineStore('keno', {
   state: (): KenoState => ({
     grid: [],
     gridSize: 5,
+    puzzleSize: '5x5',
     squareNumbers: new Map(),
     flippedSquares: new Set(),
     selectedSquares: new Set(),
@@ -85,6 +88,7 @@ export const useKenoStore = defineStore('keno', {
     turnHistory: [],
     roundComplete: false,
     highScore: 0,
+    showBoard: false,
   }),
 
   getters: {
@@ -145,8 +149,11 @@ export const useKenoStore = defineStore('keno', {
   },
 
   actions: {
-    async loadRandomPuzzle() {
+    async loadRandomPuzzle(puzzleSize?: string) {
       try {
+        // Use provided size or default to current puzzleSize
+        const size = puzzleSize || this.puzzleSize;
+
         // Load puzzles.json
         const response = await fetch('/puzzles.json');
         if (!response.ok) {
@@ -154,13 +161,13 @@ export const useKenoStore = defineStore('keno', {
         }
 
         const data = await response.json();
-        const puzzles5x5 = data['5x5'] || [];
+        const puzzlesForSize = data[size] || [];
 
         // Filter for puzzles ending in "-0"
-        const validPuzzles = puzzles5x5.filter((puzzle: any) => puzzle.id.endsWith('-0'));
+        const validPuzzles = puzzlesForSize.filter((puzzle: any) => puzzle.id.endsWith('-0'));
 
         if (validPuzzles.length === 0) {
-          throw new Error('No valid 5x5 puzzles found');
+          throw new Error(`No valid ${size} puzzles found`);
         }
 
         // Select a random puzzle
@@ -169,11 +176,21 @@ export const useKenoStore = defineStore('keno', {
 
         console.log('Selected puzzle:', selectedPuzzle.id);
 
+        // Update puzzleSize state
+        this.puzzleSize = size;
+
         // Parse the puzzle data
         this.parsePuzzleData(selectedPuzzle);
       } catch (error) {
         console.error('Error loading puzzle:', error);
         throw error;
+      }
+    },
+
+    setPuzzleSize(size: string) {
+      if (this.puzzleSize !== size) {
+        this.puzzleSize = size;
+        this.loadRandomPuzzle(size);
       }
     },
 
@@ -487,6 +504,10 @@ export const useKenoStore = defineStore('keno', {
       // Reset game and load a new puzzle
       this.resetGame();
       this.loadRandomPuzzle();
+    },
+
+    toggleShowBoard() {
+      this.showBoard = !this.showBoard;
     },
   },
 });
