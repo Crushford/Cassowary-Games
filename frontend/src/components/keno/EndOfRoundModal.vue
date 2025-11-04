@@ -1,4 +1,5 @@
 <template>
+  <!-- EndOfRoundModal -->
   <div
     v-if="isVisible"
     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4"
@@ -12,12 +13,42 @@
       <!-- Summary -->
       <div class="bg-gray-700 p-4 rounded-lg space-y-3">
         <div class="flex justify-between items-center">
-          <span class="text-gray-300">Total Coins:</span>
-          <span class="text-yellow-400 font-bold text-xl">{{ store.coins }}</span>
+          <span class="text-gray-300">Total Food:</span>
+          <span class="text-yellow-400 font-bold text-xl">{{ store.food }}</span>
         </div>
         <div class="flex justify-between items-center">
-          <span class="text-gray-300">High Score:</span>
-          <span class="text-green-400 font-bold text-xl">{{ store.highScore }}</span>
+          <span class="text-gray-300">Cassowaries:</span>
+          <span class="text-green-400 font-bold text-xl">{{ store.cassowaries }}</span>
+        </div>
+      </div>
+
+      <!-- Food Breakdown -->
+      <div class="bg-gray-700 p-4 rounded-lg">
+        <h3 class="text-lg font-semibold mb-3 text-center">Food Breakdown</h3>
+        <div class="space-y-2">
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-gray-300">From Forage:</span>
+            <span class="text-yellow-400 font-semibold">{{ foodFromForage }}</span>
+          </div>
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-gray-300">From Hunt:</span>
+            <span class="text-yellow-400 font-semibold">{{ foodFromHunt }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nesting Success -->
+      <div class="bg-gray-700 p-4 rounded-lg">
+        <h3 class="text-lg font-semibold mb-3 text-center">Nesting Success</h3>
+        <div class="space-y-2">
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-gray-300">Cassowaries Gained:</span>
+            <span class="text-green-400 font-semibold">+{{ totalCassowariesGained }}</span>
+          </div>
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-gray-300">Cassowaries Lost:</span>
+            <span class="text-red-400 font-semibold">-{{ totalCassowariesLost }}</span>
+          </div>
         </div>
       </div>
 
@@ -28,13 +59,23 @@
           <div
             v-for="turn in store.turnHistory"
             :key="turn.turn"
-            class="flex justify-between items-center text-sm"
+            class="flex flex-col gap-1 text-sm"
           >
-            <span class="text-gray-300">Turn {{ turn.turn }}:</span>
-            <span class="text-gray-300"
-              >{{ turn.selections }} selection{{ turn.selections !== 1 ? 's' : '' }} →</span
-            >
-            <span class="text-yellow-400 font-semibold">+{{ turn.coinsEarned }} coins</span>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-300">Turn {{ turn.turn }} ({{ turn.action }}):</span>
+              <span class="text-gray-300"
+                >{{ turn.selections }} selection{{ turn.selections !== 1 ? 's' : '' }}</span
+              >
+            </div>
+            <div v-if="turn.foodEarned > 0" class="text-yellow-400 text-xs ml-4">
+              +{{ turn.foodEarned }} food
+            </div>
+            <div v-if="turn.cassowariesGained > 0" class="text-green-400 text-xs ml-4">
+              +{{ turn.cassowariesGained }} cassowaries
+            </div>
+            <div v-if="turn.cassowariesLost > 0" class="text-red-400 text-xs ml-4">
+              -{{ turn.cassowariesLost }} cassowaries
+            </div>
           </div>
           <!-- Show empty turns if any -->
           <div
@@ -70,6 +111,26 @@ interface Props {
 const props = defineProps<Props>();
 
 const store = useKenoStore();
+
+const foodFromForage = computed(() => {
+  return store.turnHistory
+    .filter((t) => t.action === 'forage')
+    .reduce((sum, t) => sum + t.foodEarned, 0);
+});
+
+const foodFromHunt = computed(() => {
+  return store.turnHistory
+    .filter((t) => t.action === 'hunt')
+    .reduce((sum, t) => sum + t.foodEarned, 0);
+});
+
+const totalCassowariesGained = computed(() => {
+  return store.turnHistory.reduce((sum, t) => sum + t.cassowariesGained, 0);
+});
+
+const totalCassowariesLost = computed(() => {
+  return store.turnHistory.reduce((sum, t) => sum + t.cassowariesLost, 0);
+});
 
 const emptyTurns = computed(() => {
   const usedTurns = new Set(store.turnHistory.map((t) => t.turn));

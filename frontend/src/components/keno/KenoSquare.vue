@@ -1,6 +1,7 @@
 <template>
+  <!-- KenoSquare -->
   <button
-    class="w-full h-full aspect-square border border-black transition-colors duration-150 cursor-pointer flex items-center justify-center relative"
+    class="w-full h-full aspect-square border border-black transition-colors duration-150 cursor-pointer flex items-center justify-center relative outline-none box-border"
     :class="buttonClasses"
     @click="handleClick"
     :disabled="isFlipped || gameOver"
@@ -8,16 +9,38 @@
     <!-- Number display (before flip) -->
     <div v-if="!isFlipped" class="w-full h-full flex items-center justify-center relative">
       <span class="text-2xl font-bold text-white">{{ squareNumber }}</span>
+      <!-- Solution overlay when showBoard is true -->
+      <div
+        v-if="showBoard && isHoneypot"
+        class="absolute inset-0 flex items-center justify-center bg-green-500 bg-opacity-50 z-10"
+      >
+        <span class="text-4xl">🐅</span>
+      </div>
     </div>
 
     <!-- Card flip animation and image (after flip) -->
     <div v-else class="w-full h-full relative card-flip" :class="{ flipping: shouldFlip }">
-      <img
-        v-if="cardImageSrc"
-        :src="cardImageSrc"
-        class="absolute inset-0 w-full h-full object-cover"
-        alt=""
-      />
+      <!-- Honeypot (tiger emoji) overlay when isHoneypot is true -->
+      <div
+        v-if="isHoneypot"
+        class="absolute inset-0 flex items-center justify-center bg-gray-800 z-10"
+      >
+        <span class="text-4xl">🐅</span>
+      </div>
+      <!-- Fruit emoji overlay when hasFruit is true -->
+      <div
+        v-if="hasFruit && !isHoneypot"
+        class="absolute inset-0 flex items-center justify-center bg-gray-800 z-10"
+      >
+        <span class="text-4xl">🍎</span>
+      </div>
+      <!-- Nest emoji overlay when no fruit and no honeypot -->
+      <div
+        v-if="!hasFruit && !isHoneypot"
+        class="absolute inset-0 flex items-center justify-center bg-gray-800 z-10"
+      >
+        <span class="text-4xl">🪺</span>
+      </div>
     </div>
 
     <!-- Popup for score display -->
@@ -27,7 +50,7 @@
         class="absolute -top-12 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
         :class="popupClasses"
       >
-        <span class="text-3xl font-bold">{{ popupValue }}</span>
+        <span class="text-3xl font-bold">{{ popupValue > 0 ? '+' : '' }}{{ popupValue }}</span>
       </div>
     </Transition>
   </button>
@@ -64,6 +87,10 @@ const gameOver = computed(() => {
   return props.store.gameOver;
 });
 
+const showBoard = computed(() => {
+  return props.store.showBoard;
+});
+
 const isSelected = computed(() => {
   return props.store.isSelected(props.rowIndex, props.colIndex);
 });
@@ -87,8 +114,10 @@ const popupValue = computed(() => {
 const popupClasses = computed(() => {
   const value = popupValue.value;
   if (value === null) return '';
-  // Red for 0 (ant), green for positive values (honeypot)
-  return value === 0 ? 'text-red-500' : 'text-green-400';
+  // Red for negative values (loss), green for positive values (gain), gray for zero
+  if (value < 0) return 'text-red-500';
+  if (value > 0) return 'text-green-400';
+  return 'text-gray-400';
 });
 
 // Watch for flip state changes to trigger animation
@@ -113,20 +142,14 @@ watch(
   { immediate: false }
 );
 
+const hasFruit = computed(() => {
+  return gridCell.value.hasFruit;
+});
+
 // Computed property for the card image source
 const cardImageSrc = computed(() => {
-  // During flip animation, show no image
-  if (isFlipping.value) {
-    return '';
-  }
-
-  // Show honeypot if this is a solution queen
-  if (gridCell.value.isSolutionQueen) {
-    return '/assets/card-backs/honey.png';
-  }
-
-  // Otherwise show ant
-  return '/assets/card-backs/ant.png';
+  // We no longer use images, only emojis
+  return '';
 });
 
 // Computed property for button classes

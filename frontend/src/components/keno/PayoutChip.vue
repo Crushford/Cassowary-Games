@@ -1,4 +1,5 @@
 <template>
+  <!-- PayoutChip -->
   <div
     class="rounded-lg px-2 py-1 flex items-center justify-center gap-1 border h-full text-xs"
     :class="

@@ -1,13 +1,16 @@
 <template>
+  <!-- KenoGame -->
   <div
-    class="h-svh w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden"
+    class="h-svh w-full w-[480px] bg-gray-800 text-white flex flex-col overflow-hidden"
     :class="{ shake: kenoStore.shouldShake }"
   >
     <!-- Game Info Display -->
     <div class="flex-none p-4">
-      <KenoHeader class="mb-3" />
-      <div v-if="kenoStore.gameOver" class="text-sm text-yellow-400 text-center mt-2">
-        Game Over - All cards revealed!
+      <div class="max-w-full">
+        <KenoHeader />
+        <div v-if="kenoStore.gameOver" class="text-sm text-yellow-400 text-center mt-2">
+          Game Over - All cards revealed!
+        </div>
       </div>
     </div>
 
@@ -22,6 +25,9 @@
 
     <!-- Controls at the bottom -->
     <div class="flex-none p-4 space-y-3">
+      <!-- Action Selector -->
+      <ActionSelector :store="kenoStore" />
+
       <!-- End Turn Button - Always visible but disabled when no selections -->
       <div class="flex justify-center">
         <button
@@ -62,6 +68,7 @@ import { useKenoStore } from '../stores/kenoStore';
 const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
 const KenoSquare = defineAsyncComponent(() => import('../components/keno/KenoSquare.vue'));
 const KenoHeader = defineAsyncComponent(() => import('../components/keno/KenoHeader.vue'));
+const ActionSelector = defineAsyncComponent(() => import('../components/keno/ActionSelector.vue'));
 const EndOfRoundModal = defineAsyncComponent(
   () => import('../components/keno/EndOfRoundModal.vue')
 );

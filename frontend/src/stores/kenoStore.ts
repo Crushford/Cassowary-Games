@@ -33,13 +33,18 @@ function createEmptyGrid(size: number): GridSquare[][] {
 
 interface TurnHistory {
   turn: number;
+  action: 'forage' | 'nest' | 'hunt';
   selections: number;
-  coinsEarned: number;
+  foodEarned: number;
+  cassowariesGained: number;
+  cassowariesLost: number;
+  coinsEarned: number; // Keep for compatibility
 }
 
 interface KenoState {
   grid: GridSquare[][];
   gridSize: number;
+  puzzleSize: string; // Puzzle size key like "4x4", "5x5", etc.
   squareNumbers: Map<string, number>; // Maps "row,col" to number 1-25
   flippedSquares: Set<string>; // Tracks flipped squares by "row,col"
   selectedSquares: Set<string>; // Tracks selected squares by "row,col"
@@ -48,6 +53,9 @@ interface KenoState {
   maxTurns: number;
   gameOver: boolean;
   coins: number;
+  food: number; // Food resource
+  cassowaries: number; // Cassowaries resource
+  selectedAction: 'forage' | 'nest' | 'hunt' | null; // Current action selection
   showMaxReachedToast: boolean; // Whether to show the max selections reached toast
   shouldShake: boolean; // Whether to trigger screen shake animation
   activePopups: Map<string, number>; // Maps "row,col" to popup value (0 for ant, payout for honeypot)
@@ -55,6 +63,7 @@ interface KenoState {
   turnHistory: TurnHistory[]; // History of each turn
   roundComplete: boolean; // Whether the round is complete
   highScore: number; // High score from localStorage
+  showBoard: boolean; // Whether to show the solution board overlay
 }
 
 // Calculate fair payout for k matches out of g selections
@@ -69,7 +78,8 @@ export function getFairPayoutForMatches(g: number, k: number): number {
 export const useKenoStore = defineStore('keno', {
   state: (): KenoState => ({
     grid: [],
-    gridSize: 5,
+    gridSize: 7,
+    puzzleSize: '7x7',
     squareNumbers: new Map(),
     flippedSquares: new Set(),
     selectedSquares: new Set(),
@@ -78,6 +88,9 @@ export const useKenoStore = defineStore('keno', {
     maxTurns: 5,
     gameOver: false,
     coins: 0,
+    food: 0,
+    cassowaries: 0,
+    selectedAction: 'forage',
     showMaxReachedToast: false,
     shouldShake: false,
     activePopups: new Map(),
@@ -85,6 +98,7 @@ export const useKenoStore = defineStore('keno', {
     turnHistory: [],
     roundComplete: false,
     highScore: 0,
+    showBoard: false,
   }),
 
   getters: {
@@ -121,11 +135,28 @@ export const useKenoStore = defineStore('keno', {
     canSelectMore: (state) => {
       // Can select up to 5 squares, but not if already flipped or cards are being flipped
       if (state.gameOver || state.isFlippingCards) return false;
-      return state.selectedSquares.size < 5;
+
+      // Different limits based on action
+      if (state.selectedAction === 'forage') {
+        return state.selectedSquares.size < 5;
+      } else if (state.selectedAction === 'nest' || state.selectedAction === 'hunt') {
+        return state.selectedSquares.size < 1;
+      }
+
+      return false;
     },
     canEndTurn: (state) => {
-      // Can end turn if at least 1 square is selected and cards are not being flipped
-      return state.selectedSquares.size >= 1 && !state.gameOver && !state.isFlippingCards;
+      // Can end turn if action is selected, cards are not being flipped, and selection count meets action requirements
+      if (!state.selectedAction || state.gameOver || state.isFlippingCards) return false;
+
+      // Different minimums based on action
+      if (state.selectedAction === 'forage') {
+        return state.selectedSquares.size === 5;
+      } else if (state.selectedAction === 'nest' || state.selectedAction === 'hunt') {
+        return state.selectedSquares.size === 1;
+      }
+
+      return false;
     },
     oddsRowsForCurrentSelection(
       state
@@ -145,8 +176,11 @@ export const useKenoStore = defineStore('keno', {
   },
 
   actions: {
-    async loadRandomPuzzle() {
+    async loadRandomPuzzle(puzzleSize?: string) {
       try {
+        // Use provided size or default to current puzzleSize
+        const size = puzzleSize || this.puzzleSize;
+
         // Load puzzles.json
         const response = await fetch('/puzzles.json');
         if (!response.ok) {
@@ -154,13 +188,13 @@ export const useKenoStore = defineStore('keno', {
         }
 
         const data = await response.json();
-        const puzzles5x5 = data['5x5'] || [];
+        const puzzlesForSize = data[size] || [];
 
         // Filter for puzzles ending in "-0"
-        const validPuzzles = puzzles5x5.filter((puzzle: any) => puzzle.id.endsWith('-0'));
+        const validPuzzles = puzzlesForSize.filter((puzzle: any) => puzzle.id.endsWith('-0'));
 
         if (validPuzzles.length === 0) {
-          throw new Error('No valid 5x5 puzzles found');
+          throw new Error(`No valid ${size} puzzles found`);
         }
 
         // Select a random puzzle
@@ -169,11 +203,21 @@ export const useKenoStore = defineStore('keno', {
 
         console.log('Selected puzzle:', selectedPuzzle.id);
 
+        // Update puzzleSize state
+        this.puzzleSize = size;
+
         // Parse the puzzle data
         this.parsePuzzleData(selectedPuzzle);
       } catch (error) {
         console.error('Error loading puzzle:', error);
         throw error;
+      }
+    },
+
+    setPuzzleSize(size: string) {
+      if (this.puzzleSize !== size) {
+        this.puzzleSize = size;
+        this.loadRandomPuzzle(size);
       }
     },
 
@@ -210,6 +254,9 @@ export const useKenoStore = defineStore('keno', {
         }
       }
 
+      // Mark squares adjacent to honeypots as having fruit
+      this.markFruitAroundHoneypots();
+
       // Assign numbers 1-25 to each square
       this.assignSquareNumbers();
 
@@ -227,6 +274,9 @@ export const useKenoStore = defineStore('keno', {
       this.isFlippingCards = false;
       this.turnHistory = [];
       this.coins = 0;
+      this.food = 0;
+      this.cassowaries = 0;
+      this.selectedAction = 'forage'; // Reset to default action
       // Load high score from localStorage
       this.loadHighScore();
       // Note: highScore persists across rounds
@@ -249,6 +299,39 @@ export const useKenoStore = defineStore('keno', {
           const key = `${row},${col}`;
           this.squareNumbers.set(key, numbers[numberIndex]);
           numberIndex++;
+        }
+      }
+    },
+
+    markFruitAroundHoneypots() {
+      // Find all honeypots and mark adjacent squares as having fruit
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.grid[row][col].isSolutionQueen) {
+            // Mark all adjacent squares (including diagonal) as having fruit
+            for (let dr = -1; dr <= 1; dr++) {
+              for (let dc = -1; dc <= 1; dc++) {
+                // Skip the honeypot itself
+                if (dr === 0 && dc === 0) continue;
+
+                const adjRow = row + dr;
+                const adjCol = col + dc;
+
+                // Check bounds
+                if (
+                  adjRow >= 0 &&
+                  adjRow < this.gridSize &&
+                  adjCol >= 0 &&
+                  adjCol < this.gridSize
+                ) {
+                  // Mark as having fruit (only if it's not a honeypot itself)
+                  if (!this.grid[adjRow][adjCol].isSolutionQueen) {
+                    this.grid[adjRow][adjCol].hasFruit = true;
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -279,11 +362,17 @@ export const useKenoStore = defineStore('keno', {
         return;
       }
 
-      // Can only select up to 5 squares
-      if (this.selectedSquares.size >= 5) {
-        // Trigger shake and toast
-        this.triggerMaxReached();
-        return;
+      // Check action-based limits
+      if (this.selectedAction === 'forage') {
+        if (this.selectedSquares.size >= 5) {
+          this.triggerMaxReached();
+          return;
+        }
+      } else if (this.selectedAction === 'nest' || this.selectedAction === 'hunt') {
+        if (this.selectedSquares.size >= 1) {
+          this.triggerMaxReached();
+          return;
+        }
       }
 
       // Select the square
@@ -309,16 +398,16 @@ export const useKenoStore = defineStore('keno', {
     },
 
     async endTurn() {
-      if (this.selectedSquares.size === 0) return;
+      if (this.selectedSquares.size === 0 || !this.selectedAction) return;
       if (this.isFlippingCards) return; // Prevent multiple calls
 
       this.isFlippingCards = true;
-      const g = this.selectedSquares.size;
-      const payouts = fairPayoutsTo1Integer(g);
-      let matchesFound = 0;
+      const action = this.selectedAction;
 
-      // Track coins earned this turn
-      let coinsEarnedThisTurn = 0;
+      // Track resources earned/lost this turn
+      let foodEarned = 0;
+      let cassowariesEarned = 0;
+      let cassowariesLost = 0;
 
       // Convert selected squares to array for sequential processing
       const squaresToFlip = Array.from(this.selectedSquares);
@@ -339,20 +428,38 @@ export const useKenoStore = defineStore('keno', {
         // Flip the square
         this.flippedSquares.add(key);
 
-        // Check if it's a honeypot
-        const isHoneypot = this.grid[row][col].isSolutionQueen;
+        // Determine what's in this square
+        const isLion = this.grid[row][col].isSolutionQueen;
+        const hasFruit = this.grid[row][col].hasFruit;
+        const isNest = !isLion && !hasFruit;
+
         let popupValue = 0;
 
-        if (isHoneypot) {
-          matchesFound++;
-          // Calculate incremental payout: payout for k matches minus payout for k-1 matches
-          const payoutForK = payouts[matchesFound] || 0;
-          const payoutForKMinus1 = matchesFound > 1 ? payouts[matchesFound - 1] || 0 : 0;
-          popupValue = payoutForK - payoutForKMinus1;
-
-          this.coinsEarnedSquares.add(key);
-          this.coins += popupValue;
-          coinsEarnedThisTurn += popupValue;
+        // Apply rewards based on action
+        if (action === 'forage') {
+          if (hasFruit) {
+            foodEarned += 1;
+            popupValue = 1;
+          }
+          // Lion or nest = nothing
+        } else if (action === 'nest') {
+          if (isNest) {
+            cassowariesEarned += 3;
+            popupValue = 3;
+          } else if (isLion) {
+            cassowariesLost += 1;
+            popupValue = -1;
+          }
+          // Fruit = nothing (no gain, no loss)
+        } else if (action === 'hunt') {
+          if (isLion) {
+            foodEarned += 5;
+            popupValue = 5;
+          } else if (hasFruit) {
+            foodEarned += 1;
+            popupValue = 1;
+          }
+          // Nest = nothing
         }
 
         // Show popup
@@ -369,25 +476,27 @@ export const useKenoStore = defineStore('keno', {
         }
       }
 
+      // Apply resource changes
+      this.food += foodEarned;
+      this.cassowaries = Math.max(0, this.cassowaries + cassowariesEarned - cassowariesLost);
+
       // Record turn history
       this.turnHistory.push({
         turn: this.currentTurn,
-        selections: g,
-        coinsEarned: coinsEarnedThisTurn,
+        action: action,
+        selections: squaresToFlip.length,
+        foodEarned: foodEarned,
+        cassowariesGained: cassowariesEarned,
+        cassowariesLost: cassowariesLost,
+        coinsEarned: 0, // Keep for compatibility, but not used
       });
 
-      // Clear selections after all cards are flipped
+      // Clear selections and action after all cards are flipped
       this.selectedSquares.clear();
+      this.selectedAction = 'forage'; // Reset to default action
       // Clear toast notification
       this.showMaxReachedToast = false;
       this.isFlippingCards = false;
-
-      // Check if all honeypots found
-      const totalHoneypotsFound = this.countHoneypotsFound();
-      if (totalHoneypotsFound >= 5) {
-        this.completeRound();
-        return;
-      }
 
       // Move to next turn automatically
       this.currentTurn++;
@@ -466,6 +575,10 @@ export const useKenoStore = defineStore('keno', {
       this.gameOver = true;
     },
 
+    setAction(action: 'forage' | 'nest' | 'hunt') {
+      this.selectedAction = action;
+    },
+
     resetGame() {
       // Reset game state without loading a new puzzle
       this.flippedSquares.clear();
@@ -480,6 +593,9 @@ export const useKenoStore = defineStore('keno', {
       this.isFlippingCards = false;
       this.turnHistory = [];
       this.coins = 0;
+      this.food = 0;
+      this.cassowaries = 0;
+      this.selectedAction = 'forage'; // Reset to default action
       // Note: highScore persists across resets
     },
 
@@ -487,6 +603,28 @@ export const useKenoStore = defineStore('keno', {
       // Reset game and load a new puzzle
       this.resetGame();
       this.loadRandomPuzzle();
+    },
+
+    toggleShowBoard() {
+      const wasShowing = this.showBoard;
+      this.showBoard = !this.showBoard;
+
+      // If we're turning on show board, flip all squares
+      if (!wasShowing && this.showBoard) {
+        this.flipAllSquaresForShowBoard();
+      }
+    },
+
+    flipAllSquaresForShowBoard() {
+      // Flip all squares without ending the game (for show board preview)
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          const key = `${row},${col}`;
+          if (!this.flippedSquares.has(key)) {
+            this.flippedSquares.add(key);
+          }
+        }
+      }
     },
   },
 });
