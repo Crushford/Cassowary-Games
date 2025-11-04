@@ -25,6 +25,9 @@
 
     <!-- Controls at the bottom -->
     <div class="flex-none p-4 space-y-3">
+      <!-- Action Selector -->
+      <ActionSelector :store="kenoStore" />
+
       <!-- End Turn Button - Always visible but disabled when no selections -->
       <div class="flex justify-center">
         <button
@@ -65,6 +68,7 @@ import { useKenoStore } from '../stores/kenoStore';
 const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
 const KenoSquare = defineAsyncComponent(() => import('../components/keno/KenoSquare.vue'));
 const KenoHeader = defineAsyncComponent(() => import('../components/keno/KenoHeader.vue'));
+const ActionSelector = defineAsyncComponent(() => import('../components/keno/ActionSelector.vue'));
 const EndOfRoundModal = defineAsyncComponent(
   () => import('../components/keno/EndOfRoundModal.vue')
 );

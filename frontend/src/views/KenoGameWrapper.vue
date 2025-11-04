@@ -7,7 +7,7 @@
     </div>
 
     <!-- Debug Panel on the right -->
-    <div class="flex-shrink-0 w-64">
+    <div class="hidden md:flex flex-shrink-0 w-64">
       <KenoDebugPanel :store="kenoStore" />
     </div>
   </div>

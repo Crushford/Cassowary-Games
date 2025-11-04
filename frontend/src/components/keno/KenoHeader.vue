@@ -7,16 +7,14 @@
         Turn <span class="font-semibold">{{ turn }}/5</span>
       </div>
       <div>
-        Coins <span class="font-semibold" aria-live="polite">{{ coins }}</span>
+        Food <span class="font-semibold" aria-live="polite">{{ food }}</span>
       </div>
       <div>
-        Selected <span class="font-semibold">{{ g }}/5</span>
+        Cassowaries <span class="font-semibold" aria-live="polite">{{ cassowaries }}</span>
       </div>
-    </div>
-
-    <!-- payout chips row -->
-    <div class="grid grid-cols-5 gap-2 h-10">
-      <PayoutChip v-for="k in 5" :key="k" :k="k" :payout="payoutRow[k - 1]" :disabled="k > g" />
+      <div>
+        Selected <span class="font-semibold">{{ g }}/{{ requiredSelections }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -24,16 +22,15 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useKenoStore } from '../../stores/kenoStore';
-import { buildIntegerPayoutRowOfFive } from '../../lib/kenoOdds';
-import PayoutChip from './PayoutChip.vue';
 
 const store = useKenoStore();
 const turn = computed(() => store.currentTurn);
-const coins = computed(() => store.coins);
+const food = computed(() => store.food);
+const cassowaries = computed(() => store.cassowaries);
 const g = computed(() => store.selectedSquares.size);
-
-const payoutRow = computed(() => {
-  const count = g.value;
-  return count === 0 ? [0, 0, 0, 0, 0] : buildIntegerPayoutRowOfFive(count);
+const requiredSelections = computed(() => {
+  if (store.selectedAction === 'forage') return 5;
+  if (store.selectedAction === 'nest' || store.selectedAction === 'hunt') return 1;
+  return 0;
 });
 </script>
