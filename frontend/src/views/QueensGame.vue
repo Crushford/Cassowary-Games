@@ -70,7 +70,7 @@
               class="px-4 py-2 text-white font-semibold text-sm rounded-lg transition-colors duration-200 bg-blue-600 hover:bg-blue-700 cursor-pointer"
               @click="handleNewPuzzle"
             >
-              New Puzzle
+              Back to Levels
             </button>
           </div>
         </div>
@@ -80,7 +80,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, defineAsyncComponent } from 'vue';
+import { onMounted, watch, defineAsyncComponent } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useQueensStore } from '../stores/queensStore';
 
 const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
@@ -90,15 +91,41 @@ const QueensCompletionModal = defineAsyncComponent(
   () => import('../components/queens/QueensCompletionModal.vue')
 );
 
+const route = useRoute();
+const router = useRouter();
 const queensStore = useQueensStore();
 
-async function handleNewPuzzle() {
-  // Reset game state
-  queensStore.isComplete = false;
-  queensStore.clearMarkers();
+async function loadPuzzleFromRoute() {
+  console.log('[QueensGame] loadPuzzleFromRoute called');
+  const puzzleId = route.params.puzzleId as string;
+  console.log('[QueensGame] Route params:', route.params);
+  console.log('[QueensGame] puzzleId from route:', puzzleId);
 
-  // Load a new random puzzle
-  await queensStore.loadRandomPuzzle();
+  if (puzzleId) {
+    try {
+      console.log('[QueensGame] Calling loadPuzzleById with:', puzzleId);
+      await queensStore.loadPuzzleById(puzzleId);
+      console.log('[QueensGame] Puzzle loaded successfully');
+    } catch (err) {
+      console.error('[QueensGame] Error loading puzzle:', err);
+      console.error('[QueensGame] Error details:', {
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      });
+      // Redirect to levels page if puzzle not found
+      console.log('[QueensGame] Redirecting to /queens');
+      router.push('/queens');
+    }
+  } else {
+    console.log('[QueensGame] No puzzleId found, redirecting to /queens');
+    // If no puzzleId, redirect to levels page
+    router.push('/queens');
+  }
+}
+
+async function handleNewPuzzle() {
+  // Navigate back to levels page
+  router.push('/queens');
 }
 
 function handleUndo() {
@@ -110,9 +137,18 @@ function handleClear() {
 }
 
 onMounted(async () => {
-  // Load a random puzzle
-  await queensStore.loadRandomPuzzle();
+  console.log('[QueensGame] onMounted called');
+  await loadPuzzleFromRoute();
 });
+
+// Watch for route changes (e.g., when navigating between puzzles)
+watch(
+  () => route.params.puzzleId,
+  async (newPuzzleId, oldPuzzleId) => {
+    console.log('[QueensGame] Route watch triggered:', { newPuzzleId, oldPuzzleId });
+    await loadPuzzleFromRoute();
+  }
+);
 
 defineOptions({
   name: 'QueensGame',

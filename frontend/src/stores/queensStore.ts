@@ -20,6 +20,8 @@ interface QueensState {
   moveHistory: MarkType[][][];
   playerMarks: MarkType[][];
   puzzleDatabase: any;
+  allPuzzles: any[]; // Flat array of all puzzles ending in -0
+  puzzleIdMap: Map<number, any>; // Map from numeric ID to puzzle
   currentPuzzleIndex: number;
   isComplete: boolean;
   showSolution: boolean; // Whether to reveal the solution
@@ -33,6 +35,8 @@ export const useQueensStore = defineStore('queens', {
     moveHistory: [],
     playerMarks: Array.from({ length: 4 }, () => Array(4).fill(null as MarkType)),
     puzzleDatabase: null,
+    allPuzzles: [],
+    puzzleIdMap: new Map(),
     currentPuzzleIndex: 0,
     isComplete: false,
     showSolution: false,
@@ -109,8 +113,25 @@ export const useQueensStore = defineStore('queens', {
     },
 
     hasErrors: (state): boolean => {
-      const solutionQueens = state.solutionQueenPositions;
-      const playerQueens = state.queenPositions;
+      // Get solution queens
+      const solutionQueens: Pos[] = [];
+      for (let r = 0; r < state.gridSize; r++) {
+        for (let c = 0; c < state.gridSize; c++) {
+          if (state.grid[r][c].isSolutionQueen) {
+            solutionQueens.push({ row: r, col: c });
+          }
+        }
+      }
+
+      // Get player queens
+      const playerQueens: Pos[] = [];
+      for (let row = 0; row < state.gridSize; row++) {
+        for (let col = 0; col < state.gridSize; col++) {
+          if (state.playerMarks[row][col] === 'queen') {
+            playerQueens.push({ row, col });
+          }
+        }
+      }
 
       // Must have exactly the right number of queens
       if (playerQueens.length !== solutionQueens.length) {
@@ -118,7 +139,7 @@ export const useQueensStore = defineStore('queens', {
       }
 
       // Check if all player queens match solution queens
-      const solutionSet = new Set(solutionQueens.map((q) => `${q.row},${q.col}`));
+      const solutionSet = new Set(solutionQueens.map((q: Pos) => `${q.row},${q.col}`));
       for (const queen of playerQueens) {
         if (!solutionSet.has(`${queen.row},${queen.col}`)) {
           return true; // Found a queen in wrong position
@@ -129,7 +150,17 @@ export const useQueensStore = defineStore('queens', {
     },
 
     isValidPuzzleState: (state): { isValid: boolean; errorMessage: string | null } => {
-      const queenCount = state.queenPositions.length;
+      // Get player queens
+      const playerQueens: Pos[] = [];
+      for (let row = 0; row < state.gridSize; row++) {
+        for (let col = 0; col < state.gridSize; col++) {
+          if (state.playerMarks[row][col] === 'queen') {
+            playerQueens.push({ row, col });
+          }
+        }
+      }
+
+      const queenCount = playerQueens.length;
       const requiredQueens = state.gridSize;
 
       // Check if we have the correct number of queens
@@ -140,10 +171,17 @@ export const useQueensStore = defineStore('queens', {
         };
       }
 
-      // Check if all queens are in correct positions
-      const solutionQueens = state.solutionQueenPositions;
-      const playerQueens = state.queenPositions;
-      const solutionSet = new Set(solutionQueens.map((q) => `${q.row},${q.col}`));
+      // Get solution queens
+      const solutionQueens: Pos[] = [];
+      for (let r = 0; r < state.gridSize; r++) {
+        for (let c = 0; c < state.gridSize; c++) {
+          if (state.grid[r][c].isSolutionQueen) {
+            solutionQueens.push({ row: r, col: c });
+          }
+        }
+      }
+
+      const solutionSet = new Set(solutionQueens.map((q: Pos) => `${q.row},${q.col}`));
 
       for (const queen of playerQueens) {
         if (!solutionSet.has(`${queen.row},${queen.col}`)) {
@@ -265,22 +303,54 @@ export const useQueensStore = defineStore('queens', {
     },
 
     async loadPuzzleDatabase() {
+      console.log('[queensStore] loadPuzzleDatabase called');
       try {
         const response = await fetch('/puzzles.json');
         if (!response.ok) {
           throw new Error(`Failed to load puzzles.json: ${response.status}`);
         }
         const data = await response.json();
-        // Filter each size's puzzles to only include those with id ending in -0
+        console.log('[queensStore] Loaded puzzles.json, sizes:', Object.keys(data));
+
+        // Filter each size's puzzles to only include those with id ending in exactly -0 (not -0V, -0H, etc.)
         this.puzzleDatabase = {};
-        for (const [sizeKey, puzzles] of Object.entries(data)) {
-          this.puzzleDatabase[sizeKey] = (puzzles as any[]).filter((puzzle: any) =>
-            puzzle.id.endsWith('-0')
+        const allPuzzles: any[] = [];
+        this.puzzleIdMap = new Map();
+        let globalIndex = 0;
+
+        // Collect all puzzles from all sizes
+        for (const [sizeKey, sizePuzzles] of Object.entries(data)) {
+          const filtered = (sizePuzzles as any[]).filter((puzzle: any) =>
+            /^pz-\d+-0$/.test(puzzle.id)
           );
+          console.log(`[queensStore] Size ${sizeKey}: ${filtered.length} puzzles after filtering`);
+
+          // Assign numeric IDs (index + 1) to each puzzle
+          const puzzlesWithNumericIds = filtered.map((puzzle: any) => {
+            globalIndex++;
+            const numericId = globalIndex;
+            const puzzleWithId = {
+              ...puzzle,
+              id: numericId,
+              originalId: puzzle.id, // Keep the original ID for reference
+            };
+            this.puzzleIdMap.set(numericId, puzzleWithId);
+            return puzzleWithId;
+          });
+
+          this.puzzleDatabase[sizeKey] = puzzlesWithNumericIds;
+          allPuzzles.push(...puzzlesWithNumericIds);
         }
+
+        this.allPuzzles = allPuzzles;
+        console.log('[queensStore] Database loaded:', {
+          totalPuzzles: allPuzzles.length,
+          mapSize: this.puzzleIdMap.size,
+          sizes: Object.keys(this.puzzleDatabase),
+        });
         return true;
       } catch (error) {
-        console.error('Error loading puzzle database:', error);
+        console.error('[queensStore] Error loading puzzle database:', error);
         return false;
       }
     },
@@ -355,6 +425,59 @@ export const useQueensStore = defineStore('queens', {
 
       // Parse and load the puzzle
       this.parsePuzzleData(puzzle);
+    },
+
+    async loadPuzzleById(puzzleId: string | number) {
+      console.log('[queensStore] loadPuzzleById called with:', puzzleId, typeof puzzleId);
+      try {
+        // Load database if not already loaded
+        console.log('[queensStore] Checking puzzleDatabase:', {
+          hasDatabase: !!this.puzzleDatabase,
+          mapSize: this.puzzleIdMap.size,
+        });
+
+        if (!this.puzzleDatabase || this.puzzleIdMap.size === 0) {
+          console.log('[queensStore] Loading puzzle database...');
+          const success = await this.loadPuzzleDatabase();
+          console.log('[queensStore] Database load result:', success);
+          if (!success) {
+            throw new Error('Failed to load puzzle database');
+          }
+        }
+
+        // Parse puzzleId as number (from route parameter)
+        const numericId = typeof puzzleId === 'string' ? parseInt(puzzleId, 10) : puzzleId;
+        console.log('[queensStore] Parsed numericId:', numericId, 'isNaN:', isNaN(numericId));
+
+        if (isNaN(numericId)) {
+          throw new Error(`Invalid puzzle ID: ${puzzleId}`);
+        }
+
+        // Look up puzzle by numeric ID
+        console.log('[queensStore] Looking up puzzle in map, map size:', this.puzzleIdMap.size);
+        const puzzle = this.puzzleIdMap.get(numericId);
+        console.log('[queensStore] Puzzle lookup result:', puzzle ? 'found' : 'not found');
+
+        if (!puzzle) {
+          console.error(
+            '[queensStore] Puzzle not found. Available IDs:',
+            Array.from(this.puzzleIdMap.keys()).slice(0, 10)
+          );
+          throw new Error(`Puzzle with ID ${numericId} not found`);
+        }
+
+        // Parse and load the puzzle
+        console.log('[queensStore] Parsing puzzle data:', puzzle.id, puzzle.originalId);
+        this.parsePuzzleData(puzzle);
+        console.log('[queensStore] Puzzle loaded successfully');
+      } catch (error) {
+        console.error('[queensStore] Error loading puzzle by ID:', error);
+        console.error('[queensStore] Error details:', {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+        throw error;
+      }
     },
 
     clearMarkers() {

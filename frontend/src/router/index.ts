@@ -48,6 +48,11 @@ const router = createRouter({
     {
       path: '/queens',
       name: 'queens',
+      component: () => import('../views/Levels.vue'),
+    },
+    {
+      path: '/queens/:puzzleId',
+      name: 'queens-puzzle',
       component: QueensGame,
     },
     {

@@ -30,6 +30,14 @@
             <h3 class="text-xl font-bold mb-2">(Under construction) Cassowary Casino</h3>
             <p>Play the honeypot tables</p>
           </router-link>
+
+          <router-link
+            to="/queens"
+            class="block p-6 bg-pink-600 hover:bg-pink-700 rounded-lg transition-colors"
+          >
+            <h3 class="text-xl font-bold mb-2">Queens Game</h3>
+            <p>Browse and solve queen placement puzzles</p>
+          </router-link>
         </div>
       </div>
 
