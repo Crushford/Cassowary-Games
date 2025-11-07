@@ -98,10 +98,28 @@ const queensStore = useQueensStore();
 async function loadPuzzleFromRoute() {
   console.log('[QueensGame] loadPuzzleFromRoute called');
   const puzzleId = route.params.puzzleId as string;
+  const levelName = route.params.levelName as string;
   console.log('[QueensGame] Route params:', route.params);
   console.log('[QueensGame] puzzleId from route:', puzzleId);
+  console.log('[QueensGame] levelName from route:', levelName);
 
-  if (puzzleId) {
+  // Check if this is a tutorial puzzle
+  if (levelName) {
+    try {
+      console.log('[QueensGame] Loading tutorial puzzle:', levelName);
+      await queensStore.loadTutorialPuzzle(levelName);
+      console.log('[QueensGame] Tutorial puzzle loaded successfully');
+    } catch (err) {
+      console.error('[QueensGame] Error loading tutorial puzzle:', err);
+      console.error('[QueensGame] Error details:', {
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      });
+      // Redirect to levels page if puzzle not found
+      console.log('[QueensGame] Redirecting to /queens');
+      router.push('/queens');
+    }
+  } else if (puzzleId) {
     try {
       console.log('[QueensGame] Calling loadPuzzleById with:', puzzleId);
       await queensStore.loadPuzzleById(puzzleId);
@@ -117,7 +135,7 @@ async function loadPuzzleFromRoute() {
       router.push('/queens');
     }
   } else {
-    console.log('[QueensGame] No puzzleId found, redirecting to /queens');
+    console.log('[QueensGame] No puzzleId or levelName found, redirecting to /queens');
     // If no puzzleId, redirect to levels page
     router.push('/queens');
   }
@@ -143,9 +161,14 @@ onMounted(async () => {
 
 // Watch for route changes (e.g., when navigating between puzzles)
 watch(
-  () => route.params.puzzleId,
-  async (newPuzzleId, oldPuzzleId) => {
-    console.log('[QueensGame] Route watch triggered:', { newPuzzleId, oldPuzzleId });
+  () => [route.params.puzzleId, route.params.levelName],
+  async ([newPuzzleId, newLevelName], [oldPuzzleId, oldLevelName]) => {
+    console.log('[QueensGame] Route watch triggered:', {
+      newPuzzleId,
+      newLevelName,
+      oldPuzzleId,
+      oldLevelName,
+    });
     await loadPuzzleFromRoute();
   }
 );

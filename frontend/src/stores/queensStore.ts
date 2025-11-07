@@ -22,10 +22,42 @@ interface QueensState {
   puzzleDatabase: any;
   allPuzzles: any[]; // Flat array of all puzzles ending in -0
   puzzleIdMap: Map<number, any>; // Map from numeric ID to puzzle
+  tutorialPuzzles: any[]; // Tutorial puzzles (level-1 through level-10)
   currentPuzzleIndex: number;
   isComplete: boolean;
   showSolution: boolean; // Whether to reveal the solution
   currentPuzzle: any;
+  currentPuzzleId: string | number | null; // Track current puzzle ID for completion tracking
+}
+
+// LocalStorage key for completed puzzles
+const COMPLETED_PUZZLES_KEY = 'queens-completed-puzzles';
+
+// Helper functions for localStorage
+function getCompletedPuzzles(): Set<string> {
+  try {
+    const stored = localStorage.getItem(COMPLETED_PUZZLES_KEY);
+    if (stored) {
+      return new Set(JSON.parse(stored));
+    }
+  } catch (e) {
+    console.error('Error reading completed puzzles from localStorage:', e);
+  }
+  return new Set();
+}
+
+function saveCompletedPuzzle(puzzleId: string) {
+  try {
+    const completed = getCompletedPuzzles();
+    completed.add(puzzleId);
+    localStorage.setItem(COMPLETED_PUZZLES_KEY, JSON.stringify(Array.from(completed)));
+  } catch (e) {
+    console.error('Error saving completed puzzle to localStorage:', e);
+  }
+}
+
+function isPuzzleCompleted(puzzleId: string): boolean {
+  return getCompletedPuzzles().has(puzzleId);
 }
 
 export const useQueensStore = defineStore('queens', {
@@ -37,10 +69,12 @@ export const useQueensStore = defineStore('queens', {
     puzzleDatabase: null,
     allPuzzles: [],
     puzzleIdMap: new Map(),
+    tutorialPuzzles: [],
     currentPuzzleIndex: 0,
     isComplete: false,
     showSolution: false,
     currentPuzzle: null,
+    currentPuzzleId: null,
   }),
 
   getters: {
@@ -295,6 +329,14 @@ export const useQueensStore = defineStore('queens', {
       const validation = this.isValidPuzzleState;
       if (validation.isValid) {
         this.isComplete = true;
+        // Save completion to localStorage
+        if (this.currentPuzzleId !== null) {
+          const puzzleId =
+            typeof this.currentPuzzleId === 'string'
+              ? this.currentPuzzleId
+              : String(this.currentPuzzleId);
+          saveCompletedPuzzle(puzzleId);
+        }
         // Don't reveal solution - just mark as complete
       } else {
         // Has errors - don't complete, but keep the error state
@@ -343,10 +385,30 @@ export const useQueensStore = defineStore('queens', {
         }
 
         this.allPuzzles = allPuzzles;
+
+        // Load tutorial puzzles (level-1 through level-10)
+        const tutorialPuzzles: any[] = [];
+        for (const [sizeKey, sizePuzzles] of Object.entries(data)) {
+          const tutorial = (sizePuzzles as any[]).filter(
+            (puzzle: any) => puzzle.name && /^level-\d+$/.test(puzzle.name)
+          );
+          // Only get the -0 variant of each tutorial level
+          const tutorialBase = tutorial.filter((puzzle: any) => /^pz-\d+-0$/.test(puzzle.id));
+          tutorialPuzzles.push(...tutorialBase);
+        }
+        // Sort by level number
+        tutorialPuzzles.sort((a, b) => {
+          const aNum = parseInt(a.name.replace('level-', ''), 10);
+          const bNum = parseInt(b.name.replace('level-', ''), 10);
+          return aNum - bNum;
+        });
+        this.tutorialPuzzles = tutorialPuzzles;
+
         console.log('[queensStore] Database loaded:', {
           totalPuzzles: allPuzzles.length,
           mapSize: this.puzzleIdMap.size,
           sizes: Object.keys(this.puzzleDatabase),
+          tutorialPuzzles: this.tutorialPuzzles.length,
         });
         return true;
       } catch (error) {
@@ -389,6 +451,8 @@ export const useQueensStore = defineStore('queens', {
       }
 
       this.currentPuzzle = puzzleData;
+      // Set current puzzle ID for completion tracking
+      this.currentPuzzleId = puzzleData.name || puzzleData.id || puzzleData.originalId;
     },
 
     getNextPuzzle() {
@@ -510,6 +574,29 @@ export const useQueensStore = defineStore('queens', {
           }
         }
       }
+    },
+
+    // Load tutorial puzzle by name (e.g., "level-1")
+    async loadTutorialPuzzle(levelName: string) {
+      if (!this.puzzleDatabase) {
+        const success = await this.loadPuzzleDatabase();
+        if (!success) {
+          throw new Error('Failed to load puzzle database');
+        }
+      }
+
+      const tutorialPuzzle = this.tutorialPuzzles.find((p) => p.name === levelName);
+      if (!tutorialPuzzle) {
+        throw new Error(`Tutorial puzzle ${levelName} not found`);
+      }
+
+      this.parsePuzzleData(tutorialPuzzle);
+    },
+
+    // Check if a puzzle is completed
+    isPuzzleCompleted(puzzleId: string | number): boolean {
+      const id = typeof puzzleId === 'string' ? puzzleId : String(puzzleId);
+      return isPuzzleCompleted(id);
     },
   },
 });
