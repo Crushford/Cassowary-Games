@@ -19,7 +19,7 @@
         <div v-if="!selectedCategory" class="space-y-4">
           <!-- Tutorial Option -->
           <button
-            @click="selectCategory('tutorial')"
+            @click="selectTutorial"
             class="w-full p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-lg transition-all text-left border-2 border-transparent hover:border-blue-400"
           >
             <div class="text-2xl font-bold mb-1">Tutorial</div>
@@ -186,6 +186,11 @@ function loadPuzzle(puzzleId: number) {
 
 async function loadTutorialPuzzle(levelName: string) {
   router.push(`/queens/tutorial/${levelName}`);
+}
+
+function selectTutorial() {
+  // Auto-load first tutorial level
+  router.push('/queens/tutorial/level-1');
 }
 
 onMounted(() => {

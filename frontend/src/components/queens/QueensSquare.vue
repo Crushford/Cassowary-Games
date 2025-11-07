@@ -1,11 +1,27 @@
 <template>
   <button
     class="h-full w-full relative transition-colors"
-    :class="[backgroundColorClass, hoverClass]"
+    :class="[
+      backgroundColorClass,
+      hoverClass,
+      {
+        'ring-4 ring-yellow-400 ring-offset-2 ring-offset-gray-800 animate-pulse': isTutorialTarget,
+      },
+    ]"
     @click="handleClick"
+    :aria-label="ariaLabel"
+    :aria-describedby="isTutorialTarget ? 'tutorial-instruction' : undefined"
   >
     <!-- Content overlay -->
     <div class="relative z-10 flex items-center justify-center w-full h-full">
+      <!-- Error feedback (red X) -->
+      <span
+        v-if="showErrorFeedback"
+        class="text-6xl absolute z-30 animate-bounce"
+        style="text-shadow: 0 0 10px rgba(239, 68, 68, 0.8)"
+      >
+        ❌
+      </span>
       <!-- Show player marks (flag or queen) -->
       <span v-if="shouldShowFlag()" :class="getEmojiSizeClass()">🚧</span>
       <span v-else-if="shouldShowQueen()" :class="getEmojiSizeClass()">👑</span>
@@ -30,6 +46,47 @@ interface Props {
 const props = defineProps<Props>();
 const queensStore = useQueensStore();
 
+const isTutorialTarget = computed(() => {
+  if (!queensStore.isTutorialMode) return false;
+  const target = queensStore.currentTutorialTarget;
+  return target !== null && target.row === props.rowIndex && target.col === props.colIndex;
+});
+
+const showErrorFeedback = computed(() => {
+  if (!queensStore.showErrorFeedback || !queensStore.errorFeedbackSquare) return false;
+  return (
+    queensStore.errorFeedbackSquare.row === props.rowIndex &&
+    queensStore.errorFeedbackSquare.col === props.colIndex
+  );
+});
+
+const gridCell = computed(() => {
+  return props.store.grid[props.rowIndex]?.[props.colIndex];
+});
+
+const rowLabel = computed(() => String.fromCharCode(65 + props.rowIndex)); // A, B, C, etc.
+const colLabel = computed(() => props.colIndex + 1); // 1-indexed
+
+const ariaLabel = computed(() => {
+  const mark = queensStore.playerMarks[props.rowIndex][props.colIndex];
+  const color = gridCell.value?.groupColor || 'unknown';
+  let label = `Square at row ${rowLabel.value}, column ${colLabel.value}, color ${color}`;
+
+  if (mark === 'queen') {
+    label += ', contains queen';
+  } else if (mark === 'flag') {
+    label += ', flagged';
+  } else {
+    label += ', empty';
+  }
+
+  if (isTutorialTarget.value) {
+    label += ', this is the target square for the current tutorial step';
+  }
+
+  return label;
+});
+
 // Dark pastel color mapping for queens game
 const DARK_PASTEL_COLORS: Record<ColorName, { bg: string; hover: string }> = {
   red: { bg: 'bg-red-800', hover: 'hover:bg-red-700' },
@@ -44,10 +101,6 @@ const DARK_PASTEL_COLORS: Record<ColorName, { bg: string; hover: string }> = {
   amber: { bg: 'bg-amber-700', hover: 'hover:bg-amber-600' }, // Different shade
 };
 
-const gridCell = computed(() => {
-  return props.store.grid[props.rowIndex]?.[props.colIndex];
-});
-
 const backgroundColorClass = computed(() => {
   const color = gridCell.value?.groupColor as ColorName | undefined;
   if (color && DARK_PASTEL_COLORS[color]) {
@@ -56,12 +109,9 @@ const backgroundColorClass = computed(() => {
   return 'bg-gray-700';
 });
 
+// Remove hover class - no hover effect
 const hoverClass = computed(() => {
-  const color = gridCell.value?.groupColor as ColorName | undefined;
-  if (color && DARK_PASTEL_COLORS[color]) {
-    return DARK_PASTEL_COLORS[color].hover;
-  }
-  return 'hover:bg-gray-600';
+  return '';
 });
 
 function handleClick() {

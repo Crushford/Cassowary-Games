@@ -14,6 +14,14 @@ const SYMBOL_TO_COLOR: Record<string, ColorName> = Object.entries(COLOR_SYMBOLS)
   {} as Record<string, ColorName>
 );
 
+export interface TutorialStep {
+  id: string;
+  instruction: string;
+  targetSquare?: Pos | null; // Square to click (null means any square)
+  action?: 'click' | 'place-flag' | 'place-queen' | 'complete' | 'mode-selected';
+  validate?: (store: any) => boolean; // Custom validation function
+}
+
 interface QueensState {
   grid: GridSquare[][];
   gridSize: number;
@@ -28,6 +36,22 @@ interface QueensState {
   showSolution: boolean; // Whether to reveal the solution
   currentPuzzle: any;
   currentPuzzleId: string | number | null; // Track current puzzle ID for completion tracking
+  // Tutorial state
+  isTutorialMode: boolean;
+  tutorialSteps: TutorialStep[];
+  currentTutorialStep: number;
+  tutorialInstruction: string | null;
+  lastClickedSquare: Pos | null;
+  tutorialValidSquares: Pos[]; // Valid squares for current tutorial step
+  shouldShakeToast: boolean; // Flag to trigger toast shake animation
+  showErrorFeedback: boolean; // Flag to show error feedback (red X)
+  errorFeedbackSquare: Pos | null; // Square to show error feedback on
+  highlightToolSelector: boolean; // Flag to highlight tool selector in overlay
+  // UI state
+  uiState: {
+    placementMode: 'auto' | 'flag' | 'queen'; // 'auto', 'flag', or 'queen'
+    autoFlagging: boolean; // Automatically flag blocked squares
+  };
 }
 
 // LocalStorage key for completed puzzles
@@ -75,6 +99,22 @@ export const useQueensStore = defineStore('queens', {
     showSolution: false,
     currentPuzzle: null,
     currentPuzzleId: null,
+    // Tutorial state
+    isTutorialMode: false,
+    tutorialSteps: [],
+    currentTutorialStep: 0,
+    tutorialInstruction: null,
+    lastClickedSquare: null,
+    tutorialValidSquares: [],
+    shouldShakeToast: false,
+    showErrorFeedback: false,
+    errorFeedbackSquare: null,
+    highlightToolSelector: false,
+    // UI state
+    uiState: {
+      placementMode: 'auto', // 'auto', 'flag', or 'queen'
+      autoFlagging: true, // Automatically flag blocked squares
+    },
   }),
 
   getters: {
@@ -228,6 +268,14 @@ export const useQueensStore = defineStore('queens', {
 
       return { isValid: true, errorMessage: null };
     },
+
+    currentTutorialTarget: (state): Pos | null => {
+      if (!state.isTutorialMode || state.currentTutorialStep >= state.tutorialSteps.length) {
+        return null;
+      }
+      const step = state.tutorialSteps[state.currentTutorialStep];
+      return step.targetSquare || null;
+    },
   },
 
   actions: {
@@ -250,17 +298,22 @@ export const useQueensStore = defineStore('queens', {
         const lastPlayerMarks = this.moveHistory.pop();
         if (lastPlayerMarks) {
           this.playerMarks = lastPlayerMarks;
-          // Recalculate blocked moves after undo
-          // Clear all flags first, then recalculate
-          for (let r = 0; r < this.gridSize; r++) {
-            for (let c = 0; c < this.gridSize; c++) {
-              if (this.playerMarks[r][c] === 'flag') {
-                this.playerMarks[r][c] = null;
+          // Recalculate blocked moves after undo (only if auto-flagging is enabled)
+          if (this.uiState.autoFlagging) {
+            // Clear all flags first, then recalculate
+            for (let r = 0; r < this.gridSize; r++) {
+              for (let c = 0; c < this.gridSize; c++) {
+                if (this.playerMarks[r][c] === 'flag') {
+                  this.playerMarks[r][c] = null;
+                }
               }
             }
+            // Re-flag based on current queens
+            this.updateBlockedMoves();
           }
-          // Re-flag based on current queens
-          this.updateBlockedMoves();
+          // Clear error feedback when undoing
+          this.showErrorFeedback = false;
+          this.errorFeedbackSquare = null;
         }
       }
     },
@@ -274,9 +327,38 @@ export const useQueensStore = defineStore('queens', {
     placeQueen(row: number, col: number) {
       this.saveToHistory();
       this.playerMarks[row][col] = 'queen';
-      // Auto-flag blocked squares when placing a queen (always enabled)
-      this.updateBlockedMoves();
+      // Auto-flag blocked squares when placing a queen (if enabled)
+      if (this.uiState.autoFlagging) {
+        this.updateBlockedMoves();
+      }
       this.checkBoardCompletion();
+
+      // Check tutorial step after placing queen
+      if (this.isTutorialMode) {
+        // Check if we've placed 3 queens (single-square colors)
+        const queenCount = this.queenPositions.length;
+        if (queenCount === 3) {
+          // Find the step that should trigger after 3 queens
+          const currentStepIndex = this.currentTutorialStep;
+          const currentStep = this.tutorialSteps[currentStepIndex];
+
+          // If we're on a place-queen step, advance to the "3 queens placed" message
+          if (currentStep && currentStep.action === 'place-queen') {
+            // Find the next step that's the "3 queens placed" message
+            for (let i = currentStepIndex + 1; i < this.tutorialSteps.length; i++) {
+              const step = this.tutorialSteps[i];
+              if (step.id === 'three-queens-placed') {
+                this.currentTutorialStep = i;
+                this.updateTutorialInstruction();
+                return;
+              }
+            }
+          }
+        }
+
+        this.checkTutorialStep({ row, col }, 'place-queen');
+      }
+
       return true;
     },
 
@@ -295,23 +377,109 @@ export const useQueensStore = defineStore('queens', {
             }
           }
         }
-        // Re-flag based on remaining queens
-        this.updateBlockedMoves();
+        // Re-flag based on remaining queens (if auto-flagging is enabled)
+        if (this.uiState.autoFlagging) {
+          this.updateBlockedMoves();
+        }
       }
     },
 
     handleSquareClick(row: number, col: number) {
+      // Track clicked square for tutorial
+      this.lastClickedSquare = { row, col };
+
+      // Clear any previous error feedback
+      this.showErrorFeedback = false;
+      this.errorFeedbackSquare = null;
+
+      const mode = this.uiState.placementMode;
       const currentMark = this.playerMarks[row][col];
 
-      if (currentMark === null) {
-        // First click: place flag
-        this.placeFlag(row, col);
-      } else if (currentMark === 'flag') {
-        // Second click: place queen
-        this.placeQueen(row, col);
-      } else if (currentMark === 'queen') {
-        // Third click: remove mark
-        this.removeMark(row, col);
+      // Handle clicks based on placement mode
+      if (mode === 'flag') {
+        // Flag mode: toggle flag only
+        if (currentMark === null) {
+          this.placeFlag(row, col);
+        } else if (currentMark === 'flag') {
+          this.removeMark(row, col);
+        } else if (currentMark === 'queen') {
+          // Remove queen first, then can place flag
+          this.removeMark(row, col);
+        }
+        return;
+      } else if (mode === 'queen') {
+        // Queen mode: place or remove queen directly
+        if (currentMark === null) {
+          // In tutorial mode, check if this is a solution queen
+          if (this.isTutorialMode) {
+            const solutionQueens = this.solutionQueenPositions;
+            const isSolutionQueen = solutionQueens.some(
+              (queen) => queen.row === row && queen.col === col
+            );
+
+            if (!isSolutionQueen) {
+              // Show error feedback
+              this.showErrorFeedback = true;
+              this.errorFeedbackSquare = { row, col };
+              this.shakeToast();
+              // Clear error feedback after 2 seconds
+              setTimeout(() => {
+                this.showErrorFeedback = false;
+                this.errorFeedbackSquare = null;
+              }, 2000);
+              return;
+            }
+          }
+
+          // Check if it's a valid move for placing a queen
+          if (this.isValidMove(row, col)) {
+            this.placeQueen(row, col);
+            // Tutorial step checking is done in placeQueen
+          } else {
+            // Invalid move - show error feedback
+            if (this.isTutorialMode) {
+              this.showErrorFeedback = true;
+              this.errorFeedbackSquare = { row, col };
+              this.shakeToast();
+              // Clear error feedback after 2 seconds
+              setTimeout(() => {
+                this.showErrorFeedback = false;
+                this.errorFeedbackSquare = null;
+              }, 2000);
+            }
+          }
+        } else if (currentMark === 'queen') {
+          // Remove queen
+          this.removeMark(row, col);
+        } else if (currentMark === 'flag') {
+          // Remove flag and place queen if valid
+          this.removeMark(row, col);
+          if (this.isValidMove(row, col)) {
+            this.placeQueen(row, col);
+            // Tutorial step checking is done in placeQueen
+          }
+        }
+        return;
+      } else {
+        // Auto mode: first click flag, second click queen, third click remove
+        if (currentMark === null) {
+          // First click: place flag
+          this.placeFlag(row, col);
+          // Check tutorial step completion
+          if (this.isTutorialMode) {
+            this.checkTutorialStep({ row, col }, 'place-flag');
+          }
+        } else if (currentMark === 'flag') {
+          // Second click: place queen
+          this.placeQueen(row, col);
+          // Check tutorial step completion
+          if (this.isTutorialMode) {
+            this.checkTutorialStep({ row, col }, 'place-queen');
+          }
+        } else if (currentMark === 'queen') {
+          // Third click: remove mark
+          this.removeMark(row, col);
+        }
       }
     },
 
@@ -336,6 +504,10 @@ export const useQueensStore = defineStore('queens', {
               ? this.currentPuzzleId
               : String(this.currentPuzzleId);
           saveCompletedPuzzle(puzzleId);
+        }
+        // Check tutorial completion step
+        if (this.isTutorialMode) {
+          this.checkTutorialStep(null, 'complete');
         }
         // Don't reveal solution - just mark as complete
       } else {
@@ -597,6 +769,198 @@ export const useQueensStore = defineStore('queens', {
     isPuzzleCompleted(puzzleId: string | number): boolean {
       const id = typeof puzzleId === 'string' ? puzzleId : String(puzzleId);
       return isPuzzleCompleted(id);
+    },
+
+    // Tutorial functions
+    initializeTutorial(steps: TutorialStep[], validSquares?: Pos[]) {
+      this.isTutorialMode = true;
+      this.tutorialSteps = steps;
+      this.currentTutorialStep = 0;
+      this.tutorialValidSquares = validSquares || [];
+      this.shouldShakeToast = false;
+      this.updateTutorialInstruction();
+    },
+
+    updateTutorialInstruction() {
+      if (this.currentTutorialStep < this.tutorialSteps.length) {
+        const currentStep = this.tutorialSteps[this.currentTutorialStep];
+
+        // Skip select-queen-mode step if queen mode is already selected
+        if (currentStep.id === 'select-queen-mode' && this.uiState.placementMode === 'queen') {
+          console.log('[QueensStore] Queen mode already selected, skipping step');
+          this.nextTutorialStep();
+          return;
+        }
+
+        this.tutorialInstruction = currentStep.instruction;
+
+        // Show overlay for tool selector step
+        this.highlightToolSelector = currentStep.id === 'select-queen-mode';
+
+        // Auto-advance explanation steps after 5 seconds
+        if (currentStep.id.startsWith('explain-') && currentStep.action === undefined) {
+          setTimeout(() => {
+            // Only advance if we're still on this step
+            if (
+              this.isTutorialMode &&
+              this.currentTutorialStep < this.tutorialSteps.length &&
+              this.tutorialSteps[this.currentTutorialStep].id === currentStep.id
+            ) {
+              this.nextTutorialStep();
+            }
+          }, 5000);
+        }
+
+        console.log('[QueensStore] updateTutorialInstruction:', {
+          currentStepId: currentStep.id,
+          highlightToolSelector: this.highlightToolSelector,
+        });
+      } else {
+        // Tutorial complete
+        this.tutorialInstruction = null;
+        this.highlightToolSelector = false;
+      }
+    },
+
+    shakeToast() {
+      this.shouldShakeToast = true;
+      // Reset shake flag after animation
+      setTimeout(() => {
+        this.shouldShakeToast = false;
+      }, 500);
+    },
+
+    checkTutorialStep(clickedPos: Pos | null, action: string) {
+      if (!this.isTutorialMode || this.currentTutorialStep >= this.tutorialSteps.length) {
+        return;
+      }
+
+      const currentStep = this.tutorialSteps[this.currentTutorialStep];
+      console.log('[QueensStore] checkTutorialStep:', {
+        currentStepId: currentStep.id,
+        action,
+        placementMode: this.uiState.placementMode,
+        clickedPos,
+      });
+
+      // Special handling for mode selection step
+      if (currentStep.id === 'select-queen-mode') {
+        // Check if mode is set to 'queen'
+        if (this.uiState.placementMode === 'queen') {
+          console.log('[QueensStore] Mode is queen, advancing tutorial step');
+          this.nextTutorialStep();
+        } else {
+          console.log('[QueensStore] Mode is not queen yet:', this.uiState.placementMode);
+        }
+        return;
+      }
+
+      // Check if action matches
+      if (currentStep.action && currentStep.action !== action) {
+        return;
+      }
+
+      // For place-queen steps, check if clicked square is a solution queen
+      if (action === 'place-queen' && clickedPos) {
+        const solutionQueens = this.solutionQueenPositions;
+        const isSolutionQueen = solutionQueens.some(
+          (queen) => queen.row === clickedPos.row && queen.col === clickedPos.col
+        );
+
+        if (!isSolutionQueen) {
+          // Not a solution queen - show error feedback
+          this.showErrorFeedback = true;
+          this.errorFeedbackSquare = clickedPos;
+          this.shakeToast();
+          setTimeout(() => {
+            this.showErrorFeedback = false;
+            this.errorFeedbackSquare = null;
+          }, 2000);
+          return; // Don't advance step
+        }
+      }
+
+      // Check if target square matches (if specified and not checking solution queens)
+      if (
+        currentStep.targetSquare !== undefined &&
+        currentStep.targetSquare !== null &&
+        action !== 'place-queen'
+      ) {
+        if (
+          !clickedPos ||
+          clickedPos.row !== currentStep.targetSquare.row ||
+          clickedPos.col !== currentStep.targetSquare.col
+        ) {
+          return;
+        }
+      }
+
+      // Check custom validation if provided
+      if (currentStep.validate && !currentStep.validate(this)) {
+        return;
+      }
+
+      // Step completed, move to next
+      this.nextTutorialStep();
+    },
+
+    nextTutorialStep() {
+      if (this.currentTutorialStep < this.tutorialSteps.length - 1) {
+        this.currentTutorialStep++;
+        this.updateTutorialInstruction();
+
+        // Update valid squares based on current step
+        const currentStep = this.tutorialSteps[this.currentTutorialStep];
+        if (
+          currentStep &&
+          currentStep.targetSquare === null &&
+          currentStep.action === 'place-queen'
+        ) {
+          // For steps with null targetSquare, allow any valid square
+          this.tutorialValidSquares = [];
+        }
+      } else {
+        // Tutorial complete
+        this.tutorialInstruction = null;
+        this.highlightToolSelector = false;
+      }
+    },
+
+    exitTutorialMode() {
+      this.isTutorialMode = false;
+      this.tutorialSteps = [];
+      this.currentTutorialStep = 0;
+      this.tutorialInstruction = null;
+      this.lastClickedSquare = null;
+      this.tutorialValidSquares = [];
+      this.shouldShakeToast = false;
+      this.showErrorFeedback = false;
+      this.errorFeedbackSquare = null;
+      this.highlightToolSelector = false;
+    },
+
+    // UI state management
+    setPlacementMode(mode: 'auto' | 'flag' | 'queen') {
+      console.log('[QueensStore] setPlacementMode called:', mode);
+      console.log('[QueensStore] isTutorialMode:', this.isTutorialMode);
+      console.log('[QueensStore] currentTutorialStep:', this.currentTutorialStep);
+      console.log('[QueensStore] tutorialSteps:', this.tutorialSteps);
+
+      this.uiState.placementMode = mode;
+      // Check if tutorial is waiting for mode selection
+      if (this.isTutorialMode) {
+        console.log('[QueensStore] Checking tutorial step after mode change');
+        this.checkTutorialStep(null, 'mode-selected');
+      }
+    },
+
+    setAutoFlagging(enabled: boolean) {
+      this.uiState.autoFlagging = enabled;
+      // If enabling auto-flagging, update flags based on current queens
+      if (enabled) {
+        this.updateBlockedMoves();
+      }
+      // When disabling, don't remove existing flags - just prevent future auto-flagging
     },
   },
 });
