@@ -7,7 +7,7 @@
     <div class="flex items-center bg-slate-700 rounded-lg p-1 gap-1">
       <button
         v-for="option in options"
-        :key="option.value"
+        :key="String(option.value)"
         :id="`auto-flagging-${option.value}`"
         class="px-4 py-2 rounded-md transition-all duration-200 flex items-center space-x-2 focus:outline-none min-w-[80px] text-sm font-semibold"
         :class="[
