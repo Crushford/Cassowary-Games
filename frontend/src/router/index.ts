@@ -4,6 +4,7 @@ import PlantGame from '../views/PlantGame.vue';
 import LevelBuilder from '../views/LevelBuilder.vue';
 import CasinoGame from '../components/casino/CasinoGame.vue';
 import KenoGameWrapper from '../views/KenoGameWrapper.vue';
+import QueensGame from '../views/QueensGame.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -43,6 +44,21 @@ const router = createRouter({
       path: '/keno',
       name: 'keno',
       component: KenoGameWrapper,
+    },
+    {
+      path: '/queens',
+      name: 'queens',
+      component: () => import('../views/Levels.vue'),
+    },
+    {
+      path: '/queens/tutorial/:levelName',
+      name: 'queens-tutorial',
+      component: QueensGame,
+    },
+    {
+      path: '/queens/:puzzleId',
+      name: 'queens-puzzle',
+      component: QueensGame,
     },
     {
       path: '/storybook',

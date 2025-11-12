@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'border-t border-gray-700 flex items-center justify-center gap-3 px-2 py-1',
+      'border-t border-gray-700 flex items-center justify-center gap-3 px-2 py-1 relative',
       $attrs.class,
     ]"
   >

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="h-svh w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden"
+    class="h-svh w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden relative"
   >
     <!-- Dialogue -->
     <Story class="basis-[25%] flex-none" />
