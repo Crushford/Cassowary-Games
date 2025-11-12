@@ -6,8 +6,23 @@
         <p class="text-gray-400">Select a category to play</p>
       </div>
 
-      <div v-if="loading" class="text-center py-12">
-        <p class="text-gray-400">Loading puzzles...</p>
+      <div v-if="loading || queensStore.isLoadingPuzzles" class="text-center py-12">
+        <div class="max-w-md mx-auto">
+          <div class="mb-4">
+            <div class="text-xl font-semibold text-blue-400 mb-2">
+              {{ queensStore.loadingMessage || 'Loading puzzles...' }}
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+              <div
+                class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 ease-out"
+                :style="{ width: `${queensStore.loadingProgress}%` }"
+              ></div>
+            </div>
+            <div class="text-sm text-gray-400 mt-2">
+              {{ Math.round(queensStore.loadingProgress) }}%
+            </div>
+          </div>
+        </div>
       </div>
 
       <div v-else-if="error" class="text-center py-12">
@@ -108,7 +123,10 @@
       </div>
 
       <!-- Speed Mode Button -->
-      <div class="mt-12 pt-8 border-t border-gray-700">
+      <div
+        v-if="!loading && !queensStore.isLoadingPuzzles"
+        class="mt-12 pt-8 border-t border-gray-700"
+      >
         <button
           @click="showSpeedModeModal = true"
           class="w-full p-6 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 rounded-lg transition-all text-left border-2 border-transparent hover:border-yellow-400"

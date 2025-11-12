@@ -60,6 +60,10 @@ interface QueensState {
   speedModeCurrentPuzzleIndex: number; // Current puzzle index within current size
   speedModeIsNewRecord: boolean; // Whether the current session set a new record
   speedModePreviousRecord: number; // The previous record before this session (for display)
+  // Loading state
+  isLoadingPuzzles: boolean; // Whether puzzles are currently being loaded
+  loadingProgress: number; // Progress percentage (0-100)
+  loadingMessage: string; // Current loading message
   // UI state
   uiState: {
     placementMode: 'auto' | 'flag' | 'queen'; // 'auto', 'flag', or 'queen'
@@ -200,6 +204,10 @@ export const useQueensStore = defineStore('queens', {
     speedModeCurrentPuzzleIndex: 0,
     speedModeIsNewRecord: false,
     speedModePreviousRecord: 0,
+    // Loading state
+    isLoadingPuzzles: false,
+    loadingProgress: 0,
+    loadingMessage: '',
     // UI state
     uiState: {
       placementMode: 'auto', // 'auto', 'flag', or 'queen'
@@ -622,6 +630,10 @@ export const useQueensStore = defineStore('queens', {
 
     async loadPuzzleDatabase() {
       console.log('[queensStore] loadPuzzleDatabase called');
+      this.isLoadingPuzzles = true;
+      this.loadingProgress = 0;
+      this.loadingMessage = 'Loading puzzle database...';
+
       try {
         const response = await fetch('/puzzles.json');
         if (!response.ok) {
@@ -630,18 +642,73 @@ export const useQueensStore = defineStore('queens', {
         const data = await response.json();
         console.log('[queensStore] Loaded puzzles.json, sizes:', Object.keys(data));
 
-        // Filter each size's puzzles to only include those with id ending in exactly -0 (not -0V, -0H, etc.)
+        this.loadingProgress = 10;
+        this.loadingMessage = 'Processing puzzles...';
+
+        // Helper function to get sort order for puzzle variants
+        // Order: -0, -0V, -0H, -0VH, -90, -90V, -90H, -90VH
+        function getPuzzleVariantOrder(puzzleId: string): number {
+          if (/^pz-\d+-0$/.test(puzzleId)) return 1; // -0
+          if (/^pz-\d+-0V$/.test(puzzleId)) return 2; // -0V
+          if (/^pz-\d+-0H$/.test(puzzleId)) return 3; // -0H
+          if (/^pz-\d+-0VH$/.test(puzzleId)) return 4; // -0VH
+          if (/^pz-\d+-90$/.test(puzzleId)) return 5; // -90
+          if (/^pz-\d+-90V$/.test(puzzleId)) return 6; // -90V
+          if (/^pz-\d+-90H$/.test(puzzleId)) return 7; // -90H
+          if (/^pz-\d+-90VH$/.test(puzzleId)) return 8; // -90VH
+          return 999; // Unknown variants go last
+        }
+
+        // Filter each size's puzzles to include all variants: -0, -0V, -0H, -0VH, -90, -90V, -90H, -90VH
         this.puzzleDatabase = {};
         const allPuzzles: any[] = [];
         this.puzzleIdMap = new Map();
         let globalIndex = 0;
 
         // Collect all puzzles from all sizes
+        const sizeKeys = Object.keys(data);
+        const totalSizes = sizeKeys.length;
+        let processedSizes = 0;
+
         for (const [sizeKey, sizePuzzles] of Object.entries(data)) {
-          const filtered = (sizePuzzles as any[]).filter((puzzle: any) =>
-            /^pz-\d+-0$/.test(puzzle.id)
-          );
+          // Filter to include only the specified variants
+          const filtered = (sizePuzzles as any[]).filter((puzzle: any) => {
+            const id = puzzle.id;
+            return (
+              /^pz-\d+-0$/.test(id) ||
+              /^pz-\d+-0V$/.test(id) ||
+              /^pz-\d+-0H$/.test(id) ||
+              /^pz-\d+-0VH$/.test(id) ||
+              /^pz-\d+-90$/.test(id) ||
+              /^pz-\d+-90V$/.test(id) ||
+              /^pz-\d+-90H$/.test(id) ||
+              /^pz-\d+-90VH$/.test(id)
+            );
+          });
+
+          // Sort by variant order, then by puzzle number
+          filtered.sort((a, b) => {
+            const orderA = getPuzzleVariantOrder(a.id);
+            const orderB = getPuzzleVariantOrder(b.id);
+            if (orderA !== orderB) {
+              return orderA - orderB;
+            }
+            // If same variant, sort by puzzle number
+            const numA = parseInt(a.id.match(/^pz-(\d+)-/)?.[1] || '0', 10);
+            const numB = parseInt(b.id.match(/^pz-(\d+)-/)?.[1] || '0', 10);
+            return numA - numB;
+          });
+
           console.log(`[queensStore] Size ${sizeKey}: ${filtered.length} puzzles after filtering`);
+
+          // Update message and progress before processing
+          this.loadingMessage = `Processing ${sizeKey} puzzles... (${filtered.length} puzzles)`;
+          // Update progress (10% to 80% for processing sizes)
+          processedSizes++;
+          this.loadingProgress = 10 + Math.floor((processedSizes / totalSizes) * 70);
+
+          // Allow Vue to update the UI
+          await new Promise((resolve) => setTimeout(resolve, 10));
 
           // Assign numeric IDs (index + 1) to each puzzle
           const puzzlesWithNumericIds = filtered.map((puzzle: any) => {
@@ -662,6 +729,10 @@ export const useQueensStore = defineStore('queens', {
 
         this.allPuzzles = allPuzzles;
 
+        this.loadingProgress = 85;
+        this.loadingMessage = 'Loading tutorial puzzles...';
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
         // Load tutorial puzzles (level-1 through level-10)
         const tutorialPuzzles: any[] = [];
         for (const [sizeKey, sizePuzzles] of Object.entries(data)) {
@@ -680,15 +751,31 @@ export const useQueensStore = defineStore('queens', {
         });
         this.tutorialPuzzles = tutorialPuzzles;
 
+        this.loadingMessage = `Loaded ${tutorialPuzzles.length} tutorial puzzles`;
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        this.loadingProgress = 100;
+        this.loadingMessage = `Complete! Loaded ${allPuzzles.length} puzzles`;
+
         console.log('[queensStore] Database loaded:', {
           totalPuzzles: allPuzzles.length,
           mapSize: this.puzzleIdMap.size,
           sizes: Object.keys(this.puzzleDatabase),
           tutorialPuzzles: this.tutorialPuzzles.length,
         });
+
+        // Small delay to show 100% before hiding
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        this.isLoadingPuzzles = false;
+        this.loadingProgress = 0;
+        this.loadingMessage = '';
+
         return true;
       } catch (error) {
         console.error('[queensStore] Error loading puzzle database:', error);
+        this.isLoadingPuzzles = false;
+        this.loadingProgress = 0;
+        this.loadingMessage = '';
         return false;
       }
     },
