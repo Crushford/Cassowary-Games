@@ -41,17 +41,32 @@
             <div class="text-sm text-blue-100">Learn the basics with 10 guided puzzles</div>
           </button>
 
+          <!-- Speed Mode Button -->
+          <button
+            @click="showSpeedModeModal = true"
+            class="w-full p-6 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 rounded-lg transition-all text-left border-2 border-transparent hover:border-yellow-400"
+          >
+            <div class="text-2xl font-bold mb-1">⚡ Speed Mode</div>
+            <div class="text-sm text-yellow-100">Race against the clock!</div>
+          </button>
+
           <!-- Board Size Options -->
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
-            <button
-              v-for="size in availableSizes"
-              :key="size"
-              @click="selectCategory(size)"
-              class="p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-left border border-gray-700 hover:border-blue-500"
-            >
-              <div class="text-xl font-semibold text-blue-400 mb-1">{{ size }}</div>
-              <div class="text-xs text-gray-400">Puzzles</div>
-            </button>
+            <div v-for="size in availableSizes" :key="size" class="flex flex-col gap-2">
+              <button
+                @click="selectCategory(size)"
+                class="p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-left border border-gray-700 hover:border-blue-500 flex-1"
+              >
+                <div class="text-xl font-semibold text-blue-400 mb-1">{{ size }}</div>
+                <div class="text-xs text-gray-400">Puzzles</div>
+              </button>
+              <button
+                @click="loadNextUncompletedPuzzle(size)"
+                class="px-4 py-2 bg-green-600 hover:bg-green-500 rounded-lg transition-colors text-sm font-semibold text-white"
+              >
+                Play Next Unsolved
+              </button>
+            </div>
           </div>
         </div>
 
@@ -120,20 +135,6 @@
             </button>
           </div>
         </div>
-      </div>
-
-      <!-- Speed Mode Button -->
-      <div
-        v-if="!loading && !queensStore.isLoadingPuzzles"
-        class="mt-12 pt-8 border-t border-gray-700"
-      >
-        <button
-          @click="showSpeedModeModal = true"
-          class="w-full p-6 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 rounded-lg transition-all text-left border-2 border-transparent hover:border-yellow-400"
-        >
-          <div class="text-2xl font-bold mb-1">⚡ Speed Mode</div>
-          <div class="text-sm text-yellow-100">Race against the clock!</div>
-        </button>
       </div>
     </div>
 
@@ -228,6 +229,16 @@ async function loadTutorialPuzzle(levelName: string) {
 function selectTutorial() {
   // Auto-load first tutorial level
   router.push('/queens/tutorial/level-1');
+}
+
+function loadNextUncompletedPuzzle(sizeKey: string) {
+  const puzzle = queensStore.getNextUncompletedPuzzleForSize(sizeKey);
+  if (puzzle) {
+    loadPuzzle(puzzle.id);
+  } else {
+    // All puzzles completed for this size - could show a message or do nothing
+    alert(`All ${sizeKey} puzzles are completed!`);
+  }
 }
 
 onMounted(() => {

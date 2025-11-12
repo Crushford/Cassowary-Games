@@ -1322,6 +1322,26 @@ export const useQueensStore = defineStore('queens', {
       });
     },
 
+    getNextUncompletedPuzzleForSize(sizeKey: string): any | null {
+      if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
+        return null;
+      }
+
+      const completedPuzzles = getCompletedPuzzles();
+      const puzzlesForSize = this.puzzleDatabase[sizeKey] || [];
+
+      // Find first uncompleted puzzle
+      for (const puzzle of puzzlesForSize) {
+        const puzzleId = String(puzzle.id);
+        if (!completedPuzzles.has(puzzleId)) {
+          return puzzle;
+        }
+      }
+
+      // All puzzles completed for this size
+      return null;
+    },
+
     async getNextSequentialUncompletedPuzzle(): Promise<any | null> {
       if (!this.puzzleDatabase || this.puzzleIdMap.size === 0) {
         const success = await this.loadPuzzleDatabase();
