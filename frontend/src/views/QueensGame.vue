@@ -1,114 +1,104 @@
 <template>
   <!-- QueensGame -->
-  <div class="h-svh w-full flex bg-gray-900 overflow-hidden">
-    <div class="flex-shrink-0">
-      <div
-        class="h-svh w-full w-[480px] bg-gray-800 text-white flex flex-col overflow-hidden relative"
-      >
-        <!-- Puzzle Completion Modal -->
-        <QueensCompletionModal
-          v-if="!queensStore.isSpeedMode"
-          :is-visible="queensStore.isComplete"
-        />
+  <div
+    class="w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden h-dvh"
+  >
+    <!-- Puzzle Completion Modal -->
+    <QueensCompletionModal v-if="!queensStore.isSpeedMode" :is-visible="queensStore.isComplete" />
 
-        <!-- Speed Mode Completion Modal -->
-        <SpeedModeCompletionModal :is-visible="showSpeedModeCompletionModal" />
+    <!-- Speed Mode Completion Modal -->
+    <SpeedModeCompletionModal :is-visible="showSpeedModeCompletionModal" />
 
-        <!-- Tutorial Toast -->
-        <Toast
-          v-if="queensStore.isTutorialMode && queensStore.tutorialInstruction"
-          :message="queensStore.tutorialInstruction"
-          :should-shake="queensStore.shouldShakeToast"
-          id="tutorial-instruction"
-          role="alert"
-          aria-live="polite"
-        />
+    <!-- Tutorial Toast -->
+    <Toast
+      v-if="queensStore.isTutorialMode && queensStore.tutorialInstruction"
+      :message="queensStore.tutorialInstruction"
+      :should-shake="queensStore.shouldShakeToast"
+      id="tutorial-instruction"
+      role="alert"
+      aria-live="polite"
+    />
 
-        <!-- Tutorial Overlay -->
-        <TutorialOverlay
-          :is-visible="queensStore.isTutorialMode && queensStore.highlightToolSelector"
-          :highlight-tool-selector="queensStore.highlightToolSelector"
-        />
+    <!-- Tutorial Overlay -->
+    <TutorialOverlay
+      :is-visible="queensStore.isTutorialMode && queensStore.highlightToolSelector"
+      :highlight-tool-selector="queensStore.highlightToolSelector"
+    />
 
-        <!-- Game Info Display -->
-        <div class="flex-none p-4">
-          <div class="max-w-full">
-            <QueensHeader />
-            <!-- Speed Mode Timer and Counter -->
-            <div
-              v-if="queensStore.isSpeedMode"
-              class="mb-3 p-3 bg-yellow-900 bg-opacity-50 rounded-lg"
-            >
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-yellow-400 font-semibold">⚡ Speed Mode</span>
-                <span class="text-yellow-300 font-bold">{{
-                  formatTime(queensStore.speedModeTimeRemaining || 0)
-                }}</span>
-              </div>
-              <div class="text-yellow-200 text-sm text-center">
-                Completed: {{ queensStore.speedModeCompletedCount }}
-              </div>
-            </div>
-            <div v-if="queensStore.isComplete" class="text-sm text-green-400 text-center mt-2">
-              Puzzle Complete!
-            </div>
-            <div
-              v-else-if="
-                queensStore.queenPositions.length === queensStore.gridSize &&
-                !queensStore.isValidPuzzleState.isValid
-              "
-              class="text-sm text-red-400 text-center mt-2"
-            >
-              {{ queensStore.isValidPuzzleState.errorMessage }}
-            </div>
-            <div v-else class="text-sm text-gray-400 text-center mt-2">
-              Queens: {{ queensStore.queenPositions.length }}/{{ queensStore.gridSize }}
-            </div>
+    <!-- Game Info Display -->
+    <div class="flex-none p-4">
+      <div class="max-w-full">
+        <QueensHeader />
+        <!-- Speed Mode Timer and Counter -->
+        <div v-if="queensStore.isSpeedMode" class="mb-3 p-3 bg-yellow-900 bg-opacity-50 rounded-lg">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-yellow-400 font-semibold">⚡ Speed Mode</span>
+            <span class="text-yellow-300 font-bold">{{
+              formatTime(queensStore.speedModeTimeRemaining || 0)
+            }}</span>
+          </div>
+          <div class="text-yellow-200 text-sm text-center">
+            Completed: {{ queensStore.speedModeCompletedCount }}
           </div>
         </div>
-
-        <!-- PlayGrid - Flex to fill available space with max-width constraint -->
-        <div class="flex-1 flex items-center justify-center">
-          <PlayGrid class="w-full max-w-full aspect-square" :store="queensStore">
-            <template #default="{ rowIndex, colIndex, store }">
-              <QueensSquare :row-index="rowIndex" :col-index="colIndex" :store="store" />
-            </template>
-          </PlayGrid>
+        <div v-if="queensStore.isComplete" class="text-sm text-green-400 text-center mt-2">
+          Puzzle Complete!
         </div>
-
-        <!-- Controls at the bottom -->
-        <div class="flex-none p-4 space-y-3">
-          <!-- Tool Selector -->
-          <QueensToolSelector />
-
-          <!-- Action Buttons -->
-          <div class="flex gap-2 justify-center">
-            <!-- Undo Button -->
-            <button
-              class="px-4 py-2 text-white font-semibold text-sm rounded-lg transition-colors duration-200 bg-gray-600 hover:bg-gray-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              :disabled="queensStore.moveHistory.length === 0"
-              @click="handleUndo"
-            >
-              Undo
-            </button>
-
-            <!-- Clear Button -->
-            <button
-              class="px-4 py-2 text-white font-semibold text-sm rounded-lg transition-colors duration-200 bg-red-600 hover:bg-red-500 cursor-pointer"
-              @click="handleClear"
-            >
-              Clear
-            </button>
-
-            <!-- New Puzzle Button -->
-            <button
-              class="px-4 py-2 text-white font-semibold text-sm rounded-lg transition-colors duration-200 bg-blue-600 hover:bg-blue-700 cursor-pointer"
-              @click="handleNewPuzzle"
-            >
-              Back to Levels
-            </button>
-          </div>
+        <div
+          v-else-if="
+            queensStore.queenPositions.length === queensStore.gridSize &&
+            !queensStore.isValidPuzzleState.isValid
+          "
+          class="text-sm text-red-400 text-center mt-2"
+        >
+          {{ queensStore.isValidPuzzleState.errorMessage }}
         </div>
+        <div v-else class="text-sm text-gray-400 text-center mt-2">
+          Queens: {{ queensStore.queenPositions.length }}/{{ queensStore.gridSize }}
+        </div>
+      </div>
+    </div>
+
+    <!-- PlayGrid - Flex to fill available space with max-width constraint -->
+    <div class="flex-1 flex items-center justify-center">
+      <PlayGrid class="w-full max-w-full aspect-square" :store="queensStore">
+        <template #default="{ rowIndex, colIndex, store }">
+          <QueensSquare :row-index="rowIndex" :col-index="colIndex" :store="store" />
+        </template>
+      </PlayGrid>
+    </div>
+
+    <!-- Controls at the bottom -->
+    <div class="flex-none p-4 space-y-3">
+      <!-- Tool Selector -->
+      <QueensToolSelector />
+
+      <!-- Action Buttons -->
+      <div class="flex gap-2 justify-center">
+        <!-- Undo Button -->
+        <button
+          class="px-4 py-2 text-white font-semibold text-sm rounded-lg transition-colors duration-200 bg-gray-600 hover:bg-gray-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="queensStore.moveHistory.length === 0"
+          @click="handleUndo"
+        >
+          Undo
+        </button>
+
+        <!-- Clear Button -->
+        <button
+          class="px-4 py-2 text-white font-semibold text-sm rounded-lg transition-colors duration-200 bg-red-600 hover:bg-red-500 cursor-pointer"
+          @click="handleClear"
+        >
+          Clear
+        </button>
+
+        <!-- New Puzzle Button -->
+        <button
+          class="px-4 py-2 text-white font-semibold text-sm rounded-lg transition-colors duration-200 bg-blue-600 hover:bg-blue-700 cursor-pointer"
+          @click="handleNewPuzzle"
+        >
+          Back to Levels
+        </button>
       </div>
     </div>
   </div>

@@ -9,7 +9,7 @@
         v-for="mode in modes"
         :key="mode.value"
         :id="`queens-tool-${mode.value}`"
-        class="px-4 py-2 rounded-md transition-all duration-200 flex items-center space-x-2 focus:outline-none min-w-[80px] text-sm font-semibold"
+        class="px-3 py-2 rounded-md transition-all duration-200 flex items-center justify-center focus:outline-none text-lg"
         :class="[
           queensStore.uiState.placementMode === mode.value
             ? 'bg-blue-600 text-white shadow-lg'
@@ -30,8 +30,7 @@
             : undefined
         "
       >
-        <span class="text-lg" :aria-hidden="true">{{ mode.icon }}</span>
-        <span>{{ mode.label }}</span>
+        <span :aria-hidden="true">{{ mode.icon }}</span>
       </button>
     </div>
 

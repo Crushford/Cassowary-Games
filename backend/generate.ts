@@ -1178,7 +1178,7 @@ function main() {
 
   // If size was not explicitly set, use the size with the lowest puzzle count
   if (size === null) {
-    size = puzzleDatabase.getSizeWithLowestCount([4, 5, 6])
+    size = puzzleDatabase.getSizeWithLowestCount([5, 6, 7, 8])
     logVerbose(
       `No size specified, auto-selecting size ${size}x${size} (lowest puzzle count)`
     )
