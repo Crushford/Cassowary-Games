@@ -85,7 +85,7 @@ import {
   COLOR_SYMBOLS
 } from '../frontend/src/utils/colorPalette'
 
-const puzzleDatabase = new PuzzleDatabase('../public/puzzles.json')
+const puzzleDatabase = new PuzzleDatabase('../frontend/public/puzzles.json')
 
 // === Validation Helper Functions ===
 /**
@@ -1135,7 +1135,7 @@ function main() {
   const command = args[0]
 
   // Parse arguments
-  let size = SIZE
+  let size: number | null = null // null means size was not explicitly set
   let batchSize = BATCH
 
   for (let i = 0; i < args.length; i++) {
@@ -1154,6 +1154,12 @@ function main() {
         batchSize = batchValue
       }
     }
+  }
+
+  // If size was not explicitly set, use the size with the lowest puzzle count
+  if (size === null) {
+    size = puzzleDatabase.getSizeWithLowestCount()
+    console.log(`No size specified, auto-selecting size ${size}x${size} (lowest puzzle count)`)
   }
 
   if (command === 'list') {

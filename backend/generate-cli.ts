@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 
 // Parse command line arguments
 function parseArgs(args: string[]) {
-  let size = 8; // default size
+  let size: number | null = null; // null means size was not explicitly set
   let batch = 1; // default batch size
   let command = 'generate';
 
@@ -60,14 +60,15 @@ Commands:
   delete <puzzleId>     Delete a puzzle from database
 
 Options:
-  --size, -s <number>   Puzzle grid size (3-12, default: 8)
+  --size, -s <number>   Puzzle grid size (3-12). If not specified, auto-selects
+                        the size with the lowest number of existing puzzles.
   --batch, -b <number>  Number of puzzles to generate (default: 1)
   --help, -h            Show this help message
 
 Examples:
-  yarn generate                    # Generate 1 puzzle (8x8)
+  yarn generate                    # Generate 1 puzzle (auto-selects size with lowest count)
   yarn generate --size 6           # Generate 1 puzzle (6x6)
-  yarn generate --batch 5          # Generate 5 puzzles (8x8)
+  yarn generate --batch 5          # Generate 5 puzzles (auto-selects size)
   yarn generate --size 6 --batch 3 # Generate 3 puzzles (6x6)
   yarn generate list               # List all puzzles
   yarn generate stats              # Show database stats
@@ -78,13 +79,26 @@ function main() {
   const args = process.argv.slice(2);
   const { size, batch, command } = parseArgs(args);
 
-  console.log(`Configuration: size=${size}, batch=${batch}, command=${command}`);
+  if (size === null) {
+    console.log(`Configuration: size=auto (lowest count), batch=${batch}, command=${command}`);
+  } else {
+    console.log(`Configuration: size=${size}, batch=${batch}, command=${command}`);
+  }
 
   if (command === 'generate') {
-    console.log(`Generating ${batch} puzzle(s) with size ${size}x${size}...`);
+    if (size === null) {
+      console.log(`Generating ${batch} puzzle(s) (size will be auto-selected)...`);
+    } else {
+      console.log(`Generating ${batch} puzzle(s) with size ${size}x${size}...`);
+    }
 
-    // Call the original generate script with batch size and size
-    const generateArgs = ['generate', batch.toString(), '--size', size.toString()];
+    // Call the original generate script with batch size
+    // Only pass --size if it was explicitly set
+    const generateArgs = ['generate', batch.toString()];
+    if (size !== null) {
+      generateArgs.push('--size', size.toString());
+    }
+    
     const child = spawn('tsx', ['generate.ts', ...generateArgs], {
       stdio: 'inherit',
       cwd: __dirname,

@@ -26,7 +26,7 @@ export class PuzzleDatabase {
   private puzzles: PuzzleDatabaseStructure = {}
   private readonly filePath: string
 
-  constructor(filePath: string = '../public/puzzles.json') {
+  constructor(filePath: string = '../frontend/public/puzzles.json') {
     this.filePath = filePath
     this.load()
   }
@@ -479,5 +479,36 @@ export class PuzzleDatabase {
    */
   getPuzzleCountBySize(size: number): number {
     return this.getPuzzlesBySize(size).length
+  }
+
+  /**
+   * Find the grid size with the lowest number of puzzles
+   * Returns the size that should be generated next to balance puzzle distribution
+   * @param validSizes Array of valid sizes to consider (default: 4-10, excluding 3 as it's too difficult and 11-12 as there aren't enough colors)
+   * @returns The size with the lowest puzzle count, preferring larger sizes when counts are equal
+   */
+  getSizeWithLowestCount(
+    validSizes: number[] = [4, 5, 6, 7, 8, 9, 10]
+  ): number {
+    if (validSizes.length === 0) {
+      return 8 // Default fallback
+    }
+
+    // Get counts for all valid sizes
+    const sizeCounts = validSizes.map(size => ({
+      size,
+      count: this.getPuzzleCountBySize(size)
+    }))
+
+    // Sort by count (ascending), then by size (ascending) for tie-breaking
+    // This prefers smaller sizes when counts are equal, which are faster to generate
+    sizeCounts.sort((a, b) => {
+      if (a.count !== b.count) {
+        return a.count - b.count
+      }
+      return a.size - b.size // Prefer smaller sizes when counts are equal (faster generation)
+    })
+
+    return sizeCounts[0].size
   }
 }
