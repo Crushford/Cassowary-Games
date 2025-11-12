@@ -16,6 +16,7 @@ function parseArgs(args: string[]) {
   let size: number | null = null; // null means size was not explicitly set
   let batch = 1; // default batch size
   let command = 'generate';
+  let verbose = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -36,16 +37,25 @@ function parseArgs(args: string[]) {
       }
       batch = batchValue;
       i++; // Skip next argument
+    } else if (arg === '--verbose' || arg === '-v') {
+      verbose = true;
     } else if (arg === '--help' || arg === '-h') {
       showHelp();
       process.exit(0);
     } else if (!arg.startsWith('-')) {
-      // Non-flag argument is treated as command
-      command = arg;
+      // Check if it's a number - if so and command is 'generate', treat as batch size
+      const numValue = parseInt(arg);
+      if (!isNaN(numValue) && numValue > 0 && command === 'generate' && batch === 1) {
+        // Only treat as batch if we haven't already set a batch size
+        batch = numValue;
+      } else if (isNaN(numValue) || command !== 'generate') {
+        // Non-flag, non-number argument is treated as command
+        command = arg;
+      }
     }
   }
 
-  return { size, batch, command };
+  return { size, batch, command, verbose };
 }
 
 function showHelp() {
@@ -63,6 +73,7 @@ Options:
   --size, -s <number>   Puzzle grid size (3-12). If not specified, auto-selects
                         the size with the lowest number of existing puzzles.
   --batch, -b <number>  Number of puzzles to generate (default: 1)
+  --verbose, -v         Show detailed logging (default: quiet mode)
   --help, -h            Show this help message
 
 Examples:
@@ -77,19 +88,23 @@ Examples:
 
 function main() {
   const args = process.argv.slice(2);
-  const { size, batch, command } = parseArgs(args);
+  const { size, batch, command, verbose } = parseArgs(args);
 
-  if (size === null) {
-    console.log(`Configuration: size=auto (lowest count), batch=${batch}, command=${command}`);
-  } else {
-    console.log(`Configuration: size=${size}, batch=${batch}, command=${command}`);
+  if (verbose) {
+    if (size === null) {
+      console.log(`Configuration: size=auto (lowest count), batch=${batch}, command=${command}`);
+    } else {
+      console.log(`Configuration: size=${size}, batch=${batch}, command=${command}`);
+    }
   }
 
   if (command === 'generate') {
-    if (size === null) {
-      console.log(`Generating ${batch} puzzle(s) (size will be auto-selected)...`);
-    } else {
-      console.log(`Generating ${batch} puzzle(s) with size ${size}x${size}...`);
+    if (verbose) {
+      if (size === null) {
+        console.log(`Generating ${batch} puzzle(s) (size will be auto-selected)...`);
+      } else {
+        console.log(`Generating ${batch} puzzle(s) with size ${size}x${size}...`);
+      }
     }
 
     // Call the original generate script with batch size
@@ -97,6 +112,9 @@ function main() {
     const generateArgs = ['generate', batch.toString()];
     if (size !== null) {
       generateArgs.push('--size', size.toString());
+    }
+    if (verbose) {
+      generateArgs.push('--verbose');
     }
     
     const child = spawn('tsx', ['generate.ts', ...generateArgs], {
