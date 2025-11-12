@@ -7,6 +7,17 @@
         Total Completed: {{ queensStore.speedModeCompletedCount }}
       </p>
 
+      <!-- New Record Message (only for 2-minute mode) -->
+      <div
+        v-if="queensStore.speedModeTimerDuration === 120 && queensStore.speedModeIsNewRecord"
+        class="mb-6 p-4 bg-yellow-500 bg-opacity-20 border-2 border-yellow-500 rounded-lg"
+      >
+        <p class="text-yellow-400 font-bold text-lg text-center">🎉 New Record! 🎉</p>
+        <p class="text-yellow-300 text-sm text-center mt-1">
+          Previous record: {{ queensStore.speedModePreviousRecord }}
+        </p>
+      </div>
+
       <!-- Breakdown by Size -->
       <div v-if="Object.keys(queensStore.speedModeCompletedBySize).length > 0" class="mb-6">
         <h3 class="text-lg font-semibold text-gray-300 mb-3">Completed by Size:</h3>

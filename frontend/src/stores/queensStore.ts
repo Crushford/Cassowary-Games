@@ -58,6 +58,8 @@ interface QueensState {
   speedModeTimerInterval: number | null; // Interval ID for timer
   speedModeCurrentSizeIndex: number; // Current size index in ordered sizes (0 = 4x4, 1 = 5x5, etc.)
   speedModeCurrentPuzzleIndex: number; // Current puzzle index within current size
+  speedModeIsNewRecord: boolean; // Whether the current session set a new record
+  speedModePreviousRecord: number; // The previous record before this session (for display)
   // UI state
   uiState: {
     placementMode: 'auto' | 'flag' | 'queen'; // 'auto', 'flag', or 'queen'
@@ -67,6 +69,10 @@ interface QueensState {
 
 // LocalStorage key for completed puzzles
 const COMPLETED_PUZZLES_KEY = 'queens-completed-puzzles';
+// LocalStorage key for speed mode records (2-minute mode)
+const SPEED_MODE_2MIN_RECORD_KEY = 'queens-speed-mode-2min-record';
+// LocalStorage key prefix for puzzle progress
+const PUZZLE_PROGRESS_KEY_PREFIX = 'queens-puzzle-progress-';
 
 // Helper functions for localStorage
 function getCompletedPuzzles(): Set<string> {
@@ -93,6 +99,67 @@ function saveCompletedPuzzle(puzzleId: string) {
 
 function isPuzzleCompleted(puzzleId: string): boolean {
   return getCompletedPuzzles().has(puzzleId);
+}
+
+// Helper functions for speed mode records
+function getSpeedMode2MinRecord(): number {
+  try {
+    const stored = localStorage.getItem(SPEED_MODE_2MIN_RECORD_KEY);
+    if (stored) {
+      return parseInt(stored, 10);
+    }
+  } catch (e) {
+    console.error('Error reading speed mode 2min record from localStorage:', e);
+  }
+  return 0;
+}
+
+function saveSpeedMode2MinRecord(count: number) {
+  try {
+    localStorage.setItem(SPEED_MODE_2MIN_RECORD_KEY, String(count));
+  } catch (e) {
+    console.error('Error saving speed mode 2min record to localStorage:', e);
+  }
+}
+
+// Helper functions for puzzle progress
+function getPuzzleProgressKey(puzzleId: string | number | null): string {
+  if (puzzleId === null) return '';
+  return `${PUZZLE_PROGRESS_KEY_PREFIX}${puzzleId}`;
+}
+
+function savePuzzleProgress(puzzleId: string | number | null, playerMarks: MarkType[][]) {
+  if (puzzleId === null) return;
+  try {
+    const key = getPuzzleProgressKey(puzzleId);
+    localStorage.setItem(key, JSON.stringify(playerMarks));
+  } catch (e) {
+    console.error('Error saving puzzle progress to localStorage:', e);
+  }
+}
+
+function loadPuzzleProgress(puzzleId: string | number | null): MarkType[][] | null {
+  if (puzzleId === null) return null;
+  try {
+    const key = getPuzzleProgressKey(puzzleId);
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      return JSON.parse(stored) as MarkType[][];
+    }
+  } catch (e) {
+    console.error('Error loading puzzle progress from localStorage:', e);
+  }
+  return null;
+}
+
+function clearPuzzleProgress(puzzleId: string | number | null) {
+  if (puzzleId === null) return;
+  try {
+    const key = getPuzzleProgressKey(puzzleId);
+    localStorage.removeItem(key);
+  } catch (e) {
+    console.error('Error clearing puzzle progress from localStorage:', e);
+  }
 }
 
 export const useQueensStore = defineStore('queens', {
@@ -131,6 +198,8 @@ export const useQueensStore = defineStore('queens', {
     speedModeTimerInterval: null,
     speedModeCurrentSizeIndex: 0,
     speedModeCurrentPuzzleIndex: 0,
+    speedModeIsNewRecord: false,
+    speedModePreviousRecord: 0,
     // UI state
     uiState: {
       placementMode: 'auto', // 'auto', 'flag', or 'queen'
@@ -332,6 +401,8 @@ export const useQueensStore = defineStore('queens', {
             // Re-flag based on current queens
             this.updateBlockedMoves();
           }
+          // Save progress to localStorage after undo
+          savePuzzleProgress(this.currentPuzzleId, this.playerMarks);
           // Clear error feedback when undoing
           this.showErrorFeedback = false;
           this.errorFeedbackSquare = null;
@@ -342,6 +413,8 @@ export const useQueensStore = defineStore('queens', {
     placeFlag(row: number, col: number) {
       this.saveToHistory();
       this.playerMarks[row][col] = 'flag';
+      // Save progress to localStorage
+      savePuzzleProgress(this.currentPuzzleId, this.playerMarks);
       return true;
     },
 
@@ -352,6 +425,8 @@ export const useQueensStore = defineStore('queens', {
       if (this.uiState.autoFlagging) {
         this.updateBlockedMoves();
       }
+      // Save progress to localStorage
+      savePuzzleProgress(this.currentPuzzleId, this.playerMarks);
       this.checkBoardCompletion();
 
       // Check tutorial step after placing queen
@@ -403,6 +478,8 @@ export const useQueensStore = defineStore('queens', {
           this.updateBlockedMoves();
         }
       }
+      // Save progress to localStorage
+      savePuzzleProgress(this.currentPuzzleId, this.playerMarks);
     },
 
     handleSquareClick(row: number, col: number) {
@@ -525,6 +602,8 @@ export const useQueensStore = defineStore('queens', {
               ? this.currentPuzzleId
               : String(this.currentPuzzleId);
           saveCompletedPuzzle(puzzleId);
+          // Clear saved progress since puzzle is completed
+          clearPuzzleProgress(this.currentPuzzleId);
         }
         // Check tutorial completion step
         if (this.isTutorialMode) {
@@ -623,6 +702,9 @@ export const useQueensStore = defineStore('queens', {
       // Initialize grid
       this.initializeGrid();
 
+      // Set current puzzle ID for progress tracking
+      this.currentPuzzleId = puzzleData.name || puzzleData.id || puzzleData.originalId;
+
       // Parse layout (color groups) using SYMBOL_TO_COLOR mapping
       for (let i = 0; i < layout.length; i++) {
         const row = Math.floor(i / gridSize);
@@ -648,8 +730,30 @@ export const useQueensStore = defineStore('queens', {
       }
 
       this.currentPuzzle = puzzleData;
-      // Set current puzzle ID for completion tracking
-      this.currentPuzzleId = puzzleData.name || puzzleData.id || puzzleData.originalId;
+
+      // Load saved progress if puzzle is not completed
+      const puzzleId = puzzleData.name || puzzleData.id || puzzleData.originalId;
+      const puzzleIdString = typeof puzzleId === 'string' ? puzzleId : String(puzzleId);
+      if (!isPuzzleCompleted(puzzleIdString)) {
+        const savedProgress = loadPuzzleProgress(puzzleId);
+        if (savedProgress && savedProgress.length === gridSize) {
+          // Validate that saved progress matches current grid size
+          let isValid = true;
+          for (let r = 0; r < gridSize; r++) {
+            if (!savedProgress[r] || savedProgress[r].length !== gridSize) {
+              isValid = false;
+              break;
+            }
+          }
+          if (isValid) {
+            this.playerMarks = savedProgress;
+            // Recalculate blocked moves if auto-flagging is enabled
+            if (this.uiState.autoFlagging) {
+              this.updateBlockedMoves();
+            }
+          }
+        }
+      }
     },
 
     getNextPuzzle() {
@@ -752,6 +856,8 @@ export const useQueensStore = defineStore('queens', {
       this.showSolution = false;
       // Clear history when clearing markers
       this.moveHistory = [];
+      // Clear saved progress when clearing markers
+      clearPuzzleProgress(this.currentPuzzleId);
     },
 
     clearAll() {
@@ -1074,6 +1180,18 @@ export const useQueensStore = defineStore('queens', {
             this.speedModeTimerInterval = null;
           }
           this.speedModeTimeRemaining = 0;
+
+          // Check and save record for 2-minute mode
+          if (this.speedModeTimerDuration === 120) {
+            const currentRecord = getSpeedMode2MinRecord();
+            this.speedModePreviousRecord = currentRecord; // Store previous record for display
+            if (this.speedModeCompletedCount > currentRecord) {
+              this.speedModeIsNewRecord = true;
+              saveSpeedMode2MinRecord(this.speedModeCompletedCount);
+            } else {
+              this.speedModeIsNewRecord = false;
+            }
+          }
         }
       }, 1000);
     },
@@ -1095,6 +1213,12 @@ export const useQueensStore = defineStore('queens', {
       this.speedModeCompletedBySize = {};
       this.speedModeCurrentSizeIndex = 0;
       this.speedModeCurrentPuzzleIndex = 0;
+      this.speedModeIsNewRecord = false;
+      this.speedModePreviousRecord = 0;
+    },
+
+    getSpeedMode2MinRecord(): number {
+      return getSpeedMode2MinRecord();
     },
 
     getAvailableSizes(): string[] {
