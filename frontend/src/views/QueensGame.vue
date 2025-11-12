@@ -28,7 +28,7 @@
     <!-- Game Info Display -->
     <div class="flex-none p-4">
       <div class="max-w-full">
-        <QueensHeader />
+        <QueensHeader v-if="!queensStore.isSpeedMode" />
         <!-- Speed Mode Timer and Counter -->
         <div v-if="queensStore.isSpeedMode" class="mb-3 p-3 bg-yellow-900 bg-opacity-50 rounded-lg">
           <div class="flex justify-between items-center mb-2">
@@ -52,9 +52,6 @@
           class="text-sm text-red-400 text-center mt-2"
         >
           {{ queensStore.isValidPuzzleState.errorMessage }}
-        </div>
-        <div v-else class="text-sm text-gray-400 text-center mt-2">
-          Queens: {{ queensStore.queenPositions.length }}/{{ queensStore.gridSize }}
         </div>
       </div>
     </div>
