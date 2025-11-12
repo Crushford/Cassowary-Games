@@ -1174,8 +1174,19 @@ export const useQueensStore = defineStore('queens', {
       const sizeKey = `${this.gridSize}x${this.gridSize}`;
       this.speedModeCompletedBySize[sizeKey] = (this.speedModeCompletedBySize[sizeKey] || 0) + 1;
 
-      // Move to next puzzle index
-      this.speedModeCurrentPuzzleIndex++;
+      // Move to next size for sequential mode (complete one puzzle per size, then move to next)
+      const availableSizes = this.speedModeSelectedSizes || this.getAvailableSizes();
+      const currentSizeIndex = availableSizes.indexOf(sizeKey);
+
+      if (currentSizeIndex >= 0 && currentSizeIndex < availableSizes.length - 1) {
+        // Move to next size
+        this.speedModeCurrentSizeIndex = currentSizeIndex + 1;
+        this.speedModeCurrentPuzzleIndex = 0;
+      } else if (currentSizeIndex === availableSizes.length - 1) {
+        // We're at the last size, loop back to first size
+        this.speedModeCurrentSizeIndex = 0;
+        this.speedModeCurrentPuzzleIndex = 0;
+      }
 
       // Auto-load next puzzle
       this.startSpeedModePuzzle();

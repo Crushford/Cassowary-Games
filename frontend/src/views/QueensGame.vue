@@ -61,7 +61,7 @@
 
     <!-- PlayGrid - Flex to fill available space with max-width constraint -->
     <div class="flex-1 flex items-center justify-center">
-      <PlayGrid class="w-full max-w-full aspect-square" :store="queensStore">
+      <PlayGrid class="w-full max-w-full aspect-square" :store="queensStore" :enable-touch="true">
         <template #default="{ rowIndex, colIndex, store }">
           <QueensSquare :row-index="rowIndex" :col-index="colIndex" :store="store" />
         </template>
