@@ -49,7 +49,9 @@ export class PuzzleDatabase {
 
         const totalPuzzles = this.getTotalPuzzleCount()
         if (this.verbose) {
-          console.log(`Loaded ${totalPuzzles} existing puzzles organized by size`)
+          console.log(
+            `Loaded ${totalPuzzles} existing puzzles organized by size`
+          )
         }
       } else {
         if (this.verbose) {
@@ -223,7 +225,7 @@ export class PuzzleDatabase {
     const baseId = this.generateNextId()
     let addedCount = 0
     let skippedCount = 0
-    
+
     if (this.verbose) {
       console.log(
         `[DEBUG] Generating ${variants.length} variants for baseId ${baseId}`
@@ -511,9 +513,7 @@ export class PuzzleDatabase {
    * @param validSizes Array of valid sizes to consider (default: 4-8, excluding 3 as it's too difficult, 9-10 as they're too slow, and 11-12 as there aren't enough colors)
    * @returns The size with the lowest puzzle count, preferring smaller sizes when counts are equal
    */
-  getSizeWithLowestCount(
-    validSizes: number[] = [4, 5, 6, 7, 8]
-  ): number {
+  getSizeWithLowestCount(validSizes: number[] = [4, 5, 6, 7, 8]): number {
     if (validSizes.length === 0) {
       return 8 // Default fallback
     }
