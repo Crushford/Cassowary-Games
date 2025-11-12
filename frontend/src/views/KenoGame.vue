@@ -1,7 +1,7 @@
 <template>
   <!-- KenoGame -->
   <div
-    class="h-svh w-full w-[480px] bg-gray-800 text-white flex flex-col overflow-hidden relative"
+    class="h-svh w-full w-[480px] bg-gray-800 text-white flex flex-col overflow-hidden"
     :class="{ shake: kenoStore.shouldShake }"
   >
     <!-- Game Info Display -->

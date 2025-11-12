@@ -1,6 +1,6 @@
 <template>
   <div
-    class="h-svh w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden relative"
+    class="h-svh w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden"
   >
     <!-- Header -->
     <CasinoHUD class="basis-[5%]" />

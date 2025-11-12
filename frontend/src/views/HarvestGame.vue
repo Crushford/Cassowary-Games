@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden relative',
+      'w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden',
       isGameOnly ? 'h-auto' : 'h-dvh',
     ]"
   >
