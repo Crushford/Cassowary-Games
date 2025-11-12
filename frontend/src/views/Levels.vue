@@ -106,14 +106,32 @@
           </div>
         </div>
       </div>
+
+      <!-- Speed Mode Button -->
+      <div class="mt-12 pt-8 border-t border-gray-700">
+        <button
+          @click="showSpeedModeModal = true"
+          class="w-full p-6 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 rounded-lg transition-all text-left border-2 border-transparent hover:border-yellow-400"
+        >
+          <div class="text-2xl font-bold mb-1">⚡ Speed Mode</div>
+          <div class="text-sm text-yellow-100">Race against the clock!</div>
+        </button>
+      </div>
     </div>
+
+    <!-- Speed Mode Modal -->
+    <SpeedModeModal :is-visible="showSpeedModeModal" @close="showSpeedModeModal = false" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQueensStore } from '../stores/queensStore';
+
+const SpeedModeModal = defineAsyncComponent(
+  () => import('../components/queens/SpeedModeModal.vue')
+);
 
 const router = useRouter();
 const queensStore = useQueensStore();
@@ -121,6 +139,7 @@ const queensStore = useQueensStore();
 const loading = ref(true);
 const error = ref<string | null>(null);
 const selectedCategory = ref<string | null>(null);
+const showSpeedModeModal = ref(false);
 
 const availableSizes = computed(() => {
   const sizes = new Set<string>();

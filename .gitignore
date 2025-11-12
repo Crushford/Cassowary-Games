@@ -29,6 +29,10 @@ dist-ssr
 !.yarn/cache
 !.yarn/install-state.gz
 
+# Yarn PnP files (should not be committed)
+.pnp.cjs
+.pnp.loader.mjs
+
 # Build output
 /dist
 

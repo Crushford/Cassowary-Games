@@ -25,10 +25,15 @@ export interface PuzzleDatabaseStructure {
 export class PuzzleDatabase {
   private puzzles: PuzzleDatabaseStructure = {}
   private readonly filePath: string
+  private verbose: boolean = false
 
-  constructor(filePath: string = '../public/puzzles.json') {
+  constructor(filePath: string = '../frontend/public/puzzles.json') {
     this.filePath = filePath
     this.load()
+  }
+
+  setVerbose(verbose: boolean): void {
+    this.verbose = verbose
   }
 
   // === Core Database Operations ===
@@ -43,9 +48,15 @@ export class PuzzleDatabase {
         this.puzzles = JSON.parse(data) as PuzzleDatabaseStructure
 
         const totalPuzzles = this.getTotalPuzzleCount()
-        console.log(`Loaded ${totalPuzzles} existing puzzles organized by size`)
+        if (this.verbose) {
+          console.log(
+            `Loaded ${totalPuzzles} existing puzzles organized by size`
+          )
+        }
       } else {
-        console.log('Creating new puzzle database')
+        if (this.verbose) {
+          console.log('Creating new puzzle database')
+        }
         this.puzzles = {}
       }
     } catch (error) {
@@ -61,8 +72,10 @@ export class PuzzleDatabase {
     try {
       const json = JSON.stringify(this.puzzles, null, 2)
       fs.writeFileSync(this.filePath, json)
-      const totalPuzzles = this.getTotalPuzzleCount()
-      console.log(`Saved ${totalPuzzles} puzzles to database`)
+      if (this.verbose) {
+        const totalPuzzles = this.getTotalPuzzleCount()
+        console.log(`Saved ${totalPuzzles} puzzles to database`)
+      }
     } catch (error) {
       console.error(`Error saving puzzles: ${error}`)
       throw error
@@ -212,9 +225,12 @@ export class PuzzleDatabase {
     const baseId = this.generateNextId()
     let addedCount = 0
     let skippedCount = 0
-    console.log(
-      `[DEBUG] Generating ${variants.length} variants for baseId ${baseId}`
-    )
+
+    if (this.verbose) {
+      console.log(
+        `[DEBUG] Generating ${variants.length} variants for baseId ${baseId}`
+      )
+    }
 
     for (let i = 0; i < variants.length; i++) {
       const [variant, suffix] = variants[i]
@@ -232,10 +248,12 @@ export class PuzzleDatabase {
           existing.queens === encoded.queens
       )
       if (duplicate) {
-        console.log(`[DEBUG] Skipped variant ${suffix} (duplicate)`)
-        console.log(`  layout: ${encoded.layout}`)
-        console.log(`  queens: ${encoded.queens}`)
-        console.log(`  matched existing id: ${duplicate.id}`)
+        if (this.verbose) {
+          console.log(`[DEBUG] Skipped variant ${suffix} (duplicate)`)
+          console.log(`  layout: ${encoded.layout}`)
+          console.log(`  queens: ${encoded.queens}`)
+          console.log(`  matched existing id: ${duplicate.id}`)
+        }
         skippedCount++
         continue
       }
@@ -256,21 +274,29 @@ export class PuzzleDatabase {
         this.puzzles[sizeKey] = []
       }
       this.puzzles[sizeKey].push(puzzle)
-      console.log(`[DEBUG] Added puzzle ${id} to database`)
+      if (this.verbose) {
+        console.log(`[DEBUG] Added puzzle ${id} to database`)
+      }
       addedCount++
     }
 
-    console.log(
-      `[DEBUG] Variants added: ${addedCount}, skipped (duplicates): ${skippedCount}`
-    )
+    if (this.verbose) {
+      console.log(
+        `[DEBUG] Variants added: ${addedCount}, skipped (duplicates): ${skippedCount}`
+      )
+    }
 
     if (addedCount > 0) {
       // Save to file
       this.save()
-      console.log(`Added ${addedCount} new puzzle variants to database`)
+      if (this.verbose) {
+        console.log(`Added ${addedCount} new puzzle variants to database`)
+      }
       return true
     } else {
-      console.log('All variants already exist, no new puzzles added.')
+      if (this.verbose) {
+        console.log('All variants already exist, no new puzzles added.')
+      }
       return false
     }
   }
@@ -479,5 +505,34 @@ export class PuzzleDatabase {
    */
   getPuzzleCountBySize(size: number): number {
     return this.getPuzzlesBySize(size).length
+  }
+
+  /**
+   * Find the grid size with the lowest number of puzzles
+   * Returns the size that should be generated next to balance puzzle distribution
+   * @param validSizes Array of valid sizes to consider (default: 4-8, excluding 3 as it's too difficult, 9-10 as they're too slow, and 11-12 as there aren't enough colors)
+   * @returns The size with the lowest puzzle count, preferring smaller sizes when counts are equal
+   */
+  getSizeWithLowestCount(validSizes: number[] = [4, 5, 6, 7, 8]): number {
+    if (validSizes.length === 0) {
+      return 8 // Default fallback
+    }
+
+    // Get counts for all valid sizes
+    const sizeCounts = validSizes.map(size => ({
+      size,
+      count: this.getPuzzleCountBySize(size)
+    }))
+
+    // Sort by count (ascending), then by size (ascending) for tie-breaking
+    // This prefers smaller sizes when counts are equal, which are faster to generate
+    sizeCounts.sort((a, b) => {
+      if (a.count !== b.count) {
+        return a.count - b.count
+      }
+      return a.size - b.size // Prefer smaller sizes when counts are equal (faster generation)
+    })
+
+    return sizeCounts[0].size
   }
 }

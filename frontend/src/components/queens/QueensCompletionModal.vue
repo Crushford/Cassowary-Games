@@ -5,7 +5,7 @@
       <p class="text-white mb-2">Great job solving the puzzle!</p>
       <p class="text-white mb-4">Queens found: {{ queensStore.queenPositions.length }}</p>
       <button
-        @click="handleNewPuzzle"
+        @click="handleNextPuzzle"
         class="w-full py-3 px-6 bg-green-500 hover:bg-green-400 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
       >
         New Puzzle
@@ -24,14 +24,13 @@ defineProps<{
   isVisible: boolean;
 }>();
 
-async function handleNewPuzzle() {
-  // Reset game state
-  queensStore.isComplete = false;
-  queensStore.clearMarkers();
-
-  // Load a new random puzzle
-  await queensStore.loadRandomPuzzle();
-}
+const handleNextPuzzle = async () => {
+  try {
+    await queensStore.startNextPuzzle();
+  } catch (error) {
+    console.error('Error loading next puzzle:', error);
+  }
+};
 </script>
 
 <script lang="ts">

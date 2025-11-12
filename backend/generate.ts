@@ -85,7 +85,20 @@ import {
   COLOR_SYMBOLS
 } from '../frontend/src/utils/colorPalette'
 
-const puzzleDatabase = new PuzzleDatabase('../public/puzzles.json')
+const puzzleDatabase = new PuzzleDatabase('../frontend/public/puzzles.json')
+
+// === Logging Utility ===
+let VERBOSE = false
+
+function logVerbose(...args: any[]): void {
+  if (VERBOSE) {
+    console.log(...args)
+  }
+}
+
+function logError(...args: any[]): void {
+  console.error(...args)
+}
 
 // === Validation Helper Functions ===
 /**
@@ -138,7 +151,7 @@ function validateGroupSizes(
   )
   if (mismatches.length) {
     const details = mismatches.map(([c, n]) => `${c}:${n}`).join(', ')
-    console.log(
+    logVerbose(
       `Group size validation failed: Expected groups of size ${expectedSize}, but got ${details}`
     )
     return false
@@ -187,7 +200,7 @@ function createEmptyGrid(size: number): GridSquare[][] {
             ({
               position: { row, col },
               groupColor: undefined
-            }) as GridSquare
+            } as GridSquare)
         )
     )
 }
@@ -470,7 +483,7 @@ function expandColorGroupsInPlace(grid: GridSquare[][]): void {
 
     // If no square was added, log warning
     if (!expanded) {
-      console.warn(`Warning: Could not expand color group ${color}`)
+      logVerbose(`Warning: Could not expand color group ${color}`)
     }
   }
 }
@@ -494,13 +507,15 @@ function expandColorGridSafely(state: GeneratorState): boolean {
     }
   }
   if (!solvable) {
-    console.log(`expandColorGridSafely: Failed after ${attempts} attempts`)
+    logVerbose(`expandColorGridSafely: Failed after ${attempts} attempts`)
     return false
   }
 
-  console.log(`expandColorGridSafely: Success after ${attempts} attempts`)
-  printDebugState(state)
-  dumpMarks(state.autoTestMarks)
+  logVerbose(`expandColorGridSafely: Success after ${attempts} attempts`)
+  if (VERBOSE) {
+    printDebugState(state)
+    dumpMarks(state.autoTestMarks)
+  }
   return true
 }
 
@@ -756,7 +771,9 @@ function eliminateConstrainedLines(state: GeneratorState, isColumn: boolean) {
             debugger
           }
 
-          const reason = `outside allowed colors for ${Array.from(allowedColors).join(',')} on ${isColumn ? 'column' : 'row'} ${primaryIndex}`
+          const reason = `outside allowed colors for ${Array.from(
+            allowedColors
+          ).join(',')} on ${isColumn ? 'column' : 'row'} ${primaryIndex}`
           placeFlag(state, row, col, 'eliminateConstrainedLines', reason)
         }
       }
@@ -908,7 +925,7 @@ function expandIntoBlockedSquares(state: GeneratorState): void {
     const totalSquares = size * size
     const coloredSquares = countColoredSquares(state.grid)
     if (coloredSquares === totalSquares) {
-      console.log('Board is now full after expansions.')
+      logVerbose('Board is now full after expansions.')
       break
     }
 
@@ -945,7 +962,7 @@ function expandIntoBlockedSquares(state: GeneratorState): void {
 
         if (wasSolvable) {
           // Expansion successful
-          console.log(
+          logVerbose(
             `Expanded color ${neighborColor} from (${nRow}, ${nCol}) into blocked square (${row}, ${col})`
           )
           keepExpanding = true
@@ -954,7 +971,7 @@ function expandIntoBlockedSquares(state: GeneratorState): void {
           // Expansion failed - revert and record the failure
           state.grid[row][col].groupColor = originalColor
           failedAttempts.add(attemptKey)
-          console.log(
+          logVerbose(
             `Failed expansion: color ${neighborColor} into (${row}, ${col}) - made board unsolvable`
           )
         }
@@ -963,9 +980,7 @@ function expandIntoBlockedSquares(state: GeneratorState): void {
   }
 
   if (expansionCount >= maxExpansions) {
-    console.log(
-      `Warning: Reached maximum expansion attempts (${maxExpansions})`
-    )
+    logVerbose(`Warning: Reached maximum expansion attempts (${maxExpansions})`)
   }
 
   runAllSolverSteps(state)
@@ -974,12 +989,12 @@ function expandIntoBlockedSquares(state: GeneratorState): void {
   const totalSquares = state.grid.length * state.grid.length
   const coloredSquares = countColoredSquares(state.grid)
   if (coloredSquares < totalSquares) {
-    console.log(
+    logVerbose(
       `Step 5 warning: Board not fully filled. ${coloredSquares}/${totalSquares} squares colored.`
     )
-    console.log(`Failed expansion attempts: ${failedAttempts.size}`)
+    logVerbose(`Failed expansion attempts: ${failedAttempts.size}`)
   } else {
-    console.log(
+    logVerbose(
       `Step 5 complete: Board fully filled (${coloredSquares}/${totalSquares} squares)`
     )
   }
@@ -1001,11 +1016,11 @@ function experimentCreateValidBoard(
       // Step 1: Place all queens
       placeAllQueens(state, size)
       validateQueenCount(state.grid, size)
-      console.log('Step 1 complete')
+      logVerbose('Step 1 complete')
       // Step 2: Assign initial colors to queens
       assignInitialColorsToState(state)
       validateUniqueQueenColors(state.grid, size)
-      console.log('Step 2 complete')
+      logVerbose('Step 2 complete')
       if (!isSolvable(state)) {
         debugger
         throw new Error('Board is not fully solvable')
@@ -1019,7 +1034,7 @@ function experimentCreateValidBoard(
         summary.groupSizeValidationFailures++
         throw new Error('Group size validation failed at step 3')
       }
-      console.log('Step 3 complete')
+      logVerbose('Step 3 complete')
       if (!isSolvable(state)) {
         debugger
         throw new Error('Board is not fully solvable')
@@ -1033,7 +1048,7 @@ function experimentCreateValidBoard(
         summary.groupSizeValidationFailures++
         throw new Error('Group size validation failed at step 4')
       }
-      console.log('Step 4 complete')
+      logVerbose('Step 4 complete')
       if (!isSolvable(state)) {
         debugger
         throw new Error('Board is not fully solvable')
@@ -1076,7 +1091,7 @@ function experimentCreateValidBoard(
 
       // Check if this is a group size validation failure
       if (errorMessage.includes('Group size validation failed')) {
-        console.log(`Attempt ${attempt}: ${errorMessage} - retrying...`)
+        logVerbose(`Attempt ${attempt}: ${errorMessage} - retrying...`)
         // Reset the grid for the next attempt
         state.grid = createEmptyGrid(size)
         state.autoTestMarks = Array.from({ length: size }, () =>
@@ -1087,7 +1102,7 @@ function experimentCreateValidBoard(
 
       // Check if this is an expandColorGridSafely failure
       if (errorMessage.includes('expandColorGridSafely failed')) {
-        console.log(`Attempt ${attempt}: ${errorMessage} - retrying...`)
+        logVerbose(`Attempt ${attempt}: ${errorMessage} - retrying...`)
         // Reset the grid for the next attempt
         state.grid = createEmptyGrid(size)
         state.autoTestMarks = Array.from({ length: size }, () =>
@@ -1101,7 +1116,7 @@ function experimentCreateValidBoard(
         errorMessage.includes('Failed to place all') &&
         errorMessage.includes('queens')
       ) {
-        console.log(`Attempt ${attempt}: ${errorMessage} - retrying...`)
+        logVerbose(`Attempt ${attempt}: ${errorMessage} - retrying...`)
         // Reset the grid for the next attempt
         state.grid = createEmptyGrid(size)
         state.autoTestMarks = Array.from({ length: size }, () =>
@@ -1120,12 +1135,12 @@ function experimentCreateValidBoard(
     summary.groupSizeValidationFailures === summary.attempts
       ? 'All attempts failed group size validation'
       : summary.expandColorGridFailures === summary.attempts
-        ? 'All attempts failed expandColorGridSafely'
-        : summary.notFullCount === summary.attempts
-          ? 'All attempts produced incomplete grids'
-          : summary.unsolvableCount === summary.attempts
-            ? 'All attempts produced full but invalid grids'
-            : 'Mixed failures'
+      ? 'All attempts failed expandColorGridSafely'
+      : summary.notFullCount === summary.attempts
+      ? 'All attempts produced incomplete grids'
+      : summary.unsolvableCount === summary.attempts
+      ? 'All attempts produced full but invalid grids'
+      : 'Mixed failures'
   return { success: false, error: reason, diagnostics: diagnosticsPerAttempt }
 }
 
@@ -1135,7 +1150,7 @@ function main() {
   const command = args[0]
 
   // Parse arguments
-  let size = SIZE
+  let size: number | null = null // null means size was not explicitly set
   let batchSize = BATCH
 
   for (let i = 0; i < args.length; i++) {
@@ -1147,6 +1162,8 @@ function main() {
         size = sizeValue
       }
       i++ // Skip next argument
+    } else if (arg === '--verbose' || arg === '-v') {
+      VERBOSE = true
     } else if (command === 'generate' && i === 1) {
       // The second argument after 'generate' is the batch size
       const batchValue = parseInt(arg)
@@ -1154,6 +1171,25 @@ function main() {
         batchSize = batchValue
       }
     }
+  }
+
+  // Set verbose mode for puzzle database
+  puzzleDatabase.setVerbose(VERBOSE)
+
+  // If size was not explicitly set, use the size with the lowest puzzle count
+  if (size === null) {
+    size = puzzleDatabase.getSizeWithLowestCount([4, 5, 6])
+    logVerbose(
+      `No size specified, auto-selecting size ${size}x${size} (lowest puzzle count)`
+    )
+  }
+
+  // Validate that auto-selected size is within allowed range
+  if (size !== null && (size < 4 || size > 8)) {
+    console.error(
+      `Error: Auto-selected size ${size}x${size} is not allowed. Only sizes 4-8 are supported for auto-generation.`
+    )
+    process.exit(1)
   }
 
   if (command === 'list') {
@@ -1205,7 +1241,7 @@ function main() {
   }
 
   if (command === 'generate') {
-    console.log(`Generating ${batchSize} new puzzles (${size}x${size})...`)
+    logVerbose(`Generating ${batchSize} new puzzles (${size}x${size})...`)
 
     type Result = {
       success: boolean
@@ -1222,8 +1258,15 @@ function main() {
       marks: string
     }[] = []
 
+    const sizeCounts: Record<number, number> = {} // Track puzzles by size
+    let addedCount = 0
+    let duplicateCount = 0
+
     for (let i = 0; i < batchSize; i++) {
-      console.log(`\n--- Generating puzzle ${i + 1}/${batchSize} ---`)
+      logVerbose(`\n--- Generating puzzle ${i + 1}/${batchSize} ---`)
+      console.log(
+        `Generating puzzle ${i + 1}/${batchSize} (${size}x${size})...`
+      )
       const { success, grid, error, diagnostics } =
         experimentCreateValidBoard(size)
       results.push({ success, grid, error, diagnostics })
@@ -1233,94 +1276,118 @@ function main() {
         })
       }
       if (!success) {
-        console.log(`Failed to generate puzzle ${i + 1}: ${error}`)
+        console.log(`❌ Failed to generate puzzle ${i + 1}: ${error}`)
         break
       }
-    }
 
-    console.log('\n–– Solver diagnostics per attempt ––')
-    allDiagnostics.forEach(({ attempt, step, iterations, flags }) => {
-      console.log(
-        `Attempt ${attempt} Step ${step}: ${iterations} iterations, ${flags} flags`
-      )
-    })
-
-    // Add successful puzzles to database
-    const successfulPuzzles = results.filter(r => r.success)
-    if (successfulPuzzles.length > 0) {
-      console.log(
-        `\nAdding ${successfulPuzzles.length} successful puzzles to database...`
-      )
-      let addedCount = 0
-      successfulPuzzles.forEach((result, index) => {
-        if (result.grid) {
-          const wasAdded = puzzleDatabase.addPuzzle(result.grid)
-          if (wasAdded) {
-            addedCount++
-            console.log(`  Puzzle ${index + 1}: Added to database`)
-          } else {
-            console.log(`  Puzzle ${index + 1}: Duplicate, skipped`)
-          }
+      // Save puzzle immediately after generation
+      if (grid) {
+        const wasAdded = puzzleDatabase.addPuzzle(grid)
+        if (wasAdded) {
+          addedCount++
+          sizeCounts[size] = (sizeCounts[size] || 0) + 1
+          const stats = puzzleDatabase.getStats()
+          console.log(
+            `  ✅ Puzzle ${
+              i + 1
+            } created and saved (${size}x${size}) - Database: ${
+              stats.totalPuzzles
+            } puzzles`
+          )
+        } else {
+          duplicateCount++
+          console.log(`  ⚠️  Puzzle ${i + 1} was duplicate, skipped`)
         }
-      })
-
-      if (addedCount > 0) {
-        console.log(`  ${addedCount} new puzzles saved to database`)
       }
     }
 
-    // Output summary
-    const output = {
-      params: { size, retries: RETRIES, batch: batchSize },
-      summary,
-      puzzlesGenerated: successfulPuzzles.length,
-      puzzlesAdded: successfulPuzzles.length,
-      errors: results.filter(r => !r.success).map(r => r.error)
+    logVerbose('\n–– Solver diagnostics per attempt ––')
+    if (VERBOSE) {
+      allDiagnostics.forEach(({ attempt, step, iterations, flags }) => {
+        console.log(
+          `Attempt ${attempt} Step ${step}: ${iterations} iterations, ${flags} flags`
+        )
+      })
     }
 
-    if (OUT) {
-      fs.writeFileSync(OUT, JSON.stringify(output, null, 2))
+    // Show final summary
+    const successfulPuzzles = results.filter(r => r.success)
+    if (successfulPuzzles.length > 0) {
+      const stats = puzzleDatabase.getStats()
+      const sizeBreakdown = Object.entries(sizeCounts)
+        .map(([s, count]) => `${s}x${s}: ${count}`)
+        .join(', ')
+
+      console.log(
+        `\n✅ Completed: Generated ${addedCount} new puzzle(s) (${sizeBreakdown})`
+      )
+      console.log(`📊 Database now has ${stats.totalPuzzles} total puzzles`)
+      if (duplicateCount > 0) {
+        console.log(`⚠️  ${duplicateCount} puzzle(s) were duplicates`)
+      }
     } else {
-      console.log('\n=== Generation Summary ===')
-      console.log(JSON.stringify(output, null, 2))
+      console.log(`\n❌ Failed to generate any puzzles`)
+    }
+
+    // Output detailed summary only in verbose mode
+    if (VERBOSE) {
+      const output = {
+        params: { size, retries: RETRIES, batch: batchSize },
+        summary,
+        puzzlesGenerated: successfulPuzzles.length,
+        puzzlesAdded: successfulPuzzles.length,
+        errors: results.filter(r => !r.success).map(r => r.error)
+      }
+
+      if (OUT) {
+        fs.writeFileSync(OUT, JSON.stringify(output, null, 2))
+      } else {
+        console.log('\n=== Generation Summary ===')
+        console.log(JSON.stringify(output, null, 2))
+      }
     }
 
     process.exit(successfulPuzzles.length > 0 ? 0 : 1)
   }
 
   // Default behavior: generate one puzzle
-  console.log(`Generating 1 puzzle (${size}x${size}) (default behavior)...`)
-  console.log('\nAvailable commands:')
-  console.log('  yarn generate                    - Generate 1 puzzle')
-  console.log('  yarn generate generate [number]  - Generate multiple puzzles')
-  console.log(
-    '  yarn puzzle-db list              - List all puzzles in database'
-  )
-  console.log('  yarn puzzle-db stats             - Show database statistics')
-  console.log('  yarn puzzle-db export <puzzleId> - Export a specific puzzle')
-  console.log(
-    '  yarn puzzle-db delete <puzzleId> - Delete a puzzle from database'
-  )
+  logVerbose(`Generating 1 puzzle (${size}x${size}) (default behavior)...`)
+  if (VERBOSE) {
+    console.log('\nAvailable commands:')
+    console.log('  yarn generate                    - Generate 1 puzzle')
+    console.log(
+      '  yarn generate generate [number]  - Generate multiple puzzles'
+    )
+    console.log(
+      '  yarn puzzle-db list              - List all puzzles in database'
+    )
+    console.log('  yarn puzzle-db stats             - Show database statistics')
+    console.log('  yarn puzzle-db export <puzzleId> - Export a specific puzzle')
+    console.log(
+      '  yarn puzzle-db delete <puzzleId> - Delete a puzzle from database'
+    )
+  }
 
   const { success, grid, error, diagnostics } = experimentCreateValidBoard(size)
 
   if (success && grid) {
     const wasAdded = puzzleDatabase.addPuzzle(grid)
+    const stats = puzzleDatabase.getStats()
     if (wasAdded) {
-      console.log(`\n=== Generation Summary ===`)
-      console.log(`Successfully generated and saved puzzle`)
-      console.log(`Generation attempts: ${summary.attempts}`)
-      const stats = puzzleDatabase.getStats()
-      console.log(`Database now contains ${stats.totalPuzzles} puzzles`)
+      console.log(`✅ Generated 1 new puzzle (${size}x${size})`)
+      console.log(`📊 Database now has ${stats.totalPuzzles} total puzzles`)
+      if (VERBOSE) {
+        console.log(`Generation attempts: ${summary.attempts}`)
+      }
     } else {
-      console.log(`\n=== Generation Summary ===`)
-      console.log(`Generated puzzle was duplicate, not saved`)
-      console.log(`Generation attempts: ${summary.attempts}`)
-      const stats = puzzleDatabase.getStats()
-      console.log(`Database contains ${stats.totalPuzzles} puzzles`)
+      console.log(`⚠️  Generated puzzle was duplicate, not saved`)
+      console.log(`📊 Database contains ${stats.totalPuzzles} puzzles`)
+      if (VERBOSE) {
+        console.log(`Generation attempts: ${summary.attempts}`)
+      }
     }
   } else {
-    console.log(`\nGeneration failed: ${error}`)
+    console.log(`❌ Generation failed: ${error}`)
     process.exit(1)
   }
 }

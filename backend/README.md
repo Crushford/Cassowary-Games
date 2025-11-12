@@ -50,7 +50,7 @@ yarn puzzle-db list
 
 ## 📊 Database
 
-Puzzles are stored in `../public/puzzles.json` (relative to cli-tools folder).
+Puzzles are stored in `../frontend/public/puzzles.json` (relative to backend folder).
 This location makes the database accessible to the frontend game.
 
 ## 🔗 Dependencies
