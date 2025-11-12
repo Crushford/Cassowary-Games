@@ -48,6 +48,16 @@ interface QueensState {
   showErrorFeedback: boolean; // Flag to show error feedback (red X)
   errorFeedbackSquare: Pos | null; // Square to show error feedback on
   highlightToolSelector: boolean; // Flag to highlight tool selector in overlay
+  // Speed mode state
+  isSpeedMode: boolean;
+  speedModeTimerDuration: number | null; // Duration in seconds (120 for 2min, 300 for 5min)
+  speedModeTimeRemaining: number | null; // Time remaining in seconds
+  speedModeSelectedSizes: string[] | null; // Selected sizes or null for sequential
+  speedModeCompletedCount: number; // Number of puzzles completed in this session
+  speedModeCompletedBySize: Record<string, number>; // Count of completed puzzles by size
+  speedModeTimerInterval: number | null; // Interval ID for timer
+  speedModeCurrentSizeIndex: number; // Current size index in ordered sizes (0 = 4x4, 1 = 5x5, etc.)
+  speedModeCurrentPuzzleIndex: number; // Current puzzle index within current size
   // UI state
   uiState: {
     placementMode: 'auto' | 'flag' | 'queen'; // 'auto', 'flag', or 'queen'
@@ -111,6 +121,16 @@ export const useQueensStore = defineStore('queens', {
     showErrorFeedback: false,
     errorFeedbackSquare: null,
     highlightToolSelector: false,
+    // Speed mode state
+    isSpeedMode: false,
+    speedModeTimerDuration: null,
+    speedModeTimeRemaining: null,
+    speedModeSelectedSizes: null,
+    speedModeCompletedCount: 0,
+    speedModeCompletedBySize: {},
+    speedModeTimerInterval: null,
+    speedModeCurrentSizeIndex: 0,
+    speedModeCurrentPuzzleIndex: 0,
     // UI state
     uiState: {
       placementMode: 'auto', // 'auto', 'flag', or 'queen'
@@ -509,6 +529,10 @@ export const useQueensStore = defineStore('queens', {
         // Check tutorial completion step
         if (this.isTutorialMode) {
           this.checkTutorialStep(null, 'complete');
+        }
+        // Handle speed mode completion
+        if (this.isSpeedMode) {
+          this.onSpeedModePuzzleComplete();
         }
         // Don't reveal solution - just mark as complete
       } else {
@@ -1025,6 +1049,136 @@ export const useQueensStore = defineStore('queens', {
       const selectedPuzzle = puzzlesForSize[nextIndex];
       // Navigate to the next puzzle URL
       router.push(`/queens/${selectedPuzzle.id}`);
+    },
+
+    // Speed mode functions
+    startSpeedMode(timerDuration: number, selectedSizes: string[] | null) {
+      this.isSpeedMode = true;
+      this.speedModeTimerDuration = timerDuration;
+      this.speedModeTimeRemaining = timerDuration;
+      this.speedModeSelectedSizes = selectedSizes;
+      this.speedModeCompletedCount = 0;
+      this.speedModeCompletedBySize = {};
+      // Reset to start from beginning (4x4)
+      this.speedModeCurrentSizeIndex = 0;
+      this.speedModeCurrentPuzzleIndex = 0;
+
+      // Start timer
+      this.speedModeTimerInterval = window.setInterval(() => {
+        if (this.speedModeTimeRemaining !== null && this.speedModeTimeRemaining > 0) {
+          this.speedModeTimeRemaining--;
+        } else {
+          // Timer reached 0 - stop timer but keep isSpeedMode true so modal can show
+          if (this.speedModeTimerInterval !== null) {
+            clearInterval(this.speedModeTimerInterval);
+            this.speedModeTimerInterval = null;
+          }
+          this.speedModeTimeRemaining = 0;
+        }
+      }, 1000);
+    },
+
+    endSpeedMode() {
+      if (this.speedModeTimerInterval !== null) {
+        clearInterval(this.speedModeTimerInterval);
+        this.speedModeTimerInterval = null;
+      }
+      this.isSpeedMode = false;
+      this.speedModeTimeRemaining = null;
+    },
+
+    resetSpeedMode() {
+      this.endSpeedMode();
+      this.speedModeTimerDuration = null;
+      this.speedModeSelectedSizes = null;
+      this.speedModeCompletedCount = 0;
+      this.speedModeCompletedBySize = {};
+      this.speedModeCurrentSizeIndex = 0;
+      this.speedModeCurrentPuzzleIndex = 0;
+    },
+
+    getAvailableSizes(): string[] {
+      const sizes = new Set<string>();
+      this.allPuzzles.forEach((puzzle) => {
+        const gridSize = Math.sqrt(puzzle.layout.length);
+        const sizeKey = `${gridSize}x${gridSize}`;
+        sizes.add(sizeKey);
+      });
+      return Array.from(sizes).sort((a, b) => {
+        const aSize = parseInt(a.split('x')[0], 10);
+        const bSize = parseInt(b.split('x')[0], 10);
+        return aSize - bSize;
+      });
+    },
+
+    async getNextSequentialUncompletedPuzzle(): Promise<any | null> {
+      if (!this.puzzleDatabase || this.puzzleIdMap.size === 0) {
+        const success = await this.loadPuzzleDatabase();
+        if (!success) {
+          throw new Error('Failed to load puzzle database');
+        }
+      }
+
+      const completedPuzzles = getCompletedPuzzles();
+      const availableSizes = this.speedModeSelectedSizes || this.getAvailableSizes();
+
+      // Start from current size index and find next uncompleted puzzle
+      for (
+        let sizeIdx = this.speedModeCurrentSizeIndex;
+        sizeIdx < availableSizes.length;
+        sizeIdx++
+      ) {
+        const sizeKey = availableSizes[sizeIdx];
+        const puzzlesForSize = this.puzzleDatabase[sizeKey] || [];
+
+        // Start from current puzzle index for current size, or 0 for new sizes
+        const startIndex =
+          sizeIdx === this.speedModeCurrentSizeIndex ? this.speedModeCurrentPuzzleIndex : 0;
+
+        // Find next uncompleted puzzle in this size
+        for (let puzzleIdx = startIndex; puzzleIdx < puzzlesForSize.length; puzzleIdx++) {
+          const puzzle = puzzlesForSize[puzzleIdx];
+          const puzzleId = String(puzzle.id);
+          if (!completedPuzzles.has(puzzleId)) {
+            // Found an uncompleted puzzle - update indices
+            this.speedModeCurrentSizeIndex = sizeIdx;
+            this.speedModeCurrentPuzzleIndex = puzzleIdx;
+            return puzzle;
+          }
+        }
+
+        // All puzzles in this size are completed, move to next size
+        this.speedModeCurrentSizeIndex = sizeIdx + 1;
+        this.speedModeCurrentPuzzleIndex = 0;
+      }
+
+      // All puzzles completed
+      return null;
+    },
+
+    async startSpeedModePuzzle() {
+      const puzzle = await this.getNextSequentialUncompletedPuzzle();
+      if (!puzzle) {
+        // All puzzles completed, end speed mode
+        this.endSpeedMode();
+        router.push('/queens');
+        return;
+      }
+      router.push(`/queens/${puzzle.id}`);
+    },
+
+    onSpeedModePuzzleComplete() {
+      if (!this.isSpeedMode) return;
+
+      this.speedModeCompletedCount++;
+      const sizeKey = `${this.gridSize}x${this.gridSize}`;
+      this.speedModeCompletedBySize[sizeKey] = (this.speedModeCompletedBySize[sizeKey] || 0) + 1;
+
+      // Move to next puzzle index
+      this.speedModeCurrentPuzzleIndex++;
+
+      // Auto-load next puzzle
+      this.startSpeedModePuzzle();
     },
   },
 });

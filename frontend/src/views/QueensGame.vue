@@ -6,7 +6,13 @@
         class="h-svh w-full w-[480px] bg-gray-800 text-white flex flex-col overflow-hidden relative"
       >
         <!-- Puzzle Completion Modal -->
-        <QueensCompletionModal :is-visible="queensStore.isComplete" />
+        <QueensCompletionModal
+          v-if="!queensStore.isSpeedMode"
+          :is-visible="queensStore.isComplete"
+        />
+
+        <!-- Speed Mode Completion Modal -->
+        <SpeedModeCompletionModal :is-visible="showSpeedModeCompletionModal" />
 
         <!-- Tutorial Toast -->
         <Toast
@@ -28,6 +34,21 @@
         <div class="flex-none p-4">
           <div class="max-w-full">
             <QueensHeader />
+            <!-- Speed Mode Timer and Counter -->
+            <div
+              v-if="queensStore.isSpeedMode"
+              class="mb-3 p-3 bg-yellow-900 bg-opacity-50 rounded-lg"
+            >
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-yellow-400 font-semibold">⚡ Speed Mode</span>
+                <span class="text-yellow-300 font-bold">{{
+                  formatTime(queensStore.speedModeTimeRemaining || 0)
+                }}</span>
+              </div>
+              <div class="text-yellow-200 text-sm text-center">
+                Completed: {{ queensStore.speedModeCompletedCount }}
+              </div>
+            </div>
             <div v-if="queensStore.isComplete" class="text-sm text-green-400 text-center mt-2">
               Puzzle Complete!
             </div>
@@ -94,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch, defineAsyncComponent } from 'vue';
+import { onMounted, onBeforeUnmount, watch, defineAsyncComponent, ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQueensStore, type TutorialStep } from '../stores/queensStore';
 import type { Pos } from '../types/types';
@@ -104,6 +125,9 @@ const QueensSquare = defineAsyncComponent(() => import('../components/queens/Que
 const QueensHeader = defineAsyncComponent(() => import('../components/queens/QueensHeader.vue'));
 const QueensCompletionModal = defineAsyncComponent(
   () => import('../components/queens/QueensCompletionModal.vue')
+);
+const SpeedModeCompletionModal = defineAsyncComponent(
+  () => import('../components/queens/SpeedModeCompletionModal.vue')
 );
 const Toast = defineAsyncComponent(() => import('../components/shared/Toast.vue'));
 const QueensToolSelector = defineAsyncComponent(
@@ -116,6 +140,16 @@ const TutorialOverlay = defineAsyncComponent(
 const route = useRoute();
 const router = useRouter();
 const queensStore = useQueensStore();
+
+const showSpeedModeCompletionModal = computed(() => {
+  return queensStore.isSpeedMode && queensStore.speedModeTimeRemaining === 0;
+});
+
+function formatTime(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
 
 async function loadPuzzleFromRoute() {
   console.log('[QueensGame] loadPuzzleFromRoute called');
@@ -323,6 +357,13 @@ watch(
     await loadPuzzleFromRoute();
   }
 );
+
+// Cleanup speed mode timer on unmount
+onBeforeUnmount(() => {
+  if (queensStore.isSpeedMode) {
+    queensStore.endSpeedMode();
+  }
+});
 
 defineOptions({
   name: 'QueensGame',
