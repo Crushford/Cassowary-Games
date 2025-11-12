@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import type { GridSquare, Pos, MarkType, ColorName } from '../types/types';
 import { COLOR_SYMBOLS } from '../utils/colorPalette';
 import { createEmptyGrid, clearMarkers, isValidPosition, clonePlayerMarks } from './gridUtils';
+import router from '../router';
 
 // Create reverse mapping from symbols to color names
 const SYMBOL_TO_COLOR: Record<string, ColorName> = Object.entries(COLOR_SYMBOLS).reduce(
@@ -961,6 +962,69 @@ export const useQueensStore = defineStore('queens', {
         this.updateBlockedMoves();
       }
       // When disabling, don't remove existing flags - just prevent future auto-flagging
+    },
+    async startNextPuzzle() {
+      // Load database if not already loaded
+      if (!this.puzzleDatabase || this.puzzleIdMap.size === 0) {
+        const success = await this.loadPuzzleDatabase();
+        if (!success) {
+          throw new Error('Failed to load puzzle database');
+        }
+      }
+
+      // Get current puzzle's numeric ID
+      if (!this.currentPuzzle || !this.currentPuzzle.id) {
+        // If no current puzzle, redirect to levels page
+        router.push('/queens');
+        return;
+      }
+
+      const currentNumericId =
+        typeof this.currentPuzzle.id === 'number'
+          ? this.currentPuzzle.id
+          : parseInt(String(this.currentPuzzle.id), 10);
+
+      if (isNaN(currentNumericId)) {
+        // If current puzzle doesn't have a numeric ID, redirect to levels page
+        router.push('/queens');
+        return;
+      }
+
+      // Find the next puzzle ID (current + 1)
+      const nextPuzzleId = currentNumericId + 1;
+      const nextPuzzle = this.puzzleIdMap.get(nextPuzzleId);
+
+      if (nextPuzzle) {
+        // Check if next puzzle is the same size
+        const nextGridSize = Math.sqrt(nextPuzzle.layout.length);
+        if (nextGridSize === this.gridSize) {
+          // Navigate to the next puzzle URL
+          router.push(`/queens/${nextPuzzleId}`);
+          return;
+        }
+      }
+
+      // If next puzzle doesn't exist or is different size, find next puzzle of same size
+      const sizeKey = `${this.gridSize}x${this.gridSize}`;
+      const puzzlesForSize = this.puzzleDatabase[sizeKey];
+
+      if (!puzzlesForSize || puzzlesForSize.length === 0) {
+        // No puzzles available, redirect to levels page
+        router.push('/queens');
+        return;
+      }
+
+      // Find current puzzle's index in puzzlesForSize
+      const currentIndex = puzzlesForSize.findIndex(
+        (p: any) => p.id === currentNumericId || p.originalId === this.currentPuzzleId
+      );
+
+      // Get next puzzle (wrapping around if needed)
+      const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % puzzlesForSize.length : 0;
+
+      const selectedPuzzle = puzzlesForSize[nextIndex];
+      // Navigate to the next puzzle URL
+      router.push(`/queens/${selectedPuzzle.id}`);
     },
   },
 });
