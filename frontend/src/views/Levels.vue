@@ -130,6 +130,9 @@ function selectTutorial() {
 }
 
 onMounted(() => {
+  // Reset modal states to ensure nothing is selected when returning to this page
+  showSpeedModeModal.value = false;
+  showSinglePuzzleModeModal.value = false;
   loadPuzzles();
 });
 
