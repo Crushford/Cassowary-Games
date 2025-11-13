@@ -83,7 +83,7 @@
           class="px-4 py-2 text-white font-semibold text-sm rounded-lg transition-colors duration-200 bg-blue-600 hover:bg-blue-700 cursor-pointer"
           @click="handleNewPuzzle"
         >
-          Back to Levels
+          Main Menu
         </button>
       </div>
     </div>
@@ -181,6 +181,14 @@ async function loadPuzzleFromRoute() {
 }
 
 async function handleNewPuzzle() {
+  // Reset speed mode if active
+  if (queensStore.isSpeedMode) {
+    queensStore.resetSpeedMode();
+  }
+  // Exit tutorial mode if active
+  if (queensStore.isTutorialMode) {
+    queensStore.exitTutorialMode();
+  }
   // Navigate back to levels page
   router.push('/queens');
 }
