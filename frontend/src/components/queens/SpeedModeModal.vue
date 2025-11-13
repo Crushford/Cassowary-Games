@@ -35,29 +35,29 @@
 
       <!-- Size Selection -->
       <div class="mb-6">
-        <h3 class="text-lg font-semibold text-gray-300 mb-3">Puzzle Sizes</h3>
-        <div class="mb-3">
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="radio" :value="null" v-model="sizeMode" class="w-4 h-4 text-yellow-500" />
-            <span class="text-white">Sequential (4x4 → 5x5 → 6x6 → 7x7 → 8x8)</span>
-          </label>
-        </div>
-        <div class="mb-3">
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="radio" value="select" v-model="sizeMode" class="w-4 h-4 text-yellow-500" />
-            <span class="text-white">Select Sizes</span>
-          </label>
-        </div>
+        <h3 class="text-lg font-semibold text-gray-300 mb-3">Puzzle Mode</h3>
+        <div class="grid grid-cols-3 gap-2">
+          <!-- Sequential Button -->
+          <button
+            @click="selectedSize = null"
+            class="p-3 rounded-lg transition-colors text-sm font-semibold col-span-3"
+            :class="
+              selectedSize === null
+                ? 'bg-yellow-500 text-gray-900'
+                : 'bg-gray-700 text-white hover:bg-gray-600'
+            "
+          >
+            Sequential ({{ sequentialText }})
+          </button>
 
-        <!-- Size Selection Grid -->
-        <div v-if="sizeMode === 'select'" class="grid grid-cols-3 gap-2 mt-3">
+          <!-- Size Buttons -->
           <button
             v-for="size in availableSizes"
             :key="size"
-            @click="toggleSize(size)"
-            class="p-2 rounded-lg transition-colors text-sm font-semibold"
+            @click="selectedSize = size"
+            class="p-3 rounded-lg transition-colors text-sm font-semibold"
             :class="
-              selectedSizes.includes(size)
+              selectedSize === size
                 ? 'bg-yellow-500 text-gray-900'
                 : 'bg-gray-700 text-white hover:bg-gray-600'
             "
@@ -70,8 +70,7 @@
       <!-- Start Button -->
       <button
         @click="handleStart"
-        :disabled="sizeMode === 'select' && selectedSizes.length === 0"
-        class="w-full py-3 px-6 bg-yellow-500 hover:bg-yellow-400 disabled:bg-gray-600 disabled:cursor-not-allowed text-gray-900 font-semibold rounded-lg transition-colors duration-200"
+        class="w-full py-3 px-6 bg-green-500 hover:bg-green-400 text-white font-semibold rounded-lg transition-colors duration-200"
       >
         Start Speed Mode
       </button>
@@ -95,28 +94,18 @@ const emit = defineEmits<{
 }>();
 
 const selectedTimer = ref<number>(120);
-const sizeMode = ref<'random' | 'select' | null>(null);
-const selectedSizes = ref<string[]>([]);
+const selectedSize = ref<string | null>(null);
 
 const availableSizes = computed(() => {
   return queensStore.getAvailableSizes();
 });
 
-function toggleSize(size: string) {
-  const index = selectedSizes.value.indexOf(size);
-  if (index === -1) {
-    selectedSizes.value.push(size);
-  } else {
-    selectedSizes.value.splice(index, 1);
-  }
-}
+const sequentialText = computed(() => {
+  return availableSizes.value.join(' → ');
+});
 
 async function handleStart() {
-  const sizes = sizeMode.value === 'select' ? selectedSizes.value : null;
-  if (sizeMode.value === 'select' && selectedSizes.value.length === 0) {
-    return; // Don't start if no sizes selected
-  }
-  queensStore.startSpeedMode(selectedTimer.value, sizes);
+  queensStore.startSpeedMode(selectedTimer.value, selectedSize.value);
   await queensStore.startSpeedModePuzzle();
   emit('close');
 }

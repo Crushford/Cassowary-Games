@@ -41,7 +41,7 @@
 
         <!-- Single Puzzle Mode Button -->
         <button
-          @click="showSinglePuzzleModeModal = true"
+          @click="queensStore.openSinglePuzzleModeModal()"
           class="w-full p-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-lg transition-all text-left border-2 border-transparent hover:border-green-400"
         >
           <div class="text-2xl font-bold mb-1">Single Puzzle Mode</div>
@@ -50,22 +50,40 @@
 
         <!-- Speed Mode Button -->
         <button
-          @click="showSpeedModeModal = true"
+          @click="queensStore.openSpeedModeModal()"
           class="w-full p-6 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 rounded-lg transition-all text-left border-2 border-transparent hover:border-yellow-400"
         >
           <div class="text-2xl font-bold mb-1">⚡ Speed Mode</div>
           <div class="text-sm text-yellow-100">Race against the clock!</div>
         </button>
+
+        <!-- Records Button -->
+        <button
+          @click="queensStore.openRecordsModal()"
+          class="w-full p-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-lg transition-all text-left border-2 border-transparent hover:border-purple-400"
+        >
+          <div class="text-2xl font-bold mb-1">🏆 Records</div>
+          <div class="text-sm text-purple-100">View your best times and scores</div>
+        </button>
       </div>
     </div>
 
     <!-- Speed Mode Modal -->
-    <SpeedModeModal :is-visible="showSpeedModeModal" @close="showSpeedModeModal = false" />
+    <SpeedModeModal
+      :is-visible="queensStore.showSpeedModeModal"
+      @close="queensStore.closeSpeedModeModal()"
+    />
 
     <!-- Single Puzzle Mode Modal -->
     <SinglePuzzleModeModal
-      :is-visible="showSinglePuzzleModeModal"
-      @close="showSinglePuzzleModeModal = false"
+      :is-visible="queensStore.showSinglePuzzleModeModal"
+      @close="queensStore.closeSinglePuzzleModeModal()"
+    />
+
+    <!-- Records Modal -->
+    <RecordsModal
+      :is-visible="queensStore.showRecordsModal"
+      @close="queensStore.closeRecordsModal()"
     />
   </div>
 </template>
@@ -81,14 +99,13 @@ const SpeedModeModal = defineAsyncComponent(
 const SinglePuzzleModeModal = defineAsyncComponent(
   () => import('../components/queens/SinglePuzzleModeModal.vue')
 );
+const RecordsModal = defineAsyncComponent(() => import('../components/queens/RecordsModal.vue'));
 
 const router = useRouter();
 const queensStore = useQueensStore();
 
 const loading = ref(true);
 const error = ref<string | null>(null);
-const showSpeedModeModal = ref(false);
-const showSinglePuzzleModeModal = ref(false);
 
 async function loadPuzzles() {
   try {
