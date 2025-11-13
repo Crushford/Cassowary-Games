@@ -2,8 +2,8 @@
   <div class="min-h-screen bg-gray-900 text-white p-8">
     <div class="max-w-6xl mx-auto">
       <div class="mb-8">
-        <h1 class="text-4xl font-bold mb-2">Puzzle Levels</h1>
-        <p class="text-gray-400">Select a category to play</p>
+        <h1 class="text-4xl font-bold mb-2">Game Type Select</h1>
+        <p class="text-gray-400">Choose your game mode</p>
       </div>
 
       <div v-if="loading || queensStore.isLoadingPuzzles" class="text-center py-12">
@@ -39,6 +39,15 @@
           <div class="text-sm text-blue-100">Learn the basics with 10 guided puzzles</div>
         </button>
 
+        <!-- Single Puzzle Mode Button -->
+        <button
+          @click="showSinglePuzzleModeModal = true"
+          class="w-full p-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-lg transition-all text-left border-2 border-transparent hover:border-green-400"
+        >
+          <div class="text-2xl font-bold mb-1">Single Puzzle Mode</div>
+          <div class="text-sm text-green-100">Play puzzles at your own pace</div>
+        </button>
+
         <!-- Speed Mode Button -->
         <button
           @click="showSpeedModeModal = true"
@@ -46,15 +55,6 @@
         >
           <div class="text-2xl font-bold mb-1">⚡ Speed Mode</div>
           <div class="text-sm text-yellow-100">Race against the clock!</div>
-        </button>
-
-        <!-- Single Puzzle Mode Button -->
-        <button
-          @click="showSinglePuzzleModeModal = true"
-          class="w-full p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-lg transition-all text-left border-2 border-transparent hover:border-blue-400"
-        >
-          <div class="text-2xl font-bold mb-1">Single Puzzle Mode</div>
-          <div class="text-sm text-blue-100">Play puzzles at your own pace</div>
         </button>
       </div>
     </div>
