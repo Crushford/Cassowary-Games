@@ -29,117 +29,44 @@
         <p class="text-red-400">{{ error }}</p>
       </div>
 
-      <div v-else>
-        <!-- Category Selection -->
-        <div v-if="!selectedCategory" class="space-y-4">
-          <!-- Tutorial Option -->
-          <button
-            @click="selectTutorial"
-            class="w-full p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-lg transition-all text-left border-2 border-transparent hover:border-blue-400"
-          >
-            <div class="text-2xl font-bold mb-1">Tutorial</div>
-            <div class="text-sm text-blue-100">Learn the basics with 10 guided puzzles</div>
-          </button>
+      <div v-else class="space-y-4">
+        <!-- Tutorial Option -->
+        <button
+          @click="selectTutorial"
+          class="w-full p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-lg transition-all text-left border-2 border-transparent hover:border-blue-400"
+        >
+          <div class="text-2xl font-bold mb-1">Tutorial</div>
+          <div class="text-sm text-blue-100">Learn the basics with 10 guided puzzles</div>
+        </button>
 
-          <!-- Speed Mode Button -->
-          <button
-            @click="showSpeedModeModal = true"
-            class="w-full p-6 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 rounded-lg transition-all text-left border-2 border-transparent hover:border-yellow-400"
-          >
-            <div class="text-2xl font-bold mb-1">⚡ Speed Mode</div>
-            <div class="text-sm text-yellow-100">Race against the clock!</div>
-          </button>
+        <!-- Speed Mode Button -->
+        <button
+          @click="showSpeedModeModal = true"
+          class="w-full p-6 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 rounded-lg transition-all text-left border-2 border-transparent hover:border-yellow-400"
+        >
+          <div class="text-2xl font-bold mb-1">⚡ Speed Mode</div>
+          <div class="text-sm text-yellow-100">Race against the clock!</div>
+        </button>
 
-          <!-- Board Size Options -->
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
-            <div v-for="size in availableSizes" :key="size" class="flex flex-col gap-2">
-              <button
-                @click="selectCategory(size)"
-                class="p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-left border border-gray-700 hover:border-blue-500 flex-1"
-              >
-                <div class="text-xl font-semibold text-blue-400 mb-1">{{ size }}</div>
-                <div class="text-xs text-gray-400">Puzzles</div>
-              </button>
-              <button
-                @click="loadNextUncompletedPuzzle(size)"
-                class="px-4 py-2 bg-green-600 hover:bg-green-500 rounded-lg transition-colors text-sm font-semibold text-white"
-              >
-                Play Next Unsolved
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tutorial Puzzles -->
-        <div v-else-if="selectedCategory === 'tutorial'" class="space-y-4">
-          <button
-            @click="selectedCategory = null"
-            class="mb-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm"
-          >
-            ← Back
-          </button>
-          <h2 class="text-2xl font-semibold mb-4 text-blue-300">Tutorial Levels</h2>
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <button
-              v-for="puzzle in tutorialPuzzles"
-              :key="puzzle.name"
-              @click="loadTutorialPuzzle(puzzle.name)"
-              class="p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-left border border-gray-700 hover:border-blue-500 relative"
-              :class="{
-                'border-green-500': queensStore.isPuzzleCompleted(puzzle.name),
-                'bg-gray-700': queensStore.isPuzzleCompleted(puzzle.name),
-              }"
-            >
-              <div class="font-mono text-sm font-semibold text-blue-400 mb-1">
-                {{ puzzle.name }}
-              </div>
-              <div
-                v-if="queensStore.isPuzzleCompleted(puzzle.name)"
-                class="absolute top-2 right-2 text-green-400 text-lg"
-              >
-                ✓
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <!-- Board Size Puzzles -->
-        <div v-else class="space-y-4">
-          <button
-            @click="selectedCategory = null"
-            class="mb-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm"
-          >
-            ← Back
-          </button>
-          <h2 class="text-2xl font-semibold mb-4 text-blue-300">{{ selectedCategory }} Puzzles</h2>
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            <button
-              v-for="puzzle in puzzlesForCategory"
-              :key="puzzle.id"
-              @click="loadPuzzle(puzzle.id)"
-              class="p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-left border border-gray-700 hover:border-blue-500 relative"
-              :class="{
-                'border-green-500': queensStore.isPuzzleCompleted(puzzle.id),
-                'bg-gray-700': queensStore.isPuzzleCompleted(puzzle.id),
-              }"
-            >
-              <div class="font-mono text-sm font-semibold text-blue-400 mb-1">
-                Puzzle {{ puzzle.id }}
-              </div>
-              <div
-                v-if="queensStore.isPuzzleCompleted(puzzle.id)"
-                class="absolute top-2 right-2 text-green-400 text-lg"
-              >
-                ✓
-              </div>
-            </button>
-          </div>
-        </div>
+        <!-- Single Puzzle Mode Button -->
+        <button
+          @click="showSinglePuzzleModeModal = true"
+          class="w-full p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-lg transition-all text-left border-2 border-transparent hover:border-blue-400"
+        >
+          <div class="text-2xl font-bold mb-1">Single Puzzle Mode</div>
+          <div class="text-sm text-blue-100">Play puzzles at your own pace</div>
+        </button>
       </div>
     </div>
 
     <!-- Speed Mode Modal -->
     <SpeedModeModal :is-visible="showSpeedModeModal" @close="showSpeedModeModal = false" />
+
+    <!-- Single Puzzle Mode Modal -->
+    <SinglePuzzleModeModal
+      :is-visible="showSinglePuzzleModeModal"
+      @close="showSinglePuzzleModeModal = false"
+    />
   </div>
 </template>
 
@@ -151,51 +78,17 @@ import { useQueensStore } from '../stores/queensStore';
 const SpeedModeModal = defineAsyncComponent(
   () => import('../components/queens/SpeedModeModal.vue')
 );
+const SinglePuzzleModeModal = defineAsyncComponent(
+  () => import('../components/queens/SinglePuzzleModeModal.vue')
+);
 
 const router = useRouter();
 const queensStore = useQueensStore();
 
 const loading = ref(true);
 const error = ref<string | null>(null);
-const selectedCategory = ref<string | null>(null);
 const showSpeedModeModal = ref(false);
-
-const availableSizes = computed(() => {
-  const sizes = new Set<string>();
-  queensStore.allPuzzles.forEach((puzzle) => {
-    const gridSize = Math.sqrt(puzzle.layout.length);
-    const sizeKey = `${gridSize}x${gridSize}`;
-    sizes.add(sizeKey);
-  });
-  return Array.from(sizes).sort((a, b) => {
-    const aSize = parseInt(a.split('x')[0], 10);
-    const bSize = parseInt(b.split('x')[0], 10);
-    return aSize - bSize;
-  });
-});
-
-const tutorialPuzzles = computed(() => {
-  return queensStore.tutorialPuzzles;
-});
-
-const puzzlesForCategory = computed(() => {
-  if (!selectedCategory.value || selectedCategory.value === 'tutorial') {
-    return [];
-  }
-
-  const puzzles: any[] = [];
-  queensStore.allPuzzles.forEach((puzzle) => {
-    const gridSize = Math.sqrt(puzzle.layout.length);
-    const sizeKey = `${gridSize}x${gridSize}`;
-    if (sizeKey === selectedCategory.value) {
-      puzzles.push(puzzle);
-    }
-  });
-
-  // Sort puzzles by numeric ID
-  puzzles.sort((a, b) => a.id - b.id);
-  return puzzles;
-});
+const showSinglePuzzleModeModal = ref(false);
 
 async function loadPuzzles() {
   try {
@@ -214,31 +107,9 @@ async function loadPuzzles() {
   }
 }
 
-function selectCategory(category: string) {
-  selectedCategory.value = category;
-}
-
-function loadPuzzle(puzzleId: number) {
-  router.push(`/queens/${puzzleId}`);
-}
-
-async function loadTutorialPuzzle(levelName: string) {
-  router.push(`/queens/tutorial/${levelName}`);
-}
-
 function selectTutorial() {
   // Auto-load first tutorial level
   router.push('/queens/tutorial/level-1');
-}
-
-function loadNextUncompletedPuzzle(sizeKey: string) {
-  const puzzle = queensStore.getNextUncompletedPuzzleForSize(sizeKey);
-  if (puzzle) {
-    loadPuzzle(puzzle.id);
-  } else {
-    // All puzzles completed for this size - could show a message or do nothing
-    alert(`All ${sizeKey} puzzles are completed!`);
-  }
 }
 
 onMounted(() => {

@@ -30,7 +30,7 @@ interface QueensState {
   playerMarks: MarkType[][];
   puzzleDatabase: any;
   allPuzzles: any[]; // Flat array of all puzzles ending in -0
-  puzzleIdMap: Map<number, any>; // Map from numeric ID to puzzle
+  puzzleIdMap: Map<string, any>; // Map from string ID to puzzle
   tutorialPuzzles: any[]; // Tutorial puzzles (level-1 through level-10)
   currentPuzzleIndex: number;
   isComplete: boolean;
@@ -174,7 +174,7 @@ export const useQueensStore = defineStore('queens', {
     playerMarks: Array.from({ length: 4 }, () => Array(4).fill(null as MarkType)),
     puzzleDatabase: null,
     allPuzzles: [],
-    puzzleIdMap: new Map(),
+    puzzleIdMap: new Map<string, any>(),
     tutorialPuzzles: [],
     currentPuzzleIndex: 0,
     isComplete: false,
@@ -395,22 +395,18 @@ export const useQueensStore = defineStore('queens', {
       if (this.moveHistory.length > 0) {
         const lastPlayerMarks = this.moveHistory.pop();
         if (lastPlayerMarks) {
-          this.playerMarks = lastPlayerMarks;
-          // Recalculate blocked moves after undo (only if auto-flagging is enabled)
+          // Clone the restored state to avoid reference issues
+          this.playerMarks = clonePlayerMarks(lastPlayerMarks);
+
+          // If auto-flagging is enabled, recalculate flags based on current queens
+          // updateBlockedMoves only flags unmarked squares, so it won't remove correct flags
           if (this.uiState.autoFlagging) {
-            // Clear all flags first, then recalculate
-            for (let r = 0; r < this.gridSize; r++) {
-              for (let c = 0; c < this.gridSize; c++) {
-                if (this.playerMarks[r][c] === 'flag') {
-                  this.playerMarks[r][c] = null;
-                }
-              }
-            }
-            // Re-flag based on current queens
             this.updateBlockedMoves();
           }
+
           // Save progress to localStorage after undo
           savePuzzleProgress(this.currentPuzzleId, this.playerMarks);
+
           // Clear error feedback when undoing
           this.showErrorFeedback = false;
           this.errorFeedbackSquare = null;
@@ -635,140 +631,30 @@ export const useQueensStore = defineStore('queens', {
       this.loadingMessage = 'Loading puzzle database...';
 
       try {
-        const response = await fetch('/puzzles.json');
+        const response = await fetch('/puzzles.json', { cache: 'force-cache' });
         if (!response.ok) {
           throw new Error(`Failed to load puzzles.json: ${response.status}`);
         }
         const data = await response.json();
         console.log('[queensStore] Loaded puzzles.json, sizes:', Object.keys(data));
 
-        this.loadingProgress = 10;
-        this.loadingMessage = 'Processing puzzles...';
-
-        // Helper function to get sort order for puzzle variants
-        // Order: -0, -0V, -0H, -0VH, -90, -90V, -90H, -90VH
-        function getPuzzleVariantOrder(puzzleId: string): number {
-          if (/^pz-\d+-0$/.test(puzzleId)) return 1; // -0
-          if (/^pz-\d+-0V$/.test(puzzleId)) return 2; // -0V
-          if (/^pz-\d+-0H$/.test(puzzleId)) return 3; // -0H
-          if (/^pz-\d+-0VH$/.test(puzzleId)) return 4; // -0VH
-          if (/^pz-\d+-90$/.test(puzzleId)) return 5; // -90
-          if (/^pz-\d+-90V$/.test(puzzleId)) return 6; // -90V
-          if (/^pz-\d+-90H$/.test(puzzleId)) return 7; // -90H
-          if (/^pz-\d+-90VH$/.test(puzzleId)) return 8; // -90VH
-          return 999; // Unknown variants go last
-        }
-
-        // Filter each size's puzzles to include all variants: -0, -0V, -0H, -0VH, -90, -90V, -90H, -90VH
-        this.puzzleDatabase = {};
-        const allPuzzles: any[] = [];
-        this.puzzleIdMap = new Map();
-        let globalIndex = 0;
-
-        // Collect all puzzles from all sizes
-        const sizeKeys = Object.keys(data);
-        const totalSizes = sizeKeys.length;
-        let processedSizes = 0;
-
-        for (const [sizeKey, sizePuzzles] of Object.entries(data)) {
-          // Filter to include only the specified variants
-          const filtered = (sizePuzzles as any[]).filter((puzzle: any) => {
-            const id = puzzle.id;
-            return (
-              /^pz-\d+-0$/.test(id) ||
-              /^pz-\d+-0V$/.test(id) ||
-              /^pz-\d+-0H$/.test(id) ||
-              /^pz-\d+-0VH$/.test(id) ||
-              /^pz-\d+-90$/.test(id) ||
-              /^pz-\d+-90V$/.test(id) ||
-              /^pz-\d+-90H$/.test(id) ||
-              /^pz-\d+-90VH$/.test(id)
-            );
-          });
-
-          // Sort by variant order, then by puzzle number
-          filtered.sort((a, b) => {
-            const orderA = getPuzzleVariantOrder(a.id);
-            const orderB = getPuzzleVariantOrder(b.id);
-            if (orderA !== orderB) {
-              return orderA - orderB;
-            }
-            // If same variant, sort by puzzle number
-            const numA = parseInt(a.id.match(/^pz-(\d+)-/)?.[1] || '0', 10);
-            const numB = parseInt(b.id.match(/^pz-(\d+)-/)?.[1] || '0', 10);
-            return numA - numB;
-          });
-
-          console.log(`[queensStore] Size ${sizeKey}: ${filtered.length} puzzles after filtering`);
-
-          // Update message and progress before processing
-          this.loadingMessage = `Processing ${sizeKey} puzzles... (${filtered.length} puzzles)`;
-          // Update progress (10% to 80% for processing sizes)
-          processedSizes++;
-          this.loadingProgress = 10 + Math.floor((processedSizes / totalSizes) * 70);
-
-          // Allow Vue to update the UI
-          await new Promise((resolve) => setTimeout(resolve, 10));
-
-          // Assign numeric IDs (index + 1) to each puzzle
-          const puzzlesWithNumericIds = filtered.map((puzzle: any) => {
-            globalIndex++;
-            const numericId = globalIndex;
-            const puzzleWithId = {
-              ...puzzle,
-              id: numericId,
-              originalId: puzzle.id, // Keep the original ID for reference
-            };
-            this.puzzleIdMap.set(numericId, puzzleWithId);
-            return puzzleWithId;
-          });
-
-          this.puzzleDatabase[sizeKey] = puzzlesWithNumericIds;
-          allPuzzles.push(...puzzlesWithNumericIds);
-        }
-
-        this.allPuzzles = allPuzzles;
-
-        this.loadingProgress = 85;
-        this.loadingMessage = 'Loading tutorial puzzles...';
-        await new Promise((resolve) => setTimeout(resolve, 10));
-
-        // Load tutorial puzzles (level-1 through level-10)
-        const tutorialPuzzles: any[] = [];
-        for (const [sizeKey, sizePuzzles] of Object.entries(data)) {
-          const tutorial = (sizePuzzles as any[]).filter(
-            (puzzle: any) => puzzle.name && /^level-\d+$/.test(puzzle.name)
-          );
-          // Only get the -0 variant of each tutorial level
-          const tutorialBase = tutorial.filter((puzzle: any) => /^pz-\d+-0$/.test(puzzle.id));
-          tutorialPuzzles.push(...tutorialBase);
-        }
-        // Sort by level number
-        tutorialPuzzles.sort((a, b) => {
-          const aNum = parseInt(a.name.replace('level-', ''), 10);
-          const bNum = parseInt(b.name.replace('level-', ''), 10);
-          return aNum - bNum;
-        });
-        this.tutorialPuzzles = tutorialPuzzles;
-
-        this.loadingMessage = `Loaded ${tutorialPuzzles.length} tutorial puzzles`;
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        // Just store the raw data. No filtering, no reordering, no maps.
+        this.puzzleDatabase = data;
+        this.puzzleIdMap = new Map<string, any>(); // optional cache; stays empty for now
+        this.allPuzzles = []; // not needed anymore, but keep type happy
 
         this.loadingProgress = 100;
-        this.loadingMessage = `Complete! Loaded ${allPuzzles.length} puzzles`;
+        this.loadingMessage = 'Puzzles loaded';
 
-        console.log('[queensStore] Database loaded:', {
-          totalPuzzles: allPuzzles.length,
-          mapSize: this.puzzleIdMap.size,
-          sizes: Object.keys(this.puzzleDatabase),
-          tutorialPuzzles: this.tutorialPuzzles.length,
-        });
+        await new Promise((resolve) => setTimeout(resolve, 200));
 
-        // Small delay to show 100% before hiding
-        await new Promise((resolve) => setTimeout(resolve, 500));
         this.isLoadingPuzzles = false;
         this.loadingProgress = 0;
         this.loadingMessage = '';
+
+        console.log('[queensStore] Database loaded (raw):', {
+          sizes: Object.keys(this.puzzleDatabase),
+        });
 
         return true;
       } catch (error) {
@@ -790,7 +676,7 @@ export const useQueensStore = defineStore('queens', {
       this.initializeGrid();
 
       // Set current puzzle ID for progress tracking
-      this.currentPuzzleId = puzzleData.name || puzzleData.id || puzzleData.originalId;
+      this.currentPuzzleId = puzzleData.name || puzzleData.id;
 
       // Parse layout (color groups) using SYMBOL_TO_COLOR mapping
       for (let i = 0; i < layout.length; i++) {
@@ -819,7 +705,7 @@ export const useQueensStore = defineStore('queens', {
       this.currentPuzzle = puzzleData;
 
       // Load saved progress if puzzle is not completed
-      const puzzleId = puzzleData.name || puzzleData.id || puzzleData.originalId;
+      const puzzleId = puzzleData.name || puzzleData.id;
       const puzzleIdString = typeof puzzleId === 'string' ? puzzleId : String(puzzleId);
       if (!isPuzzleCompleted(puzzleIdString)) {
         const savedProgress = loadPuzzleProgress(puzzleId);
@@ -879,16 +765,34 @@ export const useQueensStore = defineStore('queens', {
       this.parsePuzzleData(puzzle);
     },
 
+    findPuzzleById(id: string): any | null {
+      if (!this.puzzleDatabase) return null;
+
+      // If we ever decide to cache, use puzzleIdMap
+      const cached = this.puzzleIdMap.get(id);
+      if (cached) return cached;
+
+      for (const [sizeKey, sizePuzzles] of Object.entries<any[]>(this.puzzleDatabase)) {
+        const found = sizePuzzles.find((p) => p.id === id);
+        if (found) {
+          // Optional: cache it for future lookups
+          this.puzzleIdMap.set(id, found);
+          return found;
+        }
+      }
+
+      return null;
+    },
+
     async loadPuzzleById(puzzleId: string | number) {
       console.log('[queensStore] loadPuzzleById called with:', puzzleId, typeof puzzleId);
       try {
-        // Load database if not already loaded
         console.log('[queensStore] Checking puzzleDatabase:', {
           hasDatabase: !!this.puzzleDatabase,
           mapSize: this.puzzleIdMap.size,
         });
 
-        if (!this.puzzleDatabase || this.puzzleIdMap.size === 0) {
+        if (!this.puzzleDatabase) {
           console.log('[queensStore] Loading puzzle database...');
           const success = await this.loadPuzzleDatabase();
           console.log('[queensStore] Database load result:', success);
@@ -897,29 +801,17 @@ export const useQueensStore = defineStore('queens', {
           }
         }
 
-        // Parse puzzleId as number (from route parameter)
-        const numericId = typeof puzzleId === 'string' ? parseInt(puzzleId, 10) : puzzleId;
-        console.log('[queensStore] Parsed numericId:', numericId, 'isNaN:', isNaN(numericId));
+        const key = typeof puzzleId === 'string' ? puzzleId : String(puzzleId);
+        console.log('[queensStore] Using string key:', key);
 
-        if (isNaN(numericId)) {
-          throw new Error(`Invalid puzzle ID: ${puzzleId}`);
-        }
-
-        // Look up puzzle by numeric ID
-        console.log('[queensStore] Looking up puzzle in map, map size:', this.puzzleIdMap.size);
-        const puzzle = this.puzzleIdMap.get(numericId);
+        const puzzle = this.findPuzzleById(key);
         console.log('[queensStore] Puzzle lookup result:', puzzle ? 'found' : 'not found');
 
         if (!puzzle) {
-          console.error(
-            '[queensStore] Puzzle not found. Available IDs:',
-            Array.from(this.puzzleIdMap.keys()).slice(0, 10)
-          );
-          throw new Error(`Puzzle with ID ${numericId} not found`);
+          throw new Error(`Puzzle with ID ${key} not found`);
         }
 
-        // Parse and load the puzzle
-        console.log('[queensStore] Parsing puzzle data:', puzzle.id, puzzle.originalId);
+        console.log('[queensStore] Parsing puzzle data:', puzzle.id);
         this.parsePuzzleData(puzzle);
         console.log('[queensStore] Puzzle loaded successfully');
       } catch (error) {
@@ -973,6 +865,34 @@ export const useQueensStore = defineStore('queens', {
         if (!success) {
           throw new Error('Failed to load puzzle database');
         }
+      }
+
+      // Build tutorialPuzzles only once, on demand
+      if (!this.tutorialPuzzles.length) {
+        const tutorials: any[] = [];
+
+        for (const sizePuzzles of Object.values<any[]>(this.puzzleDatabase)) {
+          for (const puzzle of sizePuzzles) {
+            if (
+              puzzle.name &&
+              typeof puzzle.name === 'string' &&
+              puzzle.name.startsWith('level-') &&
+              typeof puzzle.id === 'string' &&
+              puzzle.id.endsWith('-0')
+            ) {
+              tutorials.push(puzzle);
+            }
+          }
+        }
+
+        tutorials.sort((a, b) => {
+          const aNum = Number(String(a.name).slice(6));
+          const bNum = Number(String(b.name).slice(6));
+          return aNum - bNum;
+        });
+
+        this.tutorialPuzzles = tutorials;
+        console.log('[queensStore] Built tutorialPuzzles:', this.tutorialPuzzles.length);
       }
 
       const tutorialPuzzle = this.tutorialPuzzles.find((p) => p.name === levelName);
@@ -1182,65 +1102,37 @@ export const useQueensStore = defineStore('queens', {
     },
     async startNextPuzzle() {
       // Load database if not already loaded
-      if (!this.puzzleDatabase || this.puzzleIdMap.size === 0) {
+      if (!this.puzzleDatabase) {
         const success = await this.loadPuzzleDatabase();
         if (!success) {
           throw new Error('Failed to load puzzle database');
         }
       }
 
-      // Get current puzzle's numeric ID
-      if (!this.currentPuzzle || !this.currentPuzzle.id) {
-        // If no current puzzle, redirect to levels page
+      // Require a current puzzle; if missing, redirect to /queens and return
+      if (!this.currentPuzzle) {
         router.push('/queens');
         return;
       }
 
-      const currentNumericId =
-        typeof this.currentPuzzle.id === 'number'
-          ? this.currentPuzzle.id
-          : parseInt(String(this.currentPuzzle.id), 10);
-
-      if (isNaN(currentNumericId)) {
-        // If current puzzle doesn't have a numeric ID, redirect to levels page
-        router.push('/queens');
-        return;
-      }
-
-      // Find the next puzzle ID (current + 1)
-      const nextPuzzleId = currentNumericId + 1;
-      const nextPuzzle = this.puzzleIdMap.get(nextPuzzleId);
-
-      if (nextPuzzle) {
-        // Check if next puzzle is the same size
-        const nextGridSize = Math.sqrt(nextPuzzle.layout.length);
-        if (nextGridSize === this.gridSize) {
-          // Navigate to the next puzzle URL
-          router.push(`/queens/${nextPuzzleId}`);
-          return;
-        }
-      }
-
-      // If next puzzle doesn't exist or is different size, find next puzzle of same size
+      // Derive the size key and puzzles list
       const sizeKey = `${this.gridSize}x${this.gridSize}`;
       const puzzlesForSize = this.puzzleDatabase[sizeKey];
 
       if (!puzzlesForSize || puzzlesForSize.length === 0) {
-        // No puzzles available, redirect to levels page
         router.push('/queens');
         return;
       }
 
-      // Find current puzzle's index in puzzlesForSize
-      const currentIndex = puzzlesForSize.findIndex(
-        (p: any) => p.id === currentNumericId || p.originalId === this.currentPuzzleId
-      );
+      // Find the current puzzle index by its string ID
+      const currentId = this.currentPuzzle?.id;
+      const currentIndex = puzzlesForSize.findIndex((p: any) => p.id === currentId);
 
-      // Get next puzzle (wrapping around if needed)
+      // Compute the next index cyclically
       const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % puzzlesForSize.length : 0;
-
       const selectedPuzzle = puzzlesForSize[nextIndex];
-      // Navigate to the next puzzle URL
+
+      // Navigate using the string ID
       router.push(`/queens/${selectedPuzzle.id}`);
     },
 
@@ -1309,13 +1201,10 @@ export const useQueensStore = defineStore('queens', {
     },
 
     getAvailableSizes(): string[] {
-      const sizes = new Set<string>();
-      this.allPuzzles.forEach((puzzle) => {
-        const gridSize = Math.sqrt(puzzle.layout.length);
-        const sizeKey = `${gridSize}x${gridSize}`;
-        sizes.add(sizeKey);
-      });
-      return Array.from(sizes).sort((a, b) => {
+      if (!this.puzzleDatabase) return [];
+
+      const sizeKeys = Object.keys(this.puzzleDatabase);
+      return sizeKeys.sort((a, b) => {
         const aSize = parseInt(a.split('x')[0], 10);
         const bSize = parseInt(b.split('x')[0], 10);
         return aSize - bSize;
@@ -1342,8 +1231,12 @@ export const useQueensStore = defineStore('queens', {
       return null;
     },
 
+    getPuzzleProgress(puzzleId: string | number | null): MarkType[][] | null {
+      return loadPuzzleProgress(puzzleId);
+    },
+
     async getNextSequentialUncompletedPuzzle(): Promise<any | null> {
-      if (!this.puzzleDatabase || this.puzzleIdMap.size === 0) {
+      if (!this.puzzleDatabase) {
         const success = await this.loadPuzzleDatabase();
         if (!success) {
           throw new Error('Failed to load puzzle database');
@@ -1366,24 +1259,38 @@ export const useQueensStore = defineStore('queens', {
         const startIndex =
           sizeIdx === this.speedModeCurrentSizeIndex ? this.speedModeCurrentPuzzleIndex : 0;
 
-        // Find next uncompleted puzzle in this size
+        // Find next uncompleted puzzle in this size (skip completed and in-progress puzzles)
         for (let puzzleIdx = startIndex; puzzleIdx < puzzlesForSize.length; puzzleIdx++) {
           const puzzle = puzzlesForSize[puzzleIdx];
           const puzzleId = String(puzzle.id);
-          if (!completedPuzzles.has(puzzleId)) {
-            // Found an uncompleted puzzle - update indices
-            this.speedModeCurrentSizeIndex = sizeIdx;
-            this.speedModeCurrentPuzzleIndex = puzzleIdx;
-            return puzzle;
+
+          // Skip if puzzle is completed
+          if (completedPuzzles.has(puzzleId)) {
+            continue;
           }
+
+          // Skip if puzzle has saved progress (in progress)
+          const progress = loadPuzzleProgress(puzzleId);
+          if (progress && progress.length > 0) {
+            // Check if progress has any marks (not all null)
+            const hasMarks = progress.some((row) => row && row.some((mark) => mark !== null));
+            if (hasMarks) {
+              continue; // Skip puzzles in progress
+            }
+          }
+
+          // Found an unstarted, uncompleted puzzle - update indices
+          this.speedModeCurrentSizeIndex = sizeIdx;
+          this.speedModeCurrentPuzzleIndex = puzzleIdx;
+          return puzzle;
         }
 
-        // All puzzles in this size are completed, move to next size
+        // All puzzles in this size are completed or in progress, move to next size
         this.speedModeCurrentSizeIndex = sizeIdx + 1;
         this.speedModeCurrentPuzzleIndex = 0;
       }
 
-      // All puzzles completed
+      // All puzzles completed or in progress
       return null;
     },
 
