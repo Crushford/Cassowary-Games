@@ -26,21 +26,10 @@
     />
 
     <!-- Game Info Display -->
-    <div class="flex-none p-4">
+    <div class="flex-none p-2">
       <div class="max-w-full">
         <QueensHeader v-if="!queensStore.isSpeedMode" />
-        <!-- Speed Mode Timer and Counter -->
-        <div v-if="queensStore.isSpeedMode" class="mb-3 p-3 bg-yellow-900 bg-opacity-50 rounded-lg">
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-yellow-400 font-semibold">⚡ Speed Mode</span>
-            <span class="text-yellow-300 font-bold">{{
-              formatTime(queensStore.speedModeTimeRemaining || 0)
-            }}</span>
-          </div>
-          <div class="text-yellow-200 text-sm text-center">
-            Completed: {{ queensStore.speedModeCompletedCount }}
-          </div>
-        </div>
+        <SpeedModeHeader v-if="queensStore.isSpeedMode" />
         <div v-if="queensStore.isComplete" class="text-sm text-green-400 text-center mt-2">
           Puzzle Complete!
         </div>
@@ -68,7 +57,7 @@
     <!-- Controls at the bottom -->
     <div class="flex-none p-4 space-y-3">
       <!-- Tool Selector -->
-      <QueensToolSelector />
+      <QueensToolSelector :is-disabled="isModalOpen" />
 
       <!-- Action Buttons -->
       <div class="flex gap-2 justify-center">
@@ -110,6 +99,9 @@ import type { Pos } from '../types/types';
 const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
 const QueensSquare = defineAsyncComponent(() => import('../components/queens/QueensSquare.vue'));
 const QueensHeader = defineAsyncComponent(() => import('../components/queens/QueensHeader.vue'));
+const SpeedModeHeader = defineAsyncComponent(
+  () => import('../components/queens/SpeedModeHeader.vue')
+);
 const QueensCompletionModal = defineAsyncComponent(
   () => import('../components/queens/QueensCompletionModal.vue')
 );
@@ -132,11 +124,9 @@ const showSpeedModeCompletionModal = computed(() => {
   return queensStore.isSpeedMode && queensStore.speedModeTimeRemaining === 0;
 });
 
-function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
+const isModalOpen = computed(() => {
+  return showSpeedModeCompletionModal.value || (!queensStore.isSpeedMode && queensStore.isComplete);
+});
 
 async function loadPuzzleFromRoute() {
   console.log('[QueensGame] loadPuzzleFromRoute called');
@@ -345,11 +335,12 @@ watch(
   }
 );
 
-// Cleanup speed mode timer on unmount
+// Cleanup speed mode timer and error checking on unmount
 onBeforeUnmount(() => {
   if (queensStore.isSpeedMode) {
     queensStore.endSpeedMode();
   }
+  queensStore.stopErrorChecking();
 });
 
 defineOptions({

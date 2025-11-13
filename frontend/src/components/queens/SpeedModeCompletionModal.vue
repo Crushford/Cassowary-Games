@@ -2,7 +2,6 @@
   <Modal :is-visible="isVisible" @close="handleClose">
     <div>
       <h2 class="text-2xl font-bold text-yellow-400 mb-4">Time's Up! ⏰</h2>
-      <p class="text-white mb-2">Great job completing puzzles!</p>
       <p class="text-white mb-6 font-semibold text-xl">
         Total Completed: {{ queensStore.speedModeCompletedCount }}
       </p>
@@ -13,6 +12,9 @@
         class="mb-6 p-4 bg-yellow-500 bg-opacity-20 border-2 border-yellow-500 rounded-lg"
       >
         <p class="text-yellow-400 font-bold text-lg text-center">🎉 New Record! 🎉</p>
+        <p class="text-yellow-300 text-sm text-center mt-1">
+          You've completed {{ queensStore.speedModeCompletedCount }} puzzles
+        </p>
         <p class="text-yellow-300 text-sm text-center mt-1">
           Previous record: {{ queensStore.speedModePreviousRecord }}
         </p>
@@ -33,12 +35,20 @@
         </div>
       </div>
 
-      <button
-        @click="handleClose"
-        class="w-full py-3 px-6 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
-      >
-        Back to Levels
-      </button>
+      <div class="flex gap-3">
+        <button
+          @click="handleRetry"
+          class="flex-1 py-3 px-6 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors duration-200"
+        >
+          Retry
+        </button>
+        <button
+          @click="handleClose"
+          class="flex-1 py-3 px-6 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
+        >
+          Back to Levels
+        </button>
+      </div>
     </div>
   </Modal>
 </template>
@@ -67,6 +77,22 @@ const sizeBreakdown = computed(() => {
 function handleClose() {
   queensStore.resetSpeedMode();
   router.push('/queens');
+}
+
+async function handleRetry() {
+  // Save current speed mode settings before resetting
+  const timerDuration = queensStore.speedModeTimerDuration;
+  const selectedSizes = queensStore.speedModeSelectedSizes;
+
+  // Reset speed mode
+  queensStore.resetSpeedMode();
+
+  // Restart speed mode with same settings
+  if (timerDuration !== null) {
+    queensStore.startSpeedMode(timerDuration, selectedSizes);
+    // Load first puzzle
+    await queensStore.startSpeedModePuzzle();
+  }
 }
 </script>
 

@@ -1,7 +1,13 @@
 <template>
   <div
     id="queens-tool-selector"
-    class="flex items-center justify-center bg-slate-800 p-2 rounded-lg relative z-50 gap-3"
+    class="flex items-center justify-center bg-slate-800 p-2 rounded-lg relative gap-3 transition-opacity duration-200"
+    :class="[
+      isDisabled ? 'opacity-50 grayscale pointer-events-none z-30' : 'z-50',
+      {
+        'z-50': queensStore.isTutorialMode && queensStore.highlightToolSelector,
+      },
+    ]"
   >
     <!-- Mode selector - all buttons visible -->
     <div class="flex items-center bg-slate-700 rounded-lg p-1 gap-1">
@@ -19,7 +25,8 @@
               isTutorialTarget(mode.value),
           },
         ]"
-        @click="selectMode(mode.value)"
+        @click="isDisabled ? undefined : selectMode(mode.value)"
+        :disabled="isDisabled"
         :aria-pressed="queensStore.uiState.placementMode === mode.value"
         :aria-label="`${mode.label} mode: ${mode.description}`"
         :aria-describedby="
@@ -44,7 +51,8 @@
         id="auto-flagging-toggle"
         class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         :class="queensStore.uiState.autoFlagging ? 'bg-blue-600' : 'bg-slate-600'"
-        @click="toggleAutoFlagging"
+        @click="isDisabled ? undefined : toggleAutoFlagging"
+        :disabled="isDisabled"
         :aria-pressed="queensStore.uiState.autoFlagging"
         aria-label="Toggle auto-flagging"
       >
@@ -61,7 +69,24 @@
 import { computed } from 'vue';
 import { useQueensStore } from '../../stores/queensStore';
 
+const props = withDefaults(
+  defineProps<{
+    isDisabled?: boolean;
+  }>(),
+  {
+    isDisabled: false,
+  }
+);
+
 const queensStore = useQueensStore();
+
+const isDisabled = computed(() => {
+  // Don't disable during tutorial when highlighting tool selector
+  if (queensStore.isTutorialMode && queensStore.highlightToolSelector) {
+    return false;
+  }
+  return props.isDisabled;
+});
 
 const modes = [
   {

@@ -2,7 +2,6 @@
   <Modal :is-visible="isVisible">
     <div>
       <h2 class="text-2xl font-bold text-green-400 mb-4">Puzzle Complete! 🎉</h2>
-      <p class="text-white mb-2">Great job solving the puzzle!</p>
       <p class="text-white mb-4">Queens found: {{ queensStore.queenPositions.length }}</p>
       <button
         @click="handleNextPuzzle"

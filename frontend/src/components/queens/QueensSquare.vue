@@ -17,14 +17,23 @@
       <!-- Error feedback (red X) -->
       <span
         v-if="showErrorFeedback"
-        class="text-6xl absolute z-30 animate-bounce"
-        style="text-shadow: 0 0 10px rgba(239, 68, 68, 0.8)"
+        class="text-6xl absolute z-30 animate-bounce [text-shadow:0_0_10px_rgba(239,68,68,0.8)]"
       >
         ❌
       </span>
       <!-- Show player marks (flag or queen) -->
-      <span v-if="shouldShowFlag()" :class="getEmojiSizeClass()">🚧</span>
-      <span v-else-if="shouldShowQueen()" :class="getEmojiSizeClass()">👑</span>
+      <div class="relative flex items-center justify-center">
+        <span v-if="shouldShowFlag()" :class="getEmojiSizeClass()">🚧</span>
+        <span v-else-if="shouldShowQueen()" :class="getEmojiSizeClass()">👑</span>
+        <!-- Red X overlay for flags or queens in error state -->
+        <span
+          v-if="(shouldShowFlag() || shouldShowQueen()) && isInError"
+          class="absolute z-40 [text-shadow:0_0_8px_rgba(239,68,68,0.9)]"
+          :class="getEmojiSizeClass()"
+        >
+          ❌
+        </span>
+      </div>
     </div>
 
     <!-- Border overlay -->
@@ -100,6 +109,10 @@ const DARK_PASTEL_COLORS: Record<ColorName, { bg: string; hover: string }> = {
   indigo: { bg: 'bg-indigo-700', hover: 'hover:bg-indigo-600' }, // Different shade
   amber: { bg: 'bg-amber-700', hover: 'hover:bg-amber-600' }, // Different shade
 };
+
+const isInError = computed(() => {
+  return queensStore.isSquareInError(props.rowIndex, props.colIndex);
+});
 
 const backgroundColorClass = computed(() => {
   const color = gridCell.value?.groupColor as ColorName | undefined;

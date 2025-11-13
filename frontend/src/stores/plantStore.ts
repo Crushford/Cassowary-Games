@@ -583,7 +583,7 @@ export const usePlantStore = defineStore('plant', {
       }
     },
     // Export current puzzle state in the required JSON format
-    exportPuzzleData(): { id: string; layout: string; queens: string; createdAt: string } {
+    exportPuzzleData(): { id: string; layout: string; queens: string } {
       // Generate a unique ID (you might want to make this more sophisticated)
       const id = `plant-${Date.now()}`;
 
@@ -611,7 +611,6 @@ export const usePlantStore = defineStore('plant', {
         id,
         layout,
         queens,
-        createdAt: new Date().toISOString(),
       };
     },
 
