@@ -1211,9 +1211,9 @@ function main() {
   }
 
   // Validate that auto-selected size is within allowed range
-  if (size !== null && (size < 4 || size > 8)) {
+  if (size !== null && (size < 4 || size > 9)) {
     console.error(
-      `Error: Auto-selected size ${size}x${size} is not allowed. Only sizes 4-8 are supported for auto-generation.`
+      `Error: Auto-selected size ${size}x${size} is not allowed. Only sizes 4-9 are supported for auto-generation.`
     )
     process.exit(1)
   }
@@ -1294,7 +1294,7 @@ function main() {
       // If size wasn't explicitly set, check which size has the lowest count before each puzzle
       // Skip exhausted sizes
       if (!sizeExplicitlySet) {
-        const availableSizes = [4, 5, 6, 7, 8].filter(
+        const availableSizes = [4, 5, 6, 7, 8, 9].filter(
           s => !exhaustedSizes.has(s)
         )
         if (availableSizes.length === 0) {

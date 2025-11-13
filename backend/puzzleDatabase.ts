@@ -506,10 +506,10 @@ export class PuzzleDatabase {
   /**
    * Find the grid size with the lowest number of puzzles
    * Returns the size that should be generated next to balance puzzle distribution
-   * @param validSizes Array of valid sizes to consider (default: 4-8, excluding 3 as it's too difficult, 9-10 as they're too slow, and 11-12 as there aren't enough colors)
+   * @param validSizes Array of valid sizes to consider (default: 4-9, excluding 3 as it's too difficult, 10+ as they're too slow, and 11-12 as there aren't enough colors)
    * @returns The size with the lowest puzzle count, preferring smaller sizes when counts are equal
    */
-  getSizeWithLowestCount(validSizes: number[] = [4, 5, 6, 7, 8]): number {
+  getSizeWithLowestCount(validSizes: number[] = [4, 5, 6, 7, 8, 9]): number {
     if (validSizes.length === 0) {
       return 8 // Default fallback
     }
