@@ -57,7 +57,7 @@
     <!-- Controls at the bottom -->
     <div class="flex-none p-4 space-y-3">
       <!-- Tool Selector -->
-      <QueensToolSelector />
+      <QueensToolSelector :is-disabled="isModalOpen" />
 
       <!-- Action Buttons -->
       <div class="flex gap-2 justify-center">
@@ -122,6 +122,10 @@ const queensStore = useQueensStore();
 
 const showSpeedModeCompletionModal = computed(() => {
   return queensStore.isSpeedMode && queensStore.speedModeTimeRemaining === 0;
+});
+
+const isModalOpen = computed(() => {
+  return showSpeedModeCompletionModal.value || (!queensStore.isSpeedMode && queensStore.isComplete);
 });
 
 async function loadPuzzleFromRoute() {
