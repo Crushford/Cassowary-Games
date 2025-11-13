@@ -29,18 +29,7 @@
     <div class="flex-none p-4">
       <div class="max-w-full">
         <QueensHeader v-if="!queensStore.isSpeedMode" />
-        <!-- Speed Mode Timer and Counter -->
-        <div v-if="queensStore.isSpeedMode" class="mb-3 p-3 bg-yellow-900 bg-opacity-50 rounded-lg">
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-yellow-400 font-semibold">⚡ Speed Mode</span>
-            <span class="text-yellow-300 font-bold">{{
-              formatTime(queensStore.speedModeTimeRemaining || 0)
-            }}</span>
-          </div>
-          <div class="text-yellow-200 text-sm text-center">
-            Completed: {{ queensStore.speedModeCompletedCount }}
-          </div>
-        </div>
+        <SpeedModeHeader v-if="queensStore.isSpeedMode" />
         <div v-if="queensStore.isComplete" class="text-sm text-green-400 text-center mt-2">
           Puzzle Complete!
         </div>
@@ -110,6 +99,9 @@ import type { Pos } from '../types/types';
 const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
 const QueensSquare = defineAsyncComponent(() => import('../components/queens/QueensSquare.vue'));
 const QueensHeader = defineAsyncComponent(() => import('../components/queens/QueensHeader.vue'));
+const SpeedModeHeader = defineAsyncComponent(
+  () => import('../components/queens/SpeedModeHeader.vue')
+);
 const QueensCompletionModal = defineAsyncComponent(
   () => import('../components/queens/QueensCompletionModal.vue')
 );
@@ -131,12 +123,6 @@ const queensStore = useQueensStore();
 const showSpeedModeCompletionModal = computed(() => {
   return queensStore.isSpeedMode && queensStore.speedModeTimeRemaining === 0;
 });
-
-function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
 
 async function loadPuzzleFromRoute() {
   console.log('[QueensGame] loadPuzzleFromRoute called');
