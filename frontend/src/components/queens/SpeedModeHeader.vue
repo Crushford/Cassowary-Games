@@ -6,7 +6,7 @@
         Completed: {{ queensStore.speedModeCompletedCount }}
       </span>
       <span class="text-yellow-300 font-bold">{{
-        formatTime(queensStore.speedModeTimeRemaining || 0)
+        queensStore.getFormattedSpeedModeTimeRemaining
       }}</span>
     </div>
 
@@ -32,52 +32,29 @@ import { useQueensStore } from '../../stores/queensStore';
 
 const queensStore = useQueensStore();
 
-function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
 function handleEndRound() {
+  // Check and save records before ending
+  queensStore.checkAndSaveSpeedModeRecords();
+
   // Stop the timer and set time remaining to 0 to trigger completion modal
   if (queensStore.speedModeTimerInterval !== null) {
     clearInterval(queensStore.speedModeTimerInterval);
     queensStore.speedModeTimerInterval = null;
   }
   queensStore.speedModeTimeRemaining = 0;
-
-  // Check and save record for 2-minute mode
-  if (queensStore.speedModeTimerDuration === 120) {
-    const currentRecord = queensStore.getSpeedMode2MinRecord();
-    queensStore.speedModePreviousRecord = currentRecord;
-    if (queensStore.speedModeCompletedCount > currentRecord) {
-      queensStore.speedModeIsNewRecord = true;
-      // Save record using localStorage directly (store method doesn't exist for saving)
-      try {
-        localStorage.setItem(
-          'queens-speed-mode-2min-record',
-          String(queensStore.speedModeCompletedCount)
-        );
-      } catch (e) {
-        console.error('Failed to save speed mode record:', e);
-      }
-    } else {
-      queensStore.speedModeIsNewRecord = false;
-    }
-  }
 }
 
 async function handleRestart() {
   // Save current speed mode settings before resetting
   const timerDuration = queensStore.speedModeTimerDuration;
-  const selectedSizes = queensStore.speedModeSelectedSizes;
+  const selectedSize = queensStore.speedModeSize;
 
   // Reset speed mode
   queensStore.resetSpeedMode();
 
   // Restart speed mode with same settings
   if (timerDuration !== null) {
-    queensStore.startSpeedMode(timerDuration, selectedSizes);
+    queensStore.startSpeedMode(timerDuration, selectedSize);
     // Load first puzzle
     await queensStore.startSpeedModePuzzle();
   }

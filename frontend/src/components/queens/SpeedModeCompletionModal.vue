@@ -1,14 +1,16 @@
 <template>
   <Modal :is-visible="isVisible" @close="handleClose">
     <div>
-      <h2 class="text-2xl font-bold text-yellow-400 mb-4">Time's Up! ⏰</h2>
+      <h2 v-if="speedRoundHeading" class="text-2xl font-bold text-yellow-400 mb-4">
+        {{ speedRoundHeading }}
+      </h2>
       <p class="text-white mb-6 font-semibold text-xl">
         Total Completed: {{ queensStore.speedModeCompletedCount }}
       </p>
 
-      <!-- New Record Message (only for 2-minute mode) -->
+      <!-- New Record Message (for 2-minute and 5-minute modes) -->
       <div
-        v-if="queensStore.speedModeTimerDuration === 120 && queensStore.speedModeIsNewRecord"
+        v-if="queensStore.speedModeIsNewRecord"
         class="mb-6 p-4 bg-yellow-500 bg-opacity-20 border-2 border-yellow-500 rounded-lg"
       >
         <p class="text-yellow-400 font-bold text-lg text-center">🎉 New Record! 🎉</p>
@@ -31,6 +33,35 @@
           >
             <span class="text-white font-semibold">{{ size }}</span>
             <span class="text-yellow-400 font-bold">{{ count }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Best Times for This Session -->
+      <div v-if="queensStore.getBestTimesThisSession.length > 0" class="mb-6">
+        <h3 class="text-lg font-semibold text-gray-300 mb-3">Best Times This Session:</h3>
+        <div class="space-y-2">
+          <div
+            v-for="[size, time] in queensStore.getBestTimesThisSession"
+            :key="size"
+            class="p-2 bg-gray-700 rounded-lg"
+          >
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-white font-semibold">{{ size }}</span>
+              <span class="text-yellow-400 font-bold">{{ queensStore.formatTime(time) }}</span>
+            </div>
+            <div class="text-xs text-gray-400">
+              <span
+                v-if="queensStore.isRecordForSize(size, time)"
+                class="text-yellow-400 font-semibold"
+              >
+                🏆 New Record!
+              </span>
+              <span v-else-if="queensStore.getBestTimesPerSize()[size]">
+                Record: {{ queensStore.formatTime(queensStore.getBestTimesPerSize()[size]) }}
+              </span>
+              <span v-else>First time for this size!</span>
+            </div>
           </div>
         </div>
       </div>
@@ -74,6 +105,12 @@ const sizeBreakdown = computed(() => {
   });
 });
 
+const speedRoundHeading = computed(() => {
+  if (queensStore.speedModeTimerDuration === null) return null;
+  const minutes = queensStore.speedModeTimerDuration / 60;
+  return `${minutes}min speed round`;
+});
+
 function handleClose() {
   queensStore.resetSpeedMode();
   router.push('/queens');
@@ -82,14 +119,14 @@ function handleClose() {
 async function handleRetry() {
   // Save current speed mode settings before resetting
   const timerDuration = queensStore.speedModeTimerDuration;
-  const selectedSizes = queensStore.speedModeSelectedSizes;
+  const selectedSize = queensStore.speedModeSize;
 
   // Reset speed mode
   queensStore.resetSpeedMode();
 
   // Restart speed mode with same settings
   if (timerDuration !== null) {
-    queensStore.startSpeedMode(timerDuration, selectedSizes);
+    queensStore.startSpeedMode(timerDuration, selectedSize);
     // Load first puzzle
     await queensStore.startSpeedModePuzzle();
   }

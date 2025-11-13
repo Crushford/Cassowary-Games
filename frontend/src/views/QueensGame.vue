@@ -341,6 +341,7 @@ onBeforeUnmount(() => {
     queensStore.endSpeedMode();
   }
   queensStore.stopErrorChecking();
+  queensStore.stopProgressSaving();
 });
 
 defineOptions({

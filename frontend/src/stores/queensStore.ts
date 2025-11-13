@@ -52,7 +52,8 @@ interface QueensState {
   isSpeedMode: boolean;
   speedModeTimerDuration: number | null; // Duration in seconds (120 for 2min, 300 for 5min)
   speedModeTimeRemaining: number | null; // Time remaining in seconds
-  speedModeSelectedSizes: string[] | null; // Selected sizes or null for sequential
+  speedModeSelectedSizes: string[] | null; // Selected sizes or null for sequential (deprecated, use speedModeSize)
+  speedModeSize: string | null; // Single size selected or null for sequential
   speedModeCompletedCount: number; // Number of puzzles completed in this session
   speedModeCompletedBySize: Record<string, number>; // Count of completed puzzles by size
   speedModeTimerInterval: number | null; // Interval ID for timer
@@ -60,6 +61,8 @@ interface QueensState {
   speedModeCurrentPuzzleIndex: number; // Current puzzle index within current size
   speedModeIsNewRecord: boolean; // Whether the current session set a new record
   speedModePreviousRecord: number; // The previous record before this session (for display)
+  speedModePuzzleStartTime: number | null; // Timestamp when current puzzle started
+  speedModeTimesBySize: Record<string, number[]>; // Array of completion times for each size in this session
   // Loading state
   isLoadingPuzzles: boolean; // Whether puzzles are currently being loaded
   loadingProgress: number; // Progress percentage (0-100)
@@ -73,12 +76,28 @@ interface QueensState {
   errorSquares: Set<string>; // Set of "row,col" strings for squares that should be red
   flaggedGroupTimestamps: Map<string, number>; // Map of group key -> timestamp when it became fully flagged
   errorCheckInterval: number | null; // Interval ID for periodic error checking
+  progressSaveInterval: number | null; // Interval ID for periodic progress saving
+  // Puzzle timing (for individual puzzles, not speed mode)
+  puzzleStartTime: number | null; // Timestamp when current puzzle started
+  puzzleCompletionTime: number | null; // Completion time in seconds when puzzle was completed
+  puzzleBestTime: number | null; // Best time for current puzzle size
+  puzzleIsNewRecord: boolean; // Whether completion time is a new record
+  recordsRefreshTrigger: number; // Timestamp to trigger reactivity when records are reset
+  // Modal visibility state
+  showSinglePuzzleModeModal: boolean;
+  showSpeedModeModal: boolean;
+  showRecordsModal: boolean;
 }
 
 // LocalStorage key for completed puzzles
 const COMPLETED_PUZZLES_KEY = 'queens-completed-puzzles';
-// LocalStorage key for speed mode records (2-minute mode)
-const SPEED_MODE_2MIN_RECORD_KEY = 'queens-speed-mode-2min-record';
+// LocalStorage keys for speed mode records
+const SPEED_MODE_2MIN_SEQUENTIAL_RECORD_KEY = 'queens-speed-mode-2min-sequential-record';
+const SPEED_MODE_5MIN_SEQUENTIAL_RECORD_KEY = 'queens-speed-mode-5min-sequential-record';
+const SPEED_MODE_2MIN_SIZE_RECORDS_KEY = 'queens-speed-mode-2min-size-records';
+const SPEED_MODE_5MIN_SIZE_RECORDS_KEY = 'queens-speed-mode-5min-size-records';
+// LocalStorage key for best times per size (individual puzzle completion)
+const BEST_TIMES_PER_SIZE_KEY = 'queens-best-times-per-size';
 // LocalStorage key prefix for puzzle progress
 const PUZZLE_PROGRESS_KEY_PREFIX = 'queens-puzzle-progress-';
 // LocalStorage key prefix for puzzle move history
@@ -112,24 +131,112 @@ function isPuzzleCompleted(puzzleId: string): boolean {
 }
 
 // Helper functions for speed mode records
-function getSpeedMode2MinRecord(): number {
+function getSpeedModeRecord(
+  timerDuration: number,
+  isSequential: boolean,
+  sizeKey?: string
+): number {
   try {
-    const stored = localStorage.getItem(SPEED_MODE_2MIN_RECORD_KEY);
+    let key: string;
+    if (isSequential) {
+      key =
+        timerDuration === 120
+          ? SPEED_MODE_2MIN_SEQUENTIAL_RECORD_KEY
+          : SPEED_MODE_5MIN_SEQUENTIAL_RECORD_KEY;
+    } else {
+      // Per-size record
+      const recordsKey =
+        timerDuration === 120 ? SPEED_MODE_2MIN_SIZE_RECORDS_KEY : SPEED_MODE_5MIN_SIZE_RECORDS_KEY;
+      const stored = localStorage.getItem(recordsKey);
+      if (stored && sizeKey) {
+        const records = JSON.parse(stored);
+        return records[sizeKey] || 0;
+      }
+      return 0;
+    }
+
+    const stored = localStorage.getItem(key);
     if (stored) {
       return parseInt(stored, 10);
     }
   } catch (e) {
-    console.error('Error reading speed mode 2min record from localStorage:', e);
+    console.error('Error reading speed mode record from localStorage:', e);
   }
   return 0;
 }
 
-function saveSpeedMode2MinRecord(count: number) {
+function saveSpeedModeRecord(
+  timerDuration: number,
+  count: number,
+  isSequential: boolean,
+  sizeKey?: string
+) {
   try {
-    localStorage.setItem(SPEED_MODE_2MIN_RECORD_KEY, String(count));
+    if (isSequential) {
+      const key =
+        timerDuration === 120
+          ? SPEED_MODE_2MIN_SEQUENTIAL_RECORD_KEY
+          : SPEED_MODE_5MIN_SEQUENTIAL_RECORD_KEY;
+      localStorage.setItem(key, String(count));
+    } else {
+      // Per-size record
+      const recordsKey =
+        timerDuration === 120 ? SPEED_MODE_2MIN_SIZE_RECORDS_KEY : SPEED_MODE_5MIN_SIZE_RECORDS_KEY;
+      const stored = localStorage.getItem(recordsKey);
+      const records = stored ? JSON.parse(stored) : {};
+      if (sizeKey) {
+        records[sizeKey] = count;
+        localStorage.setItem(recordsKey, JSON.stringify(records));
+      }
+    }
   } catch (e) {
-    console.error('Error saving speed mode 2min record to localStorage:', e);
+    console.error('Error saving speed mode record to localStorage:', e);
   }
+}
+
+function getAllSpeedModeSizeRecords(timerDuration: number): Record<string, number> {
+  try {
+    const recordsKey =
+      timerDuration === 120 ? SPEED_MODE_2MIN_SIZE_RECORDS_KEY : SPEED_MODE_5MIN_SIZE_RECORDS_KEY;
+    const stored = localStorage.getItem(recordsKey);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error('Error reading speed mode size records from localStorage:', e);
+  }
+  return {};
+}
+
+function getBestTimesPerSize(): Record<string, number> {
+  try {
+    const stored = localStorage.getItem(BEST_TIMES_PER_SIZE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error('Error reading best times per size from localStorage:', e);
+  }
+  return {};
+}
+
+function saveBestTimesPerSize(times: Record<string, number>) {
+  try {
+    localStorage.setItem(BEST_TIMES_PER_SIZE_KEY, JSON.stringify(times));
+  } catch (e) {
+    console.error('Error saving best times per size to localStorage:', e);
+  }
+}
+
+function updateBestTimeForSize(sizeKey: string, timeSeconds: number) {
+  const bestTimes = getBestTimesPerSize();
+  const currentBest = bestTimes[sizeKey];
+  if (currentBest === undefined || timeSeconds < currentBest) {
+    bestTimes[sizeKey] = timeSeconds;
+    saveBestTimesPerSize(bestTimes);
+    return true; // New record
+  }
+  return false; // Not a record
 }
 
 // Helper functions for puzzle progress
@@ -143,11 +250,32 @@ function getPuzzleHistoryKey(puzzleId: string | number | null): string {
   return `${PUZZLE_HISTORY_KEY_PREFIX}${puzzleId}`;
 }
 
-function savePuzzleProgress(puzzleId: string | number | null, playerMarks: MarkType[][]) {
+interface PuzzleProgress {
+  playerMarks: MarkType[][];
+  elapsedTimeSeconds?: number; // Time spent on puzzle so far
+  startTimestamp?: number; // When puzzle was first started
+}
+
+function savePuzzleProgress(
+  puzzleId: string | number | null,
+  playerMarks: MarkType[][],
+  puzzleStartTime: number | null
+) {
   if (puzzleId === null) return;
   try {
     const key = getPuzzleProgressKey(puzzleId);
-    localStorage.setItem(key, JSON.stringify(playerMarks));
+    const progress: PuzzleProgress = {
+      playerMarks,
+    };
+
+    // Calculate and save elapsed time if puzzle has been started
+    if (puzzleStartTime !== null) {
+      const elapsedTimeSeconds = (Date.now() - puzzleStartTime) / 1000;
+      progress.elapsedTimeSeconds = elapsedTimeSeconds;
+      progress.startTimestamp = puzzleStartTime;
+    }
+
+    localStorage.setItem(key, JSON.stringify(progress));
   } catch (e) {
     console.error('Error saving puzzle progress to localStorage:', e);
   }
@@ -163,13 +291,19 @@ function savePuzzleHistory(puzzleId: string | number | null, moveHistory: MarkTy
   }
 }
 
-function loadPuzzleProgress(puzzleId: string | number | null): MarkType[][] | null {
+function loadPuzzleProgress(puzzleId: string | number | null): PuzzleProgress | null {
   if (puzzleId === null) return null;
   try {
     const key = getPuzzleProgressKey(puzzleId);
     const stored = localStorage.getItem(key);
     if (stored) {
-      return JSON.parse(stored) as MarkType[][];
+      const parsed = JSON.parse(stored);
+      // Handle legacy format (just playerMarks array)
+      if (Array.isArray(parsed)) {
+        return { playerMarks: parsed };
+      }
+      // New format with timing data
+      return parsed as PuzzleProgress;
     }
   } catch (e) {
     console.error('Error loading puzzle progress from localStorage:', e);
@@ -235,6 +369,7 @@ export const useQueensStore = defineStore('queens', {
     speedModeTimerDuration: null,
     speedModeTimeRemaining: null,
     speedModeSelectedSizes: null,
+    speedModeSize: null,
     speedModeCompletedCount: 0,
     speedModeCompletedBySize: {},
     speedModeTimerInterval: null,
@@ -242,6 +377,8 @@ export const useQueensStore = defineStore('queens', {
     speedModeCurrentPuzzleIndex: 0,
     speedModeIsNewRecord: false,
     speedModePreviousRecord: 0,
+    speedModePuzzleStartTime: null,
+    speedModeTimesBySize: {},
     // Loading state
     isLoadingPuzzles: false,
     loadingProgress: 0,
@@ -251,10 +388,21 @@ export const useQueensStore = defineStore('queens', {
       placementMode: 'auto', // 'auto', 'flag', or 'queen'
       autoFlagging: true, // Automatically flag blocked squares
     },
+    // Modal visibility state
+    showSinglePuzzleModeModal: false,
+    showSpeedModeModal: false,
+    showRecordsModal: false,
     // Error tracking
     errorSquares: new Set<string>(),
     flaggedGroupTimestamps: new Map<string, number>(),
     errorCheckInterval: null,
+    progressSaveInterval: null,
+    // Puzzle timing
+    puzzleStartTime: null,
+    puzzleCompletionTime: null,
+    puzzleBestTime: null,
+    puzzleIsNewRecord: false,
+    recordsRefreshTrigger: 0,
   }),
 
   getters: {
@@ -324,6 +472,74 @@ export const useQueensStore = defineStore('queens', {
       }
 
       return true;
+    },
+
+    // Format time in seconds to a readable string (with milliseconds)
+    formatTime() {
+      return (seconds: number): string => {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        const wholeSecs = Math.floor(secs);
+        const milliseconds = Math.floor((secs - wholeSecs) * 100);
+
+        if (minutes > 0) {
+          return `${minutes}:${wholeSecs.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
+        }
+        return `${wholeSecs}.${milliseconds.toString().padStart(2, '0')}s`;
+      };
+    },
+
+    // Format time for speed mode timer display (MM:SS format)
+    getFormattedSpeedModeTimeRemaining: (state): string => {
+      if (state.speedModeTimeRemaining === null) return '0:00';
+      const mins = Math.floor(state.speedModeTimeRemaining / 60);
+      const secs = Math.floor(state.speedModeTimeRemaining % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    },
+
+    // Get formatted speed mode completion time
+    getFormattedSpeedModeCompletionTime: (state): string => {
+      if (state.speedModeTimerDuration === null) return '';
+      // Calculate completion time: timerDuration - timeRemaining
+      // When time is up, timeRemaining is 0, so completion time = timerDuration
+      const completionTimeSeconds =
+        state.speedModeTimerDuration - (state.speedModeTimeRemaining ?? 0);
+      const minutes = Math.floor(completionTimeSeconds / 60);
+      const seconds = Math.floor(completionTimeSeconds % 60);
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    },
+
+    // Get best times for this speed mode session
+    getBestTimesThisSession: (state): Array<[string, number]> => {
+      const timesBySize = state.speedModeTimesBySize;
+      const bestTimes: Array<[string, number]> = [];
+
+      for (const [size, times] of Object.entries(timesBySize)) {
+        if (times.length > 0) {
+          const bestTime = Math.min(...times);
+          bestTimes.push([size, bestTime]);
+        }
+      }
+
+      return bestTimes.sort((a, b) => {
+        const aSize = parseInt(a[0].split('x')[0], 10);
+        const bSize = parseInt(b[0].split('x')[0], 10);
+        return aSize - bSize;
+      });
+    },
+
+    // Get formatted puzzle completion time
+    getFormattedPuzzleTime: (state): string | null => {
+      if (state.puzzleCompletionTime === null) return null;
+      const minutes = Math.floor(state.puzzleCompletionTime / 60);
+      const secs = state.puzzleCompletionTime % 60;
+      const wholeSecs = Math.floor(secs);
+      const milliseconds = Math.floor((secs - wholeSecs) * 100);
+
+      if (minutes > 0) {
+        return `${minutes}:${wholeSecs.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
+      }
+      return `${wholeSecs}.${milliseconds.toString().padStart(2, '0')}s`;
     },
 
     hasErrors: (state): boolean => {
@@ -426,8 +642,9 @@ export const useQueensStore = defineStore('queens', {
 
   actions: {
     initializeGrid() {
-      // Stop error checking
+      // Stop error checking and progress saving
       this.stopErrorChecking();
+      this.stopProgressSaving();
 
       this.grid = createEmptyGrid(this.gridSize);
       this.moveHistory = [];
@@ -436,6 +653,11 @@ export const useQueensStore = defineStore('queens', {
       this.playerMarks = Array.from({ length: this.gridSize }, () =>
         Array(this.gridSize).fill(null as MarkType)
       );
+      // Reset puzzle timing
+      this.puzzleStartTime = null;
+      this.puzzleCompletionTime = null;
+      this.puzzleBestTime = null;
+      this.puzzleIsNewRecord = false;
 
       // Start error checking
       this.startErrorChecking();
@@ -459,12 +681,15 @@ export const useQueensStore = defineStore('queens', {
           }
 
           // Save progress and history to localStorage after undo
-          savePuzzleProgress(this.currentPuzzleId, this.playerMarks);
+          savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
           savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
 
           // Clear error feedback when undoing
           this.showErrorFeedback = false;
           this.errorFeedbackSquare = null;
+
+          // Check board completion after undo (might have restored a completed state)
+          this.checkBoardCompletion();
         }
       }
     },
@@ -473,7 +698,7 @@ export const useQueensStore = defineStore('queens', {
       this.saveToHistory();
       this.playerMarks[row][col] = 'flag';
       // Save progress and history to localStorage
-      savePuzzleProgress(this.currentPuzzleId, this.playerMarks);
+      savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
       savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
       // Check for error conditions immediately
       this.checkFullyFlaggedGroups();
@@ -488,7 +713,7 @@ export const useQueensStore = defineStore('queens', {
         this.updateBlockedMoves();
       }
       // Save progress and history to localStorage
-      savePuzzleProgress(this.currentPuzzleId, this.playerMarks);
+      savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
       savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
       this.checkBoardCompletion();
 
@@ -542,10 +767,12 @@ export const useQueensStore = defineStore('queens', {
         }
       }
       // Save progress and history to localStorage
-      savePuzzleProgress(this.currentPuzzleId, this.playerMarks);
+      savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
       savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
       // Check for error conditions immediately
       this.checkFullyFlaggedGroups();
+      // Check board completion when removing marks (queens might have been removed)
+      this.checkBoardCompletion();
     },
 
     handleSquareClick(row: number, col: number) {
@@ -661,6 +888,24 @@ export const useQueensStore = defineStore('queens', {
       const validation = this.isValidPuzzleState;
       if (validation.isValid) {
         this.isComplete = true;
+
+        // Stop periodic progress saving when puzzle is complete
+        this.stopProgressSaving();
+
+        // Calculate completion time and update records (only if not in speed mode)
+        if (!this.isSpeedMode && this.puzzleStartTime !== null) {
+          const completionTimeSeconds = (Date.now() - this.puzzleStartTime) / 1000; // Store as decimal seconds
+          this.puzzleCompletionTime = completionTimeSeconds;
+
+          const sizeKey = `${this.gridSize}x${this.gridSize}`;
+          const isNewRecord = updateBestTimeForSize(sizeKey, completionTimeSeconds);
+          this.puzzleIsNewRecord = isNewRecord;
+
+          // Update best time display
+          const bestTimes = getBestTimesPerSize();
+          this.puzzleBestTime = bestTimes[sizeKey] || null;
+        }
+
         // Save completion to localStorage
         if (this.currentPuzzleId !== null) {
           const puzzleId =
@@ -770,18 +1015,25 @@ export const useQueensStore = defineStore('queens', {
       const puzzleId = puzzleData.name || puzzleData.id;
       const puzzleIdString = typeof puzzleId === 'string' ? puzzleId : String(puzzleId);
       if (!isPuzzleCompleted(puzzleIdString)) {
-        const savedProgress = loadPuzzleProgress(puzzleId);
-        if (savedProgress && savedProgress.length === gridSize) {
+        const savedProgressData = loadPuzzleProgress(puzzleId);
+        if (
+          savedProgressData &&
+          savedProgressData.playerMarks &&
+          savedProgressData.playerMarks.length === gridSize
+        ) {
           // Validate that saved progress matches current grid size
           let isValid = true;
           for (let r = 0; r < gridSize; r++) {
-            if (!savedProgress[r] || savedProgress[r].length !== gridSize) {
+            if (
+              !savedProgressData.playerMarks[r] ||
+              savedProgressData.playerMarks[r].length !== gridSize
+            ) {
               isValid = false;
               break;
             }
           }
           if (isValid) {
-            this.playerMarks = savedProgress;
+            this.playerMarks = savedProgressData.playerMarks;
 
             // Load saved move history if available
             const savedHistory = loadPuzzleHistory(puzzleId);
@@ -791,19 +1043,62 @@ export const useQueensStore = defineStore('queens', {
             } else {
               // If no history exists, create initial state in history
               // This allows undo to work even if history wasn't saved before
-              this.moveHistory = [clonePlayerMarks(savedProgress)];
+              this.moveHistory = [clonePlayerMarks(savedProgressData.playerMarks)];
             }
 
             // Recalculate blocked moves if auto-flagging is enabled
             if (this.uiState.autoFlagging) {
               this.updateBlockedMoves();
             }
+
+            // Restore elapsed time and adjust puzzleStartTime to continue timing
+            if (
+              savedProgressData.elapsedTimeSeconds !== undefined &&
+              savedProgressData.elapsedTimeSeconds > 0
+            ) {
+              if (this.isSpeedMode) {
+                // For speed mode, restore speedModePuzzleStartTime
+                this.speedModePuzzleStartTime =
+                  Date.now() - savedProgressData.elapsedTimeSeconds * 1000;
+              } else {
+                // Set puzzleStartTime to current time minus elapsed time
+                // This way the timer continues from where it left off
+                this.puzzleStartTime = Date.now() - savedProgressData.elapsedTimeSeconds * 1000;
+              }
+            }
+
+            // Check if puzzle is already complete after loading saved progress
+            this.checkBoardCompletion();
           }
         }
       }
 
       // Start error checking for fully flagged groups
       this.startErrorChecking();
+
+      // Record puzzle start time (only if not in speed mode, as speed mode tracks its own timing)
+      // Also check if puzzle is already complete - if so, don't start timing
+      // Only set start time if it wasn't already restored from saved progress
+      if (!this.isSpeedMode && !this.isComplete && this.puzzleStartTime === null) {
+        this.puzzleStartTime = Date.now();
+      }
+
+      // For speed mode, set puzzle start time if not already restored
+      if (this.isSpeedMode && !this.isComplete && this.speedModePuzzleStartTime === null) {
+        this.speedModePuzzleStartTime = Date.now();
+      }
+
+      // Start periodic progress saving for both single puzzle mode and speed mode
+      if (!this.isComplete) {
+        this.startProgressSaving();
+      }
+
+      // Load best time for this size (for display purposes)
+      if (!this.isSpeedMode) {
+        const sizeKey = `${this.gridSize}x${this.gridSize}`;
+        const bestTimes = getBestTimesPerSize();
+        this.puzzleBestTime = bestTimes[sizeKey] || null;
+      }
     },
 
     getNextPuzzle() {
@@ -1222,14 +1517,15 @@ export const useQueensStore = defineStore('queens', {
     },
 
     // Speed mode functions
-    startSpeedMode(timerDuration: number, selectedSizes: string[] | null) {
+    startSpeedMode(timerDuration: number, selectedSize: string | null) {
       this.isSpeedMode = true;
       this.speedModeTimerDuration = timerDuration;
       this.speedModeTimeRemaining = timerDuration;
-      this.speedModeSelectedSizes = selectedSizes;
+      this.speedModeSize = selectedSize; // Single size or null for sequential
+      this.speedModeSelectedSizes = selectedSize ? [selectedSize] : null; // Keep for backward compatibility
       this.speedModeCompletedCount = 0;
       this.speedModeCompletedBySize = {};
-      // Reset to start from beginning (4x4)
+      // Reset to start from beginning (4x4) or selected size
       this.speedModeCurrentSizeIndex = 0;
       this.speedModeCurrentPuzzleIndex = 0;
 
@@ -1245,22 +1541,63 @@ export const useQueensStore = defineStore('queens', {
           }
           this.speedModeTimeRemaining = 0;
 
-          // Check and save record for 2-minute mode
-          if (this.speedModeTimerDuration === 120) {
-            const currentRecord = getSpeedMode2MinRecord();
-            this.speedModePreviousRecord = currentRecord; // Store previous record for display
-            if (this.speedModeCompletedCount > currentRecord) {
-              this.speedModeIsNewRecord = true;
-              saveSpeedMode2MinRecord(this.speedModeCompletedCount);
-            } else {
-              this.speedModeIsNewRecord = false;
-            }
+          // Check and save record for 2-minute and 5-minute modes
+          const isSequential = selectedSize === null;
+          const currentRecord = getSpeedModeRecord(
+            timerDuration,
+            isSequential,
+            selectedSize || undefined
+          );
+          this.speedModePreviousRecord = currentRecord; // Store previous record for display
+          if (this.speedModeCompletedCount > currentRecord) {
+            this.speedModeIsNewRecord = true;
+            saveSpeedModeRecord(
+              timerDuration,
+              this.speedModeCompletedCount,
+              isSequential,
+              selectedSize || undefined
+            );
+          } else {
+            this.speedModeIsNewRecord = false;
           }
         }
       }, 1000);
     },
 
+    checkAndSaveSpeedModeRecords() {
+      if (!this.isSpeedMode || this.speedModeTimerDuration === null) return;
+
+      const isSequential = this.speedModeSize === null;
+      const currentRecord = getSpeedModeRecord(
+        this.speedModeTimerDuration,
+        isSequential,
+        this.speedModeSize || undefined
+      );
+      this.speedModePreviousRecord = currentRecord;
+
+      if (this.speedModeCompletedCount > currentRecord) {
+        this.speedModeIsNewRecord = true;
+        saveSpeedModeRecord(
+          this.speedModeTimerDuration,
+          this.speedModeCompletedCount,
+          isSequential,
+          this.speedModeSize || undefined
+        );
+      } else {
+        this.speedModeIsNewRecord = false;
+      }
+    },
+
     endSpeedMode() {
+      // Check and save records before ending (if ending early)
+      if (
+        this.isSpeedMode &&
+        this.speedModeTimeRemaining !== null &&
+        this.speedModeTimeRemaining > 0
+      ) {
+        this.checkAndSaveSpeedModeRecords();
+      }
+
       if (this.speedModeTimerInterval !== null) {
         clearInterval(this.speedModeTimerInterval);
         this.speedModeTimerInterval = null;
@@ -1273,16 +1610,50 @@ export const useQueensStore = defineStore('queens', {
       this.endSpeedMode();
       this.speedModeTimerDuration = null;
       this.speedModeSelectedSizes = null;
+      this.speedModeSize = null;
       this.speedModeCompletedCount = 0;
       this.speedModeCompletedBySize = {};
       this.speedModeCurrentSizeIndex = 0;
       this.speedModeCurrentPuzzleIndex = 0;
       this.speedModeIsNewRecord = false;
       this.speedModePreviousRecord = 0;
+      this.speedModePuzzleStartTime = null;
+      this.speedModeTimesBySize = {};
     },
 
-    getSpeedMode2MinRecord(): number {
-      return getSpeedMode2MinRecord();
+    getSpeedModeRecord(timerDuration: number, isSequential: boolean, sizeKey?: string): number {
+      return getSpeedModeRecord(timerDuration, isSequential, sizeKey);
+    },
+
+    getAllSpeedModeSizeRecords(timerDuration: number): Record<string, number> {
+      return getAllSpeedModeSizeRecords(timerDuration);
+    },
+
+    getBestTimesPerSize(): Record<string, number> {
+      return getBestTimesPerSize();
+    },
+
+    // Check if a time is a record for a given size
+    isRecordForSize(size: string, time: number): boolean {
+      const bestTimes = getBestTimesPerSize();
+      const bestTime = bestTimes[size];
+      return bestTime === undefined || time <= bestTime;
+    },
+
+    resetAllRecords() {
+      try {
+        // Clear speed mode records
+        localStorage.removeItem(SPEED_MODE_2MIN_SEQUENTIAL_RECORD_KEY);
+        localStorage.removeItem(SPEED_MODE_5MIN_SEQUENTIAL_RECORD_KEY);
+        localStorage.removeItem(SPEED_MODE_2MIN_SIZE_RECORDS_KEY);
+        localStorage.removeItem(SPEED_MODE_5MIN_SIZE_RECORDS_KEY);
+        // Clear best times per size
+        localStorage.removeItem(BEST_TIMES_PER_SIZE_KEY);
+        // Trigger reactivity update
+        this.recordsRefreshTrigger = Date.now();
+      } catch (e) {
+        console.error('Error resetting records:', e);
+      }
     },
 
     getAvailableSizes(): string[] {
@@ -1294,6 +1665,31 @@ export const useQueensStore = defineStore('queens', {
         const bSize = parseInt(b.split('x')[0], 10);
         return aSize - bSize;
       });
+    },
+
+    // Modal state management
+    openSinglePuzzleModeModal() {
+      this.showSinglePuzzleModeModal = true;
+    },
+
+    closeSinglePuzzleModeModal() {
+      this.showSinglePuzzleModeModal = false;
+    },
+
+    openSpeedModeModal() {
+      this.showSpeedModeModal = true;
+    },
+
+    closeSpeedModeModal() {
+      this.showSpeedModeModal = false;
+    },
+
+    openRecordsModal() {
+      this.showRecordsModal = true;
+    },
+
+    closeRecordsModal() {
+      this.showRecordsModal = false;
     },
 
     getNextUncompletedPuzzleForSize(sizeKey: string): any | null {
@@ -1317,7 +1713,8 @@ export const useQueensStore = defineStore('queens', {
     },
 
     getPuzzleProgress(puzzleId: string | number | null): MarkType[][] | null {
-      return loadPuzzleProgress(puzzleId);
+      const progress = loadPuzzleProgress(puzzleId);
+      return progress ? progress.playerMarks : null;
     },
 
     async getNextSequentialUncompletedPuzzle(): Promise<any | null> {
@@ -1329,7 +1726,8 @@ export const useQueensStore = defineStore('queens', {
       }
 
       const completedPuzzles = getCompletedPuzzles();
-      const availableSizes = this.speedModeSelectedSizes || this.getAvailableSizes();
+      // Use speedModeSize if set (single size mode), otherwise use sequential (all sizes)
+      const availableSizes = this.speedModeSize ? [this.speedModeSize] : this.getAvailableSizes();
 
       // Start from current size index and find next uncompleted puzzle
       for (
@@ -1347,18 +1745,25 @@ export const useQueensStore = defineStore('queens', {
         // Find next uncompleted puzzle in this size (skip completed and in-progress puzzles)
         for (let puzzleIdx = startIndex; puzzleIdx < puzzlesForSize.length; puzzleIdx++) {
           const puzzle = puzzlesForSize[puzzleIdx];
-          const puzzleId = String(puzzle.id);
+          // Normalize puzzle ID - use id if available, otherwise fall back to name
+          const puzzleId = puzzle.id || puzzle.name;
+          if (!puzzleId) {
+            continue; // Skip puzzles without valid ID
+          }
 
-          // Skip if puzzle is completed
-          if (completedPuzzles.has(puzzleId)) {
+          // Skip if puzzle is completed (normalize ID to string for consistent checking)
+          const normalizedId = String(puzzleId);
+          if (this.isPuzzleCompleted(normalizedId)) {
             continue;
           }
 
           // Skip if puzzle has saved progress (in progress)
           const progress = loadPuzzleProgress(puzzleId);
-          if (progress && progress.length > 0) {
+          if (progress && progress.playerMarks && progress.playerMarks.length > 0) {
             // Check if progress has any marks (not all null)
-            const hasMarks = progress.some((row) => row && row.some((mark) => mark !== null));
+            const hasMarks = progress.playerMarks.some(
+              (row) => row && row.some((mark) => mark !== null)
+            );
             if (hasMarks) {
               continue; // Skip puzzles in progress
             }
@@ -1382,23 +1787,42 @@ export const useQueensStore = defineStore('queens', {
     async startSpeedModePuzzle() {
       const puzzle = await this.getNextSequentialUncompletedPuzzle();
       if (!puzzle) {
-        // All puzzles completed, end speed mode
+        // All puzzles completed, check and save records before ending
+        this.checkAndSaveSpeedModeRecords();
         this.endSpeedMode();
         router.push('/queens');
         return;
       }
+      // Record puzzle start time
+      this.speedModePuzzleStartTime = Date.now();
       router.push(`/queens/${puzzle.id}`);
     },
 
     onSpeedModePuzzleComplete() {
       if (!this.isSpeedMode) return;
 
+      // Calculate puzzle completion time
+      if (this.speedModePuzzleStartTime !== null) {
+        const completionTimeSeconds = (Date.now() - this.speedModePuzzleStartTime) / 1000; // Store as decimal seconds
+        const sizeKey = `${this.gridSize}x${this.gridSize}`;
+
+        // Track time for this session
+        if (!this.speedModeTimesBySize[sizeKey]) {
+          this.speedModeTimesBySize[sizeKey] = [];
+        }
+        this.speedModeTimesBySize[sizeKey].push(completionTimeSeconds);
+
+        // Update best time record for this size
+        updateBestTimeForSize(sizeKey, completionTimeSeconds);
+      }
+
       this.speedModeCompletedCount++;
       const sizeKey = `${this.gridSize}x${this.gridSize}`;
       this.speedModeCompletedBySize[sizeKey] = (this.speedModeCompletedBySize[sizeKey] || 0) + 1;
 
       // Move to next size for sequential mode (complete one puzzle per size, then move to next)
-      const availableSizes = this.speedModeSelectedSizes || this.getAvailableSizes();
+      // For single size mode, stay on the same size
+      const availableSizes = this.speedModeSize ? [this.speedModeSize] : this.getAvailableSizes();
       const currentSizeIndex = availableSizes.indexOf(sizeKey);
 
       if (currentSizeIndex >= 0 && currentSizeIndex < availableSizes.length - 1) {
@@ -1621,6 +2045,35 @@ export const useQueensStore = defineStore('queens', {
       // Clear error state
       this.errorSquares.clear();
       this.flaggedGroupTimestamps.clear();
+    },
+
+    startProgressSaving() {
+      // Clear any existing interval
+      this.stopProgressSaving();
+
+      // Save immediately
+      if (this.currentPuzzleId !== null && !this.isComplete) {
+        const startTime = this.isSpeedMode ? this.speedModePuzzleStartTime : this.puzzleStartTime;
+        savePuzzleProgress(this.currentPuzzleId, this.playerMarks, startTime);
+      }
+
+      // Then save periodically every second
+      this.progressSaveInterval = window.setInterval(() => {
+        if (this.currentPuzzleId !== null && !this.isComplete) {
+          const startTime = this.isSpeedMode ? this.speedModePuzzleStartTime : this.puzzleStartTime;
+          savePuzzleProgress(this.currentPuzzleId, this.playerMarks, startTime);
+        } else {
+          // Stop saving if puzzle is complete
+          this.stopProgressSaving();
+        }
+      }, 1000);
+    },
+
+    stopProgressSaving() {
+      if (this.progressSaveInterval !== null) {
+        clearInterval(this.progressSaveInterval);
+        this.progressSaveInterval = null;
+      }
     },
   },
 });
