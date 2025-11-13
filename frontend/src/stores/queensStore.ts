@@ -465,6 +465,9 @@ export const useQueensStore = defineStore('queens', {
           // Clear error feedback when undoing
           this.showErrorFeedback = false;
           this.errorFeedbackSquare = null;
+
+          // Check board completion after undo (might have restored a completed state)
+          this.checkBoardCompletion();
         }
       }
     },
@@ -546,6 +549,8 @@ export const useQueensStore = defineStore('queens', {
       savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
       // Check for error conditions immediately
       this.checkFullyFlaggedGroups();
+      // Check board completion when removing marks (queens might have been removed)
+      this.checkBoardCompletion();
     },
 
     handleSquareClick(row: number, col: number) {
