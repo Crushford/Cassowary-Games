@@ -335,11 +335,12 @@ watch(
   }
 );
 
-// Cleanup speed mode timer on unmount
+// Cleanup speed mode timer and error checking on unmount
 onBeforeUnmount(() => {
   if (queensStore.isSpeedMode) {
     queensStore.endSpeedMode();
   }
+  queensStore.stopErrorChecking();
 });
 
 defineOptions({

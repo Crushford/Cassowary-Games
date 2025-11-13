@@ -69,6 +69,10 @@ interface QueensState {
     placementMode: 'auto' | 'flag' | 'queen'; // 'auto', 'flag', or 'queen'
     autoFlagging: boolean; // Automatically flag blocked squares
   };
+  // Error tracking for fully flagged groups/rows/columns
+  errorSquares: Set<string>; // Set of "row,col" strings for squares that should be red
+  flaggedGroupTimestamps: Map<string, number>; // Map of group key -> timestamp when it became fully flagged
+  errorCheckInterval: number | null; // Interval ID for periodic error checking
 }
 
 // LocalStorage key for completed puzzles
@@ -213,6 +217,10 @@ export const useQueensStore = defineStore('queens', {
       placementMode: 'auto', // 'auto', 'flag', or 'queen'
       autoFlagging: true, // Automatically flag blocked squares
     },
+    // Error tracking
+    errorSquares: new Set<string>(),
+    flaggedGroupTimestamps: new Map<string, number>(),
+    errorCheckInterval: null,
   }),
 
   getters: {
@@ -374,10 +382,19 @@ export const useQueensStore = defineStore('queens', {
       const step = state.tutorialSteps[state.currentTutorialStep];
       return step.targetSquare || null;
     },
+
+    isSquareInError:
+      (state) =>
+      (row: number, col: number): boolean => {
+        return state.errorSquares.has(`${row},${col}`);
+      },
   },
 
   actions: {
     initializeGrid() {
+      // Stop error checking
+      this.stopErrorChecking();
+
       this.grid = createEmptyGrid(this.gridSize);
       this.moveHistory = [];
       this.isComplete = false;
@@ -385,6 +402,9 @@ export const useQueensStore = defineStore('queens', {
       this.playerMarks = Array.from({ length: this.gridSize }, () =>
         Array(this.gridSize).fill(null as MarkType)
       );
+
+      // Start error checking
+      this.startErrorChecking();
     },
 
     saveToHistory() {
@@ -419,6 +439,8 @@ export const useQueensStore = defineStore('queens', {
       this.playerMarks[row][col] = 'flag';
       // Save progress to localStorage
       savePuzzleProgress(this.currentPuzzleId, this.playerMarks);
+      // Check for error conditions immediately
+      this.checkFullyFlaggedGroups();
       return true;
     },
 
@@ -484,6 +506,8 @@ export const useQueensStore = defineStore('queens', {
       }
       // Save progress to localStorage
       savePuzzleProgress(this.currentPuzzleId, this.playerMarks);
+      // Check for error conditions immediately
+      this.checkFullyFlaggedGroups();
     },
 
     handleSquareClick(row: number, col: number) {
@@ -727,6 +751,9 @@ export const useQueensStore = defineStore('queens', {
           }
         }
       }
+
+      // Start error checking for fully flagged groups
+      this.startErrorChecking();
     },
 
     getNextPuzzle() {
@@ -825,6 +852,9 @@ export const useQueensStore = defineStore('queens', {
     },
 
     clearMarkers() {
+      // Stop error checking
+      this.stopErrorChecking();
+
       // Clear all marks by setting each cell to null
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
@@ -837,6 +867,9 @@ export const useQueensStore = defineStore('queens', {
       this.moveHistory = [];
       // Clear saved progress when clearing markers
       clearPuzzleProgress(this.currentPuzzleId);
+
+      // Restart error checking
+      this.startErrorChecking();
     },
 
     clearAll() {
@@ -856,6 +889,8 @@ export const useQueensStore = defineStore('queens', {
           }
         }
       }
+      // Check for error conditions after auto-flagging
+      this.checkFullyFlaggedGroups();
     },
 
     // Load tutorial puzzle by name (e.g., "level-1")
@@ -1328,6 +1363,214 @@ export const useQueensStore = defineStore('queens', {
 
       // Auto-load next puzzle
       this.startSpeedModePuzzle();
+    },
+
+    // Error detection for fully flagged groups/rows/columns and multiple queens
+    checkFullyFlaggedGroups() {
+      const now = Date.now();
+      const fullyFlaggedGroups = new Set<string>();
+      const errorSquaresSet = new Set<string>();
+
+      // Check rows for fully flagged
+      for (let row = 0; row < this.gridSize; row++) {
+        const isFullyFlagged = this.playerMarks[row].every((mark) => mark === 'flag');
+        if (isFullyFlagged) {
+          const groupKey = `row-flag-${row}`;
+          fullyFlaggedGroups.add(groupKey);
+
+          // Check if this group was already flagged
+          const timestamp = this.flaggedGroupTimestamps.get(groupKey);
+          if (!timestamp) {
+            // First time we see this group fully flagged, record timestamp
+            this.flaggedGroupTimestamps.set(groupKey, now);
+          } else {
+            // Check if it's been flagged for more than 1 second
+            if (now - timestamp >= 1000) {
+              // Mark all squares in this row as errors
+              for (let col = 0; col < this.gridSize; col++) {
+                errorSquaresSet.add(`${row},${col}`);
+              }
+            }
+          }
+        } else {
+          // Row is no longer fully flagged, remove timestamp
+          this.flaggedGroupTimestamps.delete(`row-flag-${row}`);
+        }
+      }
+
+      // Check rows for multiple queens
+      for (let row = 0; row < this.gridSize; row++) {
+        const queenPositions: number[] = [];
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.playerMarks[row][col] === 'queen') {
+            queenPositions.push(col);
+          }
+        }
+        if (queenPositions.length > 1) {
+          const groupKey = `row-queen-${row}`;
+          fullyFlaggedGroups.add(groupKey);
+
+          const timestamp = this.flaggedGroupTimestamps.get(groupKey);
+          if (!timestamp) {
+            this.flaggedGroupTimestamps.set(groupKey, now);
+          } else {
+            if (now - timestamp >= 1000) {
+              // Mark all queens in this row as errors
+              for (const col of queenPositions) {
+                errorSquaresSet.add(`${row},${col}`);
+              }
+            }
+          }
+        } else {
+          this.flaggedGroupTimestamps.delete(`row-queen-${row}`);
+        }
+      }
+
+      // Check columns for fully flagged
+      for (let col = 0; col < this.gridSize; col++) {
+        const isFullyFlagged = this.playerMarks.every((row) => row[col] === 'flag');
+        if (isFullyFlagged) {
+          const groupKey = `col-flag-${col}`;
+          fullyFlaggedGroups.add(groupKey);
+
+          const timestamp = this.flaggedGroupTimestamps.get(groupKey);
+          if (!timestamp) {
+            this.flaggedGroupTimestamps.set(groupKey, now);
+          } else {
+            if (now - timestamp >= 1000) {
+              // Mark all squares in this column as errors
+              for (let row = 0; row < this.gridSize; row++) {
+                errorSquaresSet.add(`${row},${col}`);
+              }
+            }
+          }
+        } else {
+          this.flaggedGroupTimestamps.delete(`col-flag-${col}`);
+        }
+      }
+
+      // Check columns for multiple queens
+      for (let col = 0; col < this.gridSize; col++) {
+        const queenPositions: number[] = [];
+        for (let row = 0; row < this.gridSize; row++) {
+          if (this.playerMarks[row][col] === 'queen') {
+            queenPositions.push(row);
+          }
+        }
+        if (queenPositions.length > 1) {
+          const groupKey = `col-queen-${col}`;
+          fullyFlaggedGroups.add(groupKey);
+
+          const timestamp = this.flaggedGroupTimestamps.get(groupKey);
+          if (!timestamp) {
+            this.flaggedGroupTimestamps.set(groupKey, now);
+          } else {
+            if (now - timestamp >= 1000) {
+              // Mark all queens in this column as errors
+              for (const row of queenPositions) {
+                errorSquaresSet.add(`${row},${col}`);
+              }
+            }
+          }
+        } else {
+          this.flaggedGroupTimestamps.delete(`col-queen-${col}`);
+        }
+      }
+
+      // Check color groups for fully flagged
+      const colorGroups: { [color: string]: { row: number; col: number }[] } = {};
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          const color = this.grid[row][col].groupColor;
+          if (!color) continue;
+
+          if (!colorGroups[color]) {
+            colorGroups[color] = [];
+          }
+          colorGroups[color].push({ row, col });
+        }
+      }
+
+      for (const color in colorGroups) {
+        const squares = colorGroups[color];
+        const isFullyFlagged = squares.every(
+          (pos) => this.playerMarks[pos.row][pos.col] === 'flag'
+        );
+
+        if (isFullyFlagged) {
+          const groupKey = `color-flag-${color}`;
+          fullyFlaggedGroups.add(groupKey);
+
+          const timestamp = this.flaggedGroupTimestamps.get(groupKey);
+          if (!timestamp) {
+            this.flaggedGroupTimestamps.set(groupKey, now);
+          } else {
+            if (now - timestamp >= 1000) {
+              // Mark all squares in this color group as errors
+              for (const pos of squares) {
+                errorSquaresSet.add(`${pos.row},${pos.col}`);
+              }
+            }
+          }
+        } else {
+          this.flaggedGroupTimestamps.delete(`color-flag-${color}`);
+        }
+      }
+
+      // Check color groups for multiple queens
+      for (const color in colorGroups) {
+        const squares = colorGroups[color];
+        const queenPositions: { row: number; col: number }[] = [];
+        for (const pos of squares) {
+          if (this.playerMarks[pos.row][pos.col] === 'queen') {
+            queenPositions.push(pos);
+          }
+        }
+        if (queenPositions.length > 1) {
+          const groupKey = `color-queen-${color}`;
+          fullyFlaggedGroups.add(groupKey);
+
+          const timestamp = this.flaggedGroupTimestamps.get(groupKey);
+          if (!timestamp) {
+            this.flaggedGroupTimestamps.set(groupKey, now);
+          } else {
+            if (now - timestamp >= 1000) {
+              // Mark all queens in this color group as errors
+              for (const pos of queenPositions) {
+                errorSquaresSet.add(`${pos.row},${pos.col}`);
+              }
+            }
+          }
+        } else {
+          this.flaggedGroupTimestamps.delete(`color-queen-${color}`);
+        }
+      }
+
+      // Update error squares
+      this.errorSquares = errorSquaresSet;
+    },
+
+    startErrorChecking() {
+      // Clear any existing interval
+      this.stopErrorChecking();
+
+      // Check immediately
+      this.checkFullyFlaggedGroups();
+
+      // Then check periodically (every 100ms for responsive updates)
+      this.errorCheckInterval = window.setInterval(() => {
+        this.checkFullyFlaggedGroups();
+      }, 100);
+    },
+
+    stopErrorChecking() {
+      if (this.errorCheckInterval !== null) {
+        clearInterval(this.errorCheckInterval);
+        this.errorCheckInterval = null;
+      }
+      // Clear error state
+      this.errorSquares.clear();
+      this.flaggedGroupTimestamps.clear();
     },
   },
 });
