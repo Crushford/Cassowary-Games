@@ -31811,6 +31811,5646 @@
       "id": "pz-1158-90VH",
       "layout": "IIKKKKOIPPPPOOOOOPOOOOOOBTTTOOBBTOOO",
       "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1159-0",
+      "layout": "BIITTTBBIITTOBITTTOOPPKTPPPKKTPPPPKK",
+      "queens": "Q........Q.......Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1159-0V",
+      "layout": "PPPPKKPPPKKTOOPPKTOBITTTBBIITTBIITTT",
+      "queens": "..Q.......Q..Q.........Q...Q..Q....."
+    },
+    {
+      "id": "pz-1159-0H",
+      "layout": "TTTIIBTTIIBBTTTIBOTKPPOOTKKPPPKKPPPP",
+      "queens": ".....Q..Q...Q.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1159-0VH",
+      "layout": "KKPPPPTKKPPPTKPPOOTTTIBOTTIIBBTTTIIB",
+      "queens": "...Q...Q........Q.Q.......Q........Q"
+    },
+    {
+      "id": "pz-1159-90",
+      "layout": "PPOOBBPPOBBIPPPIIIPKPTITKKKTTTKTTTTT",
+      "queens": ".....Q..Q...Q.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1159-90V",
+      "layout": "KTTTTTKKKTTTPKPTITPPPIIIPPOBBIPPOOBB",
+      "queens": "...Q...Q........Q.Q.......Q........Q"
+    },
+    {
+      "id": "pz-1159-90H",
+      "layout": "BBOOPPIBBOPPIIIPPPTITPKPTTTKKKTTTTTK",
+      "queens": "Q........Q.......Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1159-90VH",
+      "layout": "TTTTTKTTTKKKTITPKPIIIPPPIBBOPPBBOOPP",
+      "queens": "..Q.......Q..Q.........Q...Q..Q....."
+    },
+    {
+      "id": "pz-1160-0",
+      "layout": "TBBIIITTBOIKTTBOIKTTOOOKTTPPOKTTPKKK",
+      "queens": ".Q........Q.Q........Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1160-0V",
+      "layout": "TTPKKKTTPPOKTTOOOKTTBOIKTTBOIKTBBIII",
+      "queens": "..Q........Q...Q..Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1160-0H",
+      "layout": "IIIBBTKIOBTTKIOBTTKOOOTTKOPPTTKKKPTT",
+      "queens": "....Q..Q.........Q..Q...Q........Q.."
+    },
+    {
+      "id": "pz-1160-0VH",
+      "layout": "KKKPTTKOPPTTKOOOTTKIOBTTKIOBTTIIIBBT",
+      "queens": "...Q..Q.......Q........Q.Q........Q."
+    },
+    {
+      "id": "pz-1160-90",
+      "layout": "TTTTTTTTTTTBPPOBBBKPOOOIKOOIIIKKKKKI",
+      "queens": "...Q.......QQ.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1160-90V",
+      "layout": "KKKKKIKOOIIIKPOOOIPPOBBBTTTTTBTTTTTT",
+      "queens": ".Q........Q...Q...Q..........Q...Q.."
+    },
+    {
+      "id": "pz-1160-90H",
+      "layout": "TTTTTTBTTTTTBBBOPPIOOOPKIIIOOKIKKKKK",
+      "queens": "..Q...Q..........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1160-90VH",
+      "layout": "IKKKKKIIIOOKIOOOPKBBBOPPBTTTTTTTTTTT",
+      "queens": "....Q..Q.......Q.......QQ.......Q..."
+    },
+    {
+      "id": "pz-1161-0",
+      "layout": "IOBBBBIOOOBBIOTTTBOOOOTTOPPOKKOPOOOK",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1161-0V",
+      "layout": "OPOOOKOPPOKKOOOOTTIOTTTBIOOOBBIOBBBB",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1161-0H",
+      "layout": "BBBBOIBBOOOIBTTTOITTOOOOKKOPPOKOOOPO",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1161-0VH",
+      "layout": "KOOOPOKKOPPOTTOOOOBTTTOIBBOOOIBBBBOI",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1161-90",
+      "layout": "OOOIIIPPOOOOOPOTOBOOOTOBOKTTBBKKTBBB",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1161-90V",
+      "layout": "KKTBBBOKTTBBOOOTOBOPOTOBPPOOOOOOOIII",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1161-90H",
+      "layout": "IIIOOOOOOOPPBOTOPOBOTOOOBBTTKOBBBTKK",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1161-90VH",
+      "layout": "BBBTKKBBTTKOBOTOOOBOTOPOOOOOPPIIIOOO",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1162-0",
+      "layout": "IIBBBBOITTTBOOOOTTPOOOKKPPOOKOPPPOOO",
+      "queens": "...Q...Q.........Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1162-0V",
+      "layout": "PPPOOOPPOOKOPOOOKKOOOOTTOITTTBIIBBBB",
+      "queens": "Q.........Q...Q........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1162-0H",
+      "layout": "BBBBIIBTTTIOTTOOOOKKOOOPOKOOPPOOOPPP",
+      "queens": "..Q.......Q.Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1162-0VH",
+      "layout": "OOOPPPOKOOPPKKOOOPTTOOOOBTTTIOBBBBII",
+      "queens": ".....Q.Q.......Q..Q.........Q...Q..."
+    },
+    {
+      "id": "pz-1162-90",
+      "layout": "PPPOOIPPOOIIPOOOTBOOOOTBOKKTTBOOKTBB",
+      "queens": "Q.........Q...Q........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1162-90V",
+      "layout": "OOKTBBOKKTTBOOOOTBPOOOTBPPOOIIPPPOOI",
+      "queens": "...Q...Q.........Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1162-90H",
+      "layout": "IOOPPPIIOOPPBTOOOPBTOOOOBTTKKOBBTKOO",
+      "queens": ".....Q.Q.......Q..Q.........Q...Q..."
+    },
+    {
+      "id": "pz-1162-90VH",
+      "layout": "BBTKOOBTTKKOBTOOOOBTOOOPIIOOPPIOOPPP",
+      "queens": "..Q.......Q.Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1163-0",
+      "layout": "IBBBTTIIBBTTOOTTTOOOOOOOKOOOOOKKPPPP",
+      "queens": "...Q...Q........Q...Q...Q..........Q"
+    },
+    {
+      "id": "pz-1163-0V",
+      "layout": "KKPPPPKOOOOOOOOOOOOOTTTOIIBBTTIBBBTT",
+      "queens": ".....QQ.......Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1163-0H",
+      "layout": "TTBBBITTBBIIOTTTOOOOOOOOOOOOOKPPPPKK",
+      "queens": "..Q.......Q..Q.......Q.......QQ....."
+    },
+    {
+      "id": "pz-1163-0VH",
+      "layout": "PPPPKKOOOOOKOOOOOOOTTTOOTTBBIITTBBBI",
+      "queens": "Q..........Q...Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1163-90",
+      "layout": "KKOOIIKOOOIBPOOTBBPOOTBBPOOTTTPOOOTT",
+      "queens": ".Q........Q...Q........Q...Q..Q....."
+    },
+    {
+      "id": "pz-1163-90V",
+      "layout": "POOOTTPOOTTTPOOTBBPOOTBBKOOOIBKKOOII",
+      "queens": "Q........Q.......Q..Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1163-90H",
+      "layout": "IIOOKKBIOOOKBBTOOPBBTOOPTTTOOPTTOOOP",
+      "queens": "....Q..Q.......Q..Q.......Q........Q"
+    },
+    {
+      "id": "pz-1163-90VH",
+      "layout": "TTOOOPTTTOOPBBTOOPBBTOOPBIOOOKIIOOKK",
+      "queens": ".....Q..Q...Q........Q...Q........Q."
+    },
+    {
+      "id": "pz-1164-0",
+      "layout": "BBBBBBIBBBBBIIITTTOOOOTTKKKOOOKKKPPP",
+      "queens": "..Q...Q..........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1164-0V",
+      "layout": "KKKPPPKKKOOOOOOOTTIIITTTIBBBBBBBBBBB",
+      "queens": "....Q..Q.......Q.......QQ.......Q..."
+    },
+    {
+      "id": "pz-1164-0H",
+      "layout": "BBBBBBBBBBBITTTIIITTOOOOOOOKKKPPPKKK",
+      "queens": "...Q.......QQ.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1164-0VH",
+      "layout": "PPPKKKOOOKKKTTOOOOTTTIIIBBBBBIBBBBBB",
+      "queens": ".Q........Q...Q...Q..........Q...Q.."
+    },
+    {
+      "id": "pz-1164-90",
+      "layout": "KKOIIBKKOIBBKKOIBBPOOTBBPOTTBBPOTTBB",
+      "queens": "....Q..Q.........Q..Q...Q........Q.."
+    },
+    {
+      "id": "pz-1164-90V",
+      "layout": "POTTBBPOTTBBPOOTBBKKOIBBKKOIBBKKOIIB",
+      "queens": "...Q..Q.......Q........Q.Q........Q."
+    },
+    {
+      "id": "pz-1164-90H",
+      "layout": "BIIOKKBBIOKKBBIOKKBBTOOPBBTTOPBBTTOP",
+      "queens": ".Q........Q.Q........Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1164-90VH",
+      "layout": "BBTTOPBBTTOPBBTOOPBBIOKKBBIOKKBIIOKK",
+      "queens": "..Q........Q...Q..Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1165-0",
+      "layout": "IOOBBBIIOBTTOOOTTOOOOOOOKKOPPOKOOPPO",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1165-0V",
+      "layout": "KOOPPOKKOPPOOOOOOOOOOTTOIIOBTTIOOBBB",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1165-0H",
+      "layout": "BBBOOITTBOIIOTTOOOOOOOOOOPPOKKOPPOOK",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1165-0VH",
+      "layout": "OPPOOKOPPOKKOOOOOOOTTOOOTTBOIIBBBOOI",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1165-90",
+      "layout": "KKOOIIOKOOIOOOOOOOPPOTBBPPOTTBOOOOTB",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1165-90V",
+      "layout": "OOOOTBPPOTTBPPOTBBOOOOOOOKOOIOKKOOII",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1165-90H",
+      "layout": "IIOOKKOIOOKOOOOOOOBBTOPPBTTOPPBTOOOO",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1165-90VH",
+      "layout": "BTOOOOBTTOPPBBTOPPOOOOOOOIOOKOIIOOKK",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1166-0",
+      "layout": "IBBBTTIOBKTTIOBKTTOOPKKTOPPKKTOPPPKT",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1166-0V",
+      "layout": "OPPPKTOPPKKTOOPKKTIOBKTTIOBKTTIBBBTT",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1166-0H",
+      "layout": "TTBBBITTKBOITTKBOITKKPOOTKKPPOTKPPPO",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1166-0VH",
+      "layout": "TKPPPOTKKPPOTKKPOOTTKBOITTKBOITTBBBI",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1166-90",
+      "layout": "OOOIIIPPOOOBPPPBBBPKKKKBKKKTTTTTTTTT",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1166-90V",
+      "layout": "TTTTTTKKKTTTPKKKKBPPPBBBPPOOOBOOOIII",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1166-90H",
+      "layout": "IIIOOOBOOOPPBBBPPPBKKKKPTTTKKKTTTTTT",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1166-90VH",
+      "layout": "TTTTTTTTTKKKBKKKKPBBBPPPBOOOPPIIIOOO",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1167-0",
+      "layout": "BBBBBBIIIBBOTTTTTOKKKOOOKPKPPPKPPPPP",
+      "queens": "....Q..Q.......Q.......QQ.......Q..."
+    },
+    {
+      "id": "pz-1167-0V",
+      "layout": "KPPPPPKPKPPPKKKOOOTTTTTOIIIBBOBBBBBB",
+      "queens": "..Q...Q..........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1167-0H",
+      "layout": "BBBBBBOBBIIIOTTTTTOOOKKKPPPKPKPPPPPK",
+      "queens": ".Q........Q...Q...Q..........Q...Q.."
+    },
+    {
+      "id": "pz-1167-0VH",
+      "layout": "PPPPPKPPPKPKOOOKKKOTTTTTOBBIIIBBBBBB",
+      "queens": "...Q.......QQ.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1167-90",
+      "layout": "KKKTIBPPKTIBPKKTIBPPOTBBPPOTBBPPOOOB",
+      "queens": ".Q........Q.Q........Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1167-90V",
+      "layout": "PPOOOBPPOTBBPPOTBBPKKTIBPPKTIBKKKTIB",
+      "queens": "..Q........Q...Q..Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1167-90H",
+      "layout": "BITKKKBITKPPBITKKPBBTOPPBBTOPPBOOOPP",
+      "queens": "....Q..Q.........Q..Q...Q........Q.."
+    },
+    {
+      "id": "pz-1167-90VH",
+      "layout": "BOOOPPBBTOPPBBTOPPBITKKPBITKPPBITKKK",
+      "queens": "...Q..Q.......Q........Q.Q........Q."
+    },
+    {
+      "id": "pz-1168-0",
+      "layout": "IBBBBBIITBTTTTTTTTTTOOOTTKPOOOKKPPOO",
+      "queens": ".....QQ.......Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1168-0V",
+      "layout": "KKPPOOTKPOOOTTOOOTTTTTTTIITBTTIBBBBB",
+      "queens": "...Q...Q........Q...Q...Q..........Q"
+    },
+    {
+      "id": "pz-1168-0H",
+      "layout": "BBBBBITTBTIITTTTTTTOOOTTOOOPKTOOPPKK",
+      "queens": "Q..........Q...Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1168-0VH",
+      "layout": "OOPPKKOOOPKTTOOOTTTTTTTTTTBTIIBBBBBI",
+      "queens": "..Q.......Q..Q.......Q.......QQ....."
+    },
+    {
+      "id": "pz-1168-90",
+      "layout": "KTTTIIKKTTIBPPOTTBPOOTBBOOOTTBOOTTTB",
+      "queens": "....Q..Q.......Q..Q.......Q........Q"
+    },
+    {
+      "id": "pz-1168-90V",
+      "layout": "OOTTTBOOOTTBPOOTBBPPOTTBKKTTIBKTTTII",
+      "queens": ".....Q..Q...Q........Q...Q........Q."
+    },
+    {
+      "id": "pz-1168-90H",
+      "layout": "IITTTKBITTKKBTTOPPBBTOOPBTTOOOBTTTOO",
+      "queens": ".Q........Q...Q........Q...Q..Q....."
+    },
+    {
+      "id": "pz-1168-90VH",
+      "layout": "BTTTOOBTTOOOBBTOOPBTTOPPBITTKKIITTTK",
+      "queens": "Q........Q.......Q..Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1169-0",
+      "layout": "BBIIIIBIIITTIITTTTOITTTTOOKKKKKKKPPP",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1169-0V",
+      "layout": "KKKPPPOOKKKKOITTTTIITTTTBIIITTBBIIII",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1169-0H",
+      "layout": "IIIIBBTTIIIBTTTTIITTTTIOKKKKOOPPPKKK",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1169-0VH",
+      "layout": "PPPKKKKKKKOOTTTTIOTTTTIITTIIIBIIIIBB",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1169-90",
+      "layout": "KOOIBBKOIIIBKKTTIIPKTTIIPKTTTIPKTTTI",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1169-90V",
+      "layout": "PKTTTIPKTTTIPKTTIIKKTTIIKOIIIBKOOIBB",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1169-90H",
+      "layout": "BBIOOKBIIIOKIITTKKIITTKPITTTKPITTTKP",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1169-90VH",
+      "layout": "ITTTKPITTTKPIITTKPIITTKKBIIIOKBBIOOK",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1170-0",
+      "layout": "IIBBTTIBBTTTOOOKTTPOOKTTPOOKKTPPOOKT",
+      "queens": "...Q..Q..........Q..Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1170-0V",
+      "layout": "PPOOKTPOOKKTPOOKTTOOOKTTIBBTTTIIBBTT",
+      "queens": ".Q........Q...Q........QQ........Q.."
+    },
+    {
+      "id": "pz-1170-0H",
+      "layout": "TTBBIITTTBBITTKOOOTTKOOPTKKOOPTKOOPP",
+      "queens": "..Q........QQ........Q...Q........Q."
+    },
+    {
+      "id": "pz-1170-0VH",
+      "layout": "TKOOPPTKKOOPTTKOOPTTKOOOTTTBBITTBBII",
+      "queens": "....Q..Q.......Q..Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1170-90",
+      "layout": "PPPOIIPOOOBIOOOOBBOKKKTBKKTTTTTTTTTT",
+      "queens": "....Q.Q.......Q........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1170-90V",
+      "layout": "TTTTTTKKTTTTOKKKTBOOOOBBPOOOBIPPPOII",
+      "queens": "...Q...Q.........Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1170-90H",
+      "layout": "IIOPPPIBOOOPBBOOOOBTKKKOTTTTKKTTTTTT",
+      "queens": ".Q.........Q...Q..Q.........Q...Q..."
+    },
+    {
+      "id": "pz-1170-90VH",
+      "layout": "TTTTTTTTTTKKBTKKKOBBOOOOIBOOOPIIOPPP",
+      "queens": "..Q.......Q.Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1171-0",
+      "layout": "IIIBBBIIIIIBTTTIIITOOOIIOOOOKIPPPKKK",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1171-0V",
+      "layout": "PPPKKKOOOOKITOOOIITTTIIIIIIIIBIIIBBB",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1171-0H",
+      "layout": "BBBIIIBIIIIIIIITTTIIOOOTIKOOOOKKKPPP",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1171-0VH",
+      "layout": "KKKPPPIKOOOOIIOOOTIIITTTBIIIIIBBBIII",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1171-90",
+      "layout": "POTTIIPOOTIIPOOTIIKOOIIBKKIIIBKIIIBB",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1171-90V",
+      "layout": "KIIIBBKKIIIBKOOIIBPOOTIIPOOTIIPOTTII",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1171-90H",
+      "layout": "IITTOPIITOOPIITOOPBIIOOKBIIIKKBBIIIK",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1171-90VH",
+      "layout": "BBIIIKBIIIKKBIIOOKIITOOPIITOOPIITTOP",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1172-0",
+      "layout": "IITTBBTITTBTTTTTTTPPKTTOPKKTOOPKTTTT",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1172-0V",
+      "layout": "PKTTTTPKKTOOPPKTTOTTTTTTTITTBTIITTBB",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1172-0H",
+      "layout": "BBTTIITBTTITTTTTTTOTTKPPOOTKKPTTTTKP",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1172-0VH",
+      "layout": "TTTTKPOOTKKPOTTKPPTTTTTTTBTTITBBTTII",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1172-90",
+      "layout": "PPPTTIKKPTIITKKTTTTTTTTTTOTTBBTOOTTB",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1172-90V",
+      "layout": "TOOTTBTOTTBBTTTTTTTKKTTTKKPTIIPPPTTI",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1172-90H",
+      "layout": "ITTPPPIITPKKTTTKKTTTTTTTBBTTOTBTTOOT",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1172-90VH",
+      "layout": "BTTOOTBBTTOTTTTTTTTTTKKTIITPKKITTPPP",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1173-0",
+      "layout": "IIITBBTITTTBTTTTTTTTTOOOTTKKKOPPPKKK",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1173-0V",
+      "layout": "PPPKKKTTKKKOTTTOOOTTTTTTTITTTBIIITBB",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1173-0H",
+      "layout": "BBTIIIBTTTITTTTTTTOOOTTTOKKKTTKKKPPP",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1173-0VH",
+      "layout": "KKKPPPOKKKTTOOOTTTTTTTTTBTTTITBBTIII",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1173-90",
+      "layout": "PTTTTIPTTTIIPKTTTIKKOTTTKKOTTBKOOTBB",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1173-90V",
+      "layout": "KOOTBBKKOTTBKKOTTTPKTTTIPTTTIIPTTTTI",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1173-90H",
+      "layout": "ITTTTPIITTTPITTTKPTTTOKKBTTOKKBBTOOK",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1173-90VH",
+      "layout": "BBTOOKBTTOKKTTTOKKITTTKPIITTTPITTTTP",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1174-0",
+      "layout": "TTIBBOTIIBOOTIOOOOTIOOOOKKOOPOKOOPPO",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1174-0V",
+      "layout": "KOOPPOKKOOPOTIOOOOTIOOOOTIIBOOTTIBBO",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1174-0H",
+      "layout": "OBBITTOOBIITOOOOITOOOOITOPOOKKOPPOOK",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1174-0VH",
+      "layout": "OPPOOKOPOOKKOOOOITOOOOITOOBIITOBBITT",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1174-90",
+      "layout": "KKTTTTOKIIITOOOOIIPOOOBBPPOOOBOOOOOO",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1174-90V",
+      "layout": "OOOOOOPPOOOBPOOOBBOOOOIIOKIIITKKTTTT",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1174-90H",
+      "layout": "TTTTKKTIIIKOIIOOOOBBOOOPBOOOPPOOOOOO",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1174-90VH",
+      "layout": "OOOOOOBOOOPPBBOOOPIIOOOOTIIIKOTTTTKK",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1175-0",
+      "layout": "IOOBBTIIOOBTIIOBBTKKOOTTKKPOTTKPPOTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1175-0V",
+      "layout": "KPPOTTKKPOTTKKOOTTIIOBBTIIOOBTIOOBBT",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1175-0H",
+      "layout": "TBBOOITBOOIITBBOIITTOOKKTTOPKKTTOPPK",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1175-0VH",
+      "layout": "TTOPPKTTOPKKTTOOKKTBBOIITBOOIITBBOOI",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1175-90",
+      "layout": "KKKIIIPKKIIOPPOOOOOOOBOBTTTBBBTTTTTT",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1175-90V",
+      "layout": "TTTTTTTTTBBBOOOBOBPPOOOOPKKIIOKKKIII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1175-90H",
+      "layout": "IIIKKKOIIKKPOOOOPPBOBOOOBBBTTTTTTTTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1175-90VH",
+      "layout": "TTTTTTBBBTTTBOBOOOOOOOPPOIIKKPIIIKKK",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1176-0",
+      "layout": "BBBBBBBTTIBBTTIIBBTOOOOOOOOOKKPPPKKK",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1176-0V",
+      "layout": "PPPKKKOOOOKKTOOOOOTTIIBBBTTIBBBBBBBB",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1176-0H",
+      "layout": "BBBBBBBBITTBBBIITTOOOOOTKKOOOOKKKPPP",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1176-0VH",
+      "layout": "KKKPPPKKOOOOOOOOOTBBIITTBBITTBBBBBBB",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1176-90",
+      "layout": "POTTBBPOOTTBPOOITBKOOIIBKKOBBBKKOBBB",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1176-90V",
+      "layout": "KKOBBBKKOBBBKOOIIBPOOITBPOOTTBPOTTBB",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1176-90H",
+      "layout": "BBTTOPBTTOOPBTIOOPBIIOOKBBBOKKBBBOKK",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1176-90VH",
+      "layout": "BBBOKKBBBOKKBIIOOKBTIOOPBTTOOPBBTTOP",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1177-0",
+      "layout": "TTTIIBTTIIBBTTTTTTTTKTOOTKKPOOTKPPOO",
+      "queens": ".....Q..Q...Q.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1177-0V",
+      "layout": "TKPPOOTKKPOOTTKTOOTTTTTTTTIIBBTTTIIB",
+      "queens": "...Q...Q........Q.Q.......Q........Q"
+    },
+    {
+      "id": "pz-1177-0H",
+      "layout": "BIITTTBBIITTTTTTTTOOTKTTOOPKKTOOPPKT",
+      "queens": "Q........Q.......Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1177-0VH",
+      "layout": "OOPPKTOOPKKTOOTKTTTTTTTTBBIITTBIITTT",
+      "queens": "..Q.......Q..Q.........Q...Q..Q....."
+    },
+    {
+      "id": "pz-1177-90",
+      "layout": "TTTTTTKKTTTTPKKTITPPTTIIOOOTBIOOOTBB",
+      "queens": "...Q...Q........Q.Q.......Q........Q"
+    },
+    {
+      "id": "pz-1177-90V",
+      "layout": "OOOTBBOOOTBIPPTTIIPKKTITKKTTTTTTTTTT",
+      "queens": ".....Q..Q...Q.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1177-90H",
+      "layout": "TTTTTTTTTTKKTITKKPIITTPPIBTOOOBBTOOO",
+      "queens": "..Q.......Q..Q.........Q...Q..Q....."
+    },
+    {
+      "id": "pz-1177-90VH",
+      "layout": "BBTOOOIBTOOOIITTPPTITKKPTTTTKKTTTTTT",
+      "queens": "Q........Q.......Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1178-0",
+      "layout": "IIBBBBTIIIBBTTIPOBKKPPOBKPPOOBPPPOBB",
+      "queens": ".....Q...Q...Q........Q.Q.......Q..."
+    },
+    {
+      "id": "pz-1178-0V",
+      "layout": "PPPOBBKPPOOBKKPPOBTTIPOBTIIIBBIIBBBB",
+      "queens": "..Q...Q.........Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1178-0H",
+      "layout": "BBBBIIBBIIITBOPITTBOPPKKBOOPPKBBOPPP",
+      "queens": "Q.......Q.......Q..Q.........Q...Q.."
+    },
+    {
+      "id": "pz-1178-0VH",
+      "layout": "BBOPPPBOOPPKBOPPKKBOPITTBBIIITBBBBII",
+      "queens": "...Q.......Q.Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1178-90",
+      "layout": "PKKTTIPPKTIIPPPIIBOOPPIBBOOOBBBBBBBB",
+      "queens": ".Q.......Q..Q.........Q...Q........Q"
+    },
+    {
+      "id": "pz-1178-90V",
+      "layout": "BBBBBBBOOOBBOOPPIBPPPIIBPPKTIIPKKTTI",
+      "queens": ".....Q..Q.......Q.Q........Q...Q...."
+    },
+    {
+      "id": "pz-1178-90H",
+      "layout": "ITTKKPIITKPPBIIPPPBIPPOOBBOOOBBBBBBB",
+      "queens": "....Q...Q........Q.Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1178-90VH",
+      "layout": "BBBBBBBBOOOBBIPPOOBIIPPPIITKPPITTKKP",
+      "queens": "Q........Q...Q.........Q..Q.......Q."
+    },
+    {
+      "id": "pz-1179-0",
+      "layout": "IIIBBBIIIIIBIOOTTTIOOOOTKKKOOOPPPOOO",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1179-0V",
+      "layout": "PPPOOOKKKOOOIOOOOTIOOTTTIIIIIBIIIBBB",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1179-0H",
+      "layout": "BBBIIIBIIIIITTTOOITOOOOIOOOKKKOOOPPP",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1179-0VH",
+      "layout": "OOOPPPOOOKKKTOOOOITTTOOIBIIIIIBBBIII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1179-90",
+      "layout": "PKIIIIPKOOIIPKOOIIOOOTIBOOOTIBOOTTBB",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1179-90V",
+      "layout": "OOTTBBOOOTIBOOOTIBPKOOIIPKOOIIPKIIII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1179-90H",
+      "layout": "IIIIKPIIOOKPIIOOKPBITOOOBITOOOBBTTOO",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1179-90VH",
+      "layout": "BBTTOOBITOOOBITOOOIIOOKPIIOOKPIIIIKP",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1180-0",
+      "layout": "IIOOOBTIIOBBTTIOOBOOOOOOOKOOOPKKOOPP",
+      "queens": ".....Q..Q...Q........Q...Q........Q."
+    },
+    {
+      "id": "pz-1180-0V",
+      "layout": "KKOOPPOKOOOPOOOOOOTTIOOBTIIOBBIIOOOB",
+      "queens": "....Q..Q.......Q..Q.......Q........Q"
+    },
+    {
+      "id": "pz-1180-0H",
+      "layout": "BOOOIIBBOIITBOOITTOOOOOOPOOOKOPPOOKK",
+      "queens": "Q........Q.......Q..Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1180-0VH",
+      "layout": "PPOOKKPOOOKOOOOOOOBOOITTBBOIITBOOOII",
+      "queens": ".Q........Q...Q........Q...Q..Q....."
+    },
+    {
+      "id": "pz-1180-90",
+      "layout": "KOOTTIKKOTIIOOOIIOOOOOOOPOOOBOPPOBBB",
+      "queens": "...Q...Q........Q...Q...Q..........Q"
+    },
+    {
+      "id": "pz-1180-90V",
+      "layout": "PPOBBBPOOOBOOOOOOOOOOIIOKKOTIIKOOTTI",
+      "queens": ".....QQ.......Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1180-90H",
+      "layout": "ITTOOKIITOKKOIIOOOOOOOOOOBOOOPBBBOPP",
+      "queens": "..Q.......Q..Q.......Q.......QQ....."
+    },
+    {
+      "id": "pz-1180-90VH",
+      "layout": "BBBOPPOBOOOPOOOOOOOIIOOOIITOKKITTOOK",
+      "queens": "Q..........Q...Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1181-0",
+      "layout": "ITTBBOIITBOOTTTBOPTTBBOPTKBPOPKKBPPP",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1181-0V",
+      "layout": "KKBPPPTKBPOPTTBBOPTTTBOPIITBOOITTBBO",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1181-0H",
+      "layout": "OBBTTIOOBTIIPOBTTTPOBBTTPOPBKTPPPBKK",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1181-0VH",
+      "layout": "PPPBKKPOPBKTPOBBTTPOBTTTOOBTIIOBBTTI",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1181-90",
+      "layout": "KTTTIIKKTTITBBBTTTPPBBBBPOOOOBPPPPOO",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1181-90V",
+      "layout": "PPPPOOPOOOOBPPBBBBBBBTTTKKTTITKTTTII",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1181-90H",
+      "layout": "IITTTKTITTKKTTTBBBBBBBPPBOOOOPOOPPPP",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1181-90VH",
+      "layout": "OOPPPPBOOOOPBBBBPPTTTBBBTITTKKIITTTK",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1182-0",
+      "layout": "TTIBBBTIIBOBTIOOOBTIOOOBKKOOPPKOOOOP",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1182-0V",
+      "layout": "KOOOOPKKOOPPTIOOOBTIOOOBTIIBOBTTIBBB",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1182-0H",
+      "layout": "BBBITTBOBIITBOOOITBOOOITPPOOKKPOOOOK",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1182-0VH",
+      "layout": "POOOOKPPOOKKBOOOITBOOOITBOBIITBBBITT",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1182-90",
+      "layout": "KKTTTTOKIIITOOOOIIOOOOBBOPOOOBPPBBBB",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1182-90V",
+      "layout": "PPBBBBOPOOOBOOOOBBOOOOIIOKIIITKKTTTT",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1182-90H",
+      "layout": "TTTTKKTIIIKOIIOOOOBBOOOOBOOOPOBBBBPP",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1182-90VH",
+      "layout": "BBBBPPBOOOPOBBOOOOIIOOOOTIIIKOTTTTKK",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1183-0",
+      "layout": "BBBBBBIIBBBBOIIBBTOOKBTTKKKBPTKKBBPP",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1183-0V",
+      "layout": "KKBBPPKKKBPTOOKBTTOIIBBTIIBBBBBBBBBB",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1183-0H",
+      "layout": "BBBBBBBBBBIITBBIIOTTBKOOTPBKKKPPBBKK",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1183-0VH",
+      "layout": "PPBBKKTPBKKKTTBKOOTBBIIOBBBBIIBBBBBB",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1183-90",
+      "layout": "KKOOIBKKOIIBBKKIBBBBBBBBPPTBBBPTTTBB",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1183-90V",
+      "layout": "PTTTBBPPTBBBBBBBBBBKKIBBKKOIIBKKOOIB",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1183-90H",
+      "layout": "BIOOKKBIIOKKBBIKKBBBBBBBBBBTPPBBTTTP",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1183-90VH",
+      "layout": "BBTTTPBBBTPPBBBBBBBBIKKBBIIOKKBIOOKK",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1184-0",
+      "layout": "ITTBOOITTBOOITTBOOKTTOOPKKTOPPKTTOPP",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1184-0V",
+      "layout": "KTTOPPKKTOPPKTTOOPITTBOOITTBOOITTBOO",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1184-0H",
+      "layout": "OOBTTIOOBTTIOOBTTIPOOTTKPPOTKKPPOTTK",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1184-0VH",
+      "layout": "PPOTTKPPOTKKPOOTTKOOBTTIOOBTTIOOBTTI",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1184-90",
+      "layout": "KKKIIITKTTTTTTTTTTOOOBBBPPOOOOPPPOOO",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1184-90V",
+      "layout": "PPPOOOPPOOOOOOOBBBTTTTTTTKTTTTKKKIII",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1184-90H",
+      "layout": "IIIKKKTTTTKTTTTTTTBBBOOOOOOOPPOOOPPP",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1184-90VH",
+      "layout": "OOOPPPOOOOPPBBBOOOTTTTTTTTTTKTIIIKKK",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1185-0",
+      "layout": "BBIOOOBBIIOOBTTIIOBTTPIOTTKPOOTKKPPO",
+      "queens": "Q........Q...Q.........Q..Q.......Q."
+    },
+    {
+      "id": "pz-1185-0V",
+      "layout": "TKKPPOTTKPOOBTTPIOBTTIIOBBIIOOBBIOOO",
+      "queens": "....Q...Q........Q.Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1185-0H",
+      "layout": "OOOIBBOOIIBBOIITTBOIPTTBOOPKTTOPPKKT",
+      "queens": ".....Q..Q.......Q.Q........Q...Q...."
+    },
+    {
+      "id": "pz-1185-0VH",
+      "layout": "OPPKKTOOPKTTOIPTTBOIITTBOOIIBBOOOIBB",
+      "queens": ".Q.......Q..Q.........Q...Q........Q"
+    },
+    {
+      "id": "pz-1185-90",
+      "layout": "TTBBBBKTTTBBKKTTIIPPPIIOPOIIOOOOOOOO",
+      "queens": ".....Q...Q...Q........Q.Q.......Q..."
+    },
+    {
+      "id": "pz-1185-90V",
+      "layout": "OOOOOOPOIIOOPPPIIOKKTTIIKTTTBBTTBBBB",
+      "queens": "..Q...Q.........Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1185-90H",
+      "layout": "BBBBTTBBTTTKIITTKKOIIPPPOOIIOPOOOOOO",
+      "queens": "Q.......Q.......Q..Q.........Q...Q.."
+    },
+    {
+      "id": "pz-1185-90VH",
+      "layout": "OOOOOOOOIIOPOIIPPPIITTKKBBTTTKBBBBTT",
+      "queens": "...Q.......Q.Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1186-0",
+      "layout": "IBBBBBIIBTTBOIITTBOOKTBBKKKPBBKKKPPB",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1186-0V",
+      "layout": "KKKPPBKKKPBBOOKTBBOIITTBIIBTTBIBBBBB",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1186-0H",
+      "layout": "BBBBBIBTTBIIBTTIIOBBTKOOBBPKKKBPPKKK",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1186-0VH",
+      "layout": "BPPKKKBBPKKKBBTKOOBTTIIOBTTBIIBBBBBI",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1186-90",
+      "layout": "KKOOIIKKOIIBKKKIBBPPTTTBPBBTTBBBBBBB",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1186-90V",
+      "layout": "BBBBBBPBBTTBPPTTTBKKKIBBKKOIIBKKOOII",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1186-90H",
+      "layout": "IIOOKKBIIOKKBBIKKKBTTTPPBTTBBPBBBBBB",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1186-90VH",
+      "layout": "BBBBBBBTTBBPBTTTPPBBIKKKBIIOKKIIOOKK",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1187-0",
+      "layout": "BBBBBBIIIBOBITTTOOKKKOOOKPKPPPKPPPPP",
+      "queens": "....Q..Q.......Q.......QQ.......Q..."
+    },
+    {
+      "id": "pz-1187-0V",
+      "layout": "KPPPPPKPKPPPKKKOOOITTTOOIIIBOBBBBBBB",
+      "queens": "..Q...Q..........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1187-0H",
+      "layout": "BBBBBBBOBIIIOOTTTIOOOKKKPPPKPKPPPPPK",
+      "queens": ".Q........Q...Q...Q..........Q...Q.."
+    },
+    {
+      "id": "pz-1187-0VH",
+      "layout": "PPPPPKPPPKPKOOOKKKOOTTTIBOBIIIBBBBBB",
+      "queens": "...Q.......QQ.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1187-90",
+      "layout": "KKKIIBPPKTIBPKKTIBPPOTBBPPOOOBPPOOBB",
+      "queens": ".Q........Q.Q........Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1187-90V",
+      "layout": "PPOOBBPPOOOBPPOTBBPKKTIBPPKTIBKKKIIB",
+      "queens": "..Q........Q...Q..Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1187-90H",
+      "layout": "BIIKKKBITKPPBITKKPBBTOPPBOOOPPBBOOPP",
+      "queens": "....Q..Q.........Q..Q...Q........Q.."
+    },
+    {
+      "id": "pz-1187-90VH",
+      "layout": "BBOOPPBOOOPPBBTOPPBITKKPBITKPPBIIKKK",
+      "queens": "...Q..Q.......Q........Q.Q........Q."
+    },
+    {
+      "id": "pz-1188-0",
+      "layout": "IIIIBTIIIBBTIIITTTIOOTTTOOPKTTPPPKKT",
+      "queens": "....Q...Q........Q.Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1188-0V",
+      "layout": "PPPKKTOOPKTTIOOTTTIIITTTIIIBBTIIIIBT",
+      "queens": "Q........Q...Q.........Q..Q.......Q."
+    },
+    {
+      "id": "pz-1188-0H",
+      "layout": "TBIIIITBBIIITTTIIITTTOOITTKPOOTKKPPP",
+      "queens": ".Q.......Q..Q.........Q...Q........Q"
+    },
+    {
+      "id": "pz-1188-0VH",
+      "layout": "TKKPPPTTKPOOTTTOOITTTIIITBBIIITBIIII",
+      "queens": ".....Q..Q.......Q.Q........Q...Q...."
+    },
+    {
+      "id": "pz-1188-90",
+      "layout": "POIIIIPOOIIIPPOIIIKKTTBIKTTTBBTTTTTT",
+      "queens": "Q.......Q.......Q..Q.........Q...Q.."
+    },
+    {
+      "id": "pz-1188-90V",
+      "layout": "TTTTTTKTTTBBKKTTBIPPOIIIPOOIIIPOIIII",
+      "queens": "...Q.......Q.Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1188-90H",
+      "layout": "IIIIOPIIIOOPIIIOPPIBTTKKBBTTTKTTTTTT",
+      "queens": ".....Q...Q...Q........Q.Q.......Q..."
+    },
+    {
+      "id": "pz-1188-90VH",
+      "layout": "TTTTTTBBTTTKIBTTKKIIIOPPIIIOOPIIIIOP",
+      "queens": "..Q...Q.........Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1189-0",
+      "layout": "TIIIBBTTTIBTTTTTTTTOOTTTTPOOKTPPOOKK",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1189-0V",
+      "layout": "PPOOKKTPOOKTTOOTTTTTTTTTTTTIBTTIIIBB",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1189-0H",
+      "layout": "BBIIITTBITTTTTTTTTTTTOOTTKOOPTKKOOPP",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1189-0VH",
+      "layout": "KKOOPPTKOOPTTTTOOTTTTTTTTBITTTBBIIIT",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1189-90",
+      "layout": "PTTTTTPPOTTIOOOTTIOOTTIIKKTTBBKTTTTB",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1189-90V",
+      "layout": "KTTTTBKKTTBBOOTTIIOOOTTIPPOTTIPTTTTT",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1189-90H",
+      "layout": "TTTTTPITTOPPITTOOOIITTOOBBTTKKBTTTTK",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1189-90VH",
+      "layout": "BTTTTKBBTTKKIITTOOITTOOOITTOPPTTTTTP",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1190-0",
+      "layout": "ITTBBBIITTTTTTTKTTTTTKTOPPKKOOPPKOOO",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1190-0V",
+      "layout": "PPKOOOPPKKOOTTTKTOTTTKTTIITTTTITTBBB",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1190-0H",
+      "layout": "BBBTTITTTTIITTKTTTOTKTTTOOKKPPOOOKPP",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1190-0VH",
+      "layout": "OOOKPPOOKKPPOTKTTTTTKTTTTTTTIIBBBTTI",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1190-90",
+      "layout": "PPTTIIPPTTITKKTTTTOKKKTBOOTTTBOOOTTB",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1190-90V",
+      "layout": "OOOTTBOOTTTBOKKKTBKKTTTTPPTTITPPTTII",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1190-90H",
+      "layout": "IITTPPTITTPPTTTTKKBTKKKOBTTTOOBTTOOO",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1190-90VH",
+      "layout": "BTTOOOBTTTOOBTKKKOTTTTKKTITTPPIITTPP",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1191-0",
+      "layout": "IIOBBTIIOBTTIOOBBTKPOOBTKPPOTTKKPOTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1191-0V",
+      "layout": "KKPOTTKPPOTTKPOOBTIOOBBTIIOBTTIIOBBT",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1191-0H",
+      "layout": "TBBOIITTBOIITBBOOITBOOPKTTOPPKTTOPKK",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1191-0VH",
+      "layout": "TTOPKKTTOPPKTBOOPKTBBOOITTBOIITBBOII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1191-90",
+      "layout": "KKKIIIKPPOIIPPOOOOOOOBBBTTBBTBTTTTTT",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1191-90V",
+      "layout": "TTTTTTTTBBTBOOOBBBPPOOOOKPPOIIKKKIII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1191-90H",
+      "layout": "IIIKKKIIOPPKOOOOPPBBBOOOBTBBTTTTTTTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1191-90VH",
+      "layout": "TTTTTTBTBBTTBBBOOOOOOOPPIIOPPKIIIKKK",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1192-0",
+      "layout": "BBBIIIIIIIITOOOTTTOKKKKKKKKKKKKKKPPP",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1192-0V",
+      "layout": "KKKPPPKKKKKKOKKKKKOOOTTTIIIIITBBBIII",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1192-0H",
+      "layout": "IIIBBBTIIIIITTTOOOKKKKKOKKKKKKPPPKKK",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1192-0VH",
+      "layout": "PPPKKKKKKKKKKKKKKOTTTOOOTIIIIIIIIBBB",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1192-90",
+      "layout": "KKOOIBKKKOIBKKKOIBPKKTIIPKKTIIPKKTTI",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1192-90V",
+      "layout": "PKKTTIPKKTIIPKKTIIKKKOIBKKKOIBKKOOIB",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1192-90H",
+      "layout": "BIOOKKBIOKKKBIOKKKIITKKPIITKKPITTKKP",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1192-90VH",
+      "layout": "ITTKKPIITKKPIITKKPBIOKKKBIOKKKBIOOKK",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1193-0",
+      "layout": "BBBBBBBIIBBBIIOBTBOOOTTBOPPKTTOPKKKT",
+      "queens": ".....Q..Q.......Q.Q........Q...Q...."
+    },
+    {
+      "id": "pz-1193-0V",
+      "layout": "OPKKKTOPPKTTOOOTTBIIOBTBBIIBBBBBBBBB",
+      "queens": ".Q.......Q..Q.........Q...Q........Q"
+    },
+    {
+      "id": "pz-1193-0H",
+      "layout": "BBBBBBBBBIIBBTBOIIBTTOOOTTKPPOTKKKPO",
+      "queens": "Q........Q...Q.........Q..Q.......Q."
+    },
+    {
+      "id": "pz-1193-0VH",
+      "layout": "TKKKPOTTKPPOBTTOOOBTBOIIBBBIIBBBBBBB",
+      "queens": "....Q...Q........Q.Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1193-90",
+      "layout": "OOOIBBPPOIIBKPOOIBKKTBBBKTTTBBTTBBBB",
+      "queens": "..Q...Q.........Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1193-90V",
+      "layout": "TTBBBBKTTTBBKKTBBBKPOOIBPPOIIBOOOIBB",
+      "queens": ".....Q...Q...Q........Q.Q.......Q..."
+    },
+    {
+      "id": "pz-1193-90H",
+      "layout": "BBIOOOBIIOPPBIOOPKBBBTKKBBTTTKBBBBTT",
+      "queens": "...Q.......Q.Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1193-90VH",
+      "layout": "BBBBTTBBTTTKBBBTKKBIOOPKBIIOPPBBIOOO",
+      "queens": "Q.......Q.......Q..Q.........Q...Q.."
+    },
+    {
+      "id": "pz-1194-0",
+      "layout": "BBBBBBTBBIIBTBIIIITTIOOOPOOOKKPPOOKK",
+      "queens": "..Q.......Q.Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1194-0V",
+      "layout": "PPOOKKPOOOKKTTIOOOTBIIIITBBIIBBBBBBB",
+      "queens": ".Q.........Q...Q..Q.........Q...Q..."
+    },
+    {
+      "id": "pz-1194-0H",
+      "layout": "BBBBBBBIIBBTIIIIBTOOOITTKKOOOPKKOOPP",
+      "queens": "...Q...Q.........Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1194-0VH",
+      "layout": "KKOOPPKKOOOPOOOITTIIIIBTBIIBBTBBBBBB",
+      "queens": "....Q.Q.......Q........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1194-90",
+      "layout": "PPTTTBPOTBBBOOIIBBOOOIIBKKOIIBKKOIBB",
+      "queens": "...Q..Q..........Q..Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1194-90V",
+      "layout": "KKOIBBKKOIIBOOOIIBOOIIBBPOTBBBPPTTTB",
+      "queens": ".Q........Q...Q........QQ........Q.."
+    },
+    {
+      "id": "pz-1194-90H",
+      "layout": "BTTTPPBBBTOPBBIIOOBIIOOOBIIOKKBBIOKK",
+      "queens": "..Q........QQ........Q...Q........Q."
+    },
+    {
+      "id": "pz-1194-90VH",
+      "layout": "BBIOKKBIIOKKBIIOOOBBIIOOBBBTOPBTTTPP",
+      "queens": "....Q..Q.......Q..Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1195-0",
+      "layout": "BTTTTIBBTTIITTTTTTTPTKOOPPTKKOPPTTKK",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1195-0V",
+      "layout": "PPTTKKPPTKKOTPTKOOTTTTTTBBTTIIBTTTTI",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1195-0H",
+      "layout": "ITTTTBIITTBBTTTTTTOOKTPTOKKTPPKKTTPP",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1195-0VH",
+      "layout": "KKTTPPOKKTPPOOKTPTTTTTTTIITTBBITTTTB",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1195-90",
+      "layout": "PPTTBBPPPTBTTTTTTTTKKTTTKKOTITKOOTII",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1195-90V",
+      "layout": "KOOTIIKKOTITTKKTTTTTTTTTPPPTBTPPTTBB",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1195-90H",
+      "layout": "BBTTPPTBTPPPTTTTTTTTTKKTTITOKKIITOOK",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1195-90VH",
+      "layout": "IITOOKTITOKKTTTKKTTTTTTTTBTPPPBBTTPP",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1196-0",
+      "layout": "IIITBBTITTTBTTTTTTTTTTTOKKKOOOKPPPPP",
+      "queens": "....Q..Q.......Q.......QQ.......Q..."
+    },
+    {
+      "id": "pz-1196-0V",
+      "layout": "KPPPPPKKKOOOTTTTTOTTTTTTTITTTBIIITBB",
+      "queens": "..Q...Q..........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1196-0H",
+      "layout": "BBTIIIBTTTITTTTTTTOTTTTTOOOKKKPPPPPK",
+      "queens": ".Q........Q...Q...Q..........Q...Q.."
+    },
+    {
+      "id": "pz-1196-0VH",
+      "layout": "PPPPPKOOOKKKOTTTTTTTTTTTBTTTITBBTIII",
+      "queens": "...Q.......QQ.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1196-90",
+      "layout": "KKTTTIPKTTIIPKTTTIPOTTTTPOTTTBPOOTBB",
+      "queens": ".Q........Q.Q........Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1196-90V",
+      "layout": "POOTBBPOTTTBPOTTTTPKTTTIPKTTIIKKTTTI",
+      "queens": "..Q........Q...Q..Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1196-90H",
+      "layout": "ITTTKKIITTKPITTTKPTTTTOPBTTTOPBBTOOP",
+      "queens": "....Q..Q.........Q..Q...Q........Q.."
+    },
+    {
+      "id": "pz-1196-90VH",
+      "layout": "BBTOOPBTTTOPTTTTOPITTTKPIITTKPITTTKK",
+      "queens": "...Q..Q.......Q........Q.Q........Q."
+    },
+    {
+      "id": "pz-1197-0",
+      "layout": "TTTIBBTTIIBTTTTTTTPTKTOOPTKKKOPTTTKK",
+      "queens": ".....Q...Q...Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1197-0V",
+      "layout": "PTTTKKPTKKKOPTKTOOTTTTTTTTIIBTTTTIBB",
+      "queens": "Q.......Q.......Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1197-0H",
+      "layout": "BBITTTTBIITTTTTTTTOOTKTPOKKKTPKKTTTP",
+      "queens": "Q.......Q.......Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1197-0VH",
+      "layout": "KKTTTPOKKKTPOOTKTPTTTTTTTBIITTBBITTT",
+      "queens": ".....Q...Q...Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1197-90",
+      "layout": "PPPTTTTTTTTTTKKTITTKTTIIKKOTBBKOOTTB",
+      "queens": "Q........Q...Q........Q...Q........Q"
+    },
+    {
+      "id": "pz-1197-90V",
+      "layout": "KOOTTBKKOTBBTKTTIITKKTITTTTTTTPPPTTT",
+      "queens": ".....Q..Q.......Q..Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1197-90H",
+      "layout": "TTTPPPTTTTTTTITKKTIITTKTBBTOKKBTTOOK",
+      "queens": ".....Q..Q.......Q..Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1197-90VH",
+      "layout": "BTTOOKBBTOKKIITTKTTITKKTTTTTTTTTTPPP",
+      "queens": "Q........Q...Q........Q...Q........Q"
+    },
+    {
+      "id": "pz-1198-0",
+      "layout": "BBBBBBTBBBIITTBBBIKPBBBOKPPOOOKKPPOO",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1198-0V",
+      "layout": "KKPPOOKPPOOOKPBBBOTTBBBITBBBIIBBBBBB",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1198-0H",
+      "layout": "BBBBBBIIBBBTIBBBTTOBBBPKOOOPPKOOPPKK",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1198-0VH",
+      "layout": "OOPPKKOOOPPKOBBBPKIBBBTTIIBBBTBBBBBB",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1198-90",
+      "layout": "KKKTTBKPPTBBPPBBBBPOBBBBOOBBIBOOOIIB",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1198-90V",
+      "layout": "OOOIIBOOBBIBPOBBBBPPBBBBKPPTBBKKKTTB",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1198-90H",
+      "layout": "BTTKKKBBTPPKBBBBPPBBBBOPBIBBOOBIIOOO",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1198-90VH",
+      "layout": "BIIOOOBIBBOOBBBBOPBBBBPPBBTPPKBTTKKK",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1199-0",
+      "layout": "IIIBBBIIIIIITIIOIITTIOOIKKIPOOKPPPOO",
+      "queens": ".....Q..Q...Q.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1199-0V",
+      "layout": "KPPPOOKKIPOOTTIOOITIIOIIIIIIIIIIIBBB",
+      "queens": "...Q...Q........Q.Q.......Q........Q"
+    },
+    {
+      "id": "pz-1199-0H",
+      "layout": "BBBIIIIIIIIIIIOIITIOOITTOOPIKKOOPPPK",
+      "queens": "Q........Q.......Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1199-0VH",
+      "layout": "OOPPPKOOPIKKIOOITTIIOIITIIIIIIBBBIII",
+      "queens": "..Q.......Q..Q.........Q...Q..Q....."
+    },
+    {
+      "id": "pz-1199-90",
+      "layout": "KKTTIIPKTIIIPIIIIIPPOOIBOOOIIBOOIIIB",
+      "queens": "...Q...Q........Q.Q.......Q........Q"
+    },
+    {
+      "id": "pz-1199-90V",
+      "layout": "OOIIIBOOOIIBPPOOIBPIIIIIPKTIIIKKTTII",
+      "queens": ".....Q..Q...Q.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1199-90H",
+      "layout": "IITTKKIIITKPIIIIIPBIOOPPBIIOOOBIIIOO",
+      "queens": "..Q.......Q..Q.........Q...Q..Q....."
+    },
+    {
+      "id": "pz-1199-90VH",
+      "layout": "BIIIOOBIIOOOBIOOPPIIIIIPIIITKPIITTKK",
+      "queens": "Q........Q.......Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1200-0",
+      "layout": "BBOOIIBBOOIPTTTOPPTTOOPPTOOPPKTOOPKK",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1200-0V",
+      "layout": "TOOPKKTOOPPKTTOOPPTTTOPPBBOOIPBBOOII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1200-0H",
+      "layout": "IIOOBBPIOOBBPPOTTTPPOOTTKPPOOTKKPOOT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1200-0VH",
+      "layout": "KKPOOTKPPOOTPPOOTTPPOTTTPIOOBBIIOOBB",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1200-90",
+      "layout": "TTTTBBOOTTBBOOOTOOPPOOOOKPPPIIKKPPPI",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1200-90V",
+      "layout": "KKPPPIKPPPIIPPOOOOOOOTOOOOTTBBTTTTBB",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1200-90H",
+      "layout": "BBTTTTBBTTOOOOTOOOOOOOPPIIPPPKIPPPKK",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1200-90VH",
+      "layout": "IPPPKKIIPPPKOOOOPPOOTOOOBBTTOOBBTTTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1201-0",
+      "layout": "IIIBBBIIIIIITIIIIITTTOOOKKKKKOPPPKKK",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1201-0V",
+      "layout": "PPPKKKKKKKKOTTTOOOTIIIIIIIIIIIIIIBBB",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1201-0H",
+      "layout": "BBBIIIIIIIIIIIIIITOOOTTTOKKKKKKKKPPP",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1201-0VH",
+      "layout": "KKKPPPOKKKKKOOOTTTIIIIITIIIIIIBBBIII",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1201-90",
+      "layout": "PKTTIIPKTIIIPKTIIIKKOIIBKKOIIBKOOIIB",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1201-90V",
+      "layout": "KOOIIBKKOIIBKKOIIBPKTIIIPKTIIIPKTTII",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1201-90H",
+      "layout": "IITTKPIIITKPIIITKPBIIOKKBIIOKKBIIOOK",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1201-90VH",
+      "layout": "BIIOOKBIIOKKBIIOKKIIITKPIIITKPIITTKP",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1202-0",
+      "layout": "TIIBBTTIIBTTTTIBTTOTTTTKOPTPPKOPPPPK",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1202-0V",
+      "layout": "OPPPPKOPTPPKOTTTTKTTIBTTTIIBTTTIIBBT",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1202-0H",
+      "layout": "TBBIITTTBIITTTBITTKTTTTOKPPTPOKPPPPO",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1202-0VH",
+      "layout": "KPPPPOKPPTPOKTTTTOTTBITTTTBIITTBBIIT",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1202-90",
+      "layout": "OOOTTTPPTTIIPTTIIIPPTBBBPPTTTBKKKTTT",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1202-90V",
+      "layout": "KKKTTTPPTTTBPPTBBBPTTIIIPPTTIIOOOTTT",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1202-90H",
+      "layout": "TTTOOOIITTPPIIITTPBBBTPPBTTTPPTTTKKK",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1202-90VH",
+      "layout": "TTTKKKBTTTPPBBBTPPIIITTPIITTPPTTTOOO",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1203-0",
+      "layout": "BBBBBBBBTTIIBPTKIOBPKKOOBPPKKKBPPPKK",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1203-0V",
+      "layout": "BPPPKKBPPKKKBPKKOOBPTKIOBBTTIIBBBBBB",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1203-0H",
+      "layout": "BBBBBBIITTBBOIKTPBOOKKPBKKKPPBKKPPPB",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1203-0VH",
+      "layout": "KKPPPBKKKPPBOOKKPBOIKTPBIITTBBBBBBBB",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1203-90",
+      "layout": "BBBBBBPPPPBBPPKTTBPKKKTBKKOIIBKKOOIB",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1203-90V",
+      "layout": "KKOOIBKKOIIBPKKKTBPPKTTBPPPPBBBBBBBB",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1203-90H",
+      "layout": "BBBBBBBBPPPPBTTKPPBTKKKPBIIOKKBIOOKK",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1203-90VH",
+      "layout": "BIOOKKBIIOKKBTKKKPBTTKPPBBPPPPBBBBBB",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1204-0",
+      "layout": "IOBBTTIOBKTTIOBKTTOOPKKTOPPKKTOPPKKT",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1204-0V",
+      "layout": "OPPKKTOPPKKTOOPKKTIOBKTTIOBKTTIOBBTT",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1204-0H",
+      "layout": "TTBBOITTKBOITTKBOITKKPOOTKKPPOTKKPPO",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1204-0VH",
+      "layout": "TKKPPOTKKPPOTKKPOOTTKBOITTKBOITTBBOI",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1204-90",
+      "layout": "OOOIIIPPOOOOPPPBBBKKKKKBKKKTTTTTTTTT",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1204-90V",
+      "layout": "TTTTTTKKKTTTKKKKKBPPPBBBPPOOOOOOOIII",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1204-90H",
+      "layout": "IIIOOOOOOOPPBBBPPPBKKKKKTTTKKKTTTTTT",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1204-90VH",
+      "layout": "TTTTTTTTTKKKBKKKKKBBBPPPOOOOPPIIIOOO",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1205-0",
+      "layout": "BIIIOOBBTIIOBBTTIOOOOOOOOKPOOOKKPPOO",
+      "queens": "Q.........Q...Q........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1205-0V",
+      "layout": "KKPPOOOKPOOOOOOOOOBBTTIOBBTIIOBIIIOO",
+      "queens": "...Q...Q.........Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1205-0H",
+      "layout": "OOIIIBOIITBBOITTBBOOOOOOOOOPKOOOPPKK",
+      "queens": ".....Q.Q.......Q..Q.........Q...Q..."
+    },
+    {
+      "id": "pz-1205-0VH",
+      "layout": "OOPPKKOOOPKOOOOOOOOITTBBOIITBBOOIIIB",
+      "queens": "..Q.......Q.Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1205-90",
+      "layout": "KOOBBBKKOBBIPPOTTIPOOTIIOOOIIOOOOOOO",
+      "queens": ".....Q.Q.......Q..Q.........Q...Q..."
+    },
+    {
+      "id": "pz-1205-90V",
+      "layout": "OOOOOOOOOIIOPOOTIIPPOTTIKKOBBIKOOBBB",
+      "queens": "..Q.......Q.Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1205-90H",
+      "layout": "BBBOOKIBBOKKITTOPPIITOOPOIIOOOOOOOOO",
+      "queens": "Q.........Q...Q........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1205-90VH",
+      "layout": "OOOOOOOIIOOOIITOOPITTOPPIBBOKKBBBOOK",
+      "queens": "...Q...Q.........Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1206-0",
+      "layout": "BBBBBBBBBBIITBBIIOTTBKOOPTBKKKPPBKKK",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1206-0V",
+      "layout": "PPBKKKPTBKKKTTBKOOTBBIIOBBBBIIBBBBBB",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1206-0H",
+      "layout": "BBBBBBIIBBBBOIIBBTOOKBTTKKKBTPKKKBPP",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1206-0VH",
+      "layout": "KKKBPPKKKBTPOOKBTTOIIBBTIIBBBBBBBBBB",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1206-90",
+      "layout": "PPTTBBPTTBBBBBBBBBKKKIBBKKOIIBKKOOIB",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1206-90V",
+      "layout": "KKOOIBKKOIIBKKKIBBBBBBBBPTTBBBPPTTBB",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1206-90H",
+      "layout": "BBTTPPBBBTTPBBBBBBBBIKKKBIIOKKBIOOKK",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1206-90VH",
+      "layout": "BIOOKKBIIOKKBBIKKKBBBBBBBBBTTPBBTTPP",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1207-0",
+      "layout": "BBBBBBOBBTIIOOBTTIOOBBTTPPBBKKPBBBBK",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1207-0V",
+      "layout": "PBBBBKPPBBKKOOBBTTOOBTTIOBBTIIBBBBBB",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1207-0H",
+      "layout": "BBBBBBIITBBOITTBOOTTBBOOKKBBPPKBBBBP",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1207-0VH",
+      "layout": "KBBBBPKKBBPPTTBBOOITTBOOIITBBOBBBBBB",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1207-90",
+      "layout": "PPOOOBBPOOBBBBBBBBBBBTTBBKTTIBKKTIIB",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1207-90V",
+      "layout": "KKTIIBBKTTIBBBBTTBBBBBBBBPOOBBPPOOOB",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1207-90H",
+      "layout": "BOOOPPBBOOPBBBBBBBBTTBBBBITTKBBIITKK",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1207-90VH",
+      "layout": "BIITKKBITTKBBTTBBBBBBBBBBBOOPBBOOOPP",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1208-0",
+      "layout": "KIIBBTKIOBTTKIOBTTKPOOTTKPPOTTKKPOTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1208-0V",
+      "layout": "KKPOTTKPPOTTKPOOTTKIOBTTKIOBTTKIIBBT",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1208-0H",
+      "layout": "TBBIIKTTBOIKTTBOIKTTOOPKTTOPPKTTOPKK",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1208-0VH",
+      "layout": "TTOPKKTTOPPKTTOOPKTTBOIKTTBOIKTBBIIK",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1208-90",
+      "layout": "KKKKKKKPPIIIPPOOOIOOOBBBTTTTTBTTTTTT",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1208-90V",
+      "layout": "TTTTTTTTTTTBOOOBBBPPOOOIKPPIIIKKKKKK",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1208-90H",
+      "layout": "KKKKKKIIIPPKIOOOPPBBBOOOBTTTTTTTTTTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1208-90VH",
+      "layout": "TTTTTTBTTTTTBBBOOOIOOOPPIIIPPKKKKKKK",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1209-0",
+      "layout": "BBBBBBITBBBBITTTTTIIIOOOPKKKKOPPPKKK",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1209-0V",
+      "layout": "PPPKKKPKKKKOIIIOOOITTTTTITBBBBBBBBBB",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1209-0H",
+      "layout": "BBBBBBBBBBTITTTTTIOOOIIIOKKKKPKKKPPP",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1209-0VH",
+      "layout": "KKKPPPOKKKKPOOOIIITTTTTIBBBBTIBBBBBB",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1209-90",
+      "layout": "PPIIIBPKITTBPKITBBKKOTBBKKOTBBKOOTBB",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1209-90V",
+      "layout": "KOOTBBKKOTBBKKOTBBPKITBBPKITTBPPIIIB",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1209-90H",
+      "layout": "BIIIPPBTTIKPBBTIKPBBTOKKBBTOKKBBTOOK",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1209-90VH",
+      "layout": "BBTOOKBBTOKKBBTOKKBBTIKPBTTIKPBIIIPP",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1210-0",
+      "layout": "IIBBBBIIIIBBTTOIIBPTOOKBPKKKKBPPKKBB",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1210-0V",
+      "layout": "PPKKBBPKKKKBPTOOKBTTOIIBIIIIBBIIBBBB",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1210-0H",
+      "layout": "BBBBIIBBIIIIBIIOTTBKOOTPBKKKKPBBKKPP",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1210-0VH",
+      "layout": "BBKKPPBKKKKPBKOOTPBIIOTTBBIIIIBBBBII",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1210-90",
+      "layout": "PPPTIIPKTTIIKKOOIBKKOIIBBKKIBBBBBBBB",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1210-90V",
+      "layout": "BBBBBBBKKIBBKKOIIBKKOOIBPKTTIIPPPTII",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1210-90H",
+      "layout": "IITPPPIITTKPBIOOKKBIIOKKBBIKKBBBBBBB",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1210-90VH",
+      "layout": "BBBBBBBBIKKBBIIOKKBIOOKKIITTKPIITPPP",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1211-0",
+      "layout": "BBBBBBIITTBBOIITBBOOOKPBOKKKPBKKPPPB",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1211-0V",
+      "layout": "KKPPPBOKKKPBOOOKPBOIITBBIITTBBBBBBBB",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1211-0H",
+      "layout": "BBBBBBBBTTIIBBTIIOBPKOOOBPKKKOBPPPKK",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1211-0VH",
+      "layout": "BPPPKKBPKKKOBPKOOOBBTIIOBBTTIIBBBBBB",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1211-90",
+      "layout": "KOOOIBKKOIIBPKOITBPKKTTBPPPBBBBBBBBB",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1211-90V",
+      "layout": "BBBBBBPPPBBBPKKTTBPKOITBKKOIIBKOOOIB",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1211-90H",
+      "layout": "BIOOOKBIIOKKBTIOKPBTTKKPBBBPPPBBBBBB",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1211-90VH",
+      "layout": "BBBBBBBBBPPPBTTKKPBTIOKPBIIOKKBIOOOK",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1212-0",
+      "layout": "BBBBBBBBTTIBBPTKIIBPTKOOBPKKKOBPPPKK",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1212-0V",
+      "layout": "BPPPKKBPKKKOBPTKOOBPTKIIBBTTIBBBBBBB",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1212-0H",
+      "layout": "BBBBBBBITTBBIIKTPBOOKTPBOKKKPBKKPPPB",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1212-0VH",
+      "layout": "KKPPPBOKKKPBOOKTPBIIKTPBBITTBBBBBBBB",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1212-90",
+      "layout": "BBBBBBPPPPBBPKTTTBPKKKTBKKOIIBKOOIBB",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1212-90V",
+      "layout": "KOOIBBKKOIIBPKKKTBPKTTTBPPPPBBBBBBBB",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1212-90H",
+      "layout": "BBBBBBBBPPPPBTTTKPBTKKKPBIIOKKBBIOOK",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1212-90VH",
+      "layout": "BBIOOKBIIOKKBTKKKPBTTTKPBBPPPPBBBBBB",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1213-0",
+      "layout": "BBIIIIOBIITTOOTTTTOOOOOOOKOPOOKKPPPP",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1213-0V",
+      "layout": "KKPPPPOKOPOOOOOOOOOOTTTTOBIITTBBIIII",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1213-0H",
+      "layout": "IIIIBBTTIIBOTTTTOOOOOOOOOOPOKOPPPPKK",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1213-0VH",
+      "layout": "PPPPKKOOPOKOOOOOOOTTTTOOTTIIBOIIIIBB",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1213-90",
+      "layout": "KOOOOBKKOOBBPOOTIIPPOTIIPOOTTIPOOTTI",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1213-90V",
+      "layout": "POOTTIPOOTTIPPOTIIPOOTIIKKOOBBKOOOOB",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1213-90H",
+      "layout": "BOOOOKBBOOKKIITOOPIITOPPITTOOPITTOOP",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1213-90VH",
+      "layout": "ITTOOPITTOOPIITOPPIITOOPBBOOKKBOOOOK",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1214-0",
+      "layout": "BBIOOOKBIOTOKBIOTTKKOOTTKKOPPTKKOOPT",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1214-0V",
+      "layout": "KKOOPTKKOPPTKKOOTTKBIOTTKBIOTOBBIOOO",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1214-0H",
+      "layout": "OOOIBBOTOIBKTTOIBKTTOOKKTPPOKKTPOOKK",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1214-0VH",
+      "layout": "TPOOKKTPPOKKTTOOKKTTOIBKOTOIBKOOOIBB",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1214-90",
+      "layout": "KKKKKBKKKBBBOOOIIIOPOOOOPPTTTOTTTTOO",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1214-90V",
+      "layout": "TTTTOOPPTTTOOPOOOOOOOIIIKKKBBBKKKKKB",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1214-90H",
+      "layout": "BKKKKKBBBKKKIIIOOOOOOOPOOTTTPPOOTTTT",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1214-90VH",
+      "layout": "OOTTTTOTTTPPOOOOPOIIIOOOBBBKKKBKKKKK",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1215-0",
+      "layout": "TTBBIITTTBBITTOOBOOOOOOOKOOOOPKKOOPP",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1215-0V",
+      "layout": "KKOOPPKOOOOPOOOOOOTTOOBOTTTBBITTBBII",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1215-0H",
+      "layout": "IIBBTTIBBTTTOBOOTTOOOOOOPOOOOKPPOOKK",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1215-0VH",
+      "layout": "PPOOKKPOOOOKOOOOOOOBOOTTIBBTTTIIBBTT",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1215-90",
+      "layout": "KKOTTTKOOTTTOOOOTBOOOOBBPOOBBIPPOOII",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1215-90V",
+      "layout": "PPOOIIPOOBBIOOOOBBOOOOTBKOOTTTKKOTTT",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1215-90H",
+      "layout": "TTTOKKTTTOOKBTOOOOBBOOOOIBBOOPIIOOPP",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1215-90VH",
+      "layout": "IIOOPPIBBOOPBBOOOOBTOOOOTTTOOKTTTOKK",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1216-0",
+      "layout": "BBBIIITTTTTITTTTTTOOOTTTKKKKTTKKKPPP",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1216-0V",
+      "layout": "KKKPPPKKKKTTOOOTTTTTTTTTTTTTTIBBBIII",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1216-0H",
+      "layout": "IIIBBBITTTTTTTTTTTTTTOOOTTKKKKPPPKKK",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1216-0VH",
+      "layout": "PPPKKKTTKKKKTTTOOOTTTTTTITTTTTIIIBBB",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1216-90",
+      "layout": "KKOTTBKKOTTBKKOTTBPKTTTIPTTTTIPTTTII",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1216-90V",
+      "layout": "PTTTIIPTTTTIPKTTTIKKOTTBKKOTTBKKOTTB",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1216-90H",
+      "layout": "BTTOKKBTTOKKBTTOKKITTTKPITTTTPIITTTP",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1216-90VH",
+      "layout": "IITTTPITTTTPITTTKPBTTOKKBTTOKKBTTOKK",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1217-0",
+      "layout": "IIIBBBIIIIIBTIIIIITTTOOOKKKKKOPPPKKK",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1217-0V",
+      "layout": "PPPKKKKKKKKOTTTOOOTIIIIIIIIIIBIIIBBB",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1217-0H",
+      "layout": "BBBIIIBIIIIIIIIIITOOOTTTOKKKKKKKKPPP",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1217-0VH",
+      "layout": "KKKPPPOKKKKKOOOTTTIIIIITBIIIIIBBBIII",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1217-90",
+      "layout": "PKTTIIPKTIIIPKTIIIKKOIIBKKOIIBKOOIBB",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1217-90V",
+      "layout": "KOOIBBKKOIIBKKOIIBPKTIIIPKTIIIPKTTII",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1217-90H",
+      "layout": "IITTKPIIITKPIIITKPBIIOKKBIIOKKBBIOOK",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1217-90VH",
+      "layout": "BBIOOKBIIOKKBIIOKKIIITKPIIITKPIITTKP",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1218-0",
+      "layout": "BBBBIIBTTTIOTTPPPOKKPPOOKPPPPPPPPPPP",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1218-0V",
+      "layout": "PPPPPPKPPPPPKKPPOOTTPPPOBTTTIOBBBBII",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1218-0H",
+      "layout": "IIBBBBOITTTBOPPPTTOOPPKKPPPPPKPPPPPP",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1218-0VH",
+      "layout": "PPPPPPPPPPPKOOPPKKOPPPTTOITTTBIIBBBB",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1218-90",
+      "layout": "PKKTBBPPKTTBPPPPTBPPPPTBPPOPIIPPOOOI",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1218-90V",
+      "layout": "PPOOOIPPOPIIPPPPTBPPPPTBPPKTTBPKKTBB",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1218-90H",
+      "layout": "BBTKKPBTTKPPBTPPPPBTPPPPIIPOPPIOOOPP",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1218-90VH",
+      "layout": "IOOOPPIIPOPPBTPPPPBTPPPPBTTKPPBBTKKP",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1219-0",
+      "layout": "IIOOBTIIOOBTIIOBBTIOOOTTKKPOTTKPPOTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1219-0V",
+      "layout": "KPPOTTKKPOTTIOOOTTIIOBBTIIOOBTIIOOBT",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1219-0H",
+      "layout": "TBOOIITBOOIITBBOIITTOOOITTOPKKTTOPPK",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1219-0VH",
+      "layout": "TTOPPKTTOPKKTTOOOITBBOIITBOOIITBOOII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1219-90",
+      "layout": "KKIIIIPKOIIIPPOOOOOOOBOOTTTBBBTTTTTT",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1219-90V",
+      "layout": "TTTTTTTTTBBBOOOBOOPPOOOOPKOIIIKKIIII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1219-90H",
+      "layout": "IIIIKKIIIOKPOOOOPPOOBOOOBBBTTTTTTTTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1219-90VH",
+      "layout": "TTTTTTBBBTTTOOBOOOOOOOPPIIIOKPIIIIKK",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1220-0",
+      "layout": "BBOITTBOOITTBOIIITOOOKTTPPOKKTPOOKTT",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1220-0V",
+      "layout": "POOKTTPPOKKTOOOKTTBOIIITBOOITTBBOITT",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1220-0H",
+      "layout": "TTIOBBTTIOOBTIIIOBTTKOOOTKKOPPTTKOOP",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1220-0VH",
+      "layout": "TTKOOPTKKOPPTTKOOOTIIIOBTTIOOBTTIOBB",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1220-90",
+      "layout": "PPOBBBOPOOOBOOOIOOKKKIIITKTITTTTTTTT",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1220-90V",
+      "layout": "TTTTTTTKTITTKKKIIIOOOIOOOPOOOBPPOBBB",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1220-90H",
+      "layout": "BBBOPPBOOOPOOOIOOOIIIKKKTTITKTTTTTTT",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1220-90VH",
+      "layout": "TTTTTTTTITKTIIIKKKOOIOOOBOOOPOBBBOPP",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1221-0",
+      "layout": "BBBIOOTBBIIOTTBBIOPPOOOOKPPOOOKKPPOO",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1221-0V",
+      "layout": "KKPPOOKPPOOOPPOOOOTTBBIOTBBIIOBBBIOO",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1221-0H",
+      "layout": "OOIBBBOIIBBTOIBBTTOOOOPPOOOPPKOOPPKK",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1221-0VH",
+      "layout": "OOPPKKOOOPPKOOOOPPOIBBTTOIIBBTOOIBBB",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1221-90",
+      "layout": "KKPTTBKPPTBBPPOBBBPOOBIIOOOIIOOOOOOO",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1221-90V",
+      "layout": "OOOOOOOOOIIOPOOBIIPPOBBBKPPTBBKKPTTB",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1221-90H",
+      "layout": "BTTPKKBBTPPKBBBOPPIIBOOPOIIOOOOOOOOO",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1221-90VH",
+      "layout": "OOOOOOOIIOOOIIBOOPBBBOPPBBTPPKBTTPKK",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1222-0",
+      "layout": "BBIITTBPOITTPPOKTTPOOKKTPOKKKTPOKKTT",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1222-0V",
+      "layout": "POKKTTPOKKKTPOOKKTPPOKTTBPOITTBBIITT",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1222-0H",
+      "layout": "TTIIBBTTIOPBTTKOPPTKKOOPTKKKOPTTKKOP",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1222-0VH",
+      "layout": "TTKKOPTKKKOPTKKOOPTTKOPPTTIOPBTTIIBB",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1222-90",
+      "layout": "PPPPBBOOOPPBKKOOOIKKKKIITKKTTTTTTTTT",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1222-90V",
+      "layout": "TTTTTTTKKTTTKKKKIIKKOOOIOOOPPBPPPPBB",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1222-90H",
+      "layout": "BBPPPPBPPOOOIOOOKKIIKKKKTTTKKTTTTTTT",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1222-90VH",
+      "layout": "TTTTTTTTTKKTIIKKKKIOOOKKBPPOOOBBPPPP",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1223-0",
+      "layout": "IITTBBITTTTBTTTTTTPPTKOOPPTKKOPPTTKK",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1223-0V",
+      "layout": "PPTTKKPPTKKOPPTKOOTTTTTTITTTTBIITTBB",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1223-0H",
+      "layout": "BBTTIIBTTTTITTTTTTOOKTPPOKKTPPKKTTPP",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1223-0VH",
+      "layout": "KKTTPPOKKTPPOOKTPPTTTTTTBTTTTIBBTTII",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1223-90",
+      "layout": "PPPTIIPPPTTITTTTTTTKKTTTKKOTTBKOOTBB",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1223-90V",
+      "layout": "KOOTBBKKOTTBTKKTTTTTTTTTPPPTTIPPPTII",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1223-90H",
+      "layout": "IITPPPITTPPPTTTTTTTTTKKTBTTOKKBBTOOK",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1223-90VH",
+      "layout": "BBTOOKBTTOKKTTTKKTTTTTTTITTPPPIITPPP",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1224-0",
+      "layout": "IIOBBTIIOBTTIIOBBTKKOOTTKKPOTTKPPOTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1224-0V",
+      "layout": "KPPOTTKKPOTTKKOOTTIIOBBTIIOBTTIIOBBT",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1224-0H",
+      "layout": "TBBOIITTBOIITBBOIITTOOKKTTOPKKTTOPPK",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1224-0VH",
+      "layout": "TTOPPKTTOPKKTTOOKKTBBOIITTBOIITBBOII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1224-90",
+      "layout": "KKKIIIPKKIIIPPOOOOOOOBBBTTTBTBTTTTTT",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1224-90V",
+      "layout": "TTTTTTTTTBTBOOOBBBPPOOOOPKKIIIKKKIII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1224-90H",
+      "layout": "IIIKKKIIIKKPOOOOPPBBBOOOBTBTTTTTTTTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1224-90VH",
+      "layout": "TTTTTTBTBTTTBBBOOOOOOOPPIIIKKPIIIKKK",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1225-0",
+      "layout": "BBBBBBBBIIIBTTIOIITOOOOIKOOPOOKKPPOO",
+      "queens": ".....Q...Q...Q........Q.Q.......Q..."
+    },
+    {
+      "id": "pz-1225-0V",
+      "layout": "KKPPOOKOOPOOTOOOOITTIOIIBBIIIBBBBBBB",
+      "queens": "..Q...Q.........Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1225-0H",
+      "layout": "BBBBBBBIIIBBIIOITTIOOOOTOOPOOKOOPPKK",
+      "queens": "Q.......Q.......Q..Q.........Q...Q.."
+    },
+    {
+      "id": "pz-1225-0VH",
+      "layout": "OOPPKKOOPOOKIOOOOTIIOITTBIIIBBBBBBBB",
+      "queens": "...Q.......Q.Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1225-90",
+      "layout": "KKTTBBKOOTBBPOOIIBPPOOIBOOOIIBOOIIBB",
+      "queens": ".Q.......Q..Q.........Q...Q........Q"
+    },
+    {
+      "id": "pz-1225-90V",
+      "layout": "OOIIBBOOOIIBPPOOIBPOOIIBKOOTBBKKTTBB",
+      "queens": ".....Q..Q.......Q.Q........Q...Q...."
+    },
+    {
+      "id": "pz-1225-90H",
+      "layout": "BBTTKKBBTOOKBIIOOPBIOOPPBIIOOOBBIIOO",
+      "queens": "....Q...Q........Q.Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1225-90VH",
+      "layout": "BBIIOOBIIOOOBIOOPPBIIOOPBBTOOKBBTTKK",
+      "queens": "Q........Q...Q.........Q..Q.......Q."
+    },
+    {
+      "id": "pz-1226-0",
+      "layout": "IOOBBBIIOBTTOOOTTOOOOOOOKKOPOOKOOPPO",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1226-0V",
+      "layout": "KOOPPOKKOPOOOOOOOOOOOTTOIIOBTTIOOBBB",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1226-0H",
+      "layout": "BBBOOITTBOIIOTTOOOOOOOOOOOPOKKOPPOOK",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1226-0VH",
+      "layout": "OPPOOKOOPOKKOOOOOOOTTOOOTTBOIIBBBOOI",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1226-90",
+      "layout": "KKOOIIOKOOIOOOOOOOPPOTBBPOOTTBOOOOTB",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1226-90V",
+      "layout": "OOOOTBPOOTTBPPOTBBOOOOOOOKOOIOKKOOII",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1226-90H",
+      "layout": "IIOOKKOIOOKOOOOOOOBBTOPPBTTOOPBTOOOO",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1226-90VH",
+      "layout": "BTOOOOBTTOOPBBTOPPOOOOOOOIOOKOIIOOKK",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1227-0",
+      "layout": "IBBBBBIITBBOTTTBBOTTBBOOKKBBPPKBBBBP",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1227-0V",
+      "layout": "KBBBBPKKBBPPTTBBOOTTTBBOIITBBOIBBBBB",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1227-0H",
+      "layout": "BBBBBIOBBTIIOBBTTTOOBBTTPPBBKKPBBBBK",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1227-0VH",
+      "layout": "PBBBBKPPBBKKOOBBTTOBBTTTOBBTIIBBBBBI",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1227-90",
+      "layout": "KKTTIIBKTTIBBBBTTBBBBBBBBPOBBBPPOOOB",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1227-90V",
+      "layout": "PPOOOBBPOBBBBBBBBBBBBTTBBKTTIBKKTTII",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1227-90H",
+      "layout": "IITTKKBITTKBBTTBBBBBBBBBBBBOPBBOOOPP",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1227-90VH",
+      "layout": "BOOOPPBBBOPBBBBBBBBTTBBBBITTKBIITTKK",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1228-0",
+      "layout": "IIOBBTIIOBTTKIOBTTKOOPTTKOOPTTKOPPTT",
+      "queens": "....Q..Q.........Q..Q...Q........Q.."
+    },
+    {
+      "id": "pz-1228-0V",
+      "layout": "KOPPTTKOOPTTKOOPTTKIOBTTIIOBTTIIOBBT",
+      "queens": "...Q..Q.......Q........Q.Q........Q."
+    },
+    {
+      "id": "pz-1228-0H",
+      "layout": "TBBOIITTBOIITTBOIKTTPOOKTTPOOKTTPPOK",
+      "queens": ".Q........Q.Q........Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1228-0VH",
+      "layout": "TTPPOKTTPOOKTTPOOKTTBOIKTTBOIITBBOII",
+      "queens": "..Q........Q...Q..Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1228-90",
+      "layout": "KKKKIIOOOIIIPOOOOOPPPBBBTTTTTBTTTTTT",
+      "queens": ".Q........Q...Q...Q..........Q...Q.."
+    },
+    {
+      "id": "pz-1228-90V",
+      "layout": "TTTTTTTTTTTBPPPBBBPOOOOOOOOIIIKKKKII",
+      "queens": "...Q.......QQ.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1228-90H",
+      "layout": "IIKKKKIIIOOOOOOOOPBBBPPPBTTTTTTTTTTT",
+      "queens": "....Q..Q.......Q.......QQ.......Q..."
+    },
+    {
+      "id": "pz-1228-90VH",
+      "layout": "TTTTTTBTTTTTBBBPPPOOOOOPIIIOOOIIKKKK",
+      "queens": "..Q...Q..........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1229-0",
+      "layout": "BIIIOPBTIIOPBTIOOPTTKOOPTKKOOPTKOOPP",
+      "queens": "Q........Q...Q........Q...Q........Q"
+    },
+    {
+      "id": "pz-1229-0V",
+      "layout": "TKOOPPTKKOOPTTKOOPBTIOOPBTIIOPBIIIOP",
+      "queens": ".....Q..Q.......Q..Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1229-0H",
+      "layout": "POIIIBPOIITBPOOITBPOOKTTPOOKKTPPOOKT",
+      "queens": ".....Q..Q.......Q..Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1229-0VH",
+      "layout": "PPOOKTPOOKKTPOOKTTPOOITBPOIITBPOIIIB",
+      "queens": "Q........Q...Q........Q...Q........Q"
+    },
+    {
+      "id": "pz-1229-90",
+      "layout": "TTTBBBKKTTTIOKKIIIOOOOIIPOOOOOPPPPPP",
+      "queens": ".....Q...Q...Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1229-90V",
+      "layout": "PPPPPPPOOOOOOOOOIIOKKIIIKKTTTITTTBBB",
+      "queens": "Q.......Q.......Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1229-90H",
+      "layout": "BBBTTTITTTKKIIIKKOIIOOOOOOOOOPPPPPPP",
+      "queens": "Q.......Q.......Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1229-90VH",
+      "layout": "PPPPPPOOOOOPIIOOOOIIIKKOITTTKKBBBTTT",
+      "queens": ".....Q...Q...Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1230-0",
+      "layout": "TBBOIITTBOIOTTBOIOKTPOOOKTPOOOKKPPOO",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1230-0V",
+      "layout": "KKPPOOKTPOOOKTPOOOTTBOIOTTBOIOTBBOII",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1230-0H",
+      "layout": "IIOBBTOIOBTTOIOBTTOOOPTKOOOPTKOOPPKK",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1230-0VH",
+      "layout": "OOPPKKOOOPTKOOOPTKOIOBTTOIOBTTIIOBBT",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1230-90",
+      "layout": "KKKTTTKTTTTBPPPBBBPOOOOOOOOIIIOOOOOI",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1230-90V",
+      "layout": "OOOOOIOOOIIIPOOOOOPPPBBBKTTTTBKKKTTT",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1230-90H",
+      "layout": "TTTKKKBTTTTKBBBPPPOOOOOPIIIOOOIOOOOO",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1230-90VH",
+      "layout": "IOOOOOIIIOOOOOOOOPBBBPPPBTTTTKTTTKKK",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1231-0",
+      "layout": "IOOBBTIIOBTTOOOTTOOOOOOOKOOPPOKKOPPP",
+      "queens": "...Q...Q........Q...Q...Q..........Q"
+    },
+    {
+      "id": "pz-1231-0V",
+      "layout": "KKOPPPKOOPPOOOOOOOOOOTTOIIOBTTIOOBBT",
+      "queens": ".....QQ.......Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1231-0H",
+      "layout": "TBBOOITTBOIIOTTOOOOOOOOOOPPOOKPPPOKK",
+      "queens": "..Q.......Q..Q.......Q.......QQ....."
+    },
+    {
+      "id": "pz-1231-0VH",
+      "layout": "PPPOKKOPPOOKOOOOOOOTTOOOTTBOIITBBOOI",
+      "queens": "Q..........Q...Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1231-90",
+      "layout": "KKOOIIKOOOIOOOOOOOPPOTBBPPOTTBPOOOTT",
+      "queens": ".Q........Q...Q........Q...Q..Q....."
+    },
+    {
+      "id": "pz-1231-90V",
+      "layout": "POOOTTPPOTTBPPOTBBOOOOOOKOOOIOKKOOII",
+      "queens": "Q........Q.......Q..Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1231-90H",
+      "layout": "IIOOKKOIOOOKOOOOOOBBTOPPBTTOPPTTOOOP",
+      "queens": "....Q..Q.......Q..Q.......Q........Q"
+    },
+    {
+      "id": "pz-1231-90VH",
+      "layout": "TTOOOPBTTOPPBBTOPPOOOOOOOIOOOKIIOOKK",
+      "queens": ".....Q..Q...Q........Q...Q........Q."
+    },
+    {
+      "id": "pz-1232-0",
+      "layout": "TIOOBBTIIOBBTTIOBBOOOOOOKKOOPPKOOOOP",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1232-0V",
+      "layout": "KOOOOPKKOOPPOOOOOOTTIOBBTIIOBBTIOOBB",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1232-0H",
+      "layout": "BBOOITBBOIITBBOITTOOOOOOPPOOKKPOOOOK",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1232-0VH",
+      "layout": "POOOOKPPOOKKOOOOOOBBOITTBBOIITBBOOIT",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1232-90",
+      "layout": "KKOTTTOKOTIIOOOIIOOOOOOOOPOBBBPPOBBB",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1232-90V",
+      "layout": "PPOBBBOPOBBBOOOOOOOOOIIOOKOTIIKKOTTT",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1232-90H",
+      "layout": "TTTOKKIITOKOOIIOOOOOOOOOBBBOPOBBBOPP",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1232-90VH",
+      "layout": "BBBOPPBBBOPOOOOOOOOIIOOOIITOKOTTTOKK",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1233-0",
+      "layout": "OBBTTIOBTTIIOTTOOOOOOOOOOPPOKKOPPPPK",
+      "queens": ".Q........Q...Q...Q..........Q...Q.."
+    },
+    {
+      "id": "pz-1233-0V",
+      "layout": "OPPPPKOPPOKKOOOOOOOTTOOOOBTTIIOBBTTI",
+      "queens": "...Q.......QQ.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1233-0H",
+      "layout": "ITTBBOIITTBOOOOTTOOOOOOOKKOPPOKPPPPO",
+      "queens": "....Q..Q.......Q.......QQ.......Q..."
+    },
+    {
+      "id": "pz-1233-0VH",
+      "layout": "KPPPPOKKOPPOOOOOOOOOOTTOIITTBOITTBBO",
+      "queens": "..Q...Q..........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1233-90",
+      "layout": "OOOOOOPPOTBBPPOTTBPOOOTTPKOOITKKOOII",
+      "queens": "..Q........Q...Q..Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1233-90V",
+      "layout": "KKOOIIPKOOITPOOOTTPPOTTBPPOTBBOOOOOO",
+      "queens": ".Q........Q.Q........Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1233-90H",
+      "layout": "OOOOOOBBTOPPBTTOPPTTOOOPTIOOKPIIOOKK",
+      "queens": "...Q..Q.......Q........Q.Q........Q."
+    },
+    {
+      "id": "pz-1233-90VH",
+      "layout": "IIOOKKTIOOKPTTOOOPBTTOPPBBTOPPOOOOOO",
+      "queens": "....Q..Q.........Q..Q...Q........Q.."
+    },
+    {
+      "id": "pz-1234-0",
+      "layout": "IIIBBBITITTTITTTTTKKTOOOKKKKKKPPPKKK",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1234-0V",
+      "layout": "PPPKKKKKKKKKKKTOOOITTTTTITITTTIIIBBB",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1234-0H",
+      "layout": "BBBIIITTTITITTTTTIOOOTKKKKKKKKKKKPPP",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1234-0VH",
+      "layout": "KKKPPPKKKKKKOOOTKKTTTTTITTTITIBBBIII",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1234-90",
+      "layout": "PKKIIIPKKTTIPKTTIIKKOTTBKKOTTBKKOTTB",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1234-90V",
+      "layout": "KKOTTBKKOTTBKKOTTBPKTTIIPKKTTIPKKIII",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1234-90H",
+      "layout": "IIIKKPITTKKPIITTKPBTTOKKBTTOKKBTTOKK",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1234-90VH",
+      "layout": "BTTOKKBTTOKKBTTOKKIITTKPITTKKPIIIKKP",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1235-0",
+      "layout": "IOOPBBIIOPBBKOOPTBKOOPTTKOPPPPKOPPPP",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1235-0V",
+      "layout": "KOPPPPKOPPPPKOOPTTKOOPTBIIOPBBIOOPBB",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1235-0H",
+      "layout": "BBPOOIBBPOIIBTPOOKTTPOOKPPPPOKPPPPOK",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1235-0VH",
+      "layout": "PPPPOKPPPPOKTTPOOKBTPOOKBBPOIIBBPOOI",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1235-90",
+      "layout": "KKKKIIOOOOIOPPOOOOPPPPPPPPTTBBPPTBBB",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1235-90V",
+      "layout": "PPTBBBPPTTBBPPPPPPPPOOOOOOOOIOKKKKII",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1235-90H",
+      "layout": "IIKKKKOIOOOOOOOOPPPPPPPPBBTTPPBBBTPP",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1235-90VH",
+      "layout": "BBBTPPBBTTPPPPPPPPOOOOPPOIOOOOIIKKKK",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1236-0",
+      "layout": "IOOBBTIOOBTTIOOBTTOOPPTKOOOPTKOPPPTK",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1236-0V",
+      "layout": "OPPPTKOOOPTKOOPPTKIOOBTTIOOBTTIOOBBT",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1236-0H",
+      "layout": "TBBOOITTBOOITTBOOIKTPPOOKTPOOOKTPPPO",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1236-0VH",
+      "layout": "KTPPPOKTPOOOKTPPOOTTBOOITTBOOITBBOOI",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1236-90",
+      "layout": "OOOIIIPOOOOOPOPOOOPPPBBBTTTTTBKKKTTT",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1236-90V",
+      "layout": "KKKTTTTTTTTBPPPBBBPOPOOOPOOOOOOOOIII",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1236-90H",
+      "layout": "IIIOOOOOOOOPOOOPOPBBBPPPBTTTTTTTTKKK",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1236-90VH",
+      "layout": "TTTKKKBTTTTTBBBPPPOOOPOPOOOOOPIIIOOO",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1237-0",
+      "layout": "BBBIIIBIIIITOOOTTTOKOKKKOKKKKKKKKPPP",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1237-0V",
+      "layout": "KKKPPPOKKKKKOKOKKKOOOTTTBIIIITBBBIII",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1237-0H",
+      "layout": "IIIBBBTIIIIBTTTOOOKKKOKOKKKKKOPPPKKK",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1237-0VH",
+      "layout": "PPPKKKKKKKKOKKKOKOTTTOOOTIIIIBIIIBBB",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1237-90",
+      "layout": "KOOOBBKKKOIBKKOOIBPKKTIIPKKTIIPKKTTI",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1237-90V",
+      "layout": "PKKTTIPKKTIIPKKTIIKKOOIBKKKOIBKOOOBB",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1237-90H",
+      "layout": "BBOOOKBIOKKKBIOOKKIITKKPIITKKPITTKKP",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1237-90VH",
+      "layout": "ITTKKPIITKKPIITKKPBIOOKKBIOKKKBBOOOK",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1238-0",
+      "layout": "BBBBBBIIIIIITTTTTIOTTKTTOOKKTTPPPKKK",
+      "queens": ".....Q..Q.......Q.Q........Q...Q...."
+    },
+    {
+      "id": "pz-1238-0V",
+      "layout": "PPPKKKOOKKTTOTTKTTTTTTTIIIIIIIBBBBBB",
+      "queens": ".Q.......Q..Q.........Q...Q........Q"
+    },
+    {
+      "id": "pz-1238-0H",
+      "layout": "BBBBBBIIIIIIITTTTTTTKTTOTTKKOOKKKPPP",
+      "queens": "Q........Q...Q.........Q..Q.......Q."
+    },
+    {
+      "id": "pz-1238-0VH",
+      "layout": "KKKPPPTTKKOOTTKTTOITTTTTIIIIIIBBBBBB",
+      "queens": "....Q...Q........Q.Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1238-90",
+      "layout": "POOTIBPOTTIBPKTTIBKKKTIBKTTTIBKTTIIB",
+      "queens": "..Q...Q.........Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1238-90V",
+      "layout": "KTTIIBKTTTIBKKKTIBPKTTIBPOTTIBPOOTIB",
+      "queens": ".....Q...Q...Q........Q.Q.......Q..."
+    },
+    {
+      "id": "pz-1238-90H",
+      "layout": "BITOOPBITTOPBITTKPBITKKKBITTTKBIITTK",
+      "queens": "...Q.......Q.Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1238-90VH",
+      "layout": "BIITTKBITTTKBITKKKBITTKPBITTOPBITOOP",
+      "queens": "Q.......Q.......Q..Q.........Q...Q.."
+    },
+    {
+      "id": "pz-1239-0",
+      "layout": "BBBBBBBBBBIIBTTIIOBTPKOOBTPKKKBPPKKK",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1239-0V",
+      "layout": "BPPKKKBTPKKKBTPKOOBTTIIOBBBBIIBBBBBB",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1239-0H",
+      "layout": "BBBBBBIIBBBBOIITTBOOKPTBKKKPTBKKKPPB",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1239-0VH",
+      "layout": "KKKPPBKKKPTBOOKPTBOIITTBIIBBBBBBBBBB",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1239-90",
+      "layout": "BBBBBBPTTTBBPPPTBBKKKIBBKKOIIBKKOOIB",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1239-90V",
+      "layout": "KKOOIBKKOIIBKKKIBBPPPTBBPTTTBBBBBBBB",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1239-90H",
+      "layout": "BBBBBBBBTTTPBBTPPPBBIKKKBIIOKKBIOOKK",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1239-90VH",
+      "layout": "BIOOKKBIIOKKBBIKKKBBTPPPBBTTTPBBBBBB",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1240-0",
+      "layout": "BBOIITBOOITTOOKTTTOKKKTTOOPKKTOPPKTT",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1240-0V",
+      "layout": "OPPKTTOOPKKTOKKKTTOOKTTTBOOITTBBOIIT",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1240-0H",
+      "layout": "TIIOBBTTIOOBTTTKOOTTKKKOTKKPOOTTKPPO",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1240-0VH",
+      "layout": "TTKPPOTKKPOOTTKKKOTTTKOOTTIOOBTIIOBB",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1240-90",
+      "layout": "OOOOBBPOKOOBPPKKOOKKKTIITKTTTITTTTTT",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1240-90V",
+      "layout": "TTTTTTTKTTTIKKKTIIPPKKOOPOKOOBOOOOBB",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1240-90H",
+      "layout": "BBOOOOBOOKOPOOKKPPIITKKKITTTKTTTTTTT",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1240-90VH",
+      "layout": "TTTTTTITTTKTIITKKKOOKKPPBOOKOPBBOOOO",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1241-0",
+      "layout": "BIIIOOBIIIIOBBTTIOKKTOOOKKPOOOKPPPOO",
+      "queens": "Q.........Q...Q........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1241-0V",
+      "layout": "KPPPOOKKPOOOKKTOOOBBTTIOBIIIIOBIIIOO",
+      "queens": "...Q...Q.........Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1241-0H",
+      "layout": "OOIIIBOIIIIBOITTBBOOOTKKOOOPKKOOPPPK",
+      "queens": ".....Q.Q.......Q..Q.........Q...Q..."
+    },
+    {
+      "id": "pz-1241-0VH",
+      "layout": "OOPPPKOOOPKKOOOTKKOITTBBOIIIIBOOIIIB",
+      "queens": "..Q.......Q.Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1241-90",
+      "layout": "KKKBBBPKKBIIPPTTIIPOOTIIOOOIIOOOOOOO",
+      "queens": ".....Q.Q.......Q..Q.........Q...Q..."
+    },
+    {
+      "id": "pz-1241-90V",
+      "layout": "OOOOOOOOOIIOPOOTIIPPTTIIPKKBIIKKKBBB",
+      "queens": "..Q.......Q.Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1241-90H",
+      "layout": "BBBKKKIIBKKPIITTPPIITOOPOIIOOOOOOOOO",
+      "queens": "Q.........Q...Q........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1241-90VH",
+      "layout": "OOOOOOOIIOOOIITOOPIITTPPIIBKKPBBBKKK",
+      "queens": "...Q...Q.........Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1242-0",
+      "layout": "BBBBBBBBIIBBIIITTBOOKTTTOKKKPPKKPPPP",
+      "queens": "Q.......Q.......Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1242-0V",
+      "layout": "KKPPPPOKKKPPOOKTTTIIITTBBBIIBBBBBBBB",
+      "queens": ".....Q...Q...Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1242-0H",
+      "layout": "BBBBBBBBIIBBBTTIIITTTKOOPPKKKOPPPPKK",
+      "queens": ".....Q...Q...Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1242-0VH",
+      "layout": "PPPPKKPPKKKOTTTKOOBTTIIIBBIIBBBBBBBB",
+      "queens": "Q.......Q.......Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1242-90",
+      "layout": "KOOIBBKKOIBBPKKIIBPKTTIBPPTTBBPPTBBB",
+      "queens": ".....Q..Q.......Q..Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1242-90V",
+      "layout": "PPTBBBPPTTBBPKTTIBPKKIIBKKOIBBKOOIBB",
+      "queens": "Q........Q...Q........Q...Q........Q"
+    },
+    {
+      "id": "pz-1242-90H",
+      "layout": "BBIOOKBBIOKKBIIKKPBITTKPBBTTPPBBBTPP",
+      "queens": "Q........Q...Q........Q...Q........Q"
+    },
+    {
+      "id": "pz-1242-90VH",
+      "layout": "BBBTPPBBTTPPBITTKPBIIKKPBBIOKKBBIOOK",
+      "queens": ".....Q..Q.......Q..Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1243-0",
+      "layout": "BBBBBBBITBBBIITTBBOOKKPBOKKPPBOKPPPB",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1243-0V",
+      "layout": "OKPPPBOKKPPBOOKKPBIITTBBBITBBBBBBBBB",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1243-0H",
+      "layout": "BBBBBBBBBTIBBBTTIIBPKKOOBPPKKOBPPPKO",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1243-0VH",
+      "layout": "BPPPKOBPPKKOBPKKOOBBTTIIBBBTIBBBBBBB",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1243-90",
+      "layout": "OOOIBBKKOIIBPKKTTBPPKTBBPPPBBBBBBBBB",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1243-90V",
+      "layout": "BBBBBBPPPBBBPPKTBBPKKTTBKKOIIBOOOIBB",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1243-90H",
+      "layout": "BBIOOOBIIOKKBTTKKPBBTKPPBBBPPPBBBBBB",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1243-90VH",
+      "layout": "BBBBBBBBBPPPBBTKPPBTTKKPBIIOKKBBIOOO",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1244-0",
+      "layout": "KTBIIIKTBIIIKTBOPIKOOOPIKOOOPIKOOPPI",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1244-0V",
+      "layout": "KOOPPIKOOOPIKOOOPIKTBOPIKTBIIIKTBIII",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1244-0H",
+      "layout": "IIIBTKIIIBTKIPOBTKIPOOOKIPOOOKIPPOOK",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1244-0VH",
+      "layout": "IPPOOKIPOOOKIPOOOKIPOBTKIIIBTKIIIBTK",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1244-90",
+      "layout": "KKKKKKOOOTTTOOOBBBPOOOIIPPPPIIIIIIII",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1244-90V",
+      "layout": "IIIIIIPPPPIIPOOOIIOOOBBBOOOTTTKKKKKK",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1244-90H",
+      "layout": "KKKKKKTTTOOOBBBOOOIIOOOPIIPPPPIIIIII",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1244-90VH",
+      "layout": "IIIIIIIIPPPPIIOOOPBBBOOOTTTOOOKKKKKK",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1245-0",
+      "layout": "BBIITTBOOITTBOOITTOOOPPTKOOPTTKKOPPT",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1245-0V",
+      "layout": "KKOPPTKOOPTTOOOPPTBOOITTBOOITTBBIITT",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1245-0H",
+      "layout": "TTIIBBTTIOOBTTIOOBTPPOOOTTPOOKTPPOKK",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1245-0VH",
+      "layout": "TPPOKKTTPOOKTPPOOOTTIOOBTTIOOBTTIIBB",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1245-90",
+      "layout": "KKOBBBKOOOOBOOOOOIPPPIIIPTPTTTTTTTTT",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1245-90V",
+      "layout": "TTTTTTPTPTTTPPPIIIOOOOOIKOOOOBKKOBBB",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1245-90H",
+      "layout": "BBBOKKBOOOOKIOOOOOIIIPPPTTTPTPTTTTTT",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1245-90VH",
+      "layout": "TTTTTTTTTPTPIIIPPPIOOOOOBOOOOKBBBOKK",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1246-0",
+      "layout": "TBBOIITBOOIITBBOIITTOOOKTTOPKKTTOPPK",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1246-0V",
+      "layout": "TTOPPKTTOPKKTTOOOKTBBOIITBOOIITBBOII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1246-0H",
+      "layout": "IIOBBTIIOOBTIIOBBTKOOOTTKKPOTTKPPOTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1246-0VH",
+      "layout": "KPPOTTKKPOTTKOOOTTIIOBBTIIOOBTIIOBBT",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1246-90",
+      "layout": "TTTTTTTTTBBBOOOBOBPPOOOOPKOIIIKKKIII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1246-90V",
+      "layout": "KKKIIIPKOIIIPPOOOOOOOBOBTTTBBBTTTTTT",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1246-90H",
+      "layout": "TTTTTTBBBTTTBOBOOOOOOOPPIIIOKPIIIKKK",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1246-90VH",
+      "layout": "IIIKKKIIIOKPOOOOPPBOBOOOBBBTTTTTTTTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1247-0",
+      "layout": "BBBBIIBTTTIOTTOOOOKKOOOPKOOOPPOOOPPP",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1247-0V",
+      "layout": "OOOPPPKOOOPPKKOOOPTTOOOOBTTTIOBBBBII",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1247-0H",
+      "layout": "IIBBBBOITTTBOOOOTTPOOOKKPPOOOKPPPOOO",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1247-0VH",
+      "layout": "PPPOOOPPOOOKPOOOKKOOOOTTOITTTBIIBBBB",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1247-90",
+      "layout": "OKKTBBOOKTTBOOOOTBPOOOTBPPOOIIPPPOOI",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1247-90V",
+      "layout": "PPPOOIPPOOIIPOOOTBOOOOTBOOKTTBOKKTBB",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1247-90H",
+      "layout": "BBTKKOBTTKOOBTOOOOBTOOOPIIOOPPIOOPPP",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1247-90VH",
+      "layout": "IOOPPPIIOOPPBTOOOPBTOOOOBTTKOOBBTKKO",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1248-0",
+      "layout": "BBTTTITBTTIITTTOOOOOOOPPOKKKKPKKPPPP",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1248-0V",
+      "layout": "KKPPPPOKKKKPOOOOPPTTTOOOTBTTIIBBTTTI",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1248-0H",
+      "layout": "ITTTBBIITTBTOOOTTTPPOOOOPKKKKOPPPPKK",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1248-0VH",
+      "layout": "PPPPKKPKKKKOPPOOOOOOOTTTIITTBTITTTBB",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1248-90",
+      "layout": "KOOTTBKKOTBBPKOTTTPKOOTTPKPOITPPPOII",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1248-90V",
+      "layout": "PPPOIIPKPOITPKOOTTPKOTTTKKOTBBKOOTTB",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1248-90H",
+      "layout": "BTTOOKBBTOKKTTTOKPTTOOKPTIOPKPIIOPPP",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1248-90VH",
+      "layout": "IIOPPPTIOPKPTTOOKPTTTOKPBBTOKKBTTOOK",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1249-0",
+      "layout": "TBBBIPTTBIIPTTKOOPTTKKOPTTKKPPTTTKPP",
+      "queens": ".Q.......Q..Q.........Q...Q........Q"
+    },
+    {
+      "id": "pz-1249-0V",
+      "layout": "TTTKPPTTKKPPTTKKOPTTKOOPTTBIIPTBBBIP",
+      "queens": ".....Q..Q.......Q.Q........Q...Q...."
+    },
+    {
+      "id": "pz-1249-0H",
+      "layout": "PIBBBTPIIBTTPOOKTTPOKKTTPPKKTTPPKTTT",
+      "queens": "....Q...Q........Q.Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1249-0VH",
+      "layout": "PPKTTTPPKKTTPOKKTTPOOKTTPIIBTTPIBBBT",
+      "queens": "Q........Q...Q.........Q..Q.......Q."
+    },
+    {
+      "id": "pz-1249-90",
+      "layout": "TTTTTTTTTTTBTKKKBBKKKOIBPPOOIIPPPPPP",
+      "queens": "...Q.......Q.Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1249-90V",
+      "layout": "PPPPPPPPOOIIKKKOIBTKKKBBTTTTTBTTTTTT",
+      "queens": "Q.......Q.......Q..Q.........Q...Q.."
+    },
+    {
+      "id": "pz-1249-90H",
+      "layout": "TTTTTTBTTTTTBBKKKTBIOKKKIIOOPPPPPPPP",
+      "queens": "..Q...Q.........Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1249-90VH",
+      "layout": "PPPPPPIIOOPPBIOKKKBBKKKTBTTTTTTTTTTT",
+      "queens": ".....Q...Q...Q........Q.Q.......Q..."
+    },
+    {
+      "id": "pz-1250-0",
+      "layout": "TTBBBITTBBIIOTTTIIOOTKKIPPTKKIPTTKKI",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1250-0V",
+      "layout": "PTTKKIPPTKKIOOTKKIOTTTIITTBBIITTBBBI",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1250-0H",
+      "layout": "IBBBTTIIBBTTIITTTOIKKTOOIKKTPPIKKTTP",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1250-0VH",
+      "layout": "IKKTTPIKKTPPIKKTOOIITTTOIIBBTTIBBBTT",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1250-90",
+      "layout": "PPOOTTTPOTTTTTTTBBKKKTBBKKKIIBIIIIII",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1250-90V",
+      "layout": "IIIIIIKKKIIBKKKTBBTTTTBBTPOTTTPPOOTT",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1250-90H",
+      "layout": "TTOOPPTTTOPTBBTTTTBBTKKKBIIKKKIIIIII",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1250-90VH",
+      "layout": "IIIIIIBIIKKKBBTKKKBBTTTTTTTOPTTTOOPP",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1251-0",
+      "layout": "OBBITTOOBIITOOOOITOOOOITPPOOKKPPOOOK",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1251-0V",
+      "layout": "PPOOOKPPOOKKOOOOITOOOOITOOBIITOBBITT",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1251-0H",
+      "layout": "TTIBBOTIIBOOTIOOOOTIOOOOKKOOPPKOOOPP",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1251-0VH",
+      "layout": "KOOOPPKKOOPPTIOOOOTIOOOOTIIBOOTTIBBO",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1251-90",
+      "layout": "PPOOOOPPOOOBOOOOBBOOOOIIOKIIITKKTTTT",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1251-90V",
+      "layout": "KKTTTTOKIIITOOOOIIOOOOBBPPOOOBPPOOOO",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1251-90H",
+      "layout": "OOOOPPBOOOPPBBOOOOIIOOOOTIIIKOTTTTKK",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1251-90VH",
+      "layout": "TTTTKKTIIIKOIIOOOOBBOOOOBOOOPPOOOOPP",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1252-0",
+      "layout": "BBBIIITTTTTITTTTTTOOOKTTKKKKPTPPPPPP",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1252-0V",
+      "layout": "PPPPPPKKKKPTOOOKTTTTTTTTTTTTTIBBBIII",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1252-0H",
+      "layout": "IIIBBBITTTTTTTTTTTTTKOOOTPKKKKPPPPPP",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1252-0VH",
+      "layout": "PPPPPPTPKKKKTTKOOOTTTTTTITTTTTIIIBBB",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1252-90",
+      "layout": "PKOTTBPKOTTBPKOTTBPKKTTIPPTTTIPTTTII",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1252-90V",
+      "layout": "PTTTIIPPTTTIPKKTTIPKOTTBPKOTTBPKOTTB",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1252-90H",
+      "layout": "BTTOKPBTTOKPBTTOKPITTKKPITTTPPIITTTP",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1252-90VH",
+      "layout": "IITTTPITTTPPITTKKPBTTOKPBTTOKPBTTOKP",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1253-0",
+      "layout": "BBBBBBIIIBBBIOTTTBIOTKTTOOKKTTPPPKKK",
+      "queens": ".....Q..Q.......Q..Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1253-0V",
+      "layout": "PPPKKKOOKKTTIOTKTTIOTTTBIIIBBBBBBBBB",
+      "queens": "Q........Q...Q........Q...Q........Q"
+    },
+    {
+      "id": "pz-1253-0H",
+      "layout": "BBBBBBBBBIIIBTTTOITTKTOITTKKOOKKKPPP",
+      "queens": "Q........Q...Q........Q...Q........Q"
+    },
+    {
+      "id": "pz-1253-0VH",
+      "layout": "KKKPPPTTKKOOTTKTOIBTTTOIBBBIIIBBBBBB",
+      "queens": ".....Q..Q.......Q..Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1253-90",
+      "layout": "POIIIBPOOOIBPKTTIBKKKTBBKTTTBBKTTBBB",
+      "queens": "Q.......Q.......Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1253-90V",
+      "layout": "KTTBBBKTTTBBKKKTBBPKTTIBPOOOIBPOIIIB",
+      "queens": ".....Q...Q...Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1253-90H",
+      "layout": "BIIIOPBIOOOPBITTKPBBTKKKBBTTTKBBBTTK",
+      "queens": ".....Q...Q...Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1253-90VH",
+      "layout": "BBBTTKBBTTTKBBTKKKBITTKPBIOOOPBIIIOP",
+      "queens": "Q.......Q.......Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1254-0",
+      "layout": "BBIIIIOBITTTOOITTPKOKKTPKOKKTPKKKPPP",
+      "queens": "Q.......Q.......Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1254-0V",
+      "layout": "KKKPPPKOKKTPKOKKTPOOITTPOBITTTBBIIII",
+      "queens": ".....Q...Q...Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1254-0H",
+      "layout": "IIIIBBTTTIBOPTTIOOPTKKOKPTKKOKPPPKKK",
+      "queens": ".....Q...Q...Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1254-0VH",
+      "layout": "PPPKKKPTKKOKPTKKOKPTTIOOTTTIBOIIIIBB",
+      "queens": "Q.......Q.......Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1254-90",
+      "layout": "KKKOOBKOOOBBKKKIIIPKKTTIPTTTTIPPPPTI",
+      "queens": ".....Q..Q.......Q..Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1254-90V",
+      "layout": "PPPPTIPTTTTIPKKTTIKKKIIIKOOOBBKKKOOB",
+      "queens": "Q........Q...Q........Q...Q........Q"
+    },
+    {
+      "id": "pz-1254-90H",
+      "layout": "BOOKKKBBOOOKIIIKKKITTKKPITTTTPITPPPP",
+      "queens": "Q........Q...Q........Q...Q........Q"
+    },
+    {
+      "id": "pz-1254-90VH",
+      "layout": "ITPPPPITTTTPITTKKPIIIKKKBBOOOKBOOKKK",
+      "queens": ".....Q..Q.......Q..Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1255-0",
+      "layout": "IBBBTTIIBTTTTTTTTTOOTKPTOKKKPTOKPPPT",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1255-0V",
+      "layout": "OKPPPTOKKKPTOOTKPTTTTTTTIIBTTTIBBBTT",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1255-0H",
+      "layout": "TTBBBITTTBIITTTTTTTPKTOOTPKKKOTPPPKO",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1255-0VH",
+      "layout": "TPPPKOTPKKKOTPKTOOTTTTTTTTTBIITTBBBI",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1255-90",
+      "layout": "OOOTIIKKOTIBPKTTBBPKKTTBPPPTTTTTTTTT",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1255-90V",
+      "layout": "TTTTTTPPPTTTPKKTTBPKTTBBKKOTIBOOOTII",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1255-90H",
+      "layout": "IITOOOBITOKKBBTTKPBTTKKPTTTPPPTTTTTT",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1255-90VH",
+      "layout": "TTTTTTTTTPPPBTTKKPBBTTKPBITOKKIITOOO",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1256-0",
+      "layout": "IIIBTOIIBBTOTTTTTOTKKKKOKKPPPPPPPPPP",
+      "queens": "...Q..Q.......Q........Q.Q........Q."
+    },
+    {
+      "id": "pz-1256-0V",
+      "layout": "PPPPPPKKPPPPTKKKKOTTTTTOIIBBTOIIIBTO",
+      "queens": "....Q..Q.........Q..Q...Q........Q.."
+    },
+    {
+      "id": "pz-1256-0H",
+      "layout": "OTBIIIOTBBIIOTTTTTOKKKKTPPPPKKPPPPPP",
+      "queens": "..Q........Q...Q..Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1256-0VH",
+      "layout": "PPPPPPPPPPKKOKKKKTOTTTTTOTBBIIOTBIII",
+      "queens": ".Q........Q.Q........Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1256-90",
+      "layout": "PKTTIIPKKTIIPPKTBIPPKTBBPPKTTTPPOOOO",
+      "queens": "....Q..Q.......Q.......QQ.......Q..."
+    },
+    {
+      "id": "pz-1256-90V",
+      "layout": "PPOOOOPPKTTTPPKTBBPPKTBIPKKTIIPKTTII",
+      "queens": "..Q...Q..........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1256-90H",
+      "layout": "IITTKPIITKKPIBTKPPBBTKPPTTTKPPOOOOPP",
+      "queens": ".Q........Q...Q...Q..........Q...Q.."
+    },
+    {
+      "id": "pz-1256-90VH",
+      "layout": "OOOOPPTTTKPPBBTKPPIBTKPPIITKKPIITTKP",
+      "queens": "...Q.......QQ.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1257-0",
+      "layout": "IBBTTOIIBBTOTTTTTOTTPOOOTKPOOOKKPPPO",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1257-0V",
+      "layout": "KKPPPOTKPOOOTTPOOOTTTTTOIIBBTOIBBTTO",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1257-0H",
+      "layout": "OTTBBIOTBBIIOTTTTTOOOPTTOOOPKTOPPPKK",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1257-0VH",
+      "layout": "OPPPKKOOOPKTOOOPTTOTTTTTOTBBIIOTTBBI",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1257-90",
+      "layout": "KTTTIIKKTTIBPPPTBBPOOTBTPOOTTTOOOOOO",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1257-90V",
+      "layout": "OOOOOOPOOTTTPOOTBTPPPTBBKKTTIBKTTTII",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1257-90H",
+      "layout": "IITTTKBITTKKBBTPPPTBTOOPTTTOOPOOOOOO",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1257-90VH",
+      "layout": "OOOOOOTTTOOPTBTOOPBBTPPPBITTKKIITTTK",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1258-0",
+      "layout": "BBBOIIBBOOOIBTOOOITTOOOPKKOOOPKOOOPP",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1258-0V",
+      "layout": "KOOOPPKKOOOPTTOOOPBTOOOIBBOOOIBBBOII",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1258-0H",
+      "layout": "IIOBBBIOOOBBIOOOTBPOOOTTPOOOKKPPOOOK",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1258-0VH",
+      "layout": "PPOOOKPOOOKKPOOOTTIOOOTBIOOOBBIIOBBB",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1258-90",
+      "layout": "KKTBBBOKTTBBOOOOOBOOOOOOPOOOOIPPPIII",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1258-90V",
+      "layout": "PPPIIIPOOOOIOOOOOOOOOOOBOKTTBBKKTBBB",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1258-90H",
+      "layout": "BBBTKKBBTTKOBOOOOOOOOOOOIOOOOPIIIPPP",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1258-90VH",
+      "layout": "IIIPPPIOOOOPOOOOOOBOOOOOBBTTKOBBBTKK",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1259-0",
+      "layout": "BBBOIIBTTOOITTOOOOKOOOOOKOOOOPKKOOPP",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1259-0V",
+      "layout": "KKOOPPKOOOOPKOOOOOTTOOOOBTTOOIBBBOII",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1259-0H",
+      "layout": "IIOBBBIOOTTBOOOOTTOOOOOKPOOOOKPPOOKK",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1259-0VH",
+      "layout": "PPOOKKPOOOOKOOOOOKOOOOTTIOOTTBIIOBBB",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1259-90",
+      "layout": "KKKTBBKOOTTBOOOOTBOOOOOOPOOOOIPPOOII",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1259-90V",
+      "layout": "PPOOIIPOOOOIOOOOOOOOOOTBKOOTTBKKKTBB",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1259-90H",
+      "layout": "BBTKKKBTTOOKBTOOOOOOOOOOIOOOOPIIOOPP",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1259-90VH",
+      "layout": "IIOOPPIOOOOPOOOOOOBTOOOOBTTOOKBBTKKK",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1260-0",
+      "layout": "IOOBBTIIOBTTKIOBTTKOOPTTKOOPTTKOPPTT",
+      "queens": "....Q..Q.........Q..Q...Q........Q.."
+    },
+    {
+      "id": "pz-1260-0V",
+      "layout": "KOPPTTKOOPTTKOOPTTKIOBTTIIOBTTIOOBBT",
+      "queens": "...Q..Q.......Q........Q.Q........Q."
+    },
+    {
+      "id": "pz-1260-0H",
+      "layout": "TBBOOITTBOIITTBOIKTTPOOKTTPOOKTTPPOK",
+      "queens": ".Q........Q.Q........Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1260-0VH",
+      "layout": "TTPPOKTTPOOKTTPOOKTTBOIKTTBOIITBBOOI",
+      "queens": "..Q........Q...Q..Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1260-90",
+      "layout": "KKKKIIOOOIIOPOOOOOPPPBBBTTTTTBTTTTTT",
+      "queens": ".Q........Q...Q...Q..........Q...Q.."
+    },
+    {
+      "id": "pz-1260-90V",
+      "layout": "TTTTTTTTTTTBPPPBBBPOOOOOOOOIIOKKKKII",
+      "queens": "...Q.......QQ.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1260-90H",
+      "layout": "IIKKKKOIIOOOOOOOOPBBBPPPBTTTTTTTTTTT",
+      "queens": "....Q..Q.......Q.......QQ.......Q..."
+    },
+    {
+      "id": "pz-1260-90VH",
+      "layout": "TTTTTTBTTTTTBBBPPPOOOOOPOIIOOOIIKKKK",
+      "queens": "..Q...Q..........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1261-0",
+      "layout": "BBBBBBBBBBBITTTIIITOOOOOTTPKKKPPPKKK",
+      "queens": "...Q.......QQ.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1261-0V",
+      "layout": "PPPKKKTTPKKKTOOOOOTTTIIIBBBBBIBBBBBB",
+      "queens": ".Q........Q...Q...Q..........Q...Q.."
+    },
+    {
+      "id": "pz-1261-0H",
+      "layout": "BBBBBBIBBBBBIIITTTOOOOOTKKKPTTKKKPPP",
+      "queens": "..Q...Q..........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1261-0VH",
+      "layout": "KKKPPPKKKPTTOOOOOTIIITTTIBBBBBBBBBBB",
+      "queens": "....Q..Q.......Q.......QQ.......Q..."
+    },
+    {
+      "id": "pz-1261-90",
+      "layout": "PTTTBBPTOTBBPPOTBBKKOIBBKKOIBBKKOIIB",
+      "queens": "...Q..Q.......Q........Q.Q........Q."
+    },
+    {
+      "id": "pz-1261-90V",
+      "layout": "KKOIIBKKOIBBKKOIBBPPOTBBPTOTBBPTTTBB",
+      "queens": "....Q..Q.........Q..Q...Q........Q.."
+    },
+    {
+      "id": "pz-1261-90H",
+      "layout": "BBTTTPBBTOTPBBTOPPBBIOKKBBIOKKBIIOKK",
+      "queens": "..Q........Q...Q..Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1261-90VH",
+      "layout": "BIIOKKBBIOKKBBIOKKBBTOPPBBTOTPBBTTTP",
+      "queens": ".Q........Q.Q........Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1262-0",
+      "layout": "IIBBBBTITTTTTTTTTTTTOOOOTPKOOOPPKKOO",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1262-0V",
+      "layout": "PPKKOOTPKOOOTTOOOOTTTTTTTITTTTIIBBBB",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1262-0H",
+      "layout": "BBBBIITTTTITTTTTTTOOOOTTOOOKPTOOKKPP",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1262-0VH",
+      "layout": "OOKKPPOOOKPTOOOOTTTTTTTTTTTTITBBBBII",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1262-90",
+      "layout": "PTTTTIPPTTIIKKOTTBKOOTTBOOOTTBOOOTTB",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1262-90V",
+      "layout": "OOOTTBOOOTTBKOOTTBKKOTTBPPTTIIPTTTTI",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1262-90H",
+      "layout": "ITTTTPIITTPPBTTOKKBTTOOKBTTOOOBTTOOO",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1262-90VH",
+      "layout": "BTTOOOBTTOOOBTTOOKBTTOKKIITTPPITTTTP",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1263-0",
+      "layout": "IPPPPBIIPPBBKOPPTTKOOPPTKKOPPTKKOPPT",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1263-0V",
+      "layout": "KKOPPTKKOPPTKOOPPTKOPPTTIIPPBBIPPPPB",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1263-0H",
+      "layout": "BPPPPIBBPPIITTPPOKTPPOOKTPPOKKTPPOKK",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1263-0VH",
+      "layout": "TPPOKKTPPOKKTPPOOKTTPPOKBBPPIIBPPPPI",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1263-90",
+      "layout": "KKKKIIKKOOIPOOOPPPPPPPPPPPPTBPTTTTBB",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1263-90V",
+      "layout": "TTTTBBPPPTBPPPPPPPOOOPPPKKOOIPKKKKII",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1263-90H",
+      "layout": "IIKKKKPIOOKKPPPOOOPPPPPPPBTPPPBBTTTT",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1263-90VH",
+      "layout": "BBTTTTPBTPPPPPPPPPPPPOOOPIOOKKIIKKKK",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1264-0",
+      "layout": "TTIBBBTTIIIBTTTTTTTPKTOOTPKKKOTPPPKO",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1264-0V",
+      "layout": "TPPPKOTPKKKOTPKTOOTTTTTTTTIIIBTTIBBB",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1264-0H",
+      "layout": "BBBITTBIIITTTTTTTTOOTKPTOKKKPTOKPPPT",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1264-0VH",
+      "layout": "OKPPPTOKKKPTOOTKPTTTTTTTBIIITTBBBITT",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1264-90",
+      "layout": "TTTTTTPPPTTTPKKTIIPKTTIBKKOTIBOOOTBB",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1264-90V",
+      "layout": "OOOTBBKKOTIBPKTTIBPKKTIIPPPTTTTTTTTT",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1264-90H",
+      "layout": "TTTTTTTTTPPPIITKKPBITTKPBITOKKBBTOOO",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1264-90VH",
+      "layout": "BBTOOOBITOKKBITTKPIITKKPTTTPPPTTTTTT",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1265-0",
+      "layout": "IBBBBBIIBBBTOIIBBTOOKBTTKKKBTPKKKBPP",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1265-0V",
+      "layout": "KKKBPPKKKBTPOOKBTTOIIBBTIIBBBTIBBBBB",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1265-0H",
+      "layout": "BBBBBITBBBIITBBIIOTTBKOOPTBKKKPPBKKK",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1265-0VH",
+      "layout": "PPBKKKPTBKKKTTBKOOTBBIIOTBBBIIBBBBBI",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1265-90",
+      "layout": "KKOOIIKKOIIBKKKIBBBBBBBBPTTBBBPPTTTB",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1265-90V",
+      "layout": "PPTTTBPTTBBBBBBBBBKKKIBBKKOIIBKKOOII",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1265-90H",
+      "layout": "IIOOKKBIIOKKBBIKKKBBBBBBBBBTTPBTTTPP",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1265-90VH",
+      "layout": "BTTTPPBBBTTPBBBBBBBBIKKKBIIOKKIIOOKK",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1266-0",
+      "layout": "IOOOBTIIOOBTIOOBBTOOOOTTKKPOTTKPPOTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1266-0V",
+      "layout": "KPPOTTKKPOTTOOOOTTIOOBBTIIOOBTIOOOBT",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1266-0H",
+      "layout": "TBOOOITBOOIITBBOOITTOOOOTTOPKKTTOPPK",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1266-0VH",
+      "layout": "TTOPPKTTOPKKTTOOOOTBBOOITBOOIITBOOOI",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1266-90",
+      "layout": "KKOIIIPKOOIOPPOOOOOOOBOOTTTBBBTTTTTT",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1266-90V",
+      "layout": "TTTTTTTTTBBBOOOBOOPPOOOOPKOOIOKKOIII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1266-90H",
+      "layout": "IIIOKKOIOOKPOOOOPPOOBOOOBBBTTTTTTTTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1266-90VH",
+      "layout": "TTTTTTBBBTTTOOBOOOOOOOPPOIOOKPIIIOKK",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1267-0",
+      "layout": "TIIIBBTTTIBTTTTTTTTKTTOTPKKKOOPPPPPP",
+      "queens": ".....Q...Q...Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1267-0V",
+      "layout": "PPPPPPPKKKOOTKTTOTTTTTTTTTTIBTTIIIBB",
+      "queens": "Q.......Q.......Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1267-0H",
+      "layout": "BBIIITTBITTTTTTTTTTOTTKTOOKKKPPPPPPP",
+      "queens": "Q.......Q.......Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1267-0VH",
+      "layout": "PPPPPPOOKKKPTOTTKTTTTTTTTBITTTBBIIIT",
+      "queens": ".....Q...Q...Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1267-90",
+      "layout": "PPTTTTPKKTTIPKTTTIPKTTIIPOOTBBPOTTTB",
+      "queens": "Q........Q...Q........Q...Q........Q"
+    },
+    {
+      "id": "pz-1267-90V",
+      "layout": "POTTTBPOOTBBPKTTIIPKTTTIPKKTTIPPTTTT",
+      "queens": ".....Q..Q.......Q..Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1267-90H",
+      "layout": "TTTTPPITTKKPITTTKPIITTKPBBTOOPBTTTOP",
+      "queens": ".....Q..Q.......Q..Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1267-90VH",
+      "layout": "BTTTOPBBTOOPIITTKPITTTKPITTKKPTTTTPP",
+      "queens": "Q........Q...Q........Q...Q........Q"
+    },
+    {
+      "id": "pz-1268-0",
+      "layout": "IBBBBTIIBOBTIPBOTTIPBOTOKPPOOOKKPPOO",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1268-0V",
+      "layout": "KKPPOOKPPOOOIPBOTOIPBOTTIIBOBTIBBBBT",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1268-0H",
+      "layout": "TBBBBITBOBIITTOBPIOTOBPIOOOPPKOOPPKK",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1268-0VH",
+      "layout": "OOPPKKOOOPPKOTOBPITTOBPITBOBIITBBBBI",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1268-90",
+      "layout": "KKIIIIKPPPIBPPBBBBPOOOOBOOTTBBOOOTTT",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1268-90V",
+      "layout": "OOOTTTOOTTBBPOOOOBPPBBBBKPPPIBKKIIII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1268-90H",
+      "layout": "IIIIKKBIPPPKBBBBPPBOOOOPBBTTOOTTTOOO",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1268-90VH",
+      "layout": "TTTOOOBBTTOOBOOOOPBBBBPPBIPPPKIIIIKK",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1269-0",
+      "layout": "BBBBBBBBBTIBBBTTIIBPKTOOBPKKKOBPPPKK",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1269-0V",
+      "layout": "BPPPKKBPKKKOBPKTOOBBTTIIBBBTIBBBBBBB",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1269-0H",
+      "layout": "BBBBBBBITBBBIITTBBOOTKPBOKKKPBKKPPPB",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1269-0VH",
+      "layout": "KKPPPBOKKKPBOOTKPBIITTBBBITBBBBBBBBB",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1269-90",
+      "layout": "BBBBBBPPPBBBPKKTBBPKTTTBKKOIIBKOOIBB",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1269-90V",
+      "layout": "KOOIBBKKOIIBPKTTTBPKKTBBPPPBBBBBBBBB",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1269-90H",
+      "layout": "BBBBBBBBBPPPBBTKKPBTTTKPBIIOKKBBIOOK",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1269-90VH",
+      "layout": "BBIOOKBIIOKKBTTTKPBBTKKPBBBPPPBBBBBB",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1270-0",
+      "layout": "BBBBBBBBBTIIBBTTOIBPKTOOBPKKKOBPPPKK",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1270-0V",
+      "layout": "BPPPKKBPKKKOBPKTOOBBTTOIBBBTIIBBBBBB",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1270-0H",
+      "layout": "BBBBBBIITBBBIOTTBBOOTKPBOKKKPBKKPPPB",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1270-0VH",
+      "layout": "KKPPPBOKKKPBOOTKPBIOTTBBIITBBBBBBBBB",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1270-90",
+      "layout": "BBBBBBPPPBBBPKKTBBPKTTTBKKOOIBKOOIIB",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1270-90V",
+      "layout": "KOOIIBKKOOIBPKTTTBPKKTBBPPPBBBBBBBBB",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1270-90H",
+      "layout": "BBBBBBBBBPPPBBTKKPBTTTKPBIOOKKBIIOOK",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1270-90VH",
+      "layout": "BIIOOKBIOOKKBTTTKPBBTKKPBBBPPPBBBBBB",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1271-0",
+      "layout": "OIIBBTOOIBTTPOOKTTPOKKTTPPKKKTPPKTTT",
+      "queens": "....Q...Q........Q.Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1271-0V",
+      "layout": "PPKTTTPPKKKTPOKKTTPOOKTTOOIBTTOIIBBT",
+      "queens": "Q........Q...Q.........Q..Q.......Q."
+    },
+    {
+      "id": "pz-1271-0H",
+      "layout": "TBBIIOTTBIOOTTKOOPTTKKOPTKKKPPTTTKPP",
+      "queens": ".Q.......Q..Q.........Q...Q........Q"
+    },
+    {
+      "id": "pz-1271-0VH",
+      "layout": "TTTKPPTKKKPPTTKKOPTTKOOPTTBIOOTBBIIO",
+      "queens": ".....Q..Q.......Q.Q........Q...Q...."
+    },
+    {
+      "id": "pz-1271-90",
+      "layout": "PPPPOOPPOOOIKKKOIITKKKBBTKTTTBTTTTTT",
+      "queens": "Q.......Q.......Q..Q.........Q...Q.."
+    },
+    {
+      "id": "pz-1271-90V",
+      "layout": "TTTTTTTKTTTBTKKKBBKKKOIIPPOOOIPPPPOO",
+      "queens": "...Q.......Q.Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1271-90H",
+      "layout": "OOPPPPIOOOPPIIOKKKBBKKKTBTTTKTTTTTTT",
+      "queens": ".....Q...Q...Q........Q.Q.......Q..."
+    },
+    {
+      "id": "pz-1271-90VH",
+      "layout": "TTTTTTBTTTKTBBKKKTIIOKKKIOOOPPOOPPPP",
+      "queens": "..Q...Q.........Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1272-0",
+      "layout": "IIBBTTIBBTTTTTTTOOKTTOOPKKTOPPPPPPPP",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1272-0V",
+      "layout": "PPPPPPKKTOPPKTTOOPTTTTOOIBBTTTIIBBTT",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1272-0H",
+      "layout": "TTBBIITTTBBIOOTTTTPOOTTKPPOTKKPPPPPP",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1272-0VH",
+      "layout": "PPPPPPPPOTKKPOOTTKOOTTTTTTTBBITTBBII",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1272-90",
+      "layout": "PKKTIIPKTTBIPTTTBBPOOTTBPPOOTTPPPOTT",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1272-90V",
+      "layout": "PPPOTTPPOOTTPOOTTBPTTTBBPKTTBIPKKTII",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1272-90H",
+      "layout": "IITKKPIBTTKPBBTTTPBTTOOPTTOOPPTTOPPP",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1272-90VH",
+      "layout": "TTOPPPTTOOPPBTTOOPBBTTTPIBTTKPIITKKP",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1273-0",
+      "layout": "IITTBBITTTOBPTTTOOPPTKKOPTTKKKPPTTKK",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1273-0V",
+      "layout": "PPTTKKPTTKKKPPTKKOPTTTOOITTTOBIITTBB",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1273-0H",
+      "layout": "BBTTIIBOTTTIOOTTTPOKKTPPKKKTTPKKTTPP",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1273-0VH",
+      "layout": "KKTTPPKKKTTPOKKTPPOOTTTPBOTTTIBBTTII",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1273-90",
+      "layout": "PPPPIIPTPTTITTTTTTTKKTTTKKKOOBKKOOBB",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1273-90V",
+      "layout": "KKOOBBKKKOOBTKKTTTTTTTTTPTPTTIPPPPII",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1273-90H",
+      "layout": "IIPPPPITTPTPTTTTTTTTTKKTBOOKKKBBOOKK",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1273-90VH",
+      "layout": "BBOOKKBOOKKKTTTKKTTTTTTTITTPTPIIPPPP",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1274-0",
+      "layout": "IBBTOOIBBTOOIBTTOOKKTPOOKKTPOOKKTPPO",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1274-0V",
+      "layout": "KKTPPOKKTPOOKKTPOOIBTTOOIBBTOOIBBTOO",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1274-0H",
+      "layout": "OOTBBIOOTBBIOOTTBIOOPTKKOOPTKKOPPTKK",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1274-0VH",
+      "layout": "OPPTKKOOPTKKOOPTKKOOTTBIOOTBBIOOTBBI",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1274-90",
+      "layout": "KKKIIIKKKBBBTTTTBBPPPTTTPOOOOOOOOOOO",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1274-90V",
+      "layout": "OOOOOOPOOOOOPPPTTTTTTTBBKKKBBBKKKIII",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1274-90H",
+      "layout": "IIIKKKBBBKKKBBTTTTTTTPPPOOOOOPOOOOOO",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1274-90VH",
+      "layout": "OOOOOOOOOOOPTTTPPPBBTTTTBBBKKKIIIKKK",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1275-0",
+      "layout": "BBIIIIBIIITTIITTTTIOOOOOKOOOOOKKPPPP",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1275-0V",
+      "layout": "KKPPPPKOOOOOIOOOOOIITTTTBIIITTBBIIII",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1275-0H",
+      "layout": "IIIIBBTTIIIBTTTTIIOOOOOIOOOOOKPPPPKK",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1275-0VH",
+      "layout": "PPPPKKOOOOOKOOOOOITTTTIITTIIIBIIIIBB",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1275-90",
+      "layout": "KKIIBBKOOIIBPOOTIIPOOTIIPOOTTIPOOTTI",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1275-90V",
+      "layout": "POOTTIPOOTTIPOOTIIPOOTIIKOOIIBKKIIBB",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1275-90H",
+      "layout": "BBIIKKBIIOOKIITOOPIITOOPITTOOPITTOOP",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1275-90VH",
+      "layout": "ITTOOPITTOOPIITOOPIITOOPBIIOOKBBIIKK",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1276-0",
+      "layout": "IOOBTTIOOBTTIOOBTTPPOTTKPOOTTKPPTTTK",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1276-0V",
+      "layout": "PPTTTKPOOTTKPPOTTKIOOBTTIOOBTTIOOBTT",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1276-0H",
+      "layout": "TTBOOITTBOOITTBOOIKTTOPPKTTOOPKTTTPP",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1276-0VH",
+      "layout": "KTTTPPKTTOOPKTTOPPTTBOOITTBOOITTBOOI",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1276-90",
+      "layout": "PPPIIIPOPOOOTOOOOOTTTBBBTTTTTTKKKTTT",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1276-90V",
+      "layout": "KKKTTTTTTTTTTTTBBBTOOOOOPOPOOOPPPIII",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1276-90H",
+      "layout": "IIIPPPOOOPOPOOOOOTBBBTTTTTTTTTTTTKKK",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1276-90VH",
+      "layout": "TTTKKKTTTTTTBBBTTTOOOOOTOOOPOPIIIPPP",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1277-0",
+      "layout": "IIBBBBITTBTTTTTTTTTTOOOTTKPOOOKKPPOO",
+      "queens": ".....QQ.......Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1277-0V",
+      "layout": "KKPPOOTKPOOOTTOOOTTTTTTTITTBTTIIBBBB",
+      "queens": "...Q...Q........Q...Q...Q..........Q"
+    },
+    {
+      "id": "pz-1277-0H",
+      "layout": "BBBBIITTBTTITTTTTTTOOOTTOOOPKTOOPPKK",
+      "queens": "Q..........Q...Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1277-0VH",
+      "layout": "OOPPKKOOOPKTTOOOTTTTTTTTTTBTTIBBBBII",
+      "queens": "..Q.......Q..Q.......Q.......QQ....."
+    },
+    {
+      "id": "pz-1277-90",
+      "layout": "KTTTIIKKTTTIPPOTTBPOOTBBOOOTTBOOTTTB",
+      "queens": "....Q..Q.......Q..Q.......Q........Q"
+    },
+    {
+      "id": "pz-1277-90V",
+      "layout": "OOTTTBOOOTTBPOOTBBPPOTTBKKTTTIKTTTII",
+      "queens": ".....Q..Q...Q........Q...Q........Q."
+    },
+    {
+      "id": "pz-1277-90H",
+      "layout": "IITTTKITTTKKBTTOPPBBTOOPBTTOOOBTTTOO",
+      "queens": ".Q........Q...Q........Q...Q..Q....."
+    },
+    {
+      "id": "pz-1277-90VH",
+      "layout": "BTTTOOBTTOOOBBTOOPBTTOPPITTTKKIITTTK",
+      "queens": "Q........Q.......Q..Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1278-0",
+      "layout": "TTBBIITTTBIOTTTTTOTPKTOOTPKKKKTPPPKK",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1278-0V",
+      "layout": "TPPPKKTPKKKKTPKTOOTTTTTOTTTBIOTTBBII",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1278-0H",
+      "layout": "IIBBTTOIBTTTOTTTTTOOTKPTKKKKPTKKPPPT",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1278-0VH",
+      "layout": "KKPPPTKKKKPTOOTKPTOTTTTTOIBTTTIIBBTT",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1278-90",
+      "layout": "TTTTTTPPPTTTPKKTTBPKTTBBKKOTIIKKOOOI",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1278-90V",
+      "layout": "KKOOOIKKOTIIPKTTBBPKKTTBPPPTTTTTTTTT",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1278-90H",
+      "layout": "TTTTTTTTTPPPBTTKKPBBTTKPIITOKKIOOOKK",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1278-90VH",
+      "layout": "IOOOKKIITOKKBBTTKPBTTKKPTTTPPPTTTTTT",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1279-0",
+      "layout": "IOOBBTIIOBTTOOOTTOOOOOOOKKOPPOKOOPPP",
+      "queens": "...Q...Q........Q...Q...Q..........Q"
+    },
+    {
+      "id": "pz-1279-0V",
+      "layout": "KOOPPPKKOPPOOOOOOOOOOTTOIIOBTTIOOBBT",
+      "queens": ".....QQ.......Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1279-0H",
+      "layout": "TBBOOITTBOIIOTTOOOOOOOOOOPPOKKPPPOOK",
+      "queens": "..Q.......Q..Q.......Q.......QQ....."
+    },
+    {
+      "id": "pz-1279-0VH",
+      "layout": "PPPOOKOPPOKKOOOOOOOTTOOOTTBOIITBBOOI",
+      "queens": "Q..........Q...Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1279-90",
+      "layout": "KKOOIIOKOOIOOOOOOOPPOTBBPPOTTBPOOOTT",
+      "queens": ".Q........Q...Q........Q...Q..Q....."
+    },
+    {
+      "id": "pz-1279-90V",
+      "layout": "POOOTTPPOTTBPPOTBBOOOOOOOKOOIOKKOOII",
+      "queens": "Q........Q.......Q..Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1279-90H",
+      "layout": "IIOOKKOIOOKOOOOOOOBBTOPPBTTOPPTTOOOP",
+      "queens": "....Q..Q.......Q..Q.......Q........Q"
+    },
+    {
+      "id": "pz-1279-90VH",
+      "layout": "TTOOOPBTTOPPBBTOPPOOOOOOOIOOKOIIOOKK",
+      "queens": ".....Q..Q...Q........Q...Q........Q."
+    },
+    {
+      "id": "pz-1280-0",
+      "layout": "BBBBBBBBTTIBPBTKIIPBTKOOPBKKKOPBBBKK",
+      "queens": ".Q........Q...Q........Q...Q..Q....."
+    },
+    {
+      "id": "pz-1280-0V",
+      "layout": "PBBBKKPBKKKOPBTKOOPBTKIIBBTTIBBBBBBB",
+      "queens": "Q........Q.......Q..Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1280-0H",
+      "layout": "BBBBBBBITTBBIIKTBPOOKTBPOKKKBPKKBBBP",
+      "queens": "....Q..Q.......Q..Q.......Q........Q"
+    },
+    {
+      "id": "pz-1280-0VH",
+      "layout": "KKBBBPOKKKBPOOKTBPIIKTBPBITTBBBBBBBB",
+      "queens": ".....Q..Q...Q........Q...Q........Q."
+    },
+    {
+      "id": "pz-1280-90",
+      "layout": "PPPPBBBBBBBBBKTTTBBKKKTBKKOIIBKOOIBB",
+      "queens": "Q..........Q...Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1280-90V",
+      "layout": "KOOIBBKKOIIBBKKKTBBKTTTBBBBBBBPPPPBB",
+      "queens": "..Q.......Q..Q.......Q.......QQ....."
+    },
+    {
+      "id": "pz-1280-90H",
+      "layout": "BBPPPPBBBBBBBTTTKBBTKKKBBIIOKKBBIOOK",
+      "queens": ".....QQ.......Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1280-90VH",
+      "layout": "BBIOOKBIIOKKBTKKKBBTTTKBBBBBBBBBPPPP",
+      "queens": "...Q...Q........Q...Q...Q..........Q"
+    },
+    {
+      "id": "pz-1281-0",
+      "layout": "BBBIIIBIIIITOOOTTTOKKKKKKKKKKKKKKPPP",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1281-0V",
+      "layout": "KKKPPPKKKKKKOKKKKKOOOTTTBIIIITBBBIII",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1281-0H",
+      "layout": "IIIBBBTIIIIBTTTOOOKKKKKOKKKKKKPPPKKK",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1281-0VH",
+      "layout": "PPPKKKKKKKKKKKKKKOTTTOOOTIIIIBIIIBBB",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1281-90",
+      "layout": "KKOOBBKKKOIBKKKOIBPKKTIIPKKTIIPKKTTI",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1281-90V",
+      "layout": "PKKTTIPKKTIIPKKTIIKKKOIBKKKOIBKKOOBB",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1281-90H",
+      "layout": "BBOOKKBIOKKKBIOKKKIITKKPIITKKPITTKKP",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1281-90VH",
+      "layout": "ITTKKPIITKKPIITKKPBIOKKKBIOKKKBBOOKK",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1282-0",
+      "layout": "IOBBTKIOOBTKIOOBTKPOOTTKPOOTKKPPOTTK",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1282-0V",
+      "layout": "PPOTTKPOOTKKPOOTTKIOOBTKIOOBTKIOBBTK",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1282-0H",
+      "layout": "KTBBOIKTBOOIKTBOOIKTTOOPKKTOOPKTTOPP",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1282-0VH",
+      "layout": "KTTOPPKKTOOPKTTOOPKTBOOIKTBOOIKTBBOI",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1282-90",
+      "layout": "PPPIIIPOOOOOOOOOOBTTTBBBTKTTTTKKKKKK",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1282-90V",
+      "layout": "KKKKKKTKTTTTTTTBBBOOOOOBPOOOOOPPPIII",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1282-90H",
+      "layout": "IIIPPPOOOOOPBOOOOOBBBTTTTTTTKTKKKKKK",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1282-90VH",
+      "layout": "KKKKKKTTTTKTBBBTTTBOOOOOOOOOOPIIIPPP",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1283-0",
+      "layout": "OOOIBBOOIIBBOIITTBOIPPTBOOPKTTOPPKKT",
+      "queens": ".....Q..Q.......Q.Q........Q...Q...."
+    },
+    {
+      "id": "pz-1283-0V",
+      "layout": "OPPKKTOOPKTTOIPPTBOIITTBOOIIBBOOOIBB",
+      "queens": ".Q.......Q..Q.........Q...Q........Q"
+    },
+    {
+      "id": "pz-1283-0H",
+      "layout": "BBIOOOBBIIOOBTTIIOBTPPIOTTKPOOTKKPPO",
+      "queens": "Q........Q...Q.........Q..Q.......Q."
+    },
+    {
+      "id": "pz-1283-0VH",
+      "layout": "TKKPPOTTKPOOBTPPIOBTTIIOBBIIOOBBIOOO",
+      "queens": "....Q...Q........Q.Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1283-90",
+      "layout": "OOOOOOPOIIOOPPPIIOKKPTIIKTTTBBTTBBBB",
+      "queens": "..Q...Q.........Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1283-90V",
+      "layout": "TTBBBBKTTTBBKKPTIIPPPIIOPOIIOOOOOOOO",
+      "queens": ".....Q...Q...Q........Q.Q.......Q..."
+    },
+    {
+      "id": "pz-1283-90H",
+      "layout": "OOOOOOOOIIOPOIIPPPIITPKKBBTTTKBBBBTT",
+      "queens": "...Q.......Q.Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1283-90VH",
+      "layout": "BBBBTTBBTTTKIITPKKOIIPPPOOIIOPOOOOOO",
+      "queens": "Q.......Q.......Q..Q.........Q...Q.."
+    },
+    {
+      "id": "pz-1284-0",
+      "layout": "TTIBBOTIIBOOTIOOOOTIOOOOKKOPOOKPPPOO",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1284-0V",
+      "layout": "KPPPOOKKOPOOTIOOOOTIOOOOTIIBOOTTIBBO",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1284-0H",
+      "layout": "OBBITTOOBIITOOOOITOOOOITOOPOKKOOPPPK",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1284-0VH",
+      "layout": "OOPPPKOOPOKKOOOOITOOOOITOOBIITOBBITT",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1284-90",
+      "layout": "KKTTTTPKIIITPOOOIIPPOOBBOOOOOBOOOOOO",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1284-90V",
+      "layout": "OOOOOOOOOOOBPPOOBBPOOOIIPKIIITKKTTTT",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1284-90H",
+      "layout": "TTTTKKTIIIKPIIOOOPBBOOPPBOOOOOOOOOOO",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1284-90VH",
+      "layout": "OOOOOOBOOOOOBBOOPPIIOOOPTIIIKPTTTTKK",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1285-0",
+      "layout": "BBITTTOBIITTOOTTTTOOOOOOKOOOOOKKPPPP",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1285-0V",
+      "layout": "KKPPPPKOOOOOOOOOOOOOTTTTOBIITTBBITTT",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1285-0H",
+      "layout": "TTTIBBTTIIBOTTTTOOOOOOOOOOOOOKPPPPKK",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1285-0VH",
+      "layout": "PPPPKKOOOOOKOOOOOOTTTTOOTTIIBOTTTIBB",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1285-90",
+      "layout": "KKOOOBKOOOBBPOOTIIPOOTITPOOTTTPOOTTT",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1285-90V",
+      "layout": "POOTTTPOOTTTPOOTITPOOTIIKOOOBBKKOOOB",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1285-90H",
+      "layout": "BOOOKKBBOOOKIITOOPTITOOPTTTOOPTTTOOP",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1285-90VH",
+      "layout": "TTTOOPTTTOOPTITOOPIITOOPBBOOOKBOOOKK",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1286-0",
+      "layout": "KKITBBKIITTBKIOOTBKIOPTBKKOPBBKPPPBB",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1286-0V",
+      "layout": "KPPPBBKKOPBBKIOPTBKIOOTBKIITTBKKITBB",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1286-0H",
+      "layout": "BBTIKKBTTIIKBTOOIKBTPOIKBBPOKKBBPPPK",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1286-0VH",
+      "layout": "BBPPPKBBPOKKBTPOIKBTOOIKBTTIIKBBTIKK",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1286-90",
+      "layout": "KKKKKKPKIIIKPOOOIIPPPOTTBBTTTBBBBBBB",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1286-90V",
+      "layout": "BBBBBBBBTTTBPPPOTTPOOOIIPKIIIKKKKKKK",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1286-90H",
+      "layout": "KKKKKKKIIIKPIIOOOPTTOPPPBTTTBBBBBBBB",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1286-90VH",
+      "layout": "BBBBBBBTTTBBTTOPPPIIOOOPKIIIKPKKKKKK",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1287-0",
+      "layout": "IIIIBBITTTBTTTTTTTTOOOTTOOPPKTOOPPKK",
+      "queens": ".....QQ........Q...Q........Q...Q..."
+    },
+    {
+      "id": "pz-1287-0V",
+      "layout": "OOPPKKOOPPKTTOOOTTTTTTTTITTTBTIIIIBB",
+      "queens": "..Q.......Q..Q.......Q..Q..........Q"
+    },
+    {
+      "id": "pz-1287-0H",
+      "layout": "BBIIIITBTTTITTTTTTTTOOOTTKPPOOKKPPOO",
+      "queens": "Q..........Q..Q.......Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1287-0VH",
+      "layout": "KKPPOOTKPPOOTTOOOTTTTTTTTBTTTIBBIIII",
+      "queens": "...Q...Q........Q...Q........QQ....."
+    },
+    {
+      "id": "pz-1287-90",
+      "layout": "OOTTIIOOOTTIPPOTTIPPOTTIKKTTBBKTTTTB",
+      "queens": "....Q...Q...Q........Q...Q.........Q"
+    },
+    {
+      "id": "pz-1287-90V",
+      "layout": "KTTTTBKKTTBBPPOTTIPPOTTIOOOTTIOOTTII",
+      "queens": ".....Q.Q.......Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1287-90H",
+      "layout": "IITTOOITTOOOITTOPPITTOPPBBTTKKBTTTTK",
+      "queens": ".Q.......Q.......Q..Q.......Q.Q....."
+    },
+    {
+      "id": "pz-1287-90VH",
+      "layout": "BTTTTKBBTTKKITTOPPITTOPPITTOOOIITTOO",
+      "queens": "Q.........Q...Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1288-0",
+      "layout": "BBBBBBBBBIIITBBIOITTTOOOPKKKKOPPPKKK",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1288-0V",
+      "layout": "PPPKKKPKKKKOTTTOOOTBBIOIBBBIIIBBBBBB",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1288-0H",
+      "layout": "BBBBBBIIIBBBIOIBBTOOOTTTOKKKKPKKKPPP",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1288-0VH",
+      "layout": "KKKPPPOKKKKPOOOTTTIOIBBTIIIBBBBBBBBB",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1288-90",
+      "layout": "PPTTBBPKTBBBPKTBBBKKOIIBKKOOIBKOOIIB",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1288-90V",
+      "layout": "KOOIIBKKOOIBKKOIIBPKTBBBPKTBBBPPTTBB",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1288-90H",
+      "layout": "BBTTPPBBBTKPBBBTKPBIIOKKBIOOKKBIIOOK",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1288-90VH",
+      "layout": "BIIOOKBIOOKKBIIOKKBBBTKPBBBTKPBBTTPP",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1289-0",
+      "layout": "IOOTBBIOOTTBIOOTTBOOTTTKOOTPTKOOPPKK",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1289-0V",
+      "layout": "OOPPKKOOTPTKOOTTTKIOOTTBIOOTTBIOOTBB",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1289-0H",
+      "layout": "BBTOOIBTTOOIBTTOOIKTTTOOKTPTOOKKPPOO",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1289-0VH",
+      "layout": "KKPPOOKTPTOOKTTTOOBTTOOIBTTOOIBBTOOI",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1289-90",
+      "layout": "OOOIIIOOOOOOPTTOOOPPTTTTKTTTTBKKKBBB",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1289-90V",
+      "layout": "KKKBBBKTTTTBPPTTTTPTTOOOOOOOOOOOOIII",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1289-90H",
+      "layout": "IIIOOOOOOOOOOOOTTPTTTTPPBTTTTKBBBKKK",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1289-90VH",
+      "layout": "BBBKKKBTTTTKTTTTPPOOOTTPOOOOOOIIIOOO",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1290-0",
+      "layout": "TTTBBBTTTIIIOOTTKKOOOTKKOPPTKKPPPTKK",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1290-0V",
+      "layout": "PPPTKKOPPTKKOOOTKKOOTTKKTTTIIITTTBBB",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1290-0H",
+      "layout": "BBBTTTIIITTTKKTTOOKKTOOOKKTPPOKKTPPP",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1290-0VH",
+      "layout": "KKTPPPKKTPPOKKTOOOKKTTOOIIITTTBBBTTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1290-90",
+      "layout": "POOOTTPPOOTTPPOTTTTTTTIBKKKKIBKKKKIB",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1290-90V",
+      "layout": "KKKKIBKKKKIBTTTTIBPPOTTTPPOOTTPOOOTT",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1290-90H",
+      "layout": "TTOOOPTTOOPPTTTOPPBITTTTBIKKKKBIKKKK",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1290-90VH",
+      "layout": "BIKKKKBIKKKKBITTTTTTTOPPTTOOPPTTOOOP",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1291-0",
+      "layout": "IIIBBBIIIIIBTIIIIITTTOOOPKKKOOPPPKKK",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1291-0V",
+      "layout": "PPPKKKPKKKOOTTTOOOTIIIIIIIIIIBIIIBBB",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1291-0H",
+      "layout": "BBBIIIBIIIIIIIIIITOOOTTTOOKKKPKKKPPP",
+      "queens": ".Q.......Q.......QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1291-0VH",
+      "layout": "KKKPPPOOKKKPOOOTTTIIIIITBIIIIIBBBIII",
+      "queens": "....Q...Q...Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1291-90",
+      "layout": "PPTTIIPKTIIIPKTIIIKKOIIBKOOIIBKOOIBB",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1291-90V",
+      "layout": "KOOIBBKOOIIBKKOIIBPKTIIIPKTIIIPPTTII",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1291-90H",
+      "layout": "IITTPPIIITKPIIITKPBIIOKKBIIOOKBBIOOK",
+      "queens": "..Q........Q.Q........Q.Q........Q.."
+    },
+    {
+      "id": "pz-1291-90VH",
+      "layout": "BBIOOKBIIOOKBIIOKKIIITKPIIITKPIITTPP",
+      "queens": "...Q..Q.........Q..Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1292-0",
+      "layout": "BBTTTIBOTTIIBOTTIPOOKTPPOKKTPPOKTTPP",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1292-0V",
+      "layout": "OKTTPPOKKTPPOOKTPPBOTTIPBOTTIIBBTTTI",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1292-0H",
+      "layout": "ITTTBBIITTOBPITTOBPPTKOOPPTKKOPPTTKO",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1292-0VH",
+      "layout": "PPTTKOPPTKKOPPTKOOPITTOBIITTOBITTTBB",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1292-90",
+      "layout": "OOOBBBKKOOOBTKKTTTTTTTTTPPPIITPPPPII",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1292-90V",
+      "layout": "PPPPIIPPPIITTTTTTTTKKTTTKKOOOBOOOBBB",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1292-90H",
+      "layout": "BBBOOOBOOOKKTTTKKTTTTTTTTIIPPPIIPPPP",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1292-90VH",
+      "layout": "IIPPPPTIIPPPTTTTTTTTTKKTBOOOKKBBBOOO",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1293-0",
+      "layout": "BOOIITBOIIITBOIITTBOITTPBOIKKPBOIIKP",
+      "queens": "Q.......Q.......Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1293-0V",
+      "layout": "BOIIKPBOIKKPBOITTPBOIITTBOIIITBOOIIT",
+      "queens": ".....Q...Q...Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1293-0H",
+      "layout": "TIIOOBTIIIOBTTIIOBPTTIOBPKKIOBPKIIOB",
+      "queens": ".....Q...Q...Q........Q...Q...Q....."
+    },
+    {
+      "id": "pz-1293-0VH",
+      "layout": "PKIIOBPKKIOBPTTIOBTTIIOBTIIIOBTIIOOB",
+      "queens": "Q.......Q.......Q..Q.......Q.......Q"
+    },
+    {
+      "id": "pz-1293-90",
+      "layout": "BBBBBBOOOOOOIIIIIOIKTIIIKKTTIIPPPTTT",
+      "queens": ".....Q..Q.......Q..Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1293-90V",
+      "layout": "PPPTTTKKTTIIIKTIIIIIIIIOOOOOOOBBBBBB",
+      "queens": "Q........Q...Q........Q...Q........Q"
+    },
+    {
+      "id": "pz-1293-90H",
+      "layout": "BBBBBBOOOOOOOIIIIIIIITKIIITTKKTTTPPP",
+      "queens": "Q........Q...Q........Q...Q........Q"
+    },
+    {
+      "id": "pz-1293-90VH",
+      "layout": "TTTPPPIITTKKIIITKIOIIIIIOOOOOOBBBBBB",
+      "queens": ".....Q..Q.......Q..Q.......Q..Q....."
+    },
+    {
+      "id": "pz-1294-0",
+      "layout": "BBBIIIBTBIIITTOOOOOOOKKKPPKKKKPPPPPP",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1294-0V",
+      "layout": "PPPPPPPPKKKKOOOKKKTTOOOOBTBIIIBBBIII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1294-0H",
+      "layout": "IIIBBBIIIBTBOOOOTTKKKOOOKKKKPPPPPPPP",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1294-0VH",
+      "layout": "PPPPPPKKKKPPKKKOOOOOOOTTIIIBTBIIIBBB",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1294-90",
+      "layout": "PPOTBBPPOTTBPKOOBBPKKOIIPKKOIIPKKOII",
+      "queens": "...Q.......Q..Q...Q.........Q..Q...."
+    },
+    {
+      "id": "pz-1294-90V",
+      "layout": "PKKOIIPKKOIIPKKOIIPKOOBBPPOTTBPPOTBB",
+      "queens": ".Q........Q.Q.......Q........Q...Q.."
+    },
+    {
+      "id": "pz-1294-90H",
+      "layout": "BBTOPPBTTOPPBBOOKPIIOKKPIIOKKPIIOKKP",
+      "queens": "..Q...Q........Q.......Q.Q........Q."
+    },
+    {
+      "id": "pz-1294-90VH",
+      "layout": "IIOKKPIIOKKPIIOKKPBBOOKPBTTOPPBBTOPP",
+      "queens": "....Q..Q.........Q...Q..Q.......Q..."
+    },
+    {
+      "id": "pz-1295-0",
+      "layout": "IITTBBITTTOBPTTKOOPTTKKOPTTKKOPPTKKO",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1295-0V",
+      "layout": "PPTKKOPTTKKOPTTKKOPTTKOOITTTOBIITTBB",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1295-0H",
+      "layout": "BBTTIIBOTTTIOOKTTPOKKTTPOKKTTPOKKTPP",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1295-0VH",
+      "layout": "OKKTPPOKKTTPOKKTTPOOKTTPBOTTTIBBTTII",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1295-90",
+      "layout": "PPPPIIPTTTTITTTTTTKKKKTTKKKOOBOOOOBB",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1295-90V",
+      "layout": "OOOOBBKKKOOBKKKKTTTTTTTTPTTTTIPPPPII",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
+    },
+    {
+      "id": "pz-1295-90H",
+      "layout": "IIPPPPITTTTPTTTTTTTTKKKKBOOKKKBBOOOO",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1295-90VH",
+      "layout": "BBOOOOBOOKKKTTKKKKTTTTTTITTTTPIIPPPP",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1296-0",
+      "layout": "BBBBBBIIIIBBIIIITBOIIITTOOIIIKPPPPKK",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1296-0V",
+      "layout": "PPPPKKOOIIIKOIIITTIIIITBIIIIBBBBBBBB",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1296-0H",
+      "layout": "BBBBBBBBIIIIBTIIIITTIIIOKIIIOOKKPPPP",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1296-0VH",
+      "layout": "KKPPPPKIIIOOTTIIIOBTIIIIBBIIIIBBBBBB",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1296-90",
+      "layout": "POOIIBPOIIIBPIIIIBPIIIIBKITTBBKKTBBB",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1296-90V",
+      "layout": "KKTBBBKITTBBPIIIIBPIIIIBPOIIIBPOOIIB",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1296-90H",
+      "layout": "BIIOOPBIIIOPBIIIIPBIIIIPBBTTIKBBBTKK",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1296-90VH",
+      "layout": "BBBTKKBBTTIKBIIIIPBIIIIPBIIIOPBIIOOP",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1297-0",
+      "layout": "BPPPPIBBPPIITTPPOOTPPOOOTTPOOKTPPOKK",
+      "queens": "Q.........Q..Q.......Q.......Q..Q..."
+    },
+    {
+      "id": "pz-1297-0V",
+      "layout": "TPPOKKTTPOOKTPPOOOTTPPOOBBPPIIBPPPPI",
+      "queens": "..Q........Q...Q...Q........Q.Q....."
+    },
+    {
+      "id": "pz-1297-0H",
+      "layout": "IPPPPBIIPPBBOOPPTTOOOPPTKOOPTTKKOPPT",
+      "queens": ".....Q.Q........Q...Q...Q........Q.."
+    },
+    {
+      "id": "pz-1297-0VH",
+      "layout": "KKOPPTKOOPTTOOOPPTOOPPTTIIPPBBIPPPPB",
+      "queens": "...Q..Q.......Q.......Q..Q.........Q"
+    },
+    {
+      "id": "pz-1297-90",
+      "layout": "TTTTBBPTPTBPPPPPPPOOOPPPKOOOIPKKOOII",
+      "queens": ".....Q...Q..Q.......Q.......Q..Q...."
+    },
+    {
+      "id": "pz-1297-90V",
+      "layout": "KKOOIIKOOOIPOOOPPPPPPPPPPTPTBPTTTTBB",
+      "queens": ".Q........Q...Q...Q........Q.......Q"
+    },
+    {
+      "id": "pz-1297-90H",
+      "layout": "BBTTTTPBTPTPPPPPPPPPPOOOPIOOOKIIOOKK",
+      "queens": "Q.......Q........Q...Q...Q........Q."
+    },
+    {
+      "id": "pz-1297-90VH",
+      "layout": "IIOOKKPIOOOKPPPOOOPPPPPPPBTPTPBBTTTT",
+      "queens": "....Q..Q.......Q.......Q..Q...Q....."
+    },
+    {
+      "id": "pz-1298-0",
+      "layout": "IIBBBOIIIIBOTIOIBOTTOOOOKKPOOOKPPPOO",
+      "queens": "....Q...Q...Q..........Q.Q.......Q.."
+    },
+    {
+      "id": "pz-1298-0V",
+      "layout": "KPPPOOKKPOOOTTOOOOTIOIBOIIIIBOIIBBBO",
+      "queens": "...Q...Q.........QQ.......Q.......Q."
+    },
+    {
+      "id": "pz-1298-0H",
+      "layout": "OBBBIIOBIIIIOBIOITOOOOTTOOOPKKOOPPPK",
+      "queens": ".Q.......Q.......QQ.........Q...Q..."
+    },
+    {
+      "id": "pz-1298-0VH",
+      "layout": "OOPPPKOOOPKKOOOOTTOBIOITOBIIIIOBBBII",
+      "queens": "..Q.......Q.Q..........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1298-90",
+      "layout": "KKTTIIPKTIIIPPOOIBPOOIIBOOOBBBOOOOOO",
+      "queens": "...Q...Q........Q.Q..........Q..Q..."
+    },
+    {
+      "id": "pz-1298-90V",
+      "layout": "OOOOOOOOOBBBPOOIIBPPOOIBPKTIIIKKTTII",
+      "queens": "..Q........QQ.........Q..Q.......Q.."
+    },
+    {
+      "id": "pz-1298-90H",
+      "layout": "IITTKKIIITKPBIOOPPBIIOOPBBBOOOOOOOOO",
+      "queens": "..Q.......Q..Q.........QQ........Q.."
+    },
+    {
+      "id": "pz-1298-90VH",
+      "layout": "OOOOOOBBBOOOBIIOOPBIOOPPIIITKPIITTKK",
+      "queens": "...Q..Q..........Q.Q........Q...Q..."
+    },
+    {
+      "id": "pz-1299-0",
+      "layout": "BBOITTBOOITTBOIITTOOOPPTKOOPTTKKOPPT",
+      "queens": ".Q.......Q.......Q..Q...Q.........Q."
+    },
+    {
+      "id": "pz-1299-0V",
+      "layout": "KKOPPTKOOPTTOOOPPTBOIITTBOOITTBBOITT",
+      "queens": "....Q.Q.......Q........Q...Q...Q...."
+    },
+    {
+      "id": "pz-1299-0H",
+      "layout": "TTIOBBTTIOOBTTIIOBTPPOOOTTPOOKTPPOKK",
+      "queens": "....Q...Q...Q........Q.......Q.Q...."
+    },
+    {
+      "id": "pz-1299-0VH",
+      "layout": "TPPOKKTTPOOKTPPOOOTTIIOBTTIOOBTTIOBB",
+      "queens": ".Q.........Q...Q..Q.......Q.......Q."
+    },
+    {
+      "id": "pz-1299-90",
+      "layout": "KKOBBBKOOOOBOOOIOOPPPIIIPTPTTTTTTTTT",
+      "queens": ".Q.........Q..Q.......Q.Q........Q.."
+    },
+    {
+      "id": "pz-1299-90V",
+      "layout": "TTTTTTPTPTTTPPPIIIOOOIOOKOOOOBKKOBBB",
+      "queens": "...Q..Q.........Q...Q........Q.Q...."
+    },
+    {
+      "id": "pz-1299-90H",
+      "layout": "BBBOKKBOOOOKOOIOOOIIIPPPTTTPTPTTTTTT",
+      "queens": "....Q.Q........Q...Q.........Q..Q..."
+    },
+    {
+      "id": "pz-1299-90VH",
+      "layout": "TTTTTTTTTPTPIIIPPPOOIOOOBOOOOKBBBOKK",
+      "queens": "..Q........Q.Q.......Q..Q.........Q."
     }
   ],
   "7x7": [
