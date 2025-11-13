@@ -15,7 +15,6 @@ export interface PuzzleStringFormat {
   layout: string // One character per tile representing groupColor
   queens: string // One character per tile: 'Q' for queen, '.' for empty
   name?: string // Optional user-provided name for the puzzle
-  createdAt: string // ISO timestamp when the puzzle was generated
 }
 
 export interface PuzzleDatabaseStructure {
@@ -266,8 +265,7 @@ export class PuzzleDatabase {
         id,
         layout: encoded.layout,
         queens: encoded.queens,
-        name: name || undefined,
-        createdAt: new Date().toISOString()
+        name: name || undefined
       }
 
       if (!this.puzzles[sizeKey]) {
@@ -372,22 +370,10 @@ export class PuzzleDatabase {
     const uniqueSizes = [...new Set(gridSizes)]
     const uniqueLayouts = new Set(this.getAllPuzzles().map(p => p.layout)).size
 
-    let dateRange: { start: string; end: string } | undefined
-    if (this.getAllPuzzles().length > 1) {
-      const dates = this.getAllPuzzles()
-        .map(p => new Date(p.createdAt))
-        .sort()
-      dateRange = {
-        start: dates[0].toISOString(),
-        end: dates[dates.length - 1].toISOString()
-      }
-    }
-
     return {
       totalPuzzles: this.getTotalPuzzleCount(),
       gridSizes: uniqueSizes,
-      uniqueLayouts,
-      dateRange
+      uniqueLayouts
     }
   }
 
@@ -433,7 +419,6 @@ export class PuzzleDatabase {
         console.log(`\nGrid Size: ${gridSize}x${gridSize}`)
         puzzles.forEach((puzzle, index) => {
           console.log(`${index + 1}. ${puzzle.id}`)
-          console.log(`   Created: ${puzzle.createdAt}`)
           console.log(`   Layout: ${puzzle.layout}`)
           console.log(`   Queens: ${puzzle.queens}`)
           console.log('')
