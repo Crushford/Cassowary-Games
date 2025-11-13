@@ -81,6 +81,8 @@ const COMPLETED_PUZZLES_KEY = 'queens-completed-puzzles';
 const SPEED_MODE_2MIN_RECORD_KEY = 'queens-speed-mode-2min-record';
 // LocalStorage key prefix for puzzle progress
 const PUZZLE_PROGRESS_KEY_PREFIX = 'queens-puzzle-progress-';
+// LocalStorage key prefix for puzzle move history
+const PUZZLE_HISTORY_KEY_PREFIX = 'queens-puzzle-history-';
 
 // Helper functions for localStorage
 function getCompletedPuzzles(): Set<string> {
@@ -136,6 +138,11 @@ function getPuzzleProgressKey(puzzleId: string | number | null): string {
   return `${PUZZLE_PROGRESS_KEY_PREFIX}${puzzleId}`;
 }
 
+function getPuzzleHistoryKey(puzzleId: string | number | null): string {
+  if (puzzleId === null) return '';
+  return `${PUZZLE_HISTORY_KEY_PREFIX}${puzzleId}`;
+}
+
 function savePuzzleProgress(puzzleId: string | number | null, playerMarks: MarkType[][]) {
   if (puzzleId === null) return;
   try {
@@ -143,6 +150,16 @@ function savePuzzleProgress(puzzleId: string | number | null, playerMarks: MarkT
     localStorage.setItem(key, JSON.stringify(playerMarks));
   } catch (e) {
     console.error('Error saving puzzle progress to localStorage:', e);
+  }
+}
+
+function savePuzzleHistory(puzzleId: string | number | null, moveHistory: MarkType[][][]) {
+  if (puzzleId === null) return;
+  try {
+    const key = getPuzzleHistoryKey(puzzleId);
+    localStorage.setItem(key, JSON.stringify(moveHistory));
+  } catch (e) {
+    console.error('Error saving puzzle history to localStorage:', e);
   }
 }
 
@@ -160,11 +177,28 @@ function loadPuzzleProgress(puzzleId: string | number | null): MarkType[][] | nu
   return null;
 }
 
+function loadPuzzleHistory(puzzleId: string | number | null): MarkType[][][] | null {
+  if (puzzleId === null) return null;
+  try {
+    const key = getPuzzleHistoryKey(puzzleId);
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      return JSON.parse(stored) as MarkType[][][];
+    }
+  } catch (e) {
+    console.error('Error loading puzzle history from localStorage:', e);
+  }
+  return null;
+}
+
 function clearPuzzleProgress(puzzleId: string | number | null) {
   if (puzzleId === null) return;
   try {
     const key = getPuzzleProgressKey(puzzleId);
     localStorage.removeItem(key);
+    // Also clear history when clearing progress
+    const historyKey = getPuzzleHistoryKey(puzzleId);
+    localStorage.removeItem(historyKey);
   } catch (e) {
     console.error('Error clearing puzzle progress from localStorage:', e);
   }
@@ -424,8 +458,9 @@ export const useQueensStore = defineStore('queens', {
             this.updateBlockedMoves();
           }
 
-          // Save progress to localStorage after undo
+          // Save progress and history to localStorage after undo
           savePuzzleProgress(this.currentPuzzleId, this.playerMarks);
+          savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
 
           // Clear error feedback when undoing
           this.showErrorFeedback = false;
@@ -437,8 +472,9 @@ export const useQueensStore = defineStore('queens', {
     placeFlag(row: number, col: number) {
       this.saveToHistory();
       this.playerMarks[row][col] = 'flag';
-      // Save progress to localStorage
+      // Save progress and history to localStorage
       savePuzzleProgress(this.currentPuzzleId, this.playerMarks);
+      savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
       // Check for error conditions immediately
       this.checkFullyFlaggedGroups();
       return true;
@@ -451,8 +487,9 @@ export const useQueensStore = defineStore('queens', {
       if (this.uiState.autoFlagging) {
         this.updateBlockedMoves();
       }
-      // Save progress to localStorage
+      // Save progress and history to localStorage
       savePuzzleProgress(this.currentPuzzleId, this.playerMarks);
+      savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
       this.checkBoardCompletion();
 
       // Check tutorial step after placing queen
@@ -504,8 +541,9 @@ export const useQueensStore = defineStore('queens', {
           this.updateBlockedMoves();
         }
       }
-      // Save progress to localStorage
+      // Save progress and history to localStorage
       savePuzzleProgress(this.currentPuzzleId, this.playerMarks);
+      savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
       // Check for error conditions immediately
       this.checkFullyFlaggedGroups();
     },
@@ -744,6 +782,18 @@ export const useQueensStore = defineStore('queens', {
           }
           if (isValid) {
             this.playerMarks = savedProgress;
+
+            // Load saved move history if available
+            const savedHistory = loadPuzzleHistory(puzzleId);
+            if (savedHistory && Array.isArray(savedHistory)) {
+              // Clone the history to avoid reference issues
+              this.moveHistory = savedHistory.map((state) => clonePlayerMarks(state));
+            } else {
+              // If no history exists, create initial state in history
+              // This allows undo to work even if history wasn't saved before
+              this.moveHistory = [clonePlayerMarks(savedProgress)];
+            }
+
             // Recalculate blocked moves if auto-flagging is enabled
             if (this.uiState.autoFlagging) {
               this.updateBlockedMoves();
