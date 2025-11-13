@@ -76,6 +76,7 @@ interface QueensState {
   errorSquares: Set<string>; // Set of "row,col" strings for squares that should be red
   flaggedGroupTimestamps: Map<string, number>; // Map of group key -> timestamp when it became fully flagged
   errorCheckInterval: number | null; // Interval ID for periodic error checking
+  progressSaveInterval: number | null; // Interval ID for periodic progress saving
   // Puzzle timing (for individual puzzles, not speed mode)
   puzzleStartTime: number | null; // Timestamp when current puzzle started
   puzzleCompletionTime: number | null; // Completion time in seconds when puzzle was completed
@@ -395,6 +396,7 @@ export const useQueensStore = defineStore('queens', {
     errorSquares: new Set<string>(),
     flaggedGroupTimestamps: new Map<string, number>(),
     errorCheckInterval: null,
+    progressSaveInterval: null,
     // Puzzle timing
     puzzleStartTime: null,
     puzzleCompletionTime: null,
@@ -640,8 +642,9 @@ export const useQueensStore = defineStore('queens', {
 
   actions: {
     initializeGrid() {
-      // Stop error checking
+      // Stop error checking and progress saving
       this.stopErrorChecking();
+      this.stopProgressSaving();
 
       this.grid = createEmptyGrid(this.gridSize);
       this.moveHistory = [];
@@ -886,6 +889,9 @@ export const useQueensStore = defineStore('queens', {
       if (validation.isValid) {
         this.isComplete = true;
 
+        // Stop periodic progress saving when puzzle is complete
+        this.stopProgressSaving();
+
         // Calculate completion time and update records (only if not in speed mode)
         if (!this.isSpeedMode && this.puzzleStartTime !== null) {
           const completionTimeSeconds = (Date.now() - this.puzzleStartTime) / 1000; // Store as decimal seconds
@@ -1050,9 +1056,15 @@ export const useQueensStore = defineStore('queens', {
               savedProgressData.elapsedTimeSeconds !== undefined &&
               savedProgressData.elapsedTimeSeconds > 0
             ) {
-              // Set puzzleStartTime to current time minus elapsed time
-              // This way the timer continues from where it left off
-              this.puzzleStartTime = Date.now() - savedProgressData.elapsedTimeSeconds * 1000;
+              if (this.isSpeedMode) {
+                // For speed mode, restore speedModePuzzleStartTime
+                this.speedModePuzzleStartTime =
+                  Date.now() - savedProgressData.elapsedTimeSeconds * 1000;
+              } else {
+                // Set puzzleStartTime to current time minus elapsed time
+                // This way the timer continues from where it left off
+                this.puzzleStartTime = Date.now() - savedProgressData.elapsedTimeSeconds * 1000;
+              }
             }
 
             // Check if puzzle is already complete after loading saved progress
@@ -1069,6 +1081,16 @@ export const useQueensStore = defineStore('queens', {
       // Only set start time if it wasn't already restored from saved progress
       if (!this.isSpeedMode && !this.isComplete && this.puzzleStartTime === null) {
         this.puzzleStartTime = Date.now();
+      }
+
+      // For speed mode, set puzzle start time if not already restored
+      if (this.isSpeedMode && !this.isComplete && this.speedModePuzzleStartTime === null) {
+        this.speedModePuzzleStartTime = Date.now();
+      }
+
+      // Start periodic progress saving for both single puzzle mode and speed mode
+      if (!this.isComplete) {
+        this.startProgressSaving();
       }
 
       // Load best time for this size (for display purposes)
@@ -1723,10 +1745,15 @@ export const useQueensStore = defineStore('queens', {
         // Find next uncompleted puzzle in this size (skip completed and in-progress puzzles)
         for (let puzzleIdx = startIndex; puzzleIdx < puzzlesForSize.length; puzzleIdx++) {
           const puzzle = puzzlesForSize[puzzleIdx];
-          const puzzleId = String(puzzle.id);
+          // Normalize puzzle ID - use id if available, otherwise fall back to name
+          const puzzleId = puzzle.id || puzzle.name;
+          if (!puzzleId) {
+            continue; // Skip puzzles without valid ID
+          }
 
-          // Skip if puzzle is completed
-          if (completedPuzzles.has(puzzleId)) {
+          // Skip if puzzle is completed (normalize ID to string for consistent checking)
+          const normalizedId = String(puzzleId);
+          if (this.isPuzzleCompleted(normalizedId)) {
             continue;
           }
 
@@ -2018,6 +2045,35 @@ export const useQueensStore = defineStore('queens', {
       // Clear error state
       this.errorSquares.clear();
       this.flaggedGroupTimestamps.clear();
+    },
+
+    startProgressSaving() {
+      // Clear any existing interval
+      this.stopProgressSaving();
+
+      // Save immediately
+      if (this.currentPuzzleId !== null && !this.isComplete) {
+        const startTime = this.isSpeedMode ? this.speedModePuzzleStartTime : this.puzzleStartTime;
+        savePuzzleProgress(this.currentPuzzleId, this.playerMarks, startTime);
+      }
+
+      // Then save periodically every second
+      this.progressSaveInterval = window.setInterval(() => {
+        if (this.currentPuzzleId !== null && !this.isComplete) {
+          const startTime = this.isSpeedMode ? this.speedModePuzzleStartTime : this.puzzleStartTime;
+          savePuzzleProgress(this.currentPuzzleId, this.playerMarks, startTime);
+        } else {
+          // Stop saving if puzzle is complete
+          this.stopProgressSaving();
+        }
+      }, 1000);
+    },
+
+    stopProgressSaving() {
+      if (this.progressSaveInterval !== null) {
+        clearInterval(this.progressSaveInterval);
+        this.progressSaveInterval = null;
+      }
     },
   },
 });

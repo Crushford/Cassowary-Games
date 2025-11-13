@@ -1,15 +1,11 @@
 <template>
   <Modal :is-visible="isVisible" @close="handleClose">
     <div>
-      <h2 class="text-2xl font-bold text-yellow-400 mb-4">Time's Up! ⏰</h2>
+      <h2 v-if="speedRoundHeading" class="text-2xl font-bold text-yellow-400 mb-4">
+        {{ speedRoundHeading }}
+      </h2>
       <p class="text-white mb-6 font-semibold text-xl">
         Total Completed: {{ queensStore.speedModeCompletedCount }}
-      </p>
-      <p
-        v-if="queensStore.speedModeTimerDuration !== null"
-        class="text-white mb-6 font-semibold text-lg"
-      >
-        Time Completed: {{ queensStore.getFormattedSpeedModeCompletionTime }}
       </p>
 
       <!-- New Record Message (for 2-minute and 5-minute modes) -->
@@ -107,6 +103,12 @@ const sizeBreakdown = computed(() => {
     const bSize = parseInt(b[0].split('x')[0], 10);
     return aSize - bSize;
   });
+});
+
+const speedRoundHeading = computed(() => {
+  if (queensStore.speedModeTimerDuration === null) return null;
+  const minutes = queensStore.speedModeTimerDuration / 60;
+  return `${minutes}min speed round`;
 });
 
 function handleClose() {

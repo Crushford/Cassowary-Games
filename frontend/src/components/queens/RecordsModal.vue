@@ -82,16 +82,16 @@
         </div>
       </div>
 
-      <div class="flex gap-3 justify-end">
+      <div class="flex gap-3 justify-between">
         <button
           @click="handleResetRecords"
-          class="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-semibold rounded-lg transition-colors duration-200"
+          class="px-2 py-1 text-xs bg-red-600 hover:bg-red-500 text-white font-semibold rounded transition-colors duration-200"
         >
           Reset Records
         </button>
         <button
           @click="$emit('close')"
-          class="px-6 py-3 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
+          class="px-2 py-1 text-xs bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-semibold rounded transition-colors duration-200"
         >
           Close
         </button>
