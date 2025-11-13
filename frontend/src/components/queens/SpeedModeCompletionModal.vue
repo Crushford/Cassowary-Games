@@ -2,7 +2,6 @@
   <Modal :is-visible="isVisible" @close="handleClose">
     <div>
       <h2 class="text-2xl font-bold text-yellow-400 mb-4">Time's Up! ⏰</h2>
-      <p class="text-white mb-2">Great job completing puzzles!</p>
       <p class="text-white mb-6 font-semibold text-xl">
         Total Completed: {{ queensStore.speedModeCompletedCount }}
       </p>
@@ -13,6 +12,9 @@
         class="mb-6 p-4 bg-yellow-500 bg-opacity-20 border-2 border-yellow-500 rounded-lg"
       >
         <p class="text-yellow-400 font-bold text-lg text-center">🎉 New Record! 🎉</p>
+        <p class="text-yellow-300 text-sm text-center mt-1">
+          You've completed {{ queensStore.speedModeCompletedCount }} puzzles
+        </p>
         <p class="text-yellow-300 text-sm text-center mt-1">
           Previous record: {{ queensStore.speedModePreviousRecord }}
         </p>

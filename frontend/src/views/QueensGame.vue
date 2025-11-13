@@ -26,7 +26,7 @@
     />
 
     <!-- Game Info Display -->
-    <div class="flex-none p-4">
+    <div class="flex-none p-2">
       <div class="max-w-full">
         <QueensHeader v-if="!queensStore.isSpeedMode" />
         <SpeedModeHeader v-if="queensStore.isSpeedMode" />

@@ -1,24 +1,25 @@
 <template>
-  <div class="mb-3 p-3 bg-yellow-900 bg-opacity-50 rounded-lg">
+  <div class="p-3 bg-yellow-900 bg-opacity-50 rounded-lg">
     <div class="flex justify-between items-center mb-2">
       <span class="text-yellow-400 font-semibold">⚡ Speed Mode</span>
+      <span class="text-yellow-200 text-sm">
+        Completed: {{ queensStore.speedModeCompletedCount }}
+      </span>
       <span class="text-yellow-300 font-bold">{{
         formatTime(queensStore.speedModeTimeRemaining || 0)
       }}</span>
     </div>
-    <div class="text-yellow-200 text-sm text-center mb-3">
-      Completed: {{ queensStore.speedModeCompletedCount }}
-    </div>
+
     <div class="flex gap-2">
       <button
         @click="handleEndRound"
-        class="flex-1 py-2 px-4 bg-red-600 hover:bg-red-500 text-white font-semibold text-sm rounded-lg transition-colors duration-200"
+        class="flex-1 p-1 bg-red-600 hover:bg-red-500 text-white font-semibold text-sm rounded-lg transition-colors duration-200"
       >
         End Round
       </button>
       <button
         @click="handleRestart"
-        class="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm rounded-lg transition-colors duration-200"
+        class="flex-1 p-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm rounded-lg transition-colors duration-200"
       >
         Restart
       </button>
