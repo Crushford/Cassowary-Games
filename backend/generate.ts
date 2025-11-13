@@ -1145,6 +1145,29 @@ function experimentCreateValidBoard(
 }
 
 function main() {
+  // First, show total number of puzzles for each size
+  const stats = puzzleDatabase.getStats()
+  const sizeCounts = puzzleDatabase.getSizeCounts()
+
+  console.log('\n=== Puzzle Database Summary ===')
+  if (stats.totalPuzzles === 0) {
+    console.log('No puzzles in database')
+  } else {
+    // Sort sizes numerically
+    const sortedSizes = Object.keys(sizeCounts).sort((a, b) => {
+      const aSize = parseInt(a.split('x')[0], 10)
+      const bSize = parseInt(b.split('x')[0], 10)
+      return aSize - bSize
+    })
+
+    console.log(`Total puzzles: ${stats.totalPuzzles}`)
+    console.log('\nPuzzles by size:')
+    for (const sizeKey of sortedSizes) {
+      console.log(`  ${sizeKey}: ${sizeCounts[sizeKey]}`)
+    }
+  }
+  console.log('')
+
   // Check command line arguments for different modes
   const args = process.argv.slice(2)
   const command = args[0]
@@ -1176,11 +1199,14 @@ function main() {
   // Set verbose mode for puzzle database
   puzzleDatabase.setVerbose(VERBOSE)
 
-  // If size was not explicitly set, use the size with the lowest puzzle count
+  // Track whether size was explicitly set by user
+  const sizeExplicitlySet = size !== null
+
+  // If size was not explicitly set, we'll check the lowest count before each puzzle generation
   if (size === null) {
-    size = puzzleDatabase.getSizeWithLowestCount([5, 6, 7, 8])
+    size = puzzleDatabase.getSizeWithLowestCount([5, 6, 7, 8, 9])
     logVerbose(
-      `No size specified, auto-selecting size ${size}x${size} (lowest puzzle count)`
+      `No size specified, will auto-select size with lowest puzzle count before each puzzle`
     )
   }
 
@@ -1261,8 +1287,38 @@ function main() {
     const sizeCounts: Record<number, number> = {} // Track puzzles by size
     let addedCount = 0
     let duplicateCount = 0
+    const consecutiveDuplicatesBySize: Record<number, number> = {} // Track consecutive duplicates per size
+    const exhaustedSizes = new Set<number>() // Track sizes that are exhausted (10+ consecutive duplicates)
 
     for (let i = 0; i < batchSize; i++) {
+      // If size wasn't explicitly set, check which size has the lowest count before each puzzle
+      // Skip exhausted sizes
+      if (!sizeExplicitlySet) {
+        const availableSizes = [4, 5, 6, 7, 8].filter(
+          s => !exhaustedSizes.has(s)
+        )
+        if (availableSizes.length === 0) {
+          console.log(
+            `\n⚠️  All sizes exhausted (10+ consecutive duplicates each). Stopping generation.`
+          )
+          break
+        }
+        size = puzzleDatabase.getSizeWithLowestCount(availableSizes)
+        logVerbose(
+          `Auto-selected size ${size}x${size} for puzzle ${
+            i + 1
+          } (lowest puzzle count)`
+        )
+      } else {
+        // If size is explicitly set and exhausted, warn and break
+        if (exhaustedSizes.has(size)) {
+          console.log(
+            `\n⚠️  Size ${size}x${size} is exhausted (10+ consecutive duplicates). Stopping generation.`
+          )
+          break
+        }
+      }
+
       logVerbose(`\n--- Generating puzzle ${i + 1}/${batchSize} ---`)
       console.log(
         `Generating puzzle ${i + 1}/${batchSize} (${size}x${size})...`
@@ -1284,6 +1340,8 @@ function main() {
       if (grid) {
         const wasAdded = puzzleDatabase.addPuzzle(grid)
         if (wasAdded) {
+          // Successfully added - reset consecutive duplicates for this size
+          consecutiveDuplicatesBySize[size] = 0
           addedCount++
           sizeCounts[size] = (sizeCounts[size] || 0) + 1
           const stats = puzzleDatabase.getStats()
@@ -1295,8 +1353,33 @@ function main() {
             } puzzles`
           )
         } else {
+          // Duplicate - increment consecutive duplicates counter
           duplicateCount++
-          console.log(`  ⚠️  Puzzle ${i + 1} was duplicate, skipped`)
+          consecutiveDuplicatesBySize[size] =
+            (consecutiveDuplicatesBySize[size] || 0) + 1
+          const consecutiveCount = consecutiveDuplicatesBySize[size]
+          console.log(
+            `  ⚠️  Puzzle ${
+              i + 1
+            } was duplicate, skipped (${consecutiveCount} consecutive duplicates for ${size}x${size})`
+          )
+
+          // If we hit 10 consecutive duplicates, mark this size as exhausted
+          if (consecutiveCount >= 10) {
+            exhaustedSizes.add(size)
+            console.log(
+              `  ⛔ Size ${size}x${size} exhausted (10 consecutive duplicates). Moving to next size.`
+            )
+
+            // If size was explicitly set, break the loop
+            if (sizeExplicitlySet) {
+              console.log(
+                `\n⚠️  Size ${size}x${size} is exhausted. Stopping generation.`
+              )
+              break
+            }
+            // Otherwise, continue to next iteration which will auto-select a new size
+          }
         }
       }
     }
@@ -1325,8 +1408,26 @@ function main() {
       if (duplicateCount > 0) {
         console.log(`⚠️  ${duplicateCount} puzzle(s) were duplicates`)
       }
+      if (exhaustedSizes.size > 0) {
+        const exhaustedList = Array.from(exhaustedSizes)
+          .sort((a, b) => a - b)
+          .map(s => `${s}x${s}`)
+          .join(', ')
+        console.log(
+          `⛔ Exhausted sizes (10+ consecutive duplicates): ${exhaustedList}`
+        )
+      }
     } else {
       console.log(`\n❌ Failed to generate any puzzles`)
+      if (exhaustedSizes.size > 0) {
+        const exhaustedList = Array.from(exhaustedSizes)
+          .sort((a, b) => a - b)
+          .map(s => `${s}x${s}`)
+          .join(', ')
+        console.log(
+          `⛔ Exhausted sizes (10+ consecutive duplicates): ${exhaustedList}`
+        )
+      }
     }
 
     // Output detailed summary only in verbose mode
@@ -1368,20 +1469,50 @@ function main() {
     )
   }
 
+  // Track consecutive duplicates for single puzzle generation
+  const consecutiveDuplicatesBySize: Record<number, number> = {}
+  const exhaustedSizes = new Set<number>()
+
+  // Check if current size is exhausted
+  if (exhaustedSizes.has(size)) {
+    console.log(
+      `⚠️  Size ${size}x${size} is exhausted (10+ consecutive duplicates).`
+    )
+    console.log(`Try a different size or use auto-selection.`)
+    process.exit(1)
+  }
+
   const { success, grid, error, diagnostics } = experimentCreateValidBoard(size)
 
   if (success && grid) {
     const wasAdded = puzzleDatabase.addPuzzle(grid)
     const stats = puzzleDatabase.getStats()
     if (wasAdded) {
+      // Reset consecutive duplicates on success
+      consecutiveDuplicatesBySize[size] = 0
       console.log(`✅ Generated 1 new puzzle (${size}x${size})`)
       console.log(`📊 Database now has ${stats.totalPuzzles} total puzzles`)
       if (VERBOSE) {
         console.log(`Generation attempts: ${summary.attempts}`)
       }
     } else {
-      console.log(`⚠️  Generated puzzle was duplicate, not saved`)
+      // Increment consecutive duplicates
+      consecutiveDuplicatesBySize[size] =
+        (consecutiveDuplicatesBySize[size] || 0) + 1
+      const consecutiveCount = consecutiveDuplicatesBySize[size]
+      console.log(
+        `⚠️  Generated puzzle was duplicate, not saved (${consecutiveCount} consecutive duplicates for ${size}x${size})`
+      )
       console.log(`📊 Database contains ${stats.totalPuzzles} puzzles`)
+
+      if (consecutiveCount >= 50) {
+        exhaustedSizes.add(size)
+        console.log(
+          `⛔ Size ${size}x${size} is now exhausted (10 consecutive duplicates).`
+        )
+        console.log(`Consider trying a different size or using auto-selection.`)
+      }
+
       if (VERBOSE) {
         console.log(`Generation attempts: ${summary.attempts}`)
       }

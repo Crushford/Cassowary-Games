@@ -428,6 +428,17 @@ export class PuzzleDatabase {
   }
 
   /**
+   * Get puzzle counts by size
+   */
+  getSizeCounts(): Record<string, number> {
+    const counts: Record<string, number> = {}
+    for (const [sizeKey, puzzles] of Object.entries(this.puzzles)) {
+      counts[sizeKey] = puzzles.length
+    }
+    return counts
+  }
+
+  /**
    * Display database statistics
    */
   showStats(): void {
