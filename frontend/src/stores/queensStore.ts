@@ -1261,7 +1261,6 @@ export const useQueensStore = defineStore('queens', {
     },
 
     clearMarkers() {
-
       // Stop error checking (this also clears error messages)
       this.stopErrorChecking();
 
