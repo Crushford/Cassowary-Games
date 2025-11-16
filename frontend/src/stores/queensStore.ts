@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia';
 import type { GridSquare, Pos, MarkType, ColorName } from '../types/types';
 import { COLOR_SYMBOLS } from '../utils/colorPalette';
-import { createEmptyGrid, clearMarkers, isValidPosition, clonePlayerMarks } from './gridUtils';
+import { createEmptyGrid, isValidPosition, clonePlayerMarks } from './gridUtils';
+import { removeQueenPlacement, replayHistoryFromEntries } from '../utils/queenRemoval';
 import router from '../router';
 
 // Create reverse mapping from symbols to color names
@@ -762,16 +763,17 @@ export const useQueensStore = defineStore('queens', {
         // This ensures we have all queens that were placed after the one we're removing
         this.saveToHistory();
 
-        const placementIndex = this.findQueenPlacementIndex(row, col);
+        const result = removeQueenPlacement(
+          this.moveHistory,
+          row,
+          col,
+          this.grid,
+          this.gridSize,
+          this.uiState.autoFlagging
+        );
 
-        if (placementIndex !== null) {
-          this.undoQueenPlacement(placementIndex, row, col);
-        } else {
-          this.playerMarks[row][col] = null;
-          if (this.uiState.autoFlagging) {
-            this.updateBlockedMoves();
-          }
-        }
+        this.playerMarks = result.newBoard;
+        this.moveHistory = result.newHistory;
       } else {
         this.saveToHistory();
         this.playerMarks[row][col] = null;
@@ -783,199 +785,8 @@ export const useQueensStore = defineStore('queens', {
       this.checkBoardCompletion();
     },
 
-    findQueenPlacementIndex(row: number, col: number): number | null {
-      // Search backwards to find where this specific queen was LAST placed
-      for (let i = this.moveHistory.length - 2; i >= 0; i--) {
-        const beforeHasQueen = this.moveHistory[i]?.[row]?.[col] === 'queen';
-        const afterHasQueen = this.moveHistory[i + 1]?.[row]?.[col] === 'queen';
-
-        // Find where this queen was placed (transition from not present to present)
-        if (!beforeHasQueen && afterHasQueen) {
-          return i;
-        }
-      }
-
-      // Check if queen exists in the very first history entry (was placed before any history was saved)
-      if (this.moveHistory.length > 0 && this.moveHistory[0]?.[row]?.[col] === 'queen') {
-        return 0;
-      }
-
-      return null;
-    },
-
-    undoQueenPlacement(placementIndex: number, row: number, col: number) {
-      // Create a clean copy of the board (empty)
-      const virtualBoard = Array.from({ length: this.gridSize }, () =>
-        Array(this.gridSize).fill(null as MarkType)
-      );
-
-      // Remove the history entries related to this queen placement
-      const entriesToRemove = placementIndex + 1 < this.moveHistory.length ? 2 : 1;
-      const newHistory = [...this.moveHistory];
-      newHistory.splice(placementIndex, entriesToRemove);
-
-      // Replay all moves from history except the removed queen placement
-      if (newHistory.length > 0) {
-        // Start from the first history entry (empty board)
-        let currentState = clonePlayerMarks(newHistory[0]);
-
-        // Replay each move by comparing consecutive history states
-        for (let i = 0; i < newHistory.length - 1; i++) {
-          const beforeState = newHistory[i];
-          const afterState = newHistory[i + 1];
-
-          if (!beforeState || !afterState) continue;
-
-          // Find what changed between these two states
-          const changes: Array<{ row: number; col: number; from: MarkType; to: MarkType }> = [];
-          for (let r = 0; r < this.gridSize; r++) {
-            if (!beforeState[r] || !afterState[r]) continue;
-            for (let c = 0; c < this.gridSize; c++) {
-              const beforeMark = beforeState[r]?.[c];
-              const afterMark = afterState[r]?.[c];
-              if (beforeMark !== afterMark) {
-                changes.push({ row: r, col: c, from: beforeMark, to: afterMark });
-              }
-            }
-          }
-
-          // Apply changes: removals first, then flags, then queens (with auto-flagging)
-          const removals = changes.filter((c) => c.to === null);
-          const flags = changes.filter((c) => c.to === 'flag');
-          const queens = changes.filter((c) => c.to === 'queen');
-
-          for (const change of removals) {
-            currentState[change.row][change.col] = null;
-          }
-          for (const change of flags) {
-            currentState[change.row][change.col] = 'flag';
-          }
-          for (const change of queens) {
-            currentState[change.row][change.col] = 'queen';
-            if (this.uiState.autoFlagging) {
-              this.applyAutoFlagging(currentState, change.row, change.col);
-            }
-          }
-        }
-
-        // Use the replayed state (not the last history entry, as it might still contain the removed queen)
-        virtualBoard.splice(0, this.gridSize, ...currentState);
-
-        // Double-check: ensure the removed queen is not in the virtual board
-        if (virtualBoard[row]?.[col] === 'queen') {
-          virtualBoard[row][col] = null;
-          if (this.uiState.autoFlagging) {
-            // Clear all flags and recalculate based on remaining queens
-            for (let r = 0; r < this.gridSize; r++) {
-              for (let c = 0; c < this.gridSize; c++) {
-                if (virtualBoard[r]?.[c] === 'flag') {
-                  virtualBoard[r][c] = null;
-                }
-              }
-            }
-            // Reapply auto-flagging for all remaining queens
-            for (let r = 0; r < this.gridSize; r++) {
-              for (let c = 0; c < this.gridSize; c++) {
-                if (virtualBoard[r]?.[c] === 'queen') {
-                  this.applyAutoFlagging(virtualBoard, r, c);
-                }
-              }
-            }
-          }
-        }
-      }
-
-      // Replace the actual board with the virtual board
-      this.playerMarks = virtualBoard;
-      this.moveHistory = newHistory;
-    },
-
     replayHistory(history: MarkType[][][]): MarkType[][] {
-      // If there's no history, return empty board
-      if (history.length === 0) {
-        return Array.from({ length: this.gridSize }, () =>
-          Array(this.gridSize).fill(null as MarkType)
-        );
-      }
-
-      // Start from the first history entry (initial state)
-      if (!history[0] || history[0].length !== this.gridSize) {
-        return Array.from({ length: this.gridSize }, () =>
-          Array(this.gridSize).fill(null as MarkType)
-        );
-      }
-
-      let currentState = clonePlayerMarks(history[0]);
-
-      // Replay each move by comparing consecutive history states
-      // Apply changes incrementally, one move at a time
-      for (let i = 0; i < history.length - 1; i++) {
-        const beforeState = history[i];
-        const afterState = history[i + 1];
-
-        // Safety check: ensure states are valid
-        if (
-          !beforeState ||
-          !afterState ||
-          beforeState.length !== this.gridSize ||
-          afterState.length !== this.gridSize
-        ) {
-          continue;
-        }
-
-        // Find what changed - but only apply ONE change at a time (the actual move)
-        // History entries represent states before each move, so the change between
-        // history[i] and history[i+1] represents move i+1
-        let moveApplied = false;
-        for (let r = 0; r < this.gridSize && !moveApplied; r++) {
-          if (!beforeState[r] || !afterState[r] || !currentState[r]) continue;
-          for (let c = 0; c < this.gridSize && !moveApplied; c++) {
-            const beforeMark = beforeState[r]?.[c];
-            const afterMark = afterState[r]?.[c];
-
-            // Only apply the first change we find (the actual move)
-            if (beforeMark !== afterMark) {
-              currentState[r][c] = afterMark;
-
-              // If a queen was placed, auto-flag blocked squares
-              if (afterMark === 'queen' && this.uiState.autoFlagging) {
-                this.applyAutoFlagging(currentState, r, c);
-              }
-
-              moveApplied = true;
-            }
-          }
-        }
-
-        // If no single move was found, it means multiple things changed at once
-        // This can happen when auto-flagging adds multiple flags, or when loading saved state
-        if (!moveApplied) {
-          const changes: Array<{ row: number; col: number; from: MarkType; to: MarkType }> = [];
-          for (let r = 0; r < this.gridSize; r++) {
-            if (!beforeState[r] || !afterState[r] || !currentState[r]) continue;
-            for (let c = 0; c < this.gridSize; c++) {
-              const beforeMark = beforeState[r]?.[c];
-              const afterMark = afterState[r]?.[c];
-              if (beforeMark !== afterMark) {
-                changes.push({ row: r, col: c, from: beforeMark, to: afterMark });
-                currentState[r][c] = afterMark;
-                if (afterMark === 'queen' && this.uiState.autoFlagging) {
-                  this.applyAutoFlagging(currentState, r, c);
-                }
-              }
-            }
-          }
-        }
-      }
-
-      // Use the last history entry as the source of truth
-      // It represents the state after all moves except the removed one
-      const lastState = history[history.length - 1];
-      if (lastState && lastState.length === this.gridSize) {
-        return clonePlayerMarks(lastState);
-      }
-
-      return currentState;
+      return replayHistoryFromEntries(history, this.grid, this.gridSize, this.uiState.autoFlagging);
     },
 
     applyAutoFlagging(playerMarks: MarkType[][], queenRow: number, queenCol: number) {
