@@ -11,12 +11,25 @@
 
     <!-- Tutorial Toast -->
     <Toast
-      v-if="queensStore.isTutorialMode && queensStore.tutorialInstruction"
+      v-if="
+        queensStore.isTutorialMode && queensStore.tutorialInstruction && !queensStore.errorMessage
+      "
       :message="queensStore.tutorialInstruction"
       :should-shake="queensStore.shouldShakeToast"
       id="tutorial-instruction"
       role="alert"
       aria-live="polite"
+    />
+
+    <!-- Error Toast -->
+    <Toast
+      v-if="queensStore.errorMessage"
+      :message="queensStore.errorMessage"
+      :should-shake="shouldShakeErrorToast"
+      id="error-message"
+      role="alert"
+      aria-live="assertive"
+      variant="error"
     />
 
     <!-- Tutorial Overlay -->
@@ -119,6 +132,22 @@ const TutorialOverlay = defineAsyncComponent(
 const route = useRoute();
 const router = useRouter();
 const queensStore = useQueensStore();
+
+const shouldShakeErrorToast = ref(false);
+
+// Watch for error message changes and trigger shake
+watch(
+  () => queensStore.errorMessage,
+  (newMessage, oldMessage) => {
+    if (newMessage && !oldMessage) {
+      // Error just appeared, trigger shake
+      shouldShakeErrorToast.value = true;
+      setTimeout(() => {
+        shouldShakeErrorToast.value = false;
+      }, 500);
+    }
+  }
+);
 
 const showSpeedModeCompletionModal = computed(() => {
   return queensStore.isSpeedMode && queensStore.speedModeTimeRemaining === 0;

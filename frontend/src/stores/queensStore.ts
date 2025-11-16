@@ -77,6 +77,9 @@ interface QueensState {
   flaggedGroupTimestamps: Map<string, number>; // Map of group key -> timestamp when it became fully flagged
   errorCheckInterval: number | null; // Interval ID for periodic error checking
   progressSaveInterval: number | null; // Interval ID for periodic progress saving
+  // Error message toast
+  errorMessage: string | null; // Current error message to display in toast
+  errorMessageTimeout: number | null; // Timeout ID for auto-hiding error message
   // Puzzle timing (for individual puzzles, not speed mode)
   puzzleStartTime: number | null; // Timestamp when current puzzle started
   puzzleCompletionTime: number | null; // Completion time in seconds when puzzle was completed
@@ -397,6 +400,9 @@ export const useQueensStore = defineStore('queens', {
     flaggedGroupTimestamps: new Map<string, number>(),
     errorCheckInterval: null,
     progressSaveInterval: null,
+    // Error message toast
+    errorMessage: null,
+    errorMessageTimeout: null,
     // Puzzle timing
     puzzleStartTime: null,
     puzzleCompletionTime: null,
@@ -708,10 +714,12 @@ export const useQueensStore = defineStore('queens', {
     placeQueen(row: number, col: number) {
       this.saveToHistory();
       this.playerMarks[row][col] = 'queen';
+
       // Auto-flag blocked squares when placing a queen (if enabled)
       if (this.uiState.autoFlagging) {
         this.updateBlockedMoves();
       }
+
       // Save progress and history to localStorage
       savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
       savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
@@ -748,31 +756,299 @@ export const useQueensStore = defineStore('queens', {
 
     removeMark(row: number, col: number) {
       const wasQueen = this.playerMarks[row][col] === 'queen';
-      this.saveToHistory();
-      this.playerMarks[row][col] = null;
 
-      // If we removed a queen, recalculate blocked moves
       if (wasQueen) {
-        // Clear all flags first, then recalculate
-        for (let r = 0; r < this.gridSize; r++) {
-          for (let c = 0; c < this.gridSize; c++) {
-            if (this.playerMarks[r][c] === 'flag') {
-              this.playerMarks[r][c] = null;
+        // Save current state to history FIRST, so we have the latest state before removal
+        // This ensures we have all queens that were placed after the one we're removing
+        this.saveToHistory();
+
+        const placementIndex = this.findQueenPlacementIndex(row, col);
+
+        if (placementIndex !== null) {
+          this.undoQueenPlacement(placementIndex, row, col);
+        } else {
+          this.playerMarks[row][col] = null;
+          if (this.uiState.autoFlagging) {
+            this.updateBlockedMoves();
+          }
+        }
+      } else {
+        this.saveToHistory();
+        this.playerMarks[row][col] = null;
+      }
+
+      savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
+      savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
+      this.checkFullyFlaggedGroups();
+      this.checkBoardCompletion();
+    },
+
+    findQueenPlacementIndex(row: number, col: number): number | null {
+      // Search backwards to find where this specific queen was LAST placed
+      for (let i = this.moveHistory.length - 2; i >= 0; i--) {
+        const beforeHasQueen = this.moveHistory[i]?.[row]?.[col] === 'queen';
+        const afterHasQueen = this.moveHistory[i + 1]?.[row]?.[col] === 'queen';
+
+        // Find where this queen was placed (transition from not present to present)
+        if (!beforeHasQueen && afterHasQueen) {
+          return i;
+        }
+      }
+
+      // Check if queen exists in the very first history entry (was placed before any history was saved)
+      if (this.moveHistory.length > 0 && this.moveHistory[0]?.[row]?.[col] === 'queen') {
+        return 0;
+      }
+
+      return null;
+    },
+
+    undoQueenPlacement(placementIndex: number, row: number, col: number) {
+      // Create a clean copy of the board (empty)
+      const virtualBoard = Array.from({ length: this.gridSize }, () =>
+        Array(this.gridSize).fill(null as MarkType)
+      );
+
+      // Remove the history entries related to this queen placement
+      const entriesToRemove = placementIndex + 1 < this.moveHistory.length ? 2 : 1;
+      const newHistory = [...this.moveHistory];
+      newHistory.splice(placementIndex, entriesToRemove);
+
+      // Replay all moves from history except the removed queen placement
+      if (newHistory.length > 0) {
+        // Start from the first history entry (empty board)
+        let currentState = clonePlayerMarks(newHistory[0]);
+
+        // Replay each move by comparing consecutive history states
+        for (let i = 0; i < newHistory.length - 1; i++) {
+          const beforeState = newHistory[i];
+          const afterState = newHistory[i + 1];
+
+          if (!beforeState || !afterState) continue;
+
+          // Find what changed between these two states
+          const changes: Array<{ row: number; col: number; from: MarkType; to: MarkType }> = [];
+          for (let r = 0; r < this.gridSize; r++) {
+            if (!beforeState[r] || !afterState[r]) continue;
+            for (let c = 0; c < this.gridSize; c++) {
+              const beforeMark = beforeState[r]?.[c];
+              const afterMark = afterState[r]?.[c];
+              if (beforeMark !== afterMark) {
+                changes.push({ row: r, col: c, from: beforeMark, to: afterMark });
+              }
+            }
+          }
+
+          // Apply changes: removals first, then flags, then queens (with auto-flagging)
+          const removals = changes.filter((c) => c.to === null);
+          const flags = changes.filter((c) => c.to === 'flag');
+          const queens = changes.filter((c) => c.to === 'queen');
+
+          for (const change of removals) {
+            currentState[change.row][change.col] = null;
+          }
+          for (const change of flags) {
+            currentState[change.row][change.col] = 'flag';
+          }
+          for (const change of queens) {
+            currentState[change.row][change.col] = 'queen';
+            if (this.uiState.autoFlagging) {
+              this.applyAutoFlagging(currentState, change.row, change.col);
             }
           }
         }
-        // Re-flag based on remaining queens (if auto-flagging is enabled)
-        if (this.uiState.autoFlagging) {
-          this.updateBlockedMoves();
+
+        // Use the replayed state (not the last history entry, as it might still contain the removed queen)
+        virtualBoard.splice(0, this.gridSize, ...currentState);
+
+        // Double-check: ensure the removed queen is not in the virtual board
+        if (virtualBoard[row]?.[col] === 'queen') {
+          virtualBoard[row][col] = null;
+          if (this.uiState.autoFlagging) {
+            // Clear all flags and recalculate based on remaining queens
+            for (let r = 0; r < this.gridSize; r++) {
+              for (let c = 0; c < this.gridSize; c++) {
+                if (virtualBoard[r]?.[c] === 'flag') {
+                  virtualBoard[r][c] = null;
+                }
+              }
+            }
+            // Reapply auto-flagging for all remaining queens
+            for (let r = 0; r < this.gridSize; r++) {
+              for (let c = 0; c < this.gridSize; c++) {
+                if (virtualBoard[r]?.[c] === 'queen') {
+                  this.applyAutoFlagging(virtualBoard, r, c);
+                }
+              }
+            }
+          }
         }
       }
-      // Save progress and history to localStorage
-      savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
-      savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
-      // Check for error conditions immediately
-      this.checkFullyFlaggedGroups();
-      // Check board completion when removing marks (queens might have been removed)
-      this.checkBoardCompletion();
+
+      // Replace the actual board with the virtual board
+      this.playerMarks = virtualBoard;
+      this.moveHistory = newHistory;
+    },
+
+    replayHistory(history: MarkType[][][]): MarkType[][] {
+      // If there's no history, return empty board
+      if (history.length === 0) {
+        return Array.from({ length: this.gridSize }, () =>
+          Array(this.gridSize).fill(null as MarkType)
+        );
+      }
+
+      // Start from the first history entry (initial state)
+      if (!history[0] || history[0].length !== this.gridSize) {
+        return Array.from({ length: this.gridSize }, () =>
+          Array(this.gridSize).fill(null as MarkType)
+        );
+      }
+
+      let currentState = clonePlayerMarks(history[0]);
+
+      // Replay each move by comparing consecutive history states
+      // Apply changes incrementally, one move at a time
+      for (let i = 0; i < history.length - 1; i++) {
+        const beforeState = history[i];
+        const afterState = history[i + 1];
+
+        // Safety check: ensure states are valid
+        if (
+          !beforeState ||
+          !afterState ||
+          beforeState.length !== this.gridSize ||
+          afterState.length !== this.gridSize
+        ) {
+          continue;
+        }
+
+        // Find what changed - but only apply ONE change at a time (the actual move)
+        // History entries represent states before each move, so the change between
+        // history[i] and history[i+1] represents move i+1
+        let moveApplied = false;
+        for (let r = 0; r < this.gridSize && !moveApplied; r++) {
+          if (!beforeState[r] || !afterState[r] || !currentState[r]) continue;
+          for (let c = 0; c < this.gridSize && !moveApplied; c++) {
+            const beforeMark = beforeState[r]?.[c];
+            const afterMark = afterState[r]?.[c];
+
+            // Only apply the first change we find (the actual move)
+            if (beforeMark !== afterMark) {
+              currentState[r][c] = afterMark;
+
+              // If a queen was placed, auto-flag blocked squares
+              if (afterMark === 'queen' && this.uiState.autoFlagging) {
+                this.applyAutoFlagging(currentState, r, c);
+              }
+
+              moveApplied = true;
+            }
+          }
+        }
+
+        // If no single move was found, it means multiple things changed at once
+        // This can happen when auto-flagging adds multiple flags, or when loading saved state
+        if (!moveApplied) {
+          const changes: Array<{ row: number; col: number; from: MarkType; to: MarkType }> = [];
+          for (let r = 0; r < this.gridSize; r++) {
+            if (!beforeState[r] || !afterState[r] || !currentState[r]) continue;
+            for (let c = 0; c < this.gridSize; c++) {
+              const beforeMark = beforeState[r]?.[c];
+              const afterMark = afterState[r]?.[c];
+              if (beforeMark !== afterMark) {
+                changes.push({ row: r, col: c, from: beforeMark, to: afterMark });
+                currentState[r][c] = afterMark;
+                if (afterMark === 'queen' && this.uiState.autoFlagging) {
+                  this.applyAutoFlagging(currentState, r, c);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Use the last history entry as the source of truth
+      // It represents the state after all moves except the removed one
+      const lastState = history[history.length - 1];
+      if (lastState && lastState.length === this.gridSize) {
+        return clonePlayerMarks(lastState);
+      }
+
+      return currentState;
+    },
+
+    applyAutoFlagging(playerMarks: MarkType[][], queenRow: number, queenCol: number) {
+      // Flag all squares blocked by this queen
+      for (let r = 0; r < this.gridSize; r++) {
+        for (let c = 0; c < this.gridSize; c++) {
+          // Only flag squares that are currently unmarked
+          if (playerMarks[r][c] === null) {
+            // Check if this square is blocked by the queen
+            if (!this.isValidMoveWithMarks(r, c, playerMarks)) {
+              playerMarks[r][c] = 'flag';
+            }
+          }
+        }
+      }
+    },
+
+    isValidMoveWithMarks(row: number, col: number, playerMarks: MarkType[][]): boolean {
+      const square = this.grid[row][col];
+
+      // Check if there's a queen in the same row or column
+      for (let i = 0; i < this.gridSize; i++) {
+        if (playerMarks[row][i] === 'queen' || playerMarks[i][col] === 'queen') {
+          return false;
+        }
+      }
+
+      // Check diagonally adjacent squares (one square away)
+      const diagonalPositions = [
+        { r: row - 1, c: col - 1 },
+        { r: row - 1, c: col + 1 },
+        { r: row + 1, c: col - 1 },
+        { r: row + 1, c: col + 1 },
+      ];
+
+      for (const pos of diagonalPositions) {
+        if (isValidPosition(this.grid, pos.r, pos.c) && playerMarks[pos.r][pos.c] === 'queen') {
+          return false;
+        }
+      }
+
+      // Check color group (if the square has a group color)
+      if (square.groupColor) {
+        for (let r = 0; r < this.gridSize; r++) {
+          for (let c = 0; c < this.gridSize; c++) {
+            if (playerMarks[r][c] === 'queen' && this.grid[r][c].groupColor === square.groupColor) {
+              return false;
+            }
+          }
+        }
+      }
+
+      return true;
+    },
+
+    countFlags(playerMarks: MarkType[][]): number {
+      let count = 0;
+      for (let r = 0; r < playerMarks.length; r++) {
+        for (let c = 0; c < playerMarks[r].length; c++) {
+          if (playerMarks[r][c] === 'flag') count++;
+        }
+      }
+      return count;
+    },
+
+    countQueens(playerMarks: MarkType[][]): number {
+      let count = 0;
+      for (let r = 0; r < playerMarks.length; r++) {
+        for (let c = 0; c < playerMarks[r].length; c++) {
+          if (playerMarks[r][c] === 'queen') count++;
+        }
+      }
+      return count;
     },
 
     handleSquareClick(row: number, col: number) {
@@ -1197,7 +1473,12 @@ export const useQueensStore = defineStore('queens', {
     },
 
     clearMarkers() {
-      // Stop error checking
+      console.log(
+        '[clearMarkers] Clearing markers. History length before:',
+        this.moveHistory.length
+      );
+
+      // Stop error checking (this also clears error messages)
       this.stopErrorChecking();
 
       // Clear all marks by setting each cell to null
@@ -1208,8 +1489,10 @@ export const useQueensStore = defineStore('queens', {
       }
       this.isComplete = false;
       this.showSolution = false;
+
       // Clear history when clearing markers
       this.moveHistory = [];
+
       // Clear saved progress when clearing markers
       clearPuzzleProgress(this.currentPuzzleId);
 
@@ -1234,6 +1517,7 @@ export const useQueensStore = defineStore('queens', {
           }
         }
       }
+
       // Check for error conditions after auto-flagging
       this.checkFullyFlaggedGroups();
     },
@@ -2020,8 +2304,124 @@ export const useQueensStore = defineStore('queens', {
         }
       }
 
+      // Check for diagonally adjacent queens (touching diagonally)
+      const allQueenPositions: { row: number; col: number }[] = [];
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.playerMarks[row][col] === 'queen') {
+            allQueenPositions.push({ row, col });
+          }
+        }
+      }
+
+      // Check each queen against all others for diagonal adjacency
+      const diagonalConflicts = new Set<string>();
+      for (let i = 0; i < allQueenPositions.length; i++) {
+        const queen1 = allQueenPositions[i];
+        for (let j = i + 1; j < allQueenPositions.length; j++) {
+          const queen2 = allQueenPositions[j];
+          // Check if queens are diagonally adjacent (one square away diagonally)
+          const rowDiff = Math.abs(queen1.row - queen2.row);
+          const colDiff = Math.abs(queen1.col - queen2.col);
+          if (rowDiff === 1 && colDiff === 1) {
+            // Queens are diagonally touching, mark both as errors
+            diagonalConflicts.add(`${queen1.row},${queen1.col}`);
+            diagonalConflicts.add(`${queen2.row},${queen2.col}`);
+          }
+        }
+      }
+
+      // Add diagonal conflicts to error squares (no delay needed, show immediately)
+      for (const squareKey of diagonalConflicts) {
+        errorSquaresSet.add(squareKey);
+      }
+
+      // Show error messages for detected errors
+      this.showErrorMessages(errorSquaresSet, allQueenPositions, diagonalConflicts.size > 0);
+
       // Update error squares
       this.errorSquares = errorSquaresSet;
+    },
+
+    showErrorMessages(
+      errorSquares: Set<string>,
+      queenPositions: { row: number; col: number }[],
+      hasDiagonalConflicts: boolean
+    ) {
+      // Clear any existing timeout
+      if (this.errorMessageTimeout !== null) {
+        clearTimeout(this.errorMessageTimeout);
+        this.errorMessageTimeout = null;
+      }
+
+      // If no errors, clear message
+      if (errorSquares.size === 0) {
+        this.errorMessage = null;
+        return;
+      }
+
+      // Determine which error type to show (prioritize diagonal conflicts)
+      let message: string | null = null;
+
+      if (hasDiagonalConflicts) {
+        message = 'Queens cannot touch diagonally';
+      } else {
+        // Check for multiple queens in rows
+        for (let row = 0; row < this.gridSize; row++) {
+          const queensInRow = queenPositions.filter((q) => q.row === row);
+          if (queensInRow.length > 1) {
+            message = 'Only 1 queen per row';
+            break;
+          }
+        }
+
+        // Check for multiple queens in columns
+        if (!message) {
+          for (let col = 0; col < this.gridSize; col++) {
+            const queensInCol = queenPositions.filter((q) => q.col === col);
+            if (queensInCol.length > 1) {
+              message = 'Only 1 queen per column';
+              break;
+            }
+          }
+        }
+
+        // Check for multiple queens in color groups
+        if (!message) {
+          const colorGroups: { [color: string]: { row: number; col: number }[] } = {};
+          for (let row = 0; row < this.gridSize; row++) {
+            for (let col = 0; col < this.gridSize; col++) {
+              const color = this.grid[row][col].groupColor;
+              if (!color) continue;
+              if (!colorGroups[color]) {
+                colorGroups[color] = [];
+              }
+              colorGroups[color].push({ row, col });
+            }
+          }
+
+          for (const color in colorGroups) {
+            const squares = colorGroups[color];
+            const queensInColor = queenPositions.filter((q) =>
+              squares.some((s) => s.row === q.row && s.col === q.col)
+            );
+            if (queensInColor.length > 1) {
+              message = 'Only 1 queen per color group';
+              break;
+            }
+          }
+        }
+      }
+
+      // Only update message if it changed (to avoid flickering)
+      if (message !== this.errorMessage) {
+        this.errorMessage = message;
+        // Auto-hide after 3 seconds
+        this.errorMessageTimeout = window.setTimeout(() => {
+          this.errorMessage = null;
+          this.errorMessageTimeout = null;
+        }, 3000);
+      }
     },
 
     startErrorChecking() {
@@ -2045,6 +2445,12 @@ export const useQueensStore = defineStore('queens', {
       // Clear error state
       this.errorSquares.clear();
       this.flaggedGroupTimestamps.clear();
+      // Clear error message
+      if (this.errorMessageTimeout !== null) {
+        clearTimeout(this.errorMessageTimeout);
+        this.errorMessageTimeout = null;
+      }
+      this.errorMessage = null;
     },
 
     startProgressSaving() {

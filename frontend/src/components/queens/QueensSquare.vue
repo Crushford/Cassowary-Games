@@ -77,7 +77,7 @@ const rowLabel = computed(() => String.fromCharCode(65 + props.rowIndex)); // A,
 const colLabel = computed(() => props.colIndex + 1); // 1-indexed
 
 const ariaLabel = computed(() => {
-  const mark = queensStore.playerMarks[props.rowIndex][props.colIndex];
+  const mark = queensStore.playerMarks[props.rowIndex]?.[props.colIndex];
   const color = gridCell.value?.groupColor || 'unknown';
   let label = `Square at row ${rowLabel.value}, column ${colLabel.value}, color ${color}`;
 
@@ -132,11 +132,11 @@ function handleClick() {
 }
 
 function shouldShowQueen(): boolean {
-  return queensStore.playerMarks[props.rowIndex][props.colIndex] === 'queen';
+  return queensStore.playerMarks[props.rowIndex]?.[props.colIndex] === 'queen';
 }
 
 function shouldShowFlag(): boolean {
-  return queensStore.playerMarks[props.rowIndex][props.colIndex] === 'flag';
+  return queensStore.playerMarks[props.rowIndex]?.[props.colIndex] === 'flag';
 }
 
 function getEmojiSizeClass() {
