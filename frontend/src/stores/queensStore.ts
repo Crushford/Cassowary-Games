@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia';
 import type { GridSquare, Pos, MarkType, ColorName } from '../types/types';
 import { COLOR_SYMBOLS } from '../utils/colorPalette';
-import { createEmptyGrid, clearMarkers, isValidPosition, clonePlayerMarks } from './gridUtils';
+import { createEmptyGrid, isValidPosition, clonePlayerMarks } from './gridUtils';
+import { removeQueenPlacement, replayHistoryFromEntries } from '../utils/queenRemoval';
 import router from '../router';
 
 // Create reverse mapping from symbols to color names
@@ -77,6 +78,9 @@ interface QueensState {
   flaggedGroupTimestamps: Map<string, number>; // Map of group key -> timestamp when it became fully flagged
   errorCheckInterval: number | null; // Interval ID for periodic error checking
   progressSaveInterval: number | null; // Interval ID for periodic progress saving
+  // Error message toast
+  errorMessage: string | null; // Current error message to display in toast
+  errorMessageTimeout: number | null; // Timeout ID for auto-hiding error message
   // Puzzle timing (for individual puzzles, not speed mode)
   puzzleStartTime: number | null; // Timestamp when current puzzle started
   puzzleCompletionTime: number | null; // Completion time in seconds when puzzle was completed
@@ -397,6 +401,9 @@ export const useQueensStore = defineStore('queens', {
     flaggedGroupTimestamps: new Map<string, number>(),
     errorCheckInterval: null,
     progressSaveInterval: null,
+    // Error message toast
+    errorMessage: null,
+    errorMessageTimeout: null,
     // Puzzle timing
     puzzleStartTime: null,
     puzzleCompletionTime: null,
@@ -708,10 +715,12 @@ export const useQueensStore = defineStore('queens', {
     placeQueen(row: number, col: number) {
       this.saveToHistory();
       this.playerMarks[row][col] = 'queen';
+
       // Auto-flag blocked squares when placing a queen (if enabled)
       if (this.uiState.autoFlagging) {
         this.updateBlockedMoves();
       }
+
       // Save progress and history to localStorage
       savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
       savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
@@ -748,31 +757,109 @@ export const useQueensStore = defineStore('queens', {
 
     removeMark(row: number, col: number) {
       const wasQueen = this.playerMarks[row][col] === 'queen';
-      this.saveToHistory();
-      this.playerMarks[row][col] = null;
 
-      // If we removed a queen, recalculate blocked moves
       if (wasQueen) {
-        // Clear all flags first, then recalculate
-        for (let r = 0; r < this.gridSize; r++) {
-          for (let c = 0; c < this.gridSize; c++) {
-            if (this.playerMarks[r][c] === 'flag') {
-              this.playerMarks[r][c] = null;
+        // Save current state to history FIRST, so we have the latest state before removal
+        // This ensures we have all queens that were placed after the one we're removing
+        this.saveToHistory();
+
+        const result = removeQueenPlacement(
+          this.moveHistory,
+          row,
+          col,
+          this.grid,
+          this.gridSize,
+          this.uiState.autoFlagging
+        );
+
+        this.playerMarks = result.newBoard;
+        this.moveHistory = result.newHistory;
+      } else {
+        this.saveToHistory();
+        this.playerMarks[row][col] = null;
+      }
+
+      savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
+      savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
+      this.checkFullyFlaggedGroups();
+      this.checkBoardCompletion();
+    },
+
+    replayHistory(history: MarkType[][][]): MarkType[][] {
+      return replayHistoryFromEntries(history, this.grid, this.gridSize, this.uiState.autoFlagging);
+    },
+
+    applyAutoFlagging(playerMarks: MarkType[][], queenRow: number, queenCol: number) {
+      // Flag all squares blocked by this queen
+      for (let r = 0; r < this.gridSize; r++) {
+        for (let c = 0; c < this.gridSize; c++) {
+          // Only flag squares that are currently unmarked
+          if (playerMarks[r][c] === null) {
+            // Check if this square is blocked by the queen
+            if (!this.isValidMoveWithMarks(r, c, playerMarks)) {
+              playerMarks[r][c] = 'flag';
             }
           }
         }
-        // Re-flag based on remaining queens (if auto-flagging is enabled)
-        if (this.uiState.autoFlagging) {
-          this.updateBlockedMoves();
+      }
+    },
+
+    isValidMoveWithMarks(row: number, col: number, playerMarks: MarkType[][]): boolean {
+      const square = this.grid[row][col];
+
+      // Check if there's a queen in the same row or column
+      for (let i = 0; i < this.gridSize; i++) {
+        if (playerMarks[row][i] === 'queen' || playerMarks[i][col] === 'queen') {
+          return false;
         }
       }
-      // Save progress and history to localStorage
-      savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
-      savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
-      // Check for error conditions immediately
-      this.checkFullyFlaggedGroups();
-      // Check board completion when removing marks (queens might have been removed)
-      this.checkBoardCompletion();
+
+      // Check diagonally adjacent squares (one square away)
+      const diagonalPositions = [
+        { r: row - 1, c: col - 1 },
+        { r: row - 1, c: col + 1 },
+        { r: row + 1, c: col - 1 },
+        { r: row + 1, c: col + 1 },
+      ];
+
+      for (const pos of diagonalPositions) {
+        if (isValidPosition(this.grid, pos.r, pos.c) && playerMarks[pos.r][pos.c] === 'queen') {
+          return false;
+        }
+      }
+
+      // Check color group (if the square has a group color)
+      if (square.groupColor) {
+        for (let r = 0; r < this.gridSize; r++) {
+          for (let c = 0; c < this.gridSize; c++) {
+            if (playerMarks[r][c] === 'queen' && this.grid[r][c].groupColor === square.groupColor) {
+              return false;
+            }
+          }
+        }
+      }
+
+      return true;
+    },
+
+    countFlags(playerMarks: MarkType[][]): number {
+      let count = 0;
+      for (let r = 0; r < playerMarks.length; r++) {
+        for (let c = 0; c < playerMarks[r].length; c++) {
+          if (playerMarks[r][c] === 'flag') count++;
+        }
+      }
+      return count;
+    },
+
+    countQueens(playerMarks: MarkType[][]): number {
+      let count = 0;
+      for (let r = 0; r < playerMarks.length; r++) {
+        for (let c = 0; c < playerMarks[r].length; c++) {
+          if (playerMarks[r][c] === 'queen') count++;
+        }
+      }
+      return count;
     },
 
     handleSquareClick(row: number, col: number) {
@@ -932,7 +1019,6 @@ export const useQueensStore = defineStore('queens', {
     },
 
     async loadPuzzleDatabase() {
-      console.log('[queensStore] loadPuzzleDatabase called');
       this.isLoadingPuzzles = true;
       this.loadingProgress = 0;
       this.loadingMessage = 'Loading puzzle database...';
@@ -943,7 +1029,6 @@ export const useQueensStore = defineStore('queens', {
           throw new Error(`Failed to load puzzles.json: ${response.status}`);
         }
         const data = await response.json();
-        console.log('[queensStore] Loaded puzzles.json, sizes:', Object.keys(data));
 
         // Just store the raw data. No filtering, no reordering, no maps.
         this.puzzleDatabase = data;
@@ -958,10 +1043,6 @@ export const useQueensStore = defineStore('queens', {
         this.isLoadingPuzzles = false;
         this.loadingProgress = 0;
         this.loadingMessage = '';
-
-        console.log('[queensStore] Database loaded (raw):', {
-          sizes: Object.keys(this.puzzleDatabase),
-        });
 
         return true;
       } catch (error) {
@@ -1157,47 +1238,30 @@ export const useQueensStore = defineStore('queens', {
     },
 
     async loadPuzzleById(puzzleId: string | number) {
-      console.log('[queensStore] loadPuzzleById called with:', puzzleId, typeof puzzleId);
       try {
-        console.log('[queensStore] Checking puzzleDatabase:', {
-          hasDatabase: !!this.puzzleDatabase,
-          mapSize: this.puzzleIdMap.size,
-        });
-
         if (!this.puzzleDatabase) {
-          console.log('[queensStore] Loading puzzle database...');
           const success = await this.loadPuzzleDatabase();
-          console.log('[queensStore] Database load result:', success);
           if (!success) {
             throw new Error('Failed to load puzzle database');
           }
         }
 
         const key = typeof puzzleId === 'string' ? puzzleId : String(puzzleId);
-        console.log('[queensStore] Using string key:', key);
-
         const puzzle = this.findPuzzleById(key);
-        console.log('[queensStore] Puzzle lookup result:', puzzle ? 'found' : 'not found');
 
         if (!puzzle) {
           throw new Error(`Puzzle with ID ${key} not found`);
         }
 
-        console.log('[queensStore] Parsing puzzle data:', puzzle.id);
         this.parsePuzzleData(puzzle);
-        console.log('[queensStore] Puzzle loaded successfully');
       } catch (error) {
         console.error('[queensStore] Error loading puzzle by ID:', error);
-        console.error('[queensStore] Error details:', {
-          message: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined,
-        });
         throw error;
       }
     },
 
     clearMarkers() {
-      // Stop error checking
+      // Stop error checking (this also clears error messages)
       this.stopErrorChecking();
 
       // Clear all marks by setting each cell to null
@@ -1208,8 +1272,10 @@ export const useQueensStore = defineStore('queens', {
       }
       this.isComplete = false;
       this.showSolution = false;
+
       // Clear history when clearing markers
       this.moveHistory = [];
+
       // Clear saved progress when clearing markers
       clearPuzzleProgress(this.currentPuzzleId);
 
@@ -1234,6 +1300,7 @@ export const useQueensStore = defineStore('queens', {
           }
         }
       }
+
       // Check for error conditions after auto-flagging
       this.checkFullyFlaggedGroups();
     },
@@ -1272,7 +1339,6 @@ export const useQueensStore = defineStore('queens', {
         });
 
         this.tutorialPuzzles = tutorials;
-        console.log('[queensStore] Built tutorialPuzzles:', this.tutorialPuzzles.length);
       }
 
       const tutorialPuzzle = this.tutorialPuzzles.find((p) => p.name === levelName);
@@ -1305,7 +1371,6 @@ export const useQueensStore = defineStore('queens', {
 
         // Skip select-queen-mode step if queen mode is already selected
         if (currentStep.id === 'select-queen-mode' && this.uiState.placementMode === 'queen') {
-          console.log('[QueensStore] Queen mode already selected, skipping step');
           this.nextTutorialStep();
           return;
         }
@@ -1328,11 +1393,6 @@ export const useQueensStore = defineStore('queens', {
             }
           }, 5000);
         }
-
-        console.log('[QueensStore] updateTutorialInstruction:', {
-          currentStepId: currentStep.id,
-          highlightToolSelector: this.highlightToolSelector,
-        });
       } else {
         // Tutorial complete
         this.tutorialInstruction = null;
@@ -1354,21 +1414,12 @@ export const useQueensStore = defineStore('queens', {
       }
 
       const currentStep = this.tutorialSteps[this.currentTutorialStep];
-      console.log('[QueensStore] checkTutorialStep:', {
-        currentStepId: currentStep.id,
-        action,
-        placementMode: this.uiState.placementMode,
-        clickedPos,
-      });
 
       // Special handling for mode selection step
       if (currentStep.id === 'select-queen-mode') {
         // Check if mode is set to 'queen'
         if (this.uiState.placementMode === 'queen') {
-          console.log('[QueensStore] Mode is queen, advancing tutorial step');
           this.nextTutorialStep();
-        } else {
-          console.log('[QueensStore] Mode is not queen yet:', this.uiState.placementMode);
         }
         return;
       }
@@ -1459,15 +1510,9 @@ export const useQueensStore = defineStore('queens', {
 
     // UI state management
     setPlacementMode(mode: 'auto' | 'flag' | 'queen') {
-      console.log('[QueensStore] setPlacementMode called:', mode);
-      console.log('[QueensStore] isTutorialMode:', this.isTutorialMode);
-      console.log('[QueensStore] currentTutorialStep:', this.currentTutorialStep);
-      console.log('[QueensStore] tutorialSteps:', this.tutorialSteps);
-
       this.uiState.placementMode = mode;
       // Check if tutorial is waiting for mode selection
       if (this.isTutorialMode) {
-        console.log('[QueensStore] Checking tutorial step after mode change');
         this.checkTutorialStep(null, 'mode-selected');
       }
     },
@@ -2020,8 +2065,124 @@ export const useQueensStore = defineStore('queens', {
         }
       }
 
+      // Check for diagonally adjacent queens (touching diagonally)
+      const allQueenPositions: { row: number; col: number }[] = [];
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.playerMarks[row][col] === 'queen') {
+            allQueenPositions.push({ row, col });
+          }
+        }
+      }
+
+      // Check each queen against all others for diagonal adjacency
+      const diagonalConflicts = new Set<string>();
+      for (let i = 0; i < allQueenPositions.length; i++) {
+        const queen1 = allQueenPositions[i];
+        for (let j = i + 1; j < allQueenPositions.length; j++) {
+          const queen2 = allQueenPositions[j];
+          // Check if queens are diagonally adjacent (one square away diagonally)
+          const rowDiff = Math.abs(queen1.row - queen2.row);
+          const colDiff = Math.abs(queen1.col - queen2.col);
+          if (rowDiff === 1 && colDiff === 1) {
+            // Queens are diagonally touching, mark both as errors
+            diagonalConflicts.add(`${queen1.row},${queen1.col}`);
+            diagonalConflicts.add(`${queen2.row},${queen2.col}`);
+          }
+        }
+      }
+
+      // Add diagonal conflicts to error squares (no delay needed, show immediately)
+      for (const squareKey of diagonalConflicts) {
+        errorSquaresSet.add(squareKey);
+      }
+
+      // Show error messages for detected errors
+      this.showErrorMessages(errorSquaresSet, allQueenPositions, diagonalConflicts.size > 0);
+
       // Update error squares
       this.errorSquares = errorSquaresSet;
+    },
+
+    showErrorMessages(
+      errorSquares: Set<string>,
+      queenPositions: { row: number; col: number }[],
+      hasDiagonalConflicts: boolean
+    ) {
+      // Clear any existing timeout
+      if (this.errorMessageTimeout !== null) {
+        clearTimeout(this.errorMessageTimeout);
+        this.errorMessageTimeout = null;
+      }
+
+      // If no errors, clear message
+      if (errorSquares.size === 0) {
+        this.errorMessage = null;
+        return;
+      }
+
+      // Determine which error type to show (prioritize diagonal conflicts)
+      let message: string | null = null;
+
+      if (hasDiagonalConflicts) {
+        message = 'Queens cannot touch diagonally';
+      } else {
+        // Check for multiple queens in rows
+        for (let row = 0; row < this.gridSize; row++) {
+          const queensInRow = queenPositions.filter((q) => q.row === row);
+          if (queensInRow.length > 1) {
+            message = 'Only 1 queen per row';
+            break;
+          }
+        }
+
+        // Check for multiple queens in columns
+        if (!message) {
+          for (let col = 0; col < this.gridSize; col++) {
+            const queensInCol = queenPositions.filter((q) => q.col === col);
+            if (queensInCol.length > 1) {
+              message = 'Only 1 queen per column';
+              break;
+            }
+          }
+        }
+
+        // Check for multiple queens in color groups
+        if (!message) {
+          const colorGroups: { [color: string]: { row: number; col: number }[] } = {};
+          for (let row = 0; row < this.gridSize; row++) {
+            for (let col = 0; col < this.gridSize; col++) {
+              const color = this.grid[row][col].groupColor;
+              if (!color) continue;
+              if (!colorGroups[color]) {
+                colorGroups[color] = [];
+              }
+              colorGroups[color].push({ row, col });
+            }
+          }
+
+          for (const color in colorGroups) {
+            const squares = colorGroups[color];
+            const queensInColor = queenPositions.filter((q) =>
+              squares.some((s) => s.row === q.row && s.col === q.col)
+            );
+            if (queensInColor.length > 1) {
+              message = 'Only 1 queen per color group';
+              break;
+            }
+          }
+        }
+      }
+
+      // Only update message if it changed (to avoid flickering)
+      if (message !== this.errorMessage) {
+        this.errorMessage = message;
+        // Auto-hide after 3 seconds
+        this.errorMessageTimeout = window.setTimeout(() => {
+          this.errorMessage = null;
+          this.errorMessageTimeout = null;
+        }, 3000);
+      }
     },
 
     startErrorChecking() {
@@ -2045,6 +2206,12 @@ export const useQueensStore = defineStore('queens', {
       // Clear error state
       this.errorSquares.clear();
       this.flaggedGroupTimestamps.clear();
+      // Clear error message
+      if (this.errorMessageTimeout !== null) {
+        clearTimeout(this.errorMessageTimeout);
+        this.errorMessageTimeout = null;
+      }
+      this.errorMessage = null;
     },
 
     startProgressSaving() {
