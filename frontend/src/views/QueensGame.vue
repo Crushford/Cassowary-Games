@@ -158,29 +158,18 @@ const isModalOpen = computed(() => {
 });
 
 async function loadPuzzleFromRoute() {
-  console.log('[QueensGame] loadPuzzleFromRoute called');
   const puzzleId = route.params.puzzleId as string;
   const levelName = route.params.levelName as string;
-  console.log('[QueensGame] Route params:', route.params);
-  console.log('[QueensGame] puzzleId from route:', puzzleId);
-  console.log('[QueensGame] levelName from route:', levelName);
 
   // Check if this is a tutorial puzzle
   if (levelName) {
     try {
-      console.log('[QueensGame] Loading tutorial puzzle:', levelName);
       await queensStore.loadTutorialPuzzle(levelName);
-      console.log('[QueensGame] Tutorial puzzle loaded successfully');
       // Initialize tutorial steps
       initializeTutorialSteps(levelName);
     } catch (err) {
       console.error('[QueensGame] Error loading tutorial puzzle:', err);
-      console.error('[QueensGame] Error details:', {
-        message: err instanceof Error ? err.message : String(err),
-        stack: err instanceof Error ? err.stack : undefined,
-      });
       // Redirect to levels page if puzzle not found
-      console.log('[QueensGame] Redirecting to /queens');
       router.push('/queens');
     }
   } else if (puzzleId) {
@@ -189,21 +178,13 @@ async function loadPuzzleFromRoute() {
       if (queensStore.isTutorialMode) {
         queensStore.exitTutorialMode();
       }
-      console.log('[QueensGame] Calling loadPuzzleById with:', puzzleId);
       await queensStore.loadPuzzleById(puzzleId);
-      console.log('[QueensGame] Puzzle loaded successfully');
     } catch (err) {
       console.error('[QueensGame] Error loading puzzle:', err);
-      console.error('[QueensGame] Error details:', {
-        message: err instanceof Error ? err.message : String(err),
-        stack: err instanceof Error ? err.stack : undefined,
-      });
       // Redirect to levels page if puzzle not found
-      console.log('[QueensGame] Redirecting to /queens');
       router.push('/queens');
     }
   } else {
-    console.log('[QueensGame] No puzzleId or levelName found, redirecting to /queens');
     // If no puzzleId, redirect to levels page
     router.push('/queens');
   }
@@ -354,20 +335,13 @@ function initializeTutorialSteps(levelName: string) {
 }
 
 onMounted(async () => {
-  console.log('[QueensGame] onMounted called');
   await loadPuzzleFromRoute();
 });
 
 // Watch for route changes (e.g., when navigating between puzzles)
 watch(
   () => [route.params.puzzleId, route.params.levelName],
-  async ([newPuzzleId, newLevelName], [oldPuzzleId, oldLevelName]) => {
-    console.log('[QueensGame] Route watch triggered:', {
-      newPuzzleId,
-      newLevelName,
-      oldPuzzleId,
-      oldLevelName,
-    });
+  async () => {
     await loadPuzzleFromRoute();
   }
 );

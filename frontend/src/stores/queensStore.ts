@@ -1019,7 +1019,6 @@ export const useQueensStore = defineStore('queens', {
     },
 
     async loadPuzzleDatabase() {
-      console.log('[queensStore] loadPuzzleDatabase called');
       this.isLoadingPuzzles = true;
       this.loadingProgress = 0;
       this.loadingMessage = 'Loading puzzle database...';
@@ -1030,7 +1029,6 @@ export const useQueensStore = defineStore('queens', {
           throw new Error(`Failed to load puzzles.json: ${response.status}`);
         }
         const data = await response.json();
-        console.log('[queensStore] Loaded puzzles.json, sizes:', Object.keys(data));
 
         // Just store the raw data. No filtering, no reordering, no maps.
         this.puzzleDatabase = data;
@@ -1045,10 +1043,6 @@ export const useQueensStore = defineStore('queens', {
         this.isLoadingPuzzles = false;
         this.loadingProgress = 0;
         this.loadingMessage = '';
-
-        console.log('[queensStore] Database loaded (raw):', {
-          sizes: Object.keys(this.puzzleDatabase),
-        });
 
         return true;
       } catch (error) {
@@ -1244,50 +1238,29 @@ export const useQueensStore = defineStore('queens', {
     },
 
     async loadPuzzleById(puzzleId: string | number) {
-      console.log('[queensStore] loadPuzzleById called with:', puzzleId, typeof puzzleId);
       try {
-        console.log('[queensStore] Checking puzzleDatabase:', {
-          hasDatabase: !!this.puzzleDatabase,
-          mapSize: this.puzzleIdMap.size,
-        });
-
         if (!this.puzzleDatabase) {
-          console.log('[queensStore] Loading puzzle database...');
           const success = await this.loadPuzzleDatabase();
-          console.log('[queensStore] Database load result:', success);
           if (!success) {
             throw new Error('Failed to load puzzle database');
           }
         }
 
         const key = typeof puzzleId === 'string' ? puzzleId : String(puzzleId);
-        console.log('[queensStore] Using string key:', key);
-
         const puzzle = this.findPuzzleById(key);
-        console.log('[queensStore] Puzzle lookup result:', puzzle ? 'found' : 'not found');
 
         if (!puzzle) {
           throw new Error(`Puzzle with ID ${key} not found`);
         }
 
-        console.log('[queensStore] Parsing puzzle data:', puzzle.id);
         this.parsePuzzleData(puzzle);
-        console.log('[queensStore] Puzzle loaded successfully');
       } catch (error) {
         console.error('[queensStore] Error loading puzzle by ID:', error);
-        console.error('[queensStore] Error details:', {
-          message: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined,
-        });
         throw error;
       }
     },
 
     clearMarkers() {
-      console.log(
-        '[clearMarkers] Clearing markers. History length before:',
-        this.moveHistory.length
-      );
 
       // Stop error checking (this also clears error messages)
       this.stopErrorChecking();
@@ -1367,7 +1340,6 @@ export const useQueensStore = defineStore('queens', {
         });
 
         this.tutorialPuzzles = tutorials;
-        console.log('[queensStore] Built tutorialPuzzles:', this.tutorialPuzzles.length);
       }
 
       const tutorialPuzzle = this.tutorialPuzzles.find((p) => p.name === levelName);
@@ -1400,7 +1372,6 @@ export const useQueensStore = defineStore('queens', {
 
         // Skip select-queen-mode step if queen mode is already selected
         if (currentStep.id === 'select-queen-mode' && this.uiState.placementMode === 'queen') {
-          console.log('[QueensStore] Queen mode already selected, skipping step');
           this.nextTutorialStep();
           return;
         }
@@ -1423,11 +1394,6 @@ export const useQueensStore = defineStore('queens', {
             }
           }, 5000);
         }
-
-        console.log('[QueensStore] updateTutorialInstruction:', {
-          currentStepId: currentStep.id,
-          highlightToolSelector: this.highlightToolSelector,
-        });
       } else {
         // Tutorial complete
         this.tutorialInstruction = null;
@@ -1449,21 +1415,12 @@ export const useQueensStore = defineStore('queens', {
       }
 
       const currentStep = this.tutorialSteps[this.currentTutorialStep];
-      console.log('[QueensStore] checkTutorialStep:', {
-        currentStepId: currentStep.id,
-        action,
-        placementMode: this.uiState.placementMode,
-        clickedPos,
-      });
 
       // Special handling for mode selection step
       if (currentStep.id === 'select-queen-mode') {
         // Check if mode is set to 'queen'
         if (this.uiState.placementMode === 'queen') {
-          console.log('[QueensStore] Mode is queen, advancing tutorial step');
           this.nextTutorialStep();
-        } else {
-          console.log('[QueensStore] Mode is not queen yet:', this.uiState.placementMode);
         }
         return;
       }
@@ -1554,15 +1511,9 @@ export const useQueensStore = defineStore('queens', {
 
     // UI state management
     setPlacementMode(mode: 'auto' | 'flag' | 'queen') {
-      console.log('[QueensStore] setPlacementMode called:', mode);
-      console.log('[QueensStore] isTutorialMode:', this.isTutorialMode);
-      console.log('[QueensStore] currentTutorialStep:', this.currentTutorialStep);
-      console.log('[QueensStore] tutorialSteps:', this.tutorialSteps);
-
       this.uiState.placementMode = mode;
       // Check if tutorial is waiting for mode selection
       if (this.isTutorialMode) {
-        console.log('[QueensStore] Checking tutorial step after mode change');
         this.checkTutorialStep(null, 'mode-selected');
       }
     },
