@@ -56,6 +56,11 @@ const router = createRouter({
       component: QueensGame,
     },
     {
+      path: '/evolve',
+      name: 'evolve',
+      component: () => import('../views/Evolve.vue'),
+    },
+    {
       path: '/storybook',
       redirect: '/storybook-static/index.html',
     },

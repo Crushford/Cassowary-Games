@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gray-900 text-white p-8">
+  <div class="min-h-screen bg-gray-900 text-white p-8 relative">
     <div class="max-w-4xl mx-auto">
-      <h1 class="text-4xl font-bold mb-8">Honey Pot Ant Games</h1>
+      <h1 class="text-4xl font-bold mb-8">Cassowary Games</h1>
 
       <!-- Games Section -->
       <div class="mb-8">
@@ -22,16 +22,71 @@
             <h3 class="text-xl font-bold mb-2">Honey Pot Ant Farming</h3>
             <p>A honey pot ant farming skin on the queens game</p>
           </router-link>
-
-          <router-link
-            to="/keno"
-            class="block p-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors opacity-75"
-          >
-            <h3 class="text-sm font-bold mb-1">(Under construction) Keno Game</h3>
-            <p class="text-xs">Play the Keno game</p>
-          </router-link>
         </div>
       </div>
     </div>
+
+    <!-- Works in Progress Button - Bottom Left -->
+    <div class="fixed bottom-0 left-0 p-4">
+      <button
+        @click="showWorksInProgressModal = true"
+        class="inline-flex items-center justify-center px-6 py-3 bg-orange-500 text-white border-none rounded-lg font-medium cursor-pointer transition-all hover:bg-orange-600 hover:-translate-y-0.5 active:translate-y-0"
+      >
+        Works in Progress
+      </button>
+    </div>
+
+    <!-- Works in Progress Modal -->
+    <Modal :is-visible="showWorksInProgressModal" @close="showWorksInProgressModal = false">
+      <div>
+        <h3 class="text-2xl font-semibold text-white mb-4">Works in Progress</h3>
+        <p class="text-gray-300 mb-4 text-sm">
+          These games are just here for testing and are not ready to be played.
+        </p>
+        <div class="space-y-3">
+          <router-link
+            to="/evolve"
+            @click="showWorksInProgressModal = false"
+            class="block p-4 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+          >
+            <h4 class="text-lg font-bold mb-1">Evolve</h4>
+            <p class="text-sm text-gray-200" v-if="hasEvolveProgress">
+              Generation {{ evolveStore.generation }} • {{ evolveStore.fruit }} fruit
+            </p>
+            <p class="text-sm text-gray-200" v-else>
+              Start a new game
+            </p>
+          </router-link>
+
+          <router-link
+            to="/keno"
+            @click="showWorksInProgressModal = false"
+            class="block p-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+          >
+            <h4 class="text-lg font-bold mb-1">Keno</h4>
+            <p class="text-sm text-gray-200">Play the Keno game</p>
+          </router-link>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
+import { useEvolveStore } from '@/stores/evolve';
+import BaseButton from '@/components/level-builder/BaseButton.vue';
+import Modal from '@/components/shared/Modal.vue';
+
+const evolveStore = useEvolveStore();
+const showWorksInProgressModal = ref(false);
+
+// Check if evolve has progress
+const hasEvolveProgress = computed(() => {
+  return evolveStore.hasSavedGame;
+});
+
+onMounted(() => {
+  evolveStore.loadFromStorage();
+});
+</script>
