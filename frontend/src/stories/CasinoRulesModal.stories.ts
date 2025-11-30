@@ -16,7 +16,7 @@ export default meta;
 
 type Story = StoryObj<typeof CasinoRulesModal>;
 
-const createStoryWithPinia = (showRules: boolean, tableId?: string) => ({
+const createStoryWithPinia = (showRules: boolean, boardSize?: string) => ({
   components: { CasinoRulesModal },
   setup() {
     const pinia = createPinia();
@@ -27,8 +27,8 @@ const createStoryWithPinia = (showRules: boolean, tableId?: string) => ({
     const tableStore = useTableStore();
 
     globalStore.ui.showRules = showRules;
-    if (tableId) {
-      roundStore.tableId = tableId;
+    if (boardSize) {
+      roundStore.boardSize = boardSize;
     }
 
     return {};
@@ -38,12 +38,12 @@ const createStoryWithPinia = (showRules: boolean, tableId?: string) => ({
 
 export const Default: Story = {
   args: {},
-  render: () => createStoryWithPinia(true, 'table1'),
+  render: () => createStoryWithPinia(true, '4x4'),
 };
 
 export const Hidden: Story = {
   args: {},
-  render: () => createStoryWithPinia(false, 'table1'),
+  render: () => createStoryWithPinia(false, '4x4'),
 };
 
 export const NoTableSelected: Story = {

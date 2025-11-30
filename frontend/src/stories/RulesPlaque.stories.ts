@@ -16,7 +16,7 @@ export default meta;
 
 type Story = StoryObj<typeof RulesPlaque>;
 
-const createStoryWithPinia = (tableId?: string, totalProfit?: number, maxPayout?: number) => ({
+const createStoryWithPinia = (boardSize?: string, maxPayout?: number) => ({
   components: { RulesPlaque },
   setup() {
     const pinia = createPinia();
@@ -26,17 +26,8 @@ const createStoryWithPinia = (tableId?: string, totalProfit?: number, maxPayout?
     const tableStore = useTableStore();
     const roundStore = useRoundStore();
 
-    if (tableId) {
-      roundStore.tableId = tableId;
-      if (totalProfit !== undefined) {
-        globalStore.tablesProgress[tableId] = {
-          totalProfit,
-          roundsComplete: 0,
-          currentPuzzleIdOrName: null,
-          isUsingRegex: false,
-          roundWinnings: 0,
-        };
-      }
+    if (boardSize) {
+      roundStore.boardSize = boardSize;
     }
 
     if (maxPayout !== undefined) {
@@ -55,20 +46,20 @@ export const Default: Story = {
 
 export const WithTableSelected: Story = {
   args: {},
-  render: () => createStoryWithPinia('table1', 0, 10000),
+  render: () => createStoryWithPinia('4x4', 10000),
 };
 
 export const WithProgress: Story = {
   args: {},
-  render: () => createStoryWithPinia('table1', 3000, 10000),
+  render: () => createStoryWithPinia('4x4', 10000),
 };
 
 export const NearMaxPayout: Story = {
   args: {},
-  render: () => createStoryWithPinia('table1', 9500, 10000),
+  render: () => createStoryWithPinia('4x4', 10000),
 };
 
 export const NegativeProgress: Story = {
   args: {},
-  render: () => createStoryWithPinia('table1', -2000, 10000),
+  render: () => createStoryWithPinia('4x4', 10000),
 };

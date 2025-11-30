@@ -16,12 +16,7 @@ export default meta;
 
 type Story = StoryObj<typeof TableLimitReachedModal>;
 
-const createStoryWithPinia = (
-  initialChips: number,
-  tableId: string,
-  maxPayout: number,
-  totalProfit: number
-) => ({
+const createStoryWithPinia = (initialChips: number, boardSize: string, maxPayout: number) => ({
   components: { TableLimitReachedModal },
   setup() {
     const pinia = createPinia();
@@ -32,16 +27,9 @@ const createStoryWithPinia = (
     const roundStore = useRoundStore();
 
     globalStore.player.totalChips = initialChips;
-    globalStore.tablesProgress[tableId] = {
-      totalProfit,
-      roundsComplete: 0,
-      currentPuzzleIdOrName: null,
-      isUsingRegex: false,
-      roundWinnings: 0,
-    };
     tableStore.maxPayout = maxPayout;
     tableStore.showTableLimitReached = true;
-    roundStore.tableId = tableId;
+    roundStore.boardSize = boardSize;
 
     return {};
   },
@@ -50,20 +38,20 @@ const createStoryWithPinia = (
 
 export const Default: Story = {
   args: {},
-  render: () => createStoryWithPinia(15000, 'table1', 10000, 10000),
+  render: () => createStoryWithPinia(15000, '4x4', 10000),
 };
 
 export const HighBalance: Story = {
   args: {},
-  render: () => createStoryWithPinia(50000, 'table1', 10000, 10000),
+  render: () => createStoryWithPinia(50000, '4x4', 10000),
 };
 
 export const LowBalance: Story = {
   args: {},
-  render: () => createStoryWithPinia(1000, 'table1', 10000, 10000),
+  render: () => createStoryWithPinia(1000, '4x4', 10000),
 };
 
 export const LargePayout: Story = {
   args: {},
-  render: () => createStoryWithPinia(100000, 'table1', 50000, 50000),
+  render: () => createStoryWithPinia(100000, '4x4', 50000),
 };

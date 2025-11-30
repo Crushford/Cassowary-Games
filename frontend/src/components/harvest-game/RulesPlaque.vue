@@ -11,7 +11,7 @@
           id="rules-title"
           class="text-[#f2f1ea] text-opacity-90 font-semibold tracking-wider text-shadow-[0_1px_0_rgba(0,0,0,0.35)]"
         >
-          The rules of this table:
+          The rules of this farm:
         </h2>
         <button
           @click="globalStore.setShowRules(true)"
@@ -61,7 +61,7 @@
           class="flex items-center justify-center px-3 py-2 bg-[#4a1111] border border-[#a33] rounded-full"
         >
           <img src="/assets/card-backs/ant.png" alt="ant" class="w-8 h-8 mr-4" />
-          <span class="text-red-300 font-semibold">–{{ tablePayouts.ant }} gold</span>
+          <span class="text-red-300 font-semibold">–{{ levelPayouts.ant }} gold</span>
         </div>
 
         <!-- Win capsule -->
@@ -69,23 +69,8 @@
           class="flex items-center justify-center px-3 py-2 bg-[#144b1a] border border-[#2d8b3a] rounded-full"
         >
           <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-8 h-8 mr-4" />
-          <span class="text-green-300 font-semibold">+{{ tablePayouts.honeypot }} gold</span>
+          <span class="text-green-300 font-semibold">+{{ levelPayouts.honeypot }} gold</span>
         </div>
-      </div>
-
-      <!-- Max payout info -->
-      <div
-        v-if="tableStore.maxPayout > 0"
-        class="mt-2 pt-2 border-t border-[#d4af37] border-opacity-30"
-      >
-        <div
-          class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-center mb-2"
-        >
-          Max you can win at this table:
-          <span class="text-yellow-300 font-semibold">{{ tableStore.maxPayout }}</span>
-        </div>
-
-        <!-- Progress bar removed - no longer tracking table progress -->
       </div>
     </div>
   </div>
@@ -94,33 +79,20 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useGlobalStore } from '../../stores/global';
-import { useTableStore } from '../../stores/table';
-import { useRoundStore } from '../../stores/round';
 import { useLevelStore } from '../../stores/level';
+import { useRoundStore } from '../../stores/round';
 
 const globalStore = useGlobalStore();
-const tableStore = useTableStore();
-const roundStore = useRoundStore();
 const levelStore = useLevelStore();
+const roundStore = useRoundStore();
 
-const tablePayouts = computed(() => {
-  if (!roundStore.boardSize) {
-    return {
-      honeypot: Math.round(globalStore.config.payoutPerHoneypot),
-      ant: Math.round(globalStore.config.penaltyPerAnt),
-    };
-  }
-  const level = levelStore.getLevel(roundStore.boardSize);
+const levelPayouts = computed(() => {
+  const level = roundStore.boardSize ? levelStore.getLevel(roundStore.boardSize) : undefined;
   const multiplier = level?.payoutMultiplier ?? 1.0;
   return {
     honeypot: Math.round(globalStore.config.payoutPerHoneypot * multiplier),
     ant: Math.round(globalStore.config.penaltyPerAnt * multiplier),
   };
-});
-
-const currentProgress = computed(() => {
-  // Table progress no longer tracked in new system
-  return 0;
 });
 
 defineOptions({

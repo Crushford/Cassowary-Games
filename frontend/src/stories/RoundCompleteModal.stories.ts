@@ -19,9 +19,7 @@ type Story = StoryObj<typeof RoundCompleteModal>;
 const createStoryWithPinia = (
   status: 'playing' | 'won' | 'busted' | 'capped',
   initialChips: number,
-  tableId: string,
-  totalProfit: number,
-  roundWinnings: number
+  boardSize: string
 ) => ({
   components: { RoundCompleteModal },
   setup() {
@@ -33,18 +31,10 @@ const createStoryWithPinia = (
     const roundStore = useRoundStore();
 
     globalStore.player.totalChips = initialChips;
-    globalStore.tablesProgress[tableId] = {
-      totalProfit,
-      roundWinnings,
-      roundsComplete: 0,
-      currentPuzzleIdOrName: null,
-      isUsingRegex: false,
-    };
     globalStore.totalRoundsComplete = 5;
     tableStore.status = status;
     tableStore.showRoundComplete = true;
-    tableStore.maxPayout = 10000;
-    roundStore.tableId = tableId;
+    roundStore.boardSize = boardSize;
 
     return {};
   },
@@ -53,20 +43,20 @@ const createStoryWithPinia = (
 
 export const Won: Story = {
   args: {},
-  render: () => createStoryWithPinia('won', 5000, 'table1', 3000, 500),
+  render: () => createStoryWithPinia('won', 5000, '4x4'),
 };
 
 export const Busted: Story = {
   args: {},
-  render: () => createStoryWithPinia('busted', 0, 'table1', -2000, -500),
+  render: () => createStoryWithPinia('busted', 0, '4x4'),
 };
 
 export const HighWinnings: Story = {
   args: {},
-  render: () => createStoryWithPinia('won', 15000, 'table1', 8000, 2000),
+  render: () => createStoryWithPinia('won', 15000, '4x4'),
 };
 
 export const NearCap: Story = {
   args: {},
-  render: () => createStoryWithPinia('won', 10000, 'table1', 9500, 500),
+  render: () => createStoryWithPinia('won', 10000, '4x4'),
 };

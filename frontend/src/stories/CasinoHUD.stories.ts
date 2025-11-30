@@ -15,7 +15,7 @@ export default meta;
 
 type Story = StoryObj<typeof CasinoHUD>;
 
-const createStoryWithPinia = (initialChips: number, tableId?: string) => ({
+const createStoryWithPinia = (initialChips: number, boardSize?: string) => ({
   components: { CasinoHUD },
   setup() {
     const pinia = createPinia();
@@ -25,8 +25,8 @@ const createStoryWithPinia = (initialChips: number, tableId?: string) => ({
     const roundStore = useRoundStore();
 
     globalStore.player.totalChips = initialChips;
-    if (tableId) {
-      roundStore.tableId = tableId;
+    if (boardSize) {
+      roundStore.boardSize = boardSize;
     }
 
     return {};
@@ -41,15 +41,15 @@ export const Default: Story = {
 
 export const WithTableSelected: Story = {
   args: {},
-  render: () => createStoryWithPinia(1000, 'table1'),
+  render: () => createStoryWithPinia(1000, '4x4'),
 };
 
 export const HighRoller: Story = {
   args: {},
-  render: () => createStoryWithPinia(100000, 'table1'),
+  render: () => createStoryWithPinia(100000, '4x4'),
 };
 
 export const LowBalance: Story = {
   args: {},
-  render: () => createStoryWithPinia(50, 'table1'),
+  render: () => createStoryWithPinia(50, '4x4'),
 };

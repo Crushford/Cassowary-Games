@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HarvestGame from '../views/HarvestGame.vue';
 import PlantGame from '../views/PlantGame.vue';
 import LevelBuilder from '../views/LevelBuilder.vue';
-import CasinoGame from '../components/casino/CasinoGame.vue';
+import Levels from '../views/Levels.vue';
 import KenoGameWrapper from '../views/KenoGameWrapper.vue';
 import QueensGame from '../views/QueensGame.vue';
 
@@ -31,9 +31,9 @@ const router = createRouter({
       component: PlantGame,
     },
     {
-      path: '/casino',
-      name: 'casino',
-      component: CasinoGame,
+      path: '/levels',
+      name: 'levels',
+      component: Levels,
     },
     {
       path: '/keno',

@@ -280,21 +280,14 @@ export const useTableStore = defineStore('table', {
         const globalStore = useGlobalStore();
         const roundStore = useRoundStore();
 
-        if (roundStore.tableId) {
+        if (roundStore.boardSize) {
           if (newStatus === 'won') {
-            globalStore.recordTableWin(roundStore.tableId);
+            // Table wins no longer tracked in new system
           }
         }
 
-        // Check if table limit has been reached
-        if (roundStore.tableId && newStatus === 'won') {
-          const tableProgress = globalStore.tablesProgress[roundStore.tableId];
-          if (tableProgress && tableProgress.totalProfit >= this.maxPayout) {
-            // Table limit reached - show table limit reached modal
-            this.showTableLimitReached = true;
-            return;
-          }
-        }
+        // Check if table limit has been reached (no longer applicable in new system)
+        // Table limits removed in level-based system
 
         // Show round complete modal
         this.showRoundComplete = true;
@@ -305,27 +298,27 @@ export const useTableStore = defineStore('table', {
       const { useRoundStore } = await import('./round');
       const roundStore = useRoundStore();
 
-      if (roundStore.tableId && this.status === 'playing') {
+      if (roundStore.boardSize && this.status === 'playing') {
         // Auto cash-out when leaving
-        roundStore.leaveTable();
+        roundStore.leaveLevel();
       }
     },
 
     async goToTables() {
       this.showRoundComplete = false; // Reset round complete modal state
       this.showTableLimitReached = false; // Reset table limit reached modal state
-      // Clear table context to show tables modal
+      // Clear level context to show tables modal
       const { useRoundStore } = await import('./round');
       const roundStore = useRoundStore();
-      roundStore.tableId = null;
+      roundStore.boardSize = null;
     },
 
     async handleNextRound() {
       const { useRoundStore } = await import('./round');
       const roundStore = useRoundStore();
 
-      const tableId = roundStore.tableId;
-      if (tableId) {
+      const boardSize = roundStore.boardSize;
+      if (boardSize) {
         try {
           // Hide the round complete modal
           this.showRoundComplete = false;
@@ -336,8 +329,8 @@ export const useTableStore = defineStore('table', {
           // Advance to next puzzle in the queue
           this.puzzleQueueIndex++;
 
-          // Start a new round with the same table
-          await this.startRound(tableId);
+          // Start a new round with the same board size
+          await this.startRound(boardSize);
         } catch (error) {
           console.error('Failed to start next round:', error);
         }

@@ -12,22 +12,6 @@
               >{{ globalStore.player.totalChips }} chips</span
             >
           </div>
-          <div class="pt-4 border-t border-green-600">
-            <div class="flex justify-between mb-2">
-              <span>Your progress on this table:</span>
-              <span class="font-semibold text-green-300"
-                >{{ totalProfit }} / {{ tableStore.maxPayout }}</span
-              >
-            </div>
-            <div class="w-full bg-green-900 rounded-full h-3">
-              <div
-                class="bg-green-400 h-3 rounded-full transition-all duration-300"
-                :style="{
-                  width: '100%',
-                }"
-              ></div>
-            </div>
-          </div>
           <div class="text-green-100 text-sm">
             <p>You've won the maximum amount you can win on this table!</p>
             <p class="mt-2">It's time to choose a new table.</p>
@@ -45,19 +29,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useRoundStore } from '../../stores/round';
 import { useTableStore } from '../../stores/table';
 import { useGlobalStore } from '../../stores/global';
 
-const roundStore = useRoundStore();
 const tableStore = useTableStore();
 const globalStore = useGlobalStore();
-
-const totalProfit = computed(() => {
-  if (!roundStore.tableId) return 0;
-  return globalStore.tablesProgress[roundStore.tableId]?.totalProfit ?? 0;
-});
 
 defineOptions({
   name: 'TableLimitReachedModal',

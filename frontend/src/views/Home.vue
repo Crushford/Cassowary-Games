@@ -16,7 +16,7 @@
           </router-link>
 
           <router-link
-            to="/casino"
+            to="/levels"
             class="block p-6 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors"
           >
             <h3 class="text-xl font-bold mb-2">Honey Pot Ant Farming</h3>
@@ -53,9 +53,7 @@
             <p class="text-sm text-gray-200" v-if="hasEvolveProgress">
               Generation {{ evolveStore.generation }} • {{ evolveStore.fruit }} fruit
             </p>
-            <p class="text-sm text-gray-200" v-else>
-              Start a new game
-            </p>
+            <p class="text-sm text-gray-200" v-else>Start a new game</p>
           </router-link>
 
           <router-link

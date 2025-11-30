@@ -24,6 +24,11 @@ interface TableProgress {
   roundWinnings: number;
 }
 
+interface SizeProgress {
+  currentPuzzleIdOrName: string | null;
+  isUsingRegex: boolean;
+}
+
 interface GlobalState {
   schemaVersion: number;
   updatedAt: string;
@@ -32,6 +37,8 @@ interface GlobalState {
   ui: UI;
   tablesProgress: Record<string, TableProgress>;
   totalRoundsComplete: number;
+  unlockedSizes: Set<string>;
+  sizeProgress: Record<string, SizeProgress>;
 }
 
 export const useGlobalStore = defineStore('global', {
@@ -53,6 +60,8 @@ export const useGlobalStore = defineStore('global', {
     },
     tablesProgress: {},
     totalRoundsComplete: 0,
+    unlockedSizes: new Set<string>(['4x4']), // First size is always unlocked
+    sizeProgress: {},
   }),
 
   actions: {
@@ -93,10 +102,10 @@ export const useGlobalStore = defineStore('global', {
 
     // Handle bust logic
     async handleBust() {
-      // Set table status to busted
-      const { useTableStore } = await import('./table');
-      const tableStore = useTableStore();
-      tableStore.status = 'busted';
+      // Set round status to busted (for compatibility)
+      const { useRoundStore } = await import('./round');
+      const roundStore = useRoundStore();
+      // Note: roundStore doesn't have a status field, but we can handle this in the round store
     },
 
     addTableProfit(tableId: string, delta: number) {
@@ -154,6 +163,33 @@ export const useGlobalStore = defineStore('global', {
       this.persist();
     },
 
+    async sitAtSize(boardSize: string) {
+      const { useLevelStore } = await import('./level');
+      const levelStore = useLevelStore();
+      await levelStore.sitAtSize(boardSize, this);
+      this.persist();
+    },
+
+    unlockSize(boardSize: string, cost: number) {
+      if (this.player.totalChips >= cost) {
+        this.player.totalChips -= cost;
+        this.unlockedSizes.add(boardSize);
+        this.persist();
+      }
+    },
+
+    updateSizePuzzleInfo(boardSize: string, puzzleIdOrName: string | null, isUsingRegex: boolean) {
+      if (!this.sizeProgress[boardSize]) {
+        this.sizeProgress[boardSize] = {
+          currentPuzzleIdOrName: null,
+          isUsingRegex: false,
+        };
+      }
+      this.sizeProgress[boardSize].currentPuzzleIdOrName = puzzleIdOrName;
+      this.sizeProgress[boardSize].isUsingRegex = isUsingRegex;
+      this.persist();
+    },
+
     isTableAccessible(tableId: string, minimumBuyIn: number, maxPayout?: number): boolean {
       // Check if table is completed (reached max payout)
       const tableProgress = this.tablesProgress[tableId];
@@ -186,7 +222,12 @@ export const useGlobalStore = defineStore('global', {
 
     persist() {
       this.updatedAt = new Date().toISOString();
-      localStorage.setItem('cw.global', JSON.stringify(this.$state));
+      // Convert Set to Array for JSON serialization
+      const stateToSave = {
+        ...this.$state,
+        unlockedSizes: Array.from(this.unlockedSizes),
+      };
+      localStorage.setItem('cw.global', JSON.stringify(stateToSave));
     },
 
     rehydrate() {
@@ -231,7 +272,20 @@ export const useGlobalStore = defineStore('global', {
               data.totalRoundsComplete = calculatedTotal;
             }
 
+            // Migrate to size-based system
+            if (!data.unlockedSizes) {
+              data.unlockedSizes = ['4x4']; // First size always unlocked
+            }
+            if (!data.sizeProgress) {
+              data.sizeProgress = {};
+            }
+
+            // Convert unlockedSizes array to Set after patching
+            const unlockedSizesArray = Array.isArray(data.unlockedSizes)
+              ? data.unlockedSizes
+              : ['4x4'];
             this.$patch(data);
+            this.unlockedSizes = new Set(unlockedSizesArray);
           } else {
             // Future schema migrations would go here
             console.warn('Unknown schema version:', data.schemaVersion);
@@ -246,22 +300,22 @@ export const useGlobalStore = defineStore('global', {
       // Completely reset the global state to initial values
       this.$reset();
 
-      // Clear table context if we're at a table
+      // Clear level context if we're at a level
       const { useRoundStore } = await import('./round');
-      const { useTableStore } = await import('./table');
+      const { useLevelStore } = await import('./level');
       const roundStore = useRoundStore();
-      const tableStore = useTableStore();
+      const levelStore = useLevelStore();
 
-      // Clear all table and round state
-      if (roundStore.tableId) {
-        roundStore.leaveTable();
+      // Clear all level and round state
+      if (roundStore.boardSize) {
+        roundStore.leaveLevel();
       }
 
       // Clear round state completely
       roundStore.resetRoundState();
 
-      // Reset table store state
-      tableStore.resetTableState();
+      // Reset level store state
+      levelStore.resetLevelState();
 
       // Persist the reset state
       this.persist();

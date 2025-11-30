@@ -43,8 +43,8 @@ interface RoundState {
   seed: string;
   startedAt: number;
 
-  // Table context
-  tableId: string | null;
+  // Level context (boardSize)
+  boardSize: string | null;
 
   // Puzzle - using combined grid structure
   grid: GridSquare[][];
@@ -75,7 +75,7 @@ export const useRoundStore = defineStore('round', {
     roundId: '',
     seed: '',
     startedAt: 0,
-    tableId: null,
+    boardSize: null,
     grid: [],
     gridSize: 4,
     hiddenMapHash: '',
@@ -172,7 +172,7 @@ export const useRoundStore = defineStore('round', {
       }
     },
 
-    async startRound(tableId: string, puzzleData?: any) {
+    async startRound(boardSize: string, puzzleData?: any) {
       // Load user configuration first
       this.loadUserConfiguration();
 
@@ -181,8 +181,8 @@ export const useRoundStore = defineStore('round', {
       this.seed = Math.random().toString(36).substr(2, 9);
       this.startedAt = Date.now();
 
-      // Set table context (no separate table stack needed)
-      this.tableId = tableId;
+      // Set level context
+      this.boardSize = boardSize;
 
       // Parse puzzle data if provided, otherwise load random puzzle
       if (puzzleData) {
@@ -308,16 +308,11 @@ export const useRoundStore = defineStore('round', {
       }
     },
 
-    // Check if table cap has been reached
+    // Check if table cap has been reached (kept for compatibility, but no longer used)
     checkTableCap() {
-      if (!this.tableId) return;
-
-      const globalStore = useGlobalStore();
-      const totalProfitSoFar = globalStore.tablesProgress[this.tableId]?.totalProfit ?? 0;
-
-      // Return the cap status for parent to handle
+      // No longer tracking table caps in the new system
       return {
-        totalProfitSoFar,
+        totalProfitSoFar: 0,
         sessionNet: 0,
         isCapped: false,
       };
@@ -326,12 +321,12 @@ export const useRoundStore = defineStore('round', {
     // Flip action - reveal the square
     async flipSquare(row: number, col: number) {
       const globalStore = useGlobalStore();
-      const { useTableStore } = await import('./table');
-      const tableStore = useTableStore();
+      const { useLevelStore } = await import('./level');
+      const levelStore = useLevelStore();
 
-      // Get table-specific payout multiplier
-      const table = tableStore.getTable(this.tableId!);
-      const multiplier = table?.payoutMultiplier ?? 1.0;
+      // Get level-specific payout multiplier
+      const level = this.boardSize ? levelStore.getLevel(this.boardSize) : undefined;
+      const multiplier = level?.payoutMultiplier ?? 1.0;
       const honeypotPayout = Math.round(globalStore.config.payoutPerHoneypot * multiplier);
       const antPenalty = Math.round(globalStore.config.penaltyPerAnt * multiplier);
 
@@ -339,11 +334,6 @@ export const useRoundStore = defineStore('round', {
         // Found honeypot
         this.grid[row][col].playerMark = 'queen';
         globalStore.grantChips(honeypotPayout);
-
-        // Update table profit
-        if (this.tableId) {
-          globalStore.addTableProfit(this.tableId, honeypotPayout);
-        }
 
         this.queensFound++;
         this.flipsMade++;
@@ -373,11 +363,6 @@ export const useRoundStore = defineStore('round', {
         this.grid[row][col].playerMark = 'invalid';
         globalStore.applyPenalty(antPenalty);
 
-        // Update table profit (negative)
-        if (this.tableId) {
-          globalStore.addTableProfit(this.tableId, -antPenalty);
-        }
-
         this.antsFound++;
         this.flipsMade++;
 
@@ -406,11 +391,11 @@ export const useRoundStore = defineStore('round', {
 
     // Helper method to handle win
     handleWin() {
-      // We'll need to handle this asynchronously
+      // Show round complete modal
       setTimeout(async () => {
-        const { useTableStore } = await import('./table');
-        const tableStore = useTableStore();
-        tableStore.status = 'won';
+        const { useLevelStore } = await import('./level');
+        const levelStore = useLevelStore();
+        levelStore.showRoundComplete = true;
       }, 0);
     },
 
@@ -447,19 +432,19 @@ export const useRoundStore = defineStore('round', {
     },
 
     autoCashOut(reason: 'leave' | 'capped' | 'end') {
-      if (!this.tableId) return;
+      if (!this.boardSize) return;
 
       const globalStore = useGlobalStore();
 
       // No separate table stack to cash out - player keeps their bank balance
-      // Just clear table context
-      this.tableId = null;
+      // Just clear level context
+      this.boardSize = null;
 
       this.grid = [];
       this.actionLog = [];
     },
 
-    leaveTable() {
+    leaveLevel() {
       this.autoCashOut('leave');
     },
 
@@ -473,7 +458,7 @@ export const useRoundStore = defineStore('round', {
       this.roundId = '';
       this.seed = '';
       this.startedAt = 0;
-      this.tableId = null;
+      this.boardSize = null;
       this.grid = [];
       this.gridSize = 4;
       this.hiddenMapHash = '';

@@ -7,13 +7,13 @@
       <GoldDisplay />
     </div>
 
-    <!-- Back to Tables Button (right side) -->
+    <!-- Back to Farms Button (right side) -->
     <button
       v-if="roundStore.boardSize"
-      @click="handleCashOut"
+      @click="handleLeave"
       class="bg-gradient-to-r from-amber-600 to-amber-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-amber-500 hover:to-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl z-10"
     >
-      Back to Tables
+      Back to Farms
     </button>
   </div>
 </template>
@@ -21,19 +21,17 @@
 <script setup lang="ts">
 import { defineAsyncComponent } from 'vue';
 import { useRoundStore } from '../../stores/round';
-import { useTableStore } from '../../stores/table';
 
-const GoldDisplay = defineAsyncComponent(() => import('./GoldDisplay.vue'));
+const GoldDisplay = defineAsyncComponent(() => import('../casino/GoldDisplay.vue'));
 const roundStore = useRoundStore();
-const tableStore = useTableStore();
 
-const handleCashOut = () => {
+const handleLeave = () => {
   if (roundStore.boardSize) {
     roundStore.leaveLevel();
   }
 };
 
 defineOptions({
-  name: 'CasinoHUD',
+  name: 'LevelHUD',
 });
 </script>

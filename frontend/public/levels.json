@@ -1,0 +1,35 @@
+[
+  {
+    "boardSize": "4x4",
+    "payoutMultiplier": 1.0,
+    "purchaseCost": 0,
+    "puzzleFilter": "-0$"
+  },
+  {
+    "boardSize": "5x5",
+    "payoutMultiplier": 2.0,
+    "purchaseCost": 50,
+    "puzzleFilter": "-0$"
+  },
+  {
+    "boardSize": "6x6",
+    "payoutMultiplier": 4.0,
+    "purchaseCost": 200,
+    "puzzleFilter": "-0$"
+  },
+  {
+    "boardSize": "7x7",
+    "payoutMultiplier": 8.0,
+    "purchaseCost": 800,
+    "puzzleFilter": "-0$"
+  },
+  {
+    "boardSize": "8x8",
+    "payoutMultiplier": 16.0,
+    "purchaseCost": 3200,
+    "puzzleFilter": "-0$"
+  }
+]
+
+
+
