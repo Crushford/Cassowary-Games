@@ -47,43 +47,39 @@ export const useEvolveStore = defineStore('evolve', {
     generation: 0,
     fruit: 0,
     evolutionPoints: 0,
-    
+
     // Current matriarch ID
     matriarchId: '' as string,
-    
+
     // All females in the family
     females: [] as Female[],
-    
+
     // All male partners
     males: [] as Male[],
-    
+
     // Active egg batch (temporary, cleared after selection)
     activeEggBatch: null as EggBatch | null,
-    
+
     // Lineage history (past matriarchs)
     lineageHistory: [] as LineageEntry[],
-    
+
     // Clutch cost (fixed for now)
     clutchCost: 5,
   }),
 
   getters: {
     currentMatriarch(): Female | null {
-      return this.females.find(f => f.id === this.matriarchId) || null;
+      return this.females.find((f) => f.id === this.matriarchId) || null;
     },
-    
+
     matriarchPartner(): Male | null {
       const matriarch = this.currentMatriarch;
       if (!matriarch) return null;
-      return this.males.find(m => m.linkedFemaleId === matriarch.id) || null;
+      return this.males.find((m) => m.linkedFemaleId === matriarch.id) || null;
     },
-    
+
     canLayEggs(): boolean {
-      return !!(
-        this.currentMatriarch &&
-        this.matriarchPartner &&
-        this.fruit >= this.clutchCost
-      );
+      return !!(this.currentMatriarch && this.matriarchPartner && this.fruit >= this.clutchCost);
     },
   },
 
@@ -100,7 +96,7 @@ export const useEvolveStore = defineStore('evolve', {
       this.evolutionPoints = 0;
       this.lineageHistory = [];
       this.activeEggBatch = null;
-      
+
       // Create initial matriarch
       const initialMatriarch: Female = {
         id: this.generateId(),
@@ -110,7 +106,7 @@ export const useEvolveStore = defineStore('evolve', {
         fertility: 1,
         role: 'matriarch',
       };
-      
+
       // Create initial male partner
       const initialMale: Male = {
         id: this.generateId(),
@@ -120,14 +116,14 @@ export const useEvolveStore = defineStore('evolve', {
         fertility: 1,
         linkedFemaleId: null, // Will be auto-assigned
       };
-      
+
       this.females = [initialMatriarch];
       this.matriarchId = initialMatriarch.id;
       this.males = [initialMale];
-      
+
       // Auto-assign partner
       this.assignPartner();
-      
+
       this.hasSavedGame = true;
       this.saveToStorage();
     },
@@ -135,7 +131,7 @@ export const useEvolveStore = defineStore('evolve', {
     loadFromStorage() {
       // Check for new key first, then migrate from old key if needed
       let raw = localStorage.getItem('evolve-save');
-      
+
       // Migrate from old 'evolution-save' key if it exists
       if (!raw) {
         const oldRaw = localStorage.getItem('evolution-save');
@@ -145,12 +141,12 @@ export const useEvolveStore = defineStore('evolve', {
           raw = oldRaw;
         }
       }
-      
+
       if (!raw) return;
 
       try {
         const data = JSON.parse(raw);
-        
+
         // Handle version 1 (old format) migration
         if (data.saveVersion === 1) {
           // Migrate old format to new format
@@ -162,7 +158,7 @@ export const useEvolveStore = defineStore('evolve', {
             fertility: data.matriarch?.fertility || 1,
             role: 'matriarch',
           };
-          
+
           // Create initial male partner for migration
           const initialMale: Male = {
             id: this.generateId(),
@@ -172,7 +168,7 @@ export const useEvolveStore = defineStore('evolve', {
             fertility: data.matriarch?.fertility || 1,
             linkedFemaleId: null,
           };
-          
+
           this.isGameActive = data.isGameActive || false;
           this.generation = data.generation || 1;
           this.fruit = data.fruit || 0;
@@ -183,15 +179,15 @@ export const useEvolveStore = defineStore('evolve', {
           this.lineageHistory = [];
           this.activeEggBatch = null;
           this.hasSavedGame = data.hasSavedGame || false;
-          
+
           // Auto-assign partner
           this.assignPartner();
-          
+
           // Save migrated data
           this.saveToStorage();
           return;
         }
-        
+
         // Handle version 2 (new format)
         if (data.saveVersion === 2) {
           // Ensure all fields have defaults to prevent undefined errors
@@ -247,11 +243,11 @@ export const useEvolveStore = defineStore('evolve', {
     assignPartner(femaleId?: string) {
       const targetFemaleId = femaleId || this.matriarchId;
       if (!targetFemaleId) return;
-      
+
       // Find unassigned male
-      const unassignedMale = this.males.find(m => !m.linkedFemaleId);
+      const unassignedMale = this.males.find((m) => !m.linkedFemaleId);
       if (!unassignedMale) return;
-      
+
       unassignedMale.linkedFemaleId = targetFemaleId;
       this.saveToStorage();
     },
@@ -259,19 +255,19 @@ export const useEvolveStore = defineStore('evolve', {
     // Lay eggs - creates egg batch and generates chicks
     layEggs() {
       if (!this.canLayEggs) return;
-      
+
       const matriarch = this.currentMatriarch!;
       const partner = this.matriarchPartner!;
-      
+
       // Calculate clutch size based on fertility (simple formula: fertility + base)
       const clutchSize = matriarch.fertility + 2;
-      
+
       // Deduct cost
       this.fruit -= this.clutchCost;
-      
+
       // Generate chicks
       const chicks = this.generateChicks(matriarch, partner, clutchSize);
-      
+
       // Create egg batch
       this.activeEggBatch = {
         motherId: matriarch.id,
@@ -279,27 +275,30 @@ export const useEvolveStore = defineStore('evolve', {
         clutchSize,
         chicks,
       };
-      
+
       this.saveToStorage();
     },
 
     // Generate chicks with mutations
     generateChicks(mother: Female, father: Male, count: number): Chick[] {
       const chicks: Chick[] = [];
-      
+
       for (let i = 0; i < count; i++) {
         // Determine sex (50/50)
         const sex: Sex = Math.random() < 0.5 ? 'male' : 'female';
-        
+
         // Base stats from parents (average)
         const baseSize = Math.round((mother.size + father.size) / 2);
         const baseSpeed = Math.round((mother.speed + father.speed) / 2);
         const baseFertility = Math.round((mother.fertility + father.fertility) / 2);
-        
+
         // Pick one stat to mutate
-        const statToMutate = ['size', 'speed', 'fertility'][Math.floor(Math.random() * 3)] as 'size' | 'speed' | 'fertility';
+        const statToMutate = ['size', 'speed', 'fertility'][Math.floor(Math.random() * 3)] as
+          | 'size'
+          | 'speed'
+          | 'fertility';
         const mutationDirection = Math.random() < 0.5 ? -1 : 1;
-        
+
         const chick: Chick = {
           id: this.generateId(),
           generation: this.generation + 1,
@@ -309,7 +308,7 @@ export const useEvolveStore = defineStore('evolve', {
           sex,
           mutatedStat: statToMutate,
         };
-        
+
         // Apply mutation (bounded between 1 and 10)
         if (statToMutate === 'size') {
           chick.size = Math.max(1, Math.min(10, baseSize + mutationDirection));
@@ -318,20 +317,20 @@ export const useEvolveStore = defineStore('evolve', {
         } else {
           chick.fertility = Math.max(1, Math.min(10, baseFertility + mutationDirection));
         }
-        
+
         chicks.push(chick);
       }
-      
+
       return chicks;
     },
 
     // Select new matriarch and keep chosen chicks
     selectNewMatriarch(newMatriarchId: string, chicksToKeep: string[]) {
       if (!this.activeEggBatch) return;
-      
+
       const batch = this.activeEggBatch;
-      const newMatriarchChick = batch.chicks.find(c => c.id === newMatriarchId);
-      
+      const newMatriarchChick = batch.chicks.find((c) => c.id === newMatriarchId);
+
       if (!newMatriarchChick || newMatriarchChick.sex !== 'female') {
         // If no valid female chick, keep current matriarch and just add kept chicks
         this.addChicksToFamily(chicksToKeep);
@@ -339,7 +338,7 @@ export const useEvolveStore = defineStore('evolve', {
         this.saveToStorage();
         return;
       }
-      
+
       // Get current matriarch before replacing
       const currentMatriarch = this.currentMatriarch;
       if (currentMatriarch) {
@@ -351,11 +350,11 @@ export const useEvolveStore = defineStore('evolve', {
           speed: currentMatriarch.speed,
           fertility: currentMatriarch.fertility,
         });
-        
+
         // Change role to retired
         currentMatriarch.role = 'retired';
       }
-      
+
       // Create new matriarch from chick
       const newMatriarch: Female = {
         id: newMatriarchChick.id,
@@ -365,38 +364,38 @@ export const useEvolveStore = defineStore('evolve', {
         fertility: newMatriarchChick.fertility,
         role: 'matriarch',
       };
-      
+
       // Update matriarch ID
       this.matriarchId = newMatriarch.id;
-      
+
       // Add new matriarch to females
       this.females.push(newMatriarch);
-      
+
       // Add other kept chicks
-      this.addChicksToFamily(chicksToKeep.filter(id => id !== newMatriarchId));
-      
+      this.addChicksToFamily(chicksToKeep.filter((id) => id !== newMatriarchId));
+
       // Advance generation
       this.generation = newMatriarch.generation;
-      
+
       // Clear egg batch
       this.activeEggBatch = null;
-      
+
       // Auto-assign partner if available
       this.assignPartner();
-      
+
       this.saveToStorage();
     },
 
     // Add kept chicks to family (females) or partner pool (males)
     addChicksToFamily(chickIds: string[]) {
       if (!this.activeEggBatch) return;
-      
+
       const batch = this.activeEggBatch;
-      
+
       for (const chickId of chickIds) {
-        const chick = batch.chicks.find(c => c.id === chickId);
+        const chick = batch.chicks.find((c) => c.id === chickId);
         if (!chick) continue;
-        
+
         if (chick.sex === 'female') {
           const female: Female = {
             id: chick.id,
