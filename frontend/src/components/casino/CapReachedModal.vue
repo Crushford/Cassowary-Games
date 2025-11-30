@@ -43,8 +43,8 @@ const tableStore = useTableStore();
 const globalStore = useGlobalStore();
 
 const totalProfit = computed(() => {
-  if (!roundStore.tableId) return 0;
-  return globalStore.tablesProgress[roundStore.tableId]?.totalProfit ?? 0;
+  // Table progress no longer tracked in new system
+  return 0;
 });
 
 defineOptions({

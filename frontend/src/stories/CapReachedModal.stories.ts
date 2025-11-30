@@ -18,7 +18,7 @@ type Story = StoryObj<typeof CapReachedModal>;
 
 const createStoryWithPinia = (
   initialChips: number,
-  tableId: string,
+  boardSize: string,
   maxPayout: number,
   totalProfit: number
 ) => ({
@@ -32,15 +32,8 @@ const createStoryWithPinia = (
     const roundStore = useRoundStore();
 
     globalStore.player.totalChips = initialChips;
-    globalStore.tablesProgress[tableId] = {
-      totalProfit,
-      roundsComplete: 0,
-      currentPuzzleIdOrName: null,
-      isUsingRegex: false,
-      roundWinnings: 0,
-    };
     tableStore.maxPayout = maxPayout;
-    roundStore.tableId = tableId;
+    roundStore.boardSize = boardSize;
 
     return {};
   },
@@ -49,20 +42,20 @@ const createStoryWithPinia = (
 
 export const Default: Story = {
   args: {},
-  render: () => createStoryWithPinia(1000, 'table1', 5000, 2500),
+  render: () => createStoryWithPinia(1000, '4x4', 5000, 2500),
 };
 
 export const LowBalance: Story = {
   args: {},
-  render: () => createStoryWithPinia(50, 'table1', 5000, 4800),
+  render: () => createStoryWithPinia(50, '4x4', 5000, 4800),
 };
 
 export const HighBalance: Story = {
   args: {},
-  render: () => createStoryWithPinia(100000, 'table1', 5000, 1000),
+  render: () => createStoryWithPinia(100000, '4x4', 5000, 1000),
 };
 
 export const NearCap: Story = {
   args: {},
-  render: () => createStoryWithPinia(5000, 'table1', 5000, 4999),
+  render: () => createStoryWithPinia(5000, '4x4', 5000, 4999),
 };

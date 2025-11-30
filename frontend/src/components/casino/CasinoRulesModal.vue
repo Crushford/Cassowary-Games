@@ -63,15 +63,23 @@ import { computed } from 'vue';
 import { useGlobalStore } from '../../stores/global';
 import { useRoundStore } from '../../stores/round';
 import { useTableStore } from '../../stores/table';
+import { useLevelStore } from '../../stores/level';
 import Modal from '../shared/Modal.vue';
 
 const globalStore = useGlobalStore();
 const roundStore = useRoundStore();
 const tableStore = useTableStore();
+const levelStore = useLevelStore();
 
 const tablePayouts = computed(() => {
-  const table = tableStore.getTable(roundStore.tableId!);
-  const multiplier = table?.payoutMultiplier ?? 1.0;
+  if (!roundStore.boardSize) {
+    return {
+      honeypot: Math.round(globalStore.config.payoutPerHoneypot),
+      ant: Math.round(globalStore.config.penaltyPerAnt),
+    };
+  }
+  const level = levelStore.getLevel(roundStore.boardSize);
+  const multiplier = level?.payoutMultiplier ?? 1.0;
   return {
     honeypot: Math.round(globalStore.config.payoutPerHoneypot * multiplier),
     ant: Math.round(globalStore.config.penaltyPerAnt * multiplier),

@@ -9,7 +9,7 @@
 
     <!-- Back to Tables Button (right side) -->
     <button
-      v-if="roundStore.tableId"
+      v-if="roundStore.boardSize"
       @click="handleCashOut"
       class="bg-gradient-to-r from-amber-600 to-amber-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-amber-500 hover:to-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl z-10"
     >
@@ -28,8 +28,8 @@ const roundStore = useRoundStore();
 const tableStore = useTableStore();
 
 const handleCashOut = () => {
-  if (roundStore.tableId) {
-    roundStore.leaveTable();
+  if (roundStore.boardSize) {
+    roundStore.leaveLevel();
   }
 };
 

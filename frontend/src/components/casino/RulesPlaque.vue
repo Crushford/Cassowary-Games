@@ -85,31 +85,7 @@
           <span class="text-yellow-300 font-semibold">{{ tableStore.maxPayout }}</span>
         </div>
 
-        <!-- Progress bar -->
-        <div
-          v-if="roundStore.tableId && globalStore.tablesProgress[roundStore.tableId]"
-          class="space-y-1"
-        >
-          <div class="flex justify-between text-xs text-[#f2f1ea] text-opacity-80">
-            <span>Progress:</span>
-            <span
-              class="font-semibold"
-              :class="currentProgress < 0 ? 'text-red-300' : 'text-yellow-300'"
-            >
-              {{ currentProgress }} / {{ tableStore.maxPayout }}
-            </span>
-          </div>
-          <div
-            class="w-full bg-[#0f3b2e] border border-[#d4af37] border-opacity-30 rounded-full h-2"
-          >
-            <div
-              class="bg-yellow-400 h-2 rounded-full transition-all duration-300"
-              :style="{
-                width: `${Math.max(0, Math.min(100, (currentProgress / tableStore.maxPayout) * 100))}%`,
-              }"
-            ></div>
-          </div>
-        </div>
+        <!-- Progress bar removed - no longer tracking table progress -->
       </div>
     </div>
   </div>
@@ -120,14 +96,22 @@ import { computed } from 'vue';
 import { useGlobalStore } from '../../stores/global';
 import { useTableStore } from '../../stores/table';
 import { useRoundStore } from '../../stores/round';
+import { useLevelStore } from '../../stores/level';
 
 const globalStore = useGlobalStore();
 const tableStore = useTableStore();
 const roundStore = useRoundStore();
+const levelStore = useLevelStore();
 
 const tablePayouts = computed(() => {
-  const table = tableStore.getTable(roundStore.tableId!);
-  const multiplier = table?.payoutMultiplier ?? 1.0;
+  if (!roundStore.boardSize) {
+    return {
+      honeypot: Math.round(globalStore.config.payoutPerHoneypot),
+      ant: Math.round(globalStore.config.penaltyPerAnt),
+    };
+  }
+  const level = levelStore.getLevel(roundStore.boardSize);
+  const multiplier = level?.payoutMultiplier ?? 1.0;
   return {
     honeypot: Math.round(globalStore.config.payoutPerHoneypot * multiplier),
     ant: Math.round(globalStore.config.penaltyPerAnt * multiplier),
@@ -135,8 +119,8 @@ const tablePayouts = computed(() => {
 });
 
 const currentProgress = computed(() => {
-  if (!roundStore.tableId) return 0;
-  return globalStore.tablesProgress[roundStore.tableId]?.totalProfit ?? 0;
+  // Table progress no longer tracked in new system
+  return 0;
 });
 
 defineOptions({
