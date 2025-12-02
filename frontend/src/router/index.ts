@@ -61,6 +61,11 @@ const router = createRouter({
       component: () => import('../views/Evolve.vue'),
     },
     {
+      path: '/pompeii',
+      name: 'pompeii',
+      component: () => import('../views/PompeiiGame.vue'),
+    },
+    {
       path: '/storybook',
       redirect: '/storybook-static/index.html',
     },

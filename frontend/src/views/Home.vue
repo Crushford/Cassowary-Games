@@ -64,6 +64,15 @@
             <h4 class="text-lg font-bold mb-1">Keno</h4>
             <p class="text-sm text-gray-200">Play the Keno game</p>
           </router-link>
+
+          <router-link
+            to="/pompeii"
+            @click="showWorksInProgressModal = false"
+            class="block p-4 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+          >
+            <h4 class="text-lg font-bold mb-1">Pompeii</h4>
+            <p class="text-sm text-gray-200">City building and defense game</p>
+          </router-link>
         </div>
       </div>
     </Modal>
