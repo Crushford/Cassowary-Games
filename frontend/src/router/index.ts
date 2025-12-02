@@ -43,7 +43,7 @@ const router = createRouter({
     {
       path: '/queens',
       name: 'queens',
-      component: () => import('../views/Levels.vue'),
+      component: () => import('../views/QueensLevels.vue'),
     },
     {
       path: '/queens/tutorial/:levelName',
