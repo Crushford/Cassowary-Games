@@ -1,8 +1,10 @@
 import { ref, computed } from 'vue';
+import { isEuLocation } from '@/utils/region';
 
 const CONSENT_KEY = 'cookie-consent';
 const CONSENT_VALUE_ACCEPTED = 'accepted';
 const CONSENT_VALUE_DECLINED = 'declined';
+const euConsentRequired = ref<boolean>(isEuLocation());
 
 // Shared reactive state
 const consentStatus = ref<string | null>(null);
@@ -32,6 +34,20 @@ export function useCookieConsent() {
     return consentStatus.value === CONSENT_VALUE_ACCEPTED;
   });
 
+  const shouldShowBanner = computed(() => {
+    return euConsentRequired.value && !hasConsented.value;
+  });
+
+  const isAnalyticsAllowed = computed(() => {
+    if (consentStatus.value === CONSENT_VALUE_DECLINED) {
+      return false;
+    }
+    if (consentStatus.value === CONSENT_VALUE_ACCEPTED) {
+      return true;
+    }
+    return !euConsentRequired.value;
+  });
+
   const acceptConsent = () => {
     try {
       localStorage.setItem(CONSENT_KEY, CONSENT_VALUE_ACCEPTED);
@@ -53,6 +69,9 @@ export function useCookieConsent() {
   return {
     hasConsented,
     hasAccepted,
+    euConsentRequired,
+    shouldShowBanner,
+    isAnalyticsAllowed,
     acceptConsent,
     declineConsent,
   };

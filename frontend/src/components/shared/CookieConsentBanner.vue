@@ -1,7 +1,7 @@
 <template>
   <Transition name="cookie-banner">
     <div
-      v-if="!hasConsented"
+      v-if="shouldShowBanner"
       class="fixed bottom-0 left-0 right-0 z-50 bg-gray-800 border-t-2 border-yellow-600 shadow-lg"
     >
       <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
@@ -35,30 +35,9 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue';
-import { useRoute } from 'vue-router';
 import { useCookieConsent } from '@/composables/useCookieConsent';
-import { initGoogleAnalytics, trackPageView } from '@/utils/analytics';
 
-const route = useRoute();
-const { hasConsented, hasAccepted, acceptConsent, declineConsent } = useCookieConsent();
-
-// Watch for consent changes and initialize analytics if accepted
-watch(
-  hasAccepted,
-  (accepted) => {
-    if (accepted && import.meta.env.VITE_GA_MEASUREMENT_ID) {
-      initGoogleAnalytics();
-      // Track current page view after GA initializes
-      // Use nextTick to ensure GA is ready
-      setTimeout(() => {
-        const [path, query] = route.fullPath.split('?');
-        trackPageView(path, query ? `?${query}` : undefined);
-      }, 100);
-    }
-  },
-  { immediate: true }
-);
+const { shouldShowBanner, acceptConsent, declineConsent } = useCookieConsent();
 
 const accept = () => {
   acceptConsent();

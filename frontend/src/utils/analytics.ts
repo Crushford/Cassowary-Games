@@ -7,10 +7,10 @@ let isInitialized = false;
 // Initialize Google Analytics (loads the script)
 // Only called after user consent is granted
 export function initGoogleAnalytics() {
-  const { hasAccepted } = useCookieConsent();
+  const { isAnalyticsAllowed } = useCookieConsent();
 
-  // Only initialize if user has accepted cookies
-  if (!hasAccepted.value) {
+  // Only initialize when analytics is allowed for this visitor
+  if (!isAnalyticsAllowed.value) {
     return;
   }
 
@@ -43,9 +43,9 @@ export function initGoogleAnalytics() {
 }
 
 export function trackEvent(eventName: string, eventParams?: Record<string, unknown>) {
-  const { hasAccepted } = useCookieConsent();
+  const { isAnalyticsAllowed } = useCookieConsent();
 
-  if (!hasAccepted.value || !isInitialized) {
+  if (!isAnalyticsAllowed.value || !isInitialized) {
     return;
   }
 
@@ -71,9 +71,9 @@ export function trackEvent(eventName: string, eventParams?: Record<string, unkno
 }
 
 export function trackPageView(path: string, query?: string) {
-  const { hasAccepted } = useCookieConsent();
+  const { isAnalyticsAllowed } = useCookieConsent();
 
-  if (!hasAccepted.value || !isInitialized) {
+  if (!isAnalyticsAllowed.value || !isInitialized) {
     return;
   }
 
