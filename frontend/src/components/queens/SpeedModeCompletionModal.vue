@@ -85,17 +85,36 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQueensStore } from '../../stores/queensStore';
 import Modal from '../shared/Modal.vue';
+import { trackGameComplete } from '../../utils/analyticsEvents';
 
 const router = useRouter();
 const queensStore = useQueensStore();
 
-defineProps<{
+const props = defineProps<{
   isVisible: boolean;
 }>();
+
+watch(
+  () => props.isVisible,
+  (isVisible) => {
+    if (!isVisible) {
+      return;
+    }
+
+    trackGameComplete({
+      game_name: 'queens',
+      game_mode: 'speed',
+      speed_timer_s: queensStore.speedModeTimerDuration ?? undefined,
+      speed_completed_count: queensStore.speedModeCompletedCount,
+      speed_size_filter: queensStore.speedModeSize ?? 'mixed',
+      new_record: queensStore.speedModeIsNewRecord,
+    });
+  }
+);
 
 const sizeBreakdown = computed(() => {
   return Object.entries(queensStore.speedModeCompletedBySize).sort((a, b) => {

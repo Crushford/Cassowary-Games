@@ -59,12 +59,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { useGlobalStore } from '../../stores/global';
 import { useRoundStore } from '../../stores/round';
 import { useTableStore } from '../../stores/table';
 import { useLevelStore } from '../../stores/level';
 import Modal from '../shared/Modal.vue';
+import { trackRulesOpened } from '../../utils/analyticsEvents';
 
 const globalStore = useGlobalStore();
 const roundStore = useRoundStore();
@@ -85,6 +86,22 @@ const tablePayouts = computed(() => {
     ant: Math.round(globalStore.config.penaltyPerAnt * multiplier),
   };
 });
+
+watch(
+  () => globalStore.ui.showRules,
+  (isVisible) => {
+    if (!isVisible) {
+      return;
+    }
+
+    trackRulesOpened({
+      game_name: 'casino',
+      game_mode: 'table',
+      board_size: roundStore.boardSize ?? undefined,
+      table_max_payout: tableStore.maxPayout,
+    });
+  }
+);
 
 const onClose = () => {
   globalStore.setShowRules(false);

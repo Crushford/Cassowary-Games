@@ -62,8 +62,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, defineAsyncComponent } from 'vue';
+import { onMounted, watch, defineAsyncComponent } from 'vue';
 import { useKenoStore } from '../stores/kenoStore';
+import { trackGameStart, trackGameComplete } from '../utils/analyticsEvents';
 
 const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
 const KenoSquare = defineAsyncComponent(() => import('../components/keno/KenoSquare.vue'));
@@ -81,7 +82,30 @@ function handleEndTurn() {
 
 onMounted(async () => {
   await kenoStore.loadRandomPuzzle();
+  trackGameStart({
+    game_name: 'keno',
+    game_mode: 'standard',
+    grid_size: kenoStore.gridSize,
+  });
 });
+
+watch(
+  () => kenoStore.roundComplete,
+  (roundComplete) => {
+    if (!roundComplete) {
+      return;
+    }
+
+    trackGameComplete({
+      game_name: 'keno',
+      game_mode: 'standard',
+      grid_size: kenoStore.gridSize,
+      turns_used: kenoStore.turnHistory.length,
+      total_food: kenoStore.food,
+      total_cassowaries: kenoStore.cassowaries,
+    });
+  }
+);
 
 defineOptions({
   name: 'KenoGame',

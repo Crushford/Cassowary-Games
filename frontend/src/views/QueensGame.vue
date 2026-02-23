@@ -108,6 +108,7 @@ import { onMounted, onBeforeUnmount, watch, defineAsyncComponent, ref, computed 
 import { useRoute, useRouter } from 'vue-router';
 import { useQueensStore, type TutorialStep } from '../stores/queensStore';
 import type { Pos } from '../types/types';
+import { trackGameStart } from '../utils/analyticsEvents';
 
 const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
 const QueensSquare = defineAsyncComponent(() => import('../components/queens/QueensSquare.vue'));
@@ -167,6 +168,12 @@ async function loadPuzzleFromRoute() {
       await queensStore.loadTutorialPuzzle(levelName);
       // Initialize tutorial steps
       initializeTutorialSteps(levelName);
+      trackGameStart({
+        game_name: 'queens',
+        game_mode: 'tutorial',
+        grid_size: queensStore.gridSize,
+        puzzle_id: levelName,
+      });
     } catch (err) {
       console.error('[QueensGame] Error loading tutorial puzzle:', err);
       // Redirect to levels page if puzzle not found
@@ -179,6 +186,13 @@ async function loadPuzzleFromRoute() {
         queensStore.exitTutorialMode();
       }
       await queensStore.loadPuzzleById(puzzleId);
+      trackGameStart({
+        game_name: 'queens',
+        game_mode: queensStore.isSpeedMode ? 'speed' : 'standard',
+        grid_size: queensStore.gridSize,
+        puzzle_id:
+          queensStore.currentPuzzleId === null ? undefined : String(queensStore.currentPuzzleId),
+      });
     } catch (err) {
       console.error('[QueensGame] Error loading puzzle:', err);
       // Redirect to levels page if puzzle not found

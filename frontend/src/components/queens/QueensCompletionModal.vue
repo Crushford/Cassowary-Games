@@ -36,14 +36,36 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue';
 import { useQueensStore } from '../../stores/queensStore';
 import Modal from '../shared/Modal.vue';
+import { trackGameComplete } from '../../utils/analyticsEvents';
 
 const queensStore = useQueensStore();
 
-defineProps<{
+const props = defineProps<{
   isVisible: boolean;
 }>();
+
+watch(
+  () => props.isVisible,
+  (isVisible) => {
+    if (!isVisible) {
+      return;
+    }
+
+    trackGameComplete({
+      game_name: 'queens',
+      game_mode: queensStore.isTutorialMode ? 'tutorial' : queensStore.isSpeedMode ? 'speed' : 'standard',
+      grid_size: queensStore.gridSize,
+      puzzle_id:
+        queensStore.currentPuzzleId === null ? undefined : String(queensStore.currentPuzzleId),
+      completion_time_s: queensStore.puzzleCompletionTime ?? undefined,
+      queens_found: queensStore.queenPositions.length,
+      move_count: queensStore.moveHistory.length,
+    });
+  }
+);
 
 const handleNextPuzzle = async () => {
   try {

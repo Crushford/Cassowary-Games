@@ -52,7 +52,9 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue';
 import Modal from '../shared/Modal.vue';
+import { trackRulesOpened } from '../../utils/analyticsEvents';
 
 interface Props {
   store: {
@@ -62,6 +64,20 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+watch(
+  () => props.store.showGameRules,
+  (isVisible) => {
+    if (!isVisible) {
+      return;
+    }
+
+    trackRulesOpened({
+      game_name: 'harvest',
+      game_mode: 'campaign',
+    });
+  }
+);
 
 const onClose = () => {
   props.store.closeRulesModal();
