@@ -45,6 +45,7 @@ import { computed } from 'vue';
 import Modal from './Modal.vue';
 import { useCookieConsent } from '@/composables/useCookieConsent';
 import { initGoogleAnalytics } from '@/utils/analytics';
+import { trackAnalyticsConsentUpdated } from '@/utils/analyticsEvents';
 
 interface Props {
   isVisible: boolean;
@@ -64,6 +65,7 @@ const close = () => {
 
 const handleAccept = () => {
   acceptConsent();
+  trackAnalyticsConsentUpdated({ source: 'privacy_settings', status: 'accepted' });
   if (import.meta.env.VITE_GA_MEASUREMENT_ID) {
     initGoogleAnalytics();
   }
@@ -75,6 +77,7 @@ const handleAccept = () => {
 
 const handleDecline = () => {
   declineConsent();
+  trackAnalyticsConsentUpdated({ source: 'privacy_settings', status: 'declined' });
   // Note: GA won't load if declined, and if it was already loaded,
   // it will stop tracking new events (but won't unload the script)
   setTimeout(() => {

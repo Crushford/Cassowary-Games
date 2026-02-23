@@ -25,9 +25,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, defineAsyncComponent } from 'vue';
+import { onMounted, watch, defineAsyncComponent } from 'vue';
 import { usePlantStore } from '../stores/plantStore';
 import { useDialogueStore } from '../stores/dialogueStore';
+import { trackGameComplete, trackGameStart } from '../utils/analyticsEvents';
 
 const Story = defineAsyncComponent(() => import('../components/shared/Story.vue'));
 const PlantTools = defineAsyncComponent(() => import('../components/plant-game/PlantTools.vue'));
@@ -50,7 +51,30 @@ onMounted(() => {
   dialogueStore.setCurrentGame('plant');
 
   plantStore.loadUserConfiguration();
+
+  trackGameStart({
+    game_name: 'plant',
+    game_mode: 'builder',
+    grid_size: plantStore.gridSize,
+  });
 });
+
+watch(
+  () => plantStore.isComplete,
+  (isComplete) => {
+    if (!isComplete) {
+      return;
+    }
+
+    trackGameComplete({
+      game_name: 'plant',
+      game_mode: 'builder',
+      grid_size: plantStore.gridSize,
+      honey_pots_placed: plantStore.honeyPotsPlaced,
+      current_step: plantStore.currentStep,
+    });
+  }
+);
 
 defineOptions({
   name: 'PlantGame',

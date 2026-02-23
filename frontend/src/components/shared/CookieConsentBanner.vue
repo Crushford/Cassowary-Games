@@ -36,15 +36,18 @@
 
 <script setup lang="ts">
 import { useCookieConsent } from '@/composables/useCookieConsent';
+import { trackAnalyticsConsentUpdated } from '@/utils/analyticsEvents';
 
 const { shouldShowBanner, acceptConsent, declineConsent } = useCookieConsent();
 
 const accept = () => {
   acceptConsent();
+  trackAnalyticsConsentUpdated({ source: 'banner', status: 'accepted' });
 };
 
 const decline = () => {
   declineConsent();
+  trackAnalyticsConsentUpdated({ source: 'banner', status: 'declined' });
 };
 </script>
 

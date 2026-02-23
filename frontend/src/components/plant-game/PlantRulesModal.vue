@@ -63,10 +63,27 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue';
 import { usePlantStore } from '../../stores/plantStore';
 import Modal from '../shared/Modal.vue';
+import { trackRulesOpened } from '../../utils/analyticsEvents';
 
 const plantStore = usePlantStore();
+
+watch(
+  () => plantStore.showGameRules,
+  (isVisible) => {
+    if (!isVisible) {
+      return;
+    }
+
+    trackRulesOpened({
+      game_name: 'plant',
+      game_mode: 'builder',
+      grid_size: plantStore.gridSize,
+    });
+  }
+);
 
 const onClose = () => {
   plantStore.closeRulesModal();

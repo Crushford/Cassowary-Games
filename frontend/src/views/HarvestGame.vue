@@ -38,6 +38,7 @@
 import { onMounted, watch, defineAsyncComponent } from 'vue';
 import { useHarvestStore } from '../stores/harvestStore';
 import { useDialogueStore } from '../stores/dialogueStore';
+import { trackGameComplete, trackGameStart } from '../utils/analyticsEvents';
 
 interface Props {
   isGameOnly?: boolean;
@@ -100,6 +101,14 @@ onMounted(() => {
       harvestStore.showGameRules = true;
     }
   }
+
+  trackGameStart({
+    game_name: 'harvest',
+    game_mode: props.isGameOnly ? 'puzzle_only' : 'campaign',
+    grid_size: harvestStore.gridSize,
+    day_number: props.isGameOnly ? undefined : harvestStore.currentDay,
+    is_training_day: props.isGameOnly ? undefined : harvestStore.isTrainingDay,
+  });
 });
 
 // Watch for configuration changes and save them
@@ -114,6 +123,25 @@ watch(
   () => harvestStore.uiState.autoFlagging,
   () => {
     harvestStore.saveUserConfiguration();
+  }
+);
+
+watch(
+  () => harvestStore.isComplete,
+  (isComplete) => {
+    if (!isComplete) {
+      return;
+    }
+
+    trackGameComplete({
+      game_name: 'harvest',
+      game_mode: props.isGameOnly ? 'puzzle_only' : 'campaign',
+      grid_size: harvestStore.gridSize,
+      day_number: harvestStore.currentDay,
+      is_training_day: harvestStore.isTrainingDay,
+      honey_pots: harvestStore.honeyPots,
+      bites: harvestStore.bites,
+    });
   }
 );
 
