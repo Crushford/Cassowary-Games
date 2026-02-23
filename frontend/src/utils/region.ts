@@ -1,9 +1,11 @@
-const EU_TIMEZONES = new Set([
+const CONSENT_REQUIRED_TIMEZONES = new Set([
   'Africa/Ceuta',
+  'Arctic/Longyearbyen',
   'Asia/Nicosia',
   'Atlantic/Azores',
   'Atlantic/Canary',
   'Atlantic/Madeira',
+  'Atlantic/Reykjavik',
   'Europe/Amsterdam',
   'Europe/Athens',
   'Europe/Bratislava',
@@ -14,12 +16,14 @@ const EU_TIMEZONES = new Set([
   'Europe/Copenhagen',
   'Europe/Dublin',
   'Europe/Helsinki',
+  'Europe/London',
   'Europe/Lisbon',
   'Europe/Ljubljana',
   'Europe/Luxembourg',
   'Europe/Madrid',
   'Europe/Malta',
   'Europe/Mariehamn',
+  'Europe/Oslo',
   'Europe/Paris',
   'Europe/Prague',
   'Europe/Riga',
@@ -27,6 +31,7 @@ const EU_TIMEZONES = new Set([
   'Europe/Sofia',
   'Europe/Stockholm',
   'Europe/Tallinn',
+  'Europe/Vaduz',
   'Europe/Vienna',
   'Europe/Vilnius',
   'Europe/Warsaw',
@@ -42,7 +47,7 @@ function getRegionOverride(): 'eu' | 'non-eu' | null {
   return null;
 }
 
-export function isEuLocation(): boolean {
+export function isConsentRequiredLocation(): boolean {
   const override = getRegionOverride();
   if (override === 'eu') {
     return true;
@@ -53,9 +58,12 @@ export function isEuLocation(): boolean {
 
   try {
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    return Boolean(timeZone && EU_TIMEZONES.has(timeZone));
+    if (!timeZone) {
+      return true;
+    }
+    return CONSENT_REQUIRED_TIMEZONES.has(timeZone);
   } catch (error) {
     console.warn('Failed to detect timezone for analytics consent region check:', error);
-    return false;
+    return true;
   }
 }
