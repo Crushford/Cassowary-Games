@@ -36,6 +36,19 @@
       </button>
     </div>
 
+    <!-- Privacy Settings Link - Bottom Right -->
+    <div class="fixed bottom-0 right-0 p-4">
+      <button
+        @click="showPrivacySettings = true"
+        class="text-sm text-gray-400 hover:text-gray-300 underline transition-colors"
+      >
+        Privacy Settings
+      </button>
+    </div>
+
+    <!-- Privacy Settings Modal -->
+    <PrivacySettingsModal :is-visible="showPrivacySettings" @close="showPrivacySettings = false" />
+
     <!-- Works in Progress Modal -->
     <Modal :is-visible="showWorksInProgressModal" @close="showWorksInProgressModal = false">
       <div>
@@ -84,9 +97,11 @@ import { ref, computed, onMounted } from 'vue';
 import { useEvolveStore } from '@/stores/evolve';
 import BaseButton from '@/components/level-builder/BaseButton.vue';
 import Modal from '@/components/shared/Modal.vue';
+import PrivacySettingsModal from '@/components/shared/PrivacySettingsModal.vue';
 
 const evolveStore = useEvolveStore();
 const showWorksInProgressModal = ref(false);
+const showPrivacySettings = ref(false);
 
 // Check if evolve has progress
 const hasEvolveProgress = computed(() => {
