@@ -8,6 +8,12 @@
 import fs from 'fs'
 import type { GridSquare, ColorName } from '../frontend/src/types/types'
 import { COLOR_SYMBOLS } from '../frontend/src/utils/colorPalette'
+import {
+  calculateMedianAttributeDifferences,
+  pickBestInsertionIndexForNewFamily,
+  ratePuzzleAttributes,
+  type PuzzleFamily
+} from './puzzleArrangement'
 
 // === Types ===
 export interface PuzzleStringFormat {
@@ -19,6 +25,55 @@ export interface PuzzleStringFormat {
 
 export interface PuzzleDatabaseStructure {
   [sizeKey: string]: PuzzleStringFormat[] // e.g., "5x5", "6x6", "7x7"
+}
+
+const ID_VARIANT_SUFFIX_REGEX = /-(0|90|180|270)(VH|V|H)?$/
+
+const SIGNATURE_SYMBOLS =
+  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+
+/**
+ * Normalize color symbols so layouts that differ only by symbol labels compare equal.
+ */
+export function normalizeLayoutColors(layout: string): string {
+  const remap = new Map<string, string>()
+  let nextIndex = 0
+  let normalized = ''
+
+  for (const symbol of layout) {
+    let mapped = remap.get(symbol)
+    if (!mapped) {
+      if (nextIndex >= SIGNATURE_SYMBOLS.length) {
+        throw new Error('Too many unique layout symbols to normalize')
+      }
+      mapped = SIGNATURE_SYMBOLS[nextIndex]
+      remap.set(symbol, mapped)
+      nextIndex++
+    }
+    normalized += mapped
+  }
+
+  return normalized
+}
+
+/**
+ * Build a color-invariant signature for duplicate detection.
+ */
+export function buildColorInvariantSignature(
+  layout: string,
+  queens: string
+): string {
+  return `${queens}|${normalizeLayoutColors(layout)}`
+}
+
+/**
+ * Strip variant suffix (e.g. -0, -90V) and return family base id.
+ */
+export function extractPuzzleFamilyBaseId(id: string): string | null {
+  if (!ID_VARIANT_SUFFIX_REGEX.test(id)) {
+    return null
+  }
+  return id.replace(ID_VARIANT_SUFFIX_REGEX, '')
 }
 
 export class PuzzleDatabase {
@@ -224,6 +279,16 @@ export class PuzzleDatabase {
     const baseId = this.generateNextId()
     let addedCount = 0
     let skippedCount = 0
+    const size = grid.length
+    const sizeKey = `${size}x${size}`
+    const puzzlesOfSameSize = this.puzzles[sizeKey] || []
+    const signatureToPuzzleId = new Map<string, string>(
+      puzzlesOfSameSize.map(existing => [
+        buildColorInvariantSignature(existing.layout, existing.queens),
+        existing.id
+      ])
+    )
+    const newlyAddedFamilyMembers: PuzzleStringFormat[] = []
 
     if (this.verbose) {
       console.log(
@@ -234,24 +299,18 @@ export class PuzzleDatabase {
     for (let i = 0; i < variants.length; i++) {
       const [variant, suffix] = variants[i]
       const encoded = this.encodePuzzle(variant)
-
-      // Determine grid size for the puzzle
-      const size = grid.length
-      const sizeKey = `${size}x${size}`
-
-      // Check for duplicates within the same size
-      const puzzlesOfSameSize = this.puzzles[sizeKey] || []
-      const duplicate = puzzlesOfSameSize.find(
-        existing =>
-          existing.layout === encoded.layout &&
-          existing.queens === encoded.queens
+      // Check for duplicates within the same size (color-invariant)
+      const encodedSignature = buildColorInvariantSignature(
+        encoded.layout,
+        encoded.queens
       )
-      if (duplicate) {
+      const duplicateId = signatureToPuzzleId.get(encodedSignature)
+      if (duplicateId) {
         if (this.verbose) {
           console.log(`[DEBUG] Skipped variant ${suffix} (duplicate)`)
           console.log(`  layout: ${encoded.layout}`)
           console.log(`  queens: ${encoded.queens}`)
-          console.log(`  matched existing id: ${duplicate.id}`)
+          console.log(`  matched existing id: ${duplicateId}`)
         }
         skippedCount++
         continue
@@ -271,7 +330,8 @@ export class PuzzleDatabase {
       if (!this.puzzles[sizeKey]) {
         this.puzzles[sizeKey] = []
       }
-      this.puzzles[sizeKey].push(puzzle)
+      newlyAddedFamilyMembers.push(puzzle)
+      signatureToPuzzleId.set(encodedSignature, id)
       if (this.verbose) {
         console.log(`[DEBUG] Added puzzle ${id} to database`)
       }
@@ -285,6 +345,10 @@ export class PuzzleDatabase {
     }
 
     if (addedCount > 0) {
+      this.puzzles[sizeKey] = this.insertNewFamilyByContrast(
+        sizeKey,
+        newlyAddedFamilyMembers
+      )
       // Save to file
       this.save()
       if (this.verbose) {
@@ -297,6 +361,79 @@ export class PuzzleDatabase {
       }
       return false
     }
+  }
+
+  private buildFamiliesFromPuzzleList(puzzles: PuzzleStringFormat[]): PuzzleFamily[] {
+    const familyOrder: string[] = []
+    const membersByFamily = new Map<string, PuzzleStringFormat[]>()
+
+    for (const puzzle of puzzles) {
+      const familyId = extractPuzzleFamilyBaseId(puzzle.id)
+      if (!familyId) {
+        continue
+      }
+      if (!membersByFamily.has(familyId)) {
+        membersByFamily.set(familyId, [])
+        familyOrder.push(familyId)
+      }
+      membersByFamily.get(familyId)!.push(puzzle)
+    }
+
+    const families: PuzzleFamily[] = []
+    for (const familyId of familyOrder) {
+      const members = membersByFamily.get(familyId) || []
+      const primary = members.find(member => member.id.endsWith('-0'))
+      if (!primary) {
+        continue
+      }
+      families.push({
+        familyId,
+        primary,
+        members
+      })
+    }
+    return families
+  }
+
+  private insertNewFamilyByContrast(
+    sizeKey: string,
+    newFamilyMembers: PuzzleStringFormat[]
+  ): PuzzleStringFormat[] {
+    const existing = this.puzzles[sizeKey] || []
+    if (existing.length === 0) {
+      return newFamilyMembers
+    }
+
+    const primary = newFamilyMembers.find(member => member.id.endsWith('-0'))
+    if (!primary) {
+      return [...existing, ...newFamilyMembers]
+    }
+
+    const familyId = extractPuzzleFamilyBaseId(primary.id) || primary.id
+    const newFamily: PuzzleFamily = {
+      familyId,
+      primary,
+      members: newFamilyMembers
+    }
+
+    const existingFamilies = this.buildFamiliesFromPuzzleList(existing)
+    if (existingFamilies.length === 0) {
+      return [...existing, ...newFamilyMembers]
+    }
+
+    const medians = calculateMedianAttributeDifferences(
+      existingFamilies.map(family => ratePuzzleAttributes(family.primary.layout))
+    )
+    const insertionIndex = pickBestInsertionIndexForNewFamily(
+      existingFamilies,
+      newFamily,
+      medians
+    )
+
+    const newFamilyOrder = [...existingFamilies]
+    newFamilyOrder.splice(insertionIndex, 0, newFamily)
+
+    return newFamilyOrder.flatMap(family => family.members)
   }
 
   /**

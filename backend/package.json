@@ -6,6 +6,7 @@
   "scripts": {
     "generate": "tsx generate-cli.ts",
     "puzzle-db": "tsx puzzleDbCli.ts",
+    "reorder-puzzles": "tsx reorderPuzzlesByDifference.ts",
     "server": "tsx server.ts",
     "dev:server": "tsx --watch server.ts"
   },

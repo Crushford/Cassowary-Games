@@ -5,6 +5,7 @@ import LevelBuilder from '../views/LevelBuilder.vue';
 import Levels from '../views/Levels.vue';
 import KenoGameWrapper from '../views/KenoGameWrapper.vue';
 import QueensGame from '../views/QueensGame.vue';
+import QueensDiversityLab from '../views/QueensDiversityLab.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -68,6 +69,11 @@ const router = createRouter({
     {
       path: '/storybook',
       redirect: '/storybook-static/index.html',
+    },
+    {
+      path: '/internal/queens-diversity',
+      name: 'internal-queens-diversity',
+      component: QueensDiversityLab,
     },
     {
       path: '/:pathMatch(.*)*',

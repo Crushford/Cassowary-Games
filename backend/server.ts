@@ -1,9 +1,15 @@
 import express from 'express'
 import cors from 'cors'
 import { PuzzleDatabase } from './puzzleDatabase'
+import {
+  comparePuzzleFeatures,
+  extractPuzzleDiversityFeatures,
+  getDiversityFeatureDefinitions
+} from './puzzleDiversity'
 
 const app = express()
-const PORT = process.env.PORT || 3001
+const REQUESTED_PORT = parseInt(process.env.PORT || '3001', 10)
+const MAX_PORT_ATTEMPTS = 25
 
 // Middleware
 app.use(cors())
@@ -78,6 +84,68 @@ app.get('/api/puzzles/random/:size', (req, res) => {
   } catch (error) {
     console.error('Error fetching random puzzle:', error)
     res.status(500).json({ error: 'Failed to fetch random puzzle' })
+  }
+})
+
+app.get('/api/internal/diversity-pair/:size', (req, res) => {
+  try {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).json({ error: 'Not found' })
+    }
+
+    const size = parseInt(req.params.size, 10)
+    if (isNaN(size) || size <= 0) {
+      return res.status(400).json({ error: 'Invalid grid size' })
+    }
+
+    const originalsOnly =
+      req.query.originalsOnly === undefined
+        ? true
+        : String(req.query.originalsOnly) !== '0'
+
+    const allPuzzles = db.getPuzzlesBySize(size).filter(puzzle =>
+      isValidPuzzle(puzzle.layout, puzzle.queens, size)
+    )
+    const candidates = originalsOnly
+      ? allPuzzles.filter(puzzle => puzzle.id.endsWith('-0'))
+      : allPuzzles
+
+    if (candidates.length < 2) {
+      return res.status(404).json({
+        error: `Need at least 2 ${size}x${size} puzzles for comparison`,
+        count: candidates.length
+      })
+    }
+
+    const firstIndex = Math.floor(Math.random() * candidates.length)
+    let secondIndex = Math.floor(Math.random() * candidates.length)
+    if (secondIndex === firstIndex) {
+      secondIndex = (secondIndex + 1) % candidates.length
+    }
+
+    const leftPuzzle = candidates[firstIndex]
+    const rightPuzzle = candidates[secondIndex]
+    const leftFeatures = extractPuzzleDiversityFeatures(leftPuzzle)
+    const rightFeatures = extractPuzzleDiversityFeatures(rightPuzzle)
+    const comparison = comparePuzzleFeatures(leftFeatures, rightFeatures)
+
+    res.json({
+      size,
+      originalsOnly,
+      featureDefinitions: getDiversityFeatureDefinitions(),
+      comparison,
+      left: {
+        puzzle: leftPuzzle,
+        features: leftFeatures
+      },
+      right: {
+        puzzle: rightPuzzle,
+        features: rightFeatures
+      }
+    })
+  } catch (error) {
+    console.error('Error generating diversity comparison pair:', error)
+    res.status(500).json({ error: 'Failed to generate diversity comparison pair' })
   }
 })
 
@@ -240,8 +308,31 @@ function convertStringToGrid(layout: string, queens: string, gridSize: number) {
   return grid
 }
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Puzzle API server running on http://localhost:${PORT}`)
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`)
-})
+function startServer(preferredPort: number, attemptsRemaining: number): void {
+  const server = app.listen(preferredPort, () => {
+    console.log(`🚀 Puzzle API server running on http://localhost:${preferredPort}`)
+    console.log(`📊 Health check: http://localhost:${preferredPort}/api/health`)
+    if (preferredPort !== REQUESTED_PORT) {
+      console.log(
+        `ℹ️  Port ${REQUESTED_PORT} was busy, using port ${preferredPort} instead`
+      )
+    }
+  })
+
+  server.on('error', (error: NodeJS.ErrnoException) => {
+    if (error.code === 'EADDRINUSE' && attemptsRemaining > 0) {
+      const nextPort = preferredPort + 1
+      console.warn(
+        `⚠️  Port ${preferredPort} in use, retrying on ${nextPort} (${attemptsRemaining} attempts left)`
+      )
+      server.close()
+      startServer(nextPort, attemptsRemaining - 1)
+      return
+    }
+
+    console.error(`Failed to start server on port ${preferredPort}:`, error)
+    process.exit(1)
+  })
+}
+
+startServer(REQUESTED_PORT, MAX_PORT_ATTEMPTS)
