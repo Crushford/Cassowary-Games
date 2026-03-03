@@ -38,6 +38,11 @@ const props = withDefaults(defineProps<Props>(), {
   enableTouch: false,
 });
 
+const emit = defineEmits<{
+  'swipe-start': [];
+  'swipe-end': [];
+}>();
+
 // Swipe tracking state (only used if touch is enabled)
 const isSwiping = ref(false);
 const swipeStartPos = ref<{ x: number; y: number } | null>(null);
@@ -59,6 +64,9 @@ function handleTouchStart(event: TouchEvent) {
     const row = parseInt(cellElement.getAttribute('data-row')!);
     const col = parseInt(cellElement.getAttribute('data-col')!);
     swipedCells.value.add(`${row},${col}`);
+
+    // Notify parent that a swipe gesture has started (used by rotate mode)
+    emit('swipe-start');
   }
 }
 
@@ -98,6 +106,9 @@ function handleTouchMove(event: TouchEvent) {
 
 function handleTouchEnd(event: TouchEvent) {
   if (!props.enableTouch) return;
+
+  // Notify parent that the swipe gesture has ended (used by rotate mode)
+  emit('swipe-end');
 
   isSwiping.value = false;
   swipeStartPos.value = null;
