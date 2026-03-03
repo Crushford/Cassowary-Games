@@ -41,7 +41,7 @@
     <!-- Game Info Display -->
     <div class="flex-none p-2">
       <div class="max-w-full">
-        <component :is="headerComponents[queensStore.currentMode]" />
+        <QueensGameHeader />
         <div v-if="queensStore.isComplete" class="text-sm text-green-400 text-center mt-2">
           Puzzle Complete!
         </div>
@@ -127,12 +127,8 @@ import { trackGameStart } from '../utils/analyticsEvents';
 
 const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
 const QueensSquare = defineAsyncComponent(() => import('../components/queens/QueensSquare.vue'));
-const QueensHeader = defineAsyncComponent(() => import('../components/queens/QueensHeader.vue'));
-const SpeedModeHeader = defineAsyncComponent(
-  () => import('../components/queens/SpeedModeHeader.vue')
-);
-const RotateModeHeader = defineAsyncComponent(
-  () => import('../components/queens/RotateModeHeader.vue')
+const QueensGameHeader = defineAsyncComponent(
+  () => import('../components/queens/QueensGameHeader.vue')
 );
 const QueensCompletionModal = defineAsyncComponent(
   () => import('../components/queens/QueensCompletionModal.vue')
@@ -154,13 +150,6 @@ const queensStore = useQueensStore();
 const speedModeStore = useSpeedModeStore();
 
 const shouldShakeErrorToast = ref(false);
-
-// Header component map
-const headerComponents = {
-  standard: QueensHeader,
-  speed: SpeedModeHeader,
-  rotate: RotateModeHeader,
-} as const;
 
 // Board rotation animation
 const boardRotationDeg = ref(0);
