@@ -29,9 +29,12 @@
         <button
           v-for="tool in tools"
           :key="tool.id"
+          type="button"
           class="px-3 py-1 rounded text-xs font-semibold"
           :class="selectedTool === tool.id ? tool.activeClass : 'bg-gray-700 hover:bg-gray-600'"
           @click="selectedTool = tool.id"
+          :aria-label="`Select ${tool.label} tool`"
+          :aria-pressed="selectedTool === tool.id"
         >
           {{ tool.label }}
         </button>
@@ -44,9 +47,11 @@
         <button
           v-for="cell in gridCells"
           :key="cell.key"
+          type="button"
           class="w-8 h-8 rounded border border-gray-500 flex items-center justify-center text-xs"
           :class="cell.cellClass"
           @click="applyTool(cell.row, cell.col)"
+          :aria-label="cell.ariaLabel"
         >
           <span v-if="cell.hasFlag">🚧</span>
         </button>
@@ -54,22 +59,39 @@
     </div>
 
     <div class="flex gap-2">
-      <button class="flex-1 px-3 py-2 rounded bg-gray-700 hover:bg-gray-600 text-sm" @click="clearFlags">
+      <button
+        type="button"
+        class="flex-1 px-3 py-2 rounded bg-gray-700 hover:bg-gray-600 text-sm"
+        @click="clearFlags"
+        aria-label="Clear all flagged output cells"
+      >
         Clear Flags
       </button>
-      <button class="flex-1 px-3 py-2 rounded bg-gray-700 hover:bg-gray-600 text-sm" @click="clearActive">
+      <button
+        type="button"
+        class="flex-1 px-3 py-2 rounded bg-gray-700 hover:bg-gray-600 text-sm"
+        @click="clearActive"
+        aria-label="Clear all active pattern cells"
+      >
         Clear Active
       </button>
     </div>
 
     <div class="flex gap-2">
-      <button class="flex-1 px-3 py-2 rounded bg-gray-600 hover:bg-gray-500 text-sm font-semibold" @click="$emit('cancel')">
+      <button
+        type="button"
+        class="flex-1 px-3 py-2 rounded bg-gray-600 hover:bg-gray-500 text-sm font-semibold"
+        @click="$emit('cancel')"
+        aria-label="Cancel custom pattern card creation"
+      >
         Cancel
       </button>
       <button
+        type="button"
         class="flex-1 px-3 py-2 rounded bg-purple-700 hover:bg-purple-600 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         :disabled="activeCells.size === 0 || flagCells.size === 0"
         @click="handleSave"
+        aria-label="Save custom pattern card"
       >
         Save Card
       </button>
@@ -169,7 +191,14 @@ const gridStyle = computed(() => ({
 }));
 
 const gridCells = computed(() => {
-  const cells: Array<{ key: string; row: number; col: number; hasFlag: boolean; cellClass: string }> = [];
+  const cells: Array<{
+    key: string;
+    row: number;
+    col: number;
+    hasFlag: boolean;
+    cellClass: string;
+    ariaLabel: string;
+  }> = [];
 
   for (let row = 0; row < size.value; row++) {
     for (let col = 0; col < size.value; col++) {
@@ -177,8 +206,10 @@ const gridCells = computed(() => {
       const isActive = activeCells.value.has(key);
       const hasFlag = flagCells.value.has(key);
       const cellClass = isActive ? 'bg-emerald-600' : 'bg-gray-600';
+      const stateLabel = hasFlag ? 'flagged output' : isActive ? 'active pattern' : 'other';
+      const ariaLabel = `Pattern cell row ${row + 1}, column ${col + 1}, currently ${stateLabel}`;
 
-      cells.push({ key, row, col, hasFlag, cellClass });
+      cells.push({ key, row, col, hasFlag, cellClass, ariaLabel });
     }
   }
 

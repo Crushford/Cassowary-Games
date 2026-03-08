@@ -179,6 +179,7 @@ function getPatternCardVariants(card: PatternCardDefinition): PatternCardVariant
 
 function hasRequiredStructureAt(
   grid: GridSquare[][],
+  playerMarks: MarkType[][],
   baseRow: number,
   baseCol: number,
   variant: PatternCardVariant
@@ -196,6 +197,12 @@ function hasRequiredStructureAt(
   if (!focusColor) {
     return false;
   }
+
+  const absoluteActiveCells = variant.activeCells.map((cell) => ({
+    row: baseRow + cell.row,
+    col: baseCol + cell.col,
+  }));
+  const absoluteActiveSet = new Set(absoluteActiveCells.map(keyForPos));
 
   // Non-active cells are implicitly "other" in this 3..9 square window.
   for (let relRow = 0; relRow < variant.size; relRow++) {
@@ -221,6 +228,26 @@ function hasRequiredStructureAt(
     }
   }
 
+  for (let row = 0; row < grid.length; row++) {
+    for (let col = 0; col < grid[row].length; col++) {
+      if (grid[row][col].groupColor !== focusColor) {
+        continue;
+      }
+
+      const key = keyForCell(row, col);
+      const isActiveCell = absoluteActiveSet.has(key);
+      const isUnmarked = playerMarks[row][col] === null;
+
+      if (isActiveCell && !isUnmarked) {
+        return false;
+      }
+
+      if (!isActiveCell && isUnmarked) {
+        return false;
+      }
+    }
+  }
+
   return true;
 }
 
@@ -238,7 +265,7 @@ export function collectPatternFlagPlacements(
   for (const variant of variants) {
     for (let baseRow = -(variant.size - 1); baseRow <= gridSize - 1; baseRow++) {
       for (let baseCol = -(variant.size - 1); baseCol <= gridSize - 1; baseCol++) {
-        if (!hasRequiredStructureAt(grid, baseRow, baseCol, variant)) {
+        if (!hasRequiredStructureAt(grid, playerMarks, baseRow, baseCol, variant)) {
           continue;
         }
 

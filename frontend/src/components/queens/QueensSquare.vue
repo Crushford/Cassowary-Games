@@ -1,5 +1,7 @@
 <template>
   <button
+    type="button"
+    role="gridcell"
     class="h-full w-full relative transition-colors"
     :class="[
       backgroundColorClass,
@@ -13,6 +15,10 @@
     @click="handleClick"
     :aria-label="ariaLabel"
     :aria-describedby="isTutorialTarget ? 'tutorial-instruction' : undefined"
+    :aria-rowindex="rowIndex + 1"
+    :aria-colindex="colIndex + 1"
+    :data-row-index="rowIndex"
+    :data-col-index="colIndex"
   >
     <!-- Content overlay -->
     <div class="relative z-10 flex items-center justify-center w-full h-full">
