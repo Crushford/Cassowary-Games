@@ -45,7 +45,7 @@
       <div
         v-if="incrementalStore.runStatus === 'playing' && queensStore.autoFlagComboCount > 0"
         :key="queensStore.autoFlagComboTick"
-        class="mt-2 flex justify-end pointer-events-none"
+        class="absolute top-16 right-3 z-50 pointer-events-none"
       >
         <div
           class="text-xs font-bold leading-none px-[0.6rem] py-[0.4rem] rounded-full border border-emerald-400/40 bg-emerald-500/15 text-emerald-300 animate-pulse"
@@ -55,10 +55,28 @@
       </div>
       <div v-if="incrementalStore.runStatus === 'idle'" class="mt-2">
         <div class="text-sm text-gray-300">
-          Solve timed 5x5 Queens puzzles. Spend bank in the shop after each solve to upgrade Risk
-          or Time.
+          Solve timed 5x5 Queens puzzles. Spend bank in the shop after each solve to upgrade Risk.
         </div>
       </div>
+    </div>
+
+    <div
+      v-if="incrementalStore.autoNextPuzzlePurchased && incrementalStore.runStatus !== 'idle'"
+      class="px-3 pt-2"
+    >
+      <label class="inline-flex items-center gap-2 rounded bg-gray-700 px-3 py-1 text-xs font-semibold">
+        <input
+          type="checkbox"
+          class="h-4 w-4 accent-emerald-500"
+          :checked="incrementalStore.autoNextPuzzleEnabled"
+          @change="
+            incrementalStore.setAutoNextPuzzleEnabled(
+              ($event.target as HTMLInputElement).checked
+            )
+          "
+        />
+        <span>Auto Next Level</span>
+      </label>
     </div>
 
     <div
@@ -81,21 +99,43 @@
       <div v-if="incrementalStore.isLoadingPuzzle" class="text-yellow-300" role="status" aria-live="polite">
         Loading puzzle...
       </div>
-      <PlayGrid
-        v-else
-        class="w-full max-w-full aspect-square"
-        :store="queensStore"
-        :enable-touch="true"
-        role="grid"
-        aria-label="Incremental Queens puzzle grid"
-        :aria-rowcount="queensStore.gridSize"
-        :aria-colcount="queensStore.gridSize"
-        data-game-board="queens-incremental"
-      >
-        <template #default="{ rowIndex, colIndex, store }">
-          <QueensSquare :row-index="rowIndex" :col-index="colIndex" :store="store" />
-        </template>
-      </PlayGrid>
+      <div v-else class="relative w-full max-w-full aspect-square">
+        <PlayGrid
+          class="w-full h-full"
+          :store="queensStore"
+          :enable-touch="true"
+          role="grid"
+          aria-label="Incremental Queens puzzle grid"
+          :aria-rowcount="queensStore.gridSize"
+          :aria-colcount="queensStore.gridSize"
+          data-game-board="queens-incremental"
+        >
+          <template #default="{ rowIndex, colIndex, store }">
+            <QueensSquare :row-index="rowIndex" :col-index="colIndex" :store="store" />
+          </template>
+        </PlayGrid>
+        <div
+          v-if="incrementalStore.runStatus === 'upgrade-select' && incrementalStore.lastScoreBreakdown"
+          class="absolute top-2 left-2 right-2 z-20 pointer-events-none"
+        >
+          <div class="rounded bg-gray-900/90 border border-emerald-500/30 p-2 text-xs">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-emerald-300">Time Remaining</span>
+              <span>{{ solvedTimeRemainingLabel }}</span>
+            </div>
+            <div class="h-2 rounded-full bg-slate-700 overflow-hidden mb-2">
+              <div
+                class="h-full rounded-full bg-emerald-400 transition-[width] duration-700 ease-out"
+                :style="{ width: `${animatedTimeRemainingPercent}%` }"
+              />
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-gray-300">Earned</span>
+              <span class="font-bold text-emerald-300">+{{ animatedScoreAward }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div v-if="incrementalStore.runStatus !== 'idle'" class="flex-none p-3 space-y-2">
@@ -181,36 +221,13 @@
           </button>
         </div>
         <p id="incremental-upgrade-description" class="sr-only">
-          Shop phase. Buy upgrades or pattern cards, then continue to the next puzzle.
+          Buy upgrades or pattern cards, then continue to the next puzzle.
         </p>
-        <div v-if="incrementalStore.lastScoreBreakdown" class="bg-gray-700 rounded p-3 mb-4 text-sm">
-          <div class="flex justify-between items-end">
-            <span class="font-semibold">Time Remaining</span>
-            <span>{{ incrementalStore.lastScoreBreakdown.timeRemaining }}s / {{ incrementalStore.lastScoreBreakdown.totalTime }}s</span>
-          </div>
-          <div class="mt-2">
-            <div class="flex justify-between text-xs text-gray-300 mb-1">
-              <span>Timer Left</span>
-              <span>{{ timeRemainingPercentLabel }} of total</span>
-            </div>
-            <div class="h-2 rounded-full bg-slate-600 overflow-hidden">
-              <div
-                class="h-full rounded-full bg-emerald-400 transition-[width] duration-700 ease-out"
-                :style="{ width: `${animatedTimeRemainingPercent}%` }"
-              />
-            </div>
-          </div>
-          <div class="mt-3 space-y-1">
-            <div class="flex justify-between"><span>Multiplier</span><span>x{{ formatMultiplier(incrementalStore.lastScoreBreakdown.multiplier) }}</span></div>
-            <div class="flex justify-between font-bold text-emerald-300"><span>Bank</span><span>{{ incrementalStore.runBank }}</span></div>
-          </div>
-        </div>
-
-        <h3 class="text-sm font-semibold text-gray-300 mb-2">Shop Phase</h3>
 
         <div class="space-y-2">
           <div class="text-xs text-gray-300 px-1">
-            Current timer: <span class="font-semibold text-white">{{ incrementalStore.currentPuzzleTimeLimit }}s</span>
+            Time Limit Per Puzzle:
+            <span class="font-semibold text-white">{{ puzzleTimeLimitLabel }}</span>
           </div>
           <button
             type="button"
@@ -242,26 +259,6 @@
           </button>
 
           <button
-            type="button"
-            class="w-full text-left p-3 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-            :class="incrementalStore.canAffordTime ? 'bg-blue-700 hover:bg-blue-600' : 'bg-gray-700'"
-            :disabled="!incrementalStore.canAffordTime"
-            @click="incrementalStore.buyTimeUpgrade"
-            :aria-label="timeUpgradeAriaLabel"
-          >
-            <div class="font-semibold flex items-center justify-between">
-              <span>Time {{ incrementalStore.timeShopPreview.currentLevel }} → {{ incrementalStore.timeShopPreview.nextLevel }}</span>
-              <span class="text-xs text-yellow-300">Cost: {{ incrementalStore.timeShopPreview.cost }}</span>
-            </div>
-            <div class="text-xs text-blue-100">
-              Current timer: {{ incrementalStore.timeShopPreview.currentTimeLimit }}s
-            </div>
-            <div class="text-xs text-blue-100">
-              After purchase: {{ incrementalStore.timeShopPreview.nextTimeLimit }}s (+30s)
-            </div>
-          </button>
-
-          <button
             v-if="incrementalStore.selectedOneOffUpgrade"
             type="button"
             class="w-full text-left p-3 rounded disabled:opacity-50 disabled:cursor-not-allowed"
@@ -276,29 +273,6 @@
             <div class="text-xs text-emerald-100">{{ incrementalStore.selectedOneOffUpgrade.description }}</div>
           </button>
 
-          <label
-            v-if="incrementalStore.autoNextPuzzlePurchased"
-            class="w-full flex items-center justify-between p-3 rounded bg-gray-700 cursor-pointer"
-          >
-            <span class="text-sm font-semibold">Auto Start Next Puzzle</span>
-            <input
-              type="checkbox"
-              class="h-4 w-4 accent-emerald-500"
-              :checked="incrementalStore.autoNextPuzzleEnabled"
-              @change="
-                incrementalStore.setAutoNextPuzzleEnabled(
-                  ($event.target as HTMLInputElement).checked
-                )
-              "
-            />
-          </label>
-          <div v-else class="text-xs text-gray-400 px-1">
-            Auto Start Next Puzzle appears as a one-off shop upgrade.
-          </div>
-
-          <div class="text-[11px] text-gray-400 px-1">
-            Pattern automation costs scale: +20 per purchased pattern card this run.
-          </div>
           <button
             type="button"
             class="w-full py-2 rounded bg-purple-700 hover:bg-purple-600 font-semibold"
@@ -433,7 +407,6 @@
           </div>
           <div class="flex justify-between"><span>Puzzles Solved</span><span class="font-bold">{{ incrementalStore.puzzlesSolved }}</span></div>
           <div class="flex justify-between"><span>Risk Level</span><span class="font-bold">{{ incrementalStore.riskLevel }}</span></div>
-          <div class="flex justify-between"><span>Time Level</span><span class="font-bold">{{ incrementalStore.timeLevel }}</span></div>
           <div class="flex justify-between">
             <span>Auto Flag</span>
             <span class="font-bold">{{ incrementalStore.autoFlagPurchased ? 'Owned' : 'Not Owned' }}</span>
@@ -495,6 +468,7 @@ const showPatternManager = ref(false);
 const showGiveUpConfirm = ref(false);
 const showNextLevelConfirm = ref(false);
 const animatedTimeRemainingPercent = ref(0);
+const animatedScoreAward = ref(0);
 
 const rootAriaDescribedBy = computed(() => {
   if (incrementalStore.runStatus === 'idle') {
@@ -543,18 +517,19 @@ const timeRemainingPercent = computed(() => {
   return Math.max(0, Math.min(100, (breakdown.timeRemaining / breakdown.totalTime) * 100));
 });
 
-const timeRemainingPercentLabel = computed(() => {
-  return `${Math.round(timeRemainingPercent.value)}%`;
+const puzzleTimeLimitLabel = computed(() => {
+  return formatSeconds(incrementalStore.currentPuzzleTimeLimit);
+});
+
+const solvedTimeRemainingLabel = computed(() => {
+  const breakdown = incrementalStore.lastScoreBreakdown;
+  if (!breakdown) return '';
+  return `${formatSeconds(breakdown.timeRemaining)} / ${formatSeconds(breakdown.totalTime)}`;
 });
 
 const riskUpgradeAriaLabel = computed(() => {
   const preview = incrementalStore.riskShopPreview;
   return `Buy Risk upgrade from level ${preview.currentLevel} to ${preview.nextLevel}. Cost ${preview.cost}. Timer ${preview.currentTimeLimit} to ${preview.nextTimeLimit} seconds. Score multiplier ${formatMultiplier(preview.currentMultiplier)} to ${formatMultiplier(preview.nextMultiplier)}.`;
-});
-
-const timeUpgradeAriaLabel = computed(() => {
-  const preview = incrementalStore.timeShopPreview;
-  return `Buy Time upgrade from level ${preview.currentLevel} to ${preview.nextLevel}. Cost ${preview.cost}. Timer ${preview.currentTimeLimit} to ${preview.nextTimeLimit} seconds.`;
 });
 
 const isBoardInteractive = computed(() => {
@@ -592,18 +567,45 @@ watch(
   () => ({
     status: incrementalStore.runStatus,
     percent: timeRemainingPercent.value,
+    score: incrementalStore.lastScoreBreakdown?.scoreAwarded ?? 0,
   }),
-  async ({ status, percent }) => {
+  async ({ status, percent, score }) => {
     if (status !== 'upgrade-select') {
       animatedTimeRemainingPercent.value = 0;
+      animatedScoreAward.value = 0;
       return;
     }
 
     animatedTimeRemainingPercent.value = 0;
+    animatedScoreAward.value = 0;
     await nextTick();
     requestAnimationFrame(() => {
       animatedTimeRemainingPercent.value = percent;
     });
+    const durationMs = 650;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - start) / durationMs);
+      animatedScoreAward.value = Math.round(score * progress);
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      }
+    };
+    requestAnimationFrame(tick);
+  }
+);
+
+watch(
+  () => showShopModal.value,
+  (isOpen) => {
+    if (incrementalStore.runStatus !== 'playing') {
+      return;
+    }
+    if (isOpen) {
+      incrementalStore.stopTimer();
+      return;
+    }
+    incrementalStore.startTimer();
   }
 );
 
@@ -621,6 +623,12 @@ watch(
 
 function formatMultiplier(value: number): string {
   return value.toFixed(2);
+}
+
+function formatSeconds(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
 async function handleStartRun() {
