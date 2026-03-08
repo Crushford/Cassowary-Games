@@ -32,6 +32,7 @@ const TIME_SECONDS_PER_LEVEL = 30;
 const TIME_BASE_COST = 40;
 const TIME_COST_GROWTH = 1.6;
 const AUTO_FLAG_COST = 75;
+const PATTERN_CARD_COST_STEP = 20;
 
 const BASE_POINTS = 100;
 
@@ -111,13 +112,27 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       (patternCardId: string): boolean => {
         return state.ownedPatternCardIds.includes(patternCardId);
       },
+    patternCardCost:
+      (state) =>
+      (patternCardId: string): number => {
+        const card = PATTERN_CARD_DEFINITIONS.find((item) => item.id === patternCardId);
+        if (!card) return 0;
+        const purchasedPremadeCount = state.ownedPatternCardIds.filter((ownedId) =>
+          PATTERN_CARD_DEFINITIONS.some((preMade) => preMade.id === ownedId)
+        ).length;
+        return card.cost + purchasedPremadeCount * PATTERN_CARD_COST_STEP;
+      },
     canAffordPatternCard:
       (state) =>
       (patternCardId: string): boolean => {
         const card = PATTERN_CARD_DEFINITIONS.find((item) => item.id === patternCardId);
         if (!card) return false;
         if (state.ownedPatternCardIds.includes(patternCardId)) return false;
-        return state.runBank >= card.cost;
+        const purchasedPremadeCount = state.ownedPatternCardIds.filter((ownedId) =>
+          PATTERN_CARD_DEFINITIONS.some((preMade) => preMade.id === ownedId)
+        ).length;
+        const currentCost = card.cost + purchasedPremadeCount * PATTERN_CARD_COST_STEP;
+        return state.runBank >= currentCost;
       },
     currentRunTimeLimit(state): number {
       return getRunTimeLimitSeconds(state.riskLevel, state.timeLevel);
@@ -509,11 +524,12 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       if (!card) {
         return;
       }
-      if (this.runBank < card.cost) {
+      const currentCost = this.patternCardCost(patternCardId);
+      if (this.runBank < currentCost) {
         return;
       }
 
-      this.runBank -= card.cost;
+      this.runBank -= currentCost;
       this.ownedPatternCardIds.push(patternCardId);
     },
 

@@ -17,7 +17,10 @@ export interface PatternCardDefinition {
 interface PatternCardVariant {
   size: number;
   activeCells: Pos[];
-  activeSet: Set<string>;
+  activeWindowCells: Set<string>;
+  activeWindowOrigin: Pos;
+  activeWindowHeight: number;
+  activeWindowWidth: number;
   outputFlags: Pos[];
 }
 
@@ -42,6 +45,23 @@ export const PATTERN_CARD_DEFINITIONS: PatternCardDefinition[] = [
       { row: 0, col: 2 },
       { row: 1, col: 0 },
       { row: 2, col: 1 },
+    ],
+  },
+  {
+    id: 'pattern-new-card-2',
+    cost: 60,
+    size: 5,
+    cells: [
+      { row: 1, col: 3, activeSquare: true },
+      { row: 2, col: 2, activeSquare: true },
+    ],
+    outputFlags: [
+      { row: 0, col: 2 },
+      { row: 1, col: 1 },
+      { row: 1, col: 2 },
+      { row: 2, col: 3 },
+      { row: 2, col: 4 },
+      { row: 3, col: 3 },
     ],
   },
 ];
@@ -145,11 +165,36 @@ function buildVariant(
     transformCoord(pos, card.size, transform.rotationsCW, transform.flipMode)
   );
   const sortedActive = sortedPositions(transformedActive);
+  if (sortedActive.length === 0) {
+    return {
+      size: card.size,
+      activeCells: [],
+      activeWindowCells: new Set<string>(),
+      activeWindowOrigin: { row: 0, col: 0 },
+      activeWindowHeight: 0,
+      activeWindowWidth: 0,
+      outputFlags: sortedPositions(transformedFlags),
+    };
+  }
+  const minActiveRow = Math.min(...sortedActive.map((pos) => pos.row));
+  const maxActiveRow = Math.max(...sortedActive.map((pos) => pos.row));
+  const minActiveCol = Math.min(...sortedActive.map((pos) => pos.col));
+  const maxActiveCol = Math.max(...sortedActive.map((pos) => pos.col));
+
+  const activeWindowOrigin = { row: minActiveRow, col: minActiveCol };
+  const activeWindowHeight = maxActiveRow - minActiveRow + 1;
+  const activeWindowWidth = maxActiveCol - minActiveCol + 1;
+  const activeWindowCells = new Set(
+    sortedActive.map((pos) => keyForCell(pos.row - minActiveRow, pos.col - minActiveCol))
+  );
 
   return {
     size: card.size,
     activeCells: sortedActive,
-    activeSet: new Set(sortedActive.map(keyForPos)),
+    activeWindowCells,
+    activeWindowOrigin,
+    activeWindowHeight,
+    activeWindowWidth,
     outputFlags: sortedPositions(transformedFlags),
   };
 }
@@ -189,8 +234,8 @@ function hasRequiredStructureAt(
   }
 
   const anchor = variant.activeCells[0];
-  const anchorRow = anchor.row;
-  const anchorCol = anchor.col;
+  const anchorRow = anchor.row - variant.activeWindowOrigin.row;
+  const anchorCol = anchor.col - variant.activeWindowOrigin.col;
 
   const anchorSquare = grid[baseRow + anchorRow]?.[baseCol + anchorCol];
   const focusColor = anchorSquare?.groupColor;
@@ -199,29 +244,21 @@ function hasRequiredStructureAt(
   }
 
   const absoluteActiveCells = variant.activeCells.map((cell) => ({
-    row: baseRow + cell.row,
-    col: baseCol + cell.col,
+    row: baseRow + (cell.row - variant.activeWindowOrigin.row),
+    col: baseCol + (cell.col - variant.activeWindowOrigin.col),
   }));
   const absoluteActiveSet = new Set(absoluteActiveCells.map(keyForPos));
 
-  // Non-active cells are implicitly "other" in this 3..9 square window.
-  for (let relRow = 0; relRow < variant.size; relRow++) {
-    for (let relCol = 0; relCol < variant.size; relCol++) {
+  for (let relRow = 0; relRow < variant.activeWindowHeight; relRow++) {
+    for (let relCol = 0; relCol < variant.activeWindowWidth; relCol++) {
       const square = grid[baseRow + relRow]?.[baseCol + relCol];
-      const isActive = variant.activeSet.has(keyForCell(relRow, relCol));
+      const isActive = variant.activeWindowCells.has(keyForCell(relRow, relCol));
 
       if (isActive) {
         if (!square?.groupColor) {
           return false;
         }
         if (square.groupColor !== focusColor) {
-          return false;
-        }
-      } else {
-        if (!square?.groupColor) {
-          continue;
-        }
-        if (square.groupColor === focusColor) {
           return false;
         }
       }
@@ -263,15 +300,15 @@ export function collectPatternFlagPlacements(
   const variants = getPatternCardVariants(card);
 
   for (const variant of variants) {
-    for (let baseRow = -(variant.size - 1); baseRow <= gridSize - 1; baseRow++) {
-      for (let baseCol = -(variant.size - 1); baseCol <= gridSize - 1; baseCol++) {
+    for (let baseRow = 0; baseRow <= gridSize - variant.activeWindowHeight; baseRow++) {
+      for (let baseCol = 0; baseCol <= gridSize - variant.activeWindowWidth; baseCol++) {
         if (!hasRequiredStructureAt(grid, playerMarks, baseRow, baseCol, variant)) {
           continue;
         }
 
         for (const output of variant.outputFlags) {
-          const row = baseRow + output.row;
-          const col = baseCol + output.col;
+          const row = baseRow + (output.row - variant.activeWindowOrigin.row);
+          const col = baseCol + (output.col - variant.activeWindowOrigin.col);
 
           if (row < 0 || row >= gridSize || col < 0 || col >= gridSize) {
             continue;

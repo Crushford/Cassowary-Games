@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { GridSquare, MarkType, Pos } from '../types/types';
 import {
+  PATTERN_CARD_DEFINITIONS,
   collectPatternFlagPlacements,
-  getPatternCardById,
   type PatternCardDefinition,
 } from './incrementalPatternCards';
+
+type FlipMode = 'none' | 'horizontal' | 'vertical';
 
 function createGrid(size: number, defaultColor = 'other'): GridSquare[][] {
   return Array.from({ length: size }, (_, row) =>
@@ -19,166 +21,207 @@ function createMarks(size: number): MarkType[][] {
   return Array.from({ length: size }, () => Array(size).fill(null));
 }
 
-function setGroup(grid: GridSquare[][], cells: Pos[], color: string): void {
-  for (const cell of cells) {
-    grid[cell.row][cell.col].groupColor = color;
-  }
-}
-
-function sortPositions(positions: Pos[]): Pos[] {
+function sortedPositions(positions: Pos[]): Pos[] {
   return [...positions].sort((a, b) => (a.row === b.row ? a.col - b.col : a.row - b.row));
 }
 
 function expectSamePositions(actual: Pos[], expected: Pos[]): void {
-  expect(sortPositions(actual)).toEqual(sortPositions(expected));
+  expect(sortedPositions(actual)).toEqual(sortedPositions(expected));
 }
 
-function getTestCard(): PatternCardDefinition {
-  const card = getPatternCardById('pattern-new-card');
-  if (!card) {
-    throw new Error('pattern-new-card is required for these tests');
+function rotateCoord(pos: Pos, size: number, rotationsCW: number): Pos {
+  switch (rotationsCW % 4) {
+    case 0:
+      return { row: pos.row, col: pos.col };
+    case 1:
+      return { row: pos.col, col: size - 1 - pos.row };
+    case 2:
+      return { row: size - 1 - pos.row, col: size - 1 - pos.col };
+    case 3:
+      return { row: size - 1 - pos.col, col: pos.row };
+    default:
+      return { row: pos.row, col: pos.col };
   }
-  return card;
 }
 
-describe('collectPatternFlagPlacements(pattern-new-card)', () => {
-  it('matches the base orientation and returns the expected output flags', () => {
-    const card = getTestCard();
-    const grid = createGrid(5, 'other');
-    const marks = createMarks(5);
+function flipCoord(pos: Pos, size: number, flipMode: FlipMode): Pos {
+  if (flipMode === 'horizontal') {
+    return { row: pos.row, col: size - 1 - pos.col };
+  }
+  if (flipMode === 'vertical') {
+    return { row: size - 1 - pos.row, col: pos.col };
+  }
+  return pos;
+}
 
-    setGroup(
-      grid,
-      [
-        { row: 0, col: 1 },
-        { row: 1, col: 1 },
-        { row: 1, col: 2 },
-      ],
-      'focus'
-    );
+function transformCoord(pos: Pos, size: number, rotationsCW: number, flipMode: FlipMode): Pos {
+  return flipCoord(rotateCoord(pos, size, rotationsCW), size, flipMode);
+}
 
-    const placements = collectPatternFlagPlacements(grid, marks, card);
+function activeCells(card: PatternCardDefinition): Pos[] {
+  return card.cells
+    .filter((cell) => cell.activeSquare === true)
+    .map((cell) => ({ row: cell.row, col: cell.col }));
+}
 
-    expectSamePositions(placements, [
-      { row: 0, col: 2 },
-      { row: 1, col: 0 },
-      { row: 2, col: 1 },
-    ]);
-  });
+function getActiveBounds(card: PatternCardDefinition): {
+  minRow: number;
+  maxRow: number;
+  minCol: number;
+  maxCol: number;
+} | null {
+  const cells = activeCells(card);
+  if (cells.length === 0) return null;
+  return {
+    minRow: Math.min(...cells.map((cell) => cell.row)),
+    maxRow: Math.max(...cells.map((cell) => cell.row)),
+    minCol: Math.min(...cells.map((cell) => cell.col)),
+    maxCol: Math.max(...cells.map((cell) => cell.col)),
+  };
+}
 
-  it('matches rotated and flipped variants at the board corner', () => {
-    const card = getTestCard();
-    const grid = createGrid(5, 'other');
-    const marks = createMarks(5);
+function placePatternWindow(
+  grid: GridSquare[][],
+  card: PatternCardDefinition,
+  transform: { rotationsCW: number; flipMode: FlipMode },
+  base: Pos,
+  focusColor = 'focus'
+) {
+  const transformedActive = activeCells(card).map((cell) =>
+    transformCoord(cell, card.size, transform.rotationsCW, transform.flipMode)
+  );
+  const transformedOutputs = card.outputFlags.map((cell) =>
+    transformCoord(cell, card.size, transform.rotationsCW, transform.flipMode)
+  );
 
-    setGroup(
-      grid,
-      [
-        { row: 0, col: 0 },
-        { row: 0, col: 1 },
-        { row: 1, col: 1 },
-      ],
-      'focus'
-    );
+  for (const cell of transformedActive) {
+    grid[base.row + cell.row][base.col + cell.col].groupColor = focusColor;
+  }
 
-    const placements = collectPatternFlagPlacements(grid, marks, card);
+  return {
+    transformedActive,
+    transformedOutputs: transformedOutputs.map((cell) => ({
+      row: base.row + cell.row,
+      col: base.col + cell.col,
+    })),
+  };
+}
 
-    expect(placements.length).toBeGreaterThan(0);
-  });
+describe('collectPatternFlagPlacements invariants for all pattern cards', () => {
+  for (const card of PATTERN_CARD_DEFINITIONS) {
+    it(`${card.id}: matches base orientation outputs`, () => {
+      const grid = createGrid(card.size, 'other');
+      const marks = createMarks(card.size);
 
-  it('does not return output cells that are already marked', () => {
-    const card = getTestCard();
-    const grid = createGrid(5, 'other');
-    const marks = createMarks(5);
+      placePatternWindow(grid, card, { rotationsCW: 0, flipMode: 'none' }, { row: 0, col: 0 });
+      const placements = collectPatternFlagPlacements(grid, marks, card);
 
-    setGroup(
-      grid,
-      [
-        { row: 0, col: 1 },
-        { row: 1, col: 1 },
-        { row: 1, col: 2 },
-      ],
-      'focus'
-    );
-    marks[0][2] = 'flag';
-
-    const placements = collectPatternFlagPlacements(grid, marks, card);
-
-    expectSamePositions(placements, [
-      { row: 1, col: 0 },
-      { row: 2, col: 1 },
-    ]);
-  });
-
-  it('respects canPlaceFlagAt filtering', () => {
-    const card = getTestCard();
-    const grid = createGrid(5, 'other');
-    const marks = createMarks(5);
-
-    setGroup(
-      grid,
-      [
-        { row: 0, col: 1 },
-        { row: 1, col: 1 },
-        { row: 1, col: 2 },
-      ],
-      'focus'
-    );
-
-    const placements = collectPatternFlagPlacements(grid, marks, card, (row, col) => {
-      return !(row === 1 && col === 0);
+      expectSamePositions(placements, card.outputFlags);
     });
 
-    expectSamePositions(placements, [
-      { row: 0, col: 2 },
-      { row: 2, col: 1 },
-    ]);
-  });
+    it(`${card.id}: matches rotated/flipped orientation at corner`, () => {
+      const boardSize = card.size + 2;
+      const grid = createGrid(boardSize, 'other');
+      const marks = createMarks(boardSize);
+      const transform = { rotationsCW: 1, flipMode: 'horizontal' as const };
+      const base = { row: 0, col: 0 };
 
-  it('only matches when active pattern is the only remaining unmarked cells in that color group', () => {
-    const card = getTestCard();
-    const grid = createGrid(5, 'other');
-    const marks = createMarks(5);
+      const placed = placePatternWindow(grid, card, transform, base);
+      const placements = collectPatternFlagPlacements(grid, marks, card);
 
-    setGroup(
-      grid,
-      [
-        { row: 0, col: 1 },
-        { row: 1, col: 1 },
-        { row: 1, col: 2 },
-        { row: 4, col: 4 },
-      ],
-      'focus'
-    );
+      expectSamePositions(placements, placed.transformedOutputs);
+    });
 
-    const placements = collectPatternFlagPlacements(grid, marks, card);
+    it(`${card.id}: does not place output that is already marked`, () => {
+      const boardSize = card.size + 2;
+      const grid = createGrid(boardSize, 'other');
+      const marks = createMarks(boardSize);
+      const base = { row: 0, col: 0 };
 
-    expect(placements).toEqual([]);
-  });
+      const placed = placePatternWindow(grid, card, { rotationsCW: 0, flipMode: 'none' }, base);
+      if (placed.transformedOutputs.length > 0) {
+        const first = placed.transformedOutputs[0];
+        marks[first.row][first.col] = 'flag';
+      }
 
-  it('still matches when non-pattern cells in the same color group are already resolved', () => {
-    const card = getTestCard();
-    const grid = createGrid(5, 'other');
-    const marks = createMarks(5);
+      const placements = collectPatternFlagPlacements(grid, marks, card);
+      const expected = placed.transformedOutputs.slice(1);
+      expectSamePositions(placements, expected);
+    });
 
-    setGroup(
-      grid,
-      [
-        { row: 0, col: 1 },
-        { row: 1, col: 1 },
-        { row: 1, col: 2 },
-        { row: 4, col: 4 },
-      ],
-      'focus'
-    );
-    marks[4][4] = 'flag';
+    it(`${card.id}: requires active cells to be only remaining unmarked cells in that color group`, () => {
+      const boardSize = card.size + 3;
+      const grid = createGrid(boardSize, 'other');
+      const marks = createMarks(boardSize);
+      const base = { row: 0, col: 0 };
 
-    const placements = collectPatternFlagPlacements(grid, marks, card);
+      const placed = placePatternWindow(grid, card, { rotationsCW: 0, flipMode: 'none' }, base);
+      const extraFocus = { row: boardSize - 1, col: boardSize - 1 };
+      grid[extraFocus.row][extraFocus.col].groupColor = 'focus';
 
-    expectSamePositions(placements, [
-      { row: 0, col: 2 },
-      { row: 1, col: 0 },
-      { row: 2, col: 1 },
-    ]);
-  });
+      const blocked = collectPatternFlagPlacements(grid, marks, card);
+      expect(blocked).toEqual([]);
+
+      marks[extraFocus.row][extraFocus.col] = 'flag';
+      const placements = collectPatternFlagPlacements(grid, marks, card);
+      expectSamePositions(placements, placed.transformedOutputs);
+    });
+
+    it(`${card.id}: ignores full-card non-active focus cells when they are already resolved`, () => {
+      const bounds = getActiveBounds(card);
+      if (!bounds) {
+        return;
+      }
+
+      const candidate: Pos | null = (() => {
+        for (let row = 0; row < card.size; row++) {
+          for (let col = 0; col < card.size; col++) {
+            const withinActiveBounds =
+              row >= bounds.minRow &&
+              row <= bounds.maxRow &&
+              col >= bounds.minCol &&
+              col <= bounds.maxCol;
+            if (!withinActiveBounds) {
+              return { row, col };
+            }
+          }
+        }
+        return null;
+      })();
+
+      if (!candidate) {
+        return;
+      }
+
+      const boardSize = card.size + 2;
+      const grid = createGrid(boardSize, 'other');
+      const marks = createMarks(boardSize);
+      const base = { row: 0, col: 0 };
+      const placed = placePatternWindow(grid, card, { rotationsCW: 0, flipMode: 'none' }, base);
+
+      grid[candidate.row][candidate.col].groupColor = 'focus';
+      marks[candidate.row][candidate.col] = 'flag';
+
+      const placements = collectPatternFlagPlacements(grid, marks, card);
+      expectSamePositions(placements, placed.transformedOutputs);
+    });
+
+    it(`${card.id}: respects canPlaceFlagAt filter`, () => {
+      const boardSize = card.size + 2;
+      const grid = createGrid(boardSize, 'other');
+      const marks = createMarks(boardSize);
+      const base = { row: 0, col: 0 };
+
+      const placed = placePatternWindow(grid, card, { rotationsCW: 0, flipMode: 'none' }, base);
+      const blocked = placed.transformedOutputs[0];
+
+      const placements = collectPatternFlagPlacements(grid, marks, card, (row, col) => {
+        if (!blocked) return true;
+        return !(row === blocked.row && col === blocked.col);
+      });
+
+      const expected = blocked ? placed.transformedOutputs.slice(1) : [];
+      expectSamePositions(placements, expected);
+    });
+  }
 });
