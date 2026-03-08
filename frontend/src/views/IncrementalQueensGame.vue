@@ -31,17 +31,17 @@
       </div>
 
       <div class="bg-gray-700 rounded p-2 min-h-[52px]">
-        <div class="text-xs text-gray-300 mb-1">Active Upgrades</div>
-        <div v-if="incrementalStore.activeUpgradeDetails.length === 0" class="text-xs text-gray-400">
-          None
-        </div>
-        <div v-else class="flex flex-wrap gap-1">
+        <div class="text-xs text-gray-300 mb-1">Upgrade Paths</div>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="px-2 py-1 rounded bg-red-800">
+            Risk Lv {{ incrementalStore.riskLevel }} (x{{ formatMultiplier(incrementalStore.currentScoreMultiplier) }})
+          </span>
+          <span class="px-2 py-1 rounded bg-blue-800">Time Lv {{ incrementalStore.timeLevel }}</span>
           <span
-            v-for="upgrade in incrementalStore.activeUpgradeDetails"
-            :key="upgrade.id"
-            class="text-xs px-2 py-1 rounded bg-emerald-700"
+            v-if="incrementalStore.autoFlagPurchased"
+            class="px-2 py-1 rounded bg-emerald-800"
           >
-            {{ upgrade.name }}
+            Auto Flag
           </span>
         </div>
       </div>
@@ -53,7 +53,7 @@
     >
       <div class="max-w-sm w-full bg-gray-700 rounded-lg p-4 space-y-3">
         <p class="text-sm text-gray-200">
-          Solve timed 5x5 Queens puzzles. Score scales with remaining time. Timeout ends the run.
+          Solve timed 5x5 Queens puzzles. Spend bank in the shop after each solve to upgrade Risk or Time.
         </p>
         <button
           class="w-full py-3 rounded bg-emerald-600 hover:bg-emerald-500 font-semibold"
@@ -106,36 +106,74 @@
       <div>
         <h2 class="text-xl font-bold text-green-400 mb-3">Puzzle Solved</h2>
         <div v-if="incrementalStore.lastScoreBreakdown" class="bg-gray-700 rounded p-3 mb-4 text-sm">
-          <div class="flex justify-between"><span>Time Remaining</span><span>{{ incrementalStore.lastScoreBreakdown.timeRemaining }}s / {{ incrementalStore.lastScoreBreakdown.totalTime }}s</span></div>
+          <div class="flex justify-between">
+            <span>Time Remaining</span>
+            <span>{{ incrementalStore.lastScoreBreakdown.timeRemaining }}s / {{ incrementalStore.lastScoreBreakdown.totalTime }}s</span>
+          </div>
           <div class="flex justify-between"><span>Base Points</span><span>{{ incrementalStore.lastScoreBreakdown.basePoints }}</span></div>
           <div class="flex justify-between"><span>Time Score</span><span>{{ Math.max(10, incrementalStore.lastScoreBreakdown.rawScore) }}</span></div>
-          <div class="flex justify-between"><span>Multiplier</span><span>x{{ incrementalStore.lastScoreBreakdown.multiplier }}</span></div>
+          <div class="flex justify-between"><span>Multiplier</span><span>x{{ formatMultiplier(incrementalStore.lastScoreBreakdown.multiplier) }}</span></div>
           <div class="flex justify-between font-bold text-yellow-300 mt-2"><span>Awarded</span><span>{{ incrementalStore.lastScoreBreakdown.scoreAwarded }}</span></div>
           <div class="flex justify-between font-bold text-yellow-300"><span>Total Score</span><span>{{ incrementalStore.runScore }}</span></div>
           <div class="flex justify-between font-bold text-emerald-300"><span>Bank</span><span>{{ incrementalStore.runBank }}</span></div>
         </div>
 
-        <h3 class="text-sm font-semibold text-gray-300 mb-2">Choose an Upgrade</h3>
+        <h3 class="text-sm font-semibold text-gray-300 mb-2">Shop Phase</h3>
+
         <div class="space-y-2">
           <button
-            v-for="upgrade in incrementalStore.availableUpgrades"
-            :key="upgrade.id"
             class="w-full text-left p-3 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-            :class="
-              incrementalStore.canAffordUpgrade(upgrade.id)
-                ? 'bg-emerald-700 hover:bg-emerald-600'
-                : 'bg-gray-700'
-            "
-            :disabled="!incrementalStore.canAffordUpgrade(upgrade.id)"
-            @click="incrementalStore.selectUpgrade(upgrade.id)"
+            :class="incrementalStore.canAffordRisk ? 'bg-red-700 hover:bg-red-600' : 'bg-gray-700'"
+            :disabled="!incrementalStore.canAffordRisk"
+            @click="incrementalStore.buyRiskUpgrade"
           >
             <div class="font-semibold flex items-center justify-between">
-              <span>{{ upgrade.name }}</span>
-              <span class="text-xs text-yellow-300">Cost: {{ upgrade.cost }}</span>
+              <span>Risk {{ incrementalStore.riskShopPreview.currentLevel }} → {{ incrementalStore.riskShopPreview.nextLevel }}</span>
+              <span class="text-xs text-yellow-300">Cost: {{ incrementalStore.riskShopPreview.cost }}</span>
             </div>
-            <div class="text-xs text-emerald-100">{{ upgrade.description }}</div>
+            <div class="text-xs text-red-100">
+              Timer: {{ incrementalStore.riskShopPreview.currentTimeLimit }}s → {{ incrementalStore.riskShopPreview.nextTimeLimit }}s
+            </div>
+            <div class="text-xs text-red-100">
+              Score: x{{ formatMultiplier(incrementalStore.riskShopPreview.currentMultiplier) }} → x{{ formatMultiplier(incrementalStore.riskShopPreview.nextMultiplier) }}
+            </div>
+          </button>
+
+          <button
+            class="w-full text-left p-3 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            :class="incrementalStore.canAffordTime ? 'bg-blue-700 hover:bg-blue-600' : 'bg-gray-700'"
+            :disabled="!incrementalStore.canAffordTime"
+            @click="incrementalStore.buyTimeUpgrade"
+          >
+            <div class="font-semibold flex items-center justify-between">
+              <span>Time {{ incrementalStore.timeShopPreview.currentLevel }} → {{ incrementalStore.timeShopPreview.nextLevel }}</span>
+              <span class="text-xs text-yellow-300">Cost: {{ incrementalStore.timeShopPreview.cost }}</span>
+            </div>
+            <div class="text-xs text-blue-100">
+              Timer: {{ incrementalStore.timeShopPreview.currentTimeLimit }}s → {{ incrementalStore.timeShopPreview.nextTimeLimit }}s
+            </div>
+            <div class="text-xs text-blue-100">Adds +30s per level. No score bonus.</div>
+          </button>
+
+          <button
+            v-if="!incrementalStore.autoFlagPurchased"
+            class="w-full text-left p-3 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            :class="
+              incrementalStore.canAffordAutoFlag ? 'bg-emerald-700 hover:bg-emerald-600' : 'bg-gray-700'
+            "
+            :disabled="!incrementalStore.canAffordAutoFlag"
+            @click="incrementalStore.buyAutoFlagUpgrade"
+          >
+            <div class="font-semibold flex items-center justify-between">
+              <span>Auto Flag</span>
+              <span class="text-xs text-yellow-300">Cost: {{ incrementalStore.autoFlagCost }}</span>
+            </div>
+            <div class="text-xs text-emerald-100">
+              Automatically flags blocked squares after placing a queen.
+            </div>
           </button>
         </div>
+
         <button
           class="w-full mt-3 py-2 rounded bg-gray-600 hover:bg-gray-500 font-semibold"
           @click="incrementalStore.skipUpgradeSelection"
@@ -149,21 +187,20 @@
       <div>
         <h2 class="text-xl font-bold text-red-400 mb-3">Run Over</h2>
         <div class="bg-gray-700 rounded p-3 mb-4 text-sm space-y-1">
-          <div class="flex justify-between"><span>Total Score</span><span class="font-bold text-yellow-300">{{ incrementalStore.runScore }}</span></div>
-          <div class="flex justify-between"><span>Remaining Bank</span><span class="font-bold text-emerald-300">{{ incrementalStore.runBank }}</span></div>
+          <div class="flex justify-between">
+            <span>Total Score</span>
+            <span class="font-bold text-yellow-300">{{ incrementalStore.runScore }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Remaining Bank</span>
+            <span class="font-bold text-emerald-300">{{ incrementalStore.runBank }}</span>
+          </div>
           <div class="flex justify-between"><span>Puzzles Solved</span><span class="font-bold">{{ incrementalStore.puzzlesSolved }}</span></div>
-          <div>
-            <div class="text-gray-300 mb-1">Upgrades</div>
-            <div v-if="incrementalStore.activeUpgradeDetails.length === 0" class="text-gray-400">None</div>
-            <div v-else class="flex flex-wrap gap-1">
-              <span
-                v-for="upgrade in incrementalStore.activeUpgradeDetails"
-                :key="upgrade.id"
-                class="text-xs px-2 py-1 rounded bg-emerald-700"
-              >
-                {{ upgrade.name }}
-              </span>
-            </div>
+          <div class="flex justify-between"><span>Risk Level</span><span class="font-bold">{{ incrementalStore.riskLevel }}</span></div>
+          <div class="flex justify-between"><span>Time Level</span><span class="font-bold">{{ incrementalStore.timeLevel }}</span></div>
+          <div class="flex justify-between">
+            <span>Auto Flag</span>
+            <span class="font-bold">{{ incrementalStore.autoFlagPurchased ? 'Owned' : 'Not Owned' }}</span>
           </div>
         </div>
 
@@ -215,6 +252,10 @@ watch(
     }
   }
 );
+
+function formatMultiplier(value: number): string {
+  return value.toFixed(2);
+}
 
 async function handleStartRun() {
   await incrementalStore.startRun();
