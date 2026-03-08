@@ -8,7 +8,7 @@
         <input
           v-model="idInput"
           class="w-full px-2 py-1 rounded bg-gray-700 border border-gray-600"
-          placeholder="pattern-custom-1"
+          placeholder="pc-custom-1"
         />
       </label>
       <label class="text-sm">

@@ -33,7 +33,7 @@ interface TransformSpec {
 
 export const PATTERN_CARD_DEFINITIONS: PatternCardDefinition[] = [
   {
-    id: 'pattern-new-card',
+    id: 'pc-1',
     cost: 60,
     size: 3,
     cells: [
@@ -48,20 +48,20 @@ export const PATTERN_CARD_DEFINITIONS: PatternCardDefinition[] = [
     ],
   },
   {
-    id: 'pattern-new-card-2',
+    id: 'pc-2',
     cost: 60,
-    size: 5,
+    size: 4,
     cells: [
-      { row: 1, col: 3, activeSquare: true },
-      { row: 2, col: 2, activeSquare: true },
+      { row: 1, col: 2, activeSquare: true },
+      { row: 2, col: 1, activeSquare: true },
     ],
     outputFlags: [
-      { row: 0, col: 2 },
+      { row: 0, col: 1 },
+      { row: 1, col: 0 },
       { row: 1, col: 1 },
-      { row: 1, col: 2 },
+      { row: 2, col: 2 },
       { row: 2, col: 3 },
-      { row: 2, col: 4 },
-      { row: 3, col: 3 },
+      { row: 3, col: 2 },
     ],
   },
 ];
@@ -86,9 +86,7 @@ function sortedPositions(positions: Pos[]): Pos[] {
 }
 
 function serializePositions(positions: Pos[]): string {
-  return sortedPositions(positions)
-    .map(keyForPos)
-    .join('|');
+  return sortedPositions(positions).map(keyForPos).join('|');
 }
 
 function rotateCoord(pos: Pos, size: number, rotationsCW: number): Pos {
