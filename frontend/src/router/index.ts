@@ -52,6 +52,11 @@ const router = createRouter({
       component: QueensGame,
     },
     {
+      path: '/queens/incremental',
+      name: 'queens-incremental',
+      component: () => import('../views/IncrementalQueensGame.vue'),
+    },
+    {
       path: '/queens/:puzzleId',
       name: 'queens-puzzle',
       component: QueensGame,

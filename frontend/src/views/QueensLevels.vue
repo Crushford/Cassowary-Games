@@ -51,6 +51,15 @@
           <div class="text-sm opacity-90">Board rotates 90° after every move</div>
         </button>
 
+        <!-- Incremental Mode Button -->
+        <button
+          @click="goToIncrementalMode"
+          class="w-full py-4 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+        >
+          <div class="text-xl font-bold mb-1">Incremental Queens 🧪</div>
+          <div class="text-sm opacity-90">Timed run mode with persistent upgrades</div>
+        </button>
+
         <!-- Records Button -->
         <button
           @click="queensStore.openRecordsModal()"
@@ -85,6 +94,7 @@
 
 <script setup lang="ts">
 import { onMounted, defineAsyncComponent, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useQueensStore } from '../stores/queensStore';
 import { useSpeedModeStore } from '../stores/speedModeStore';
 
@@ -99,6 +109,11 @@ const RecordsModal = defineAsyncComponent(() => import('../components/queens/Rec
 const queensStore = useQueensStore();
 const speedModeStore = useSpeedModeStore();
 const showRotateModeModal = ref(false);
+const router = useRouter();
+
+function goToIncrementalMode() {
+  router.push('/queens/incremental');
+}
 
 onMounted(async () => {
   if (!queensStore.puzzleDatabase) {
