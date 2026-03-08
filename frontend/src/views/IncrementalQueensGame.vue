@@ -250,16 +250,6 @@
         </div>
 
         <button
-          v-if="incrementalStore.canCreateCustomPatternCard"
-          type="button"
-          class="w-full mt-2 py-2 rounded bg-purple-700 hover:bg-purple-600 font-semibold"
-          @click="showPatternDesigner = true"
-          aria-label="Create a custom pattern card"
-        >
-          Create Your Own Pattern Card
-        </button>
-
-        <button
           type="button"
           class="w-full mt-3 py-2 rounded bg-green-600 hover:bg-green-500 font-semibold"
           @click="incrementalStore.skipUpgradeSelection"
@@ -278,7 +268,14 @@
       <MobilePatternCardDesigner @save="handleSaveCustomPatternCard" @cancel="showPatternDesigner = false" />
     </Modal>
 
-    <PatternCardManagerModal :is-visible="showPatternManager" @close="showPatternManager = false" />
+    <PatternCardManagerModal
+      :is-visible="showPatternManager"
+      @close="showPatternManager = false"
+      @create-custom="
+        showPatternManager = false;
+        showPatternDesigner = true;
+      "
+    />
 
     <Modal
       :is-visible="showGiveUpConfirm"

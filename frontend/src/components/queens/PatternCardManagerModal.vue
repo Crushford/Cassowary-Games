@@ -12,7 +12,6 @@
           <div class="flex items-start gap-2">
             <PatternCardPreview :card="card" />
             <div class="flex-1">
-              <div class="text-sm font-semibold">{{ card.id }}</div>
               <button
                 type="button"
                 class="mt-1 px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-xs"
@@ -33,7 +32,6 @@
           <div class="flex items-start gap-2">
             <PatternCardPreview :card="card" />
             <div class="flex-1">
-              <div class="text-sm font-semibold">{{ card.id }}</div>
               <div class="text-xs text-yellow-300">
                 Cost: {{ incrementalStore.patternCardCost(card.id) }}
               </div>
@@ -54,6 +52,14 @@
           </div>
         </div>
       </div>
+      <button
+        v-if="incrementalStore.canCreateCustomPatternCard"
+        type="button"
+        class="w-full mt-3 py-2 rounded bg-purple-700 hover:bg-purple-600 font-semibold"
+        @click="$emit('create-custom')"
+      >
+        Create Your Own Pattern Card
+      </button>
       <button
         type="button"
         class="w-full mt-3 py-2 rounded bg-gray-600 hover:bg-gray-500 font-semibold"
@@ -76,6 +82,7 @@ defineProps<{
 
 defineEmits<{
   close: [];
+  'create-custom': [];
 }>();
 
 const incrementalStore = useIncrementalQueensStore();
