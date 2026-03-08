@@ -235,17 +235,17 @@
           </button>
 
           <div class="text-[11px] text-gray-400 px-1">
-            Pattern card costs scale: +20 per purchased pattern card this run.
+            Pattern automation costs scale: +20 per purchased pattern card this run.
           </div>
           <button
             type="button"
             class="w-full py-2 rounded bg-purple-700 hover:bg-purple-600 font-semibold"
             @click="showPatternManager = true"
           >
-            Manage Pattern Cards
+            Manage Automations
           </button>
           <div class="text-xs text-gray-300 px-1">
-            Active: {{ incrementalStore.ownedPatternCardIds.length }} card(s)
+            Active pattern automations: {{ incrementalStore.ownedPatternCardIds.length }}
           </div>
         </div>
 
@@ -257,6 +257,27 @@
         >
           Next Puzzle
         </button>
+        <button
+          v-if="incrementalStore.currentPuzzleSize < 9"
+          type="button"
+          class="w-full mt-2 py-2 rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          :class="
+            incrementalStore.canBuySizeUpGoal
+              ? 'bg-orange-700 hover:bg-orange-600'
+              : 'bg-gray-700'
+          "
+          :disabled="!incrementalStore.canBuySizeUpGoal"
+          @click="incrementalStore.buySizeUpGoal"
+          aria-label="Advance to next board size and reset run progression"
+        >
+          <div class="flex items-center justify-between px-2">
+            <span>Advance Size {{ incrementalStore.sizeUpGoalLabel }}</span>
+            <span class="text-xs text-yellow-300">Goal: {{ incrementalStore.sizeUpGoalCost }}</span>
+          </div>
+        </button>
+        <div v-if="incrementalStore.currentPuzzleSize < 9" class="text-[11px] text-gray-400 mt-1 px-1">
+          This is a full reset: bank, score, upgrades, and pattern cards are cleared.
+        </div>
       </div>
     </Modal>
 
@@ -338,7 +359,7 @@
             <span class="font-bold">{{ incrementalStore.autoFlagPurchased ? 'Owned' : 'Not Owned' }}</span>
           </div>
           <div class="flex justify-between">
-            <span>Pattern Cards</span>
+            <span>Pattern Automations</span>
             <span class="font-bold">{{ incrementalStore.ownedPatternCardIds.length }}</span>
           </div>
         </div>
@@ -455,7 +476,11 @@ const timeUpgradeAriaLabel = computed(() => {
 });
 
 const isBoardInteractive = computed(() => {
-  return incrementalStore.runStatus === 'playing' && !incrementalStore.isLoadingPuzzle;
+  return (
+    incrementalStore.runStatus === 'playing' &&
+    !incrementalStore.isLoadingPuzzle &&
+    !incrementalStore.isAutomationInProgress
+  );
 });
 
 const timerClass = computed(() => {
@@ -471,7 +496,11 @@ const timerClass = computed(() => {
 watch(
   () => queensStore.isComplete,
   (isComplete) => {
-    if (isComplete && incrementalStore.runStatus === 'playing') {
+    if (
+      isComplete &&
+      incrementalStore.runStatus === 'playing' &&
+      !incrementalStore.isAutomationInProgress
+    ) {
       incrementalStore.handlePuzzleSolved();
     }
   }

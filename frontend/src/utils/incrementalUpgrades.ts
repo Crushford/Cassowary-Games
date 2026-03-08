@@ -18,17 +18,13 @@ export const TIME_COST_GROWTH = 1.6;
 
 export const AUTO_FLAG_COST = 75;
 export const PATTERN_CARD_COST_STEP = 20;
-export const AUTO_QUEEN_COLOR_COST = 80;
-export const AUTO_QUEEN_ROW_COST = 90;
-export const AUTO_QUEEN_COLUMN_COST = 90;
+export const AUTO_QUEEN_COLOR_COST = 350;
+export const AUTO_QUEEN_ROW_COST = 400;
+export const AUTO_QUEEN_COLUMN_COST = 400;
 export const SIZE_UP_COST = 150;
 
 export const ONE_OFF_UPGRADE_IDS: OneOffUpgradeId[] = [
   'auto-flag',
-  'auto-queen-color',
-  'auto-queen-row',
-  'auto-queen-column',
-  'size-up',
 ];
 
 export function getOneOffUpgradeCost(id: OneOffUpgradeId): number {
