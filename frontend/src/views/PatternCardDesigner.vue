@@ -102,7 +102,7 @@ import { computed, ref, watch } from 'vue';
 
 type DesignerTool = 'active' | 'other' | 'flag';
 
-const id = ref('pattern-new-card');
+const id = ref('pc-custom');
 const cost = ref(60);
 const size = ref(5);
 const selectedTool = ref<DesignerTool>('active');

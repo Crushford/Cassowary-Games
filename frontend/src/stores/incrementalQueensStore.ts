@@ -15,7 +15,6 @@ import {
   RISK_BASE_COST,
   RISK_COST_STEP,
   RISK_SCORE_FACTOR,
-  SIZE_UP_COST,
   TIME_BASE_COST,
   TIME_COST_GROWTH,
   TIME_SECONDS_PER_LEVEL,
@@ -60,7 +59,6 @@ function createInitialRunState() {
     autoQueenByRowPurchased: false,
     autoQueenByColumnPurchased: false,
     currentPuzzleSize: 5,
-    sizeUpCost: SIZE_UP_COST,
     currentPuzzleTimeLimit: BASE_TIME_SECONDS,
     timeRemaining: BASE_TIME_SECONDS,
     timerInterval: null as number | null,
@@ -103,9 +101,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     },
     canAffordTime(): boolean {
       return this.runBank >= this.nextTimeCost;
-    },
-    canAffordSizeUp(state): boolean {
-      return state.runBank >= SIZE_UP_COST && state.currentPuzzleSize < 9;
     },
     availablePatternCards(state): PatternCardDefinition[] {
       return PATTERN_CARD_DEFINITIONS.filter((card) => !state.ownedPatternCardIds.includes(card.id));
@@ -254,14 +249,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       }
     },
 
-    computeTimeLimitSeconds(): number {
-      return this.currentRunTimeLimit;
-    },
-
-    getScoreMultiplier(): number {
-      return this.currentScoreMultiplier;
-    },
-
     startTimer() {
       this.stopTimer();
       this.timerInterval = window.setInterval(() => {
@@ -277,17 +264,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
 
         this.handleTimeout();
       }, 1000);
-    },
-
-    getOwnedPatternCards(): PatternCardDefinition[] {
-      return this.ownedPatternCardIds
-        .map(
-          (cardId) =>
-            getPatternCardById(cardId) ||
-            this.customPatternCards.find((patternCard) => patternCard.id === cardId) ||
-            null
-        )
-        .filter((card): card is PatternCardDefinition => card !== null);
     },
 
     applyOwnedPatternCards() {
@@ -307,7 +283,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       const { flagsPlaced } = runIncrementalAutomationFixedPoint({
         grid: queensStore.grid,
         initialMarks: queensStore.playerMarks,
-        patternCards: hasPatternCards ? this.getOwnedPatternCards() : [],
+        patternCards: hasPatternCards ? this.ownedPatternCards : [],
         autoQueenRules: {
           byColor: this.autoQueenByColorPurchased,
           byRow: this.autoQueenByRowPurchased,
@@ -422,7 +398,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         this.isLoadingPuzzle = false;
       }
 
-      this.currentPuzzleTimeLimit = this.computeTimeLimitSeconds();
+      this.currentPuzzleTimeLimit = this.currentRunTimeLimit;
       this.timeRemaining = this.currentPuzzleTimeLimit;
       this.runStatus = 'playing';
       this.startTimer();
@@ -437,7 +413,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       this.stopTimer();
       this.stopPatternScan();
 
-      const multiplier = this.getScoreMultiplier();
+      const multiplier = this.currentScoreMultiplier;
       const rawScore = Math.round(BASE_POINTS * (this.timeRemaining / this.currentPuzzleTimeLimit));
       const minimumApplied = rawScore < 10;
       const scoreBeforeMultiplier = Math.max(10, rawScore);
@@ -609,7 +585,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         return;
       }
 
-      const fallbackId = `pattern-custom-${this.customPatternCardCounter}`;
+      const fallbackId = `pc-custom-${this.customPatternCardCounter}`;
       const id = (input.id || '').trim() || fallbackId;
       if (this.allPatternCards.some((card) => card.id === id)) {
         return;
