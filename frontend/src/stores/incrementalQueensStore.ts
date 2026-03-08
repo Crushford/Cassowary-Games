@@ -242,8 +242,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         const matches = collectPatternFlagPlacements(
           queensStore.grid,
           queensStore.playerMarks,
-          card,
-          (row, col) => !queensStore.isValidMove(row, col)
+          card
         );
 
         for (const match of matches) {
