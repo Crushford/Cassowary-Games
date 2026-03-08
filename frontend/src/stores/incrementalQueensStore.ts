@@ -23,10 +23,9 @@ interface PuzzleScoreBreakdown {
 const BASE_TIME_SECONDS = 300;
 const MIN_TIME_SECONDS = 15;
 
-const RISK_TIME_FACTOR = 0.85;
 const RISK_SCORE_FACTOR = 1.5;
 const RISK_BASE_COST = 90;
-const RISK_COST_GROWTH = 1.9;
+const RISK_COST_STEP = 20;
 
 const TIME_SECONDS_PER_LEVEL = 30;
 const TIME_BASE_COST = 40;
@@ -34,6 +33,16 @@ const TIME_COST_GROWTH = 1.6;
 const AUTO_FLAG_COST = 75;
 
 const BASE_POINTS = 100;
+
+function getTimeBonusSeconds(timeLevel: number): number {
+  return TIME_SECONDS_PER_LEVEL * timeLevel;
+}
+
+function getRunTimeLimitSeconds(riskLevel: number, timeLevel: number): number {
+  const totalTimeBeforeRisk = BASE_TIME_SECONDS + getTimeBonusSeconds(timeLevel);
+  const riskDivisor = Math.pow(2, riskLevel);
+  return Math.max(MIN_TIME_SECONDS, Math.floor(totalTimeBeforeRisk / riskDivisor));
+}
 
 export const useIncrementalQueensStore = defineStore('incrementalQueens', {
   state: () => ({
@@ -69,7 +78,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       return Math.pow(RISK_SCORE_FACTOR, state.riskLevel);
     },
     nextRiskCost: (state): number => {
-      return Math.floor(RISK_BASE_COST * Math.pow(RISK_COST_GROWTH, state.riskLevel));
+      return RISK_BASE_COST + state.riskLevel * RISK_COST_STEP;
     },
     nextTimeCost: (state): number => {
       return Math.floor(TIME_BASE_COST * Math.pow(TIME_COST_GROWTH, state.timeLevel));
@@ -110,12 +119,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         return state.runBank >= card.cost;
       },
     currentRunTimeLimit(state): number {
-      const reducedBaseTime = Math.max(
-        MIN_TIME_SECONDS,
-        Math.floor(BASE_TIME_SECONDS * Math.pow(RISK_TIME_FACTOR, state.riskLevel))
-      );
-      const bonusTime = TIME_SECONDS_PER_LEVEL * state.timeLevel;
-      return reducedBaseTime + bonusTime;
+      return getRunTimeLimitSeconds(state.riskLevel, state.timeLevel);
     },
     riskShopPreview(state): {
       currentLevel: number;
@@ -131,24 +135,14 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       const currentMultiplier = Math.pow(RISK_SCORE_FACTOR, currentLevel);
       const nextMultiplier = Math.pow(RISK_SCORE_FACTOR, nextLevel);
 
-      const currentReducedBase = Math.max(
-        MIN_TIME_SECONDS,
-        Math.floor(BASE_TIME_SECONDS * Math.pow(RISK_TIME_FACTOR, currentLevel))
-      );
-      const nextReducedBase = Math.max(
-        MIN_TIME_SECONDS,
-        Math.floor(BASE_TIME_SECONDS * Math.pow(RISK_TIME_FACTOR, nextLevel))
-      );
-      const bonusTime = TIME_SECONDS_PER_LEVEL * state.timeLevel;
-
       return {
         currentLevel,
         nextLevel,
         currentMultiplier,
         nextMultiplier,
-        currentTimeLimit: currentReducedBase + bonusTime,
-        nextTimeLimit: nextReducedBase + bonusTime,
-        cost: Math.floor(RISK_BASE_COST * Math.pow(RISK_COST_GROWTH, currentLevel)),
+        currentTimeLimit: getRunTimeLimitSeconds(currentLevel, state.timeLevel),
+        nextTimeLimit: getRunTimeLimitSeconds(nextLevel, state.timeLevel),
+        cost: RISK_BASE_COST + currentLevel * RISK_COST_STEP,
       };
     },
     timeShopPreview(state): {
@@ -161,19 +155,11 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       const currentLevel = state.timeLevel;
       const nextLevel = state.timeLevel + 1;
 
-      const reducedBase = Math.max(
-        MIN_TIME_SECONDS,
-        Math.floor(BASE_TIME_SECONDS * Math.pow(RISK_TIME_FACTOR, state.riskLevel))
-      );
-
-      const currentBonus = TIME_SECONDS_PER_LEVEL * currentLevel;
-      const nextBonus = TIME_SECONDS_PER_LEVEL * nextLevel;
-
       return {
         currentLevel,
         nextLevel,
-        currentTimeLimit: reducedBase + currentBonus,
-        nextTimeLimit: reducedBase + nextBonus,
+        currentTimeLimit: getRunTimeLimitSeconds(state.riskLevel, currentLevel),
+        nextTimeLimit: getRunTimeLimitSeconds(state.riskLevel, nextLevel),
         cost: Math.floor(TIME_BASE_COST * Math.pow(TIME_COST_GROWTH, currentLevel)),
       };
     },
