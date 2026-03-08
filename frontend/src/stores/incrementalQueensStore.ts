@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { useQueensStore } from './queensStore';
 import { useSpeedModeStore } from './speedModeStore';
+import type { MarkType } from '../types/types';
 import {
   PATTERN_CARD_DEFINITIONS,
   collectPatternFlagPlacements,
@@ -205,6 +206,70 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       }, 1000);
     },
 
+    getOwnedPatternCards(): PatternCardDefinition[] {
+      return this.ownedPatternCardIds
+        .map(
+          (cardId) =>
+            getPatternCardById(cardId) ||
+            this.customPatternCards.find((patternCard) => patternCard.id === cardId) ||
+            null
+        )
+        .filter((card): card is PatternCardDefinition => card !== null);
+    },
+
+    cloneMarks(marks: MarkType[][]): MarkType[][] {
+      return marks.map((row) => [...row]);
+    },
+
+    collectPlacementsForMarks(marks: MarkType[][]): Array<{ row: number; col: number }> {
+      const queensStore = useQueensStore();
+      const cards = this.getOwnedPatternCards();
+      const placements: Array<{ row: number; col: number }> = [];
+      const seen = new Set<string>();
+
+      for (const card of cards) {
+        const matches = collectPatternFlagPlacements(queensStore.grid, marks, card);
+        for (const match of matches) {
+          const key = `${match.row},${match.col}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          placements.push(match);
+        }
+      }
+
+      return placements;
+    },
+
+    collectWavePlacements(seedMarks: MarkType[][]): Array<{ row: number; col: number }> {
+      const workingMarks = this.cloneMarks(seedMarks);
+      const queuedPlacements: Array<{ row: number; col: number }> = [];
+      const queuedSet = new Set<string>();
+      const maxIterations = 100;
+
+      for (let i = 0; i < maxIterations; i++) {
+        const matches = this.collectPlacementsForMarks(workingMarks);
+        let addedAny = false;
+
+        for (const match of matches) {
+          if (workingMarks[match.row][match.col] !== null) continue;
+
+          const key = `${match.row},${match.col}`;
+          if (queuedSet.has(key)) continue;
+
+          queuedSet.add(key);
+          queuedPlacements.push(match);
+          workingMarks[match.row][match.col] = 'flag';
+          addedAny = true;
+        }
+
+        if (!addedAny) {
+          break;
+        }
+      }
+
+      return queuedPlacements;
+    },
+
     applyOwnedPatternCards() {
       if (this.runStatus !== 'playing') {
         return;
@@ -215,42 +280,37 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       }
 
       const queensStore = useQueensStore();
-      const placements: Array<{ row: number; col: number }> = [];
-      const seen = new Set<string>();
+      const marksSnapshot = this.cloneMarks(queensStore.playerMarks);
+      const maxWaves = 100;
+      let totalPlacedCount = 0;
 
-      for (const cardId of this.ownedPatternCardIds) {
-        const card =
-          getPatternCardById(cardId) ||
-          this.customPatternCards.find((patternCard) => patternCard.id === cardId) ||
-          null;
-        if (!card) continue;
-
-        const matches = collectPatternFlagPlacements(
-          queensStore.grid,
-          queensStore.playerMarks,
-          card
-        );
-
-        for (const match of matches) {
-          const key = `${match.row},${match.col}`;
-          if (seen.has(key)) continue;
-          seen.add(key);
-          placements.push(match);
+      for (let wave = 0; wave < maxWaves; wave++) {
+        const queuedPlacements = this.collectWavePlacements(marksSnapshot);
+        if (queuedPlacements.length === 0) {
+          break;
         }
+
+        let wavePlacedCount = 0;
+        for (const position of queuedPlacements) {
+          if (queensStore.playerMarks[position.row][position.col] !== null) {
+            continue;
+          }
+
+          queensStore.placeFlag(position.row, position.col);
+          queensStore.triggerAutoFlagAnimation(position.row, position.col, 'pattern', 0);
+          marksSnapshot[position.row][position.col] = 'flag';
+          wavePlacedCount += 1;
+        }
+
+        if (wavePlacedCount === 0) {
+          break;
+        }
+
+        totalPlacedCount += wavePlacedCount;
       }
 
-      const maxPlacementsPerTick = 3;
-      const limited = placements.slice(0, maxPlacementsPerTick);
-
-      let placedCount = 0;
-      for (const [index, position] of limited.entries()) {
-        queensStore.placeFlag(position.row, position.col);
-        queensStore.triggerAutoFlagAnimation(position.row, position.col, 'pattern', index * 50);
-        placedCount += 1;
-      }
-
-      if (placedCount > 0) {
-        queensStore.showAutoFlagCombo(placedCount);
+      if (totalPlacedCount > 0) {
+        queensStore.showAutoFlagCombo(totalPlacedCount);
       }
     },
 
