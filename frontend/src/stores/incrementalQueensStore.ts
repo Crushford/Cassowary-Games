@@ -16,9 +16,6 @@ import {
   RISK_COST_STEP,
   RISK_SCORE_FACTOR,
   SIZE_UP_COST,
-  TIME_BASE_COST,
-  TIME_COST_GROWTH,
-  TIME_SECONDS_PER_LEVEL,
   type OneOffUpgradeId,
   getOneOffUpgradeCost,
   getOneOffUpgradeDescription,
@@ -66,7 +63,6 @@ function createInitialRunState() {
     runBank: 0,
     puzzlesSolved: 0,
     riskLevel: 0,
-    timeLevel: 0,
     autoFlagPurchased: false,
     autoNextPuzzlePurchased: false,
     autoNextPuzzleEnabled: false,
@@ -110,14 +106,8 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     nextRiskCost: (state): number => {
       return RISK_BASE_COST + state.riskLevel * RISK_COST_STEP;
     },
-    nextTimeCost: (state): number => {
-      return Math.floor(TIME_BASE_COST * Math.pow(TIME_COST_GROWTH, state.timeLevel));
-    },
     canAffordRisk(): boolean {
       return this.runBank >= this.nextRiskCost && this.currentPuzzleTimeLimit > MIN_TIME_SECONDS;
-    },
-    canAffordTime(): boolean {
-      return this.runBank >= this.nextTimeCost;
     },
     canStartNextPuzzle(state): boolean {
       return state.runStatus === 'upgrade-select' && !state.isLoadingPuzzle && !state.isAutomationInProgress;
@@ -193,24 +183,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         currentTimeLimit: state.currentPuzzleTimeLimit,
         nextTimeLimit: Math.max(MIN_TIME_SECONDS, Math.floor(state.currentPuzzleTimeLimit / 2)),
         cost: RISK_BASE_COST + currentLevel * RISK_COST_STEP,
-      };
-    },
-    timeShopPreview(state): {
-      currentLevel: number;
-      nextLevel: number;
-      currentTimeLimit: number;
-      nextTimeLimit: number;
-      cost: number;
-    } {
-      const currentLevel = state.timeLevel;
-      const nextLevel = state.timeLevel + 1;
-
-      return {
-        currentLevel,
-        nextLevel,
-        currentTimeLimit: state.currentPuzzleTimeLimit,
-        nextTimeLimit: state.currentPuzzleTimeLimit + TIME_SECONDS_PER_LEVEL,
-        cost: Math.floor(TIME_BASE_COST * Math.pow(TIME_COST_GROWTH, currentLevel)),
       };
     },
     availableManagePatternCards(state): PatternCardDefinition[] {
@@ -556,20 +528,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       );
     },
 
-    buyTimeUpgrade() {
-      if (this.runStatus !== 'upgrade-select') {
-        return;
-      }
-      const cost = this.nextTimeCost;
-      if (this.runBank < cost) {
-        return;
-      }
-
-      this.runBank -= cost;
-      this.timeLevel += 1;
-      this.currentPuzzleTimeLimit += TIME_SECONDS_PER_LEVEL;
-    },
-
     buyPatternCard(patternCardId: string) {
       if (this.runStatus !== 'upgrade-select') {
         return;
@@ -731,7 +689,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       this.runBank = 0;
       this.puzzlesSolved = 0;
       this.riskLevel = 0;
-      this.timeLevel = 0;
       this.autoFlagPurchased = false;
       this.autoNextPuzzlePurchased = false;
       this.autoNextPuzzleEnabled = false;
