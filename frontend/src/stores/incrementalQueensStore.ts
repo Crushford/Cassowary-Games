@@ -10,6 +10,7 @@ export interface IncrementalUpgrade {
   id: IncrementalUpgradeId;
   name: string;
   description: string;
+  cost: number;
 }
 
 interface PuzzleScoreBreakdown {
@@ -30,16 +31,19 @@ const UPGRADE_POOL: IncrementalUpgrade[] = [
     id: 'high-risk',
     name: 'High Risk',
     description: 'Future puzzles: -50% time, x3 score.',
+    cost: 85,
   },
   {
     id: 'auto-flag',
     name: 'Auto Flag',
     description: 'Auto-flag blocked squares when placing queens.',
+    cost: 75,
   },
   {
     id: 'more-time',
     name: 'More Time',
     description: 'Future puzzles: +60 seconds.',
+    cost: 40,
   },
 ];
 
@@ -47,6 +51,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
   state: () => ({
     runStatus: 'idle' as IncrementalRunStatus,
     runScore: 0,
+    runBank: 0,
     puzzlesSolved: 0,
     activeUpgrades: [] as IncrementalUpgradeId[],
     availableUpgrades: [] as IncrementalUpgrade[],
@@ -70,6 +75,13 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     activeUpgradeDetails: (state): IncrementalUpgrade[] => {
       return UPGRADE_POOL.filter((upgrade) => state.activeUpgrades.includes(upgrade.id));
     },
+    canAffordUpgrade:
+      (state) =>
+      (upgradeId: IncrementalUpgradeId): boolean => {
+        const upgrade = UPGRADE_POOL.find((item) => item.id === upgradeId);
+        if (!upgrade) return false;
+        return state.runBank >= upgrade.cost;
+      },
     formattedTimeRemaining: (state): string => {
       const minutes = Math.floor(state.timeRemaining / 60);
       const seconds = Math.floor(state.timeRemaining % 60);
@@ -192,6 +204,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
 
       this.runStatus = 'playing';
       this.runScore = 0;
+      this.runBank = 0;
       this.puzzlesSolved = 0;
       this.activeUpgrades = [];
       this.availableUpgrades = [];
@@ -244,6 +257,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       };
 
       this.runScore += scoreAwarded;
+      this.runBank += scoreAwarded;
       this.puzzlesSolved += 1;
 
       this.availableUpgrades = this.getRemainingUpgrades();
@@ -267,9 +281,25 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         return;
       }
 
+      const selectedUpgrade = UPGRADE_POOL.find((upgrade) => upgrade.id === upgradeId);
+      if (!selectedUpgrade) {
+        return;
+      }
+      if (this.runBank < selectedUpgrade.cost) {
+        return;
+      }
+
       this.activeUpgrades.push(upgradeId);
+      this.runBank -= selectedUpgrade.cost;
       this.availableUpgrades = this.getRemainingUpgrades();
 
+      await this.startNextPuzzle();
+    },
+
+    async skipUpgradeSelection() {
+      if (this.runStatus !== 'upgrade-select') {
+        return;
+      }
       await this.startNextPuzzle();
     },
 
@@ -295,6 +325,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       this.stopTimer();
       this.runStatus = 'idle';
       this.runScore = 0;
+      this.runBank = 0;
       this.puzzlesSolved = 0;
       this.activeUpgrades = [];
       this.availableUpgrades = [];

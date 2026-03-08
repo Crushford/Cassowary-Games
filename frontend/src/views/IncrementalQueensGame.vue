@@ -17,16 +17,16 @@
           <div class="font-bold text-yellow-300">{{ incrementalStore.runScore }}</div>
         </div>
         <div class="bg-gray-700 rounded p-2">
+          <div class="text-gray-300">Bank</div>
+          <div class="font-bold text-emerald-300">{{ incrementalStore.runBank }}</div>
+        </div>
+        <div class="bg-gray-700 rounded p-2">
           <div class="text-gray-300">Solved</div>
           <div class="font-bold">{{ incrementalStore.puzzlesSolved }}</div>
         </div>
         <div class="bg-gray-700 rounded p-2">
           <div class="text-gray-300">Timer</div>
           <div class="font-bold text-red-300">{{ incrementalStore.formattedTimeRemaining }}</div>
-        </div>
-        <div class="bg-gray-700 rounded p-2">
-          <div class="text-gray-300">Puzzle</div>
-          <div class="font-bold">5x5</div>
         </div>
       </div>
 
@@ -111,7 +111,8 @@
           <div class="flex justify-between"><span>Time Score</span><span>{{ Math.max(10, incrementalStore.lastScoreBreakdown.rawScore) }}</span></div>
           <div class="flex justify-between"><span>Multiplier</span><span>x{{ incrementalStore.lastScoreBreakdown.multiplier }}</span></div>
           <div class="flex justify-between font-bold text-yellow-300 mt-2"><span>Awarded</span><span>{{ incrementalStore.lastScoreBreakdown.scoreAwarded }}</span></div>
-          <div class="flex justify-between font-bold text-yellow-300"><span>Total Run Score</span><span>{{ incrementalStore.runScore }}</span></div>
+          <div class="flex justify-between font-bold text-yellow-300"><span>Total Score</span><span>{{ incrementalStore.runScore }}</span></div>
+          <div class="flex justify-between font-bold text-emerald-300"><span>Bank</span><span>{{ incrementalStore.runBank }}</span></div>
         </div>
 
         <h3 class="text-sm font-semibold text-gray-300 mb-2">Choose an Upgrade</h3>
@@ -119,13 +120,28 @@
           <button
             v-for="upgrade in incrementalStore.availableUpgrades"
             :key="upgrade.id"
-            class="w-full text-left p-3 rounded bg-emerald-700 hover:bg-emerald-600"
+            class="w-full text-left p-3 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            :class="
+              incrementalStore.canAffordUpgrade(upgrade.id)
+                ? 'bg-emerald-700 hover:bg-emerald-600'
+                : 'bg-gray-700'
+            "
+            :disabled="!incrementalStore.canAffordUpgrade(upgrade.id)"
             @click="incrementalStore.selectUpgrade(upgrade.id)"
           >
-            <div class="font-semibold">{{ upgrade.name }}</div>
+            <div class="font-semibold flex items-center justify-between">
+              <span>{{ upgrade.name }}</span>
+              <span class="text-xs text-yellow-300">Cost: {{ upgrade.cost }}</span>
+            </div>
             <div class="text-xs text-emerald-100">{{ upgrade.description }}</div>
           </button>
         </div>
+        <button
+          class="w-full mt-3 py-2 rounded bg-gray-600 hover:bg-gray-500 font-semibold"
+          @click="incrementalStore.skipUpgradeSelection"
+        >
+          Skip
+        </button>
       </div>
     </Modal>
 
@@ -134,6 +150,7 @@
         <h2 class="text-xl font-bold text-red-400 mb-3">Run Over</h2>
         <div class="bg-gray-700 rounded p-3 mb-4 text-sm space-y-1">
           <div class="flex justify-between"><span>Total Score</span><span class="font-bold text-yellow-300">{{ incrementalStore.runScore }}</span></div>
+          <div class="flex justify-between"><span>Remaining Bank</span><span class="font-bold text-emerald-300">{{ incrementalStore.runBank }}</span></div>
           <div class="flex justify-between"><span>Puzzles Solved</span><span class="font-bold">{{ incrementalStore.puzzlesSolved }}</span></div>
           <div>
             <div class="text-gray-300 mb-1">Upgrades</div>
