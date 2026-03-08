@@ -21,6 +21,21 @@ interface PuzzleScoreBreakdown {
   totalTime: number;
 }
 
+type OneOffUpgradeId =
+  | 'auto-flag'
+  | 'auto-queen-color'
+  | 'auto-queen-row'
+  | 'auto-queen-column'
+  | 'size-up';
+
+interface OneOffUpgradeOption {
+  id: OneOffUpgradeId;
+  title: string;
+  description: string;
+  cost: number;
+  canBuy: boolean;
+}
+
 const BASE_TIME_SECONDS = 300;
 const MIN_TIME_SECONDS = 15;
 
@@ -33,18 +48,12 @@ const TIME_BASE_COST = 40;
 const TIME_COST_GROWTH = 1.6;
 const AUTO_FLAG_COST = 75;
 const PATTERN_CARD_COST_STEP = 20;
+const AUTO_QUEEN_COLOR_COST = 80;
+const AUTO_QUEEN_ROW_COST = 90;
+const AUTO_QUEEN_COLUMN_COST = 90;
+const SIZE_UP_COST = 150;
 
 const BASE_POINTS = 100;
-
-function getTimeBonusSeconds(timeLevel: number): number {
-  return TIME_SECONDS_PER_LEVEL * timeLevel;
-}
-
-function getRunTimeLimitSeconds(riskLevel: number, timeLevel: number): number {
-  const totalTimeBeforeRisk = BASE_TIME_SECONDS + getTimeBonusSeconds(timeLevel);
-  const riskDivisor = Math.pow(2, riskLevel);
-  return Math.max(MIN_TIME_SECONDS, Math.floor(totalTimeBeforeRisk / riskDivisor));
-}
 
 export const useIncrementalQueensStore = defineStore('incrementalQueens', {
   state: () => ({
@@ -55,6 +64,11 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     riskLevel: 0,
     timeLevel: 0,
     autoFlagPurchased: false,
+    autoQueenByColorPurchased: false,
+    autoQueenByRowPurchased: false,
+    autoQueenByColumnPurchased: false,
+    currentPuzzleSize: 5,
+    sizeUpCost: SIZE_UP_COST,
     currentPuzzleTimeLimit: BASE_TIME_SECONDS,
     timeRemaining: BASE_TIME_SECONDS,
     timerInterval: null as number | null,
@@ -64,6 +78,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     ownedPatternCardIds: [] as string[],
     customPatternCards: [] as PatternCardDefinition[],
     customPatternCardCounter: 1,
+    selectedOneOffUpgradeId: null as OneOffUpgradeId | null,
     isLoadingPuzzle: false,
     previousPlacementMode: null as 'auto' | 'flag' | 'queen' | null,
     previousAutoFlagging: null as boolean | null,
@@ -86,7 +101,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       return Math.floor(TIME_BASE_COST * Math.pow(TIME_COST_GROWTH, state.timeLevel));
     },
     canAffordRisk(): boolean {
-      return this.runBank >= this.nextRiskCost;
+      return this.runBank >= this.nextRiskCost && this.currentPuzzleTimeLimit > MIN_TIME_SECONDS;
     },
     canAffordTime(): boolean {
       return this.runBank >= this.nextTimeCost;
@@ -95,8 +110,32 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       if (state.autoFlagPurchased) return false;
       return state.runBank >= AUTO_FLAG_COST;
     },
+    canAffordAutoQueenByColor(state): boolean {
+      if (state.autoQueenByColorPurchased) return false;
+      return state.runBank >= AUTO_QUEEN_COLOR_COST;
+    },
+    canAffordAutoQueenByRow(state): boolean {
+      if (state.autoQueenByRowPurchased) return false;
+      return state.runBank >= AUTO_QUEEN_ROW_COST;
+    },
+    canAffordAutoQueenByColumn(state): boolean {
+      if (state.autoQueenByColumnPurchased) return false;
+      return state.runBank >= AUTO_QUEEN_COLUMN_COST;
+    },
+    canAffordSizeUp(state): boolean {
+      return state.runBank >= SIZE_UP_COST && state.currentPuzzleSize < 9;
+    },
     autoFlagCost(): number {
       return AUTO_FLAG_COST;
+    },
+    autoQueenByColorCost(): number {
+      return AUTO_QUEEN_COLOR_COST;
+    },
+    autoQueenByRowCost(): number {
+      return AUTO_QUEEN_ROW_COST;
+    },
+    autoQueenByColumnCost(): number {
+      return AUTO_QUEEN_COLUMN_COST;
     },
     availablePatternCards(state): PatternCardDefinition[] {
       return PATTERN_CARD_DEFINITIONS.filter((card) => !state.ownedPatternCardIds.includes(card.id));
@@ -115,27 +154,27 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     patternCardCost:
       (state) =>
       (patternCardId: string): number => {
-        const card = PATTERN_CARD_DEFINITIONS.find((item) => item.id === patternCardId);
+        const card =
+          PATTERN_CARD_DEFINITIONS.find((item) => item.id === patternCardId) ||
+          state.customPatternCards.find((item) => item.id === patternCardId);
         if (!card) return 0;
-        const purchasedPremadeCount = state.ownedPatternCardIds.filter((ownedId) =>
-          PATTERN_CARD_DEFINITIONS.some((preMade) => preMade.id === ownedId)
-        ).length;
-        return card.cost + purchasedPremadeCount * PATTERN_CARD_COST_STEP;
+        const purchasedCount = state.ownedPatternCardIds.length;
+        return card.cost + purchasedCount * PATTERN_CARD_COST_STEP;
       },
     canAffordPatternCard:
       (state) =>
       (patternCardId: string): boolean => {
-        const card = PATTERN_CARD_DEFINITIONS.find((item) => item.id === patternCardId);
+        const card =
+          PATTERN_CARD_DEFINITIONS.find((item) => item.id === patternCardId) ||
+          state.customPatternCards.find((item) => item.id === patternCardId);
         if (!card) return false;
         if (state.ownedPatternCardIds.includes(patternCardId)) return false;
-        const purchasedPremadeCount = state.ownedPatternCardIds.filter((ownedId) =>
-          PATTERN_CARD_DEFINITIONS.some((preMade) => preMade.id === ownedId)
-        ).length;
-        const currentCost = card.cost + purchasedPremadeCount * PATTERN_CARD_COST_STEP;
+        const purchasedCount = state.ownedPatternCardIds.length;
+        const currentCost = card.cost + purchasedCount * PATTERN_CARD_COST_STEP;
         return state.runBank >= currentCost;
       },
     currentRunTimeLimit(state): number {
-      return getRunTimeLimitSeconds(state.riskLevel, state.timeLevel);
+      return state.currentPuzzleTimeLimit;
     },
     riskShopPreview(state): {
       currentLevel: number;
@@ -156,8 +195,8 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         nextLevel,
         currentMultiplier,
         nextMultiplier,
-        currentTimeLimit: getRunTimeLimitSeconds(currentLevel, state.timeLevel),
-        nextTimeLimit: getRunTimeLimitSeconds(nextLevel, state.timeLevel),
+        currentTimeLimit: state.currentPuzzleTimeLimit,
+        nextTimeLimit: Math.max(MIN_TIME_SECONDS, Math.floor(state.currentPuzzleTimeLimit / 2)),
         cost: RISK_BASE_COST + currentLevel * RISK_COST_STEP,
       };
     },
@@ -174,14 +213,89 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       return {
         currentLevel,
         nextLevel,
-        currentTimeLimit: getRunTimeLimitSeconds(state.riskLevel, currentLevel),
-        nextTimeLimit: getRunTimeLimitSeconds(state.riskLevel, nextLevel),
+        currentTimeLimit: state.currentPuzzleTimeLimit,
+        nextTimeLimit: state.currentPuzzleTimeLimit + TIME_SECONDS_PER_LEVEL,
         cost: Math.floor(TIME_BASE_COST * Math.pow(TIME_COST_GROWTH, currentLevel)),
       };
+    },
+    availableManagePatternCards(state): PatternCardDefinition[] {
+      return [...PATTERN_CARD_DEFINITIONS, ...state.customPatternCards].filter(
+        (card) => !state.ownedPatternCardIds.includes(card.id)
+      );
+    },
+    ownedPatternCards(state): PatternCardDefinition[] {
+      return state.ownedPatternCardIds
+        .map(
+          (cardId) =>
+            getPatternCardById(cardId) ||
+            state.customPatternCards.find((patternCard) => patternCard.id === cardId) ||
+            null
+        )
+        .filter((card): card is PatternCardDefinition => card !== null);
+    },
+    availableOneOffUpgrades(state): OneOffUpgradeOption[] {
+      const upgrades: OneOffUpgradeOption[] = [
+        {
+          id: 'auto-flag',
+          title: 'Auto Flag',
+          description: 'Automatically flags blocked squares after placing a queen.',
+          cost: AUTO_FLAG_COST,
+          canBuy: !state.autoFlagPurchased && state.runBank >= AUTO_FLAG_COST,
+        },
+        {
+          id: 'auto-queen-color',
+          title: 'Auto Queen: Color Group',
+          description: 'Auto-place when only one square remains in a color group.',
+          cost: AUTO_QUEEN_COLOR_COST,
+          canBuy: !state.autoQueenByColorPurchased && state.runBank >= AUTO_QUEEN_COLOR_COST,
+        },
+        {
+          id: 'auto-queen-row',
+          title: 'Auto Queen: Row',
+          description: 'Auto-place when only one square remains in a row.',
+          cost: AUTO_QUEEN_ROW_COST,
+          canBuy: !state.autoQueenByRowPurchased && state.runBank >= AUTO_QUEEN_ROW_COST,
+        },
+        {
+          id: 'auto-queen-column',
+          title: 'Auto Queen: Column',
+          description: 'Auto-place when only one square remains in a column.',
+          cost: AUTO_QUEEN_COLUMN_COST,
+          canBuy: !state.autoQueenByColumnPurchased && state.runBank >= AUTO_QUEEN_COLUMN_COST,
+        },
+        {
+          id: 'size-up',
+          title: `Size Up: ${state.currentPuzzleSize}x${state.currentPuzzleSize} -> ${state.currentPuzzleSize + 1}x${state.currentPuzzleSize + 1}`,
+          description: 'Move to next board size and reset all upgrades.',
+          cost: SIZE_UP_COST,
+          canBuy: state.currentPuzzleSize < 9 && state.runBank >= SIZE_UP_COST,
+        },
+      ];
+
+      return upgrades.filter((upgrade) => {
+        if (upgrade.id === 'size-up') {
+          return state.currentPuzzleSize < 9;
+        }
+        return true;
+      });
+    },
+    selectedOneOffUpgrade(): OneOffUpgradeOption | null {
+      if (!this.selectedOneOffUpgradeId) return null;
+      return this.availableOneOffUpgrades.find((u) => u.id === this.selectedOneOffUpgradeId) || null;
     },
   },
 
   actions: {
+    rollOneOffUpgrade() {
+      const pool = this.availableOneOffUpgrades;
+      if (pool.length === 0) {
+        this.selectedOneOffUpgradeId = null;
+        return;
+      }
+      const randomIndex = Math.floor(Math.random() * pool.length);
+      this.selectedOneOffUpgradeId = pool[randomIndex].id;
+    },
+
     stopTimer() {
       if (this.timerInterval !== null) {
         clearInterval(this.timerInterval);
@@ -285,12 +399,76 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       return queuedPlacements;
     },
 
+    collectAutoQueenPlacements(marks: MarkType[][]): Array<{ row: number; col: number }> {
+      const queensStore = useQueensStore();
+      const placements: Array<{ row: number; col: number }> = [];
+      const seen = new Set<string>();
+      const size = queensStore.gridSize;
+
+      const tryAdd = (row: number, col: number) => {
+        if (marks[row][col] !== null) return;
+        if (!queensStore.isValidMoveWithMarks(row, col, marks)) return;
+        const key = `${row},${col}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        placements.push({ row, col });
+      };
+
+      if (this.autoQueenByColorPurchased) {
+        const colorGroups = new Map<string, Array<{ row: number; col: number }>>();
+        for (let row = 0; row < size; row++) {
+          for (let col = 0; col < size; col++) {
+            const color = queensStore.grid[row][col].groupColor;
+            if (!color) continue;
+            if (!colorGroups.has(color)) colorGroups.set(color, []);
+            colorGroups.get(color)!.push({ row, col });
+          }
+        }
+        for (const group of colorGroups.values()) {
+          const free = group.filter((cell) => marks[cell.row][cell.col] === null);
+          if (free.length === 1) {
+            tryAdd(free[0].row, free[0].col);
+          }
+        }
+      }
+
+      if (this.autoQueenByRowPurchased) {
+        for (let row = 0; row < size; row++) {
+          const free: Array<{ row: number; col: number }> = [];
+          for (let col = 0; col < size; col++) {
+            if (marks[row][col] === null) free.push({ row, col });
+          }
+          if (free.length === 1) {
+            tryAdd(free[0].row, free[0].col);
+          }
+        }
+      }
+
+      if (this.autoQueenByColumnPurchased) {
+        for (let col = 0; col < size; col++) {
+          const free: Array<{ row: number; col: number }> = [];
+          for (let row = 0; row < size; row++) {
+            if (marks[row][col] === null) free.push({ row, col });
+          }
+          if (free.length === 1) {
+            tryAdd(free[0].row, free[0].col);
+          }
+        }
+      }
+
+      return placements;
+    },
+
     applyOwnedPatternCards() {
       if (this.runStatus !== 'playing') {
         return;
       }
 
-      if (this.ownedPatternCardIds.length === 0) {
+      const hasPatternCards = this.ownedPatternCardIds.length > 0;
+      const hasAutoQueen =
+        this.autoQueenByColorPurchased || this.autoQueenByRowPurchased || this.autoQueenByColumnPurchased;
+
+      if (!hasPatternCards && !hasAutoQueen) {
         return;
       }
 
@@ -300,10 +478,8 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       let totalPlacedCount = 0;
 
       for (let wave = 0; wave < maxWaves; wave++) {
-        const queuedPlacements = this.collectWavePlacements(marksSnapshot);
-        if (queuedPlacements.length === 0) {
-          break;
-        }
+        let changed = false;
+        const queuedPlacements = hasPatternCards ? this.collectWavePlacements(marksSnapshot) : [];
 
         let wavePlacedCount = 0;
         for (const position of queuedPlacements) {
@@ -315,9 +491,28 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
           queensStore.triggerAutoFlagAnimation(position.row, position.col, 'pattern', 0);
           marksSnapshot[position.row][position.col] = 'flag';
           wavePlacedCount += 1;
+          changed = true;
         }
 
-        if (wavePlacedCount === 0) {
+        const queenPlacements = hasAutoQueen ? this.collectAutoQueenPlacements(marksSnapshot) : [];
+        let placedQueen = false;
+        for (const queen of queenPlacements) {
+          if (queensStore.playerMarks[queen.row][queen.col] !== null) continue;
+          if (!queensStore.isValidMove(queen.row, queen.col)) continue;
+          queensStore.placeQueen(queen.row, queen.col);
+          placedQueen = true;
+          changed = true;
+        }
+        if (placedQueen) {
+          const refreshed = this.cloneMarks(queensStore.playerMarks);
+          for (let row = 0; row < refreshed.length; row++) {
+            for (let col = 0; col < refreshed[row].length; col++) {
+              marksSnapshot[row][col] = refreshed[row][col];
+            }
+          }
+        }
+
+        if (!changed) {
           break;
         }
 
@@ -351,13 +546,14 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
 
     pickNextPuzzleId(): string {
       const queensStore = useQueensStore();
-      const puzzlesForSize = (queensStore.puzzleDatabase?.['5x5'] || []) as Array<{ id: string }>;
+      const sizeKey = `${this.currentPuzzleSize}x${this.currentPuzzleSize}`;
+      const puzzlesForSize = (queensStore.puzzleDatabase?.[sizeKey] || []) as Array<{ id: string }>;
       const originalVariants = puzzlesForSize.filter((puzzle) =>
         typeof puzzle.id === 'string' ? puzzle.id.endsWith('-0') : false
       );
 
       if (originalVariants.length === 0) {
-        throw new Error('No 5x5 puzzles available for Incremental Queens');
+        throw new Error(`No ${sizeKey} puzzles available for Incremental Queens`);
       }
 
       const nonRepeatingPool =
@@ -413,9 +609,14 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       this.riskLevel = 0;
       this.timeLevel = 0;
       this.autoFlagPurchased = false;
+      this.autoQueenByColorPurchased = false;
+      this.autoQueenByRowPurchased = false;
+      this.autoQueenByColumnPurchased = false;
+      this.currentPuzzleSize = 5;
       this.ownedPatternCardIds = [];
       this.customPatternCards = [];
       this.customPatternCardCounter = 1;
+      this.selectedOneOffUpgradeId = null;
       this.lastScoreBreakdown = null;
       this.currentPuzzleTimeLimit = BASE_TIME_SECONDS;
       this.timeRemaining = BASE_TIME_SECONDS;
@@ -469,6 +670,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       this.runBank += scoreAwarded;
       this.puzzlesSolved += 1;
       this.runStatus = 'upgrade-select';
+      this.rollOneOffUpgrade();
     },
 
     buyRiskUpgrade() {
@@ -479,9 +681,16 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       if (this.runBank < cost) {
         return;
       }
+      if (this.currentPuzzleTimeLimit <= MIN_TIME_SECONDS) {
+        return;
+      }
 
       this.runBank -= cost;
       this.riskLevel += 1;
+      this.currentPuzzleTimeLimit = Math.max(
+        MIN_TIME_SECONDS,
+        Math.floor(this.currentPuzzleTimeLimit / 2)
+      );
     },
 
     buyTimeUpgrade() {
@@ -495,6 +704,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
 
       this.runBank -= cost;
       this.timeLevel += 1;
+      this.currentPuzzleTimeLimit += TIME_SECONDS_PER_LEVEL;
     },
 
     buyAutoFlagUpgrade() {
@@ -510,6 +720,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
 
       this.runBank -= AUTO_FLAG_COST;
       this.autoFlagPurchased = true;
+      this.rollOneOffUpgrade();
     },
 
     buyPatternCard(patternCardId: string) {
@@ -520,7 +731,10 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         return;
       }
 
-      const card = getPatternCardById(patternCardId);
+      const card =
+        getPatternCardById(patternCardId) ||
+        this.customPatternCards.find((patternCard) => patternCard.id === patternCardId) ||
+        null;
       if (!card) {
         return;
       }
@@ -531,6 +745,86 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
 
       this.runBank -= currentCost;
       this.ownedPatternCardIds.push(patternCardId);
+    },
+
+    removePatternCard(patternCardId: string) {
+      if (this.runStatus !== 'upgrade-select') {
+        return;
+      }
+      this.ownedPatternCardIds = this.ownedPatternCardIds.filter((id) => id !== patternCardId);
+    },
+
+    buyAutoQueenByColorUpgrade() {
+      if (this.runStatus !== 'upgrade-select' || this.autoQueenByColorPurchased) return;
+      if (this.runBank < AUTO_QUEEN_COLOR_COST) return;
+      this.runBank -= AUTO_QUEEN_COLOR_COST;
+      this.autoQueenByColorPurchased = true;
+      this.rollOneOffUpgrade();
+    },
+
+    buyAutoQueenByRowUpgrade() {
+      if (this.runStatus !== 'upgrade-select' || this.autoQueenByRowPurchased) return;
+      if (this.runBank < AUTO_QUEEN_ROW_COST) return;
+      this.runBank -= AUTO_QUEEN_ROW_COST;
+      this.autoQueenByRowPurchased = true;
+      this.rollOneOffUpgrade();
+    },
+
+    buyAutoQueenByColumnUpgrade() {
+      if (this.runStatus !== 'upgrade-select' || this.autoQueenByColumnPurchased) return;
+      if (this.runBank < AUTO_QUEEN_COLUMN_COST) return;
+      this.runBank -= AUTO_QUEEN_COLUMN_COST;
+      this.autoQueenByColumnPurchased = true;
+      this.rollOneOffUpgrade();
+    },
+
+    buySizeUpUpgrade() {
+      if (this.runStatus !== 'upgrade-select') return;
+      if (this.runBank < SIZE_UP_COST) return;
+      if (this.currentPuzzleSize >= 9) return;
+
+      this.runBank -= SIZE_UP_COST;
+      this.currentPuzzleSize += 1;
+      this.riskLevel = 0;
+      this.timeLevel = 0;
+      this.autoFlagPurchased = false;
+      this.autoQueenByColorPurchased = false;
+      this.autoQueenByRowPurchased = false;
+      this.autoQueenByColumnPurchased = false;
+      this.ownedPatternCardIds = [];
+      this.customPatternCards = [];
+      this.customPatternCardCounter = 1;
+      this.currentPuzzleTimeLimit = BASE_TIME_SECONDS;
+      this.rollOneOffUpgrade();
+    },
+
+    buySelectedOneOffUpgrade() {
+      if (this.runStatus !== 'upgrade-select') {
+        return;
+      }
+      if (!this.selectedOneOffUpgradeId) {
+        return;
+      }
+
+      switch (this.selectedOneOffUpgradeId) {
+        case 'auto-flag':
+          this.buyAutoFlagUpgrade();
+          break;
+        case 'auto-queen-color':
+          this.buyAutoQueenByColorUpgrade();
+          break;
+        case 'auto-queen-row':
+          this.buyAutoQueenByRowUpgrade();
+          break;
+        case 'auto-queen-column':
+          this.buyAutoQueenByColumnUpgrade();
+          break;
+        case 'size-up':
+          this.buySizeUpUpgrade();
+          break;
+        default:
+          break;
+      }
     },
 
     createCustomPatternCard(input: {
@@ -622,9 +916,14 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       this.riskLevel = 0;
       this.timeLevel = 0;
       this.autoFlagPurchased = false;
+      this.autoQueenByColorPurchased = false;
+      this.autoQueenByRowPurchased = false;
+      this.autoQueenByColumnPurchased = false;
+      this.currentPuzzleSize = 5;
       this.ownedPatternCardIds = [];
       this.customPatternCards = [];
       this.customPatternCardCounter = 1;
+      this.selectedOneOffUpgradeId = null;
       this.lastScoreBreakdown = null;
       this.currentPuzzleTimeLimit = BASE_TIME_SECONDS;
       this.timeRemaining = BASE_TIME_SECONDS;

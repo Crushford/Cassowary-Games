@@ -167,6 +167,9 @@
         <h3 class="text-sm font-semibold text-gray-300 mb-2">Shop Phase</h3>
 
         <div class="space-y-2">
+          <div class="text-xs text-gray-300 px-1">
+            Current timer: <span class="font-semibold text-white">{{ incrementalStore.currentPuzzleTimeLimit }}s</span>
+          </div>
           <button
             type="button"
             class="w-full text-left p-3 rounded disabled:opacity-50 disabled:cursor-not-allowed"
@@ -180,10 +183,19 @@
               <span class="text-xs text-yellow-300">Cost: {{ incrementalStore.riskShopPreview.cost }}</span>
             </div>
             <div class="text-xs text-red-100">
-              Timer: {{ incrementalStore.riskShopPreview.currentTimeLimit }}s → {{ incrementalStore.riskShopPreview.nextTimeLimit }}s
+              Current timer: {{ incrementalStore.riskShopPreview.currentTimeLimit }}s
+            </div>
+            <div class="text-xs text-red-100">
+              After purchase: {{ incrementalStore.riskShopPreview.nextTimeLimit }}s
             </div>
             <div class="text-xs text-red-100">
               Score: x{{ formatMultiplier(incrementalStore.riskShopPreview.currentMultiplier) }} → x{{ formatMultiplier(incrementalStore.riskShopPreview.nextMultiplier) }}
+            </div>
+            <div
+              v-if="incrementalStore.currentPuzzleTimeLimit <= 15"
+              class="text-xs text-amber-200 mt-1"
+            >
+              Timer is at minimum. Risk cannot increase further.
             </div>
           </button>
 
@@ -200,62 +212,41 @@
               <span class="text-xs text-yellow-300">Cost: {{ incrementalStore.timeShopPreview.cost }}</span>
             </div>
             <div class="text-xs text-blue-100">
-              Timer: {{ incrementalStore.timeShopPreview.currentTimeLimit }}s → {{ incrementalStore.timeShopPreview.nextTimeLimit }}s
+              Current timer: {{ incrementalStore.timeShopPreview.currentTimeLimit }}s
             </div>
-            <div class="text-xs text-blue-100">Adds +30s per level. No score bonus.</div>
+            <div class="text-xs text-blue-100">
+              After purchase: {{ incrementalStore.timeShopPreview.nextTimeLimit }}s (+30s)
+            </div>
           </button>
 
           <button
-            v-if="!incrementalStore.autoFlagPurchased"
+            v-if="incrementalStore.selectedOneOffUpgrade"
             type="button"
             class="w-full text-left p-3 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-            :class="
-              incrementalStore.canAffordAutoFlag ? 'bg-emerald-700 hover:bg-emerald-600' : 'bg-gray-700'
-            "
-            :disabled="!incrementalStore.canAffordAutoFlag"
-            @click="incrementalStore.buyAutoFlagUpgrade"
-            :aria-label="autoFlagUpgradeAriaLabel"
+            :class="incrementalStore.selectedOneOffUpgrade.canBuy ? 'bg-emerald-700 hover:bg-emerald-600' : 'bg-gray-700'"
+            :disabled="!incrementalStore.selectedOneOffUpgrade.canBuy"
+            @click="incrementalStore.buySelectedOneOffUpgrade"
           >
             <div class="font-semibold flex items-center justify-between">
-              <span>Auto Flag</span>
-              <span class="text-xs text-yellow-300">Cost: {{ incrementalStore.autoFlagCost }}</span>
+              <span>{{ incrementalStore.selectedOneOffUpgrade.title }}</span>
+              <span class="text-xs text-yellow-300">Cost: {{ incrementalStore.selectedOneOffUpgrade.cost }}</span>
             </div>
-            <div class="text-xs text-emerald-100">
-              Automatically flags blocked squares after placing a queen.
-            </div>
+            <div class="text-xs text-emerald-100">{{ incrementalStore.selectedOneOffUpgrade.description }}</div>
           </button>
+
           <div class="text-[11px] text-gray-400 px-1">
             Pattern card costs scale: +20 per purchased pattern card this run.
           </div>
           <button
-            v-for="card in incrementalStore.availablePatternCards"
-            :key="card.id"
             type="button"
-            class="w-full text-left p-3 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-            :class="
-              incrementalStore.canAffordPatternCard(card.id)
-                ? 'bg-purple-700 hover:bg-purple-600'
-                : 'bg-gray-700'
-            "
-            :disabled="!incrementalStore.canAffordPatternCard(card.id)"
-            @click="incrementalStore.buyPatternCard(card.id)"
-            :aria-label="patternCardAriaLabel(card)"
+            class="w-full py-2 rounded bg-purple-700 hover:bg-purple-600 font-semibold"
+            @click="showPatternManager = true"
           >
-            <div class="flex items-start gap-3">
-              <PatternCardPreview :card="card" />
-              <div class="flex-1 min-w-0">
-                <div class="font-semibold flex items-center justify-between gap-2">
-                  <span>Pattern Card: {{ card.id }}</span>
-                  <span class="text-xs text-yellow-300 shrink-0">
-                    Cost: {{ incrementalStore.patternCardCost(card.id) }}
-                  </span>
-                </div>
-                <div class="text-xs text-purple-100">
-                  Base {{ card.cost }} + scaling.
-                </div>
-              </div>
-            </div>
+            Manage Pattern Cards
           </button>
+          <div class="text-xs text-gray-300 px-1">
+            Active: {{ incrementalStore.ownedPatternCardIds.length }} card(s)
+          </div>
         </div>
 
         <button
@@ -286,6 +277,8 @@
     >
       <MobilePatternCardDesigner @save="handleSaveCustomPatternCard" @cancel="showPatternDesigner = false" />
     </Modal>
+
+    <PatternCardManagerModal :is-visible="showPatternManager" @close="showPatternManager = false" />
 
     <Modal
       :is-visible="showGiveUpConfirm"
@@ -388,17 +381,18 @@ const QueensToolSelector = defineAsyncComponent(
   () => import('../components/queens/QueensToolSelector.vue')
 );
 const Modal = defineAsyncComponent(() => import('../components/shared/Modal.vue'));
-const PatternCardPreview = defineAsyncComponent(
-  () => import('../components/queens/PatternCardPreview.vue')
-);
 const MobilePatternCardDesigner = defineAsyncComponent(
   () => import('../components/queens/MobilePatternCardDesigner.vue')
+);
+const PatternCardManagerModal = defineAsyncComponent(
+  () => import('../components/queens/PatternCardManagerModal.vue')
 );
 
 const queensStore = useQueensStore();
 const incrementalStore = useIncrementalQueensStore();
 const router = useRouter();
 const showPatternDesigner = ref(false);
+const showPatternManager = ref(false);
 const showGiveUpConfirm = ref(false);
 const animatedTimeRemainingPercent = ref(0);
 
@@ -463,10 +457,6 @@ const timeUpgradeAriaLabel = computed(() => {
   return `Buy Time upgrade from level ${preview.currentLevel} to ${preview.nextLevel}. Cost ${preview.cost}. Timer ${preview.currentTimeLimit} to ${preview.nextTimeLimit} seconds.`;
 });
 
-const autoFlagUpgradeAriaLabel = computed(() => {
-  return `Buy Auto Flag upgrade. Cost ${incrementalStore.autoFlagCost}. Automatically flags blocked squares after placing a queen.`;
-});
-
 const isBoardInteractive = computed(() => {
   return incrementalStore.runStatus === 'playing' && !incrementalStore.isLoadingPuzzle;
 });
@@ -511,11 +501,6 @@ watch(
 
 function formatMultiplier(value: number): string {
   return value.toFixed(2);
-}
-
-function patternCardAriaLabel(card: { id: string; cost: number }): string {
-  const currentCost = incrementalStore.patternCardCost(card.id);
-  return `Buy pattern card ${card.id}. Cost ${currentCost}. Base ${card.cost} plus scaling. Auto-flag pattern card.`;
 }
 
 async function handleStartRun() {
