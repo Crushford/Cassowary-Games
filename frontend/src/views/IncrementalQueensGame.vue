@@ -224,6 +224,9 @@
               Automatically flags blocked squares after placing a queen.
             </div>
           </button>
+          <div class="text-[11px] text-gray-400 px-1">
+            Pattern card costs scale: +20 per purchased pattern card this run.
+          </div>
           <button
             v-for="card in incrementalStore.availablePatternCards"
             :key="card.id"
@@ -243,9 +246,13 @@
               <div class="flex-1 min-w-0">
                 <div class="font-semibold flex items-center justify-between gap-2">
                   <span>Pattern Card: {{ card.id }}</span>
-                  <span class="text-xs text-yellow-300 shrink-0">Cost: {{ card.cost }}</span>
+                  <span class="text-xs text-yellow-300 shrink-0">
+                    Cost: {{ incrementalStore.patternCardCost(card.id) }}
+                  </span>
                 </div>
-                <div class="text-xs text-purple-100">Auto-flag pattern card</div>
+                <div class="text-xs text-purple-100">
+                  Base {{ card.cost }} + scaling.
+                </div>
               </div>
             </div>
           </button>
@@ -507,7 +514,8 @@ function formatMultiplier(value: number): string {
 }
 
 function patternCardAriaLabel(card: { id: string; cost: number }): string {
-  return `Buy pattern card ${card.id}. Cost ${card.cost}. Auto-flag pattern card.`;
+  const currentCost = incrementalStore.patternCardCost(card.id);
+  return `Buy pattern card ${card.id}. Cost ${currentCost}. Base ${card.cost} plus scaling. Auto-flag pattern card.`;
 }
 
 async function handleStartRun() {
