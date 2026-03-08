@@ -484,8 +484,11 @@ watch(
 );
 
 watch(
-  () => [incrementalStore.runStatus, timeRemainingPercent.value],
-  async ([status, percent]) => {
+  () => ({
+    status: incrementalStore.runStatus,
+    percent: timeRemainingPercent.value,
+  }),
+  async ({ status, percent }) => {
     if (status !== 'upgrade-select') {
       animatedTimeRemainingPercent.value = 0;
       return;
