@@ -23,12 +23,13 @@ interface RunIncrementalAutomationOptions {
   patternCards: PatternCardDefinition[];
   autoQueenRules: AutoQueenRules;
   isValidMoveWithMarks: (row: number, col: number, marks: MarkType[][]) => boolean;
-  isValidMoveNow: (row: number, col: number) => boolean;
-  getCurrentMarks: () => MarkType[][];
-  placeFlag: (row: number, col: number) => void;
-  placeQueen: (row: number, col: number) => void;
-  onPatternFlagPlaced?: (row: number, col: number) => void;
   maxIterations?: number;
+}
+
+export interface IncrementalAutomationAction {
+  type: 'flag' | 'queen';
+  row: number;
+  col: number;
 }
 
 function cloneMarks(marks: MarkType[][]): MarkType[][] {
@@ -154,20 +155,19 @@ export function collectAutoQueenPlacements({
   return placements;
 }
 
-export function runIncrementalAutomationFixedPoint({
+export function buildIncrementalAutomationPlan({
   grid,
   initialMarks,
   patternCards,
   autoQueenRules,
   isValidMoveWithMarks,
-  isValidMoveNow,
-  getCurrentMarks,
-  placeFlag,
-  placeQueen,
-  onPatternFlagPlaced,
   maxIterations = 100,
-}: RunIncrementalAutomationOptions): { flagsPlaced: number } {
+}: RunIncrementalAutomationOptions): {
+  actions: IncrementalAutomationAction[];
+  flagsPlaced: number;
+} {
   const marksSnapshot = cloneMarks(initialMarks);
+  const actions: IncrementalAutomationAction[] = [];
   let totalFlagPlacements = 0;
 
   for (let wave = 0; wave < maxIterations; wave++) {
@@ -177,9 +177,12 @@ export function runIncrementalAutomationFixedPoint({
 
     for (const position of queuedPlacements) {
       if (marksSnapshot[position.row][position.col] !== null) continue;
-      placeFlag(position.row, position.col);
-      onPatternFlagPlaced?.(position.row, position.col);
       marksSnapshot[position.row][position.col] = 'flag';
+      actions.push({
+        type: 'flag',
+        row: position.row,
+        col: position.col,
+      });
       totalFlagPlacements += 1;
       changed = true;
     }
@@ -190,23 +193,17 @@ export function runIncrementalAutomationFixedPoint({
       rules: autoQueenRules,
       isValidMoveWithMarks,
     });
-    let placedQueen = false;
 
     for (const queen of queenPlacements) {
       if (marksSnapshot[queen.row][queen.col] !== null) continue;
-      if (!isValidMoveNow(queen.row, queen.col)) continue;
-      placeQueen(queen.row, queen.col);
-      placedQueen = true;
+      if (!isValidMoveWithMarks(queen.row, queen.col, marksSnapshot)) continue;
+      marksSnapshot[queen.row][queen.col] = 'queen';
+      actions.push({
+        type: 'queen',
+        row: queen.row,
+        col: queen.col,
+      });
       changed = true;
-    }
-
-    if (placedQueen) {
-      const refreshed = cloneMarks(getCurrentMarks());
-      for (let row = 0; row < refreshed.length; row++) {
-        for (let col = 0; col < refreshed[row].length; col++) {
-          marksSnapshot[row][col] = refreshed[row][col];
-        }
-      }
     }
 
     if (!changed) {
@@ -214,5 +211,8 @@ export function runIncrementalAutomationFixedPoint({
     }
   }
 
-  return { flagsPlaced: totalFlagPlacements };
+  return {
+    actions,
+    flagsPlaced: totalFlagPlacements,
+  };
 }

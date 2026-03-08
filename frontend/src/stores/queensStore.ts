@@ -101,6 +101,7 @@ interface QueensState {
   rotationHistory: number[]; // parallel to moveHistory, rotation count at each history save
   isSwipeActive: boolean; // whether a touch swipe is currently in progress
   swipePlacedFlags: boolean; // whether any flags were placed during the current swipe
+  lastManualInteractionAt: number;
   diversityAverageBySize: Record<string, number>; // Average difference between any 2 originals by size
   recentPuzzleIdsBySize: Record<string, string[]>; // Recent puzzle history per size to avoid immediate repeats
   lastDiversitySelectionSummary: {
@@ -385,6 +386,7 @@ export const useQueensStore = defineStore('queens', {
     rotationHistory: [],
     isSwipeActive: false,
     swipePlacedFlags: false,
+    lastManualInteractionAt: 0,
     // Error tracking
     errorSquares: new Set<string>(),
     flaggedGroupTimestamps: new Map<string, number>(),
@@ -939,6 +941,7 @@ export const useQueensStore = defineStore('queens', {
     },
 
     handleSquareClick(row: number, col: number) {
+      this.lastManualInteractionAt = Date.now();
       // Track clicked square for tutorial
       this.lastClickedSquare = { row, col };
 
