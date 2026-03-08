@@ -41,8 +41,7 @@
     <!-- Game Info Display -->
     <div class="flex-none p-2">
       <div class="max-w-full">
-        <QueensHeader v-if="!queensStore.isSpeedMode" />
-        <SpeedModeHeader v-if="queensStore.isSpeedMode" />
+        <QueensGameHeader />
         <div v-if="queensStore.isComplete" class="text-sm text-green-400 text-center mt-2">
           Puzzle Complete!
         </div>
@@ -60,7 +59,14 @@
 
     <!-- PlayGrid - Flex to fill available space with max-width constraint -->
     <div class="flex-1 flex items-center justify-center">
-      <PlayGrid class="w-full max-w-full aspect-square" :store="queensStore" :enable-touch="true">
+      <PlayGrid
+        class="w-full max-w-full aspect-square"
+        :style="boardAnimationStyle"
+        :store="queensStore"
+        :enable-touch="true"
+        @swipe-start="queensStore.onSwipeStart"
+        @swipe-end="queensStore.onSwipeEnd"
+      >
         <template #default="{ rowIndex, colIndex, store }">
           <QueensSquare :row-index="rowIndex" :col-index="colIndex" :store="store" />
         </template>
@@ -104,17 +110,25 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, watch, defineAsyncComponent, ref, computed } from 'vue';
+import {
+  onMounted,
+  onBeforeUnmount,
+  watch,
+  defineAsyncComponent,
+  ref,
+  computed,
+  nextTick,
+} from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQueensStore, type TutorialStep } from '../stores/queensStore';
+import { useSpeedModeStore } from '../stores/speedModeStore';
 import type { Pos } from '../types/types';
 import { trackGameStart } from '../utils/analyticsEvents';
 
 const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
 const QueensSquare = defineAsyncComponent(() => import('../components/queens/QueensSquare.vue'));
-const QueensHeader = defineAsyncComponent(() => import('../components/queens/QueensHeader.vue'));
-const SpeedModeHeader = defineAsyncComponent(
-  () => import('../components/queens/SpeedModeHeader.vue')
+const QueensGameHeader = defineAsyncComponent(
+  () => import('../components/queens/QueensGameHeader.vue')
 );
 const QueensCompletionModal = defineAsyncComponent(
   () => import('../components/queens/QueensCompletionModal.vue')
@@ -133,8 +147,54 @@ const TutorialOverlay = defineAsyncComponent(
 const route = useRoute();
 const router = useRouter();
 const queensStore = useQueensStore();
+const speedModeStore = useSpeedModeStore();
 
 const shouldShakeErrorToast = ref(false);
+
+// Board rotation animation
+const boardRotationDeg = ref(0);
+const boardAnimating = ref(false);
+
+const boardAnimationStyle = computed(() => {
+  if (!queensStore.isRotateMode) return {};
+  return {
+    transform: `rotate(${boardRotationDeg.value}deg)`,
+    transition: boardAnimating.value ? 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
+  };
+});
+
+// Animate a clockwise spin when the board rotates in rotate mode.
+// Strategy: after data updates (new rotated state), instantly position the board at -90°
+// so it visually looks like the old state — then smoothly transition to 0° (CW spin).
+watch(
+  () => queensStore.boardRotationCount,
+  async (newVal, oldVal) => {
+    if (!queensStore.isRotateMode) return;
+    // Only animate for a genuine 90° CW step, not for resets on new puzzle load
+    if (newVal !== (oldVal + 1) % 4) return;
+
+    boardAnimating.value = false;
+    boardRotationDeg.value = -90;
+
+    await nextTick();
+
+    requestAnimationFrame(() => {
+      boardAnimating.value = true;
+      boardRotationDeg.value = 0;
+    });
+  }
+);
+
+// Reset animation state when rotate mode ends
+watch(
+  () => queensStore.isRotateMode,
+  (active) => {
+    if (!active) {
+      boardAnimating.value = false;
+      boardRotationDeg.value = 0;
+    }
+  }
+);
 
 // Watch for error message changes and trigger shake
 watch(
@@ -151,7 +211,7 @@ watch(
 );
 
 const showSpeedModeCompletionModal = computed(() => {
-  return queensStore.isSpeedMode && queensStore.speedModeTimeRemaining === 0;
+  return queensStore.isSpeedMode && speedModeStore.timeRemaining === 0;
 });
 
 const isModalOpen = computed(() => {
@@ -207,11 +267,15 @@ async function loadPuzzleFromRoute() {
 async function handleNewPuzzle() {
   // Reset speed mode if active
   if (queensStore.isSpeedMode) {
-    queensStore.resetSpeedMode();
+    speedModeStore.reset();
   }
   // Exit tutorial mode if active
   if (queensStore.isTutorialMode) {
     queensStore.exitTutorialMode();
+  }
+  // Reset rotate mode if active
+  if (queensStore.isRotateMode) {
+    queensStore.resetRotateMode();
   }
   // Navigate back to levels page
   router.push('/queens');
@@ -360,10 +424,13 @@ watch(
   }
 );
 
-// Cleanup speed mode timer and error checking on unmount
+// Cleanup speed mode timer, rotate mode, and error checking on unmount
 onBeforeUnmount(() => {
   if (queensStore.isSpeedMode) {
-    queensStore.endSpeedMode();
+    speedModeStore.end();
+  }
+  if (queensStore.isRotateMode) {
+    queensStore.resetRotateMode();
   }
   queensStore.stopErrorChecking();
   queensStore.stopProgressSaving();

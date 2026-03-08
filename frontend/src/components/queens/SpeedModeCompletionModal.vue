@@ -5,25 +5,25 @@
         {{ speedRoundHeading }}
       </h2>
       <p class="text-white mb-6 font-semibold text-xl">
-        Total Completed: {{ queensStore.speedModeCompletedCount }}
+        Total Completed: {{ speedModeStore.completedCount }}
       </p>
 
       <!-- New Record Message (for 2-minute and 5-minute modes) -->
       <div
-        v-if="queensStore.speedModeIsNewRecord"
+        v-if="speedModeStore.isNewRecord"
         class="mb-6 p-4 bg-yellow-500 bg-opacity-20 border-2 border-yellow-500 rounded-lg"
       >
         <p class="text-yellow-400 font-bold text-lg text-center">🎉 New Record! 🎉</p>
         <p class="text-yellow-300 text-sm text-center mt-1">
-          You've completed {{ queensStore.speedModeCompletedCount }} puzzles
+          You've completed {{ speedModeStore.completedCount }} puzzles
         </p>
         <p class="text-yellow-300 text-sm text-center mt-1">
-          Previous record: {{ queensStore.speedModePreviousRecord }}
+          Previous record: {{ speedModeStore.previousRecord }}
         </p>
       </div>
 
       <!-- Breakdown by Size -->
-      <div v-if="Object.keys(queensStore.speedModeCompletedBySize).length > 0" class="mb-6">
+      <div v-if="Object.keys(speedModeStore.completedBySize).length > 0" class="mb-6">
         <h3 class="text-lg font-semibold text-gray-300 mb-3">Completed by Size:</h3>
         <div class="space-y-2">
           <div
@@ -38,11 +38,11 @@
       </div>
 
       <!-- Best Times for This Session -->
-      <div v-if="queensStore.getBestTimesThisSession.length > 0" class="mb-6">
+      <div v-if="speedModeStore.getBestTimesThisSession.length > 0" class="mb-6">
         <h3 class="text-lg font-semibold text-gray-300 mb-3">Best Times This Session:</h3>
         <div class="space-y-2">
           <div
-            v-for="[size, time] in queensStore.getBestTimesThisSession"
+            v-for="[size, time] in speedModeStore.getBestTimesThisSession"
             :key="size"
             class="p-2 bg-gray-700 rounded-lg"
           >
@@ -88,11 +88,13 @@
 import { computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQueensStore } from '../../stores/queensStore';
+import { useSpeedModeStore } from '../../stores/speedModeStore';
 import Modal from '../shared/Modal.vue';
 import { trackGameComplete } from '../../utils/analyticsEvents';
 
 const router = useRouter();
 const queensStore = useQueensStore();
+const speedModeStore = useSpeedModeStore();
 
 const props = defineProps<{
   isVisible: boolean;
@@ -108,16 +110,16 @@ watch(
     trackGameComplete({
       game_name: 'queens',
       game_mode: 'speed',
-      speed_timer_s: queensStore.speedModeTimerDuration ?? undefined,
-      speed_completed_count: queensStore.speedModeCompletedCount,
-      speed_size_filter: queensStore.speedModeSize ?? 'mixed',
-      new_record: queensStore.speedModeIsNewRecord,
+      speed_timer_s: speedModeStore.timerDuration ?? undefined,
+      speed_completed_count: speedModeStore.completedCount,
+      speed_size_filter: speedModeStore.size ?? 'mixed',
+      new_record: speedModeStore.isNewRecord,
     });
   }
 );
 
 const sizeBreakdown = computed(() => {
-  return Object.entries(queensStore.speedModeCompletedBySize).sort((a, b) => {
+  return Object.entries(speedModeStore.completedBySize).sort((a, b) => {
     const aSize = parseInt(a[0].split('x')[0], 10);
     const bSize = parseInt(b[0].split('x')[0], 10);
     return aSize - bSize;
@@ -125,29 +127,28 @@ const sizeBreakdown = computed(() => {
 });
 
 const speedRoundHeading = computed(() => {
-  if (queensStore.speedModeTimerDuration === null) return null;
-  const minutes = queensStore.speedModeTimerDuration / 60;
+  if (speedModeStore.timerDuration === null) return null;
+  const minutes = speedModeStore.timerDuration / 60;
   return `${minutes}min speed round`;
 });
 
 function handleClose() {
-  queensStore.resetSpeedMode();
+  speedModeStore.reset();
   router.push('/queens');
 }
 
 async function handleRetry() {
   // Save current speed mode settings before resetting
-  const timerDuration = queensStore.speedModeTimerDuration;
-  const selectedSize = queensStore.speedModeSize;
+  const timerDuration = speedModeStore.timerDuration;
+  const selectedSize = speedModeStore.size;
 
   // Reset speed mode
-  queensStore.resetSpeedMode();
+  speedModeStore.reset();
 
   // Restart speed mode with same settings
   if (timerDuration !== null) {
-    queensStore.startSpeedMode(timerDuration, selectedSize);
-    // Load first puzzle
-    await queensStore.startSpeedModePuzzle();
+    speedModeStore.start(timerDuration, selectedSize);
+    await speedModeStore.startNextPuzzle();
   }
 }
 </script>

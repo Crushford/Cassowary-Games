@@ -56,7 +56,11 @@ watch(
 
     trackGameComplete({
       game_name: 'queens',
-      game_mode: queensStore.isTutorialMode ? 'tutorial' : queensStore.isSpeedMode ? 'speed' : 'standard',
+      game_mode: queensStore.isTutorialMode
+        ? 'tutorial'
+        : queensStore.isSpeedMode
+          ? 'speed'
+          : 'standard',
       grid_size: queensStore.gridSize,
       puzzle_id:
         queensStore.currentPuzzleId === null ? undefined : String(queensStore.currentPuzzleId),

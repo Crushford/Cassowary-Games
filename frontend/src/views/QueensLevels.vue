@@ -35,11 +35,20 @@
 
         <!-- Speed Mode Button -->
         <button
-          @click="queensStore.openSpeedModeModal()"
+          @click="speedModeStore.openModal()"
           class="w-full py-4 px-6 bg-yellow-600 hover:bg-yellow-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
         >
           <div class="text-xl font-bold mb-1">Speed Mode ⚡</div>
           <div class="text-sm opacity-90">Race against the clock</div>
+        </button>
+
+        <!-- Rotate Mode Button -->
+        <button
+          @click="showRotateModeModal = true"
+          class="w-full py-4 px-6 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+        >
+          <div class="text-xl font-bold mb-1">Rotate Mode 🔄</div>
+          <div class="text-sm opacity-90">Board rotates 90° after every move</div>
         </button>
 
         <!-- Records Button -->
@@ -58,9 +67,14 @@
       :is-visible="queensStore.showSinglePuzzleModeModal"
       @close="queensStore.closeSinglePuzzleModeModal()"
     />
+    <SinglePuzzleModeModal
+      mode="rotate"
+      :is-visible="showRotateModeModal"
+      @close="showRotateModeModal = false"
+    />
     <SpeedModeModal
-      :is-visible="queensStore.showSpeedModeModal"
-      @close="queensStore.closeSpeedModeModal()"
+      :is-visible="speedModeStore.showSpeedModeModal"
+      @close="speedModeStore.closeModal()"
     />
     <RecordsModal
       :is-visible="queensStore.showRecordsModal"
@@ -70,9 +84,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, defineAsyncComponent, ref } from 'vue';
 import { useQueensStore } from '../stores/queensStore';
-import { defineAsyncComponent } from 'vue';
+import { useSpeedModeStore } from '../stores/speedModeStore';
 
 const SinglePuzzleModeModal = defineAsyncComponent(
   () => import('../components/queens/SinglePuzzleModeModal.vue')
@@ -83,9 +97,10 @@ const SpeedModeModal = defineAsyncComponent(
 const RecordsModal = defineAsyncComponent(() => import('../components/queens/RecordsModal.vue'));
 
 const queensStore = useQueensStore();
+const speedModeStore = useSpeedModeStore();
+const showRotateModeModal = ref(false);
 
 onMounted(async () => {
-  // Load puzzles if not already loaded
   if (!queensStore.puzzleDatabase) {
     await queensStore.loadPuzzleDatabase();
   }

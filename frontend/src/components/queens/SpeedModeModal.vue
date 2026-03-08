@@ -81,9 +81,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useQueensStore } from '../../stores/queensStore';
+import { useSpeedModeStore } from '../../stores/speedModeStore';
 import Modal from '../shared/Modal.vue';
 
 const queensStore = useQueensStore();
+const speedModeStore = useSpeedModeStore();
 
 defineProps<{
   isVisible: boolean;
@@ -105,8 +107,8 @@ const sequentialText = computed(() => {
 });
 
 async function handleStart() {
-  queensStore.startSpeedMode(selectedTimer.value, selectedSize.value);
-  await queensStore.startSpeedModePuzzle();
+  speedModeStore.start(selectedTimer.value, selectedSize.value);
+  await speedModeStore.startNextPuzzle();
   emit('close');
 }
 </script>
