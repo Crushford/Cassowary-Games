@@ -68,6 +68,8 @@ function createInitialRunState() {
     riskLevel: 0,
     timeLevel: 0,
     autoFlagPurchased: false,
+    autoNextPuzzlePurchased: false,
+    autoNextPuzzleEnabled: false,
     autoQueenByColorPurchased: false,
     autoQueenByRowPurchased: false,
     autoQueenByColumnPurchased: false,
@@ -84,6 +86,7 @@ function createInitialRunState() {
     selectedOneOffUpgradeId: null as OneOffUpgradeId | null,
     isLoadingPuzzle: false,
     isAutomationInProgress: false,
+    autoNextPuzzleTimeout: null as number | null,
   };
 }
 
@@ -115,6 +118,9 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     },
     canAffordTime(): boolean {
       return this.runBank >= this.nextTimeCost;
+    },
+    canStartNextPuzzle(state): boolean {
+      return state.runStatus === 'upgrade-select' && !state.isLoadingPuzzle && !state.isAutomationInProgress;
     },
     canBuySizeUpGoal(state): boolean {
       return state.runStatus === 'upgrade-select' && state.currentPuzzleSize < 9 && state.runBank >= SIZE_UP_COST;
@@ -225,6 +231,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     availableOneOffUpgrades(state): OneOffUpgradeOption[] {
       return ONE_OFF_UPGRADE_IDS.filter((id) => {
         if (id === 'auto-flag') return !state.autoFlagPurchased;
+        if (id === 'auto-next-puzzle') return !state.autoNextPuzzlePurchased;
         return false;
       }).map((id) => {
         const cost = getOneOffUpgradeCost(id);
@@ -284,6 +291,13 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       if (this.patternScanInterval !== null) {
         clearInterval(this.patternScanInterval);
         this.patternScanInterval = null;
+      }
+    },
+
+    stopAutoNextPuzzleTimer() {
+      if (this.autoNextPuzzleTimeout !== null) {
+        clearTimeout(this.autoNextPuzzleTimeout);
+        this.autoNextPuzzleTimeout = null;
       }
     },
 
@@ -355,9 +369,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
             queensStore.triggerAutoFlagAnimation(action.row, action.col, 'pattern', 0);
           } else {
             if (queensStore.playerMarks[action.row][action.col] !== null) {
-              continue;
-            }
-            if (!queensStore.isValidMove(action.row, action.col)) {
               continue;
             }
             queensStore.placeQueen(action.row, action.col);
@@ -442,6 +453,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
 
       this.stopTimer();
       this.stopPatternScan();
+      this.stopAutoNextPuzzleTimer();
 
       if (speedModeStore.timerDuration !== null) {
         speedModeStore.reset();
@@ -509,6 +521,19 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       this.puzzlesSolved += 1;
       this.runStatus = 'upgrade-select';
       this.rollOneOffUpgrade();
+
+      if (this.autoNextPuzzlePurchased && this.autoNextPuzzleEnabled) {
+        this.stopAutoNextPuzzleTimer();
+        this.autoNextPuzzleTimeout = window.setTimeout(() => {
+          if (
+            this.runStatus === 'upgrade-select' &&
+            this.autoNextPuzzlePurchased &&
+            this.autoNextPuzzleEnabled
+          ) {
+            void this.startNextPuzzle();
+          }
+        }, 350);
+      }
     },
 
     buyRiskUpgrade() {
@@ -588,6 +613,10 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         case 'auto-flag':
           this.autoFlagPurchased = true;
           break;
+        case 'auto-next-puzzle':
+          this.autoNextPuzzlePurchased = true;
+          this.autoNextPuzzleEnabled = true;
+          break;
         case 'auto-queen-color':
           this.autoQueenByColorPurchased = true;
           break;
@@ -616,6 +645,14 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       }
 
       this.purchaseOneOffUpgrade(this.selectedOneOffUpgradeId);
+    },
+
+    setAutoNextPuzzleEnabled(enabled: boolean) {
+      if (!this.autoNextPuzzlePurchased) {
+        this.autoNextPuzzleEnabled = false;
+        return;
+      }
+      this.autoNextPuzzleEnabled = enabled;
     },
 
     buyAutomationUpgrade(id: AutomationUpgradeId) {
@@ -696,6 +733,8 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       this.riskLevel = 0;
       this.timeLevel = 0;
       this.autoFlagPurchased = false;
+      this.autoNextPuzzlePurchased = false;
+      this.autoNextPuzzleEnabled = false;
       this.autoQueenByColorPurchased = false;
       this.autoQueenByRowPurchased = false;
       this.autoQueenByColumnPurchased = false;
@@ -708,6 +747,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       this.lastPuzzleId = null;
       this.selectedOneOffUpgradeId = null;
       this.isAutomationInProgress = false;
+      this.stopAutoNextPuzzleTimer();
     },
 
     async buySizeUpGoal() {
@@ -730,12 +770,14 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       if (this.runStatus !== 'upgrade-select') {
         return;
       }
+      this.stopAutoNextPuzzleTimer();
       await this.startNextPuzzle();
     },
 
     handleTimeout() {
       this.stopTimer();
       this.stopPatternScan();
+      this.stopAutoNextPuzzleTimer();
       this.isAutomationInProgress = false;
       this.runStatus = 'game-over';
     },
@@ -744,6 +786,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       const queensStore = useQueensStore();
       this.stopTimer();
       this.stopPatternScan();
+      this.stopAutoNextPuzzleTimer();
       this.isAutomationInProgress = false;
       queensStore.stopProgressSaving();
       queensStore.stopErrorChecking();
@@ -758,6 +801,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     resetRunState() {
       this.stopTimer();
       this.stopPatternScan();
+      this.stopAutoNextPuzzleTimer();
       Object.assign(this, createInitialRunState());
       this.previousPlacementMode = null;
       this.previousAutoFlagging = null;

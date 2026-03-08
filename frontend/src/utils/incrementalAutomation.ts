@@ -14,7 +14,6 @@ interface CollectAutoQueenOptions {
   grid: GridSquare[][];
   marks: MarkType[][];
   rules: AutoQueenRules;
-  isValidMoveWithMarks: (row: number, col: number, marks: MarkType[][]) => boolean;
 }
 
 interface RunIncrementalAutomationOptions {
@@ -95,7 +94,6 @@ export function collectAutoQueenPlacements({
   grid,
   marks,
   rules,
-  isValidMoveWithMarks,
 }: CollectAutoQueenOptions): Array<{ row: number; col: number }> {
   const placements: Array<{ row: number; col: number }> = [];
   const seen = new Set<string>();
@@ -103,7 +101,6 @@ export function collectAutoQueenPlacements({
 
   const tryAdd = (row: number, col: number) => {
     if (marks[row][col] !== null) return;
-    if (!isValidMoveWithMarks(row, col, marks)) return;
     const key = `${row},${col}`;
     if (seen.has(key)) return;
     seen.add(key);
@@ -191,12 +188,10 @@ export function buildIncrementalAutomationPlan({
       grid,
       marks: marksSnapshot,
       rules: autoQueenRules,
-      isValidMoveWithMarks,
     });
 
     for (const queen of queenPlacements) {
       if (marksSnapshot[queen.row][queen.col] !== null) continue;
-      if (!isValidMoveWithMarks(queen.row, queen.col, marksSnapshot)) continue;
       marksSnapshot[queen.row][queen.col] = 'queen';
       actions.push({
         type: 'queen',

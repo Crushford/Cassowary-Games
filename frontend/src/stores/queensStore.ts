@@ -796,6 +796,7 @@ export const useQueensStore = defineStore('queens', {
         savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
       }
       this.checkBoardCompletion();
+      this.checkFullyFlaggedGroups();
 
       // Check tutorial step after placing queen
       if (this.isTutorialMode) {
@@ -988,17 +989,15 @@ export const useQueensStore = defineStore('queens', {
             }
           }
 
-          // Check if it's a valid move for placing a queen
-          if (this.isValidMove(row, col)) {
+          if (!this.isTutorialMode) {
             this.placeQueen(row, col);
-            // Tutorial step checking is done in placeQueen
           } else {
-            // Invalid move - show error feedback
-            if (this.isTutorialMode) {
+            if (this.isValidMove(row, col)) {
+              this.placeQueen(row, col);
+            } else {
               this.showErrorFeedback = true;
               this.errorFeedbackSquare = { row, col };
               this.shakeToast();
-              // Clear error feedback after 2 seconds
               setTimeout(() => {
                 this.showErrorFeedback = false;
                 this.errorFeedbackSquare = null;
@@ -1011,9 +1010,8 @@ export const useQueensStore = defineStore('queens', {
         } else if (currentMark === 'flag') {
           // Remove flag and place queen if valid
           this.removeMark(row, col);
-          if (this.isValidMove(row, col)) {
+          if (!this.isTutorialMode || this.isValidMove(row, col)) {
             this.placeQueen(row, col);
-            // Tutorial step checking is done in placeQueen
           }
         }
         return;
@@ -1028,9 +1026,8 @@ export const useQueensStore = defineStore('queens', {
           }
         } else if (currentMark === 'flag') {
           // Second click: place queen
-          if (this.isValidMove(row, col)) {
+          if (!this.isTutorialMode || this.isValidMove(row, col)) {
             this.placeQueen(row, col);
-            // Check tutorial step completion
             if (this.isTutorialMode) {
               this.checkTutorialStep({ row, col }, 'place-queen');
             }
