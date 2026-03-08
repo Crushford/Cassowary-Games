@@ -1,7 +1,19 @@
 <template>
   <div class="w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden h-dvh">
-    <div class="flex-none p-3 border-b border-gray-700 space-y-2">
-      <div class="flex items-center justify-between">
+    <div class="flex-none p-3 border-b border-gray-700">
+      <div v-if="incrementalStore.runStatus === 'playing'" class="flex items-center justify-between">
+        <button
+          class="px-3 py-1 rounded bg-red-700 hover:bg-red-600 text-sm font-semibold"
+          @click="showGiveUpConfirm = true"
+        >
+          Give Up
+        </button>
+        <div class="text-sm text-emerald-300 font-semibold">Bank {{ incrementalStore.runBank }}</div>
+        <div class="text-2xl font-bold tabular-nums leading-none" :class="timerClass">
+          {{ incrementalStore.formattedTimeRemaining }}
+        </div>
+      </div>
+      <div v-else class="flex items-center justify-between">
         <h1 class="text-lg font-bold text-emerald-400">Incremental Queens</h1>
         <button
           class="px-3 py-1 rounded bg-gray-600 hover:bg-gray-500 text-sm font-semibold"
@@ -10,45 +22,16 @@
           Back
         </button>
       </div>
-
-      <div class="grid grid-cols-2 gap-2 text-sm">
-        <div class="bg-gray-700 rounded p-2">
-          <div class="text-gray-300">Score</div>
-          <div class="font-bold text-yellow-300">{{ incrementalStore.runScore }}</div>
-        </div>
-        <div class="bg-gray-700 rounded p-2">
-          <div class="text-gray-300">Bank</div>
-          <div class="font-bold text-emerald-300">{{ incrementalStore.runBank }}</div>
-        </div>
-        <div class="bg-gray-700 rounded p-2">
-          <div class="text-gray-300">Solved</div>
-          <div class="font-bold">{{ incrementalStore.puzzlesSolved }}</div>
-        </div>
-        <div class="bg-gray-700 rounded p-2">
-          <div class="text-gray-300">Timer</div>
-          <div class="font-bold text-red-300">{{ incrementalStore.formattedTimeRemaining }}</div>
-        </div>
+      <div v-if="incrementalStore.runStatus === 'upgrade-select'" class="mt-2 flex items-center justify-end">
+        <div class="text-sm text-emerald-300 font-semibold">Bank {{ incrementalStore.runBank }}</div>
       </div>
-
-      <div class="bg-gray-700 rounded p-2 min-h-[52px]">
-        <div class="text-xs text-gray-300 mb-1">Upgrade Paths</div>
-        <div class="flex flex-wrap gap-2 text-xs">
-          <span class="px-2 py-1 rounded bg-red-800">
-            Risk Lv {{ incrementalStore.riskLevel }} (x{{ formatMultiplier(incrementalStore.currentScoreMultiplier) }})
-          </span>
-          <span class="px-2 py-1 rounded bg-blue-800">Time Lv {{ incrementalStore.timeLevel }}</span>
-          <span
-            v-if="incrementalStore.autoFlagPurchased"
-            class="px-2 py-1 rounded bg-emerald-800"
-          >
-            Auto Flag
-          </span>
-          <span
-            v-if="incrementalStore.ownedPatternCardIds.length > 0"
-            class="px-2 py-1 rounded bg-purple-800"
-          >
-            Pattern Cards: {{ incrementalStore.ownedPatternCardIds.length }}
-          </span>
+      <div v-if="incrementalStore.runStatus === 'game-over'" class="mt-2 flex items-center justify-end">
+        <div class="text-sm text-emerald-300 font-semibold">Bank {{ incrementalStore.runBank }}</div>
+      </div>
+      <div v-if="incrementalStore.runStatus === 'idle'" class="mt-2">
+        <div class="text-sm text-gray-300">
+          Solve timed 5x5 Queens puzzles. Spend bank in the shop after each solve to upgrade Risk
+          or Time.
         </div>
       </div>
     </div>
@@ -58,9 +41,6 @@
       class="flex-1 flex items-center justify-center p-6"
     >
       <div class="max-w-sm w-full bg-gray-700 rounded-lg p-4 space-y-3">
-        <p class="text-sm text-gray-200">
-          Solve timed 5x5 Queens puzzles. Spend bank in the shop after each solve to upgrade Risk or Time.
-        </p>
         <button
           class="w-full py-3 rounded bg-emerald-600 hover:bg-emerald-500 font-semibold"
           @click="handleStartRun"
@@ -219,13 +199,36 @@
           class="w-full mt-3 py-2 rounded bg-gray-600 hover:bg-gray-500 font-semibold"
           @click="incrementalStore.skipUpgradeSelection"
         >
-          Skip
+          Next Puzzle
         </button>
       </div>
     </Modal>
 
     <Modal :is-visible="showPatternDesigner" @close="showPatternDesigner = false">
       <MobilePatternCardDesigner @save="handleSaveCustomPatternCard" @cancel="showPatternDesigner = false" />
+    </Modal>
+
+    <Modal :is-visible="showGiveUpConfirm" @close="showGiveUpConfirm = false">
+      <div>
+        <h2 class="text-xl font-bold text-red-400 mb-3">Give Up Run?</h2>
+        <p class="text-sm text-gray-200 mb-4">
+          This will end the current run and return to the Queens menu.
+        </p>
+        <div class="flex gap-2">
+          <button
+            class="flex-1 py-2 rounded bg-gray-600 hover:bg-gray-500 font-semibold"
+            @click="showGiveUpConfirm = false"
+          >
+            Cancel
+          </button>
+          <button
+            class="flex-1 py-2 rounded bg-red-700 hover:bg-red-600 font-semibold"
+            @click="handleGiveUp"
+          >
+            Give Up
+          </button>
+        </div>
+      </div>
     </Modal>
 
     <Modal :is-visible="incrementalStore.runStatus === 'game-over'">
@@ -295,9 +298,20 @@ const queensStore = useQueensStore();
 const incrementalStore = useIncrementalQueensStore();
 const router = useRouter();
 const showPatternDesigner = ref(false);
+const showGiveUpConfirm = ref(false);
 
 const isBoardInteractive = computed(() => {
   return incrementalStore.runStatus === 'playing' && !incrementalStore.isLoadingPuzzle;
+});
+
+const timerClass = computed(() => {
+  if (incrementalStore.timeRemaining < 20) {
+    return 'text-red-300 animate-pulse';
+  }
+  if (incrementalStore.timeRemaining < 60) {
+    return 'text-amber-300';
+  }
+  return 'text-red-300';
 });
 
 watch(
@@ -331,6 +345,11 @@ function handleExit() {
   incrementalStore.cleanupSessionState();
   incrementalStore.resetRunState();
   router.push('/queens');
+}
+
+function handleGiveUp() {
+  showGiveUpConfirm.value = false;
+  handleExit();
 }
 
 onBeforeUnmount(() => {
