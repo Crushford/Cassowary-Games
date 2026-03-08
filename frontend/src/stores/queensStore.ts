@@ -84,6 +84,7 @@ interface QueensState {
   puzzleBestTime: number | null; // Best time for current puzzle size
   puzzleIsNewRecord: boolean; // Whether completion time is a new record
   recordsRefreshTrigger: number; // Timestamp to trigger reactivity when records are reset
+  persistProgressEnabled: boolean; // Whether puzzle progress/history should persist to localStorage
   // Modal visibility state
   showSinglePuzzleModeModal: boolean;
   showRecordsModal: boolean;
@@ -384,6 +385,7 @@ export const useQueensStore = defineStore('queens', {
     puzzleBestTime: null,
     puzzleIsNewRecord: false,
     recordsRefreshTrigger: 0,
+    persistProgressEnabled: true,
     diversityAverageBySize: {},
     recentPuzzleIdsBySize: {},
     lastDiversitySelectionSummary: null,
@@ -648,8 +650,10 @@ export const useQueensStore = defineStore('queens', {
           }
 
           // Save progress and history to localStorage after undo
-          savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
-          savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
+          if (this.persistProgressEnabled) {
+            savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
+            savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
+          }
 
           // Clear error feedback when undoing
           this.showErrorFeedback = false;
@@ -671,8 +675,10 @@ export const useQueensStore = defineStore('queens', {
       }
       this.playerMarks[row][col] = 'flag';
       // Save progress and history to localStorage
-      savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
-      savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
+      if (this.persistProgressEnabled) {
+        savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
+        savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
+      }
       // Check for error conditions immediately
       this.checkFullyFlaggedGroups();
       // Rotate board if in rotate mode and not mid-swipe
@@ -692,8 +698,10 @@ export const useQueensStore = defineStore('queens', {
       }
 
       // Save progress and history to localStorage
-      savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
-      savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
+      if (this.persistProgressEnabled) {
+        savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
+        savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
+      }
       this.checkBoardCompletion();
 
       // Check tutorial step after placing queen
@@ -754,8 +762,10 @@ export const useQueensStore = defineStore('queens', {
         this.playerMarks[row][col] = null;
       }
 
-      savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
-      savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
+      if (this.persistProgressEnabled) {
+        savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
+        savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
+      }
       this.checkFullyFlaggedGroups();
       this.checkBoardCompletion();
     },
@@ -924,10 +934,20 @@ export const useQueensStore = defineStore('queens', {
           }
         } else if (currentMark === 'flag') {
           // Second click: place queen
-          this.placeQueen(row, col);
-          // Check tutorial step completion
-          if (this.isTutorialMode) {
-            this.checkTutorialStep({ row, col }, 'place-queen');
+          if (this.isValidMove(row, col)) {
+            this.placeQueen(row, col);
+            // Check tutorial step completion
+            if (this.isTutorialMode) {
+              this.checkTutorialStep({ row, col }, 'place-queen');
+            }
+          } else if (this.isTutorialMode) {
+            this.showErrorFeedback = true;
+            this.errorFeedbackSquare = { row, col };
+            this.shakeToast();
+            setTimeout(() => {
+              this.showErrorFeedback = false;
+              this.errorFeedbackSquare = null;
+            }, 2000);
           }
         } else if (currentMark === 'queen') {
           // Third click: remove mark
@@ -1030,7 +1050,9 @@ export const useQueensStore = defineStore('queens', {
       }
     },
 
-    parsePuzzleData(puzzleData: any) {
+    parsePuzzleData(puzzleData: any, options?: { persistProgress?: boolean }) {
+      this.persistProgressEnabled = options?.persistProgress ?? true;
+
       const gridSize = Math.sqrt(puzzleData.layout.length);
       this.gridSize = gridSize;
       const layout = puzzleData.layout;
@@ -1074,7 +1096,7 @@ export const useQueensStore = defineStore('queens', {
       // Load saved progress if puzzle is not completed
       const puzzleId = puzzleData.name || puzzleData.id;
       const puzzleIdString = typeof puzzleId === 'string' ? puzzleId : String(puzzleId);
-      if (!isPuzzleCompleted(puzzleIdString)) {
+      if (this.persistProgressEnabled && !isPuzzleCompleted(puzzleIdString)) {
         const savedProgressData = loadPuzzleProgress(puzzleId);
         if (
           savedProgressData &&
@@ -1152,7 +1174,7 @@ export const useQueensStore = defineStore('queens', {
       }
 
       // Start periodic progress saving for both single puzzle mode and speed mode
-      if (!this.isComplete) {
+      if (this.persistProgressEnabled && !this.isComplete) {
         this.startProgressSaving();
       }
 
@@ -1234,7 +1256,7 @@ export const useQueensStore = defineStore('queens', {
       return this.chooseNextDiversePuzzleForSize(sizeKey, current);
     },
 
-    async loadRandomPuzzle() {
+    async loadRandomPuzzle(options?: { persistProgress?: boolean }) {
       // Load database if not already loaded
       if (!this.puzzleDatabase) {
         const success = await this.loadPuzzleDatabase();
@@ -1250,7 +1272,7 @@ export const useQueensStore = defineStore('queens', {
       }
 
       // Parse and load the puzzle
-      this.parsePuzzleData(puzzle);
+      this.parsePuzzleData(puzzle, options);
     },
 
     findPuzzleById(id: string): any | null {
@@ -1272,7 +1294,7 @@ export const useQueensStore = defineStore('queens', {
       return null;
     },
 
-    async loadPuzzleById(puzzleId: string | number) {
+    async loadPuzzleById(puzzleId: string | number, options?: { persistProgress?: boolean }) {
       try {
         if (!this.puzzleDatabase) {
           const success = await this.loadPuzzleDatabase();
@@ -1288,7 +1310,7 @@ export const useQueensStore = defineStore('queens', {
           throw new Error(`Puzzle with ID ${key} not found`);
         }
 
-        this.parsePuzzleData(puzzle);
+        this.parsePuzzleData(puzzle, options);
       } catch (error) {
         console.error('[queensStore] Error loading puzzle by ID:', error);
         throw error;
@@ -2116,6 +2138,11 @@ export const useQueensStore = defineStore('queens', {
     },
 
     startProgressSaving() {
+      if (!this.persistProgressEnabled) {
+        this.stopProgressSaving();
+        return;
+      }
+
       // Clear any existing interval
       this.stopProgressSaving();
 

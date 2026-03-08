@@ -42,10 +42,10 @@
     </div>
 
     <!-- Divider -->
-    <div class="h-10 border-l border-slate-500"></div>
+    <div v-if="props.showAutoFlagToggle" class="h-10 border-l border-slate-500"></div>
 
     <!-- Auto-flag toggle -->
-    <div class="flex items-center gap-2">
+    <div v-if="props.showAutoFlagToggle" class="flex items-center gap-2">
       <span class="text-sm font-semibold text-slate-300">auto-flag</span>
       <button
         id="auto-flagging-toggle"
@@ -72,9 +72,13 @@ import { useQueensStore } from '../../stores/queensStore';
 const props = withDefaults(
   defineProps<{
     isDisabled?: boolean;
+    hideAutoMode?: boolean;
+    showAutoFlagToggle?: boolean;
   }>(),
   {
     isDisabled: false,
+    hideAutoMode: false,
+    showAutoFlagToggle: true,
   }
 );
 
@@ -88,7 +92,7 @@ const isDisabled = computed(() => {
   return props.isDisabled;
 });
 
-const modes = [
+const allModes = [
   {
     value: 'auto' as const,
     label: 'Auto',
@@ -108,6 +112,13 @@ const modes = [
     description: 'Place or remove queen directly',
   },
 ];
+
+const modes = computed(() => {
+  if (props.hideAutoMode) {
+    return allModes.filter((mode) => mode.value !== 'auto');
+  }
+  return allModes;
+});
 
 function isTutorialTarget(modeValue: string): boolean {
   if (!queensStore.isTutorialMode) return false;
