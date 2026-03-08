@@ -81,6 +81,11 @@ const router = createRouter({
       component: QueensDiversityLab,
     },
     {
+      path: '/internal/pattern-card-designer',
+      name: 'internal-pattern-card-designer',
+      component: () => import('../views/PatternCardDesigner.vue'),
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: '/',
     },

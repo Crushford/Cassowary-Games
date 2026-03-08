@@ -43,6 +43,12 @@
           >
             Auto Flag
           </span>
+          <span
+            v-if="incrementalStore.ownedPatternCardIds.length > 0"
+            class="px-2 py-1 rounded bg-purple-800"
+          >
+            Pattern Cards: {{ incrementalStore.ownedPatternCardIds.length }}
+          </span>
         </div>
       </div>
     </div>
@@ -174,6 +180,41 @@
           </button>
         </div>
 
+        <h3 class="text-sm font-semibold text-gray-300 mt-4 mb-2">Pattern Cards</h3>
+        <div class="space-y-2">
+          <button
+            v-for="card in incrementalStore.availablePatternCards"
+            :key="card.id"
+            class="w-full text-left p-3 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            :class="
+              incrementalStore.canAffordPatternCard(card.id)
+                ? 'bg-purple-700 hover:bg-purple-600'
+                : 'bg-gray-700'
+            "
+            :disabled="!incrementalStore.canAffordPatternCard(card.id)"
+            @click="incrementalStore.buyPatternCard(card.id)"
+          >
+            <div class="flex items-start gap-3">
+              <PatternCardPreview :card="card" />
+              <div class="flex-1 min-w-0">
+                <div class="font-semibold flex items-center justify-between gap-2">
+                  <span>{{ card.id }}</span>
+                  <span class="text-xs text-yellow-300 shrink-0">Cost: {{ card.cost }}</span>
+                </div>
+                <div class="text-xs text-purple-100">Auto-flag pattern card</div>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        <button
+          v-if="incrementalStore.canCreateCustomPatternCard"
+          class="w-full mt-2 py-2 rounded bg-purple-700 hover:bg-purple-600 font-semibold"
+          @click="showPatternDesigner = true"
+        >
+          Create Your Own Pattern Card
+        </button>
+
         <button
           class="w-full mt-3 py-2 rounded bg-gray-600 hover:bg-gray-500 font-semibold"
           @click="incrementalStore.skipUpgradeSelection"
@@ -181,6 +222,10 @@
           Skip
         </button>
       </div>
+    </Modal>
+
+    <Modal :is-visible="showPatternDesigner" @close="showPatternDesigner = false">
+      <MobilePatternCardDesigner @save="handleSaveCustomPatternCard" @cancel="showPatternDesigner = false" />
     </Modal>
 
     <Modal :is-visible="incrementalStore.runStatus === 'game-over'">
@@ -201,6 +246,10 @@
           <div class="flex justify-between">
             <span>Auto Flag</span>
             <span class="font-bold">{{ incrementalStore.autoFlagPurchased ? 'Owned' : 'Not Owned' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Pattern Cards</span>
+            <span class="font-bold">{{ incrementalStore.ownedPatternCardIds.length }}</span>
           </div>
         </div>
 
@@ -224,7 +273,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, watch, defineAsyncComponent } from 'vue';
+import { computed, onBeforeUnmount, watch, defineAsyncComponent, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQueensStore } from '../stores/queensStore';
 import { useIncrementalQueensStore } from '../stores/incrementalQueensStore';
@@ -235,10 +284,17 @@ const QueensToolSelector = defineAsyncComponent(
   () => import('../components/queens/QueensToolSelector.vue')
 );
 const Modal = defineAsyncComponent(() => import('../components/shared/Modal.vue'));
+const PatternCardPreview = defineAsyncComponent(
+  () => import('../components/queens/PatternCardPreview.vue')
+);
+const MobilePatternCardDesigner = defineAsyncComponent(
+  () => import('../components/queens/MobilePatternCardDesigner.vue')
+);
 
 const queensStore = useQueensStore();
 const incrementalStore = useIncrementalQueensStore();
 const router = useRouter();
+const showPatternDesigner = ref(false);
 
 const isBoardInteractive = computed(() => {
   return incrementalStore.runStatus === 'playing' && !incrementalStore.isLoadingPuzzle;
@@ -259,6 +315,16 @@ function formatMultiplier(value: number): string {
 
 async function handleStartRun() {
   await incrementalStore.startRun();
+}
+
+async function handleSaveCustomPatternCard(payload: {
+  id?: string;
+  size: number;
+  cells: Array<{ row: number; col: number; activeSquare?: boolean }>;
+  outputFlags: Array<{ row: number; col: number }>;
+}) {
+  await incrementalStore.createCustomPatternCard(payload);
+  showPatternDesigner.value = false;
 }
 
 function handleExit() {
