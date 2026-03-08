@@ -2,10 +2,17 @@
   <div
     v-if="isVisible"
     class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[60] p-4"
-    @click="$emit('close')"
+    @click="handleBackdropClick"
   >
     <div
+      ref="dialogRef"
       class="bg-gray-800 p-8 rounded-lg shadow-xl transform transition-all duration-500 scale-100 max-w-md w-full mx-4 max-h-[calc(100vh-2rem)] overflow-y-auto"
+      :role="role"
+      aria-modal="true"
+      :aria-labelledby="ariaLabelledby"
+      :aria-describedby="ariaDescribedby"
+      :aria-label="ariaLabel"
+      tabindex="-1"
       @click.stop
     >
       <slot />
@@ -14,21 +21,52 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
-const props = defineProps<{
-  isVisible: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    isVisible: boolean;
+    role?: 'dialog' | 'alertdialog';
+    ariaLabelledby?: string;
+    ariaDescribedby?: string;
+    ariaLabel?: string;
+  }>(),
+  {
+    role: 'dialog',
+  }
+);
 
 const emit = defineEmits<{
   close: [];
 }>();
+
+const dialogRef = ref<HTMLElement | null>(null);
+let previousActiveElement: HTMLElement | null = null;
 
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Escape' && props.isVisible) {
     emit('close');
   }
 };
+
+function handleBackdropClick() {
+  emit('close');
+}
+
+watch(
+  () => props.isVisible,
+  async (isVisible) => {
+    if (isVisible) {
+      previousActiveElement = document.activeElement as HTMLElement | null;
+      await nextTick();
+      dialogRef.value?.focus();
+      return;
+    }
+
+    previousActiveElement?.focus?.();
+    previousActiveElement = null;
+  }
+);
 
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown);
