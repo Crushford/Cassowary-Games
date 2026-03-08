@@ -242,8 +242,15 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       const maxPlacementsPerTick = 3;
       const limited = placements.slice(0, maxPlacementsPerTick);
 
-      for (const position of limited) {
+      let placedCount = 0;
+      for (const [index, position] of limited.entries()) {
         queensStore.placeFlag(position.row, position.col);
+        queensStore.triggerAutoFlagAnimation(position.row, position.col, 'pattern', index * 50);
+        placedCount += 1;
+      }
+
+      if (placedCount > 0) {
+        queensStore.showAutoFlagCombo(placedCount);
       }
     },
 

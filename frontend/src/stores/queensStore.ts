@@ -34,6 +34,8 @@ export interface TutorialStep {
   validate?: (store: any) => boolean; // Custom validation function
 }
 
+type AutoFlagAnimationSource = 'blocked' | 'pattern';
+
 interface QueensState {
   grid: GridSquare[][];
   gridSize: number;
@@ -88,6 +90,12 @@ interface QueensState {
   // Modal visibility state
   showSinglePuzzleModeModal: boolean;
   showRecordsModal: boolean;
+  autoFlagAnimationCells: Set<string>;
+  autoFlagAnimationSources: Map<string, AutoFlagAnimationSource>;
+  autoFlagAnimationTimeouts: Map<string, number>;
+  autoFlagComboCount: number;
+  autoFlagComboTick: number;
+  autoFlagComboTimeout: number | null;
   // Rotate mode state
   boardRotationCount: number; // 0-3, how many 90° CW rotations have been applied
   rotationHistory: number[]; // parallel to moveHistory, rotation count at each history save
@@ -367,6 +375,12 @@ export const useQueensStore = defineStore('queens', {
     showSinglePuzzleModeModal: false,
     showRecordsModal: false,
     // Rotate mode state
+    autoFlagAnimationCells: new Set<string>(),
+    autoFlagAnimationSources: new Map<string, AutoFlagAnimationSource>(),
+    autoFlagAnimationTimeouts: new Map<string, number>(),
+    autoFlagComboCount: 0,
+    autoFlagComboTick: 0,
+    autoFlagComboTimeout: null,
     boardRotationCount: 0,
     rotationHistory: [],
     isSwipeActive: false,
@@ -588,13 +602,90 @@ export const useQueensStore = defineStore('queens', {
       (row: number, col: number): boolean => {
         return state.errorSquares.has(`${row},${col}`);
       },
+    isAutoFlagAnimating:
+      (state) =>
+      (row: number, col: number): boolean => {
+        return state.autoFlagAnimationCells.has(`${row},${col}`);
+      },
+    getAutoFlagAnimationSource:
+      (state) =>
+      (row: number, col: number): AutoFlagAnimationSource | null => {
+        return state.autoFlagAnimationSources.get(`${row},${col}`) ?? null;
+      },
   },
 
   actions: {
+    clearAutoFlagAnimations() {
+      for (const timeoutId of this.autoFlagAnimationTimeouts.values()) {
+        clearTimeout(timeoutId);
+      }
+      this.autoFlagAnimationCells = new Set<string>();
+      this.autoFlagAnimationSources = new Map<string, AutoFlagAnimationSource>();
+      this.autoFlagAnimationTimeouts = new Map<string, number>();
+
+      if (this.autoFlagComboTimeout !== null) {
+        clearTimeout(this.autoFlagComboTimeout);
+        this.autoFlagComboTimeout = null;
+      }
+      this.autoFlagComboCount = 0;
+    },
+
+    triggerAutoFlagAnimation(
+      row: number,
+      col: number,
+      source: AutoFlagAnimationSource = 'blocked',
+      delayMs = 0
+    ) {
+      const key = `${row},${col}`;
+      const existingTimeout = this.autoFlagAnimationTimeouts.get(key);
+      if (existingTimeout !== undefined) {
+        clearTimeout(existingTimeout);
+        this.autoFlagAnimationTimeouts.delete(key);
+      }
+
+      const activate = () => {
+        this.autoFlagAnimationCells.add(key);
+        this.autoFlagAnimationSources.set(key, source);
+
+        const timeoutId = window.setTimeout(() => {
+          this.autoFlagAnimationCells.delete(key);
+          this.autoFlagAnimationSources.delete(key);
+          this.autoFlagAnimationTimeouts.delete(key);
+        }, 360);
+
+        this.autoFlagAnimationTimeouts.set(key, timeoutId);
+      };
+
+      if (delayMs > 0) {
+        window.setTimeout(activate, delayMs);
+        return;
+      }
+      activate();
+    },
+
+    showAutoFlagCombo(count: number) {
+      if (count <= 0) {
+        return;
+      }
+
+      this.autoFlagComboCount = count;
+      this.autoFlagComboTick += 1;
+
+      if (this.autoFlagComboTimeout !== null) {
+        clearTimeout(this.autoFlagComboTimeout);
+      }
+
+      this.autoFlagComboTimeout = window.setTimeout(() => {
+        this.autoFlagComboCount = 0;
+        this.autoFlagComboTimeout = null;
+      }, 950);
+    },
+
     initializeGrid() {
       // Stop error checking and progress saving
       this.stopErrorChecking();
       this.stopProgressSaving();
+      this.clearAutoFlagAnimations();
 
       this.grid = createEmptyGrid(this.gridSize);
       this.moveHistory = [];
@@ -1320,6 +1411,7 @@ export const useQueensStore = defineStore('queens', {
     clearMarkers() {
       // Stop error checking (this also clears error messages)
       this.stopErrorChecking();
+      this.clearAutoFlagAnimations();
 
       // Clear all marks by setting each cell to null
       for (let row = 0; row < this.gridSize; row++) {
@@ -1355,6 +1447,7 @@ export const useQueensStore = defineStore('queens', {
     },
 
     updateBlockedMoves() {
+      let flagsPlaced = 0;
       // Flag all squares that are no longer valid moves after placing queens
       for (let row = 0; row < this.gridSize; row++) {
         for (let col = 0; col < this.gridSize; col++) {
@@ -1362,10 +1455,14 @@ export const useQueensStore = defineStore('queens', {
           if (this.playerMarks[row][col] === null) {
             if (!this.isValidMove(row, col)) {
               this.playerMarks[row][col] = 'flag';
+              const animationDelay = Math.min(flagsPlaced, 10) * 45;
+              this.triggerAutoFlagAnimation(row, col, 'blocked', animationDelay);
+              flagsPlaced += 1;
             }
           }
         }
       }
+      this.showAutoFlagCombo(flagsPlaced);
 
       // Check for error conditions after auto-flagging
       this.checkFullyFlaggedGroups();
