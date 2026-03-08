@@ -21,6 +21,13 @@ interface PatternCardVariant {
   outputFlags: Pos[];
 }
 
+type FlipMode = 'none' | 'horizontal' | 'vertical';
+
+interface TransformSpec {
+  rotationsCW: 0 | 1 | 2 | 3;
+  flipMode: FlipMode;
+}
+
 export const PATTERN_CARD_DEFINITIONS: PatternCardDefinition[] = [
   {
     id: 'pattern-new-card',
@@ -47,6 +54,10 @@ function keyForCell(row: number, col: number): string {
   return `${row},${col}`;
 }
 
+function keyForPos(pos: Pos): string {
+  return keyForCell(pos.row, pos.col);
+}
+
 function sortedPositions(positions: Pos[]): Pos[] {
   return [...positions].sort((a, b) => {
     if (a.row !== b.row) return a.row - b.row;
@@ -54,18 +65,25 @@ function sortedPositions(positions: Pos[]): Pos[] {
   });
 }
 
+function serializePositions(positions: Pos[]): string {
+  return sortedPositions(positions)
+    .map(keyForPos)
+    .join('|');
+}
+
 function rotateCoord(pos: Pos, size: number, rotationsCW: number): Pos {
-  let row = pos.row;
-  let col = pos.col;
-
-  for (let i = 0; i < rotationsCW; i++) {
-    const nextRow = col;
-    const nextCol = size - 1 - row;
-    row = nextRow;
-    col = nextCol;
+  switch (rotationsCW % 4) {
+    case 0:
+      return { row: pos.row, col: pos.col };
+    case 1:
+      return { row: pos.col, col: size - 1 - pos.row };
+    case 2:
+      return { row: size - 1 - pos.row, col: size - 1 - pos.col };
+    case 3:
+      return { row: size - 1 - pos.col, col: pos.row };
+    default:
+      return { row: pos.row, col: pos.col };
   }
-
-  return { row, col };
 }
 
 function flipHorizontally(pos: Pos, size: number): Pos {
@@ -75,22 +93,66 @@ function flipHorizontally(pos: Pos, size: number): Pos {
   };
 }
 
-function transformCoord(pos: Pos, size: number, rotationsCW: number, mirrorH: boolean): Pos {
+function flipVertically(pos: Pos, size: number): Pos {
+  return {
+    row: size - 1 - pos.row,
+    col: pos.col,
+  };
+}
+
+function transformCoord(pos: Pos, size: number, rotationsCW: number, flipMode: FlipMode): Pos {
   const rotated = rotateCoord(pos, size, rotationsCW);
-  return mirrorH ? flipHorizontally(rotated, size) : rotated;
+  if (flipMode === 'horizontal') {
+    return flipHorizontally(rotated, size);
+  }
+  if (flipMode === 'vertical') {
+    return flipVertically(rotated, size);
+  }
+  return rotated;
 }
 
 function buildVariantSignature(activeCells: Pos[], outputFlags: Pos[]): string {
-  const activePart = sortedPositions(activeCells)
-    .map((pos) => `${pos.row},${pos.col}`)
-    .join('|');
-  const outputPart = sortedPositions(outputFlags)
-    .map((pos) => `${pos.row},${pos.col}`)
-    .join('|');
+  const activePart = serializePositions(activeCells);
+  const outputPart = serializePositions(outputFlags);
   return `A:${activePart};F:${outputPart}`;
 }
 
 const patternVariantCache = new Map<string, PatternCardVariant[]>();
+
+const TRANSFORM_SPECS: TransformSpec[] = (['none', 'horizontal', 'vertical'] as const).flatMap(
+  (flipMode) =>
+    ([0, 1, 2, 3] as const).map((rotationsCW) => ({
+      rotationsCW,
+      flipMode,
+    }))
+);
+
+function extractActiveCells(card: PatternCardDefinition): Pos[] {
+  return card.cells
+    .filter((cell) => cell.activeSquare === true)
+    .map((cell) => ({ row: cell.row, col: cell.col }));
+}
+
+function buildVariant(
+  card: PatternCardDefinition,
+  activeCells: Pos[],
+  transform: TransformSpec
+): PatternCardVariant {
+  const transformedActive = activeCells.map((pos) =>
+    transformCoord(pos, card.size, transform.rotationsCW, transform.flipMode)
+  );
+  const transformedFlags = card.outputFlags.map((pos) =>
+    transformCoord(pos, card.size, transform.rotationsCW, transform.flipMode)
+  );
+  const sortedActive = sortedPositions(transformedActive);
+
+  return {
+    size: card.size,
+    activeCells: sortedActive,
+    activeSet: new Set(sortedActive.map(keyForPos)),
+    outputFlags: sortedPositions(transformedFlags),
+  };
+}
 
 function getPatternCardVariants(card: PatternCardDefinition): PatternCardVariant[] {
   const cached = patternVariantCache.get(card.id);
@@ -98,33 +160,15 @@ function getPatternCardVariants(card: PatternCardDefinition): PatternCardVariant
     return cached;
   }
 
-  const activeCells = card.cells
-    .filter((cell) => cell.activeSquare === true)
-    .map((cell) => ({ row: cell.row, col: cell.col }));
+  const activeCells = extractActiveCells(card);
 
   const uniqueVariants = new Map<string, PatternCardVariant>();
 
-  for (const mirrorH of [false, true]) {
-    for (let rotationsCW = 0; rotationsCW < 4; rotationsCW++) {
-      const transformedActive = activeCells.map((pos) =>
-        transformCoord(pos, card.size, rotationsCW, mirrorH)
-      );
-      const transformedFlags = card.outputFlags.map((pos) =>
-        transformCoord(pos, card.size, rotationsCW, mirrorH)
-      );
-
-      const signature = buildVariantSignature(transformedActive, transformedFlags);
-      if (uniqueVariants.has(signature)) {
-        continue;
-      }
-
-      const sortedActive = sortedPositions(transformedActive);
-      uniqueVariants.set(signature, {
-        size: card.size,
-        activeCells: sortedActive,
-        activeSet: new Set(sortedActive.map((pos) => keyForCell(pos.row, pos.col))),
-        outputFlags: sortedPositions(transformedFlags),
-      });
+  for (const transform of TRANSFORM_SPECS) {
+    const variant = buildVariant(card, activeCells, transform);
+    const signature = buildVariantSignature(variant.activeCells, variant.outputFlags);
+    if (!uniqueVariants.has(signature)) {
+      uniqueVariants.set(signature, variant);
     }
   }
 
@@ -153,7 +197,7 @@ function hasRequiredStructureAt(
     return false;
   }
 
-  // "Other" is default for every non-active cell in the card window.
+  // Non-active cells are implicitly "other" in this 3..9 square window.
   for (let relRow = 0; relRow < variant.size; relRow++) {
     for (let relCol = 0; relCol < variant.size; relCol++) {
       const square = grid[baseRow + relRow]?.[baseCol + relCol];
@@ -181,7 +225,7 @@ export function collectPatternFlagPlacements(
   grid: GridSquare[][],
   playerMarks: MarkType[][],
   card: PatternCardDefinition,
-  canPlaceFlagAt: (row: number, col: number) => boolean
+  canPlaceFlagAt: (row: number, col: number) => boolean = () => true
 ): Pos[] {
   const placements: Pos[] = [];
   const seen = new Set<string>();

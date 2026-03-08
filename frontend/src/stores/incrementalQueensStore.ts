@@ -242,8 +242,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         const matches = collectPatternFlagPlacements(
           queensStore.grid,
           queensStore.playerMarks,
-          card,
-          (row, col) => !queensStore.isValidMove(row, col)
+          card
         );
 
         for (const match of matches) {
@@ -404,7 +403,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       this.runStatus = 'upgrade-select';
     },
 
-    async buyRiskUpgrade() {
+    buyRiskUpgrade() {
       if (this.runStatus !== 'upgrade-select') {
         return;
       }
@@ -415,10 +414,9 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
 
       this.runBank -= cost;
       this.riskLevel += 1;
-      await this.startNextPuzzle();
     },
 
-    async buyTimeUpgrade() {
+    buyTimeUpgrade() {
       if (this.runStatus !== 'upgrade-select') {
         return;
       }
@@ -429,10 +427,9 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
 
       this.runBank -= cost;
       this.timeLevel += 1;
-      await this.startNextPuzzle();
     },
 
-    async buyAutoFlagUpgrade() {
+    buyAutoFlagUpgrade() {
       if (this.runStatus !== 'upgrade-select') {
         return;
       }
@@ -445,10 +442,9 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
 
       this.runBank -= AUTO_FLAG_COST;
       this.autoFlagPurchased = true;
-      await this.startNextPuzzle();
     },
 
-    async buyPatternCard(patternCardId: string) {
+    buyPatternCard(patternCardId: string) {
       if (this.runStatus !== 'upgrade-select') {
         return;
       }
@@ -466,10 +462,9 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
 
       this.runBank -= card.cost;
       this.ownedPatternCardIds.push(patternCardId);
-      await this.startNextPuzzle();
     },
 
-    async createCustomPatternCard(input: {
+    createCustomPatternCard(input: {
       id?: string;
       size: number;
       cells: Array<{ row: number; col: number; activeSquare?: boolean }>;
@@ -519,8 +514,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       this.customPatternCards.push(newCard);
       this.ownedPatternCardIds.push(newCard.id);
       this.customPatternCardCounter += 1;
-
-      await this.startNextPuzzle();
     },
 
     async skipUpgradeSelection() {
