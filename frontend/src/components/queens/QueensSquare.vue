@@ -6,6 +6,8 @@
       hoverClass,
       {
         'ring-4 ring-yellow-400 ring-offset-2 ring-offset-gray-800 animate-pulse': isTutorialTarget,
+        'auto-flag-tint-blocked': isAutoFlagAnimating && autoFlagAnimationSource === 'blocked',
+        'auto-flag-tint-pattern': isAutoFlagAnimating && autoFlagAnimationSource === 'pattern',
       },
     ]"
     @click="handleClick"
@@ -23,8 +25,14 @@
       </span>
       <!-- Show player marks (flag or queen) -->
       <div class="relative flex items-center justify-center">
-        <span v-if="shouldShowFlag()" :class="getEmojiSizeClass()">🚧</span>
+        <span
+          v-if="shouldShowFlag()"
+          :class="[getEmojiSizeClass(), getFlagAnimationClass()]"
+        >
+          🚧
+        </span>
         <span v-else-if="shouldShowQueen()" :class="getEmojiSizeClass()">👑</span>
+        <span v-if="showAutoFlagRipple" :class="getRippleAnimationClass()" />
         <!-- Red X overlay for flags or queens in error state -->
         <span
           v-if="(shouldShowFlag() || shouldShowQueen()) && isInError"
@@ -113,6 +121,15 @@ const DARK_PASTEL_COLORS: Record<ColorName, { bg: string; hover: string }> = {
 const isInError = computed(() => {
   return queensStore.isSquareInError(props.rowIndex, props.colIndex);
 });
+const isAutoFlagAnimating = computed(() => {
+  return queensStore.isAutoFlagAnimating(props.rowIndex, props.colIndex);
+});
+const autoFlagAnimationSource = computed(() => {
+  return queensStore.getAutoFlagAnimationSource(props.rowIndex, props.colIndex);
+});
+const showAutoFlagRipple = computed(() => {
+  return shouldShowFlag() && isAutoFlagAnimating.value;
+});
 
 const backgroundColorClass = computed(() => {
   const color = gridCell.value?.groupColor as ColorName | undefined;
@@ -139,6 +156,23 @@ function shouldShowFlag(): boolean {
   return queensStore.playerMarks[props.rowIndex]?.[props.colIndex] === 'flag';
 }
 
+function getFlagAnimationClass(): string {
+  if (!isAutoFlagAnimating.value) {
+    return '';
+  }
+  if (autoFlagAnimationSource.value === 'pattern') {
+    return 'auto-flag-pop auto-flag-pattern';
+  }
+  return 'auto-flag-pop auto-flag-blocked';
+}
+
+function getRippleAnimationClass(): string {
+  if (autoFlagAnimationSource.value === 'pattern') {
+    return 'auto-flag-ripple auto-flag-ripple-pattern';
+  }
+  return 'auto-flag-ripple auto-flag-ripple-blocked';
+}
+
 function getEmojiSizeClass() {
   const size = queensStore.gridSize;
   if (size <= 4) return 'text-3xl';
@@ -153,3 +187,94 @@ export default {
   name: 'QueensSquare',
 };
 </script>
+
+<style scoped>
+.auto-flag-pop {
+  animation: auto-flag-pop 220ms ease-out;
+}
+
+.auto-flag-pattern {
+  filter: drop-shadow(0 0 10px rgba(45, 212, 191, 0.85));
+}
+
+.auto-flag-blocked {
+  filter: drop-shadow(0 0 9px rgba(125, 211, 252, 0.65));
+}
+
+.auto-flag-ripple {
+  position: absolute;
+  width: 62%;
+  height: 62%;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  animation: auto-flag-ripple 320ms ease-out;
+}
+
+.auto-flag-ripple-pattern {
+  border-color: rgba(45, 212, 191, 0.85);
+}
+
+.auto-flag-ripple-blocked {
+  border-color: rgba(125, 211, 252, 0.75);
+}
+
+.auto-flag-tint-pattern {
+  animation: auto-flag-tint-pattern 180ms ease-out;
+}
+
+.auto-flag-tint-blocked {
+  animation: auto-flag-tint-blocked 180ms ease-out;
+}
+
+@keyframes auto-flag-pop {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.7;
+  }
+  65% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes auto-flag-ripple {
+  0% {
+    transform: scale(0.45);
+    opacity: 0.45;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+@keyframes auto-flag-tint-pattern {
+  0% {
+    box-shadow: inset 0 0 0 9999px rgba(45, 212, 191, 0.16);
+  }
+  100% {
+    box-shadow: inset 0 0 0 9999px rgba(45, 212, 191, 0);
+  }
+}
+
+@keyframes auto-flag-tint-blocked {
+  0% {
+    box-shadow: inset 0 0 0 9999px rgba(125, 211, 252, 0.14);
+  }
+  100% {
+    box-shadow: inset 0 0 0 9999px rgba(125, 211, 252, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auto-flag-pop,
+  .auto-flag-ripple,
+  .auto-flag-tint-pattern,
+  .auto-flag-tint-blocked {
+    animation: none;
+  }
+}
+</style>

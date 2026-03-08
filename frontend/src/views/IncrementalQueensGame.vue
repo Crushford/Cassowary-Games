@@ -13,7 +13,16 @@
           {{ incrementalStore.formattedTimeRemaining }}
         </div>
       </div>
-      <div v-else class="flex items-center justify-between">
+      <div
+        v-if="incrementalStore.runStatus === 'playing' && queensStore.autoFlagComboCount > 0"
+        :key="queensStore.autoFlagComboTick"
+        class="mt-2 flex justify-end pointer-events-none"
+      >
+        <div class="auto-flag-combo-chip">
+          +{{ queensStore.autoFlagComboCount }} auto flags
+        </div>
+      </div>
+      <div v-if="incrementalStore.runStatus !== 'playing'" class="flex items-center justify-between">
         <h1 class="text-lg font-bold text-emerald-400">Incremental Queens</h1>
         <button
           class="px-3 py-1 rounded bg-gray-600 hover:bg-gray-500 text-sm font-semibold"
@@ -361,3 +370,38 @@ defineOptions({
   name: 'IncrementalQueensGame',
 });
 </script>
+
+<style scoped>
+.auto-flag-combo-chip {
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.4rem 0.6rem;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.16);
+  color: rgb(110, 231, 183);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  animation: auto-flag-chip-in 900ms ease-out;
+}
+
+@keyframes auto-flag-chip-in {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.92);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-2px) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auto-flag-combo-chip {
+    animation: none;
+  }
+}
+</style>
