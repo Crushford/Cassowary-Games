@@ -18,45 +18,40 @@
         <p id="incremental-board-summary" class="sr-only">{{ boardSummary }}</p>
       </template>
 
-      <div v-if="incrementalStore.runStatus === 'playing'" class="flex items-center justify-between">
+      <div
+        v-if="incrementalStore.runStatus !== 'idle'"
+        class="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-2"
+      >
+        <h1 class="text-lg font-bold text-emerald-400 whitespace-nowrap">Incremental Queens</h1>
+        <div class="text-sm font-semibold text-cyan-300 text-center">Bank {{ incrementalStore.runBank }}</div>
+        <div
+          v-if="incrementalStore.runStatus === 'playing'"
+          class="text-xl font-bold tabular-nums leading-none text-center"
+          :class="timerClass"
+          aria-live="off"
+        >
+          {{ incrementalStore.formattedTimeRemaining }}
+        </div>
+        <div v-else />
         <button
           type="button"
-          class="px-3 py-1 rounded bg-red-700 hover:bg-red-600 text-sm font-semibold"
+          class="justify-self-center px-3 py-1 rounded bg-red-700 hover:bg-red-600 text-sm font-semibold"
           @click="showGiveUpConfirm = true"
           aria-label="Give up current run and return to Queens menu"
         >
           Give Up
         </button>
-        <div class="text-sm text-emerald-300 font-semibold">Bank {{ incrementalStore.runBank }}</div>
-        <div class="text-2xl font-bold tabular-nums leading-none" :class="timerClass" aria-live="off">
-          {{ incrementalStore.formattedTimeRemaining }}
-        </div>
       </div>
       <div
         v-if="incrementalStore.runStatus === 'playing' && queensStore.autoFlagComboCount > 0"
         :key="queensStore.autoFlagComboTick"
         class="mt-2 flex justify-end pointer-events-none"
       >
-        <div class="auto-flag-combo-chip">
+        <div
+          class="text-xs font-bold leading-none px-[0.6rem] py-[0.4rem] rounded-full border border-emerald-400/40 bg-emerald-500/15 text-emerald-300 animate-pulse"
+        >
           +{{ queensStore.autoFlagComboCount }} auto flags
         </div>
-      </div>
-      <div v-if="incrementalStore.runStatus !== 'playing'" class="flex items-center justify-between">
-        <h1 class="text-lg font-bold text-emerald-400">Incremental Queens</h1>
-        <button
-          type="button"
-          class="px-3 py-1 rounded bg-gray-600 hover:bg-gray-500 text-sm font-semibold"
-          @click="handleExit"
-          aria-label="Back to Queens menu"
-        >
-          Back
-        </button>
-      </div>
-      <div v-if="incrementalStore.runStatus === 'upgrade-select'" class="mt-2 flex items-center justify-end">
-        <div class="text-sm text-emerald-300 font-semibold">Bank {{ incrementalStore.runBank }}</div>
-      </div>
-      <div v-if="incrementalStore.runStatus === 'game-over'" class="mt-2 flex items-center justify-end">
-        <div class="text-sm text-emerald-300 font-semibold">Bank {{ incrementalStore.runBank }}</div>
       </div>
       <div v-if="incrementalStore.runStatus === 'idle'" class="mt-2">
         <div class="text-sm text-gray-300">
@@ -104,40 +99,87 @@
     </div>
 
     <div v-if="incrementalStore.runStatus !== 'idle'" class="flex-none p-3 space-y-2">
-      <QueensToolSelector
-        :is-disabled="!isBoardInteractive"
-        :hide-auto-mode="false"
-        :show-auto-flag-toggle="false"
-      />
-      <div class="flex gap-2 justify-center">
+      <div class="grid grid-cols-3 items-center gap-2 px-2">
+        <div class="flex justify-center">
+          <QueensToolSelector
+            :is-disabled="!isBoardInteractive"
+            :hide-auto-mode="false"
+            :show-auto-flag-toggle="false"
+          />
+        </div>
+        <div class="flex justify-center">
+          <button
+            type="button"
+            class="shrink-0 px-5 py-2 text-xs font-semibold rounded bg-amber-800 hover:bg-amber-700 disabled:opacity-50"
+            :disabled="!isBoardInteractive || queensStore.moveHistory.length === 0"
+            @click="queensStore.handleUndo"
+            aria-label="Undo last move"
+          >
+            Undo
+          </button>
+        </div>
+        <div class="flex justify-center">
+          <button
+            type="button"
+            class="shrink-0 px-5 py-2 text-xs font-semibold rounded bg-red-600 hover:bg-red-500 disabled:opacity-50"
+            :disabled="!isBoardInteractive"
+            @click="queensStore.clearAll"
+            aria-label="Clear all marks from the board"
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-2">
         <button
           type="button"
-          class="px-4 py-2 text-sm font-semibold rounded bg-gray-600 hover:bg-gray-500 disabled:opacity-50"
-          :disabled="!isBoardInteractive || queensStore.moveHistory.length === 0"
-          @click="queensStore.handleUndo"
-          aria-label="Undo last move"
+          class="px-2 py-2 text-xs font-semibold rounded bg-purple-700 hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="incrementalStore.runStatus !== 'upgrade-select'"
+          @click="showShopModal = true"
         >
-          Undo
+          Shop
         </button>
         <button
           type="button"
-          class="px-4 py-2 text-sm font-semibold rounded bg-red-600 hover:bg-red-500 disabled:opacity-50"
-          :disabled="!isBoardInteractive"
-          @click="queensStore.clearAll"
-          aria-label="Clear all marks from the board"
+          class="px-2 py-2 text-xs font-semibold rounded bg-green-700 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="!incrementalStore.canStartNextPuzzle"
+          @click="incrementalStore.skipUpgradeSelection"
+          aria-label="Load the next puzzle"
         >
-          Clear
+          Next Puzzle
+        </button>
+        <button
+          v-if="incrementalStore.currentPuzzleSize < 9"
+          type="button"
+          class="px-2 py-2 text-xs font-semibold rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          :class="incrementalStore.canBuySizeUpGoal ? 'bg-orange-700 hover:bg-orange-600' : 'bg-gray-700'"
+          :disabled="!incrementalStore.canBuySizeUpGoal"
+          @click="showNextLevelConfirm = true"
+          aria-label="Advance to next board size and fully reset progression"
+        >
+          Next Level ({{ incrementalStore.sizeUpGoalCost }})
         </button>
       </div>
     </div>
 
     <Modal
-      :is-visible="incrementalStore.runStatus === 'upgrade-select'"
+      :is-visible="showShopModal"
       aria-labelledby="incremental-upgrade-title"
       aria-describedby="incremental-upgrade-description"
+      @close="showShopModal = false"
     >
       <div>
-        <h2 id="incremental-upgrade-title" class="text-xl font-bold text-green-400 mb-3">Puzzle Solved</h2>
+        <div class="flex items-center justify-between mb-3">
+          <h2 id="incremental-upgrade-title" class="text-xl font-bold text-green-400">Shop</h2>
+          <button
+            type="button"
+            class="h-8 w-8 rounded bg-gray-700 hover:bg-gray-600 text-lg leading-none font-bold"
+            @click="showShopModal = false"
+            aria-label="Close shop"
+          >
+            ×
+          </button>
+        </div>
         <p id="incremental-upgrade-description" class="sr-only">
           Shop phase. Buy upgrades or pattern cards, then continue to the next puzzle.
         </p>
@@ -234,6 +276,26 @@
             <div class="text-xs text-emerald-100">{{ incrementalStore.selectedOneOffUpgrade.description }}</div>
           </button>
 
+          <label
+            v-if="incrementalStore.autoNextPuzzlePurchased"
+            class="w-full flex items-center justify-between p-3 rounded bg-gray-700 cursor-pointer"
+          >
+            <span class="text-sm font-semibold">Auto Start Next Puzzle</span>
+            <input
+              type="checkbox"
+              class="h-4 w-4 accent-emerald-500"
+              :checked="incrementalStore.autoNextPuzzleEnabled"
+              @change="
+                incrementalStore.setAutoNextPuzzleEnabled(
+                  ($event.target as HTMLInputElement).checked
+                )
+              "
+            />
+          </label>
+          <div v-else class="text-xs text-gray-400 px-1">
+            Auto Start Next Puzzle appears as a one-off shop upgrade.
+          </div>
+
           <div class="text-[11px] text-gray-400 px-1">
             Pattern automation costs scale: +20 per purchased pattern card this run.
           </div>
@@ -248,36 +310,18 @@
             Active pattern automations: {{ incrementalStore.ownedPatternCardIds.length }}
           </div>
         </div>
-
         <button
           type="button"
-          class="w-full mt-3 py-2 rounded bg-green-600 hover:bg-green-500 font-semibold"
-          @click="incrementalStore.skipUpgradeSelection"
-          aria-label="Skip shop and load the next puzzle"
-        >
-          Next Puzzle
-        </button>
-        <button
-          v-if="incrementalStore.currentPuzzleSize < 9"
-          type="button"
-          class="w-full mt-2 py-2 rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-          :class="
-            incrementalStore.canBuySizeUpGoal
-              ? 'bg-orange-700 hover:bg-orange-600'
-              : 'bg-gray-700'
+          class="w-full mt-3 py-2 rounded bg-green-600 hover:bg-green-500 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="!incrementalStore.canStartNextPuzzle"
+          @click="
+            incrementalStore.skipUpgradeSelection();
+            showShopModal = false;
           "
-          :disabled="!incrementalStore.canBuySizeUpGoal"
-          @click="incrementalStore.buySizeUpGoal"
-          aria-label="Advance to next board size and reset run progression"
+          aria-label="Start next puzzle"
         >
-          <div class="flex items-center justify-between px-2">
-            <span>Advance Size {{ incrementalStore.sizeUpGoalLabel }}</span>
-            <span class="text-xs text-yellow-300">Goal: {{ incrementalStore.sizeUpGoalCost }}</span>
-          </div>
+          Start Next Puzzle
         </button>
-        <div v-if="incrementalStore.currentPuzzleSize < 9" class="text-[11px] text-gray-400 mt-1 px-1">
-          This is a full reset: bank, score, upgrades, and pattern cards are cleared.
-        </div>
       </div>
     </Modal>
 
@@ -326,6 +370,42 @@
             aria-label="Confirm give up and exit run"
           >
             Give Up
+          </button>
+        </div>
+      </div>
+    </Modal>
+
+    <Modal
+      :is-visible="showNextLevelConfirm"
+      role="alertdialog"
+      aria-labelledby="incremental-nextlevel-title"
+      aria-describedby="incremental-nextlevel-description"
+      @close="showNextLevelConfirm = false"
+    >
+      <div>
+        <h2 id="incremental-nextlevel-title" class="text-xl font-bold text-orange-300 mb-3">
+          Advance to {{ incrementalStore.sizeUpGoalLabel }}?
+        </h2>
+        <p id="incremental-nextlevel-description" class="text-sm text-gray-200 mb-4">
+          This will fully reset your run progress: bank, score, upgrades, and pattern automations.
+        </p>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="flex-1 py-2 rounded bg-gray-600 hover:bg-gray-500 font-semibold"
+            @click="showNextLevelConfirm = false"
+            aria-label="Cancel next level purchase"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="flex-1 py-2 rounded bg-orange-700 hover:bg-orange-600 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="!incrementalStore.canBuySizeUpGoal"
+            @click="handleConfirmNextLevel"
+            aria-label="Confirm next level purchase and reset run"
+          >
+            Confirm ({{ incrementalStore.sizeUpGoalCost }})
           </button>
         </div>
       </div>
@@ -409,9 +489,11 @@ const PatternCardManagerModal = defineAsyncComponent(
 const queensStore = useQueensStore();
 const incrementalStore = useIncrementalQueensStore();
 const router = useRouter();
+const showShopModal = ref(false);
 const showPatternDesigner = ref(false);
 const showPatternManager = ref(false);
 const showGiveUpConfirm = ref(false);
+const showNextLevelConfirm = ref(false);
 const animatedTimeRemainingPercent = ref(0);
 
 const rootAriaDescribedBy = computed(() => {
@@ -450,7 +532,7 @@ const runStatusAnnouncement = computed(() => {
     return `Puzzle in progress. ${incrementalStore.puzzlesSolved} puzzles solved in this run.`;
   }
   if (incrementalStore.runStatus === 'upgrade-select') {
-    return 'Puzzle solved. Shop is open for upgrades and pattern cards.';
+    return 'Puzzle solved. Open the shop or continue to the next puzzle.';
   }
   return `Run over. Final score ${incrementalStore.runScore}, puzzles solved ${incrementalStore.puzzlesSolved}.`;
 });
@@ -525,11 +607,24 @@ watch(
   }
 );
 
+watch(
+  () => incrementalStore.runStatus,
+  (status) => {
+    if (status !== 'upgrade-select') {
+      showShopModal.value = false;
+      showPatternManager.value = false;
+      showPatternDesigner.value = false;
+      showNextLevelConfirm.value = false;
+    }
+  }
+);
+
 function formatMultiplier(value: number): string {
   return value.toFixed(2);
 }
 
 async function handleStartRun() {
+  showShopModal.value = false;
   await incrementalStore.startRun();
 }
 
@@ -544,6 +639,7 @@ async function handleSaveCustomPatternCard(payload: {
 }
 
 function handleExit() {
+  showShopModal.value = false;
   incrementalStore.cleanupSessionState();
   incrementalStore.resetRunState();
   router.push('/queens');
@@ -552,6 +648,12 @@ function handleExit() {
 function handleGiveUp() {
   showGiveUpConfirm.value = false;
   handleExit();
+}
+
+async function handleConfirmNextLevel() {
+  await incrementalStore.buySizeUpGoal();
+  showNextLevelConfirm.value = false;
+  showShopModal.value = false;
 }
 
 onBeforeUnmount(() => {
@@ -563,38 +665,3 @@ defineOptions({
   name: 'IncrementalQueensGame',
 });
 </script>
-
-<style scoped>
-.auto-flag-combo-chip {
-  font-size: 0.75rem;
-  font-weight: 700;
-  line-height: 1;
-  padding: 0.4rem 0.6rem;
-  border-radius: 9999px;
-  background: rgba(16, 185, 129, 0.16);
-  color: rgb(110, 231, 183);
-  border: 1px solid rgba(16, 185, 129, 0.4);
-  animation: auto-flag-chip-in 900ms ease-out;
-}
-
-@keyframes auto-flag-chip-in {
-  0% {
-    opacity: 0;
-    transform: translateY(6px) scale(0.92);
-  }
-  18% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-2px) scale(1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .auto-flag-combo-chip {
-    animation: none;
-  }
-}
-</style>
