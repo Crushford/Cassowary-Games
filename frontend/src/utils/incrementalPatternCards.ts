@@ -201,16 +201,19 @@ function hasRequiredStructureAt(
   for (let relRow = 0; relRow < variant.size; relRow++) {
     for (let relCol = 0; relCol < variant.size; relCol++) {
       const square = grid[baseRow + relRow]?.[baseCol + relCol];
-      if (!square?.groupColor) {
-        return false;
-      }
-
       const isActive = variant.activeSet.has(keyForCell(relRow, relCol));
+
       if (isActive) {
+        if (!square?.groupColor) {
+          return false;
+        }
         if (square.groupColor !== focusColor) {
           return false;
         }
       } else {
+        if (!square?.groupColor) {
+          continue;
+        }
         if (square.groupColor === focusColor) {
           return false;
         }
@@ -233,8 +236,8 @@ export function collectPatternFlagPlacements(
   const variants = getPatternCardVariants(card);
 
   for (const variant of variants) {
-    for (let baseRow = 0; baseRow <= gridSize - variant.size; baseRow++) {
-      for (let baseCol = 0; baseCol <= gridSize - variant.size; baseCol++) {
+    for (let baseRow = -(variant.size - 1); baseRow <= gridSize - 1; baseRow++) {
+      for (let baseCol = -(variant.size - 1); baseCol <= gridSize - 1; baseCol++) {
         if (!hasRequiredStructureAt(grid, baseRow, baseCol, variant)) {
           continue;
         }
