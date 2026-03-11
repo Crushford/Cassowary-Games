@@ -326,8 +326,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
           byRow: this.autoQueenByRowPurchased,
           byColumn: this.autoQueenByColumnPurchased,
         },
-        isValidMoveWithMarks: (row, col, marks) =>
-          queensStore.isValidMoveWithMarks(row, col, marks),
       });
       if (actions.length === 0) {
         return;
