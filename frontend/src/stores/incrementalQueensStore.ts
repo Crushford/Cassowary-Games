@@ -121,8 +121,8 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     nextRiskCost: (state): number => {
       return RISK_BASE_COST + state.riskLevel * RISK_COST_STEP;
     },
-    canAffordRisk(): boolean {
-      return this.runBank >= this.nextRiskCost && this.currentPuzzleTimeLimit > MIN_TIME_SECONDS;
+    canAffordRisk(state): boolean {
+      return state.runBank >= this.nextRiskCost && state.currentPuzzleTimeLimit > MIN_TIME_SECONDS;
     },
     canStartNextPuzzle(state): boolean {
       return (
@@ -132,11 +132,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       );
     },
     canBuySizeUpGoal(state): boolean {
-      return (
-        state.runStatus === 'upgrade-select' &&
-        state.currentPuzzleSize < 9 &&
-        state.runBank >= SIZE_UP_COST
-      );
+      return state.currentPuzzleSize < 9 && state.runBank >= SIZE_UP_COST;
     },
     sizeUpGoalCost(): number {
       return SIZE_UP_COST;
@@ -232,7 +228,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
           title: getOneOffUpgradeTitle(id, state.currentPuzzleSize),
           description: getOneOffUpgradeDescription(id),
           cost,
-          canBuy: state.runStatus === 'upgrade-select' && !owned && state.runBank >= cost,
+          canBuy: !owned && state.runBank >= cost,
         };
       });
     },
@@ -523,9 +519,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     },
 
     buyRiskUpgrade() {
-      if (this.runStatus !== 'upgrade-select') {
-        return;
-      }
       const cost = this.nextRiskCost;
       if (this.runBank < cost) {
         return;
@@ -543,9 +536,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     },
 
     buyPatternCard(patternCardId: string) {
-      if (this.runStatus !== 'upgrade-select') {
-        return;
-      }
       if (this.ownedPatternCardIds.includes(patternCardId)) {
         return;
       }
@@ -564,15 +554,10 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     },
 
     removePatternCard(patternCardId: string) {
-      if (this.runStatus !== 'upgrade-select') {
-        return;
-      }
       this.ownedPatternCardIds = this.ownedPatternCardIds.filter((id) => id !== patternCardId);
     },
 
     purchaseOneOffUpgrade(id: OneOffUpgradeId): boolean {
-      if (this.runStatus !== 'upgrade-select') return false;
-
       const option = this.availableOneOffUpgrades.find((upgrade) => upgrade.id === id);
       if (!option || !option.canBuy) return false;
 
@@ -598,9 +583,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     },
 
     buySelectedOneOffUpgrade() {
-      if (this.runStatus !== 'upgrade-select') {
-        return;
-      }
       if (!this.selectedOneOffUpgradeId) {
         return;
       }
@@ -617,9 +599,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     },
 
     buyAutomationUpgrade(id: AutomationUpgradeId) {
-      if (this.runStatus !== 'upgrade-select') {
-        return;
-      }
       const option = this.automationUpgradeOptions.find((upgrade) => upgrade.id === id);
       if (!option || !option.canBuy) {
         return;
@@ -635,9 +614,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       cells: Array<{ row: number; col: number; activeSquare?: boolean }>;
       outputFlags: Array<{ row: number; col: number }>;
     }) {
-      if (this.runStatus !== 'upgrade-select') {
-        return;
-      }
       if (!this.canCreateCustomPatternCard) {
         return;
       }
@@ -709,9 +685,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     },
 
     async buySizeUpGoal() {
-      if (this.runStatus !== 'upgrade-select') {
-        return;
-      }
       if (this.currentPuzzleSize >= 9) {
         return;
       }

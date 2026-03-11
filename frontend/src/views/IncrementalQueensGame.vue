@@ -117,7 +117,7 @@
     <div v-else class="flex-1 flex items-center justify-center p-2">
       <div
         v-if="incrementalStore.isLoadingPuzzle"
-        class="text-yellow-300"
+        class="text-amber-200"
         role="status"
         aria-live="polite"
       >
@@ -253,31 +253,65 @@
             Time Limit Per Puzzle:
             <span class="font-semibold text-white">{{ puzzleTimeLimitLabel }}</span>
           </div>
-          <Card class="rounded-lg border border-slate-700/80 bg-slate-900 bg-red-700/40">
+          <Card
+            class="rounded-lg border transition-colors duration-150"
+            :class="
+              incrementalStore.canAffordRisk
+                ? 'border-rose-400/60 bg-rose-900/45 shadow-[inset_0_0_0_1px_rgba(251,113,133,0.25)]'
+                : 'border-slate-600/80 bg-slate-800/70'
+            "
+          >
             <template #content>
               <button
                 type="button"
-                class="w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full text-left disabled:cursor-not-allowed"
                 :disabled="!incrementalStore.canAffordRisk"
                 :aria-label="riskUpgradeAriaLabel"
                 @click="incrementalStore.buyRiskUpgrade"
               >
                 <div class="font-semibold flex items-center justify-between">
-                  <span
+                  <span :class="incrementalStore.canAffordRisk ? 'text-rose-50' : 'text-slate-300'"
                     >Risk {{ incrementalStore.riskShopPreview.currentLevel }} →
                     {{ incrementalStore.riskShopPreview.nextLevel }}</span
                   >
-                  <span class="text-xs text-yellow-300"
+                  <span
+                    class="text-xs font-semibold"
+                    :class="incrementalStore.canAffordRisk ? 'text-amber-100' : 'text-slate-400'"
                     >Cost: {{ incrementalStore.riskShopPreview.cost }}</span
                   >
                 </div>
-                <div class="text-xs text-red-100">
+                <div class="mt-1">
+                  <span
+                    class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-none"
+                    :class="
+                      incrementalStore.canAffordRisk
+                        ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-200'
+                        : 'border-slate-500/90 bg-slate-700/80 text-slate-200'
+                    "
+                  >
+                    {{
+                      incrementalStore.canAffordRisk
+                        ? 'Available'
+                        : `Need ${riskCostShortfall} more bank`
+                    }}
+                  </span>
+                </div>
+                <div
+                  class="text-xs mt-2"
+                  :class="incrementalStore.canAffordRisk ? 'text-rose-100' : 'text-slate-400'"
+                >
                   Current timer: {{ incrementalStore.riskShopPreview.currentTimeLimit }}s
                 </div>
-                <div class="text-xs text-red-100">
+                <div
+                  class="text-xs"
+                  :class="incrementalStore.canAffordRisk ? 'text-rose-100' : 'text-slate-400'"
+                >
                   After purchase: {{ incrementalStore.riskShopPreview.nextTimeLimit }}s
                 </div>
-                <div class="text-xs text-red-100">
+                <div
+                  class="text-xs"
+                  :class="incrementalStore.canAffordRisk ? 'text-rose-100' : 'text-slate-400'"
+                >
                   Score: x{{
                     formatMultiplier(incrementalStore.riskShopPreview.currentMultiplier)
                   }}
@@ -296,21 +330,50 @@
           <Card
             v-for="upgrade in incrementalStore.availableOneOffUpgrades"
             :key="upgrade.id"
-            class="rounded-lg border border-slate-700/80 bg-slate-900"
-            :class="upgrade.canBuy ? 'bg-emerald-700/40' : 'bg-gray-700'"
+            class="rounded-lg border transition-colors duration-150"
+            :class="
+              upgrade.canBuy
+                ? 'border-emerald-400/60 bg-emerald-900/40 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.25)]'
+                : 'border-slate-600/80 bg-slate-800/70'
+            "
           >
             <template #content>
               <button
                 type="button"
-                class="w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full text-left disabled:cursor-not-allowed"
                 :disabled="!upgrade.canBuy"
                 @click="incrementalStore.purchaseOneOffUpgrade(upgrade.id)"
               >
                 <div class="font-semibold flex items-center justify-between">
-                  <span>{{ upgrade.title }}</span>
-                  <span class="text-xs text-yellow-300">Cost: {{ upgrade.cost }}</span>
+                  <span :class="upgrade.canBuy ? 'text-emerald-50' : 'text-slate-300'">{{
+                    upgrade.title
+                  }}</span>
+                  <span
+                    class="text-xs font-semibold"
+                    :class="upgrade.canBuy ? 'text-amber-100' : 'text-slate-400'"
+                    >Cost: {{ upgrade.cost }}</span
+                  >
                 </div>
-                <div class="text-xs text-emerald-100">
+                <div class="mt-1">
+                  <span
+                    class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-none"
+                    :class="
+                      upgrade.canBuy
+                        ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-200'
+                        : 'border-slate-500/90 bg-slate-700/80 text-slate-200'
+                    "
+                  >
+                    {{
+                      upgrade.canBuy
+                        ? 'Available'
+                        : `Need ${Math.max(0, upgrade.cost - incrementalStore.runBank)} more bank`
+                    }}
+                  </span>
+                </div>
+                <div
+                  class="text-xs mt-2"
+                  :class="upgrade.canBuy ? 'text-emerald-100' : 'text-slate-400'"
+                >
                   {{ upgrade.description }}
                 </div>
               </button>
@@ -453,7 +516,7 @@
         >
           <div class="flex justify-between">
             <span>Total Score</span>
-            <span class="font-bold text-yellow-300">{{ incrementalStore.runScore }}</span>
+            <span class="font-bold text-amber-200">{{ incrementalStore.runScore }}</span>
           </div>
           <div class="flex justify-between">
             <span>Remaining Bank</span>
@@ -619,6 +682,10 @@ const solvedTimeRemainingLabel = computed(() => {
   return `${formatSeconds(breakdown.timeRemaining)} / ${formatSeconds(breakdown.totalTime)}`;
 });
 
+const riskCostShortfall = computed(() => {
+  return Math.max(0, incrementalStore.riskShopPreview.cost - incrementalStore.runBank);
+});
+
 const riskUpgradeAriaLabel = computed(() => {
   const preview = incrementalStore.riskShopPreview;
   return `Buy Risk upgrade from level ${preview.currentLevel} to ${preview.nextLevel}. Cost ${preview.cost}. Timer ${preview.currentTimeLimit} to ${preview.nextTimeLimit} seconds. Score multiplier ${formatMultiplier(preview.currentMultiplier)} to ${formatMultiplier(preview.nextMultiplier)}.`;
@@ -637,7 +704,7 @@ const timerClass = computed(() => {
     return 'text-red-300 animate-pulse';
   }
   if (incrementalStore.timeRemaining < TIMER_WARNING_SECONDS) {
-    return 'text-amber-300';
+    return 'text-amber-200';
   }
   return '';
 });
