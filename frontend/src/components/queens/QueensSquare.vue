@@ -7,7 +7,7 @@
       backgroundColorClass,
       hoverClass,
       {
-        'ring-4 ring-yellow-400 ring-offset-2 ring-offset-gray-800 animate-pulse': isTutorialTarget,
+        'ring-4 ring-amber-500 ring-offset-2 ring-offset-slate-900 animate-pulse': isTutorialTarget,
         'auto-flag-tint-blocked': isAutoFlagAnimating && autoFlagAnimationSource === 'blocked',
         'auto-flag-tint-pattern': isAutoFlagAnimating && autoFlagAnimationSource === 'pattern',
       },
@@ -48,7 +48,7 @@
     </div>
 
     <!-- Border overlay -->
-    <div class="absolute inset-0 pointer-events-none z-20 border border-gray-200" />
+    <div class="absolute inset-0 pointer-events-none z-20 border border-slate-400/70" />
   </button>
 </template>
 
@@ -112,13 +112,13 @@ const ariaLabel = computed(() => {
 // High-separation color-only palette for queens game.
 const DARK_PASTEL_COLORS: Record<ColorName, { bg: string; hover: string }> = {
   red: { bg: 'bg-[#991B1B]', hover: 'hover:bg-[#B91C1C]' },
-  blue: { bg: 'bg-[#2563EB]', hover: 'hover:bg-[#3B82F6]' },
+  blue: { bg: 'bg-[#1E40AF]', hover: 'hover:bg-[#2563EB]' },
   green: { bg: 'bg-[#166534]', hover: 'hover:bg-[#15803D]' },
-  yellow: { bg: 'bg-[#FDE047]', hover: 'hover:bg-[#FACC15]' },
-  purple: { bg: 'bg-[#7E22CE]', hover: 'hover:bg-[#9333EA]' },
-  pink: { bg: 'bg-[#EC4899]', hover: 'hover:bg-[#F472B6]' },
-  teal: { bg: 'bg-[#0891B2]', hover: 'hover:bg-[#06B6D4]' },
-  indigo: { bg: 'bg-[#312E81]', hover: 'hover:bg-[#4338CA]' },
+  yellow: { bg: 'bg-[#A16207]', hover: 'hover:bg-[#CA8A04]' },
+  purple: { bg: 'bg-[#6B21A8]', hover: 'hover:bg-[#7E22CE]' },
+  pink: { bg: 'bg-[#BE185D]', hover: 'hover:bg-[#DB2777]' },
+  teal: { bg: 'bg-[#0E7490]', hover: 'hover:bg-[#0891B2]' },
+  indigo: { bg: 'bg-[#3730A3]', hover: 'hover:bg-[#4338CA]' },
   amber: { bg: 'bg-[#92400E]', hover: 'hover:bg-[#B45309]' },
 };
 

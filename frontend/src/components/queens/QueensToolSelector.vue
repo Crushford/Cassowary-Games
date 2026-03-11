@@ -31,7 +31,7 @@
             ? '!border-blue-600 !bg-blue-700 !text-sky-100'
             : '!border-slate-700 !bg-slate-800 !text-slate-300 hover:!border-slate-600 hover:!bg-slate-700',
           {
-            'ring-2 ring-yellow-400 ring-offset-1 ring-offset-slate-900 animate-pulse':
+            'ring-2 ring-amber-500 ring-offset-1 ring-offset-slate-900 animate-pulse':
               isTutorialTarget(mode.value),
           },
         ]"
