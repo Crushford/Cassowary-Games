@@ -5,65 +5,61 @@
  * Puzzles are stored in puzzles.json organized by grid size for efficient access.
  */
 
-import fs from 'fs'
-import type { GridSquare, ColorName } from '../frontend/src/types/types'
-import { COLOR_SYMBOLS } from '../frontend/src/utils/colorPalette'
+import fs from 'fs';
+import type { GridSquare, ColorName } from '../frontend/src/types/types';
+import { COLOR_SYMBOLS } from '../frontend/src/utils/colorPalette';
 import {
   calculateMedianAttributeDifferences,
   pickBestInsertionIndexForNewFamily,
   ratePuzzleAttributes,
-  type PuzzleFamily
-} from './puzzleArrangement'
+  type PuzzleFamily,
+} from './puzzleArrangement';
 
 // === Types ===
 export interface PuzzleStringFormat {
-  id: string // Unique alphanumeric identifier (e.g. 'pz-0012')
-  layout: string // One character per tile representing groupColor
-  queens: string // One character per tile: 'Q' for queen, '.' for empty
-  name?: string // Optional user-provided name for the puzzle
+  id: string; // Unique alphanumeric identifier (e.g. 'pz-0012')
+  layout: string; // One character per tile representing groupColor
+  queens: string; // One character per tile: 'Q' for queen, '.' for empty
+  name?: string; // Optional user-provided name for the puzzle
 }
 
 export interface PuzzleDatabaseStructure {
-  [sizeKey: string]: PuzzleStringFormat[] // e.g., "5x5", "6x6", "7x7"
+  [sizeKey: string]: PuzzleStringFormat[]; // e.g., "5x5", "6x6", "7x7"
 }
 
-const ID_VARIANT_SUFFIX_REGEX = /-(0|90|180|270)(VH|V|H)?$/
+const ID_VARIANT_SUFFIX_REGEX = /-(0|90|180|270)(VH|V|H)?$/;
 
-const SIGNATURE_SYMBOLS =
-  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+const SIGNATURE_SYMBOLS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
 /**
  * Normalize color symbols so layouts that differ only by symbol labels compare equal.
  */
 export function normalizeLayoutColors(layout: string): string {
-  const remap = new Map<string, string>()
-  let nextIndex = 0
-  let normalized = ''
+  const remap = new Map<string, string>();
+  let nextIndex = 0;
+  let normalized = '';
 
   for (const symbol of layout) {
-    let mapped = remap.get(symbol)
+    let mapped = remap.get(symbol);
     if (!mapped) {
       if (nextIndex >= SIGNATURE_SYMBOLS.length) {
-        throw new Error('Too many unique layout symbols to normalize')
+        throw new Error('Too many unique layout symbols to normalize');
       }
-      mapped = SIGNATURE_SYMBOLS[nextIndex]
-      remap.set(symbol, mapped)
-      nextIndex++
+      mapped = SIGNATURE_SYMBOLS[nextIndex];
+      remap.set(symbol, mapped);
+      nextIndex++;
     }
-    normalized += mapped
+    normalized += mapped;
   }
 
-  return normalized
+  return normalized;
 }
 
 /**
  * Build a color-invariant signature for duplicate detection.
  */
-export function buildColorInvariantSignature(
-  layout: string,
-  queens: string
-): string {
-  return `${queens}|${normalizeLayoutColors(layout)}`
+export function buildColorInvariantSignature(layout: string, queens: string): string {
+  return `${queens}|${normalizeLayoutColors(layout)}`;
 }
 
 /**
@@ -71,23 +67,23 @@ export function buildColorInvariantSignature(
  */
 export function extractPuzzleFamilyBaseId(id: string): string | null {
   if (!ID_VARIANT_SUFFIX_REGEX.test(id)) {
-    return null
+    return null;
   }
-  return id.replace(ID_VARIANT_SUFFIX_REGEX, '')
+  return id.replace(ID_VARIANT_SUFFIX_REGEX, '');
 }
 
 export class PuzzleDatabase {
-  private puzzles: PuzzleDatabaseStructure = {}
-  private readonly filePath: string
-  private verbose: boolean = false
+  private puzzles: PuzzleDatabaseStructure = {};
+  private readonly filePath: string;
+  private verbose: boolean = false;
 
   constructor(filePath: string = '../frontend/public/puzzles.json') {
-    this.filePath = filePath
-    this.load()
+    this.filePath = filePath;
+    this.load();
   }
 
   setVerbose(verbose: boolean): void {
-    this.verbose = verbose
+    this.verbose = verbose;
   }
 
   // === Core Database Operations ===
@@ -98,24 +94,22 @@ export class PuzzleDatabase {
   private load(): void {
     try {
       if (fs.existsSync(this.filePath)) {
-        const data = fs.readFileSync(this.filePath, 'utf8')
-        this.puzzles = JSON.parse(data) as PuzzleDatabaseStructure
+        const data = fs.readFileSync(this.filePath, 'utf8');
+        this.puzzles = JSON.parse(data) as PuzzleDatabaseStructure;
 
-        const totalPuzzles = this.getTotalPuzzleCount()
+        const totalPuzzles = this.getTotalPuzzleCount();
         if (this.verbose) {
-          console.log(
-            `Loaded ${totalPuzzles} existing puzzles organized by size`
-          )
+          console.log(`Loaded ${totalPuzzles} existing puzzles organized by size`);
         }
       } else {
         if (this.verbose) {
-          console.log('Creating new puzzle database')
+          console.log('Creating new puzzle database');
         }
-        this.puzzles = {}
+        this.puzzles = {};
       }
     } catch (error) {
-      console.warn(`Error loading puzzles: ${error}. Creating new database.`)
-      this.puzzles = {}
+      console.warn(`Error loading puzzles: ${error}. Creating new database.`);
+      this.puzzles = {};
     }
   }
 
@@ -124,15 +118,15 @@ export class PuzzleDatabase {
    */
   private save(): void {
     try {
-      const json = JSON.stringify(this.puzzles, null, 2)
-      fs.writeFileSync(this.filePath, json)
+      const json = JSON.stringify(this.puzzles, null, 2);
+      fs.writeFileSync(this.filePath, json);
       if (this.verbose) {
-        const totalPuzzles = this.getTotalPuzzleCount()
-        console.log(`Saved ${totalPuzzles} puzzles to database`)
+        const totalPuzzles = this.getTotalPuzzleCount();
+        console.log(`Saved ${totalPuzzles} puzzles to database`);
       }
     } catch (error) {
-      console.error(`Error saving puzzles: ${error}`)
-      throw error
+      console.error(`Error saving puzzles: ${error}`);
+      throw error;
     }
   }
 
@@ -143,32 +137,32 @@ export class PuzzleDatabase {
     return Object.values(this.puzzles).reduce(
       (total, sizePuzzles) => total + sizePuzzles.length,
       0
-    )
+    );
   }
 
   /**
    * Generate next unique ID
    */
   private generateNextId(): string {
-    const allPuzzles = this.getAllPuzzles()
+    const allPuzzles = this.getAllPuzzles();
 
     if (allPuzzles.length === 0) {
-      return 'pz-0001'
+      return 'pz-0001';
     }
 
     // Extract numeric suffixes from existing IDs
     const numericSuffixes = allPuzzles
-      .map(p => p.id)
-      .filter(id => id.startsWith('pz-'))
-      .map(id => {
-        const match = id.match(/pz-(\d+)/)
-        return match ? parseInt(match[1], 10) : 0
-      })
+      .map((p) => p.id)
+      .filter((id) => id.startsWith('pz-'))
+      .map((id) => {
+        const match = id.match(/pz-(\d+)/);
+        return match ? parseInt(match[1], 10) : 0;
+      });
 
-    const maxSuffix = Math.max(...numericSuffixes, 0)
-    const nextSuffix = maxSuffix + 1
+    const maxSuffix = Math.max(...numericSuffixes, 0);
+    const nextSuffix = maxSuffix + 1;
 
-    return `pz-${nextSuffix.toString().padStart(4, '0')}`
+    return `pz-${nextSuffix.toString().padStart(4, '0')}`;
   }
 
   // === Puzzle Encoding/Decoding ===
@@ -177,78 +171,76 @@ export class PuzzleDatabase {
    * Encode a grid into compact string format
    */
   private encodePuzzle(grid: GridSquare[][]): {
-    layout: string
-    queens: string
+    layout: string;
+    queens: string;
   } {
-    const size = grid.length
-    let layout = ''
-    let queens = ''
+    const size = grid.length;
+    let layout = '';
+    let queens = '';
 
     for (let row = 0; row < size; row++) {
       for (let column = 0; column < size; column++) {
-        const cell = grid[row][column]
+        const cell = grid[row][column];
 
         // Encode queen position
-        queens += cell.isSolutionQueen ? 'Q' : '.'
+        queens += cell.isSolutionQueen ? 'Q' : '.';
 
         // Encode color using COLOR_SYMBOLS mapping
         if (cell.groupColor) {
-          layout += COLOR_SYMBOLS[cell.groupColor as ColorName]
+          layout += COLOR_SYMBOLS[cell.groupColor as ColorName];
         } else {
-          layout += COLOR_SYMBOLS['undefined']
+          layout += COLOR_SYMBOLS['undefined'];
         }
       }
     }
 
-    return { layout, queens }
+    return { layout, queens };
   }
 
   /**
    * Generate all 16 variants of a puzzle (4 rotations + mirrors for each), with descriptive suffixes
    * Returns: Array of [variantGrid, suffix]
    */
-  private generateAllVariants(
-    grid: GridSquare[][]
-  ): [GridSquare[][], string][] {
-    const size = grid.length
+  private generateAllVariants(grid: GridSquare[][]): [GridSquare[][], string][] {
+    const size = grid.length;
 
     // Single rotate90 function
     const rotate90 = (input: GridSquare[][]): GridSquare[][] => {
-      const newGrid = Array.from({ length: size }, () => Array(size).fill(null))
+      const newGrid = Array.from({ length: size }, () => Array(size).fill(null));
       for (let row = 0; row < size; row++) {
         for (let col = 0; col < size; col++) {
           newGrid[col][size - 1 - row] = {
             ...input[row][col],
-            position: { row: col, col: size - 1 - row }
-          }
+            position: { row: col, col: size - 1 - row },
+          };
         }
       }
-      return newGrid
-    }
+      return newGrid;
+    };
 
     // Mirror functions
     const mirrorVertical = (input: GridSquare[][]): GridSquare[][] => {
       return input.map((row, rowIdx) =>
         row.map((cell, colIdx) => ({
           ...input[size - 1 - rowIdx][colIdx],
-          position: { row: rowIdx, col: colIdx }
+          position: { row: rowIdx, col: colIdx },
         }))
-      )
-    }
+      );
+    };
     const mirrorHorizontal = (input: GridSquare[][]): GridSquare[][] => {
       return input.map((row, rowIdx) =>
         row.map((cell, colIdx) => ({
           ...input[rowIdx][size - 1 - colIdx],
-          position: { row: rowIdx, col: colIdx }
+          position: { row: rowIdx, col: colIdx },
         }))
-      )
-    }
+      );
+    };
 
     // Rotations
-    const original = grid
-    const rot90 = rotate90(original)
-    const rot180 = rotate90(rot90)
-    const rot270 = rotate90(rot180)
+    const original = grid;
+    const rot90 = rotate90(original);
+    const rot180 = rotate90(rot90);
+    const rot270 = rotate90(rot180);
 
     // Helper to generate all 4 mirror variants for a given grid and base name
     const variantsFor = (baseGrid: GridSquare[][], baseName: string) =>
@@ -256,16 +248,16 @@ export class PuzzleDatabase {
         [baseGrid, baseName],
         [mirrorVertical(baseGrid), baseName + 'V'],
         [mirrorHorizontal(baseGrid), baseName + 'H'],
-        [mirrorHorizontal(mirrorVertical(baseGrid)), baseName + 'VH']
-      ] as [GridSquare[][], string][]
+        [mirrorHorizontal(mirrorVertical(baseGrid)), baseName + 'VH'],
+      ] as [GridSquare[][], string][];
 
     // Collect all variants
     return [
       ...variantsFor(original, '0'),
       ...variantsFor(rot90, '90'),
       ...variantsFor(rot180, '180'),
-      ...variantsFor(rot270, '270')
-    ]
+      ...variantsFor(rot270, '270'),
+    ];
   }
 
   // === Public API ===
@@ -275,172 +267,158 @@ export class PuzzleDatabase {
    * Returns true if any new puzzles were added, false if all were duplicates
    */
   addPuzzle(grid: GridSquare[][], name?: string): boolean {
-    const variants: [GridSquare[][], string][] = this.generateAllVariants(grid)
-    const baseId = this.generateNextId()
-    let addedCount = 0
-    let skippedCount = 0
-    const size = grid.length
-    const sizeKey = `${size}x${size}`
-    const puzzlesOfSameSize = this.puzzles[sizeKey] || []
+    const variants: [GridSquare[][], string][] = this.generateAllVariants(grid);
+    const baseId = this.generateNextId();
+    let addedCount = 0;
+    let skippedCount = 0;
+    const size = grid.length;
+    const sizeKey = `${size}x${size}`;
+    const puzzlesOfSameSize = this.puzzles[sizeKey] || [];
     const signatureToPuzzleId = new Map<string, string>(
-      puzzlesOfSameSize.map(existing => [
+      puzzlesOfSameSize.map((existing) => [
         buildColorInvariantSignature(existing.layout, existing.queens),
-        existing.id
+        existing.id,
       ])
-    )
-    const newlyAddedFamilyMembers: PuzzleStringFormat[] = []
+    );
+    const newlyAddedFamilyMembers: PuzzleStringFormat[] = [];
 
     if (this.verbose) {
-      console.log(
-        `[DEBUG] Generating ${variants.length} variants for baseId ${baseId}`
-      )
+      console.log(`[DEBUG] Generating ${variants.length} variants for baseId ${baseId}`);
     }
 
     for (let i = 0; i < variants.length; i++) {
-      const [variant, suffix] = variants[i]
-      const encoded = this.encodePuzzle(variant)
+      const [variant, suffix] = variants[i];
+      const encoded = this.encodePuzzle(variant);
       // Check for duplicates within the same size (color-invariant)
-      const encodedSignature = buildColorInvariantSignature(
-        encoded.layout,
-        encoded.queens
-      )
-      const duplicateId = signatureToPuzzleId.get(encodedSignature)
+      const encodedSignature = buildColorInvariantSignature(encoded.layout, encoded.queens);
+      const duplicateId = signatureToPuzzleId.get(encodedSignature);
       if (duplicateId) {
         if (this.verbose) {
-          console.log(`[DEBUG] Skipped variant ${suffix} (duplicate)`)
-          console.log(`  layout: ${encoded.layout}`)
-          console.log(`  queens: ${encoded.queens}`)
-          console.log(`  matched existing id: ${duplicateId}`)
+          console.log(`[DEBUG] Skipped variant ${suffix} (duplicate)`);
+          console.log(`  layout: ${encoded.layout}`);
+          console.log(`  queens: ${encoded.queens}`);
+          console.log(`  matched existing id: ${duplicateId}`);
         }
-        skippedCount++
-        continue
+        skippedCount++;
+        continue;
       }
 
       // Generate ID with descriptive suffix
-      const id = `${baseId}-${suffix}`
+      const id = `${baseId}-${suffix}`;
 
       // Create puzzle entry
       const puzzle: PuzzleStringFormat = {
         id,
         layout: encoded.layout,
         queens: encoded.queens,
-        name: name || undefined
-      }
+        name: name || undefined,
+      };
 
       if (!this.puzzles[sizeKey]) {
-        this.puzzles[sizeKey] = []
+        this.puzzles[sizeKey] = [];
       }
-      newlyAddedFamilyMembers.push(puzzle)
-      signatureToPuzzleId.set(encodedSignature, id)
+      newlyAddedFamilyMembers.push(puzzle);
+      signatureToPuzzleId.set(encodedSignature, id);
       if (this.verbose) {
-        console.log(`[DEBUG] Added puzzle ${id} to database`)
+        console.log(`[DEBUG] Added puzzle ${id} to database`);
       }
-      addedCount++
+      addedCount++;
     }
 
     if (this.verbose) {
-      console.log(
-        `[DEBUG] Variants added: ${addedCount}, skipped (duplicates): ${skippedCount}`
-      )
+      console.log(`[DEBUG] Variants added: ${addedCount}, skipped (duplicates): ${skippedCount}`);
     }
 
     if (addedCount > 0) {
-      this.puzzles[sizeKey] = this.insertNewFamilyByContrast(
-        sizeKey,
-        newlyAddedFamilyMembers
-      )
+      this.puzzles[sizeKey] = this.insertNewFamilyByContrast(sizeKey, newlyAddedFamilyMembers);
       // Save to file
-      this.save()
+      this.save();
       if (this.verbose) {
-        console.log(`Added ${addedCount} new puzzle variants to database`)
+        console.log(`Added ${addedCount} new puzzle variants to database`);
       }
-      return true
+      return true;
     } else {
       if (this.verbose) {
-        console.log('All variants already exist, no new puzzles added.')
+        console.log('All variants already exist, no new puzzles added.');
       }
-      return false
+      return false;
     }
   }
 
   private buildFamiliesFromPuzzleList(puzzles: PuzzleStringFormat[]): PuzzleFamily[] {
-    const familyOrder: string[] = []
-    const membersByFamily = new Map<string, PuzzleStringFormat[]>()
+    const familyOrder: string[] = [];
+    const membersByFamily = new Map<string, PuzzleStringFormat[]>();
 
     for (const puzzle of puzzles) {
-      const familyId = extractPuzzleFamilyBaseId(puzzle.id)
+      const familyId = extractPuzzleFamilyBaseId(puzzle.id);
       if (!familyId) {
-        continue
+        continue;
       }
       if (!membersByFamily.has(familyId)) {
-        membersByFamily.set(familyId, [])
-        familyOrder.push(familyId)
+        membersByFamily.set(familyId, []);
+        familyOrder.push(familyId);
       }
-      membersByFamily.get(familyId)!.push(puzzle)
+      membersByFamily.get(familyId)!.push(puzzle);
     }
 
-    const families: PuzzleFamily[] = []
+    const families: PuzzleFamily[] = [];
     for (const familyId of familyOrder) {
-      const members = membersByFamily.get(familyId) || []
-      const primary = members.find(member => member.id.endsWith('-0'))
+      const members = membersByFamily.get(familyId) || [];
+      const primary = members.find((member) => member.id.endsWith('-0'));
       if (!primary) {
-        continue
+        continue;
       }
       families.push({
         familyId,
         primary,
-        members
-      })
+        members,
+      });
     }
-    return families
+    return families;
   }
 
   private insertNewFamilyByContrast(
     sizeKey: string,
     newFamilyMembers: PuzzleStringFormat[]
   ): PuzzleStringFormat[] {
-    const existing = this.puzzles[sizeKey] || []
+    const existing = this.puzzles[sizeKey] || [];
     if (existing.length === 0) {
-      return newFamilyMembers
+      return newFamilyMembers;
     }
 
-    const primary = newFamilyMembers.find(member => member.id.endsWith('-0'))
+    const primary = newFamilyMembers.find((member) => member.id.endsWith('-0'));
     if (!primary) {
-      return [...existing, ...newFamilyMembers]
+      return [...existing, ...newFamilyMembers];
     }
 
-    const familyId = extractPuzzleFamilyBaseId(primary.id) || primary.id
+    const familyId = extractPuzzleFamilyBaseId(primary.id) || primary.id;
     const newFamily: PuzzleFamily = {
       familyId,
       primary,
-      members: newFamilyMembers
-    }
+      members: newFamilyMembers,
+    };
 
-    const existingFamilies = this.buildFamiliesFromPuzzleList(existing)
+    const existingFamilies = this.buildFamiliesFromPuzzleList(existing);
     if (existingFamilies.length === 0) {
-      return [...existing, ...newFamilyMembers]
+      return [...existing, ...newFamilyMembers];
     }
 
     const medians = calculateMedianAttributeDifferences(
-      existingFamilies.map(family => ratePuzzleAttributes(family.primary.layout))
-    )
-    const insertionIndex = pickBestInsertionIndexForNewFamily(
-      existingFamilies,
-      newFamily,
-      medians
-    )
+      existingFamilies.map((family) => ratePuzzleAttributes(family.primary.layout))
+    );
+    const insertionIndex = pickBestInsertionIndexForNewFamily(existingFamilies, newFamily, medians);
 
-    const newFamilyOrder = [...existingFamilies]
-    newFamilyOrder.splice(insertionIndex, 0, newFamily)
+    const newFamilyOrder = [...existingFamilies];
+    newFamilyOrder.splice(insertionIndex, 0, newFamily);
 
-    return newFamilyOrder.flatMap(family => family.members)
+    return newFamilyOrder.flatMap((family) => family.members);
   }
 
   /**
    * Get all puzzles
    */
   getAllPuzzles(): PuzzleStringFormat[] {
-    return Object.values(this.puzzles).flat()
+    return Object.values(this.puzzles).flat();
   }
 
   /**
@@ -448,12 +426,12 @@ export class PuzzleDatabase {
    */
   getPuzzle(id: string): PuzzleStringFormat | undefined {
     for (const sizeGroup of Object.values(this.puzzles)) {
-      const puzzle = sizeGroup.find(p => p.id === id)
+      const puzzle = sizeGroup.find((p) => p.id === id);
       if (puzzle) {
-        return puzzle
+        return puzzle;
       }
     }
-    return undefined
+    return undefined;
   }
 
   /**
@@ -461,140 +439,138 @@ export class PuzzleDatabase {
    * Returns true if deleted, false if not found
    */
   deletePuzzle(id: string): boolean {
-    let deleted = false
+    let deleted = false;
     for (const sizeGroup of Object.values(this.puzzles)) {
-      const index = sizeGroup.findIndex(p => p.id === id)
+      const index = sizeGroup.findIndex((p) => p.id === id);
       if (index !== -1) {
-        sizeGroup.splice(index, 1)
-        deleted = true
-        console.log(`Deleted puzzle ${id} from database`)
-        break // Found and deleted, no need to check other sizes
+        sizeGroup.splice(index, 1);
+        deleted = true;
+        console.log(`Deleted puzzle ${id} from database`);
+        break; // Found and deleted, no need to check other sizes
       }
     }
     if (!deleted) {
-      console.log(`Puzzle ${id} not found in database`)
-      return false
+      console.log(`Puzzle ${id} not found in database`);
+      return false;
     }
-    this.save()
-    return true
+    this.save();
+    return true;
   }
 
   /**
    * Get database statistics
    */
   getStats(): {
-    totalPuzzles: number
-    gridSizes: number[]
-    uniqueLayouts: number
-    dateRange?: { start: string; end: string }
+    totalPuzzles: number;
+    gridSizes: number[];
+    uniqueLayouts: number;
+    dateRange?: { start: string; end: string };
   } {
-    const totalPuzzles = this.getTotalPuzzleCount()
+    const totalPuzzles = this.getTotalPuzzleCount();
     if (totalPuzzles === 0) {
       return {
         totalPuzzles: 0,
         gridSizes: [],
-        uniqueLayouts: 0
-      }
+        uniqueLayouts: 0,
+      };
     }
 
-    const gridSizes = Object.keys(this.puzzles).map(key => {
-      const sizeMatch = key.match(/(\d+)x(\d+)/)
+    const gridSizes = Object.keys(this.puzzles).map((key) => {
+      const sizeMatch = key.match(/(\d+)x(\d+)/);
       if (sizeMatch) {
-        return parseInt(sizeMatch[1], 10)
+        return parseInt(sizeMatch[1], 10);
       }
-      return 0 // Should not happen if keys are consistent
-    })
-    const uniqueSizes = [...new Set(gridSizes)]
-    const uniqueLayouts = new Set(this.getAllPuzzles().map(p => p.layout)).size
+      return 0; // Should not happen if keys are consistent
+    });
+    const uniqueSizes = [...new Set(gridSizes)];
+    const uniqueLayouts = new Set(this.getAllPuzzles().map((p) => p.layout)).size;
 
     return {
       totalPuzzles: this.getTotalPuzzleCount(),
       gridSizes: uniqueSizes,
-      uniqueLayouts
-    }
+      uniqueLayouts,
+    };
   }
 
   /**
    * Export puzzle to separate file
    */
   exportPuzzle(id: string): void {
-    const puzzle = this.getPuzzle(id)
+    const puzzle = this.getPuzzle(id);
     if (!puzzle) {
-      console.log(`Puzzle ${id} not found in database`)
-      return
+      console.log(`Puzzle ${id} not found in database`);
+      return;
     }
 
     const exportData = {
       puzzle: puzzle,
       exportDate: new Date().toISOString(),
-      exportSource: this.filePath
-    }
+      exportSource: this.filePath,
+    };
 
-    const filename = `puzzle-${id}.json`
-    fs.writeFileSync(filename, JSON.stringify(exportData, null, 2))
-    console.log(`Exported puzzle ${id} to ${filename}`)
+    const filename = `puzzle-${id}.json`;
+    fs.writeFileSync(filename, JSON.stringify(exportData, null, 2));
+    console.log(`Exported puzzle ${id} to ${filename}`);
   }
 
   /**
    * List all puzzles with details
    */
   listPuzzles(): void {
-    console.log('\n=== Puzzle Database ===')
-    const totalPuzzles = this.getTotalPuzzleCount()
-    console.log(`Total puzzles: ${totalPuzzles}`)
+    console.log('\n=== Puzzle Database ===');
+    const totalPuzzles = this.getTotalPuzzleCount();
+    console.log(`Total puzzles: ${totalPuzzles}`);
 
     if (totalPuzzles === 0) {
-      console.log('No puzzles in database')
-      return
+      console.log('No puzzles in database');
+      return;
     }
 
-    console.log('\nPuzzles:')
+    console.log('\nPuzzles:');
     Object.entries(this.puzzles).forEach(([sizeKey, puzzles]) => {
-      const size = sizeKey.match(/(\d+)x(\d+)/)
+      const size = sizeKey.match(/(\d+)x(\d+)/);
       if (size) {
-        const gridSize = parseInt(size[1], 10)
-        console.log(`\nGrid Size: ${gridSize}x${gridSize}`)
+        const gridSize = parseInt(size[1], 10);
+        console.log(`\nGrid Size: ${gridSize}x${gridSize}`);
         puzzles.forEach((puzzle, index) => {
-          console.log(`${index + 1}. ${puzzle.id}`)
-          console.log(`   Layout: ${puzzle.layout}`)
-          console.log(`   Queens: ${puzzle.queens}`)
-          console.log('')
-        })
+          console.log(`${index + 1}. ${puzzle.id}`);
+          console.log(`   Layout: ${puzzle.layout}`);
+          console.log(`   Queens: ${puzzle.queens}`);
+          console.log('');
+        });
       }
-    })
+    });
   }
 
   /**
    * Get puzzle counts by size
    */
   getSizeCounts(): Record<string, number> {
-    const counts: Record<string, number> = {}
+    const counts: Record<string, number> = {};
     for (const [sizeKey, puzzles] of Object.entries(this.puzzles)) {
-      counts[sizeKey] = puzzles.length
+      counts[sizeKey] = puzzles.length;
     }
-    return counts
+    return counts;
   }
 
   /**
    * Display database statistics
    */
   showStats(): void {
-    const stats = this.getStats()
+    const stats = this.getStats();
 
     if (stats.totalPuzzles === 0) {
-      console.log('No puzzles in database for statistics')
-      return
+      console.log('No puzzles in database for statistics');
+      return;
     }
 
-    console.log('\n=== Database Statistics ===')
-    console.log(`Total puzzles: ${stats.totalPuzzles}`)
-    console.log(`Grid sizes: ${stats.gridSizes.join(', ')}`)
-    console.log(`Unique layouts: ${stats.uniqueLayouts}`)
+    console.log('\n=== Database Statistics ===');
+    console.log(`Total puzzles: ${stats.totalPuzzles}`);
+    console.log(`Grid sizes: ${stats.gridSizes.join(', ')}`);
+    console.log(`Unique layouts: ${stats.uniqueLayouts}`);
 
     if (stats.dateRange) {
-      console.log(
-        `Date range: ${stats.dateRange.start} to ${stats.dateRange.end}`
-      )
+      console.log(`Date range: ${stats.dateRange.start} to ${stats.dateRange.end}`);
     }
   }
 
@@ -605,39 +581,39 @@ export class PuzzleDatabase {
    */
   getAvailableSizes(): number[] {
     return Object.keys(this.puzzles)
-      .map(key => {
-        const sizeMatch = key.match(/(\d+)x(\d+)/)
-        return sizeMatch ? parseInt(sizeMatch[1], 10) : 0
+      .map((key) => {
+        const sizeMatch = key.match(/(\d+)x(\d+)/);
+        return sizeMatch ? parseInt(sizeMatch[1], 10) : 0;
       })
-      .filter(size => size > 0)
-      .sort((a, b) => a - b)
+      .filter((size) => size > 0)
+      .sort((a, b) => a - b);
   }
 
   /**
    * Get all puzzles for a specific grid size
    */
   getPuzzlesBySize(size: number): PuzzleStringFormat[] {
-    const sizeKey = `${size}x${size}`
-    return this.puzzles[sizeKey] || []
+    const sizeKey = `${size}x${size}`;
+    return this.puzzles[sizeKey] || [];
   }
 
   /**
    * Get a random puzzle for a specific grid size
    */
   getRandomPuzzleBySize(size: number): PuzzleStringFormat | undefined {
-    const puzzles = this.getPuzzlesBySize(size)
+    const puzzles = this.getPuzzlesBySize(size);
     if (puzzles.length === 0) {
-      return undefined
+      return undefined;
     }
-    const randomIndex = Math.floor(Math.random() * puzzles.length)
-    return puzzles[randomIndex]
+    const randomIndex = Math.floor(Math.random() * puzzles.length);
+    return puzzles[randomIndex];
   }
 
   /**
    * Get puzzle count for a specific grid size
    */
   getPuzzleCountBySize(size: number): number {
-    return this.getPuzzlesBySize(size).length
+    return this.getPuzzlesBySize(size).length;
   }
 
   /**
@@ -648,24 +624,24 @@ export class PuzzleDatabase {
    */
   getSizeWithLowestCount(validSizes: number[] = [4, 5, 6, 7, 8, 9]): number {
     if (validSizes.length === 0) {
-      return 8 // Default fallback
+      return 8; // Default fallback
     }
 
     // Get counts for all valid sizes
-    const sizeCounts = validSizes.map(size => ({
+    const sizeCounts = validSizes.map((size) => ({
       size,
-      count: this.getPuzzleCountBySize(size)
-    }))
+      count: this.getPuzzleCountBySize(size),
+    }));
 
     // Sort by count (ascending), then by size (ascending) for tie-breaking
     // This prefers smaller sizes when counts are equal, which are faster to generate
     sizeCounts.sort((a, b) => {
       if (a.count !== b.count) {
-        return a.count - b.count
+        return a.count - b.count;
       }
-      return a.size - b.size // Prefer smaller sizes when counts are equal (faster generation)
-    })
+      return a.size - b.size; // Prefer smaller sizes when counts are equal (faster generation)
+    });
 
-    return sizeCounts[0].size
+    return sizeCounts[0].size;
   }
 }

@@ -1,0 +1,28 @@
+{
+  "name": "honey-pot-ants",
+  "private": true,
+  "packageManager": "yarn@4.10.3",
+  "scripts": {
+    "prepare": "husky",
+    "lint": "sh -c 'yarn lint:frontend; f=$?; yarn lint:backend; b=$?; test $f -eq 0 -a $b -eq 0'",
+    "lint:frontend": "yarn --cwd frontend lint",
+    "lint:backend": "yarn --cwd backend lint",
+    "lint:fix": "lint-staged",
+    "format": "yarn format:frontend && yarn format:backend",
+    "format:frontend": "yarn --cwd frontend format",
+    "format:backend": "yarn --cwd backend format"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6"
+  },
+  "lint-staged": {
+    "frontend/src/**/*.{js,ts,vue}": [
+      "yarn --cwd frontend eslint --ext .js,.ts,.vue --ignore-path .gitignore --fix",
+      "yarn --cwd frontend prettier --write"
+    ],
+    "backend/**/*.ts": [
+      "yarn --cwd backend prettier --write"
+    ]
+  }
+}
