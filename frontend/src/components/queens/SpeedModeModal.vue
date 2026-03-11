@@ -1,35 +1,38 @@
 <template>
-  <Modal :is-visible="isVisible" @close="$emit('close')">
+  <Dialog
+    :visible="isVisible"
+    modal
+    class="w-[min(94vw,34rem)]"
+    header="Speed Mode ⚡"
+    @update:visible="!$event && $emit('close')"
+  >
     <div>
-      <h2 class="text-2xl font-bold text-yellow-400 mb-4">Speed Mode ⚡</h2>
       <p class="text-white mb-6">Race against the clock to complete as many puzzles as possible!</p>
 
       <!-- Timer Selection -->
       <div class="mb-6">
         <h3 class="text-lg font-semibold text-gray-300 mb-3">Timer Duration</h3>
         <div class="flex gap-3">
-          <button
+          <Button
             @click="selectedTimer = 120"
-            class="flex-1 py-3 px-4 rounded-lg transition-colors font-semibold"
+            class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px flex-1"
+            :label="'2 Minutes'"
             :class="
               selectedTimer === 120
-                ? 'bg-yellow-500 text-gray-900'
-                : 'bg-gray-700 text-white hover:bg-gray-600'
+                ? 'border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600'
+                : 'border-slate-700 bg-slate-800 text-slate-200 enabled:hover:bg-slate-700 enabled:hover:border-slate-600'
             "
-          >
-            2 Minutes
-          </button>
-          <button
+          />
+          <Button
             @click="selectedTimer = 300"
-            class="flex-1 py-3 px-4 rounded-lg transition-colors font-semibold"
+            class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px flex-1"
+            :label="'5 Minutes'"
             :class="
               selectedTimer === 300
-                ? 'bg-yellow-500 text-gray-900'
-                : 'bg-gray-700 text-white hover:bg-gray-600'
+                ? 'border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600'
+                : 'border-slate-700 bg-slate-800 text-slate-200 enabled:hover:bg-slate-700 enabled:hover:border-slate-600'
             "
-          >
-            5 Minutes
-          </button>
+          />
         </div>
       </div>
 
@@ -38,51 +41,49 @@
         <h3 class="text-lg font-semibold text-gray-300 mb-3">Puzzle Mode</h3>
         <div class="grid grid-cols-3 gap-2">
           <!-- Sequential Button -->
-          <button
+          <Button
             @click="selectedSize = null"
-            class="p-3 rounded-lg transition-colors text-sm font-semibold col-span-3"
+            class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px col-span-3"
+            :label="`Sequential (${sequentialText})`"
             :class="
               selectedSize === null
-                ? 'bg-yellow-500 text-gray-900'
-                : 'bg-gray-700 text-white hover:bg-gray-600'
+                ? 'border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600'
+                : 'border-slate-700 bg-slate-800 text-slate-200 enabled:hover:bg-slate-700 enabled:hover:border-slate-600'
             "
-          >
-            Sequential ({{ sequentialText }})
-          </button>
+          />
 
           <!-- Size Buttons -->
-          <button
+          <Button
             v-for="size in availableSizes"
             :key="size"
             @click="selectedSize = size"
-            class="p-3 rounded-lg transition-colors text-sm font-semibold"
+            class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px"
+            :label="size"
             :class="
               selectedSize === size
-                ? 'bg-yellow-500 text-gray-900'
-                : 'bg-gray-700 text-white hover:bg-gray-600'
+                ? 'border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600'
+                : 'border-slate-700 bg-slate-800 text-slate-200 enabled:hover:bg-slate-700 enabled:hover:border-slate-600'
             "
-          >
-            {{ size }}
-          </button>
+          />
         </div>
       </div>
 
       <!-- Start Button -->
-      <button
+      <Button
         @click="handleStart"
-        class="w-full py-3 px-6 bg-green-500 hover:bg-green-400 text-white font-semibold rounded-lg transition-colors duration-200"
-      >
-        Start Speed Mode
-      </button>
+        class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-teal-700 bg-teal-700 text-cyan-50 enabled:hover:bg-teal-600 enabled:hover:border-teal-600 w-full"
+        label="Start Speed Mode"
+      />
     </div>
-  </Modal>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
 import { useQueensStore } from '../../stores/queensStore';
 import { useSpeedModeStore } from '../../stores/speedModeStore';
-import Modal from '../shared/Modal.vue';
 
 const queensStore = useQueensStore();
 const speedModeStore = useSpeedModeStore();

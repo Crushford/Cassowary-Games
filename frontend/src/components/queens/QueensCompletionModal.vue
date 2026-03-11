@@ -1,5 +1,5 @@
 <template>
-  <Modal :is-visible="isVisible">
+  <Dialog :visible="isVisible" modal :closable="false" class="w-[min(92vw,28rem)]">
     <div>
       <h2 class="text-2xl font-bold text-green-400 mb-4">Puzzle Complete! 🎉</h2>
       <p class="text-white mb-4">Queens found: {{ queensStore.queenPositions.length }}</p>
@@ -25,20 +25,20 @@
         </div>
       </div>
 
-      <button
+      <Button
         @click="handleNextPuzzle"
-        class="w-full py-3 px-6 bg-green-500 hover:bg-green-400 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
-      >
-        New Puzzle
-      </button>
+        label="New Puzzle"
+        class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-teal-700 bg-teal-700 text-cyan-50 enabled:hover:bg-teal-600 enabled:hover:border-teal-600 w-full"
+      />
     </div>
-  </Modal>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
 import { watch } from 'vue';
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
 import { useQueensStore } from '../../stores/queensStore';
-import Modal from '../shared/Modal.vue';
 import { trackGameComplete } from '../../utils/analyticsEvents';
 
 const queensStore = useQueensStore();

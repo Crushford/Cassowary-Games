@@ -5,9 +5,11 @@ module.exports = {
     node: true,
     es2021: true,
   },
-  extends: ['plugin:vue/vue3-recommended', 'eslint:recommended', '@typescript-eslint/recommended', 'prettier', 'plugin:prettier/recommended', 'plugin:storybook/recommended'],
+  parser: 'vue-eslint-parser',
+  extends: ['plugin:vue/recommended', 'eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier', 'plugin:prettier/recommended', 'plugin:storybook/recommended'],
   parserOptions: {
     ecmaVersion: 2021,
+    sourceType: 'module',
     parser: '@typescript-eslint/parser',
   },
   plugins: ['@typescript-eslint', 'prettier'],

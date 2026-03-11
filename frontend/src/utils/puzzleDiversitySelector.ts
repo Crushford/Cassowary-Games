@@ -349,7 +349,8 @@ export function chooseRandomPuzzleThatIsMeaningfullyDifferent(
     ({ difference }) => difference > input.minimumDifference
   );
 
-  const pool = aboveThreshold.length > 0 ? aboveThreshold : chooseHighDifferenceFallbackPool(scoredCandidates);
+  const pool =
+    aboveThreshold.length > 0 ? aboveThreshold : chooseHighDifferenceFallbackPool(scoredCandidates);
   const picked = pickRandomItem(pool);
 
   return {

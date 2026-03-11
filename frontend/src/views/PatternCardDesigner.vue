@@ -8,7 +8,8 @@
     </div>
 
     <p class="text-sm text-gray-300 mb-4">
-      Build pattern cards by painting <span class="text-emerald-400 font-semibold">active (green)</span>,
+      Build pattern cards by painting
+      <span class="text-emerald-400 font-semibold">active (green)</span>,
       <span class="text-gray-300 font-semibold">other (grey)</span>, and
       <span class="text-yellow-300 font-semibold">flag outputs</span>. Default size is 5x5.
     </p>
@@ -18,7 +19,10 @@
         <div class="grid grid-cols-2 gap-2">
           <label class="text-sm">
             <div class="text-gray-300 mb-1">ID</div>
-            <input v-model="id" class="w-full px-2 py-1 rounded bg-gray-700 border border-gray-600" />
+            <input
+              v-model="id"
+              class="w-full px-2 py-1 rounded bg-gray-700 border border-gray-600"
+            />
           </label>
           <label class="text-sm">
             <div class="text-gray-300 mb-1">Cost</div>
@@ -72,10 +76,16 @@
         </div>
 
         <div class="flex gap-2">
-          <button class="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-sm" @click="clearFlags">
+          <button
+            class="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-sm"
+            @click="clearFlags"
+          >
             Clear Flags
           </button>
-          <button class="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-sm" @click="clearActive">
+          <button
+            class="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-sm"
+            @click="clearActive"
+          >
             Clear Active
           </button>
           <button class="px-3 py-1 rounded bg-red-700 hover:bg-red-600 text-sm" @click="resetAll">
@@ -87,11 +97,16 @@
       <div class="bg-gray-800 rounded-lg p-4">
         <div class="flex items-center justify-between mb-2">
           <div class="text-sm text-gray-300">Generated Code</div>
-          <button class="px-3 py-1 rounded bg-emerald-700 hover:bg-emerald-600 text-sm" @click="copyCode">
+          <button
+            class="px-3 py-1 rounded bg-emerald-700 hover:bg-emerald-600 text-sm"
+            @click="copyCode"
+          >
             Copy
           </button>
         </div>
-        <pre class="text-xs bg-gray-900 p-3 rounded overflow-auto max-h-[70svh]">{{ generatedCode }}</pre>
+        <pre class="text-xs bg-gray-900 p-3 rounded overflow-auto max-h-[70svh]">{{
+          generatedCode
+        }}</pre>
       </div>
     </div>
   </div>
@@ -183,7 +198,13 @@ const gridStyle = computed(() => ({
 }));
 
 const gridCells = computed(() => {
-  const cells: Array<{ key: string; row: number; col: number; hasFlag: boolean; cellClass: string }> = [];
+  const cells: Array<{
+    key: string;
+    row: number;
+    col: number;
+    hasFlag: boolean;
+    cellClass: string;
+  }> = [];
 
   for (let row = 0; row < size.value; row++) {
     for (let col = 0; col < size.value; col++) {

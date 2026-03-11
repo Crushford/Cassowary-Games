@@ -1,7 +1,7 @@
 // src/utils/colorPalette.ts
 import type { ColorName, ColorClasses } from '../types/types';
 
-// Define the main palette (10 colors)
+// Define the main palette (9 colors)
 export const COLOR_PALETTE: ColorName[] = [
   'red',
   'blue',
@@ -9,7 +9,6 @@ export const COLOR_PALETTE: ColorName[] = [
   'yellow',
   'purple',
   'pink',
-  'orange',
   'teal',
   'indigo',
   'amber',
@@ -23,7 +22,6 @@ export const COLOR_SYMBOLS: Record<ColorName | 'undefined', string> = {
   yellow: 'Y',
   purple: 'P',
   pink: 'K',
-  orange: 'O',
   teal: 'T',
   indigo: 'I',
   amber: 'B',
@@ -74,13 +72,6 @@ export const COLOR_CLASSES: Record<ColorName, ColorClasses> = {
     hoverBg: 'hover:bg-pink-500',
     hoverText: 'hover:text-pink-500',
   },
-  orange: {
-    bg: 'bg-orange-600',
-    text: 'text-orange-600',
-    border: 'border-orange-600',
-    hoverBg: 'hover:bg-orange-500',
-    hoverText: 'hover:text-orange-500',
-  },
   teal: {
     bg: 'bg-teal-600',
     text: 'text-teal-600',
@@ -112,7 +103,6 @@ export const COLOR_BG_HOVER_CLASSES: Record<ColorName, string> = {
   yellow: 'hover:brightness-110',
   purple: 'hover:brightness-110',
   pink: 'hover:brightness-110', // Note: using purple.png as fallback since pink.png not found
-  orange: 'hover:brightness-110',
   teal: 'hover:brightness-110',
   indigo: 'hover:brightness-110',
   amber: 'hover:brightness-110',
@@ -126,7 +116,6 @@ export const COLOR_IMAGE_URLS: Record<ColorName, string> = {
   yellow: '/assets/ant-nest-colors/yellow.png',
   purple: '/assets/ant-nest-colors/purple.png',
   pink: '/assets/ant-nest-colors/pink.png',
-  orange: '/assets/ant-nest-colors/orange.png',
   teal: '/assets/ant-nest-colors/teal.png',
   indigo: '/assets/ant-nest-colors/indigo.png',
   amber: '/assets/ant-nest-colors/amber.png',
@@ -141,7 +130,7 @@ export const COLOR_BG_IMAGES: Record<ColorName, string> = Object.fromEntries(
 ) as Record<ColorName, string>;
 
 // Get a subset of the main palette with a specific size
-export function getColorPalette(size = 10): ColorName[] {
+export function getColorPalette(size = 9): ColorName[] {
   if (size > COLOR_PALETTE.length) {
     console.warn(
       `Requested palette size ${size} exceeds available colors (${COLOR_PALETTE.length})`

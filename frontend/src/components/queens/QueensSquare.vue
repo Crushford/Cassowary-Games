@@ -31,10 +31,7 @@
       </span>
       <!-- Show player marks (flag or queen) -->
       <div class="relative flex items-center justify-center">
-        <span
-          v-if="shouldShowFlag()"
-          :class="[getEmojiSizeClass(), getFlagAnimationClass()]"
-        >
+        <span v-if="shouldShowFlag()" :class="[getEmojiSizeClass(), getFlagAnimationClass()]">
           🚧
         </span>
         <span v-else-if="shouldShowQueen()" :class="getEmojiSizeClass()">👑</span>
@@ -118,7 +115,6 @@ const DARK_PASTEL_COLORS: Record<ColorName, { bg: string; hover: string }> = {
   yellow: { bg: 'bg-[#FDE047]', hover: 'hover:bg-[#FACC15]' },
   purple: { bg: 'bg-[#7E22CE]', hover: 'hover:bg-[#9333EA]' },
   pink: { bg: 'bg-[#EC4899]', hover: 'hover:bg-[#F472B6]' },
-  orange: { bg: 'bg-[#C2410C]', hover: 'hover:bg-[#EA580C]' },
   teal: { bg: 'bg-[#0891B2]', hover: 'hover:bg-[#06B6D4]' },
   indigo: { bg: 'bg-[#312E81]', hover: 'hover:bg-[#4338CA]' },
   amber: { bg: 'bg-[#92400E]', hover: 'hover:bg-[#B45309]' },
@@ -237,10 +233,12 @@ export default {
     transform: scale(0.72);
     opacity: 0.7;
   }
+
   65% {
     transform: scale(1.15);
     opacity: 1;
   }
+
   100% {
     transform: scale(1);
   }
@@ -251,6 +249,7 @@ export default {
     transform: scale(0.45);
     opacity: 0.45;
   }
+
   100% {
     transform: scale(1.15);
     opacity: 0;
@@ -261,6 +260,7 @@ export default {
   0% {
     box-shadow: inset 0 0 0 9999px rgba(45, 212, 191, 0.16);
   }
+
   100% {
     box-shadow: inset 0 0 0 9999px rgba(45, 212, 191, 0);
   }
@@ -270,6 +270,7 @@ export default {
   0% {
     box-shadow: inset 0 0 0 9999px rgba(125, 211, 252, 0.14);
   }
+
   100% {
     box-shadow: inset 0 0 0 9999px rgba(125, 211, 252, 0);
   }

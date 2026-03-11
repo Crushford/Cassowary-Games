@@ -139,7 +139,6 @@ export type ColorName =
   | 'yellow'
   | 'purple'
   | 'pink'
-  | 'orange'
   | 'teal'
   | 'indigo'
   | 'amber';

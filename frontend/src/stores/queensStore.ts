@@ -190,7 +190,6 @@ function getSpeedModeRecord(
   return 0;
 }
 
-
 function getAllSpeedModeSizeRecords(timerDuration: number): Record<string, number> {
   try {
     const recordsKey =
@@ -2246,9 +2245,7 @@ export const useQueensStore = defineStore('queens', {
       // Save immediately
       if (this.currentPuzzleId !== null && !this.isComplete) {
         const startTime =
-          this.currentMode === 'speed'
-            ? useSpeedModeStore().puzzleStartTime
-            : this.puzzleStartTime;
+          this.currentMode === 'speed' ? useSpeedModeStore().puzzleStartTime : this.puzzleStartTime;
         savePuzzleProgress(this.currentPuzzleId, this.playerMarks, startTime);
       }
 

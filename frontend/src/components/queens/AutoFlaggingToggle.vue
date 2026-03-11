@@ -1,32 +1,29 @@
 <template>
   <div
     id="auto-flagging-toggle"
-    class="flex items-center justify-center bg-slate-800 p-2 rounded-lg relative z-50"
+    class="rounded-xl border border-slate-700 bg-slate-900/90 flex items-center justify-center p-2 rounded-lg z-50"
   >
-    <!-- Toggle selector -->
-    <div class="flex items-center bg-slate-700 rounded-lg p-1 gap-1">
-      <button
-        v-for="option in options"
-        :key="String(option.value)"
-        :id="`auto-flagging-${option.value}`"
-        class="px-4 py-2 rounded-md transition-all duration-200 flex items-center space-x-2 focus:outline-none min-w-[80px] text-sm font-semibold"
-        :class="[
-          queensStore.uiState.autoFlagging === option.value
-            ? 'bg-blue-600 text-white shadow-lg'
-            : 'bg-transparent text-slate-300 hover:bg-slate-600',
-        ]"
-        @click="selectOption(option.value)"
-        :aria-pressed="queensStore.uiState.autoFlagging === option.value"
-        :aria-label="`${option.label}: ${option.description}`"
-      >
-        <span class="text-lg" :aria-hidden="true">{{ option.icon }}</span>
-        <span>{{ option.label }}</span>
-      </button>
-    </div>
+    <SelectButton
+      v-model="autoFlagging"
+      :options="options"
+      option-label="label"
+      option-value="value"
+      class=""
+      aria-label="Auto-flagging selector"
+    >
+      <template #option="slotProps">
+        <span class="inline-flex items-center gap-1 text-sm font-semibold">
+          <span class="text-base" :aria-hidden="true">{{ slotProps.option.icon }}</span>
+          <span>{{ slotProps.option.label }}</span>
+        </span>
+      </template>
+    </SelectButton>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+import SelectButton from 'primevue/selectbutton';
 import { useQueensStore } from '../../stores/queensStore';
 
 const queensStore = useQueensStore();
@@ -49,6 +46,11 @@ const options = [
 function selectOption(value: boolean) {
   queensStore.setAutoFlagging(value);
 }
+
+const autoFlagging = computed({
+  get: () => queensStore.uiState.autoFlagging,
+  set: (value) => selectOption(Boolean(value)),
+});
 </script>
 
 <script lang="ts">

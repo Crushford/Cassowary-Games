@@ -1,7 +1,7 @@
 <template>
   <!-- QueensGame -->
   <div
-    class="w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden h-dvh"
+    class="w-full max-w-[480px] mx-auto bg-slate-950 text-slate-100 [background-image:radial-gradient(120%_120%_at_50%_-15%,#1a2740_0%,#0d1117_55%)] flex flex-col overflow-hidden h-dvh"
   >
     <!-- Puzzle Completion Modal -->
     <QueensCompletionModal v-if="!queensStore.isSpeedMode" :is-visible="queensStore.isComplete" />
@@ -79,31 +79,34 @@
       <QueensToolSelector :is-disabled="isModalOpen" />
 
       <!-- Action Buttons -->
-      <div class="flex gap-2 justify-center">
+      <div
+        class="rounded-2xl border border-slate-700 bg-slate-900/90 bg-[linear-gradient(180deg,rgba(21,28,40,0.95)_0%,rgba(14,20,32,0.95)_100%)] p-2 flex gap-2 justify-center"
+      >
         <!-- Undo Button -->
-        <button
-          class="px-4 py-2 text-white font-semibold text-sm rounded-lg transition-colors duration-200 bg-gray-600 hover:bg-gray-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        <Button
+          label="Undo"
+          unstyled
+          class="h-9 rounded-xl border !min-w-0 px-2.5 !py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600"
           :disabled="queensStore.moveHistory.length === 0"
           @click="handleUndo"
-        >
-          Undo
-        </button>
+          aria-label="Undo last move"
+        />
 
         <!-- Clear Button -->
-        <button
-          class="px-4 py-2 text-white font-semibold text-sm rounded-lg transition-colors duration-200 bg-red-600 hover:bg-red-500 cursor-pointer"
+        <Button
+          label="Clear"
+          unstyled
+          class="h-9 rounded-xl border !min-w-0 px-2.5 !py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-red-800 bg-red-900 text-red-100 enabled:hover:bg-red-800 enabled:hover:border-red-700"
           @click="handleClear"
-        >
-          Clear
-        </button>
+          aria-label="Clear all marks from the board"
+        />
 
         <!-- New Puzzle Button -->
-        <button
-          class="px-4 py-2 text-white font-semibold text-sm rounded-lg transition-colors duration-200 bg-blue-600 hover:bg-blue-700 cursor-pointer"
+        <Button
+          label="Main Menu"
+          class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-slate-700 bg-slate-800 text-slate-200 enabled:hover:bg-slate-700 enabled:hover:border-slate-600"
           @click="handleNewPuzzle"
-        >
-          Main Menu
-        </button>
+        />
       </div>
     </div>
   </div>
@@ -119,6 +122,7 @@ import {
   computed,
   nextTick,
 } from 'vue';
+import Button from 'primevue/button';
 import { useRoute, useRouter } from 'vue-router';
 import { useQueensStore, type TutorialStep } from '../stores/queensStore';
 import { useSpeedModeStore } from '../stores/speedModeStore';

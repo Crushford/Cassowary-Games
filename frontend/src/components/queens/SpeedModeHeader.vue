@@ -4,12 +4,8 @@
       <span class="text-yellow-400 font-semibold">⚡ Speed Mode</span>
     </template>
     <template #stats>
-      <span class="text-yellow-200 text-sm">
-        Completed: {{ speedModeStore.completedCount }}
-      </span>
-      <span class="text-yellow-300 font-bold">{{
-        speedModeStore.getFormattedTimeRemaining
-      }}</span>
+      <span class="text-yellow-200 text-sm"> Completed: {{ speedModeStore.completedCount }} </span>
+      <span class="text-yellow-300 font-bold">{{ speedModeStore.getFormattedTimeRemaining }}</span>
     </template>
     <template #actions>
       <button

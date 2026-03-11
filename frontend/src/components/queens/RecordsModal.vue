@@ -1,8 +1,12 @@
 <template>
-  <Modal :is-visible="isVisible" @close="$emit('close')">
+  <Dialog
+    :visible="isVisible"
+    modal
+    class="w-[min(94vw,34rem)]"
+    header="Records 🏆"
+    @update:visible="!$event && $emit('close')"
+  >
     <div>
-      <h2 class="text-2xl font-bold text-yellow-400 mb-6">Records 🏆</h2>
-
       <!-- 2-Minute Records -->
       <div class="mb-6">
         <h3 class="text-lg font-semibold text-gray-300 mb-3">2-Minute</h3>
@@ -83,27 +87,26 @@
       </div>
 
       <div class="flex gap-3 justify-between">
-        <button
+        <Button
           @click="handleResetRecords"
-          class="px-2 py-1 text-xs bg-red-600 hover:bg-red-500 text-white font-semibold rounded transition-colors duration-200"
-        >
-          Reset Records
-        </button>
-        <button
+          class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-red-800 bg-red-900 text-red-100 enabled:hover:bg-red-800 enabled:hover:border-red-700"
+          label="Reset Records"
+        />
+        <Button
           @click="$emit('close')"
-          class="px-2 py-1 text-xs bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-semibold rounded transition-colors duration-200"
-        >
-          Close
-        </button>
+          class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600"
+          label="Close"
+        />
       </div>
     </div>
-  </Modal>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
 import { useQueensStore } from '../../stores/queensStore';
-import Modal from '../shared/Modal.vue';
 
 defineProps<{
   isVisible: boolean;

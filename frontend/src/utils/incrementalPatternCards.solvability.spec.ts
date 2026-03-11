@@ -20,7 +20,10 @@ function loadFiveByFivePuzzles(): PuzzleStringFormat[] {
   return data['5x5'].filter((puzzle) => puzzle.id.endsWith('-0'));
 }
 
-function parsePuzzleGrid(puzzle: PuzzleStringFormat): { grid: GridSquare[][]; solutionQueens: Pos[] } {
+function parsePuzzleGrid(puzzle: PuzzleStringFormat): {
+  grid: GridSquare[][];
+  solutionQueens: Pos[];
+} {
   const size = Math.sqrt(puzzle.layout.length);
   if (!Number.isInteger(size)) {
     throw new Error(`Invalid puzzle layout length for ${puzzle.id}`);

@@ -116,7 +116,7 @@ function main() {
     if (verbose) {
       generateArgs.push('--verbose');
     }
-    
+
     const child = spawn('tsx', ['generate.ts', ...generateArgs], {
       stdio: 'inherit',
       cwd: __dirname,

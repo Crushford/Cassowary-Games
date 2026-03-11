@@ -1,5 +1,11 @@
 <template>
-  <Modal :is-visible="isVisible" @close="handleClose">
+  <Dialog
+    :visible="isVisible"
+    modal
+    :closable="false"
+    class="w-[min(94vw,34rem)]"
+    @update:visible="!$event && handleClose()"
+  >
     <div>
       <h2 v-if="speedRoundHeading" class="text-2xl font-bold text-yellow-400 mb-4">
         {{ speedRoundHeading }}
@@ -67,29 +73,28 @@
       </div>
 
       <div class="flex gap-3">
-        <button
+        <Button
           @click="handleRetry"
-          class="flex-1 py-3 px-6 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors duration-200"
-        >
-          Retry
-        </button>
-        <button
+          class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-blue-800 bg-blue-700 text-blue-100 enabled:hover:bg-blue-600 enabled:hover:border-blue-700 flex-1"
+          label="Retry"
+        />
+        <Button
           @click="handleClose"
-          class="flex-1 py-3 px-6 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
-        >
-          Back to Levels
-        </button>
+          class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600 flex-1"
+          label="Back to Levels"
+        />
       </div>
     </div>
-  </Modal>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
 import { computed, watch } from 'vue';
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
 import { useRouter } from 'vue-router';
 import { useQueensStore } from '../../stores/queensStore';
 import { useSpeedModeStore } from '../../stores/speedModeStore';
-import Modal from '../shared/Modal.vue';
 import { trackGameComplete } from '../../utils/analyticsEvents';
 
 const router = useRouter();

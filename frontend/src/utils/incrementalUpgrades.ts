@@ -9,7 +9,7 @@ export type OneOffUpgradeId =
 export const BASE_TIME_SECONDS = 300;
 export const MIN_TIME_SECONDS = 15;
 
-export const RISK_SCORE_FACTOR = 1.5;
+export const RISK_SCORE_FACTOR = 3;
 export const RISK_BASE_COST = 90;
 export const RISK_COST_STEP = 20;
 
@@ -25,10 +25,11 @@ export const AUTO_QUEEN_ROW_COST = 400;
 export const AUTO_QUEEN_COLUMN_COST = 400;
 export const SIZE_UP_COST = 5000;
 
-export const ONE_OFF_UPGRADE_IDS: OneOffUpgradeId[] = [
-  'auto-flag',
-  'auto-next-puzzle',
-];
+export const TIMER_URGENT_SECONDS = 20;
+export const TIMER_WARNING_SECONDS = 60;
+
+// 'size-up' and 'auto-queen-*' are handled via dedicated purchase flows, not rolled as random upgrades
+export const ONE_OFF_UPGRADE_IDS: OneOffUpgradeId[] = ['auto-flag', 'auto-next-puzzle'];
 
 export function getOneOffUpgradeCost(id: OneOffUpgradeId): number {
   switch (id) {
