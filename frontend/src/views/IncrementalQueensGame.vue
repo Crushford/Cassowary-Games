@@ -21,21 +21,18 @@
         class="rounded-xl border border-slate-700 bg-slate-900/90 p-3 grid grid-cols-[1fr_auto] gap-3 items-center">
         <div>
           <h1 class="text-base font-bold text-cyan-300 leading-none">Incremental Queens</h1>
-          <div class="text-[11px] mt-1 text-slate-400 uppercase tracking-[0.08em]">
-            Board {{ incrementalStore.currentPuzzleSize }}x{{ incrementalStore.currentPuzzleSize }}
-          </div>
         </div>
         <div class="flex items-center gap-2 justify-self-end">
           <Tag
             class="rounded-full border border-sky-500/70 bg-slate-900/95 px-3 py-1.5 text-xs font-semibold leading-none text-sky-300"
             :value="`Bank ${incrementalStore.runBank}`" />
           <div v-if="incrementalStore.runStatus === 'playing'"
-            class="rounded-full border border-slate-600 bg-slate-900/95 px-3 py-1.5 text-xs font-semibold leading-none text-slate-200 tabular-nums text-base font-bold"
+            class="rounded-full border border-slate-500 bg-slate-900/95 px-3.5 py-1.5 text-slate-100 tabular-nums text-lg font-extrabold leading-none tracking-wide"
             :class="timerClass" aria-live="off">
             {{ incrementalStore.formattedTimeRemaining }}
           </div>
           <Button type="button" label="Give Up"
-            class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px !border-red-800 !bg-red-900 !text-red-100 enabled:hover:!bg-red-800 enabled:hover:!border-red-700"
+            class="rounded-lg border !p-1 text-[11px] font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px !border-red-800 !bg-red-900 !text-red-100 enabled:hover:!bg-red-800 enabled:hover:!border-red-700"
             @click="showGiveUpConfirm = true" aria-label="Give up current run and return to Queens menu" />
         </div>
       </div>
@@ -115,7 +112,7 @@
 
     <div v-if="incrementalStore.runStatus !== 'idle'" class="flex-none p-3 space-y-2">
       <div
-        class="justify-around rounded-2xl border border-slate-700 bg-slate-900/90 bg-[linear-gradient(180deg,rgba(21,28,40,0.95)_0%,rgba(14,20,32,0.95)_100%)] p-2 flex items-center gap-2">
+        class="justify-around rounded-2xl border border-slate-700 bg-slate-900/90 bg-gradient-to-b from-slate-900/95 to-slate-950/95 p-2 flex items-center gap-2">
         <QueensToolSelector :is-disabled="!isBoardInteractive" :hide-auto-mode="false" :show-auto-flag-toggle="false"
           :embedded="true" />
 
@@ -128,22 +125,21 @@
           :disabled="!isBoardInteractive" @click="queensStore.clearAll" aria-label="Clear all marks from the board" />
       </div>
       <div
-        class="rounded-2xl border border-slate-700 bg-slate-900/90 bg-[linear-gradient(180deg,rgba(21,28,40,0.95)_0%,rgba(14,20,32,0.95)_100%)] p-2 grid grid-cols-3 gap-2">
+        class="rounded-2xl border border-slate-700 bg-slate-900/90 bg-gradient-to-b from-slate-900/95 to-slate-950/95 p-2 flex items-center gap-2">
         <Button type="button" label="Shop"
-          class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px !border-blue-800 !bg-blue-700 !text-blue-100 enabled:hover:!bg-blue-600 enabled:hover:!border-blue-700"
-          :disabled="incrementalStore.runStatus !== 'upgrade-select'" @click="showShopModal = true" />
-        <Button type="button" label="Next Puzzle"
-          class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px !border-teal-700 !bg-teal-700 !text-cyan-50 enabled:hover:!bg-teal-600 enabled:hover:!border-teal-600"
-          :disabled="!incrementalStore.canStartNextPuzzle" @click="incrementalStore.skipUpgradeSelection"
-          aria-label="Load the next puzzle" />
+          class="flex-1 min-w-0 rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px !border-blue-800 !bg-blue-700 !text-blue-100 enabled:hover:!bg-blue-600 enabled:hover:!border-blue-700"
+          :disabled="incrementalStore.runStatus === 'game-over'" @click="showShopModal = true" />
         <Button v-if="incrementalStore.currentPuzzleSize < 9" type="button"
           :label="`Next Level (${incrementalStore.sizeUpGoalCost})`"
-          class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px"
+          class="flex-1 min-w-0 rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px"
           :class="incrementalStore.canBuySizeUpGoal
             ? '!border-amber-700 !bg-amber-800 !text-amber-100 enabled:hover:!bg-amber-700 enabled:hover:!border-amber-600'
             : '!border-slate-700 !bg-slate-800 !text-slate-300 enabled:hover:!bg-slate-700 enabled:hover:!border-slate-600'
             " :disabled="!incrementalStore.canBuySizeUpGoal" @click="showNextLevelConfirm = true"
           aria-label="Advance to next board size and fully reset progression" />
+        <Button v-if="showNextPuzzleButton" type="button" label="Next Puzzle"
+          class="flex-1 min-w-0 rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px !border-teal-700 !bg-teal-700 !text-cyan-50 enabled:hover:!bg-teal-600 enabled:hover:!border-teal-600"
+          :disabled="!canUseNextPuzzleButton" @click="handleNextPuzzle" aria-label="Load the next puzzle" />
       </div>
     </div>
 
@@ -300,7 +296,7 @@
             <span>Auto Flag</span>
             <span class="font-bold">{{
               incrementalStore.autoFlagPurchased ? 'Owned' : 'Not Owned'
-            }}</span>
+              }}</span>
           </div>
           <div class="flex justify-between">
             <span>Pattern Automations</span>
@@ -363,6 +359,23 @@ const hasAnyIncrementalAutomation = computed(() => {
     incrementalStore.autoQueenByColumnPurchased ||
     incrementalStore.ownedPatternCardIds.length > 0
   );
+});
+
+const canSkipPuzzleEarly = computed(() => {
+  return (
+    incrementalStore.runStatus === 'playing' &&
+    !incrementalStore.isLoadingPuzzle &&
+    !incrementalStore.isAutomationInProgress &&
+    incrementalStore.runBank >= incrementalStore.sizeUpGoalCost
+  );
+});
+
+const showNextPuzzleButton = computed(() => {
+  return incrementalStore.runStatus === 'upgrade-select' || canSkipPuzzleEarly.value;
+});
+
+const canUseNextPuzzleButton = computed(() => {
+  return incrementalStore.canStartNextPuzzle || canSkipPuzzleEarly.value;
 });
 
 const rootAriaDescribedBy = computed(() => {
@@ -539,6 +552,17 @@ async function handleSaveCustomPatternCard(payload: {
 }) {
   await incrementalStore.createCustomPatternCard(payload);
   showPatternDesigner.value = false;
+}
+
+async function handleNextPuzzle() {
+  if (incrementalStore.runStatus === 'upgrade-select') {
+    await incrementalStore.skipUpgradeSelection();
+    return;
+  }
+  if (!canSkipPuzzleEarly.value) {
+    return;
+  }
+  await incrementalStore.startNextPuzzle();
 }
 
 function handleExit() {

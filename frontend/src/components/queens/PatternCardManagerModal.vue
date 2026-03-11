@@ -29,8 +29,8 @@
                 class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px mt-1"
                 :class="
                   upgrade.canBuy
-                    ? 'rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px-accent'
-                    : 'rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px-subtle opacity-60 cursor-not-allowed'
+                    ? 'border-blue-800 bg-blue-700 text-blue-100 enabled:hover:bg-blue-600 enabled:hover:border-blue-700'
+                    : 'border-slate-700 bg-slate-800 text-slate-300 opacity-60 cursor-not-allowed'
                 "
                 :disabled="!upgrade.canBuy"
                 @click="incrementalStore.buyAutomationUpgrade(upgrade.id)"
@@ -87,8 +87,8 @@
                 class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px mt-1"
                 :class="
                   incrementalStore.canAffordPatternCard(card.id)
-                    ? 'rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px-accent'
-                    : 'rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px-subtle opacity-60 cursor-not-allowed'
+                    ? 'border-blue-800 bg-blue-700 text-blue-100 enabled:hover:bg-blue-600 enabled:hover:border-blue-700'
+                    : 'border-slate-700 bg-slate-800 text-slate-300 opacity-60 cursor-not-allowed'
                 "
                 :disabled="!incrementalStore.canAffordPatternCard(card.id)"
                 @click="incrementalStore.buyPatternCard(card.id)"

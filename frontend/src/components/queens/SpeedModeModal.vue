@@ -19,8 +19,8 @@
             :label="'2 Minutes'"
             :class="
               selectedTimer === 120
-                ? 'rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px-warning'
-                : 'rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px-subtle'
+                ? 'border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600'
+                : 'border-slate-700 bg-slate-800 text-slate-200 enabled:hover:bg-slate-700 enabled:hover:border-slate-600'
             "
           />
           <Button
@@ -29,8 +29,8 @@
             :label="'5 Minutes'"
             :class="
               selectedTimer === 300
-                ? 'rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px-warning'
-                : 'rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px-subtle'
+                ? 'border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600'
+                : 'border-slate-700 bg-slate-800 text-slate-200 enabled:hover:bg-slate-700 enabled:hover:border-slate-600'
             "
           />
         </div>
@@ -47,8 +47,8 @@
             :label="`Sequential (${sequentialText})`"
             :class="
               selectedSize === null
-                ? 'rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px-warning'
-                : 'rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px-subtle'
+                ? 'border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600'
+                : 'border-slate-700 bg-slate-800 text-slate-200 enabled:hover:bg-slate-700 enabled:hover:border-slate-600'
             "
           />
 
@@ -61,8 +61,8 @@
             :label="size"
             :class="
               selectedSize === size
-                ? 'rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px-warning'
-                : 'rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px-subtle'
+                ? 'border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600'
+                : 'border-slate-700 bg-slate-800 text-slate-200 enabled:hover:bg-slate-700 enabled:hover:border-slate-600'
             "
           />
         </div>
