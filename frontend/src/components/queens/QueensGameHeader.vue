@@ -2,7 +2,7 @@
   <!-- Standard mode: minimal top bar with optional timer -->
   <div
     v-if="queensStore.currentMode === 'standard'"
-    class="flex items-center justify-between w-full"
+    class="rounded-xl border border-slate-700 bg-slate-900/90 px-3 py-2 flex items-center justify-between w-full"
   >
     <!-- Left: puzzle title + size -->
     <div class="flex items-center space-x-4">
@@ -45,18 +45,16 @@
       <span class="text-yellow-300 font-bold">{{ speedModeStore.getFormattedTimeRemaining }}</span>
     </template>
     <template #actions>
-      <button
+      <Button
         @click="handleSpeedEndRound"
-        class="flex-1 p-1 bg-red-600 hover:bg-red-500 text-white font-semibold text-sm rounded-lg transition-colors duration-200"
-      >
-        End Round
-      </button>
-      <button
+        class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-red-800 bg-red-900 text-red-100 enabled:hover:bg-red-800 enabled:hover:border-red-700 flex-1"
+        label="End Round"
+      />
+      <Button
         @click="handleSpeedRestart"
-        class="flex-1 p-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm rounded-lg transition-colors duration-200"
-      >
-        Restart
-      </button>
+        class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-blue-800 bg-blue-700 text-blue-100 enabled:hover:bg-blue-600 enabled:hover:border-blue-700 flex-1"
+        label="Restart"
+      />
     </template>
   </GameModeHeader>
 
@@ -71,24 +69,23 @@
       </span>
     </template>
     <template #actions>
-      <button
+      <Button
         @click="handleRotateEnd"
-        class="flex-1 p-1 bg-red-600 hover:bg-red-500 text-white font-semibold text-sm rounded-lg transition-colors duration-200"
-      >
-        Exit
-      </button>
-      <button
+        class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-red-800 bg-red-900 text-red-100 enabled:hover:bg-red-800 enabled:hover:border-red-700 flex-1"
+        label="Exit"
+      />
+      <Button
         @click="queensStore.startNextPuzzle()"
-        class="flex-1 p-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm rounded-lg transition-colors duration-200"
-      >
-        Next Puzzle
-      </button>
+        class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-blue-800 bg-blue-700 text-blue-100 enabled:hover:bg-blue-600 enabled:hover:border-blue-700 flex-1"
+        label="Next Puzzle"
+      />
     </template>
   </GameModeHeader>
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import Button from 'primevue/button';
 import { useRoute, useRouter } from 'vue-router';
 import { useQueensStore } from '../../stores/queensStore';
 import { useSpeedModeStore } from '../../stores/speedModeStore';

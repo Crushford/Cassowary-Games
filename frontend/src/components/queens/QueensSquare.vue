@@ -1,20 +1,32 @@
 <template>
-  <button type="button" role="gridcell" class="h-full w-full relative transition-colors" :class="[
-    backgroundColorClass,
-    hoverClass,
-    {
-      'ring-4 ring-yellow-400 ring-offset-2 ring-offset-gray-800 animate-pulse': isTutorialTarget,
-      'auto-flag-tint-blocked': isAutoFlagAnimating && autoFlagAnimationSource === 'blocked',
-      'auto-flag-tint-pattern': isAutoFlagAnimating && autoFlagAnimationSource === 'pattern',
-    },
-  ]" @click="handleClick" :aria-label="ariaLabel"
-    :aria-describedby="isTutorialTarget ? 'tutorial-instruction' : undefined" :aria-rowindex="rowIndex + 1"
-    :aria-colindex="colIndex + 1" :data-row-index="rowIndex" :data-col-index="colIndex">
+  <button
+    type="button"
+    role="gridcell"
+    class="h-full w-full relative transition-colors"
+    :class="[
+      backgroundColorClass,
+      hoverClass,
+      {
+        'ring-4 ring-yellow-400 ring-offset-2 ring-offset-gray-800 animate-pulse': isTutorialTarget,
+        'auto-flag-tint-blocked': isAutoFlagAnimating && autoFlagAnimationSource === 'blocked',
+        'auto-flag-tint-pattern': isAutoFlagAnimating && autoFlagAnimationSource === 'pattern',
+      },
+    ]"
+    @click="handleClick"
+    :aria-label="ariaLabel"
+    :aria-describedby="isTutorialTarget ? 'tutorial-instruction' : undefined"
+    :aria-rowindex="rowIndex + 1"
+    :aria-colindex="colIndex + 1"
+    :data-row-index="rowIndex"
+    :data-col-index="colIndex"
+  >
     <!-- Content overlay -->
     <div class="relative z-10 flex items-center justify-center w-full h-full">
       <!-- Error feedback (red X) -->
-      <span v-if="showErrorFeedback"
-        class="text-6xl absolute z-30 animate-bounce [text-shadow:0_0_10px_rgba(239,68,68,0.8)]">
+      <span
+        v-if="showErrorFeedback"
+        class="text-6xl absolute z-30 animate-bounce [text-shadow:0_0_10px_rgba(239,68,68,0.8)]"
+      >
         ❌
       </span>
       <!-- Show player marks (flag or queen) -->
@@ -25,8 +37,11 @@
         <span v-else-if="shouldShowQueen()" :class="getEmojiSizeClass()">👑</span>
         <span v-if="showAutoFlagRipple" :class="getRippleAnimationClass()" />
         <!-- Red X overlay for flags or queens in error state -->
-        <span v-if="(shouldShowFlag() || shouldShowQueen()) && isInError"
-          class="absolute z-40 [text-shadow:0_0_8px_rgba(239,68,68,0.9)]" :class="getEmojiSizeClass()">
+        <span
+          v-if="(shouldShowFlag() || shouldShowQueen()) && isInError"
+          class="absolute z-40 [text-shadow:0_0_8px_rgba(239,68,68,0.9)]"
+          :class="getEmojiSizeClass()"
+        >
           ❌
         </span>
       </div>
@@ -262,7 +277,6 @@ export default {
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .auto-flag-pop,
   .auto-flag-ripple,
   .auto-flag-tint-pattern,
