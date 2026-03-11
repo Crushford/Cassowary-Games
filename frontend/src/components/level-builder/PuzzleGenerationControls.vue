@@ -6,59 +6,59 @@
     <div class="flex items-center gap-4 text-white">
       <span>Grid Size:</span>
       <input
-        type="number"
         v-model="gridSize"
+        type="number"
         min="4"
         max="8"
         :disabled="hasCompletedGame"
-        @change="handleGridSizeChange"
         class="w-16 p-2 border border-slate-600 rounded-lg bg-slate-700 text-white"
+        @change="handleGridSizeChange"
       />
     </div>
 
     <!-- Main Run All Steps Button -->
     <div class="flex flex-col gap-2">
       <BaseButton
+        class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
         @click="
           () => {
             levelBuilderStore.placeQueensAndAssignColors();
           }
         "
-        class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
       >
         ▶️ Place Queens & Assign Initial Colors
       </BaseButton>
 
       <BaseButton
-        @click="handleExpandRandomColors"
         :disabled="!hasAnyColors"
-        disabledTitle="Assign colors first"
+        disabled-title="Assign colors first"
         class="bg-blue-600 hover:bg-blue-500 text-lg font-medium"
+        @click="handleExpandRandomColors"
       >
         🔄 Expand Random Colors safely until board is full
       </BaseButton>
 
       <BaseButton
-        @click="handleGenerateWithRetry"
         class="bg-green-600 hover:bg-green-500 text-lg font-medium"
+        @click="handleGenerateWithRetry"
       >
         🔁 Generate & Expand with Retry
       </BaseButton>
 
       <BaseButton
-        @click="levelBuilderStore.experimentCreateValidBoard()"
         class="bg-pink-600 hover:bg-pink-500 text-lg font-medium"
+        @click="levelBuilderStore.experimentCreateValidBoard()"
       >
         Experiment: Create Valid Board
       </BaseButton>
     </div>
 
     <!-- Step-by-Step Controls in Accordion -->
-    <Accordion title="Step-by-Step Controls" :defaultOpen="true">
+    <Accordion title="Step-by-Step Controls" :default-open="true">
       <!-- Step 1: Reset Board -->
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 0: Reset Board</span>
-        <BaseButton @click="levelBuilderStore.initializeGrid()" class="bg-red-950 hover:bg-red-900">
+        <BaseButton class="bg-red-950 hover:bg-red-900" @click="levelBuilderStore.initializeGrid()">
           Reset Grid to Initial State
         </BaseButton>
       </div>
@@ -68,9 +68,9 @@
         <span class="text-sm text-slate-400">Step 1: Place Queens</span>
 
         <BaseButton
-          @click="levelBuilderStore.placeAllQueens()"
-          disabledTitle="Board is full"
+          disabled-title="Board is full"
           class="bg-blue-950 hover:bg-blue-900 text-sm"
+          @click="levelBuilderStore.placeAllQueens()"
         >
           Place All Queens
         </BaseButton>
@@ -80,9 +80,9 @@
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 2: Color Each Queen</span>
         <BaseButton
-          @click="levelBuilderStore.assignInitialColorsToQueens()"
-          disabledTitle="Place queens first"
+          disabled-title="Place queens first"
           class="bg-purple-950 hover:bg-purple-900"
+          @click="levelBuilderStore.assignInitialColorsToQueens()"
         >
           Assign Initial Colors to Queens
         </BaseButton>
@@ -92,10 +92,10 @@
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 3: Expand Color Groups</span>
         <BaseButton
-          @click="levelBuilderStore.expandColorGroups()"
           :disabled="!hasAnyColors"
-          disabledTitle="Assign colors first"
+          disabled-title="Assign colors first"
           class="bg-teal-950 hover:bg-teal-900"
+          @click="levelBuilderStore.expandColorGroups()"
         >
           Expand Color Groups
         </BaseButton>
@@ -105,10 +105,10 @@
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 4: Color One Square Per Row</span>
         <BaseButton
-          @click="levelBuilderStore.addColorOnePerRow()"
           :disabled="!hasAnyColors"
-          disabledTitle="Assign colors first"
+          disabled-title="Assign colors first"
           class="bg-emerald-950 hover:bg-emerald-900"
+          @click="levelBuilderStore.addColorOnePerRow()"
         >
           Color One Square Per Row
         </BaseButton>
@@ -118,10 +118,10 @@
       <div class="flex flex-col gap-2">
         <span class="text-sm text-slate-400">Step 5: Fill Remaining</span>
         <BaseButton
-          @click="levelBuilderStore.fillRemainingSingleSquares()"
           :disabled="!hasAnyColors"
-          disabledTitle="Assign colors first"
+          disabled-title="Assign colors first"
           class="bg-cyan-950 hover:bg-cyan-900"
+          @click="levelBuilderStore.fillRemainingSingleSquares()"
         >
           Fill Remaining Squares
         </BaseButton>
@@ -170,10 +170,6 @@ const hasCompletedGame = computed(() => {
     levelBuilderStore.queenPositions.length === levelBuilderStore.gridSize &&
     levelBuilderStore.countEmptySquares() === 0
   );
-});
-
-const canPlaceQueens = computed(() => {
-  return levelBuilderStore.queenPositions.length < levelBuilderStore.gridSize;
 });
 
 // Methods

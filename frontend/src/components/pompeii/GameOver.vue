@@ -47,8 +47,8 @@
       </div>
 
       <button
-        @click="resetGame"
         class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded transition-colors"
+        @click="resetGame"
       >
         Start New Game
       </button>

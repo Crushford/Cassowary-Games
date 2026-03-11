@@ -3,7 +3,7 @@
     <h3 class="text-base font-semibold text-white mb-3">Shop</h3>
     <div class="space-y-2">
       <!-- Recruit Army -->
-      <Accordion title="Recruit Army" :default-open="true" ref="recruitRef">
+      <Accordion ref="recruitRef" title="Recruit Army" :default-open="true">
         <div class="bg-gray-700/50 rounded p-3">
           <div class="flex items-center justify-between mb-2">
             <div>
@@ -15,9 +15,9 @@
             </div>
           </div>
           <button
-            @click="recruitSoldier"
             :disabled="gold < soldierCost || gameOver"
             class="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-semibold py-2 px-4 rounded transition-colors text-sm"
+            @click="recruitSoldier"
           >
             Recruit Soldier
           </button>
@@ -25,7 +25,7 @@
       </Accordion>
 
       <!-- Wall Infrastructure -->
-      <Accordion title="Wall Infrastructure" ref="wallRef">
+      <Accordion ref="wallRef" title="Wall Infrastructure">
         <div class="space-y-2">
           <div class="bg-gray-700/50 rounded p-3">
             <div class="flex items-center justify-between mb-2">
@@ -36,9 +36,9 @@
               <div class="text-yellow-400 font-bold">🪙 25</div>
             </div>
             <button
-              @click="purchaseWallUpgrade"
               :disabled="gold < 25 || gameOver || !hasWallSlot"
               class="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-semibold py-2 px-4 rounded transition-colors text-sm"
+              @click="purchaseWallUpgrade"
             >
               Purchase Wall Upgrade
             </button>
@@ -47,7 +47,7 @@
       </Accordion>
 
       <!-- City Upgrades -->
-      <Accordion title="City Upgrades" ref="cityRef">
+      <Accordion ref="cityRef" title="City Upgrades">
         <div class="space-y-2">
           <div v-for="upgrade in cityUpgrades" :key="upgrade.id" class="bg-gray-700/50 rounded p-3">
             <div class="flex items-center justify-between mb-2">
@@ -58,9 +58,9 @@
               <div class="text-yellow-400 font-bold">🪙 {{ upgrade.cost }}</div>
             </div>
             <button
-              @click="purchaseCityUpgrade(upgrade.id)"
               :disabled="gold < upgrade.cost || gameOver || !hasCitySlot"
               class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-semibold py-2 px-4 rounded transition-colors text-sm"
+              @click="purchaseCityUpgrade(upgrade.id)"
             >
               Purchase {{ upgrade.name }}
             </button>
@@ -69,7 +69,7 @@
       </Accordion>
 
       <!-- Countryside Upgrades -->
-      <Accordion title="Countryside Upgrades" ref="countrysideRef">
+      <Accordion ref="countrysideRef" title="Countryside Upgrades">
         <div class="space-y-2">
           <div
             v-for="upgrade in countrysideUpgrades"
@@ -84,9 +84,9 @@
               <div class="text-yellow-400 font-bold">🪙 {{ upgrade.cost }}</div>
             </div>
             <button
-              @click="purchaseCountrysideUpgrade(upgrade.id)"
               :disabled="gold < upgrade.cost || gameOver || !hasCountrysideSlot"
               class="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-semibold py-2 px-4 rounded transition-colors text-sm"
+              @click="purchaseCountrysideUpgrade(upgrade.id)"
             >
               Purchase {{ upgrade.name }}
             </button>

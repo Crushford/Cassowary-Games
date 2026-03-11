@@ -17,15 +17,15 @@
 
         <div class="flex gap-4">
           <button
-            @click="goToLevels"
             class="flex-1 bg-gradient-to-r from-amber-600 to-amber-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-amber-500 hover:to-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl"
+            @click="goToLevels"
           >
             Back to Farms
           </button>
 
           <button
-            @click="nextRound"
             class="flex-1 bg-[#144b1a] border border-[#2d8b3a] text-green-300 py-3 px-6 rounded-lg font-semibold hover:bg-[#1a5a22] hover:border-[#3a9b4a] transition-all duration-200 shadow-lg hover:shadow-xl"
+            @click="nextRound"
           >
             Next Round
           </button>

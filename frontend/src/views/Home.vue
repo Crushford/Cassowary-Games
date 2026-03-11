@@ -29,8 +29,8 @@
     <!-- Works in Progress Button - Bottom Left -->
     <div class="fixed bottom-0 left-0 p-4">
       <button
-        @click="showWorksInProgressModal = true"
         class="inline-flex items-center justify-center px-6 py-3 bg-orange-500 text-white border-none rounded-lg font-medium cursor-pointer transition-all hover:bg-orange-600 hover:-translate-y-0.5 active:translate-y-0"
+        @click="showWorksInProgressModal = true"
       >
         Works in Progress
       </button>
@@ -39,8 +39,8 @@
     <!-- Privacy Settings Link - Bottom Right -->
     <div class="fixed bottom-0 right-0 p-4">
       <button
-        @click="showPrivacySettings = true"
         class="text-sm text-gray-400 hover:text-gray-300 underline transition-colors"
+        @click="showPrivacySettings = true"
       >
         Privacy Settings
       </button>
@@ -59,20 +59,20 @@
         <div class="space-y-3">
           <router-link
             to="/evolve"
-            @click="showWorksInProgressModal = false"
             class="block p-4 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+            @click="showWorksInProgressModal = false"
           >
             <h4 class="text-lg font-bold mb-1">Evolve</h4>
-            <p class="text-sm text-gray-200" v-if="hasEvolveProgress">
+            <p v-if="hasEvolveProgress" class="text-sm text-gray-200">
               Generation {{ evolveStore.generation }} • {{ evolveStore.fruit }} fruit
             </p>
-            <p class="text-sm text-gray-200" v-else>Start a new game</p>
+            <p v-else class="text-sm text-gray-200">Start a new game</p>
           </router-link>
 
           <router-link
             to="/keno"
-            @click="showWorksInProgressModal = false"
             class="block p-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            @click="showWorksInProgressModal = false"
           >
             <h4 class="text-lg font-bold mb-1">Keno</h4>
             <p class="text-sm text-gray-200">Play the Keno game</p>
@@ -80,8 +80,8 @@
 
           <router-link
             to="/pompeii"
-            @click="showWorksInProgressModal = false"
             class="block p-4 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+            @click="showWorksInProgressModal = false"
           >
             <h4 class="text-lg font-bold mb-1">Pompeii</h4>
             <p class="text-sm text-gray-200">City building and defense game</p>
@@ -95,7 +95,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useEvolveStore } from '@/stores/evolve';
-import BaseButton from '@/components/level-builder/BaseButton.vue';
 import Modal from '@/components/shared/Modal.vue';
 import PrivacySettingsModal from '@/components/shared/PrivacySettingsModal.vue';
 
@@ -110,5 +109,9 @@ const hasEvolveProgress = computed(() => {
 
 onMounted(() => {
   evolveStore.loadFromStorage();
+});
+
+defineOptions({
+  name: 'HomeView',
 });
 </script>

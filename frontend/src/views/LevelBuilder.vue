@@ -44,20 +44,20 @@
           <h3 class="font-semibold text-white">Debug Logs</h3>
           <div class="flex gap-2">
             <button
-              @click="levelBuilderStore.toggleVerboseMode()"
               class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+              @click="levelBuilderStore.toggleVerboseMode()"
             >
               {{ levelBuilderStore.verboseMode ? '🔊 Verbose Mode On' : '🔇 Verbose Mode Off' }}
             </button>
             <button
-              @click="copyLast20Logs"
               class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+              @click="copyLast20Logs"
             >
               Copy Last 20
             </button>
             <button
-              @click="copyAllLogs"
               class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+              @click="copyAllLogs"
             >
               Copy All
             </button>
@@ -77,8 +77,8 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-white">Debug Logs</h3>
           <button
-            @click="levelBuilderStore.toggleVerboseMode()"
             class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+            @click="levelBuilderStore.toggleVerboseMode()"
           >
             {{ levelBuilderStore.verboseMode ? '🔊 Verbose Mode On' : '🔇 Verbose Mode Off' }}
           </button>

@@ -74,14 +74,14 @@
 
       <div class="flex gap-3">
         <Button
-          @click="handleRetry"
           class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-blue-800 bg-blue-700 text-blue-100 enabled:hover:bg-blue-600 enabled:hover:border-blue-700 flex-1"
           label="Retry"
+          @click="handleRetry"
         />
         <Button
-          @click="handleClose"
           class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600 flex-1"
           label="Back to Levels"
+          @click="handleClose"
         />
       </div>
     </div>

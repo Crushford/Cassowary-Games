@@ -13,9 +13,9 @@
         <button
           v-for="size in availableSizes"
           :key="size"
-          @click="handleSizeClick(size)"
           class="w-full py-4 px-6 rounded-lg transition-colors font-semibold text-left border-2"
           :class="sizeButtonClass(size)"
+          @click="handleSizeClick(size)"
         >
           <div class="flex items-center justify-between">
             <div>
@@ -58,11 +58,16 @@ const description = computed(() =>
 
 const availableSizes = computed(() => queensStore.getAvailableSizes());
 
+interface PuzzleInProgress {
+  id?: string | number;
+  name?: string;
+}
+
 function hasProgress(sizeKey: string): boolean {
   return getPuzzleInProgress(sizeKey) !== null;
 }
 
-function getPuzzleInProgress(sizeKey: string): any | null {
+function getPuzzleInProgress(sizeKey: string): PuzzleInProgress | null {
   if (!queensStore.puzzleDatabase || !queensStore.puzzleDatabase[sizeKey]) return null;
   for (const puzzle of queensStore.puzzleDatabase[sizeKey]) {
     const puzzleId = puzzle.id || puzzle.name;

@@ -7,9 +7,9 @@
       <div v-if="!evolveStore.isGameActive" class="space-y-4 w-full max-w-md">
         <h1 class="text-3xl font-bold text-center mb-8">Evolve</h1>
 
-        <BaseButton @click="onNewGameClick" class="w-full"> New Game </BaseButton>
+        <BaseButton class="w-full" @click="onNewGameClick"> New Game </BaseButton>
 
-        <BaseButton v-if="evolveStore.hasSavedGame" @click="onContinueClick" class="w-full">
+        <BaseButton v-if="evolveStore.hasSavedGame" class="w-full" @click="onContinueClick">
           Continue
         </BaseButton>
       </div>
@@ -109,11 +109,11 @@
           </BaseButton>
           <BaseButton
             class="w-full"
-            @click="onLayEggsClick"
             :disabled="!evolveStore.canLayEggs"
             :disabled-title="
               !evolveStore.canLayEggs ? 'Need partner and ' + evolveStore.clutchCost + ' fruit' : ''
             "
+            @click="onLayEggsClick"
           >
             Lay eggs
           </BaseButton>
@@ -121,10 +121,10 @@
 
         <!-- Family and Partners Buttons -->
         <div class="grid grid-cols-2 gap-2">
-          <BaseButton @click="showFamilyView = true" class="w-full">
+          <BaseButton class="w-full" @click="showFamilyView = true">
             Family ({{ (evolveStore.females || []).length }})
           </BaseButton>
-          <BaseButton @click="showPartnersView = true" class="w-full">
+          <BaseButton class="w-full" @click="showPartnersView = true">
             Partners ({{ (evolveStore.males || []).length }})
           </BaseButton>
         </div>
@@ -223,7 +223,7 @@
                   <span class="text-sm font-medium">{{
                     chick.sex === 'female' ? '♀' : '♂'
                   }}</span>
-                  <span class="text-xs text-gray-400" v-if="chick.mutatedStat">
+                  <span v-if="chick.mutatedStat" class="text-xs text-gray-400">
                     Mutated: {{ chick.mutatedStat }}
                   </span>
                 </div>
@@ -235,9 +235,9 @@
               <div class="flex gap-2">
                 <BaseButton
                   v-if="chick.sex === 'female'"
-                  @click="selectMatriarch(chick.id)"
                   :class="selectedMatriarchId === chick.id ? 'bg-blue-600' : ''"
                   class="text-xs py-1 px-2"
+                  @click="selectMatriarch(chick.id)"
                 >
                   {{
                     selectedMatriarchId === chick.id
@@ -247,9 +247,9 @@
                 </BaseButton>
                 <BaseButton
                   v-if="selectedMatriarchId !== chick.id"
-                  @click="toggleKeepChick(chick.id)"
                   :class="keptChickIds.includes(chick.id) ? 'bg-green-600' : ''"
                   class="text-xs py-1 px-2"
+                  @click="toggleKeepChick(chick.id)"
                 >
                   {{ keptChickIds.includes(chick.id) ? "Don't Keep" : 'Keep' }}
                 </BaseButton>
@@ -267,8 +267,8 @@
           <div class="flex justify-end gap-2">
             <BaseButton @click="closeChickSelection"> Cancel </BaseButton>
             <BaseButton
-              @click="confirmChickSelection"
               :disabled="femaleChicks.length > 0 && !selectedMatriarchId"
+              @click="confirmChickSelection"
             >
               Confirm
             </BaseButton>
@@ -485,4 +485,8 @@ const closeChickSelection = () => {
   selectedMatriarchId.value = '';
   keptChickIds.value = [];
 };
+
+defineOptions({
+  name: 'EvolveView',
+});
 </script>

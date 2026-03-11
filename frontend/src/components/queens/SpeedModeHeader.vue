@@ -9,14 +9,14 @@
     </template>
     <template #actions>
       <button
-        @click="handleEndRound"
         class="flex-1 p-1 bg-red-600 hover:bg-red-500 text-white font-semibold text-sm rounded-lg transition-colors duration-200"
+        @click="handleEndRound"
       >
         End Round
       </button>
       <button
-        @click="handleRestart"
         class="flex-1 p-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm rounded-lg transition-colors duration-200"
+        @click="handleRestart"
       >
         Restart
       </button>

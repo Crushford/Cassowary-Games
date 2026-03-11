@@ -26,8 +26,8 @@
       <div class="w-full space-y-4">
         <!-- Single Puzzle Mode Button -->
         <button
-          @click="queensStore.openSinglePuzzleModeModal()"
           class="w-full py-4 px-6 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          @click="queensStore.openSinglePuzzleModeModal()"
         >
           <div class="text-xl font-bold mb-1">Single Puzzle Mode</div>
           <div class="text-sm opacity-90">Play puzzles one at a time</div>
@@ -35,8 +35,8 @@
 
         <!-- Speed Mode Button -->
         <button
-          @click="speedModeStore.openModal()"
           class="w-full py-4 px-6 bg-yellow-600 hover:bg-yellow-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          @click="speedModeStore.openModal()"
         >
           <div class="text-xl font-bold mb-1">Speed Mode ⚡</div>
           <div class="text-sm opacity-90">Race against the clock</div>
@@ -44,8 +44,8 @@
 
         <!-- Rotate Mode Button -->
         <button
-          @click="showRotateModeModal = true"
           class="w-full py-4 px-6 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          @click="showRotateModeModal = true"
         >
           <div class="text-xl font-bold mb-1">Rotate Mode 🔄</div>
           <div class="text-sm opacity-90">Board rotates 90° after every move</div>
@@ -53,8 +53,8 @@
 
         <!-- Incremental Mode Button -->
         <button
-          @click="goToIncrementalMode"
           class="w-full py-4 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          @click="goToIncrementalMode"
         >
           <div class="text-xl font-bold mb-1">Incremental Queens 🧪</div>
           <div class="text-sm opacity-90">Timed run mode with persistent upgrades</div>
@@ -62,8 +62,8 @@
 
         <!-- Records Button -->
         <button
-          @click="queensStore.openRecordsModal()"
           class="w-full py-4 px-6 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          @click="queensStore.openRecordsModal()"
         >
           <div class="text-xl font-bold mb-1">Records 🏆</div>
           <div class="text-sm opacity-90">View your best times and records</div>

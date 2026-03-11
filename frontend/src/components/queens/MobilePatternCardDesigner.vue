@@ -32,9 +32,9 @@
           type="button"
           class="px-3 py-1 rounded text-xs font-semibold"
           :class="selectedTool === tool.id ? tool.activeClass : 'bg-gray-700 hover:bg-gray-600'"
-          @click="selectedTool = tool.id"
           :aria-label="`Select ${tool.label} tool`"
           :aria-pressed="selectedTool === tool.id"
+          @click="selectedTool = tool.id"
         >
           {{ tool.label }}
         </button>
@@ -50,8 +50,8 @@
           type="button"
           class="w-8 h-8 rounded border border-gray-500 flex items-center justify-center text-xs"
           :class="cell.cellClass"
-          @click="applyTool(cell.row, cell.col)"
           :aria-label="cell.ariaLabel"
+          @click="applyTool(cell.row, cell.col)"
         >
           <span v-if="cell.hasFlag">🚧</span>
         </button>
@@ -62,16 +62,16 @@
       <button
         type="button"
         class="flex-1 px-3 py-2 rounded bg-gray-700 hover:bg-gray-600 text-sm"
-        @click="clearFlags"
         aria-label="Clear all flagged output cells"
+        @click="clearFlags"
       >
         Clear Flags
       </button>
       <button
         type="button"
         class="flex-1 px-3 py-2 rounded bg-gray-700 hover:bg-gray-600 text-sm"
-        @click="clearActive"
         aria-label="Clear all active pattern cells"
+        @click="clearActive"
       >
         Clear Active
       </button>
@@ -81,8 +81,8 @@
       <button
         type="button"
         class="flex-1 px-3 py-2 rounded bg-gray-600 hover:bg-gray-500 text-sm font-semibold"
-        @click="$emit('cancel')"
         aria-label="Cancel custom pattern card creation"
+        @click="$emit('cancel')"
       >
         Cancel
       </button>
@@ -90,8 +90,8 @@
         type="button"
         class="flex-1 px-3 py-2 rounded bg-purple-700 hover:bg-purple-600 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         :disabled="activeCells.size === 0 || flagCells.size === 0"
-        @click="handleSave"
         aria-label="Save custom pattern card"
+        @click="handleSave"
       >
         Save Card
       </button>

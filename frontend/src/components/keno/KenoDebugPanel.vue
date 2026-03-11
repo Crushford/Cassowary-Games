@@ -13,11 +13,11 @@
       <div>
         <label class="block text-sm font-medium mb-2">Show Solution</label>
         <button
-          @click="store.toggleShowBoard()"
           class="w-full px-4 py-2 rounded transition-colors duration-150"
           :class="
             store.showBoard ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-600'
           "
+          @click="store.toggleShowBoard()"
         >
           {{ store.showBoard ? 'Hide Board' : 'Show Board' }}
         </button>

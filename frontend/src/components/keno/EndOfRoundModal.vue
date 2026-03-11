@@ -91,8 +91,8 @@
 
       <!-- Restart Button -->
       <button
-        @click="handleRestart"
         class="w-full py-3 px-6 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors duration-200"
+        @click="handleRestart"
       >
         Play Again
       </button>
@@ -108,7 +108,7 @@ interface Props {
   isVisible: boolean;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const store = useKenoStore();
 

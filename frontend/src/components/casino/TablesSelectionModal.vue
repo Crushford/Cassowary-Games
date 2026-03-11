@@ -99,7 +99,6 @@
 
               <div class="mt-4">
                 <button
-                  @click="playTable(table.id)"
                   :disabled="
                     !globalStore.isTableAccessible(table.id, table.minimumBuyIn, table.maxPayout)
                   "
@@ -109,6 +108,7 @@
                       ? 'bg-gradient-to-r from-yellow-500 to-yellow-400 text-amber-900 hover:from-yellow-400 hover:to-yellow-300 shadow-lg hover:shadow-xl'
                       : 'bg-gray-600 text-gray-300'
                   "
+                  @click="playTable(table.id)"
                 >
                   {{ getTableButtonText(table) }}
                 </button>

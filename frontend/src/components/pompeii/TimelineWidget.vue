@@ -3,8 +3,8 @@
     <div class="flex items-center justify-between mb-2">
       <h3 class="text-sm font-semibold text-white">Upcoming Raids</h3>
       <button
-        @click="showTimelineModal = true"
         class="text-xs text-gray-400 hover:text-gray-300 underline"
+        @click="showTimelineModal = true"
       >
         View Timeline
       </button>
@@ -132,7 +132,6 @@ const nextRaidDieSize = computed(() => {
 const upcomingRaids = computed(() => {
   const raids = [];
   const currentRaidNumber = Math.floor(turnCounter.value / 20);
-  const nextRaidYear = (currentRaidNumber + 1) * 20;
 
   // Show next 5 raids or until eruption
   for (let i = 1; i <= 5; i++) {

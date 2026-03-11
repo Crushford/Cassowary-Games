@@ -63,8 +63,8 @@
       </div>
 
       <button
-        @click="handleClose"
         class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded transition-colors"
+        @click="handleClose"
       >
         Continue
       </button>

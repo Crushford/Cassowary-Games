@@ -17,7 +17,9 @@
             v-model.number="selectedSize"
             class="bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm"
           >
-            <option v-for="size in sizes" :key="size" :value="size">{{ size }}x{{ size }}</option>
+            <option v-for="optionSize in sizes" :key="optionSize" :value="optionSize">
+              {{ optionSize }}x{{ optionSize }}
+            </option>
           </select>
 
           <label class="inline-flex items-center gap-2 text-sm text-slate-300">
@@ -27,8 +29,8 @@
 
           <button
             class="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-semibold"
-            @click="loadPair"
             :disabled="loading"
+            @click="loadPair"
           >
             {{ loading ? 'Loading...' : 'Load Random Pair' }}
           </button>

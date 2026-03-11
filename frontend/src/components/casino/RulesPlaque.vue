@@ -14,9 +14,9 @@
           The rules of this table:
         </h2>
         <button
-          @click="globalStore.setShowRules(true)"
           class="px-3 py-1 bg-[#d4af37] hover:bg-[#e6c766] text-[#131313] font-semibold rounded-full text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2 focus:ring-offset-[#0f3b2e]"
           aria-label="Open full rules"
+          @click="globalStore.setShowRules(true)"
         >
           <span class="inline-block mr-1 text-xs">ℹ︎</span>
           Full Rules
@@ -116,11 +116,6 @@ const tablePayouts = computed(() => {
     honeypot: Math.round(globalStore.config.payoutPerHoneypot * multiplier),
     ant: Math.round(globalStore.config.penaltyPerAnt * multiplier),
   };
-});
-
-const currentProgress = computed(() => {
-  // Table progress no longer tracked in new system
-  return 0;
 });
 
 defineOptions({

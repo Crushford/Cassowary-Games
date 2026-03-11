@@ -16,14 +16,14 @@
           </div>
           <div class="flex gap-3 flex-shrink-0">
             <button
-              @click="decline"
               class="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+              @click="decline"
             >
               Decline
             </button>
             <button
-              @click="accept"
               class="px-6 py-2 text-sm font-semibold bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg transition-colors"
+              @click="accept"
             >
               Accept
             </button>

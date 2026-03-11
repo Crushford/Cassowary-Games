@@ -12,13 +12,13 @@
         'auto-flag-tint-pattern': isAutoFlagAnimating && autoFlagAnimationSource === 'pattern',
       },
     ]"
-    @click="handleClick"
     :aria-label="ariaLabel"
     :aria-describedby="isTutorialTarget ? 'tutorial-instruction' : undefined"
     :aria-rowindex="rowIndex + 1"
     :aria-colindex="colIndex + 1"
     :data-row-index="rowIndex"
     :data-col-index="colIndex"
+    @click="handleClick"
   >
     <!-- Content overlay -->
     <div class="relative z-10 flex items-center justify-center w-full h-full">
@@ -55,12 +55,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useQueensStore } from '../../stores/queensStore';
-import type { ColorName } from '../../types/types';
+import type { ColorName, GridSquare } from '../../types/types';
 
 interface Props {
   rowIndex: number;
   colIndex: number;
-  store: any;
+  store: {
+    grid: GridSquare[][];
+  };
 }
 
 const props = defineProps<Props>();

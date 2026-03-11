@@ -347,10 +347,10 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
             continue;
           }
           if (action.type === 'flag') {
-            queensStore.placeFlag(action.row, action.col);
+            queensStore.placeFlag(action.row, action.col, 'automation');
             queensStore.triggerAutoFlagAnimation(action.row, action.col, 'pattern', 0);
           } else {
-            queensStore.placeQueen(action.row, action.col);
+            queensStore.placeQueen(action.row, action.col, 'automation');
           }
 
           await new Promise<void>((resolve) => {

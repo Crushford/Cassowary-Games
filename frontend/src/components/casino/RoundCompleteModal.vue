@@ -58,15 +58,15 @@
           <!-- Show Cash Out and Next Round for winners -->
           <template v-if="isWon">
             <button
-              @click="async () => await tableStore.goToTables()"
               class="flex-1 bg-gradient-to-r from-amber-600 to-amber-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-amber-500 hover:to-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl"
+              @click="async () => await tableStore.goToTables()"
             >
               Back to Tables
             </button>
 
             <button
-              @click="tableStore.handleNextRound"
               class="flex-1 bg-[#144b1a] border border-[#2d8b3a] text-green-300 py-3 px-6 rounded-lg font-semibold hover:bg-[#1a5a22] hover:border-[#3a9b4a] transition-all duration-200 shadow-lg hover:shadow-xl"
+              @click="tableStore.handleNextRound"
             >
               Next Round
             </button>
@@ -75,8 +75,8 @@
           <!-- Show only Restart for busted players -->
           <template v-else>
             <button
-              @click="globalStore.restart"
               class="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-red-500 hover:to-red-400 transition-all duration-200 shadow-lg hover:shadow-xl"
+              @click="globalStore.restart"
             >
               Restart Game
             </button>
@@ -96,11 +96,6 @@ import { useGlobalStore } from '../../stores/global';
 const roundStore = useRoundStore();
 const tableStore = useTableStore();
 const globalStore = useGlobalStore();
-
-const totalProfit = computed(() => {
-  // Table progress no longer tracked in new system
-  return 0;
-});
 
 const roundWinnings = computed(() => {
   // Round winnings no longer tracked separately in new system

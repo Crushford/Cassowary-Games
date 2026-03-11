@@ -3,8 +3,8 @@
     <!-- Reset game button -->
     <button
       class="px-4 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-sm bg-slate-700 text-slate-300 hover:bg-slate-600"
-      @click="handleResetGame"
       aria-label="Reset game"
+      @click="handleResetGame"
     >
       <span>🔄</span>
       <span>Reset Game</span>
@@ -16,8 +16,8 @@
     <!-- Rules button -->
     <button
       class="px-4 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-sm bg-slate-700 text-slate-300 hover:bg-slate-600"
-      @click="handleShowRules"
       aria-label="Show rules"
+      @click="handleShowRules"
     >
       <span>📖</span>
       <span>Rules</span>
@@ -29,8 +29,8 @@
     <!-- Payout Tables button -->
     <button
       class="px-4 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-sm bg-slate-700 text-slate-300 hover:bg-slate-600"
-      @click="handleShowPayoutTables"
       aria-label="Show payout tables"
+      @click="handleShowPayoutTables"
     >
       <span>📊</span>
       <span>Payout Tables</span>
@@ -42,8 +42,8 @@
     <!-- New random level button -->
     <button
       class="px-4 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-sm bg-slate-700 text-slate-300 hover:bg-slate-600"
-      @click="handleNewRandomLevel"
       aria-label="New random level"
+      @click="handleNewRandomLevel"
     >
       <span>🎲</span>
       <span>New Random Level</span>

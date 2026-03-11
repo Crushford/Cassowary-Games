@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import type { GridSquare, Pos, MarkType, ColorName } from '../types/types';
-import { COLOR_SYMBOLS } from '../utils/colorPalette';
+import { COLOR_PALETTE, COLOR_SYMBOLS } from '../utils/colorPalette';
 import { createEmptyGrid, isValidPosition, clonePlayerMarks } from './gridUtils';
 import { removeQueenPlacement, replayHistoryFromEntries } from '../utils/queenRemoval';
 import router from '../router';
@@ -24,31 +24,67 @@ const SYMBOL_TO_COLOR: Record<string, ColorName> = Object.entries(COLOR_SYMBOLS)
   {} as Record<string, ColorName>
 );
 
+function buildLayoutSymbolToColorMap(layout: string): Record<string, ColorName> {
+  const symbolToColor: Record<string, ColorName> = {};
+  const availableColors = [...COLOR_PALETTE];
+  const fallbackColors = [...COLOR_PALETTE];
+  let overflowIndex = 0;
+
+  for (let i = availableColors.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [availableColors[i], availableColors[j]] = [availableColors[j], availableColors[i]];
+  }
+
+  for (let i = 0; i < layout.length; i++) {
+    const symbol = layout[i];
+    if (symbol === '.' || symbolToColor[symbol]) {
+      continue;
+    }
+
+    const nextColor =
+      availableColors.shift() ?? fallbackColors[overflowIndex++ % fallbackColors.length];
+    symbolToColor[symbol] = nextColor;
+  }
+
+  return symbolToColor;
+}
+
 export type GameMode = 'standard' | 'speed' | 'rotate';
+
+interface PuzzleRecord {
+  id: string | number;
+  name?: string;
+  layout: string;
+  queens: string;
+  [key: string]: unknown;
+}
+
+type PuzzleDatabase = Record<string, PuzzleRecord[]>;
 
 export interface TutorialStep {
   id: string;
   instruction: string;
   targetSquare?: Pos | null; // Square to click (null means any square)
   action?: 'click' | 'place-flag' | 'place-queen' | 'complete' | 'mode-selected';
-  validate?: (store: any) => boolean; // Custom validation function
+  validate?: (store: unknown) => boolean; // Custom validation function
 }
 
 type AutoFlagAnimationSource = 'blocked' | 'pattern';
+type PlacementSource = 'player' | 'automation';
 
 interface QueensState {
   grid: GridSquare[][];
   gridSize: number;
   moveHistory: MarkType[][][];
   playerMarks: MarkType[][];
-  puzzleDatabase: any;
-  allPuzzles: any[]; // Flat array of all puzzles ending in -0
-  puzzleIdMap: Map<string, any>; // Map from string ID to puzzle
-  tutorialPuzzles: any[]; // Tutorial puzzles (level-1 through level-10)
+  puzzleDatabase: PuzzleDatabase | null;
+  allPuzzles: PuzzleRecord[]; // Flat array of all puzzles ending in -0
+  puzzleIdMap: Map<string, PuzzleRecord>; // Map from string ID to puzzle
+  tutorialPuzzles: PuzzleRecord[]; // Tutorial puzzles (level-1 through level-10)
   currentPuzzleIndex: number;
   isComplete: boolean;
   showSolution: boolean; // Whether to reveal the solution
-  currentPuzzle: any;
+  currentPuzzle: PuzzleRecord | null;
   currentPuzzleId: string | number | null; // Track current puzzle ID for completion tracking
   // Tutorial state
   isTutorialMode: boolean;
@@ -342,7 +378,7 @@ export const useQueensStore = defineStore('queens', {
     playerMarks: Array.from({ length: 4 }, () => Array(4).fill(null as MarkType)),
     puzzleDatabase: null,
     allPuzzles: [],
-    puzzleIdMap: new Map<string, any>(),
+    puzzleIdMap: new Map<string, PuzzleRecord>(),
     tutorialPuzzles: [],
     currentPuzzleIndex: 0,
     isComplete: false,
@@ -757,7 +793,7 @@ export const useQueensStore = defineStore('queens', {
       }
     },
 
-    placeFlag(row: number, col: number) {
+    placeFlag(row: number, col: number, source: PlacementSource = 'player') {
       // In rotate mode during a swipe, only save history once (for the first flag)
       if (!this.isRotateMode || !this.isSwipeActive || !this.swipePlacedFlags) {
         this.saveToHistory();
@@ -774,13 +810,13 @@ export const useQueensStore = defineStore('queens', {
       // Check for error conditions immediately
       this.checkFullyFlaggedGroups();
       // Rotate board if in rotate mode and not mid-swipe
-      if (this.isRotateMode && !this.isSwipeActive) {
+      if (source === 'player' && this.isRotateMode && !this.isSwipeActive) {
         this.rotateBoard90CW();
       }
       return true;
     },
 
-    placeQueen(row: number, col: number) {
+    placeQueen(row: number, col: number, source: PlacementSource = 'player') {
       this.saveToHistory();
       this.playerMarks[row][col] = 'queen';
 
@@ -824,7 +860,7 @@ export const useQueensStore = defineStore('queens', {
       }
 
       // Rotate board if in rotate mode and puzzle not yet complete
-      if (this.isRotateMode && !this.isComplete) {
+      if (source === 'player' && this.isRotateMode && !this.isComplete) {
         this.rotateBoard90CW();
       }
 
@@ -867,7 +903,7 @@ export const useQueensStore = defineStore('queens', {
       return replayHistoryFromEntries(history, this.grid, this.gridSize, this.uiState.autoFlagging);
     },
 
-    applyAutoFlagging(playerMarks: MarkType[][], _queenRow: number, _queenCol: number) {
+    applyAutoFlagging(playerMarks: MarkType[][]) {
       // Flag all squares blocked by this queen
       for (let r = 0; r < this.gridSize; r++) {
         for (let c = 0; c < this.gridSize; c++) {
@@ -1117,7 +1153,7 @@ export const useQueensStore = defineStore('queens', {
 
         // Just store the raw data. No filtering, no reordering, no maps.
         this.puzzleDatabase = data;
-        this.puzzleIdMap = new Map<string, any>(); // optional cache; stays empty for now
+        this.puzzleIdMap = new Map<string, PuzzleRecord>(); // optional cache; stays empty for now
         this.allPuzzles = []; // not needed anymore, but keep type happy
         this.diversityAverageBySize = {}; // recompute averages lazily after a new database load
 
@@ -1140,7 +1176,7 @@ export const useQueensStore = defineStore('queens', {
       }
     },
 
-    parsePuzzleData(puzzleData: any, options?: { persistProgress?: boolean }) {
+    parsePuzzleData(puzzleData: PuzzleRecord, options?: { persistProgress?: boolean }) {
       this.persistProgressEnabled = options?.persistProgress ?? true;
 
       const gridSize = Math.sqrt(puzzleData.layout.length);
@@ -1154,14 +1190,16 @@ export const useQueensStore = defineStore('queens', {
       // Set current puzzle ID for progress tracking
       this.currentPuzzleId = puzzleData.name || puzzleData.id;
 
-      // Parse layout (color groups) using SYMBOL_TO_COLOR mapping
+      // Parse layout (color groups). Any non-dot symbol is treated as a color group id.
+      // We remap symbols to the active palette so legacy/unknown symbols still get valid colors.
+      const remappedSymbolToColor = buildLayoutSymbolToColorMap(layout);
       for (let i = 0; i < layout.length; i++) {
         const row = Math.floor(i / gridSize);
         const col = i % gridSize;
         const symbol = layout[i];
 
         if (symbol !== '.') {
-          const colorName = SYMBOL_TO_COLOR[symbol];
+          const colorName = remappedSymbolToColor[symbol] || SYMBOL_TO_COLOR[symbol];
           if (colorName) {
             this.grid[row][col].groupColor = colorName;
           }
@@ -1365,14 +1403,14 @@ export const useQueensStore = defineStore('queens', {
       this.parsePuzzleData(puzzle, options);
     },
 
-    findPuzzleById(id: string): any | null {
+    findPuzzleById(id: string): PuzzleRecord | null {
       if (!this.puzzleDatabase) return null;
 
       // If we ever decide to cache, use puzzleIdMap
       const cached = this.puzzleIdMap.get(id);
       if (cached) return cached;
 
-      for (const [, sizePuzzles] of Object.entries<any[]>(this.puzzleDatabase)) {
+      for (const [, sizePuzzles] of Object.entries<PuzzleRecord[]>(this.puzzleDatabase)) {
         const found = sizePuzzles.find((p) => p.id === id);
         if (found) {
           // Optional: cache it for future lookups
@@ -1478,9 +1516,9 @@ export const useQueensStore = defineStore('queens', {
 
       // Build tutorialPuzzles only once, on demand
       if (!this.tutorialPuzzles.length) {
-        const tutorials: any[] = [];
+        const tutorials: PuzzleRecord[] = [];
 
-        for (const sizePuzzles of Object.values<any[]>(this.puzzleDatabase)) {
+        for (const sizePuzzles of Object.values(this.puzzleDatabase as PuzzleDatabase)) {
           for (const puzzle of sizePuzzles) {
             if (
               puzzle.name &&
@@ -1788,11 +1826,17 @@ export const useQueensStore = defineStore('queens', {
     // Rotate only the grid (color groups + solution queens) 90° clockwise
     rotateGridOnly90CW() {
       const n = this.gridSize;
-      const newGrid: any[][] = Array.from({ length: n }, () => Array(n).fill(null));
+      const newGrid: GridSquare[][] = Array.from({ length: n }, () =>
+        Array.from({ length: n }, () => ({
+          position: { row: 0, col: 0 },
+        }))
+      );
       for (let r = 0; r < n; r++) {
         for (let c = 0; c < n; c++) {
           // CW rotation: new[c][n-1-r] = old[r][c]
-          newGrid[c][n - 1 - r] = { ...this.grid[r][c] };
+          const rotatedCell = { ...this.grid[r][c] };
+          rotatedCell.position = { row: c, col: n - 1 - r };
+          newGrid[c][n - 1 - r] = rotatedCell;
         }
       }
       this.grid = newGrid;
@@ -1804,7 +1848,7 @@ export const useQueensStore = defineStore('queens', {
       // Rotate grid
       this.rotateGridOnly90CW();
       // Rotate playerMarks
-      const newMarks: any[][] = Array.from({ length: n }, () => Array(n).fill(null));
+      const newMarks: MarkType[][] = Array.from({ length: n }, () => Array(n).fill(null));
       for (let r = 0; r < n; r++) {
         for (let c = 0; c < n; c++) {
           newMarks[c][n - 1 - r] = this.playerMarks[r][c];
@@ -1878,7 +1922,7 @@ export const useQueensStore = defineStore('queens', {
       router.push(`/queens/${puzzle.id}`);
     },
 
-    getNextUncompletedPuzzleForSize(sizeKey: string): any | null {
+    getNextUncompletedPuzzleForSize(sizeKey: string): PuzzleRecord | null {
       if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
         return null;
       }

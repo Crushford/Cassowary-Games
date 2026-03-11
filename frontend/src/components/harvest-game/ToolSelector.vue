@@ -5,9 +5,9 @@
       <div class="relative">
         <button
           class="px-3 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-lg bg-slate-700 text-slate-300 hover:bg-slate-600"
-          @click="toggleModeDropdown"
           :aria-expanded="modeDropdownOpen"
           aria-label="Select digging mode"
+          @click="toggleModeDropdown"
         >
           <span>{{ getCurrentModeIcon() }}</span>
           <span class="text-xs">▼</span>
@@ -52,8 +52,8 @@
             ? 'bg-green-600 text-white shadow'
             : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
         ]"
-        @click="harvestStore.toggleAutoFlagging()"
         :aria-pressed="harvestStore.uiState.autoFlagging"
+        @click="harvestStore.toggleAutoFlagging()"
       >
         <span>🤖</span>
         <span>🚧</span>
@@ -61,8 +61,8 @@
       <!-- Question mark icon positioned on top of auto-flag button -->
       <button
         class="absolute -top-1 -right-1 bg-slate-900 text-slate-300 rounded-full w-6 h-6 flex items-center justify-center text-base border border-slate-600 hover:bg-slate-700 focus:outline-none z-30"
-        @click.stop="toggleTooltip('autoFlag')"
         aria-label="Show info about auto-flag"
+        @click.stop="toggleTooltip('autoFlag')"
       >
         ?
       </button>
@@ -83,8 +83,8 @@
     <div class="flex items-center relative">
       <button
         class="px-3 py-1 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-xl relative bg-slate-700 text-slate-300 hover:bg-slate-600"
-        @click="undoLastFlag"
         aria-label="Undo last flag"
+        @click="undoLastFlag"
       >
         <span>↶</span>
         <span>🚧</span>
@@ -92,8 +92,8 @@
       <!-- Question mark icon positioned on top of undo button -->
       <button
         class="absolute -top-1 -right-1 bg-slate-900 text-slate-300 rounded-full w-6 h-6 flex items-center justify-center text-base border border-slate-600 hover:bg-slate-700 focus:outline-none z-30"
-        @click.stop="toggleTooltip('undo')"
         aria-label="Show info about undo flag"
+        @click.stop="toggleTooltip('undo')"
       >
         ?
       </button>
@@ -123,7 +123,7 @@ interface Props {
   isGameOnly?: boolean;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   isGameOnly: false,
 });
 
@@ -141,8 +141,6 @@ const modes = [
   { value: 'dig' as const, label: 'Dig', icon: '⛏️', description: 'Dig for Honeypot' },
   { value: 'flag' as const, label: 'Flag', icon: '🚧', description: 'Place flag' },
 ];
-
-const availableSizes = [4, 5, 6, 7, 8];
 
 const tooltipOpen = ref<string | null>(null);
 const modeDropdownOpen = ref(false);
