@@ -294,27 +294,24 @@
           </Card>
 
           <Card
-            v-if="incrementalStore.selectedOneOffUpgrade"
+            v-for="upgrade in incrementalStore.availableOneOffUpgrades"
+            :key="upgrade.id"
             class="rounded-lg border border-slate-700/80 bg-slate-900"
-            :class="
-              incrementalStore.selectedOneOffUpgrade.canBuy ? 'bg-emerald-700/40' : 'bg-gray-700'
-            "
+            :class="upgrade.canBuy ? 'bg-emerald-700/40' : 'bg-gray-700'"
           >
             <template #content>
               <button
                 type="button"
                 class="w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
-                :disabled="!incrementalStore.selectedOneOffUpgrade.canBuy"
-                @click="incrementalStore.buySelectedOneOffUpgrade"
+                :disabled="!upgrade.canBuy"
+                @click="incrementalStore.purchaseOneOffUpgrade(upgrade.id)"
               >
                 <div class="font-semibold flex items-center justify-between">
-                  <span>{{ incrementalStore.selectedOneOffUpgrade.title }}</span>
-                  <span class="text-xs text-yellow-300"
-                    >Cost: {{ incrementalStore.selectedOneOffUpgrade.cost }}</span
-                  >
+                  <span>{{ upgrade.title }}</span>
+                  <span class="text-xs text-yellow-300">Cost: {{ upgrade.cost }}</span>
                 </div>
                 <div class="text-xs text-emerald-100">
-                  {{ incrementalStore.selectedOneOffUpgrade.description }}
+                  {{ upgrade.description }}
                 </div>
               </button>
             </template>
@@ -550,8 +547,6 @@ const hasAnyIncrementalAutomation = computed(() => {
 const canSkipPuzzleEarly = computed(() => {
   return (
     incrementalStore.runStatus === 'playing' &&
-    !incrementalStore.isLoadingPuzzle &&
-    !incrementalStore.isAutomationInProgress &&
     incrementalStore.runBank >= incrementalStore.sizeUpGoalCost
   );
 });
@@ -561,6 +556,9 @@ const showNextPuzzleButton = computed(() => {
 });
 
 const canUseNextPuzzleButton = computed(() => {
+  if (incrementalStore.runBank >= incrementalStore.sizeUpGoalCost) {
+    return true;
+  }
   return incrementalStore.canStartNextPuzzle || canSkipPuzzleEarly.value;
 });
 

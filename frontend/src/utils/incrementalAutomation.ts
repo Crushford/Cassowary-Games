@@ -21,7 +21,6 @@ interface RunIncrementalAutomationOptions {
   initialMarks: MarkType[][];
   patternCards: PatternCardDefinition[];
   autoQueenRules: AutoQueenRules;
-  isValidMoveWithMarks: (row: number, col: number, marks: MarkType[][]) => boolean;
   maxIterations?: number;
 }
 
@@ -118,33 +117,48 @@ export function collectAutoQueenPlacements({
       }
     }
     for (const group of colorGroups.values()) {
-      const free = group.filter((cell) => marks[cell.row][cell.col] === null);
-      if (free.length === 1) {
-        tryAdd(free[0].row, free[0].col);
+      const unmarked = group.filter((cell) => marks[cell.row][cell.col] === null);
+      const everyOtherFlagged = group.every(
+        (cell) =>
+          marks[cell.row][cell.col] === 'flag' ||
+          (unmarked.length === 1 && cell.row === unmarked[0].row && cell.col === unmarked[0].col)
+      );
+      if (unmarked.length === 1 && everyOtherFlagged) {
+        tryAdd(unmarked[0].row, unmarked[0].col);
       }
     }
   }
 
   if (rules.byRow) {
     for (let row = 0; row < size; row++) {
-      const free: Array<{ row: number; col: number }> = [];
+      const unmarked: Array<{ row: number; col: number }> = [];
       for (let col = 0; col < size; col++) {
-        if (marks[row][col] === null) free.push({ row, col });
+        if (marks[row][col] === null) unmarked.push({ row, col });
       }
-      if (free.length === 1) {
-        tryAdd(free[0].row, free[0].col);
+      const everyOtherFlagged = marks[row].every(
+        (mark, col) =>
+          mark === 'flag' ||
+          (unmarked.length === 1 && col === unmarked[0].col && row === unmarked[0].row)
+      );
+      if (unmarked.length === 1 && everyOtherFlagged) {
+        tryAdd(unmarked[0].row, unmarked[0].col);
       }
     }
   }
 
   if (rules.byColumn) {
     for (let col = 0; col < size; col++) {
-      const free: Array<{ row: number; col: number }> = [];
+      const unmarked: Array<{ row: number; col: number }> = [];
       for (let row = 0; row < size; row++) {
-        if (marks[row][col] === null) free.push({ row, col });
+        if (marks[row][col] === null) unmarked.push({ row, col });
       }
-      if (free.length === 1) {
-        tryAdd(free[0].row, free[0].col);
+      const everyOtherFlagged = marks.every(
+        (currentRow, row) =>
+          currentRow[col] === 'flag' ||
+          (unmarked.length === 1 && row === unmarked[0].row && col === unmarked[0].col)
+      );
+      if (unmarked.length === 1 && everyOtherFlagged) {
+        tryAdd(unmarked[0].row, unmarked[0].col);
       }
     }
   }
@@ -157,7 +171,6 @@ export function buildIncrementalAutomationPlan({
   initialMarks,
   patternCards,
   autoQueenRules,
-  isValidMoveWithMarks,
   maxIterations = 100,
 }: RunIncrementalAutomationOptions): {
   actions: IncrementalAutomationAction[];

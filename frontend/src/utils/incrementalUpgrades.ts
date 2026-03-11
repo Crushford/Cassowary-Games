@@ -1,6 +1,7 @@
 export type OneOffUpgradeId =
   | 'auto-flag'
   | 'auto-next-puzzle'
+  | 'rotate-puzzle'
   | 'auto-queen-color'
   | 'auto-queen-row'
   | 'auto-queen-column'
@@ -19,6 +20,7 @@ export const TIME_COST_GROWTH = 1.6;
 
 export const AUTO_FLAG_COST = 75;
 export const AUTO_NEXT_PUZZLE_COST = 180;
+export const ROTATE_PUZZLE_COST = 260;
 export const PATTERN_CARD_COST_STEP = 20;
 export const AUTO_QUEEN_COLOR_COST = 350;
 export const AUTO_QUEEN_ROW_COST = 400;
@@ -29,7 +31,11 @@ export const TIMER_URGENT_SECONDS = 20;
 export const TIMER_WARNING_SECONDS = 60;
 
 // 'size-up' and 'auto-queen-*' are handled via dedicated purchase flows, not rolled as random upgrades
-export const ONE_OFF_UPGRADE_IDS: OneOffUpgradeId[] = ['auto-flag', 'auto-next-puzzle'];
+export const ONE_OFF_UPGRADE_IDS: OneOffUpgradeId[] = [
+  'auto-flag',
+  'auto-next-puzzle',
+  'rotate-puzzle',
+];
 
 export function getOneOffUpgradeCost(id: OneOffUpgradeId): number {
   switch (id) {
@@ -37,6 +43,8 @@ export function getOneOffUpgradeCost(id: OneOffUpgradeId): number {
       return AUTO_FLAG_COST;
     case 'auto-next-puzzle':
       return AUTO_NEXT_PUZZLE_COST;
+    case 'rotate-puzzle':
+      return ROTATE_PUZZLE_COST;
     case 'auto-queen-color':
       return AUTO_QUEEN_COLOR_COST;
     case 'auto-queen-row':
@@ -54,6 +62,8 @@ export function getOneOffUpgradeTitle(id: OneOffUpgradeId, currentPuzzleSize: nu
       return 'Auto Flag';
     case 'auto-next-puzzle':
       return 'Auto Next Puzzle';
+    case 'rotate-puzzle':
+      return 'Rotate Puzzle';
     case 'auto-queen-color':
       return 'Auto Queen: Color Group';
     case 'auto-queen-row':
@@ -71,6 +81,8 @@ export function getOneOffUpgradeDescription(id: OneOffUpgradeId): string {
       return 'Automatically flags blocked squares after placing a queen.';
     case 'auto-next-puzzle':
       return 'Unlocks auto-start for the next puzzle after a solve.';
+    case 'rotate-puzzle':
+      return 'Puzzles rotate after each move and solved puzzles score 3x points.';
     case 'auto-queen-color':
       return 'Auto-place when only one square remains in a color group.';
     case 'auto-queen-row':

@@ -78,6 +78,7 @@ function createInitialRunState() {
     riskLevel: 0,
     autoFlagPurchased: false,
     autoNextPuzzlePurchased: false,
+    rotatePuzzlePurchased: false,
     autoNextPuzzleEnabled: false,
     autoQueenByColorPurchased: false,
     autoQueenByRowPurchased: false,
@@ -203,6 +204,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       const purchased: Record<string, boolean> = {
         'auto-flag': state.autoFlagPurchased,
         'auto-next-puzzle': state.autoNextPuzzlePurchased,
+        'rotate-puzzle': state.rotatePuzzlePurchased,
       };
       return ONE_OFF_UPGRADE_IDS.filter((id) => !purchased[id]).map((id) => {
         const cost = getOneOffUpgradeCost(id);
@@ -326,8 +328,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
           byRow: this.autoQueenByRowPurchased,
           byColumn: this.autoQueenByColumnPurchased,
         },
-        isValidMoveWithMarks: (row, col, marks) =>
-          queensStore.isValidMoveWithMarks(row, col, marks),
       });
       if (actions.length === 0) {
         return;
@@ -429,6 +429,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
 
       queensStore.setPlacementMode('auto');
       queensStore.setAutoFlagging(this.autoFlagPurchased);
+      queensStore.setMode(this.rotatePuzzlePurchased ? 'rotate' : 'standard');
 
       this.lastPuzzleId = puzzleId;
     },
@@ -485,7 +486,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       this.stopTimer();
       this.stopPatternScan();
 
-      const multiplier = this.currentScoreMultiplier;
+      const multiplier = this.currentScoreMultiplier * (this.rotatePuzzlePurchased ? 3 : 1);
       const rawScore = Math.round(BASE_POINTS * (this.timeRemaining / this.currentPuzzleTimeLimit));
       const minimumApplied = rawScore < 10;
       const scoreBeforeMultiplier = Math.max(10, rawScore);
@@ -577,7 +578,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
 
       this.runBank -= option.cost;
 
-      // Only 'auto-flag' and 'auto-next-puzzle' appear in ONE_OFF_UPGRADE_IDS and thus availableOneOffUpgrades.
+      // Only one-off ids from ONE_OFF_UPGRADE_IDS appear in availableOneOffUpgrades.
       // 'auto-queen-*' use buyAutomationUpgrade; 'size-up' uses buySizeUpGoal.
       switch (id) {
         case 'auto-flag':
@@ -586,6 +587,9 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         case 'auto-next-puzzle':
           this.autoNextPuzzlePurchased = true;
           this.autoNextPuzzleEnabled = true;
+          break;
+        case 'rotate-puzzle':
+          this.rotatePuzzlePurchased = true;
           break;
       }
 
@@ -682,9 +686,12 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       this.runBank = 0;
       this.puzzlesSolved = 0;
       this.riskLevel = 0;
-      this.autoFlagPurchased = false;
-      this.autoNextPuzzlePurchased = false;
-      this.autoNextPuzzleEnabled = false;
+      // Persist selected one-off convenience upgrades across size-up.
+      // Keep current toggle state for auto-next if it's already unlocked.
+      this.autoNextPuzzleEnabled = this.autoNextPuzzlePurchased
+        ? this.autoNextPuzzleEnabled
+        : false;
+      this.rotatePuzzlePurchased = false;
       this.autoQueenByColorPurchased = false;
       this.autoQueenByRowPurchased = false;
       this.autoQueenByColumnPurchased = false;
