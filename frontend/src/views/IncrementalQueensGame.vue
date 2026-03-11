@@ -512,6 +512,7 @@ import Tag from 'primevue/tag';
 import ToggleSwitch from 'primevue/toggleswitch';
 import { useQueensStore } from '../stores/queensStore';
 import { useIncrementalQueensStore } from '../stores/incrementalQueensStore';
+import { TIMER_URGENT_SECONDS, TIMER_WARNING_SECONDS } from '../utils/incrementalUpgrades';
 
 const PlayGrid = defineAsyncComponent(() => import('../components/shared/PlayGrid.vue'));
 const QueensSquare = defineAsyncComponent(() => import('../components/queens/QueensSquare.vue'));
@@ -634,13 +635,13 @@ const isBoardInteractive = computed(() => {
 });
 
 const timerClass = computed(() => {
-  if (incrementalStore.timeRemaining < 20) {
+  if (incrementalStore.timeRemaining < TIMER_URGENT_SECONDS) {
     return 'text-red-300 animate-pulse';
   }
-  if (incrementalStore.timeRemaining < 60) {
+  if (incrementalStore.timeRemaining < TIMER_WARNING_SECONDS) {
     return 'text-amber-300';
   }
-  return 'text-red-300';
+  return '';
 });
 
 watch(

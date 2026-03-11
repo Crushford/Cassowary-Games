@@ -22,6 +22,19 @@ import {
   getOneOffUpgradeTitle,
 } from '../utils/incrementalUpgrades';
 
+function findPatternCardInAll(
+  id: string,
+  customCards: PatternCardDefinition[]
+): PatternCardDefinition | null {
+  return getPatternCardById(id) || customCards.find((card) => card.id === id) || null;
+}
+
+const AUTOMATION_UPGRADE_STATE_KEYS = {
+  'auto-queen-color': 'autoQueenByColorPurchased',
+  'auto-queen-row': 'autoQueenByRowPurchased',
+  'auto-queen-column': 'autoQueenByColumnPurchased',
+} as const satisfies Record<AutomationUpgradeId, string>;
+
 export type IncrementalRunStatus = 'idle' | 'playing' | 'upgrade-select' | 'game-over';
 
 interface PuzzleScoreBreakdown {
@@ -142,32 +155,21 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     canCreateCustomPatternCard(): boolean {
       return this.availablePatternCards.length === 0;
     },
-    hasPatternCard:
-      (state) =>
-      (patternCardId: string): boolean => {
-        return state.ownedPatternCardIds.includes(patternCardId);
-      },
     patternCardCost:
       (state) =>
       (patternCardId: string): number => {
-        const card =
-          PATTERN_CARD_DEFINITIONS.find((item) => item.id === patternCardId) ||
-          state.customPatternCards.find((item) => item.id === patternCardId);
+        const card = findPatternCardInAll(patternCardId, state.customPatternCards);
         if (!card) return 0;
-        const purchasedCount = state.ownedPatternCardIds.length;
-        return card.cost + purchasedCount * PATTERN_CARD_COST_STEP;
+        return card.cost + state.ownedPatternCardIds.length * PATTERN_CARD_COST_STEP;
       },
     canAffordPatternCard:
       (state) =>
       (patternCardId: string): boolean => {
-        const card =
-          PATTERN_CARD_DEFINITIONS.find((item) => item.id === patternCardId) ||
-          state.customPatternCards.find((item) => item.id === patternCardId);
-        if (!card) return false;
         if (state.ownedPatternCardIds.includes(patternCardId)) return false;
-        const purchasedCount = state.ownedPatternCardIds.length;
-        const currentCost = card.cost + purchasedCount * PATTERN_CARD_COST_STEP;
-        return state.runBank >= currentCost;
+        const card = findPatternCardInAll(patternCardId, state.customPatternCards);
+        if (!card) return false;
+        const cost = card.cost + state.ownedPatternCardIds.length * PATTERN_CARD_COST_STEP;
+        return state.runBank >= cost;
       },
     currentRunTimeLimit(state): number {
       return state.currentPuzzleTimeLimit;
@@ -196,10 +198,8 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         cost: RISK_BASE_COST + currentLevel * RISK_COST_STEP,
       };
     },
-    availableManagePatternCards(state): PatternCardDefinition[] {
-      return [...PATTERN_CARD_DEFINITIONS, ...state.customPatternCards].filter(
-        (card) => !state.ownedPatternCardIds.includes(card.id)
-      );
+    availableManagePatternCards(): PatternCardDefinition[] {
+      return this.allPatternCards.filter((card) => !this.ownedPatternCardIds.includes(card.id));
     },
     ownedPatternCards(state): PatternCardDefinition[] {
       return state.ownedPatternCardIds
@@ -236,11 +236,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       ];
       return ids.map((id) => {
         const cost = getOneOffUpgradeCost(id);
-        const owned =
-          (id === 'auto-queen-color' && state.autoQueenByColorPurchased) ||
-          (id === 'auto-queen-row' && state.autoQueenByRowPurchased) ||
-          (id === 'auto-queen-column' && state.autoQueenByColumnPurchased);
-
+        const owned = state[AUTOMATION_UPGRADE_STATE_KEYS[id]];
         return {
           id,
           title: getOneOffUpgradeTitle(id, state.currentPuzzleSize),
@@ -570,10 +566,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         return;
       }
 
-      const card =
-        getPatternCardById(patternCardId) ||
-        this.customPatternCards.find((patternCard) => patternCard.id === patternCardId) ||
-        null;
+      const card = findPatternCardInAll(patternCardId, this.customPatternCards);
       if (!card) {
         return;
       }
@@ -601,6 +594,8 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
 
       this.runBank -= option.cost;
 
+      // Only 'auto-flag' and 'auto-next-puzzle' appear in ONE_OFF_UPGRADE_IDS and thus availableOneOffUpgrades.
+      // 'auto-queen-*' use buyAutomationUpgrade; 'size-up' uses buySizeUpGoal.
       switch (id) {
         case 'auto-flag':
           this.autoFlagPurchased = true;
@@ -608,19 +603,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         case 'auto-next-puzzle':
           this.autoNextPuzzlePurchased = true;
           this.autoNextPuzzleEnabled = true;
-          break;
-        case 'auto-queen-color':
-          this.autoQueenByColorPurchased = true;
-          break;
-        case 'auto-queen-row':
-          this.autoQueenByRowPurchased = true;
-          break;
-        case 'auto-queen-column':
-          this.autoQueenByColumnPurchased = true;
-          break;
-        case 'size-up':
-          this.resetProgressForSizeUp();
-          this.currentPuzzleSize += 1;
           break;
       }
 
@@ -657,13 +639,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       }
 
       this.runBank -= option.cost;
-      if (id === 'auto-queen-color') {
-        this.autoQueenByColorPurchased = true;
-      } else if (id === 'auto-queen-row') {
-        this.autoQueenByRowPurchased = true;
-      } else if (id === 'auto-queen-column') {
-        this.autoQueenByColumnPurchased = true;
-      }
+      this[AUTOMATION_UPGRADE_STATE_KEYS[id]] = true;
     },
 
     createCustomPatternCard(input: {
@@ -738,6 +714,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       this.lastPuzzleId = null;
       this.selectedOneOffUpgradeId = null;
       this.isAutomationInProgress = false;
+      this.automationEnabled = true;
       this.stopAutoNextPuzzleTimer();
     },
 
