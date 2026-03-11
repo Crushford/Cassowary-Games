@@ -83,6 +83,7 @@ function createInitialRunState() {
     isLoadingPuzzle: false,
     isAutomationInProgress: false,
     autoNextPuzzleTimeout: null as number | null,
+    automationEnabled: true,
   };
 }
 
@@ -110,10 +111,18 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       return this.runBank >= this.nextRiskCost && this.currentPuzzleTimeLimit > MIN_TIME_SECONDS;
     },
     canStartNextPuzzle(state): boolean {
-      return state.runStatus === 'upgrade-select' && !state.isLoadingPuzzle && !state.isAutomationInProgress;
+      return (
+        state.runStatus === 'upgrade-select' &&
+        !state.isLoadingPuzzle &&
+        !state.isAutomationInProgress
+      );
     },
     canBuySizeUpGoal(state): boolean {
-      return state.runStatus === 'upgrade-select' && state.currentPuzzleSize < 9 && state.runBank >= SIZE_UP_COST;
+      return (
+        state.runStatus === 'upgrade-select' &&
+        state.currentPuzzleSize < 9 &&
+        state.runBank >= SIZE_UP_COST
+      );
     },
     sizeUpGoalCost(): number {
       return SIZE_UP_COST;
@@ -123,7 +132,9 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       return `${state.currentPuzzleSize}x${state.currentPuzzleSize} -> ${nextSize}x${nextSize}`;
     },
     availablePatternCards(state): PatternCardDefinition[] {
-      return PATTERN_CARD_DEFINITIONS.filter((card) => !state.ownedPatternCardIds.includes(card.id));
+      return PATTERN_CARD_DEFINITIONS.filter(
+        (card) => !state.ownedPatternCardIds.includes(card.id)
+      );
     },
     allPatternCards(state): PatternCardDefinition[] {
       return [...PATTERN_CARD_DEFINITIONS, ...state.customPatternCards];
@@ -218,7 +229,11 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       });
     },
     automationUpgradeOptions(state): AutomationUpgradeOption[] {
-      const ids: AutomationUpgradeId[] = ['auto-queen-color', 'auto-queen-row', 'auto-queen-column'];
+      const ids: AutomationUpgradeId[] = [
+        'auto-queen-color',
+        'auto-queen-row',
+        'auto-queen-column',
+      ];
       return ids.map((id) => {
         const cost = getOneOffUpgradeCost(id);
         const owned =
@@ -237,7 +252,9 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     },
     selectedOneOffUpgrade(): OneOffUpgradeOption | null {
       if (!this.selectedOneOffUpgradeId) return null;
-      return this.availableOneOffUpgrades.find((u) => u.id === this.selectedOneOffUpgradeId) || null;
+      return (
+        this.availableOneOffUpgrades.find((u) => u.id === this.selectedOneOffUpgradeId) || null
+      );
     },
   },
 
@@ -291,6 +308,9 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     },
 
     async applyOwnedPatternCards() {
+      if (!this.automationEnabled) {
+        return;
+      }
       if (this.runStatus !== 'playing') {
         return;
       }
@@ -300,7 +320,9 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
 
       const hasPatternCards = this.ownedPatternCardIds.length > 0;
       const hasAutoQueen =
-        this.autoQueenByColorPurchased || this.autoQueenByRowPurchased || this.autoQueenByColumnPurchased;
+        this.autoQueenByColorPurchased ||
+        this.autoQueenByRowPurchased ||
+        this.autoQueenByColumnPurchased;
 
       if (!hasPatternCards && !hasAutoQueen) {
         return;
@@ -320,7 +342,8 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
           byRow: this.autoQueenByRowPurchased,
           byColumn: this.autoQueenByColumnPurchased,
         },
-        isValidMoveWithMarks: (row, col, marks) => queensStore.isValidMoveWithMarks(row, col, marks),
+        isValidMoveWithMarks: (row, col, marks) =>
+          queensStore.isValidMoveWithMarks(row, col, marks),
       });
       if (actions.length === 0) {
         return;
@@ -329,6 +352,9 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       this.isAutomationInProgress = true;
       try {
         for (const action of actions) {
+          if (!this.automationEnabled) {
+            break;
+          }
           if (this.runStatus !== 'playing') {
             break;
           }
@@ -365,10 +391,14 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     startPatternScan() {
       this.stopPatternScan();
 
-      void this.applyOwnedPatternCards();
+      if (this.automationEnabled) {
+        void this.applyOwnedPatternCards();
+      }
 
       this.patternScanInterval = window.setInterval(() => {
-        void this.applyOwnedPatternCards();
+        if (this.automationEnabled) {
+          void this.applyOwnedPatternCards();
+        }
       }, 1000);
     },
 
@@ -380,6 +410,10 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
           throw new Error('Failed to load puzzle database');
         }
       }
+    },
+
+    setAutomationEnabled(enabled: boolean) {
+      this.automationEnabled = enabled;
     },
 
     pickNextPuzzleId(): string {

@@ -32,7 +32,8 @@
                     ? 'Owned'
                     : upgrade.id === 'auto-queen-row' && incrementalStore.autoQueenByRowPurchased
                       ? 'Owned'
-                      : upgrade.id === 'auto-queen-column' && incrementalStore.autoQueenByColumnPurchased
+                      : upgrade.id === 'auto-queen-column' &&
+                          incrementalStore.autoQueenByColumnPurchased
                         ? 'Owned'
                         : 'Buy'
                 }}

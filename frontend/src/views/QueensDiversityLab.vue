@@ -259,7 +259,8 @@ async function loadPair(): Promise<void> {
       errorMessage.value =
         'Could not reach backend API. Start backend with: `cd backend && yarn server`.';
     } else {
-      errorMessage.value = error instanceof Error ? error.message : 'Unexpected error while loading pair';
+      errorMessage.value =
+        error instanceof Error ? error.message : 'Unexpected error while loading pair';
     }
   } finally {
     loading.value = false;
@@ -293,7 +294,11 @@ const PuzzleBoard = defineComponent({
             },
             [
               hasQueen
-                ? h('span', { class: 'text-white text-base drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]' }, 'Q')
+                ? h(
+                    'span',
+                    { class: 'text-white text-base drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]' },
+                    'Q'
+                  )
                 : null,
             ]
           );

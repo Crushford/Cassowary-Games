@@ -1,11 +1,16 @@
 <template>
   <!-- Standard mode: minimal top bar with optional timer -->
-  <div v-if="queensStore.currentMode === 'standard'" class="flex items-center justify-between w-full">
+  <div
+    v-if="queensStore.currentMode === 'standard'"
+    class="flex items-center justify-between w-full"
+  >
     <!-- Left: puzzle title + size -->
     <div class="flex items-center space-x-4">
       <div class="text-sm">
         <div v-if="isSinglePuzzleMode" class="font-semibold text-lg">
-          <router-link to="/" class="text-white hover:text-gray-300 cursor-pointer">Queens</router-link>
+          <router-link to="/" class="text-white hover:text-gray-300 cursor-pointer"
+            >Queens</router-link
+          >
         </div>
         <div v-else class="font-semibold text-lg">Queens</div>
         <div class="text-gray-400">{{ queensStore.gridSize }}x{{ queensStore.gridSize }}</div>
@@ -36,9 +41,7 @@
       <span class="text-yellow-400 font-semibold">⚡ Speed Mode</span>
     </template>
     <template #stats>
-      <span class="text-yellow-200 text-sm">
-        Completed: {{ speedModeStore.completedCount }}
-      </span>
+      <span class="text-yellow-200 text-sm"> Completed: {{ speedModeStore.completedCount }} </span>
       <span class="text-yellow-300 font-bold">{{ speedModeStore.getFormattedTimeRemaining }}</span>
     </template>
     <template #actions>

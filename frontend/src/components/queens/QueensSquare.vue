@@ -31,10 +31,7 @@
       </span>
       <!-- Show player marks (flag or queen) -->
       <div class="relative flex items-center justify-center">
-        <span
-          v-if="shouldShowFlag()"
-          :class="[getEmojiSizeClass(), getFlagAnimationClass()]"
-        >
+        <span v-if="shouldShowFlag()" :class="[getEmojiSizeClass(), getFlagAnimationClass()]">
           🚧
         </span>
         <span v-else-if="shouldShowQueen()" :class="getEmojiSizeClass()">👑</span>

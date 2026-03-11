@@ -25,10 +25,7 @@ export const AUTO_QUEEN_ROW_COST = 400;
 export const AUTO_QUEEN_COLUMN_COST = 400;
 export const SIZE_UP_COST = 5000;
 
-export const ONE_OFF_UPGRADE_IDS: OneOffUpgradeId[] = [
-  'auto-flag',
-  'auto-next-puzzle',
-];
+export const ONE_OFF_UPGRADE_IDS: OneOffUpgradeId[] = ['auto-flag', 'auto-next-puzzle'];
 
 export function getOneOffUpgradeCost(id: OneOffUpgradeId): number {
   switch (id) {

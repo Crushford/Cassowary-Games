@@ -255,8 +255,7 @@ export const useSpeedModeStore = defineStore('speedMode', {
       for (let sizeIdx = this.currentSizeIndex; sizeIdx < availableSizes.length; sizeIdx++) {
         const sizeKey = availableSizes[sizeIdx];
         const puzzlesForSize = (queensStore.puzzleDatabase as Record<string, any[]>)[sizeKey] || [];
-        const startIndex =
-          sizeIdx === this.currentSizeIndex ? this.currentPuzzleIndex : 0;
+        const startIndex = sizeIdx === this.currentSizeIndex ? this.currentPuzzleIndex : 0;
 
         for (let puzzleIdx = startIndex; puzzleIdx < puzzlesForSize.length; puzzleIdx++) {
           const puzzle = puzzlesForSize[puzzleIdx];
