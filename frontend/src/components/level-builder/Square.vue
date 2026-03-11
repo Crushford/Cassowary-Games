@@ -62,7 +62,7 @@ const squareClasses = computed(() => {
   const classes = [];
 
   if (hasGroupColor) {
-    classes.push(`bg-group-${groupColor.value}-700`);
+    classes.push(`bg-group-${groupColor.value}-base`);
   }
 
   // Add hover state
@@ -74,6 +74,6 @@ const squareClasses = computed(() => {
 
 <script lang="ts">
 export default {
-  name: 'Square',
+  name: 'LevelBuilderSquare',
 };
 </script>

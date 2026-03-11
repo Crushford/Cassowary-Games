@@ -136,6 +136,7 @@ interface QueensState {
   rotationHistory: number[]; // parallel to moveHistory, rotation count at each history save
   isSwipeActive: boolean; // whether a touch swipe is currently in progress
   swipePlacedFlags: boolean; // whether any flags were placed during the current swipe
+  pendingRotateTimeout: number | null; // delayed rotate to avoid rotating mid-double-tap
   lastManualInteractionAt: number;
   diversityAverageBySize: Record<string, number>; // Average difference between any 2 originals by size
   recentPuzzleIdsBySize: Record<string, string[]>; // Recent puzzle history per size to avoid immediate repeats
@@ -162,6 +163,7 @@ const BEST_TIMES_PER_SIZE_KEY = 'queens-best-times-per-size';
 const PUZZLE_PROGRESS_KEY_PREFIX = 'queens-puzzle-progress-';
 // LocalStorage key prefix for puzzle move history
 const PUZZLE_HISTORY_KEY_PREFIX = 'queens-puzzle-history-';
+const ROTATE_DELAY_MS = 500;
 
 // Helper functions for localStorage
 function getCompletedPuzzles(): Set<string> {
@@ -420,6 +422,7 @@ export const useQueensStore = defineStore('queens', {
     rotationHistory: [],
     isSwipeActive: false,
     swipePlacedFlags: false,
+    pendingRotateTimeout: null,
     lastManualInteractionAt: 0,
     // Error tracking
     errorSquares: new Set<string>(),
@@ -722,6 +725,7 @@ export const useQueensStore = defineStore('queens', {
       this.stopErrorChecking();
       this.stopProgressSaving();
       this.clearAutoFlagAnimations();
+      this.clearPendingRotateTimeout();
 
       this.grid = createEmptyGrid(this.gridSize);
       this.moveHistory = [];
@@ -754,6 +758,7 @@ export const useQueensStore = defineStore('queens', {
     },
 
     handleUndo() {
+      this.clearPendingRotateTimeout();
       if (this.moveHistory.length > 0) {
         const lastPlayerMarks = this.moveHistory.pop();
         if (lastPlayerMarks) {
@@ -810,7 +815,7 @@ export const useQueensStore = defineStore('queens', {
       this.checkFullyFlaggedGroups();
       // Rotate board if in rotate mode and not mid-swipe
       if (source === 'player' && this.isRotateMode && !this.isSwipeActive) {
-        this.rotateBoard90CW();
+        this.scheduleRotateAfterDelay();
       }
       return true;
     },
@@ -860,7 +865,7 @@ export const useQueensStore = defineStore('queens', {
 
       // Rotate board if in rotate mode and puzzle not yet complete
       if (source === 'player' && this.isRotateMode && !this.isComplete) {
-        this.rotateBoard90CW();
+        this.scheduleRotateAfterDelay();
       }
 
       return true;
@@ -977,6 +982,10 @@ export const useQueensStore = defineStore('queens', {
 
     handleSquareClick(row: number, col: number) {
       this.lastManualInteractionAt = Date.now();
+      if (this.isRotateMode) {
+        // A new manual tap supersedes any queued rotate from a previous tap.
+        this.clearPendingRotateTimeout();
+      }
       // Track clicked square for tutorial
       this.lastClickedSquare = { row, col };
 
@@ -1448,6 +1457,7 @@ export const useQueensStore = defineStore('queens', {
       // Stop error checking (this also clears error messages)
       this.stopErrorChecking();
       this.clearAutoFlagAnimations();
+      this.clearPendingRotateTimeout();
 
       // Clear all marks by setting each cell to null
       for (let row = 0; row < this.gridSize; row++) {
@@ -1469,6 +1479,7 @@ export const useQueensStore = defineStore('queens', {
     },
 
     clearAll() {
+      this.clearPendingRotateTimeout();
       // If in rotate mode, un-rotate the grid back to its original orientation first
       if (this.isRotateMode && this.boardRotationCount > 0) {
         const rotationsBack = (4 - this.boardRotationCount) % 4;
@@ -1821,6 +1832,23 @@ export const useQueensStore = defineStore('queens', {
     },
 
     // Rotate mode core methods
+    clearPendingRotateTimeout() {
+      if (this.pendingRotateTimeout !== null) {
+        clearTimeout(this.pendingRotateTimeout);
+        this.pendingRotateTimeout = null;
+      }
+    },
+
+    scheduleRotateAfterDelay() {
+      this.clearPendingRotateTimeout();
+      this.pendingRotateTimeout = window.setTimeout(() => {
+        this.pendingRotateTimeout = null;
+        if (!this.isRotateMode || this.isComplete || this.isSwipeActive) {
+          return;
+        }
+        this.rotateBoard90CW();
+      }, ROTATE_DELAY_MS);
+    },
 
     // Rotate only the grid (color groups + solution queens) 90° clockwise
     rotateGridOnly90CW() {
@@ -1860,6 +1888,7 @@ export const useQueensStore = defineStore('queens', {
     // Called by PlayGrid when a touch swipe begins
     onSwipeStart() {
       if (!this.isRotateMode) return;
+      this.clearPendingRotateTimeout();
       this.isSwipeActive = true;
       this.swipePlacedFlags = false;
     },
@@ -1871,11 +1900,12 @@ export const useQueensStore = defineStore('queens', {
       this.isSwipeActive = false;
       this.swipePlacedFlags = false;
       if (hadFlags) {
-        this.rotateBoard90CW();
+        this.scheduleRotateAfterDelay();
       }
     },
 
     startRotateMode() {
+      this.clearPendingRotateTimeout();
       this.currentMode = 'rotate';
       this.boardRotationCount = 0;
       this.rotationHistory = [];
@@ -1884,6 +1914,7 @@ export const useQueensStore = defineStore('queens', {
     },
 
     resetRotateMode() {
+      this.clearPendingRotateTimeout();
       // Un-rotate grid back to original orientation
       if (this.boardRotationCount > 0) {
         const rotationsBack = (4 - this.boardRotationCount) % 4;
