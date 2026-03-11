@@ -550,8 +550,6 @@ const hasAnyIncrementalAutomation = computed(() => {
 const canSkipPuzzleEarly = computed(() => {
   return (
     incrementalStore.runStatus === 'playing' &&
-    !incrementalStore.isLoadingPuzzle &&
-    !incrementalStore.isAutomationInProgress &&
     incrementalStore.runBank >= incrementalStore.sizeUpGoalCost
   );
 });
@@ -561,6 +559,9 @@ const showNextPuzzleButton = computed(() => {
 });
 
 const canUseNextPuzzleButton = computed(() => {
+  if (incrementalStore.runBank >= incrementalStore.sizeUpGoalCost) {
+    return true;
+  }
   return incrementalStore.canStartNextPuzzle || canSkipPuzzleEarly.value;
 });
 
