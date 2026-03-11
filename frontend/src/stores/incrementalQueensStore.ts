@@ -144,16 +144,11 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       const nextSize = state.currentPuzzleSize + 1;
       return `${state.currentPuzzleSize}x${state.currentPuzzleSize} -> ${nextSize}x${nextSize}`;
     },
-    availablePatternCards(state): PatternCardDefinition[] {
-      return PATTERN_CARD_DEFINITIONS.filter(
-        (card) => !state.ownedPatternCardIds.includes(card.id)
-      );
-    },
     allPatternCards(state): PatternCardDefinition[] {
       return [...PATTERN_CARD_DEFINITIONS, ...state.customPatternCards];
     },
-    canCreateCustomPatternCard(): boolean {
-      return this.availablePatternCards.length === 0;
+    canCreateCustomPatternCard(state): boolean {
+      return PATTERN_CARD_DEFINITIONS.every((card) => state.ownedPatternCardIds.includes(card.id));
     },
     patternCardCost:
       (state) =>
@@ -171,9 +166,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         const cost = card.cost + state.ownedPatternCardIds.length * PATTERN_CARD_COST_STEP;
         return state.runBank >= cost;
       },
-    currentRunTimeLimit(state): number {
-      return state.currentPuzzleTimeLimit;
-    },
     riskShopPreview(state): {
       currentLevel: number;
       nextLevel: number;
@@ -187,6 +179,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       const nextLevel = state.riskLevel + 1;
       const currentMultiplier = Math.pow(RISK_SCORE_FACTOR, currentLevel);
       const nextMultiplier = Math.pow(RISK_SCORE_FACTOR, nextLevel);
+      // Note: currentMultiplier mirrors currentScoreMultiplier; kept inline to avoid `this` in a state-arrow getter
 
       return {
         currentLevel,
@@ -203,20 +196,15 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     },
     ownedPatternCards(state): PatternCardDefinition[] {
       return state.ownedPatternCardIds
-        .map(
-          (cardId) =>
-            getPatternCardById(cardId) ||
-            state.customPatternCards.find((patternCard) => patternCard.id === cardId) ||
-            null
-        )
+        .map((cardId) => findPatternCardInAll(cardId, state.customPatternCards))
         .filter((card): card is PatternCardDefinition => card !== null);
     },
     availableOneOffUpgrades(state): OneOffUpgradeOption[] {
-      return ONE_OFF_UPGRADE_IDS.filter((id) => {
-        if (id === 'auto-flag') return !state.autoFlagPurchased;
-        if (id === 'auto-next-puzzle') return !state.autoNextPuzzlePurchased;
-        return false;
-      }).map((id) => {
+      const purchased: Record<string, boolean> = {
+        'auto-flag': state.autoFlagPurchased,
+        'auto-next-puzzle': state.autoNextPuzzlePurchased,
+      };
+      return ONE_OFF_UPGRADE_IDS.filter((id) => !purchased[id]).map((id) => {
         const cost = getOneOffUpgradeCost(id);
 
         return {
@@ -355,16 +343,13 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
             break;
           }
 
+          if (queensStore.playerMarks[action.row][action.col] !== null) {
+            continue;
+          }
           if (action.type === 'flag') {
-            if (queensStore.playerMarks[action.row][action.col] !== null) {
-              continue;
-            }
             queensStore.placeFlag(action.row, action.col);
             queensStore.triggerAutoFlagAnimation(action.row, action.col, 'pattern', 0);
           } else {
-            if (queensStore.playerMarks[action.row][action.col] !== null) {
-              continue;
-            }
             queensStore.placeQueen(action.row, action.col);
           }
 
@@ -424,12 +409,11 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         throw new Error(`No ${sizeKey} puzzles available for Incremental Queens`);
       }
 
-      const nonRepeatingPool =
+      const selectionPool =
         this.lastPuzzleId && originalVariants.length > 1
           ? originalVariants.filter((puzzle) => puzzle.id !== this.lastPuzzleId)
           : originalVariants;
 
-      const selectionPool = nonRepeatingPool.length > 0 ? nonRepeatingPool : originalVariants;
       const randomIndex = Math.floor(Math.random() * selectionPool.length);
       return selectionPool[randomIndex].id;
     },
@@ -487,7 +471,6 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         this.isLoadingPuzzle = false;
       }
 
-      this.currentPuzzleTimeLimit = this.currentRunTimeLimit;
       this.timeRemaining = this.currentPuzzleTimeLimit;
       this.runStatus = 'playing';
       this.startTimer();
