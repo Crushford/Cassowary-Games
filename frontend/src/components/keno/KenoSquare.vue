@@ -50,7 +50,9 @@
         class="absolute -top-12 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
         :class="popupClasses"
       >
-        <span class="text-3xl font-bold">{{ popupValue > 0 ? '+' : '' }}{{ popupValue }}</span>
+        <span class="text-3xl font-bold"
+          >{{ (popupValue ?? 0) > 0 ? '+' : '' }}{{ popupValue ?? 0 }}</span
+        >
       </div>
     </Transition>
   </button>

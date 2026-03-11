@@ -56,7 +56,6 @@ interface PuzzleRecord {
   name?: string;
   layout: string;
   queens: string;
-  [key: string]: unknown;
 }
 
 type PuzzleDatabase = Record<string, PuzzleRecord[]>;
@@ -1906,11 +1905,15 @@ export const useQueensStore = defineStore('queens', {
           throw new Error('Failed to load puzzle database');
         }
       }
+      const puzzleDatabase = this.puzzleDatabase;
+      if (!puzzleDatabase) {
+        throw new Error('Puzzle database unavailable');
+      }
 
       const puzzle = this.getNextUncompletedPuzzleForSize(sizeKey);
       if (!puzzle) {
         // All puzzles for this size are completed — just use the first one
-        const puzzlesForSize = this.puzzleDatabase[sizeKey];
+        const puzzlesForSize = puzzleDatabase[sizeKey];
         if (puzzlesForSize && puzzlesForSize.length > 0) {
           this.startRotateMode();
           router.push(`/queens/${puzzlesForSize[0].id}`);
