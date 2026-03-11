@@ -128,7 +128,7 @@ export function removeQueenPlacement(
   // Replay all moves from history except the removed queen placement
   if (newHistory.length > 0) {
     // Start from the first history entry (empty board)
-    let currentState = clonePlayerMarks(newHistory[0]);
+    const currentState = clonePlayerMarks(newHistory[0]);
 
     // Replay each move by comparing consecutive history states
     for (let i = 0; i < newHistory.length - 1; i++) {
@@ -218,7 +218,7 @@ export function replayHistoryFromEntries(
     return Array.from({ length: gridSize }, () => Array(gridSize).fill(null as MarkType));
   }
 
-  let currentState = clonePlayerMarks(history[0]);
+  const currentState = clonePlayerMarks(history[0]);
 
   // Replay each move by comparing consecutive history states
   // Apply changes incrementally, one move at a time

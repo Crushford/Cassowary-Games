@@ -88,14 +88,14 @@
 
       <div class="flex gap-3 justify-between">
         <Button
-          @click="handleResetRecords"
           class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-red-800 bg-red-900 text-red-100 enabled:hover:bg-red-800 enabled:hover:border-red-700"
           label="Reset Records"
+          @click="handleResetRecords"
         />
         <Button
-          @click="$emit('close')"
           class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600"
           label="Close"
+          @click="$emit('close')"
         />
       </div>
     </div>
@@ -120,20 +120,24 @@ const queensStore = useQueensStore();
 
 // Include recordsRefreshTrigger to make computed properties reactive to localStorage changes
 const speedMode2MinSequential = computed(() => {
-  queensStore.recordsRefreshTrigger; // Access to trigger reactivity
+  const refreshTrigger = queensStore.recordsRefreshTrigger;
+  if (refreshTrigger < 0) return 0;
   return queensStore.getSpeedModeRecord(120, true);
 });
 const speedMode5MinSequential = computed(() => {
-  queensStore.recordsRefreshTrigger; // Access to trigger reactivity
+  const refreshTrigger = queensStore.recordsRefreshTrigger;
+  if (refreshTrigger < 0) return 0;
   return queensStore.getSpeedModeRecord(300, true);
 });
 
 const speedMode2MinSizeRecords = computed(() => {
-  queensStore.recordsRefreshTrigger; // Access to trigger reactivity
+  const refreshTrigger = queensStore.recordsRefreshTrigger;
+  if (refreshTrigger < 0) return {};
   return queensStore.getAllSpeedModeSizeRecords(120);
 });
 const speedMode5MinSizeRecords = computed(() => {
-  queensStore.recordsRefreshTrigger; // Access to trigger reactivity
+  const refreshTrigger = queensStore.recordsRefreshTrigger;
+  if (refreshTrigger < 0) return {};
   return queensStore.getAllSpeedModeSizeRecords(300);
 });
 
@@ -154,7 +158,8 @@ const speedMode5MinSizeEntries = computed(() => {
 });
 
 const bestTimesPerSize = computed(() => {
-  queensStore.recordsRefreshTrigger; // Access to trigger reactivity
+  const refreshTrigger = queensStore.recordsRefreshTrigger;
+  if (refreshTrigger < 0) return {};
   return queensStore.getBestTimesPerSize();
 });
 

@@ -3,8 +3,8 @@
     <div class="flex items-center gap-2 min-w-0">
       <span class="text-xs text-gray-400 whitespace-nowrap">Divine Favour:</span>
       <button
-        @click="showModal = true"
         class="flex items-center gap-1.5 text-sm hover:bg-gray-700 rounded px-2 py-1 transition-colors min-w-0 flex-shrink"
+        @click="showModal = true"
       >
         <span class="text-xs whitespace-nowrap">🛡️ {{ wallTokens }}</span>
         <span class="text-xs whitespace-nowrap">🏛️ {{ cityTokens }}</span>
@@ -27,7 +27,7 @@
         <div>
           <div class="flex items-center justify-between mb-2">
             <span class="text-sm font-semibold text-white">🛡️ Wall</span>
-            <span class="text-xs text-yellow-400" v-if="wallTokens > 0">
+            <span v-if="wallTokens > 0" class="text-xs text-yellow-400">
               x{{ (1 + 0.25 * wallTokens).toFixed(2) }}
             </span>
           </div>
@@ -35,7 +35,6 @@
             <button
               v-for="i in 3"
               :key="i"
-              @click="setTokens('wall', i - 1)"
               :class="[
                 'flex-1 py-2 rounded transition-colors text-sm font-semibold',
                 wallTokens >= i
@@ -43,6 +42,7 @@
                   : 'bg-gray-700 hover:bg-gray-600 text-gray-300',
               ]"
               :disabled="usedTokens >= totalTokens && wallTokens < i - 1"
+              @click="setTokens('wall', i - 1)"
             >
               {{ i - 1 }}
             </button>
@@ -53,7 +53,7 @@
         <div>
           <div class="flex items-center justify-between mb-2">
             <span class="text-sm font-semibold text-white">🏛️ City</span>
-            <span class="text-xs text-green-400" v-if="cityTokens > 0">
+            <span v-if="cityTokens > 0" class="text-xs text-green-400">
               x{{ (1 + 0.25 * cityTokens).toFixed(2) }}
             </span>
           </div>
@@ -61,7 +61,6 @@
             <button
               v-for="i in 3"
               :key="i"
-              @click="setTokens('city', i - 1)"
               :class="[
                 'flex-1 py-2 rounded transition-colors text-sm font-semibold',
                 cityTokens >= i
@@ -69,6 +68,7 @@
                   : 'bg-gray-700 hover:bg-gray-600 text-gray-300',
               ]"
               :disabled="usedTokens >= totalTokens && cityTokens < i - 1"
+              @click="setTokens('city', i - 1)"
             >
               {{ i - 1 }}
             </button>
@@ -79,7 +79,7 @@
         <div>
           <div class="flex items-center justify-between mb-2">
             <span class="text-sm font-semibold text-white">🌾 Countryside</span>
-            <span class="text-xs text-green-400" v-if="countrysideTokens > 0">
+            <span v-if="countrysideTokens > 0" class="text-xs text-green-400">
               x{{ (1 + 0.25 * countrysideTokens).toFixed(2) }}
             </span>
           </div>
@@ -87,7 +87,6 @@
             <button
               v-for="i in 3"
               :key="i"
-              @click="setTokens('countryside', i - 1)"
               :class="[
                 'flex-1 py-2 rounded transition-colors text-sm font-semibold',
                 countrysideTokens >= i
@@ -95,6 +94,7 @@
                   : 'bg-gray-700 hover:bg-gray-600 text-gray-300',
               ]"
               :disabled="usedTokens >= totalTokens && countrysideTokens < i - 1"
+              @click="setTokens('countryside', i - 1)"
             >
               {{ i - 1 }}
             </button>

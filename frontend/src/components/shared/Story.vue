@@ -12,9 +12,9 @@
       <button
         v-for="(topic, index) in availableTopics"
         :key="topic.id"
-        @click="selectTopic(topic)"
         :class="getDialogueButtonClass(index)"
         class="dialogue-button"
+        @click="selectTopic(topic)"
       >
         {{ topic.questionText }}
       </button>
@@ -99,7 +99,7 @@ const getDialogueButtonClass = (index: number): string => {
 };
 
 defineOptions({
-  name: 'Story',
+  name: 'SharedStory',
 });
 </script>
 

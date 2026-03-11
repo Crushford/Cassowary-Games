@@ -18,15 +18,15 @@
 
         <div class="space-y-3">
           <button
-            @click="handleAccept"
             class="w-full px-6 py-3 bg-yellow-600 hover:bg-yellow-500 text-white font-semibold rounded-lg transition-colors"
+            @click="handleAccept"
           >
             Enable Analytics Tracking
           </button>
 
           <button
-            @click="handleDecline"
             class="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+            @click="handleDecline"
           >
             Disable Analytics Tracking
           </button>
@@ -41,7 +41,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 import Modal from './Modal.vue';
 import { useCookieConsent } from '@/composables/useCookieConsent';
 import { initGoogleAnalytics } from '@/utils/analytics';
@@ -51,7 +50,7 @@ interface Props {
   isVisible: boolean;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const emit = defineEmits<{
   close: [];

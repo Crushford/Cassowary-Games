@@ -3,8 +3,8 @@
   <button
     class="w-full h-full aspect-square border border-black transition-colors duration-150 cursor-pointer flex items-center justify-center relative outline-none box-border"
     :class="buttonClasses"
-    @click="handleClick"
     :disabled="isFlipped || gameOver"
+    @click="handleClick"
   >
     <!-- Number display (before flip) -->
     <div v-if="!isFlipped" class="w-full h-full flex items-center justify-center relative">
@@ -50,7 +50,9 @@
         class="absolute -top-12 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
         :class="popupClasses"
       >
-        <span class="text-3xl font-bold">{{ popupValue > 0 ? '+' : '' }}{{ popupValue }}</span>
+        <span class="text-3xl font-bold"
+          >{{ (popupValue ?? 0) > 0 ? '+' : '' }}{{ popupValue ?? 0 }}</span
+        >
       </div>
     </Transition>
   </button>
@@ -58,11 +60,25 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import type { GridSquare } from '../../types/types';
+
+interface KenoSquareStore {
+  grid: GridSquare[][];
+  gameOver: boolean;
+  showBoard: boolean;
+  canSelectMore: boolean;
+  getSquareNumber: (row: number, col: number) => number;
+  isFlipped: (row: number, col: number) => boolean;
+  isSelected: (row: number, col: number) => boolean;
+  isShowingPopup: (row: number, col: number) => boolean;
+  getPopupValue: (row: number, col: number) => number | null;
+  selectSquare: (row: number, col: number) => void;
+}
 
 interface Props {
   rowIndex: number;
   colIndex: number;
-  store: any;
+  store: KenoSquareStore;
 }
 
 const props = defineProps<Props>();
@@ -97,10 +113,6 @@ const isSelected = computed(() => {
 
 const isHoneypot = computed(() => {
   return gridCell.value.isSolutionQueen;
-});
-
-const earnedCoin = computed(() => {
-  return props.store.earnedCoin(props.rowIndex, props.colIndex);
 });
 
 const showPopup = computed(() => {
@@ -144,12 +156,6 @@ watch(
 
 const hasFruit = computed(() => {
   return gridCell.value.hasFruit;
-});
-
-// Computed property for the card image source
-const cardImageSrc = computed(() => {
-  // We no longer use images, only emojis
-  return '';
 });
 
 // Computed property for button classes

@@ -2,8 +2,8 @@
   <div class="relative">
     <!-- Size button -->
     <button
-      @click="sizeDropdownOpen = !sizeDropdownOpen"
       class="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-700 text-slate-100 rounded transition-colors duration-150"
+      @click="sizeDropdownOpen = !sizeDropdownOpen"
     >
       <span class="text-sm">{{ store.gridSize }}×{{ store.gridSize }}</span>
       <svg
@@ -45,7 +45,13 @@ import { ref } from 'vue';
 import Modal from './Modal.vue';
 
 interface Props {
-  store: any; // The store that has gridSize property and setGridSize method
+  store: {
+    gridSize: number;
+    setGridSize?: (size: number) => void;
+    isTrainingDay?: boolean;
+    resetTraining?: () => void;
+    restartGame?: () => void;
+  };
 }
 
 const props = defineProps<Props>();

@@ -43,8 +43,8 @@
         <div class="text-lg font-semibold mb-3">Choose your defense:</div>
         <div class="space-y-3">
           <button
-            @click="chooseBattle('countryside')"
             class="w-full bg-green-700 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded transition-colors"
+            @click="chooseBattle('countryside')"
           >
             Fight in Countryside
             <div class="text-sm font-normal mt-1 text-gray-200">
@@ -52,8 +52,8 @@
             </div>
           </button>
           <button
-            @click="chooseBattle('wall')"
             class="w-full bg-orange-700 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded transition-colors"
+            @click="chooseBattle('wall')"
           >
             Defend at Wall
             <div class="text-sm font-normal mt-1 text-gray-200">

@@ -1,8 +1,8 @@
 <template>
   <div class="border border-gray-600 rounded-lg overflow-hidden">
     <button
-      @click="toggle"
       class="w-full flex items-center justify-between p-3 bg-gray-800/50 hover:bg-gray-700/50 transition-colors text-left"
+      @click="toggle"
     >
       <span class="text-sm font-semibold text-white">{{ title }}</span>
       <span
@@ -35,5 +35,9 @@ function toggle(): void {
 defineExpose({
   toggle,
   isOpen,
+});
+
+defineOptions({
+  name: 'SharedAccordion',
 });
 </script>

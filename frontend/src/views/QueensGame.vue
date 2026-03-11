@@ -14,9 +14,9 @@
       v-if="
         queensStore.isTutorialMode && queensStore.tutorialInstruction && !queensStore.errorMessage
       "
+      id="tutorial-instruction"
       :message="queensStore.tutorialInstruction"
       :should-shake="queensStore.shouldShakeToast"
-      id="tutorial-instruction"
       role="alert"
       aria-live="polite"
     />
@@ -24,9 +24,9 @@
     <!-- Error Toast -->
     <Toast
       v-if="queensStore.errorMessage"
+      id="error-message"
       :message="queensStore.errorMessage"
       :should-shake="shouldShakeErrorToast"
-      id="error-message"
       role="alert"
       aria-live="assertive"
       variant="error"
@@ -88,8 +88,8 @@
           unstyled
           class="h-9 rounded-xl border !min-w-0 px-2.5 !py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600"
           :disabled="queensStore.moveHistory.length === 0"
-          @click="handleUndo"
           aria-label="Undo last move"
+          @click="handleUndo"
         />
 
         <!-- Clear Button -->
@@ -97,8 +97,8 @@
           label="Clear"
           unstyled
           class="h-9 rounded-xl border !min-w-0 px-2.5 !py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-red-800 bg-red-900 text-red-100 enabled:hover:bg-red-800 enabled:hover:border-red-700"
-          @click="handleClear"
           aria-label="Clear all marks from the board"
+          @click="handleClear"
         />
 
         <!-- New Puzzle Button -->
@@ -316,7 +316,7 @@ function initializeTutorialSteps(levelName: string) {
 
     // Find colors with only one square
     const singleSquareColors: Pos[] = [];
-    colorCounts.forEach((positions, color) => {
+    colorCounts.forEach((positions) => {
       if (positions.length === 1) {
         singleSquareColors.push(positions[0]);
       }
@@ -353,7 +353,6 @@ function initializeTutorialSteps(levelName: string) {
 
     // Add steps for each single-square color
     for (let i = 0; i < singleSquareColors.length; i++) {
-      const square = singleSquareColors[i];
       steps.push({
         id: `place-queen-${i + 1}`,
         instruction: `Place a queen on a square with a single-square color. If you click the wrong square, a red X will appear and you should click the Undo button to undo your mistake.`,

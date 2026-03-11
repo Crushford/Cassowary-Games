@@ -5,13 +5,13 @@
 
       <!-- Toggle Button -->
       <button
-        @click="levelBuilderStore.toggleColorToolActive()"
         :class="[
           'px-4 py-2 rounded font-medium transition',
           levelBuilderStore.colorToolActive
             ? 'bg-green-600 text-white'
             : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
         ]"
+        @click="levelBuilderStore.toggleColorToolActive()"
       >
         {{ levelBuilderStore.colorToolActive ? 'Deactivate Tool' : 'Activate Tool' }}
       </button>
@@ -22,7 +22,6 @@
       <button
         v-for="color in palette"
         :key="color"
-        @click="handleColorClick(color)"
         :class="[
           'w-10 h-10 rounded-full border-2 flex items-center justify-center transition',
           levelBuilderStore.colorToolSelectedColor === color
@@ -31,6 +30,7 @@
           isColorUsed(color) ? 'opacity-100' : 'opacity-50',
         ]"
         :style="{ backgroundColor: color }"
+        @click="handleColorClick(color)"
       >
         <span v-if="isColorUsed(color)" class="text-white text-xs">✓</span>
       </button>
@@ -62,14 +62,14 @@
           </div>
           <div class="flex items-center gap-2">
             <button
-              @click="levelBuilderStore.expandColorGroupSafely(color)"
               class="text-blue-400 hover:text-blue-300 text-sm"
+              @click="levelBuilderStore.expandColorGroupSafely(color)"
             >
               Expand
             </button>
             <button
-              @click="handleDeleteColorGroup(color)"
               class="text-red-400 hover:text-red-300 text-sm"
+              @click="handleDeleteColorGroup(color)"
             >
               Delete
             </button>

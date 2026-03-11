@@ -20,9 +20,9 @@
         <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           <DivineFavourWidget />
           <button
-            @click="endTurn"
             :disabled="gameOver || currentBattle?.isActive"
             class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-semibold py-2 px-4 sm:px-6 rounded transition-colors whitespace-nowrap text-sm sm:text-base"
+            @click="endTurn"
           >
             End Turn
           </button>

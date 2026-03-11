@@ -1,21 +1,11 @@
 import { defineStore } from 'pinia';
-import type {
-  GridSquare,
-  Pos,
-  GameState,
-  AttemptResult,
-  MarkType,
-  LevelBuilderState,
-} from '../types/types';
+import type { GridSquare, Pos, MarkType, LevelBuilderState } from '../types/types';
 // Import utility functions
 import {
   createEmptyGrid,
-  getQueenPositions,
-  computeAvailableMoves,
   clearMarkers,
   validatePuzzleState,
   isValidPosition,
-  queenAttacks,
   countEmptyCells,
   countCellsWithState,
   getColorDistribution,
@@ -27,7 +17,6 @@ import {
   addColorOnePerRow as addColorOnePerRowUtil,
   fillRemainingSingleSquares as fillRemainingSingleSquaresUtil,
 } from '../utils/colorAssignment';
-import { bruteForceSolver } from './bruteForceSolver';
 import { validatePuzzleWithWorker, terminateWorker } from '../utils/puzzleValidator';
 
 // Constants
@@ -436,13 +425,12 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       const maxAttempts = 1000; // Max total attempts before full reset
       let attempts = 0;
       const gridSize = this.gridSize;
-      const moveStack: { row: number; col: number; prevMarks: MarkType[][] }[] = [];
       const verbose = this.verboseMode;
 
       // Helper: Get all valid moves (optionally only knight-moves from last queen)
       const getValidMoves = (preferKnight: boolean): { row: number; col: number }[] => {
         const moves: { row: number; col: number }[] = [];
-        let knightMoves: { row: number; col: number }[] = [];
+        const knightMoves: { row: number; col: number }[] = [];
         let lastQueen = null;
         // Find last queen placed
         for (let r = 0; r < gridSize; r++) {
@@ -512,7 +500,7 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
           tempQueenMarks[row][col] = null;
         }
       }
-      let success = backtrack(0);
+      const success = backtrack(0);
       if (!success && verbose)
         this.addDebugLog(
           'Failed to generate a random queen placement after max attempts, resetting.'
@@ -1008,7 +996,7 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
         // Sort colors by frequency if we have any colors
         if (colorCounts && Object.keys(colorCounts).length > 0) {
           const sortedColors = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
-          let colorSummary = sortedColors.map(([color, count]) => `${color}:${count}`).join(', ');
+          const colorSummary = sortedColors.map(([color, count]) => `${color}:${count}`).join(', ');
           this.addDebugLog(`Distribution: ${colorSummary}`);
         } else {
           this.addDebugLog('No colors assigned yet');
@@ -1220,7 +1208,7 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
 
           // Check if it blocks an entire color group
           let colorGroupBlocked = false;
-          for (const [_, group] of this.colorGroups) {
+          for (const [, group] of this.colorGroups) {
             if (group.positions.every(({ pos }) => simulatedMarks[pos.row][pos.col] === 'flag')) {
               colorGroupBlocked = true;
               break;
@@ -1249,7 +1237,6 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
       const gridSize = this.gridSize;
 
       this.addDebugLog(`Step 3: Eliminating constrained ${axis}s`);
-      let placedAny = false;
       const flaggedSquares: Array<{ row: number; col: number; responsibleColors: string[] }> = [];
 
       // Step 1: Map each color to the set of rows or columns (depending on axis) where it has unmarked squares
@@ -1308,7 +1295,6 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
                 col,
                 responsibleColors: Array.from(allowedColors),
               });
-              placedAny = true;
             }
           }
         }
@@ -1352,7 +1338,6 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
     },
 
     setSquareColorNew(row: number, col: number, color: string | undefined): void {
-      const key = this.posToKey({ row, col });
       if (color) {
         this.grid[row][col].groupColor = color;
       } else {
@@ -1588,7 +1573,6 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
         // Convert to array and split into two halves
         const colorArray = Array.from(colors);
         const firstHalfColors = colorArray.slice(0, Math.ceil(colorArray.length / 2));
-        const secondHalfColors = colorArray.slice(Math.ceil(colorArray.length / 2));
 
         // Filter colors that can be expanded
         const expandableColors = colorArray.filter((color) => {

@@ -137,7 +137,7 @@ export function fillRemainingSquares(
 
   // First, check if there are any uncolored squares
   let uncoloredSquares = 0;
-  let uncoloredPositions: Pos[] = [];
+  const uncoloredPositions: Pos[] = [];
 
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {

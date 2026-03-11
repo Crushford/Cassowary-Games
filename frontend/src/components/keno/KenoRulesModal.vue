@@ -48,8 +48,8 @@
         </p>
       </div>
       <button
-        @click="onClose"
         class="w-full mt-6 py-3 px-6 bg-yellow-600 hover:bg-yellow-500 text-white font-semibold rounded-lg transition-colors duration-200"
+        @click="onClose"
       >
         Got it!
       </button>

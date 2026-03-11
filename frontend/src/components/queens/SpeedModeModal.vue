@@ -14,7 +14,6 @@
         <h3 class="text-lg font-semibold text-gray-300 mb-3">Timer Duration</h3>
         <div class="flex gap-3">
           <Button
-            @click="selectedTimer = 120"
             class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px flex-1"
             :label="'2 Minutes'"
             :class="
@@ -22,9 +21,9 @@
                 ? 'border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600'
                 : 'border-slate-700 bg-slate-800 text-slate-200 enabled:hover:bg-slate-700 enabled:hover:border-slate-600'
             "
+            @click="selectedTimer = 120"
           />
           <Button
-            @click="selectedTimer = 300"
             class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px flex-1"
             :label="'5 Minutes'"
             :class="
@@ -32,6 +31,7 @@
                 ? 'border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600'
                 : 'border-slate-700 bg-slate-800 text-slate-200 enabled:hover:bg-slate-700 enabled:hover:border-slate-600'
             "
+            @click="selectedTimer = 300"
           />
         </div>
       </div>
@@ -42,7 +42,6 @@
         <div class="grid grid-cols-3 gap-2">
           <!-- Sequential Button -->
           <Button
-            @click="selectedSize = null"
             class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px col-span-3"
             :label="`Sequential (${sequentialText})`"
             :class="
@@ -50,13 +49,13 @@
                 ? 'border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600'
                 : 'border-slate-700 bg-slate-800 text-slate-200 enabled:hover:bg-slate-700 enabled:hover:border-slate-600'
             "
+            @click="selectedSize = null"
           />
 
           <!-- Size Buttons -->
           <Button
             v-for="size in availableSizes"
             :key="size"
-            @click="selectedSize = size"
             class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px"
             :label="size"
             :class="
@@ -64,15 +63,16 @@
                 ? 'border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600'
                 : 'border-slate-700 bg-slate-800 text-slate-200 enabled:hover:bg-slate-700 enabled:hover:border-slate-600'
             "
+            @click="selectedSize = size"
           />
         </div>
       </div>
 
       <!-- Start Button -->
       <Button
-        @click="handleStart"
         class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-teal-700 bg-teal-700 text-cyan-50 enabled:hover:bg-teal-600 enabled:hover:border-teal-600 w-full"
         label="Start Speed Mode"
+        @click="handleStart"
       />
     </div>
   </Dialog>

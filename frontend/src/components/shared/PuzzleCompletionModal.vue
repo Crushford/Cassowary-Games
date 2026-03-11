@@ -9,14 +9,14 @@
       <p class="text-white mb-4">Best Day: {{ harvestStore.highScore }} Honey Pots</p>
       <div class="flex flex-col space-y-2">
         <button
-          @click="harvestStore.startRealGame()"
           class="w-full py-3 px-6 bg-green-500 hover:bg-green-400 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
+          @click="harvestStore.startRealGame()"
         >
           Start Real Game (Day 1)
         </button>
         <button
-          @click="harvestStore.continueTraining()"
           class="w-full py-3 px-6 bg-blue-500 hover:bg-blue-400 text-white font-semibold rounded-lg transition-colors duration-200"
+          @click="harvestStore.continueTraining()"
         >
           Continue Training
         </button>
@@ -30,8 +30,8 @@
       <p class="text-white mb-2">Honey Pots: {{ harvestStore.honeyPots }}</p>
       <p class="text-white mb-4">Best Day: {{ harvestStore.highScore }} Honey Pots</p>
       <button
-        @click="harvestStore.startNewDay()"
         class="w-full py-3 px-6 bg-amber-500 hover:bg-amber-400 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
+        @click="harvestStore.startNewDay()"
       >
         Start Day {{ harvestStore.currentDay + 1 }}
       </button>

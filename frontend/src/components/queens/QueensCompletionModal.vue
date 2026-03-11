@@ -26,9 +26,9 @@
       </div>
 
       <Button
-        @click="handleNextPuzzle"
         label="New Puzzle"
         class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-teal-700 bg-teal-700 text-cyan-50 enabled:hover:bg-teal-600 enabled:hover:border-teal-600 w-full"
+        @click="handleNextPuzzle"
       />
     </div>
   </Dialog>

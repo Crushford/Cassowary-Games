@@ -40,17 +40,17 @@
     <!-- Upgrade Buttons -->
     <div class="flex gap-2">
       <button
-        @click="upgradeRank"
         :disabled="!canUpgradeRank || gold < rankUpgradeCost || gameOver"
         class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50 text-white text-xs font-semibold py-1.5 px-2 rounded transition-colors"
+        @click="upgradeRank"
       >
         Rank ↑<br />
         <span class="text-xs">{{ rankUpgradeCost }}g</span>
       </button>
       <button
-        @click="upgradeStrength"
         :disabled="gold < strengthUpgradeCost || gameOver"
         class="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50 text-white text-xs font-semibold py-1.5 px-2 rounded transition-colors"
+        @click="upgradeStrength"
       >
         Strength ↑<br />
         <span class="text-xs">{{ strengthUpgradeCost }}g</span>

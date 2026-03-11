@@ -46,14 +46,14 @@
     </template>
     <template #actions>
       <Button
-        @click="handleSpeedEndRound"
         class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-red-800 bg-red-900 text-red-100 enabled:hover:bg-red-800 enabled:hover:border-red-700 flex-1"
         label="End Round"
+        @click="handleSpeedEndRound"
       />
       <Button
-        @click="handleSpeedRestart"
         class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-blue-800 bg-blue-700 text-blue-100 enabled:hover:bg-blue-600 enabled:hover:border-blue-700 flex-1"
         label="Restart"
+        @click="handleSpeedRestart"
       />
     </template>
   </GameModeHeader>
@@ -70,14 +70,14 @@
     </template>
     <template #actions>
       <Button
-        @click="handleRotateEnd"
         class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-red-800 bg-red-900 text-red-100 enabled:hover:bg-red-800 enabled:hover:border-red-700 flex-1"
         label="Exit"
+        @click="handleRotateEnd"
       />
       <Button
-        @click="queensStore.startNextPuzzle()"
         class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-blue-800 bg-blue-700 text-blue-100 enabled:hover:bg-blue-600 enabled:hover:border-blue-700 flex-1"
         label="Next Puzzle"
+        @click="queensStore.startNextPuzzle()"
       />
     </template>
   </GameModeHeader>

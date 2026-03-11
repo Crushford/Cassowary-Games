@@ -64,14 +64,13 @@
               <div class="mt-4">
                 <button
                   v-if="isUnlocked(level)"
-                  @click="playLevel(level.boardSize)"
                   class="w-full py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-200 bg-gradient-to-r from-yellow-500 to-yellow-400 text-amber-900 hover:from-yellow-400 hover:to-yellow-300 shadow-lg hover:shadow-xl"
+                  @click="playLevel(level.boardSize)"
                 >
                   {{ getLevelButtonText(level) }}
                 </button>
                 <button
                   v-else
-                  @click="purchaseLevel(level)"
                   :disabled="globalStore.player.totalChips < level.purchaseCost"
                   class="w-full py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   :class="
@@ -79,6 +78,7 @@
                       ? 'bg-gradient-to-r from-green-500 to-green-400 text-white hover:from-green-400 hover:to-green-300 shadow-lg hover:shadow-xl'
                       : 'bg-gray-600 text-gray-300'
                   "
+                  @click="purchaseLevel(level)"
                 >
                   Purchase ({{ level.purchaseCost }} gold)
                 </button>

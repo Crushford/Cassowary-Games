@@ -3,8 +3,8 @@
     <div class="relative w-full h-full mx-auto flex items-center justify-center">
       <!-- Close Button -->
       <button
-        @click="closeModal"
         class="absolute -top-8 -right-8 z-10 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-600 hover:text-gray-800 rounded-full p-2 transition-all shadow-lg"
+        @click="closeModal"
       >
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -27,8 +27,8 @@
         <!-- Save Button (only show when running locally and game is complete) -->
         <div v-if="isRunningLocally && harvestStore.isComplete" class="mt-4 text-center">
           <button
-            @click="switchToSaveMode"
             class="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors font-medium"
+            @click="switchToSaveMode"
           >
             Save Puzzle
           </button>
@@ -121,15 +121,15 @@
           <!-- Action Buttons -->
           <div class="flex gap-4 justify-center">
             <button
-              @click="closeModal"
               class="px-6 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors"
+              @click="closeModal"
             >
               Cancel
             </button>
             <button
-              @click="savePuzzle"
               :disabled="isSaving"
               class="px-6 py-2 bg-green-600 hover:bg-green-500 disabled:bg-gray-500 text-white rounded-lg transition-colors flex items-center gap-2"
+              @click="savePuzzle"
             >
               <svg
                 v-if="!isSaving"
@@ -210,7 +210,7 @@ const emit = defineEmits<Emits>();
 
 const plantStore = usePlantStore();
 const harvestStore = useHarvestStore();
-const currentPuzzleData = ref<any>(null);
+const currentPuzzleData = ref<Record<string, unknown> | null>(null);
 const puzzleName = ref('');
 const isSaving = ref(false);
 const saveMessage = ref<SaveMessage | null>(null);

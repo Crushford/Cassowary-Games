@@ -3,8 +3,8 @@
   <div class="relative">
     <!-- Size button -->
     <button
-      @click="sizeDropdownOpen = !sizeDropdownOpen"
       class="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-100 rounded transition-colors duration-150 text-sm"
+      @click="sizeDropdownOpen = !sizeDropdownOpen"
     >
       <span>{{ store.puzzleSize }}</span>
       <svg

@@ -2,8 +2,8 @@
   <div class="mb-4 border border-slate-600 rounded-lg bg-slate-700">
     <button
       class="w-full p-3 flex justify-between items-center transition-colors hover:bg-opacity-5 hover:bg-white"
-      @click="toggle"
       :aria-expanded="isOpen"
+      @click="toggle"
     >
       <slot name="header">
         <div class="flex justify-between items-center w-full">
@@ -30,7 +30,7 @@
       </slot>
     </button>
 
-    <div class="overflow-hidden transition-all duration-300 ease-in-out" v-if="isOpen">
+    <div v-if="isOpen" class="overflow-hidden transition-all duration-300 ease-in-out">
       <div class="p-4 pt-0">
         <slot></slot>
       </div>
@@ -56,4 +56,8 @@ const isOpen = ref(props.defaultOpen);
 function toggle() {
   isOpen.value = !isOpen.value;
 }
+
+defineOptions({
+  name: 'LevelBuilderAccordion',
+});
 </script>

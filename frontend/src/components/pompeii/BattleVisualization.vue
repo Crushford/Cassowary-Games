@@ -102,24 +102,24 @@
       <div class="flex gap-3">
         <button
           v-if="!isBattleOver"
-          @click="autoResolve"
           :disabled="isRolling"
           class="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-semibold py-2 px-4 rounded transition-colors"
+          @click="autoResolve"
         >
           Auto-Resolve Battle
         </button>
         <button
           v-if="!isBattleOver"
-          @click="executeRound"
           :disabled="isRolling"
           class="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-semibold py-2 px-4 rounded transition-colors"
+          @click="executeRound"
         >
           {{ isRolling ? 'Rolling...' : 'Step Through Rounds' }}
         </button>
         <button
           v-if="isBattleOver"
-          @click="endBattle"
           class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+          @click="endBattle"
         >
           View Results
         </button>

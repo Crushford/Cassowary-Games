@@ -3,8 +3,8 @@
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-semibold text-white">Current Game State</h3>
       <button
-        @click="copyToClipboard"
         class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+        @click="copyToClipboard"
       >
         Copy to Clipboard
       </button>
@@ -25,13 +25,6 @@ import { useLevelBuilderStore } from '../../stores/levelBuilderStore';
 
 const levelStore = useLevelBuilderStore();
 const copyStatus = ref('');
-
-// Add new computed property for multiple solutions check
-const hasMultipleSolutions = computed(() => {
-  // This is a placeholder. In a real implementation, you would run a backtracking solver
-  // to count the number of solutions. For now, we'll assume it's false.
-  return false;
-});
 
 // Update the export text to include solver steps
 const exportText = computed(() => {

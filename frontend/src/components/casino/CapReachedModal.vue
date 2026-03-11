@@ -22,8 +22,8 @@
           </div>
         </div>
         <button
-          @click="async () => await tableStore.goToTables()"
           class="w-full bg-gradient-to-r from-amber-600 to-amber-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-amber-500 hover:to-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl"
+          @click="async () => await tableStore.goToTables()"
         >
           Back to Tables
         </button>
@@ -34,11 +34,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useRoundStore } from '../../stores/round';
 import { useTableStore } from '../../stores/table';
 import { useGlobalStore } from '../../stores/global';
 
-const roundStore = useRoundStore();
 const tableStore = useTableStore();
 const globalStore = useGlobalStore();
 

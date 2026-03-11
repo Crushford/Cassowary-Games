@@ -22,15 +22,15 @@
     <div class="mt-4 flex gap-4">
       <button
         v-if="mode === 'player'"
-        @click="levelStore.handleUndo()"
         class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+        @click="levelStore.handleUndo()"
       >
         Undo
       </button>
       <button
         v-if="mode === 'player'"
-        @click="levelStore.clearMarkers()"
         class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+        @click="levelStore.clearMarkers()"
       >
         Reset
       </button>
@@ -43,7 +43,7 @@ import { ref, watch, onMounted } from 'vue';
 import { useLevelBuilderStore } from '../../stores/levelBuilderStore';
 import Square from './Square.vue';
 
-const props = defineProps<{
+defineProps<{
   mode: 'solution' | 'player' | 'autoTest';
   showControls?: boolean;
 }>();

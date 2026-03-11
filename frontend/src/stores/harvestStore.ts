@@ -58,6 +58,15 @@ const SYMBOL_TO_COLOR: Record<string, ColorName> = Object.entries(COLOR_SYMBOLS)
   {} as Record<string, ColorName>
 );
 
+interface PuzzleRecord {
+  id: string | number;
+  name?: string;
+  layout: string;
+  queens: string;
+}
+
+type PuzzleDatabase = Record<string, PuzzleRecord[]>;
+
 export const useHarvestStore = defineStore('game', {
   state: (): GameState => ({
     // Core game state
@@ -100,7 +109,7 @@ export const useHarvestStore = defineStore('game', {
       isInterrupted: false,
     },
     // Add new state for puzzle database
-    puzzleDatabase: null as any,
+    puzzleDatabase: null as PuzzleDatabase | null,
     currentPuzzleIndex: 0, // Track current puzzle index for sequential loading
     showGameRules: false, // Controls the rules modal visibility
   }),
@@ -430,13 +439,12 @@ export const useHarvestStore = defineStore('game', {
       const maxAttempts = 1000; // Max total attempts before full reset
       let attempts = 0;
       const gridSize = this.gridSize;
-      const moveStack: { row: number; col: number; prevMarks: MarkType[][] }[] = [];
       const verbose = this.verboseMode;
 
       // Helper: Get all valid moves (optionally only knight-moves from last queen)
       const getValidMoves = (preferKnight: boolean): { row: number; col: number }[] => {
         const moves: { row: number; col: number }[] = [];
-        let knightMoves: { row: number; col: number }[] = [];
+        const knightMoves: { row: number; col: number }[] = [];
         let lastQueen = null;
         // Find last queen placed
         for (let r = 0; r < gridSize; r++) {
@@ -501,7 +509,7 @@ export const useHarvestStore = defineStore('game', {
 
       // Clear board before starting
       this.clearQueensAndFlags();
-      let success = backtrack(0);
+      const success = backtrack(0);
       if (!success && verbose)
         this.addDebugLog(
           'Failed to generate a random queen placement after max attempts, resetting.'
@@ -1088,9 +1096,9 @@ export const useHarvestStore = defineStore('game', {
         // The data is an object with keys like "5x5", each containing an array of puzzles
         // Filter each size's puzzles to only include those with id ending in -0
         this.puzzleDatabase = {};
-        for (const [sizeKey, puzzles] of Object.entries(data)) {
-          this.puzzleDatabase[sizeKey] = (puzzles as any[]).filter((puzzle: any) =>
-            puzzle.id.endsWith('-0')
+        for (const [sizeKey, puzzles] of Object.entries(data as Record<string, PuzzleRecord[]>)) {
+          this.puzzleDatabase[sizeKey] = puzzles.filter((puzzle) =>
+            String(puzzle.id).endsWith('-0')
           );
         }
         this.addDebugLog('Puzzle database loaded successfully');
@@ -1105,7 +1113,7 @@ export const useHarvestStore = defineStore('game', {
     },
 
     // Parse puzzle data from JSON format
-    parsePuzzleData(puzzleData: any) {
+    parsePuzzleData(puzzleData: PuzzleRecord) {
       const gridSize = Math.sqrt(puzzleData.layout.length);
       const layout = puzzleData.layout;
       const queens = puzzleData.queens;
@@ -1198,7 +1206,7 @@ export const useHarvestStore = defineStore('game', {
     },
 
     // New method to generate and validate a puzzle that can be solved with steps
-    async findValidPuzzleWithSteps(maxAttempts = 1000) {
+    async findValidPuzzleWithSteps() {
       if (this.puzzleGenerationState.isGenerating) return;
 
       this.puzzleGenerationState.isGenerating = true;
@@ -1252,7 +1260,7 @@ export const useHarvestStore = defineStore('game', {
         // Sort colors by frequency if we have any colors
         if (colorCounts && Object.keys(colorCounts).length > 0) {
           const sortedColors = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
-          let colorSummary = sortedColors.map(([color, count]) => `${color}:${count}`).join(', ');
+          const colorSummary = sortedColors.map(([color, count]) => `${color}:${count}`).join(', ');
           this.addDebugLog(`Distribution: ${colorSummary}`);
         } else {
           this.addDebugLog('No colors assigned yet');
@@ -1387,7 +1395,6 @@ export const useHarvestStore = defineStore('game', {
     },
 
     setSquareColorNew(row: number, col: number, color: string | undefined): void {
-      const key = this.posToKey({ row, col });
       if (color) {
         this.grid[row][col].groupColor = color;
       } else {

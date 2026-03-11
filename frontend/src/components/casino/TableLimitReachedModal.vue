@@ -18,8 +18,8 @@
           </div>
         </div>
         <button
-          @click="async () => await tableStore.goToTables()"
           class="w-full bg-gradient-to-r from-green-600 to-green-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-green-500 hover:to-green-400 transition-all duration-200 shadow-lg hover:shadow-xl"
+          @click="async () => await tableStore.goToTables()"
         >
           Back to Tables
         </button>
