@@ -1,7 +1,7 @@
 <template>
   <!-- QueensGame -->
   <div
-    class="w-full max-w-[480px] mx-auto bg-slate-950 text-slate-100 [background-image:radial-gradient(120%_120%_at_50%_-15%,#1a2740_0%,#0d1117_55%)] flex flex-col overflow-hidden h-dvh"
+    class="w-full max-w-[480px] mx-auto bg-slate-950 text-slate-100 bg-[radial-gradient(120%_120%_at_50%_-15%,var(--tw-gradient-from)_0%,var(--tw-gradient-to)_55%)] from-queens-gradientStart to-queens-gradientEnd flex flex-col overflow-hidden h-dvh"
   >
     <!-- Puzzle Completion Modal -->
     <QueensCompletionModal v-if="!queensStore.isSpeedMode" :is-visible="queensStore.isComplete" />

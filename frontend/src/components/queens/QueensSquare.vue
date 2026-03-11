@@ -111,15 +111,15 @@ const ariaLabel = computed(() => {
 
 // High-separation color-only palette for queens game.
 const DARK_PASTEL_COLORS: Record<ColorName, { bg: string; hover: string }> = {
-  red: { bg: 'bg-[#991B1B]', hover: 'hover:bg-[#B91C1C]' },
-  blue: { bg: 'bg-[#1E40AF]', hover: 'hover:bg-[#2563EB]' },
-  green: { bg: 'bg-[#166534]', hover: 'hover:bg-[#15803D]' },
-  yellow: { bg: 'bg-[#A16207]', hover: 'hover:bg-[#CA8A04]' },
-  purple: { bg: 'bg-[#6B21A8]', hover: 'hover:bg-[#7E22CE]' },
-  pink: { bg: 'bg-[#BE185D]', hover: 'hover:bg-[#DB2777]' },
-  teal: { bg: 'bg-[#0E7490]', hover: 'hover:bg-[#0891B2]' },
-  indigo: { bg: 'bg-[#3730A3]', hover: 'hover:bg-[#4338CA]' },
-  amber: { bg: 'bg-[#92400E]', hover: 'hover:bg-[#B45309]' },
+  red: { bg: 'bg-group-red-base', hover: 'hover:bg-group-red-hover' },
+  blue: { bg: 'bg-group-blue-base', hover: 'hover:bg-group-blue-hover' },
+  green: { bg: 'bg-group-green-base', hover: 'hover:bg-group-green-hover' },
+  yellow: { bg: 'bg-group-yellow-base', hover: 'hover:bg-group-yellow-hover' },
+  purple: { bg: 'bg-group-purple-base', hover: 'hover:bg-group-purple-hover' },
+  pink: { bg: 'bg-group-pink-base', hover: 'hover:bg-group-pink-hover' },
+  teal: { bg: 'bg-group-teal-base', hover: 'hover:bg-group-teal-hover' },
+  indigo: { bg: 'bg-group-indigo-base', hover: 'hover:bg-group-indigo-hover' },
+  amber: { bg: 'bg-group-amber-base', hover: 'hover:bg-group-amber-hover' },
 };
 
 const isInError = computed(() => {
