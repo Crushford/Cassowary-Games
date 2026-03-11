@@ -1,32 +1,20 @@
 <template>
-  <button
-    type="button"
-    role="gridcell"
-    class="h-full w-full relative transition-colors"
-    :class="[
-      backgroundColorClass,
-      hoverClass,
-      {
-        'ring-4 ring-yellow-400 ring-offset-2 ring-offset-gray-800 animate-pulse': isTutorialTarget,
-        'auto-flag-tint-blocked': isAutoFlagAnimating && autoFlagAnimationSource === 'blocked',
-        'auto-flag-tint-pattern': isAutoFlagAnimating && autoFlagAnimationSource === 'pattern',
-      },
-    ]"
-    @click="handleClick"
-    :aria-label="ariaLabel"
-    :aria-describedby="isTutorialTarget ? 'tutorial-instruction' : undefined"
-    :aria-rowindex="rowIndex + 1"
-    :aria-colindex="colIndex + 1"
-    :data-row-index="rowIndex"
-    :data-col-index="colIndex"
-  >
+  <button type="button" role="gridcell" class="h-full w-full relative transition-colors" :class="[
+    backgroundColorClass,
+    hoverClass,
+    {
+      'ring-4 ring-yellow-400 ring-offset-2 ring-offset-gray-800 animate-pulse': isTutorialTarget,
+      'auto-flag-tint-blocked': isAutoFlagAnimating && autoFlagAnimationSource === 'blocked',
+      'auto-flag-tint-pattern': isAutoFlagAnimating && autoFlagAnimationSource === 'pattern',
+    },
+  ]" @click="handleClick" :aria-label="ariaLabel"
+    :aria-describedby="isTutorialTarget ? 'tutorial-instruction' : undefined" :aria-rowindex="rowIndex + 1"
+    :aria-colindex="colIndex + 1" :data-row-index="rowIndex" :data-col-index="colIndex">
     <!-- Content overlay -->
     <div class="relative z-10 flex items-center justify-center w-full h-full">
       <!-- Error feedback (red X) -->
-      <span
-        v-if="showErrorFeedback"
-        class="text-6xl absolute z-30 animate-bounce [text-shadow:0_0_10px_rgba(239,68,68,0.8)]"
-      >
+      <span v-if="showErrorFeedback"
+        class="text-6xl absolute z-30 animate-bounce [text-shadow:0_0_10px_rgba(239,68,68,0.8)]">
         ❌
       </span>
       <!-- Show player marks (flag or queen) -->
@@ -37,11 +25,8 @@
         <span v-else-if="shouldShowQueen()" :class="getEmojiSizeClass()">👑</span>
         <span v-if="showAutoFlagRipple" :class="getRippleAnimationClass()" />
         <!-- Red X overlay for flags or queens in error state -->
-        <span
-          v-if="(shouldShowFlag() || shouldShowQueen()) && isInError"
-          class="absolute z-40 [text-shadow:0_0_8px_rgba(239,68,68,0.9)]"
-          :class="getEmojiSizeClass()"
-        >
+        <span v-if="(shouldShowFlag() || shouldShowQueen()) && isInError"
+          class="absolute z-40 [text-shadow:0_0_8px_rgba(239,68,68,0.9)]" :class="getEmojiSizeClass()">
           ❌
         </span>
       </div>
@@ -115,7 +100,6 @@ const DARK_PASTEL_COLORS: Record<ColorName, { bg: string; hover: string }> = {
   yellow: { bg: 'bg-[#FDE047]', hover: 'hover:bg-[#FACC15]' },
   purple: { bg: 'bg-[#7E22CE]', hover: 'hover:bg-[#9333EA]' },
   pink: { bg: 'bg-[#EC4899]', hover: 'hover:bg-[#F472B6]' },
-  orange: { bg: 'bg-[#C2410C]', hover: 'hover:bg-[#EA580C]' },
   teal: { bg: 'bg-[#0891B2]', hover: 'hover:bg-[#06B6D4]' },
   indigo: { bg: 'bg-[#312E81]', hover: 'hover:bg-[#4338CA]' },
   amber: { bg: 'bg-[#92400E]', hover: 'hover:bg-[#B45309]' },
@@ -234,10 +218,12 @@ export default {
     transform: scale(0.72);
     opacity: 0.7;
   }
+
   65% {
     transform: scale(1.15);
     opacity: 1;
   }
+
   100% {
     transform: scale(1);
   }
@@ -248,6 +234,7 @@ export default {
     transform: scale(0.45);
     opacity: 0.45;
   }
+
   100% {
     transform: scale(1.15);
     opacity: 0;
@@ -258,6 +245,7 @@ export default {
   0% {
     box-shadow: inset 0 0 0 9999px rgba(45, 212, 191, 0.16);
   }
+
   100% {
     box-shadow: inset 0 0 0 9999px rgba(45, 212, 191, 0);
   }
@@ -267,12 +255,14 @@ export default {
   0% {
     box-shadow: inset 0 0 0 9999px rgba(125, 211, 252, 0.14);
   }
+
   100% {
     box-shadow: inset 0 0 0 9999px rgba(125, 211, 252, 0);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .auto-flag-pop,
   .auto-flag-ripple,
   .auto-flag-tint-pattern,
