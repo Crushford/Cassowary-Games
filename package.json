@@ -19,7 +19,8 @@
   "lint-staged": {
     "frontend/src/**/*.{js,ts,vue}": [
       "yarn --cwd frontend eslint --ext .js,.ts,.vue --ignore-path .gitignore --fix",
-      "yarn --cwd frontend prettier --write"
+      "yarn --cwd frontend prettier --write",
+      "yarn --cwd frontend lint:theme-colors"
     ],
     "backend/**/*.ts": [
       "yarn --cwd backend prettier --write"

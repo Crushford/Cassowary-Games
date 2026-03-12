@@ -4,7 +4,8 @@
     <div
       class="relative cursor-pointer transition-transform hover:scale-105 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16"
       :class="{
-        'ring-2 ring-yellow-400 ring-offset-1 ring-offset-slate-900': isSelected,
+        'ring-2 ring-semantic-warning-400 ring-offset-1 ring-offset-semantic-neutral-900':
+          isSelected,
       }"
       @click="handleClick"
     >
@@ -14,7 +15,7 @@
         <div
           v-for="i in 3"
           :key="i"
-          class="absolute rounded-md border border-gray-300 shadow-sm"
+          class="absolute rounded-md border border-semantic-neutral-300 shadow-sm"
           :style="{
             transform: `translateY(${(i - 1) * 1.5}px) translateX(${(i - 1) * 0.5}px)`,
             zIndex: 10 - i,

@@ -6,7 +6,7 @@
   >
     <!-- Cell content -->
     <div class="w-full h-full flex items-center justify-center">
-      <div v-if="!gridCell.base" class="text-xs text-gray-500 opacity-50">
+      <div v-if="!gridCell.base" class="text-xs text-semantic-neutral-500 opacity-50">
         {{ rowIndex }},{{ colIndex }}
       </div>
       <!-- Card with Flip Animation -->
@@ -75,12 +75,12 @@ const buttonClasses = computed(() => {
   if (props.store.currentStep === 2 && props.store.selectedColor) {
     const isValid = props.store.validPlacements[props.rowIndex]?.[props.colIndex];
     if (isValid) {
-      return 'bg-green-800 hover:bg-green-700';
+      return 'bg-semantic-success-800 hover:bg-semantic-success-700';
     }
   }
 
   // Default styling
-  return 'bg-gray-800 hover:bg-gray-700';
+  return 'bg-semantic-neutral-800 hover:bg-semantic-neutral-700';
 });
 
 // Computed property for the card image source

@@ -31,32 +31,32 @@
 
       <div
         v-if="levelBuilderStore.errorMessage"
-        class="p-4 bg-red-500/20 border border-red-500 text-red-400 rounded-lg"
+        class="p-4 bg-feedback-dangerLow border border-semantic-danger-500 text-semantic-danger-400 rounded-lg"
       >
         {{ levelBuilderStore.errorMessage }}
       </div>
 
       <section
         v-if="levelBuilderStore.debugLogs.length > 0"
-        class="relative bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg"
+        class="relative bg-semantic-neutral-800 border border-semantic-neutral-700 shadow-sm p-4 rounded-lg"
       >
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-white">Debug Logs</h3>
           <div class="flex gap-2">
             <button
-              class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+              class="px-3 py-1 bg-semantic-neutral-600 hover:bg-semantic-neutral-500 text-white rounded text-sm transition-colors"
               @click="levelBuilderStore.toggleVerboseMode()"
             >
               {{ levelBuilderStore.verboseMode ? '🔊 Verbose Mode On' : '🔇 Verbose Mode Off' }}
             </button>
             <button
-              class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+              class="px-3 py-1 bg-semantic-neutral-600 hover:bg-semantic-neutral-500 text-white rounded text-sm transition-colors"
               @click="copyLast20Logs"
             >
               Copy Last 20
             </button>
             <button
-              class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+              class="px-3 py-1 bg-semantic-neutral-600 hover:bg-semantic-neutral-500 text-white rounded text-sm transition-colors"
               @click="copyAllLogs"
             >
               Copy All
@@ -68,16 +68,21 @@
             <li v-for="(log, i) in levelBuilderStore.debugLogs" :key="i">{{ log }}</li>
           </ul>
         </div>
-        <span v-if="copyStatus" class="absolute bottom-2 right-2 text-sm text-green-400">{{
-          copyStatus
-        }}</span>
+        <span
+          v-if="copyStatus"
+          class="absolute bottom-2 right-2 text-sm text-semantic-success-400"
+          >{{ copyStatus }}</span
+        >
       </section>
 
-      <section v-else class="bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg">
+      <section
+        v-else
+        class="bg-semantic-neutral-800 border border-semantic-neutral-700 shadow-sm p-4 rounded-lg"
+      >
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-white">Debug Logs</h3>
           <button
-            class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+            class="px-3 py-1 bg-semantic-neutral-600 hover:bg-semantic-neutral-500 text-white rounded text-sm transition-colors"
             @click="levelBuilderStore.toggleVerboseMode()"
           >
             {{ levelBuilderStore.verboseMode ? '🔊 Verbose Mode On' : '🔇 Verbose Mode Off' }}
@@ -93,7 +98,9 @@
       <PuzzleSolvingPanel />
 
       <!-- Game State Export Component -->
-      <section class="bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg">
+      <section
+        class="bg-semantic-neutral-800 border border-semantic-neutral-700 shadow-sm p-4 rounded-lg"
+      >
         <GameStateExport />
       </section>
     </div>

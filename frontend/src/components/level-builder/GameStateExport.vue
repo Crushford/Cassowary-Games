@@ -1,19 +1,21 @@
 <template>
-  <div class="relative bg-slate-800 border border-slate-700 shadow-sm p-4 rounded-lg">
+  <div
+    class="relative bg-semantic-neutral-800 border border-semantic-neutral-700 shadow-sm p-4 rounded-lg"
+  >
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-semibold text-white">Current Game State</h3>
       <button
-        class="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
+        class="px-3 py-1 bg-semantic-neutral-600 hover:bg-semantic-neutral-500 text-white rounded text-sm transition-colors"
         @click="copyToClipboard"
       >
         Copy to Clipboard
       </button>
     </div>
     <pre
-      class="font-mono whitespace-pre bg-slate-700 p-4 rounded text-sm overflow-x-auto my-2 text-white leading-relaxed"
+      class="font-mono whitespace-pre bg-semantic-neutral-700 p-4 rounded text-sm overflow-x-auto my-2 text-white leading-relaxed"
       >{{ exportText }}</pre
     >
-    <span v-if="copyStatus" class="absolute bottom-2 right-2 text-sm text-green-400">{{
+    <span v-if="copyStatus" class="absolute bottom-2 right-2 text-sm text-semantic-success-400">{{
       copyStatus
     }}</span>
   </div>

@@ -1,9 +1,9 @@
 <template>
-  <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-600">
+  <div class="bg-surface-muted rounded-lg p-3 border border-semantic-neutral-600">
     <div class="flex items-center justify-between mb-2">
       <h3 class="text-sm font-semibold text-white">Upcoming Raids</h3>
       <button
-        class="text-xs text-gray-400 hover:text-gray-300 underline"
+        class="text-xs text-semantic-neutral-400 hover:text-semantic-neutral-300 underline"
         @click="showTimelineModal = true"
       >
         View Timeline
@@ -11,10 +11,10 @@
     </div>
     <div class="space-y-2 text-xs">
       <div v-if="nextRaidTurn > 0" class="flex justify-between">
-        <span class="text-gray-400">Next Raid:</span>
+        <span class="text-semantic-neutral-400">Next Raid:</span>
         <span class="font-semibold">Year {{ nextRaidTurn }}</span>
       </div>
-      <div v-if="nextRaidTurn > 0" class="flex justify-between text-gray-300 gap-2">
+      <div v-if="nextRaidTurn > 0" class="flex justify-between text-semantic-neutral-300 gap-2">
         <span class="whitespace-nowrap">Strength:</span>
         <span
           class="text-right truncate"
@@ -22,10 +22,10 @@
           >{{ nextRaidStrength }}, Rank {{ nextRaidRank }} (d{{ nextRaidDieSize }})</span
         >
       </div>
-      <div class="flex justify-between pt-2 border-t border-gray-600 gap-2">
-        <span class="text-gray-400 whitespace-nowrap">🌋 Eruption:</span>
+      <div class="flex justify-between pt-2 border-t border-semantic-neutral-600 gap-2">
+        <span class="text-semantic-neutral-400 whitespace-nowrap">🌋 Eruption:</span>
         <span
-          class="font-semibold text-red-400 text-right truncate"
+          class="font-semibold text-semantic-danger-400 text-right truncate"
           :title="`Year ${eruptionYear} (${yearsUntilEruption} years)`"
           >Year {{ eruptionYear }} ({{ yearsUntilEruption }} years)</span
         >
@@ -38,50 +38,52 @@
       <h2 class="text-xl font-bold mb-4">Timeline</h2>
       <div class="space-y-3">
         <!-- Current Year -->
-        <div class="flex items-center justify-between pb-2 border-b border-gray-700">
-          <span class="text-sm text-gray-400">Current Year:</span>
+        <div class="flex items-center justify-between pb-2 border-b border-semantic-neutral-700">
+          <span class="text-sm text-semantic-neutral-400">Current Year:</span>
           <span class="text-lg font-bold text-white">{{ turnCounter }}</span>
         </div>
 
         <!-- Years Until Eruption -->
-        <div class="flex items-center justify-between pb-2 border-b border-gray-700">
-          <span class="text-sm text-gray-400">Years Until Eruption:</span>
-          <span class="text-lg font-bold text-red-400">{{ yearsUntilEruption }}</span>
+        <div class="flex items-center justify-between pb-2 border-b border-semantic-neutral-700">
+          <span class="text-sm text-semantic-neutral-400">Years Until Eruption:</span>
+          <span class="text-lg font-bold text-semantic-danger-400">{{ yearsUntilEruption }}</span>
         </div>
 
         <!-- Upcoming Raids -->
         <div v-if="yearsUntilEruption > 0" class="space-y-2">
-          <div class="text-sm text-gray-400 mb-2">Upcoming Raids:</div>
+          <div class="text-sm text-semantic-neutral-400 mb-2">Upcoming Raids:</div>
           <div
             v-for="raid in upcomingRaids"
             :key="raid.year"
-            class="flex items-center justify-between p-2 bg-gray-700 rounded"
-            :class="{ 'ring-2 ring-yellow-500': raid.isNext }"
+            class="flex items-center justify-between p-2 bg-semantic-neutral-700 rounded"
+            :class="{ 'ring-2 ring-semantic-warning-500': raid.isNext }"
           >
             <div>
               <div class="text-sm font-semibold text-white">
                 Year {{ raid.year }} - Raid #{{ raid.number }}
               </div>
-              <div class="text-xs text-gray-400 mt-1">
+              <div class="text-xs text-semantic-neutral-400 mt-1">
                 Strength: {{ raid.strength }}, Rank: {{ raid.rank }} (d{{ raid.dieSize }})
               </div>
             </div>
-            <div v-if="raid.isNext" class="text-xs text-yellow-400 font-semibold">
+            <div v-if="raid.isNext" class="text-xs text-semantic-warning-400 font-semibold">
               {{ raid.yearsUntil }} years
             </div>
           </div>
         </div>
 
         <!-- Eruption -->
-        <div class="mt-3 pt-3 border-t border-gray-700">
-          <div class="flex items-center justify-between p-2 bg-red-900/30 rounded">
+        <div class="mt-3 pt-3 border-t border-semantic-neutral-700">
+          <div class="flex items-center justify-between p-2 bg-feedback-dangerSoft rounded">
             <div>
-              <div class="text-sm font-semibold text-red-400">
+              <div class="text-sm font-semibold text-semantic-danger-400">
                 Year {{ eruptionYear }} - Eruption
               </div>
-              <div class="text-xs text-gray-400 mt-1">Vesuvius erupts!</div>
+              <div class="text-xs text-semantic-neutral-400 mt-1">Vesuvius erupts!</div>
             </div>
-            <div class="text-xs text-red-400 font-semibold">{{ yearsUntilEruption }} years</div>
+            <div class="text-xs text-semantic-danger-400 font-semibold">
+              {{ yearsUntilEruption }} years
+            </div>
           </div>
         </div>
       </div>

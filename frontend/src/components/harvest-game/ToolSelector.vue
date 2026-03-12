@@ -1,10 +1,10 @@
 <template>
-  <div class="flex items-center justify-center bg-slate-800 p-2 rounded-lg">
+  <div class="flex items-center justify-center bg-semantic-neutral-800 p-2 rounded-lg">
     <!-- Mode dropdown -->
     <div class="flex items-center relative">
       <div class="relative">
         <button
-          class="px-3 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-lg bg-slate-700 text-slate-300 hover:bg-slate-600"
+          class="px-3 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-lg bg-semantic-neutral-700 text-semantic-neutral-300 hover:bg-semantic-neutral-600"
           :aria-expanded="modeDropdownOpen"
           aria-label="Select digging mode"
           @click="toggleModeDropdown"
@@ -16,23 +16,23 @@
         <!-- Mode dropdown -->
         <div
           v-if="modeDropdownOpen"
-          class="absolute bottom-full left-0 mb-1 bg-slate-900 text-slate-100 rounded shadow-lg border border-slate-700 z-20 min-w-[280px]"
+          class="absolute bottom-full left-0 mb-1 bg-semantic-neutral-900 text-semantic-neutral-100 rounded shadow-lg border border-semantic-neutral-700 z-20 min-w-[280px]"
         >
-          <div class="px-4 py-3 border-b border-slate-700">
+          <div class="px-4 py-3 border-b border-semantic-neutral-700">
             <div class="font-semibold text-sm">Change what each tap does in the game</div>
           </div>
           <div
             v-for="mode in modes"
             :key="mode.value"
-            class="px-4 py-3 hover:bg-slate-700 cursor-pointer transition-colors duration-150"
-            :class="harvestStore.uiState.diggingMode === mode.value ? 'bg-blue-700/30' : ''"
+            class="px-4 py-3 hover:bg-semantic-neutral-700 cursor-pointer transition-colors duration-150"
+            :class="harvestStore.uiState.diggingMode === mode.value ? 'bg-feedback-infoMuted' : ''"
             @click="selectMode(mode.value)"
           >
             <div class="flex items-start space-x-3">
               <span class="text-lg">{{ mode.icon }}</span>
               <div>
                 <div class="font-semibold text-sm">{{ mode.label }}</div>
-                <div class="text-xs text-slate-300">{{ mode.description }}</div>
+                <div class="text-xs text-semantic-neutral-300">{{ mode.description }}</div>
               </div>
             </div>
           </div>
@@ -41,7 +41,7 @@
     </div>
 
     <!-- Divider -->
-    <div class="mx-3 h-10 border-l border-slate-500"></div>
+    <div class="mx-3 h-10 border-l border-semantic-neutral-500"></div>
 
     <!-- Auto-flagging toggle -->
     <div class="flex items-center relative">
@@ -49,8 +49,8 @@
         class="px-3 py-1 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-xl relative"
         :class="[
           harvestStore.uiState.autoFlagging
-            ? 'bg-green-600 text-white shadow'
-            : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
+            ? 'bg-semantic-success-600 text-white shadow'
+            : 'bg-semantic-neutral-700 text-semantic-neutral-300 hover:bg-semantic-neutral-600',
         ]"
         :aria-pressed="harvestStore.uiState.autoFlagging"
         @click="harvestStore.toggleAutoFlagging()"
@@ -60,7 +60,7 @@
       </button>
       <!-- Question mark icon positioned on top of auto-flag button -->
       <button
-        class="absolute -top-1 -right-1 bg-slate-900 text-slate-300 rounded-full w-6 h-6 flex items-center justify-center text-base border border-slate-600 hover:bg-slate-700 focus:outline-none z-30"
+        class="absolute -top-1 -right-1 bg-semantic-neutral-900 text-semantic-neutral-300 rounded-full w-6 h-6 flex items-center justify-center text-base border border-semantic-neutral-600 hover:bg-semantic-neutral-700 focus:outline-none z-30"
         aria-label="Show info about auto-flag"
         @click.stop="toggleTooltip('autoFlag')"
       >
@@ -69,7 +69,7 @@
       <!-- Tooltip for auto-flag -->
       <div
         v-if="tooltipOpen === 'autoFlag'"
-        class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full mb-2 z-20 bg-slate-900 text-slate-100 text-xs rounded shadow-lg px-4 py-3 w-64 border border-slate-700"
+        class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full mb-2 z-20 bg-semantic-neutral-900 text-semantic-neutral-100 text-xs rounded shadow-lg px-4 py-3 w-64 border border-semantic-neutral-700"
       >
         <div class="font-semibold text-sm mb-1">Auto-flag blocked positions</div>
         <div>If enabled, automatically flag all blocked positions when you find a honeypot.</div>
@@ -77,12 +77,12 @@
     </div>
 
     <!-- Divider -->
-    <div class="mx-3 h-10 border-l border-slate-500"></div>
+    <div class="mx-3 h-10 border-l border-semantic-neutral-500"></div>
 
     <!-- Undo last flag button -->
     <div class="flex items-center relative">
       <button
-        class="px-3 py-1 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-xl relative bg-slate-700 text-slate-300 hover:bg-slate-600"
+        class="px-3 py-1 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-xl relative bg-semantic-neutral-700 text-semantic-neutral-300 hover:bg-semantic-neutral-600"
         aria-label="Undo last flag"
         @click="undoLastFlag"
       >
@@ -91,7 +91,7 @@
       </button>
       <!-- Question mark icon positioned on top of undo button -->
       <button
-        class="absolute -top-1 -right-1 bg-slate-900 text-slate-300 rounded-full w-6 h-6 flex items-center justify-center text-base border border-slate-600 hover:bg-slate-700 focus:outline-none z-30"
+        class="absolute -top-1 -right-1 bg-semantic-neutral-900 text-semantic-neutral-300 rounded-full w-6 h-6 flex items-center justify-center text-base border border-semantic-neutral-600 hover:bg-semantic-neutral-700 focus:outline-none z-30"
         aria-label="Show info about undo flag"
         @click.stop="toggleTooltip('undo')"
       >
@@ -100,7 +100,7 @@
       <!-- Tooltip for undo flag -->
       <div
         v-if="tooltipOpen === 'undo'"
-        class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full mb-2 z-20 bg-slate-900 text-slate-100 text-xs rounded shadow-lg px-4 py-3 w-64 border border-slate-700"
+        class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full mb-2 z-20 bg-semantic-neutral-900 text-semantic-neutral-100 text-xs rounded shadow-lg px-4 py-3 w-64 border border-semantic-neutral-700"
       >
         <div class="font-semibold text-sm mb-1">Undo last flag</div>
         <div>Remove the last flag you placed on the board.</div>
@@ -108,7 +108,7 @@
     </div>
 
     <!-- Divider -->
-    <div v-if="!isGameOnly" class="mx-3 h-10 border-l border-slate-500"></div>
+    <div v-if="!isGameOnly" class="mx-3 h-10 border-l border-semantic-neutral-500"></div>
 
     <!-- Size selector -->
     <BoardSizeDropdown v-if="!isGameOnly" :store="harvestStore" />
@@ -173,7 +173,7 @@ function undoLastFlag() {
 }
 
 function handleClickOutside(event: MouseEvent) {
-  const toolSelector = document.querySelector('.bg-slate-800');
+  const toolSelector = document.querySelector('.bg-semantic-neutral-800');
   if (toolSelector && !toolSelector.contains(event.target as Node)) {
     tooltipOpen.value = null;
     modeDropdownOpen.value = false;

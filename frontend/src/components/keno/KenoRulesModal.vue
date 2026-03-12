@@ -1,14 +1,16 @@
 <template>
   <Modal :is-visible="isVisible" @close="onClose">
     <div>
-      <div class="bg-gray-800 text-white p-4 rounded-xl max-w-md mx-auto space-y-2 text-base">
-        <h2 class="text-yellow-400 font-bold text-xl">How to Play Keno</h2>
+      <div
+        class="bg-semantic-neutral-800 text-white p-4 rounded-xl max-w-md mx-auto space-y-2 text-base"
+      >
+        <h2 class="text-semantic-warning-400 font-bold text-xl">How to Play Keno</h2>
 
         <div class="space-y-1">
           <p>Select your numbers and find the honeypot ants to earn coins!</p>
         </div>
 
-        <div class="bg-gray-700 p-4 rounded-lg space-y-1">
+        <div class="bg-semantic-neutral-700 p-4 rounded-lg space-y-1">
           <h3 class="font-semibold text-white">How to Play:</h3>
           <ul class="list-disc list-inside space-y-1">
             <li>Select 1-5 squares by clicking on them (they will highlight green)</li>
@@ -20,19 +22,19 @@
           </ul>
         </div>
 
-        <div class="bg-gray-700 p-4 rounded-lg space-y-1">
+        <div class="bg-semantic-neutral-700 p-4 rounded-lg space-y-1">
           <h3 class="font-semibold text-white">Payouts:</h3>
           <ul class="list-disc list-inside space-y-1">
             <li>Payouts are fair odds rounded down to whole numbers (to-1 format)</li>
             <li>0 matches pay 0</li>
             <li>View the payout tables for exact odds and payouts</li>
           </ul>
-          <p class="text-sm text-gray-300 mt-2">
+          <p class="text-sm text-semantic-neutral-300 mt-2">
             The more squares you select, the lower the payout per honeypot!
           </p>
         </div>
 
-        <div class="bg-gray-700 p-4 rounded-lg space-y-1">
+        <div class="bg-semantic-neutral-700 p-4 rounded-lg space-y-1">
           <h3 class="font-semibold text-white">Game Rules:</h3>
           <ul class="list-disc list-inside space-y-1">
             <li>You have 5 turns to find all the honeypots</li>
@@ -43,12 +45,12 @@
           </ul>
         </div>
 
-        <p class="text-yellow-300 font-medium">
+        <p class="text-semantic-warning-300 font-medium">
           💡 Tip: Choosing fewer squares gives higher payouts, but is riskier!
         </p>
       </div>
       <button
-        class="w-full mt-6 py-3 px-6 bg-yellow-600 hover:bg-yellow-500 text-white font-semibold rounded-lg transition-colors duration-200"
+        class="w-full mt-6 py-3 px-6 bg-semantic-warning-600 hover:bg-semantic-warning-500 text-white font-semibold rounded-lg transition-colors duration-200"
         @click="onClose"
       >
         Got it!

@@ -4,8 +4,8 @@
     class="rounded-lg px-2 py-1 flex items-center justify-center gap-1 border h-full text-xs"
     :class="
       disabled
-        ? 'bg-slate-800/40 border-slate-700 text-slate-500'
-        : 'bg-slate-800 border-slate-600 text-slate-100'
+        ? 'bg-surface-mutedFaint border-semantic-neutral-700 text-semantic-neutral-500'
+        : 'bg-semantic-neutral-800 border-semantic-neutral-600 text-semantic-neutral-100'
     "
     role="status"
     :aria-label="`payout for ${k} matches: ${display}`"

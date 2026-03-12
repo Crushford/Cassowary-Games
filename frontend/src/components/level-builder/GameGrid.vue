@@ -2,7 +2,7 @@
   <div class="flex flex-col items-center">
     <!-- Game Grid -->
     <div
-      class="grid w-full bg-slate-800 border-2 border-slate-700 p-1 rounded-lg shadow-lg gap-1"
+      class="grid w-full bg-semantic-neutral-800 border-2 border-semantic-neutral-700 p-1 rounded-lg shadow-lg gap-1"
       :style="{
         gridTemplateColumns: `repeat(${levelStore.gridSize}, minmax(0, 1fr))`,
       }"
@@ -22,14 +22,14 @@
     <div class="mt-4 flex gap-4">
       <button
         v-if="mode === 'player'"
-        class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+        class="px-4 py-2 bg-semantic-neutral-700 hover:bg-semantic-neutral-600 text-white rounded-lg transition-colors"
         @click="levelStore.handleUndo()"
       >
         Undo
       </button>
       <button
         v-if="mode === 'player'"
-        class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+        class="px-4 py-2 bg-semantic-neutral-700 hover:bg-semantic-neutral-600 text-white rounded-lg transition-colors"
         @click="levelStore.clearMarkers()"
       >
         Reset

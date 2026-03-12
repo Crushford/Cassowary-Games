@@ -2,18 +2,20 @@
   <!-- Standard mode: minimal top bar with optional timer -->
   <div
     v-if="queensStore.currentMode === 'standard'"
-    class="rounded-xl border border-slate-700 bg-slate-900/90 px-3 py-2 flex items-center justify-between w-full"
+    class="rounded-xl border border-semantic-neutral-700 bg-surface-overlay px-3 py-2 flex items-center justify-between w-full"
   >
     <!-- Left: puzzle title + size -->
     <div class="flex items-center space-x-4">
       <div class="text-sm">
         <div v-if="isSinglePuzzleMode" class="font-semibold text-lg">
-          <router-link to="/" class="text-white hover:text-gray-300 cursor-pointer"
+          <router-link to="/" class="text-white hover:text-semantic-neutral-300 cursor-pointer"
             >Queens</router-link
           >
         </div>
         <div v-else class="font-semibold text-lg">Queens</div>
-        <div class="text-gray-400">{{ queensStore.gridSize }}x{{ queensStore.gridSize }}</div>
+        <div class="text-semantic-neutral-400">
+          {{ queensStore.gridSize }}x{{ queensStore.gridSize }}
+        </div>
       </div>
     </div>
 
@@ -38,20 +40,24 @@
   <!-- Speed mode: yellow banner with timer countdown and controls -->
   <GameModeHeader v-else-if="queensStore.currentMode === 'speed'" color="yellow">
     <template #label>
-      <span class="text-yellow-400 font-semibold">⚡ Speed Mode</span>
+      <span class="text-semantic-warning-400 font-semibold">⚡ Speed Mode</span>
     </template>
     <template #stats>
-      <span class="text-yellow-200 text-sm"> Completed: {{ speedModeStore.completedCount }} </span>
-      <span class="text-yellow-300 font-bold">{{ speedModeStore.getFormattedTimeRemaining }}</span>
+      <span class="text-semantic-warning-200 text-sm">
+        Completed: {{ speedModeStore.completedCount }}
+      </span>
+      <span class="text-semantic-warning-300 font-bold">{{
+        speedModeStore.getFormattedTimeRemaining
+      }}</span>
     </template>
     <template #actions>
       <Button
-        class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-red-800 bg-red-900 text-red-100 enabled:hover:bg-red-800 enabled:hover:border-red-700 flex-1"
+        class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-semantic-danger-800 bg-semantic-danger-900 text-semantic-danger-100 enabled:hover:bg-semantic-danger-800 enabled:hover:border-semantic-danger-700 flex-1"
         label="End Round"
         @click="handleSpeedEndRound"
       />
       <Button
-        class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-blue-800 bg-blue-700 text-blue-100 enabled:hover:bg-blue-600 enabled:hover:border-blue-700 flex-1"
+        class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-semantic-info-800 bg-semantic-info-700 text-semantic-info-100 enabled:hover:bg-semantic-info-600 enabled:hover:border-semantic-info-700 flex-1"
         label="Restart"
         @click="handleSpeedRestart"
       />
@@ -61,21 +67,21 @@
   <!-- Rotate mode: green banner with queens count and navigation -->
   <GameModeHeader v-else color="green">
     <template #label>
-      <span class="text-green-400 font-semibold">🔄 Rotate Mode</span>
+      <span class="text-semantic-success-400 font-semibold">🔄 Rotate Mode</span>
     </template>
     <template #stats>
-      <span class="text-green-200 text-sm">
+      <span class="text-semantic-success-200 text-sm">
         Queens: {{ queensStore.queenPositions.length }}/{{ queensStore.gridSize }}
       </span>
     </template>
     <template #actions>
       <Button
-        class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-red-800 bg-red-900 text-red-100 enabled:hover:bg-red-800 enabled:hover:border-red-700 flex-1"
+        class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-semantic-danger-800 bg-semantic-danger-900 text-semantic-danger-100 enabled:hover:bg-semantic-danger-800 enabled:hover:border-semantic-danger-700 flex-1"
         label="Exit"
         @click="handleRotateEnd"
       />
       <Button
-        class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-blue-800 bg-blue-700 text-blue-100 enabled:hover:bg-blue-600 enabled:hover:border-blue-700 flex-1"
+        class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-semantic-info-800 bg-semantic-info-700 text-semantic-info-100 enabled:hover:bg-semantic-info-600 enabled:hover:border-semantic-info-700 flex-1"
         label="Next Puzzle"
         @click="queensStore.startNextPuzzle()"
       />

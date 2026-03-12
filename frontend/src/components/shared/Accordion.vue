@@ -1,18 +1,18 @@
 <template>
-  <div class="border border-gray-600 rounded-lg overflow-hidden">
+  <div class="border border-semantic-neutral-600 rounded-lg overflow-hidden">
     <button
-      class="w-full flex items-center justify-between p-3 bg-gray-800/50 hover:bg-gray-700/50 transition-colors text-left"
+      class="w-full flex items-center justify-between p-3 bg-surface-muted hover:bg-surface-mutedAlt transition-colors text-left"
       @click="toggle"
     >
       <span class="text-sm font-semibold text-white">{{ title }}</span>
       <span
-        class="text-gray-400 text-lg transition-transform duration-200"
+        class="text-semantic-neutral-400 text-lg transition-transform duration-200"
         :class="{ 'rotate-90': isOpen }"
       >
         ›
       </span>
     </button>
-    <div v-if="isOpen" class="p-3 bg-gray-800/50 border-t border-gray-600">
+    <div v-if="isOpen" class="p-3 bg-surface-muted border-t border-semantic-neutral-600">
       <slot />
     </div>
   </div>

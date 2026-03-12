@@ -8,7 +8,7 @@
     :aria-describedby="rootAriaDescribedBy"
     data-game="queens-incremental"
   >
-    <div class="flex-none p-3 border-b border-incremental-border/70">
+    <div class="flex-none p-3 border-b border-edge-incrementalSoft">
       <template v-if="incrementalStore.runStatus === 'idle'">
         <h1 id="incremental-queens-title" class="sr-only">Incremental Queens</h1>
         <p id="incremental-queens-instructions" class="sr-only">
@@ -24,7 +24,7 @@
 
       <div
         v-if="incrementalStore.runStatus !== 'idle'"
-        class="rounded-xl border border-incremental-border bg-incremental-panelBg/90 p-3 grid grid-cols-[1fr_auto] gap-3 items-center"
+        class="rounded-xl border border-incremental-border bg-incremental-panelBgSoft p-3 grid grid-cols-[1fr_auto] gap-3 items-center"
       >
         <div>
           <h1 class="text-base font-bold text-incremental-title leading-none">
@@ -33,12 +33,12 @@
         </div>
         <div class="flex items-center gap-2 justify-self-end">
           <Tag
-            class="rounded-full border border-incremental-badgeInfoBorder/70 bg-incremental-panelBg/95 px-3 py-1.5 text-xs font-semibold leading-none text-incremental-badgeInfoText"
+            class="rounded-full border border-incremental-badgeInfoBorderSoft bg-incremental-panelBgOverlay px-3 py-1.5 text-xs font-semibold leading-none text-incremental-badgeInfoText"
             :value="`Bank ${incrementalStore.runBank}`"
           />
           <div
             v-if="incrementalStore.runStatus === 'playing'"
-            class="rounded-full border border-incremental-borderMuted bg-incremental-panelBg/95 px-3.5 py-1.5 text-incremental-shellText tabular-nums text-lg font-extrabold leading-none tracking-wide"
+            class="rounded-full border border-incremental-borderMuted bg-incremental-panelBgOverlay px-3.5 py-1.5 text-incremental-shellText tabular-nums text-lg font-extrabold leading-none tracking-wide"
             :class="timerClass"
             aria-live="off"
           >
@@ -59,7 +59,7 @@
         class="absolute top-16 right-3 z-50 pointer-events-none"
       >
         <div
-          class="text-xs font-bold leading-none px-[0.6rem] py-[0.4rem] rounded-full border border-incremental-successBorder/40 bg-incremental-successBg/15 text-incremental-successText animate-pulse"
+          class="text-xs font-bold leading-none px-[0.6rem] py-[0.4rem] rounded-full border border-incremental-successBorderFaint bg-incremental-successBgFaint text-incremental-successText animate-pulse"
         >
           +{{ queensStore.autoFlagComboCount }} auto flags
         </div>
@@ -77,7 +77,7 @@
     >
       <div
         v-if="incrementalStore.autoNextPuzzlePurchased"
-        class="rounded-lg border border-incremental-border/80 bg-incremental-panelBg px-3 py-2 inline-flex items-center gap-2 text-xs font-semibold"
+        class="rounded-lg border border-edge-neutralMuted bg-incremental-panelBg px-3 py-2 inline-flex items-center gap-2 text-xs font-semibold"
       >
         <span>Auto Next Level</span>
         <ToggleSwitch
@@ -89,7 +89,7 @@
 
       <div
         v-if="hasAnyIncrementalAutomation"
-        class="rounded-lg border border-incremental-border/80 bg-incremental-panelBg px-3 py-2 inline-flex items-center gap-2 text-xs font-semibold select-none"
+        class="rounded-lg border border-edge-neutralMuted bg-incremental-panelBg px-3 py-2 inline-flex items-center gap-2 text-xs font-semibold select-none"
       >
         <span>Automation</span>
         <ToggleSwitch
@@ -106,7 +106,7 @@
       class="flex-1 flex items-center justify-center p-6"
     >
       <div
-        class="max-w-sm w-full rounded-xl border border-incremental-border bg-incremental-panelBg/90 p-4 space-y-3"
+        class="max-w-sm w-full rounded-xl border border-incremental-border bg-incremental-panelBgSoft p-4 space-y-3"
       >
         <Button
           type="button"
@@ -153,7 +153,7 @@
           class="absolute top-2 left-2 right-2 z-20 pointer-events-none"
         >
           <div
-            class="rounded bg-incremental-panelBgStrong/90 border border-incremental-successBorder/30 p-2 text-xs"
+            class="rounded bg-incremental-panelBgStrongSoft border border-incremental-successBorderSoft p-2 text-xs"
           >
             <div class="flex items-center justify-between mb-1">
               <span class="font-semibold text-incremental-successText">Time Remaining</span>
@@ -176,7 +176,7 @@
 
     <div v-if="incrementalStore.runStatus !== 'idle'" class="flex-none p-3 space-y-2">
       <div
-        class="justify-around rounded-2xl border border-incremental-border bg-incremental-panelBg/90 bg-gradient-to-b from-incremental-panelBg/95 to-incremental-shellBg/95 p-2 flex items-center gap-2"
+        class="justify-around rounded-2xl border border-incremental-border bg-incremental-panelBgSoft bg-gradient-to-b from-incremental-panelBgOverlay to-incremental-shellBgSoft p-2 flex items-center gap-2"
       >
         <QueensToolSelector
           :is-disabled="!isBoardInteractive"
@@ -205,7 +205,7 @@
         />
       </div>
       <div
-        class="rounded-2xl border border-incremental-border bg-incremental-panelBg/90 bg-gradient-to-b from-incremental-panelBg/95 to-incremental-shellBg/95 p-2 flex items-center gap-2"
+        class="rounded-2xl border border-incremental-border bg-incremental-panelBgSoft bg-gradient-to-b from-incremental-panelBgOverlay to-incremental-shellBgSoft p-2 flex items-center gap-2"
       >
         <Button
           type="button"
@@ -263,8 +263,8 @@
             class="rounded-lg border transition-colors duration-150"
             :class="
               incrementalStore.canAffordRisk
-                ? 'border-incremental-riskBorder/60 bg-incremental-riskBg/45 shadow-[inset_0_0_0_1px_rgba(251,113,133,0.25)]'
-                : 'border-incremental-borderSoft/80 bg-incremental-panelBgElevated/70'
+                ? 'border-incremental-riskBorderSoft bg-incremental-riskBgSoft shadow-[inset_0_0_0_1px_rgba(251,113,133,0.25)]'
+                : 'border-incremental-borderSoftStrong bg-incremental-panelBgElevatedSoft'
             "
           >
             <template #content>
@@ -300,8 +300,8 @@
                     class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-none"
                     :class="
                       incrementalStore.canAffordRisk
-                        ? 'border-incremental-successBorder/60 bg-incremental-successBg/20 text-incremental-successTextSoft'
-                        : 'border-incremental-borderMuted/90 bg-incremental-panelBgElevated/80 text-incremental-disabledText'
+                        ? 'border-incremental-successBorderMuted bg-incremental-successBgSoft text-incremental-successTextSoft'
+                        : 'border-incremental-borderMutedSoft bg-incremental-panelBgElevatedStrong text-incremental-disabledText'
                     "
                   >
                     {{
@@ -360,8 +360,8 @@
             class="rounded-lg border transition-colors duration-150"
             :class="
               upgrade.canBuy
-                ? 'border-incremental-successBorder/60 bg-incremental-successBg/40 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.25)]'
-                : 'border-incremental-borderSoft/80 bg-incremental-panelBgElevated/70'
+                ? 'border-incremental-successBorderMuted bg-incremental-successBgMedium shadow-[inset_0_0_0_1px_rgba(52,211,153,0.25)]'
+                : 'border-incremental-borderSoftStrong bg-incremental-panelBgElevatedSoft'
             "
           >
             <template #content>
@@ -395,8 +395,8 @@
                     class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-none"
                     :class="
                       upgrade.canBuy
-                        ? 'border-incremental-successBorder/60 bg-incremental-successBg/20 text-incremental-successTextSoft'
-                        : 'border-incremental-borderMuted/90 bg-incremental-panelBgElevated/80 text-incremental-disabledText'
+                        ? 'border-incremental-successBorderMuted bg-incremental-successBgSoft text-incremental-successTextSoft'
+                        : 'border-incremental-borderMutedSoft bg-incremental-panelBgElevatedStrong text-incremental-disabledText'
                     "
                   >
                     {{
@@ -552,7 +552,7 @@
           Run finished. Review score summary, then choose New Run or Exit.
         </p>
         <div
-          class="rounded-lg border border-incremental-border/80 bg-incremental-panelBg rounded p-3 mb-4 text-sm space-y-1"
+          class="rounded-lg border border-edge-neutralMuted bg-incremental-panelBg rounded p-3 mb-4 text-sm space-y-1"
         >
           <div class="flex justify-between">
             <span>Total Score</span>

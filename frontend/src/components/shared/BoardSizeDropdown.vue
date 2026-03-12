@@ -2,7 +2,7 @@
   <div class="relative">
     <!-- Size button -->
     <button
-      class="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-700 text-slate-100 rounded transition-colors duration-150"
+      class="flex items-center gap-2 px-3 py-2 bg-semantic-neutral-700 hover:bg-semantic-neutral-700 text-semantic-neutral-100 rounded transition-colors duration-150"
       @click="sizeDropdownOpen = !sizeDropdownOpen"
     >
       <span class="text-sm">{{ store.gridSize }}×{{ store.gridSize }}</span>
@@ -21,15 +21,15 @@
     <Modal :is-visible="sizeDropdownOpen" @close="sizeDropdownOpen = false">
       <div class="text-center">
         <h3 class="text-xl font-semibold text-white mb-4">Board Size</h3>
-        <p class="text-gray-300 mb-6">
+        <p class="text-semantic-neutral-300 mb-6">
           Change the size of the game board. Larger boards have more to explore!
         </p>
         <div class="space-y-2">
           <div
             v-for="size in availableSizes"
             :key="size"
-            class="px-4 py-3 hover:bg-gray-700 cursor-pointer transition-colors duration-150 rounded"
-            :class="size === store.gridSize ? 'bg-blue-600' : ''"
+            class="px-4 py-3 hover:bg-semantic-neutral-700 cursor-pointer transition-colors duration-150 rounded"
+            :class="size === store.gridSize ? 'bg-semantic-info-600' : ''"
             @click="selectSize(size)"
           >
             <div class="text-lg font-medium text-white">{{ size }}×{{ size }}</div>

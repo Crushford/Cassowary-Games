@@ -12,7 +12,7 @@
       <!-- Solution overlay when showBoard is true -->
       <div
         v-if="showBoard && isHoneypot"
-        class="absolute inset-0 flex items-center justify-center bg-green-500 bg-opacity-50 z-10"
+        class="absolute inset-0 flex items-center justify-center bg-semantic-success-500 bg-opacity-50 z-10"
       >
         <span class="text-4xl">🐅</span>
       </div>
@@ -23,21 +23,21 @@
       <!-- Honeypot (tiger emoji) overlay when isHoneypot is true -->
       <div
         v-if="isHoneypot"
-        class="absolute inset-0 flex items-center justify-center bg-gray-800 z-10"
+        class="absolute inset-0 flex items-center justify-center bg-semantic-neutral-800 z-10"
       >
         <span class="text-4xl">🐅</span>
       </div>
       <!-- Fruit emoji overlay when hasFruit is true -->
       <div
         v-if="hasFruit && !isHoneypot"
-        class="absolute inset-0 flex items-center justify-center bg-gray-800 z-10"
+        class="absolute inset-0 flex items-center justify-center bg-semantic-neutral-800 z-10"
       >
         <span class="text-4xl">🍎</span>
       </div>
       <!-- Nest emoji overlay when no fruit and no honeypot -->
       <div
         v-if="!hasFruit && !isHoneypot"
-        class="absolute inset-0 flex items-center justify-center bg-gray-800 z-10"
+        class="absolute inset-0 flex items-center justify-center bg-semantic-neutral-800 z-10"
       >
         <span class="text-4xl">🪺</span>
       </div>
@@ -127,9 +127,9 @@ const popupClasses = computed(() => {
   const value = popupValue.value;
   if (value === null) return '';
   // Red for negative values (loss), green for positive values (gain), gray for zero
-  if (value < 0) return 'text-red-500';
-  if (value > 0) return 'text-green-400';
-  return 'text-gray-400';
+  if (value < 0) return 'text-semantic-danger-500';
+  if (value > 0) return 'text-semantic-success-400';
+  return 'text-semantic-neutral-400';
 });
 
 // Watch for flip state changes to trigger animation
@@ -161,25 +161,25 @@ const hasFruit = computed(() => {
 // Computed property for button classes
 const buttonClasses = computed(() => {
   if (isFlipped.value) {
-    return 'bg-gray-800 cursor-default';
+    return 'bg-semantic-neutral-800 cursor-default';
   }
 
   if (gameOver.value) {
-    return 'bg-gray-800 cursor-default';
+    return 'bg-semantic-neutral-800 cursor-default';
   }
 
   // Show green background when selected
   if (isSelected.value) {
-    return 'bg-green-600 hover:bg-green-700';
+    return 'bg-semantic-success-600 hover:bg-semantic-success-700';
   }
 
   // Default state - can be selected
   if (props.store.canSelectMore) {
-    return 'bg-gray-800 hover:bg-gray-700';
+    return 'bg-semantic-neutral-800 hover:bg-semantic-neutral-700';
   }
 
   // Can't select more
-  return 'bg-gray-800 cursor-default';
+  return 'bg-semantic-neutral-800 cursor-default';
 });
 
 function handleClick() {

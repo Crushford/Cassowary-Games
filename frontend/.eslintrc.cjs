@@ -16,6 +16,12 @@ module.exports = {
   rules: {
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+    'no-fallthrough': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-unused-vars': 'off',
+    '@typescript-eslint/no-empty-object-type': 'off',
+    'vue/multi-word-component-names': 'off',
+    'storybook/no-renderer-packages': 'off',
     'prettier/prettier': 'error',
     'vue/no-unused-vars': 'error',
   },

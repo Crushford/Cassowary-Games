@@ -1,8 +1,8 @@
 <template>
-  <div class="flex items-center justify-center bg-slate-800 p-2 rounded-lg">
+  <div class="flex items-center justify-center bg-semantic-neutral-800 p-2 rounded-lg">
     <!-- Reset game button -->
     <button
-      class="px-4 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-sm bg-slate-700 text-slate-300 hover:bg-slate-600"
+      class="px-4 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-sm bg-semantic-neutral-700 text-semantic-neutral-300 hover:bg-semantic-neutral-600"
       aria-label="Reset game"
       @click="handleResetGame"
     >
@@ -11,11 +11,11 @@
     </button>
 
     <!-- Divider -->
-    <div class="mx-3 h-10 border-l border-slate-500"></div>
+    <div class="mx-3 h-10 border-l border-semantic-neutral-500"></div>
 
     <!-- Rules button -->
     <button
-      class="px-4 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-sm bg-slate-700 text-slate-300 hover:bg-slate-600"
+      class="px-4 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-sm bg-semantic-neutral-700 text-semantic-neutral-300 hover:bg-semantic-neutral-600"
       aria-label="Show rules"
       @click="handleShowRules"
     >
@@ -24,11 +24,11 @@
     </button>
 
     <!-- Divider -->
-    <div class="mx-3 h-10 border-l border-slate-500"></div>
+    <div class="mx-3 h-10 border-l border-semantic-neutral-500"></div>
 
     <!-- Payout Tables button -->
     <button
-      class="px-4 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-sm bg-slate-700 text-slate-300 hover:bg-slate-600"
+      class="px-4 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-sm bg-semantic-neutral-700 text-semantic-neutral-300 hover:bg-semantic-neutral-600"
       aria-label="Show payout tables"
       @click="handleShowPayoutTables"
     >
@@ -37,11 +37,11 @@
     </button>
 
     <!-- Divider -->
-    <div class="mx-3 h-10 border-l border-slate-500"></div>
+    <div class="mx-3 h-10 border-l border-semantic-neutral-500"></div>
 
     <!-- New random level button -->
     <button
-      class="px-4 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-sm bg-slate-700 text-slate-300 hover:bg-slate-600"
+      class="px-4 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2 focus:outline-none min-w-[44px] min-h-[44px] text-sm bg-semantic-neutral-700 text-semantic-neutral-300 hover:bg-semantic-neutral-600"
       aria-label="New random level"
       @click="handleNewRandomLevel"
     >

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="h-svh w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden"
+    class="h-svh w-full max-w-[480px] mx-auto bg-semantic-neutral-800 text-white flex flex-col overflow-hidden"
   >
     <div class="flex flex-col items-center justify-center h-full p-8 overflow-y-auto">
       <!-- Menu state -->
@@ -23,15 +23,17 @@
         </div>
 
         <!-- Matriarch Panel -->
-        <div class="p-4 rounded-lg border border-gray-700 bg-gray-900 space-y-3">
+        <div
+          class="p-4 rounded-lg border border-semantic-neutral-700 bg-semantic-neutral-900 space-y-3"
+        >
           <div class="flex items-center justify-between">
             <h3 class="font-semibold text-lg">Matriarch</h3>
-            <span class="text-sm text-gray-400">Gen {{ matriarch?.generation }}</span>
+            <span class="text-sm text-semantic-neutral-400">Gen {{ matriarch?.generation }}</span>
           </div>
 
           <div v-if="matriarch" class="space-y-2">
             <!-- Stats Summary -->
-            <p class="text-sm text-gray-300">
+            <p class="text-sm text-semantic-neutral-300">
               Size {{ matriarch.size }}, Speed {{ matriarch.speed }}, Fertility
               {{ matriarch.fertility }}
             </p>
@@ -39,11 +41,11 @@
             <!-- Stat Details -->
             <div class="grid grid-cols-3 gap-2 text-xs">
               <div>
-                <div class="text-gray-400 mb-1">Size</div>
+                <div class="text-semantic-neutral-400 mb-1">Size</div>
                 <div class="flex items-center gap-1">
-                  <div class="flex-1 bg-gray-700 rounded-full h-2">
+                  <div class="flex-1 bg-semantic-neutral-700 rounded-full h-2">
                     <div
-                      class="bg-blue-500 h-2 rounded-full"
+                      class="bg-semantic-info-500 h-2 rounded-full"
                       :style="{ width: `${(matriarch.size / 10) * 100}%` }"
                     ></div>
                   </div>
@@ -51,11 +53,11 @@
                 </div>
               </div>
               <div>
-                <div class="text-gray-400 mb-1">Speed</div>
+                <div class="text-semantic-neutral-400 mb-1">Speed</div>
                 <div class="flex items-center gap-1">
-                  <div class="flex-1 bg-gray-700 rounded-full h-2">
+                  <div class="flex-1 bg-semantic-neutral-700 rounded-full h-2">
                     <div
-                      class="bg-green-500 h-2 rounded-full"
+                      class="bg-semantic-success-500 h-2 rounded-full"
                       :style="{ width: `${(matriarch.speed / 10) * 100}%` }"
                     ></div>
                   </div>
@@ -63,11 +65,11 @@
                 </div>
               </div>
               <div>
-                <div class="text-gray-400 mb-1">Fertility</div>
+                <div class="text-semantic-neutral-400 mb-1">Fertility</div>
                 <div class="flex items-center gap-1">
-                  <div class="flex-1 bg-gray-700 rounded-full h-2">
+                  <div class="flex-1 bg-semantic-neutral-700 rounded-full h-2">
                     <div
-                      class="bg-purple-500 h-2 rounded-full"
+                      class="bg-semantic-info-500 h-2 rounded-full"
                       :style="{ width: `${(matriarch.fertility / 10) * 100}%` }"
                     ></div>
                   </div>
@@ -77,26 +79,26 @@
             </div>
 
             <!-- Partner Info -->
-            <div class="pt-2 border-t border-gray-700">
-              <div class="text-sm text-gray-400 mb-1">Partner</div>
+            <div class="pt-2 border-t border-semantic-neutral-700">
+              <div class="text-sm text-semantic-neutral-400 mb-1">Partner</div>
               <div v-if="partner" class="text-sm">
-                <span class="text-gray-300">
+                <span class="text-semantic-neutral-300">
                   Size {{ partner.size }}, Speed {{ partner.speed }}, Fertility
                   {{ partner.fertility }}
                 </span>
               </div>
-              <div v-else class="text-sm text-gray-500">No partner yet</div>
+              <div v-else class="text-sm text-semantic-neutral-500">No partner yet</div>
             </div>
           </div>
         </div>
 
         <!-- Resources Panel -->
         <div class="grid grid-cols-2 gap-4">
-          <div class="p-4 rounded-lg border border-gray-700 bg-gray-900">
+          <div class="p-4 rounded-lg border border-semantic-neutral-700 bg-semantic-neutral-900">
             <p class="font-medium mb-2">Fruit</p>
             <p class="text-2xl">{{ evolveStore.fruit }}</p>
           </div>
-          <div class="p-4 rounded-lg border border-gray-700 bg-gray-900">
+          <div class="p-4 rounded-lg border border-semantic-neutral-700 bg-semantic-neutral-900">
             <p class="font-medium mb-2">Evolution Points</p>
             <p class="text-2xl">{{ evolveStore.evolutionPoints }}</p>
           </div>
@@ -130,20 +132,20 @@
         </div>
 
         <!-- Lineage View -->
-        <div class="p-4 rounded-lg border border-gray-700 bg-gray-900">
+        <div class="p-4 rounded-lg border border-semantic-neutral-700 bg-semantic-neutral-900">
           <h3 class="font-semibold mb-3">Lineage</h3>
           <div class="space-y-2 max-h-48 overflow-y-auto">
             <!-- Past matriarchs -->
             <div
               v-for="entry in evolveStore.lineageHistory || []"
               :key="entry.matriarchId"
-              class="p-2 rounded bg-gray-800 cursor-pointer hover:bg-gray-750"
+              class="p-2 rounded bg-semantic-neutral-800 cursor-pointer hover:bg-semantic-neutral-750"
               @click="
                 selectedLineageEntry = entry;
                 showLineageDetail = true;
               "
             >
-              <div class="text-xs text-gray-400">Gen {{ entry.generation }}</div>
+              <div class="text-xs text-semantic-neutral-400">Gen {{ entry.generation }}</div>
               <div class="text-sm">
                 Size {{ entry.size }}, Speed {{ entry.speed }}, Fertility {{ entry.fertility }}
               </div>
@@ -151,7 +153,7 @@
             <!-- Current matriarch -->
             <div
               v-if="matriarch"
-              class="p-2 rounded bg-blue-900 border border-blue-700 cursor-pointer hover:bg-blue-800"
+              class="p-2 rounded bg-semantic-info-900 border border-semantic-info-700 cursor-pointer hover:bg-semantic-info-800"
               @click="
                 selectedLineageEntry = {
                   matriarchId: matriarch.id,
@@ -163,7 +165,9 @@
                 showLineageDetail = true;
               "
             >
-              <div class="text-xs text-blue-300">Gen {{ matriarch.generation }} (Current)</div>
+              <div class="text-xs text-semantic-info-300">
+                Gen {{ matriarch.generation }} (Current)
+              </div>
               <div class="text-sm">
                 Size {{ matriarch.size }}, Speed {{ matriarch.speed }}, Fertility
                 {{ matriarch.fertility }}
@@ -174,7 +178,7 @@
                 (!evolveStore.lineageHistory || evolveStore.lineageHistory.length === 0) &&
                 !matriarch
               "
-              class="text-sm text-gray-500"
+              class="text-sm text-semantic-neutral-500"
             >
               No lineage history yet
             </div>
@@ -186,7 +190,7 @@
       <Modal :is-visible="showOverwriteModal" @close="showOverwriteModal = false">
         <div>
           <h3 class="text-xl font-semibold text-white mb-4">Start New Game?</h3>
-          <p class="mb-4 text-gray-300">
+          <p class="mb-4 text-semantic-neutral-300">
             Starting a new game will overwrite your existing evolve save.
           </p>
           <div class="flex justify-end gap-2">
@@ -200,7 +204,7 @@
       <Modal :is-visible="showChickSelection" @close="closeChickSelection">
         <div>
           <h3 class="text-xl font-semibold text-white mb-4">Select New Matriarch</h3>
-          <p class="mb-4 text-gray-300 text-sm">
+          <p class="mb-4 text-semantic-neutral-300 text-sm">
             Choose a female chick to become the new matriarch, then select which other chicks to
             keep.
           </p>
@@ -211,10 +215,10 @@
               :key="chick.id"
               class="p-3 rounded border"
               :class="{
-                'border-blue-500 bg-blue-900': selectedMatriarchId === chick.id,
-                'border-gray-600 bg-gray-800':
+                'border-semantic-info-500 bg-semantic-info-900': selectedMatriarchId === chick.id,
+                'border-semantic-neutral-600 bg-semantic-neutral-800':
                   selectedMatriarchId !== chick.id && keptChickIds.includes(chick.id),
-                'border-gray-700 bg-gray-900':
+                'border-semantic-neutral-700 bg-semantic-neutral-900':
                   selectedMatriarchId !== chick.id && !keptChickIds.includes(chick.id),
               }"
             >
@@ -223,11 +227,11 @@
                   <span class="text-sm font-medium">{{
                     chick.sex === 'female' ? '♀' : '♂'
                   }}</span>
-                  <span v-if="chick.mutatedStat" class="text-xs text-gray-400">
+                  <span v-if="chick.mutatedStat" class="text-xs text-semantic-neutral-400">
                     Mutated: {{ chick.mutatedStat }}
                   </span>
                 </div>
-                <div class="text-xs text-gray-400">
+                <div class="text-xs text-semantic-neutral-400">
                   Size {{ chick.size }}, Speed {{ chick.speed }}, Fertility {{ chick.fertility }}
                 </div>
               </div>
@@ -235,7 +239,7 @@
               <div class="flex gap-2">
                 <BaseButton
                   v-if="chick.sex === 'female'"
-                  :class="selectedMatriarchId === chick.id ? 'bg-blue-600' : ''"
+                  :class="selectedMatriarchId === chick.id ? 'bg-semantic-info-600' : ''"
                   class="text-xs py-1 px-2"
                   @click="selectMatriarch(chick.id)"
                 >
@@ -247,7 +251,7 @@
                 </BaseButton>
                 <BaseButton
                   v-if="selectedMatriarchId !== chick.id"
-                  :class="keptChickIds.includes(chick.id) ? 'bg-green-600' : ''"
+                  :class="keptChickIds.includes(chick.id) ? 'bg-semantic-success-600' : ''"
                   class="text-xs py-1 px-2"
                   @click="toggleKeepChick(chick.id)"
                 >
@@ -259,7 +263,7 @@
 
           <div
             v-if="femaleChicks.length === 0"
-            class="mb-4 p-3 bg-yellow-900 border border-yellow-700 rounded text-sm text-yellow-200"
+            class="mb-4 p-3 bg-semantic-warning-900 border border-semantic-warning-700 rounded text-sm text-semantic-warning-200"
           >
             No female chicks in this clutch. The current matriarch will remain.
           </div>
@@ -286,23 +290,25 @@
               :key="female.id"
               class="p-3 rounded border"
               :class="{
-                'border-blue-500 bg-blue-900': female.id === evolveStore.matriarchId,
-                'border-gray-600 bg-gray-800': female.id !== evolveStore.matriarchId,
+                'border-semantic-info-500 bg-semantic-info-900':
+                  female.id === evolveStore.matriarchId,
+                'border-semantic-neutral-600 bg-semantic-neutral-800':
+                  female.id !== evolveStore.matriarchId,
               }"
             >
               <div class="flex items-center justify-between mb-1">
                 <span class="font-medium">
                   {{ female.id === evolveStore.matriarchId ? 'Matriarch' : female.role }}
                 </span>
-                <span class="text-xs text-gray-400">Gen {{ female.generation }}</span>
+                <span class="text-xs text-semantic-neutral-400">Gen {{ female.generation }}</span>
               </div>
-              <div class="text-sm text-gray-300">
+              <div class="text-sm text-semantic-neutral-300">
                 Size {{ female.size }}, Speed {{ female.speed }}, Fertility {{ female.fertility }}
               </div>
             </div>
             <div
               v-if="!evolveStore.females || evolveStore.females.length === 0"
-              class="text-sm text-gray-500"
+              class="text-sm text-semantic-neutral-500"
             >
               No females in family
             </div>
@@ -318,22 +324,22 @@
             <div
               v-for="male in evolveStore.males || []"
               :key="male.id"
-              class="p-3 rounded border border-gray-600 bg-gray-800"
+              class="p-3 rounded border border-semantic-neutral-600 bg-semantic-neutral-800"
             >
               <div class="flex items-center justify-between mb-1">
                 <span class="font-medium">Male</span>
-                <span class="text-xs text-gray-400">Gen {{ male.generation }}</span>
+                <span class="text-xs text-semantic-neutral-400">Gen {{ male.generation }}</span>
               </div>
-              <div class="text-sm text-gray-300 mb-1">
+              <div class="text-sm text-semantic-neutral-300 mb-1">
                 Size {{ male.size }}, Speed {{ male.speed }}, Fertility {{ male.fertility }}
               </div>
-              <div class="text-xs text-gray-400">
+              <div class="text-xs text-semantic-neutral-400">
                 {{ male.linkedFemaleId ? 'Linked to female' : 'Unassigned' }}
               </div>
             </div>
             <div
               v-if="!evolveStore.males || evolveStore.males.length === 0"
-              class="text-sm text-gray-500"
+              class="text-sm text-semantic-neutral-500"
             >
               No male partners yet
             </div>
@@ -347,19 +353,19 @@
           <h3 class="text-xl font-semibold text-white mb-4">Matriarch Details</h3>
           <div class="space-y-2">
             <div>
-              <span class="text-gray-400">Generation:</span>
+              <span class="text-semantic-neutral-400">Generation:</span>
               <span class="ml-2">{{ selectedLineageEntry.generation }}</span>
             </div>
             <div>
-              <span class="text-gray-400">Size:</span>
+              <span class="text-semantic-neutral-400">Size:</span>
               <span class="ml-2">{{ selectedLineageEntry.size }}</span>
             </div>
             <div>
-              <span class="text-gray-400">Speed:</span>
+              <span class="text-semantic-neutral-400">Speed:</span>
               <span class="ml-2">{{ selectedLineageEntry.speed }}</span>
             </div>
             <div>
-              <span class="text-gray-400">Fertility:</span>
+              <span class="text-semantic-neutral-400">Fertility:</span>
               <span class="ml-2">{{ selectedLineageEntry.fertility }}</span>
             </div>
           </div>

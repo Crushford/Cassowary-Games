@@ -6,13 +6,13 @@
       <!-- Battle Info -->
       <div class="mb-4 space-y-2">
         <div class="flex justify-between">
-          <span class="text-gray-400">Round:</span>
+          <span class="text-semantic-neutral-400">Round:</span>
           <span class="font-semibold">{{ roundNumber }}</span>
         </div>
         <div class="flex justify-between">
-          <span class="text-gray-400">Battle Type:</span>
+          <span class="text-semantic-neutral-400">Battle Type:</span>
           <span class="font-semibold capitalize">{{ battleType }}</span>
-          <span v-if="battleType === 'wall'" class="text-sm text-yellow-400 ml-2">
+          <span v-if="battleType === 'wall'" class="text-sm text-semantic-warning-400 ml-2">
             (+{{ wallDefenseBonus }} wall bonus)
           </span>
         </div>
@@ -21,20 +21,26 @@
       <!-- Army Status Grid -->
       <div class="grid grid-cols-2 gap-4 mb-4">
         <!-- Player Army -->
-        <div class="bg-blue-900/30 rounded p-3">
-          <div class="text-sm text-gray-300 mb-2 font-semibold">Your Army</div>
-          <div v-if="army.length === 0" class="text-red-400 font-semibold">No units remaining!</div>
+        <div class="bg-feedback-infoSoft rounded p-3">
+          <div class="text-sm text-semantic-neutral-300 mb-2 font-semibold">Your Army</div>
+          <div v-if="army.length === 0" class="text-semantic-danger-400 font-semibold">
+            No units remaining!
+          </div>
           <div v-else class="space-y-2">
-            <div v-for="unit in army" :key="unit.id" class="text-sm bg-gray-800 rounded p-2">
+            <div
+              v-for="unit in army"
+              :key="unit.id"
+              class="text-sm bg-semantic-neutral-800 rounded p-2"
+            >
               <div class="flex items-center justify-between">
                 <span class="font-semibold">{{ unit.type }}</span>
-                <span class="text-xs text-gray-400">Rank {{ unit.rank }}</span>
+                <span class="text-xs text-semantic-neutral-400">Rank {{ unit.rank }}</span>
               </div>
               <div class="mt-1">
                 <div class="flex items-center gap-2">
-                  <div class="flex-1 bg-gray-700 rounded-full h-2">
+                  <div class="flex-1 bg-semantic-neutral-700 rounded-full h-2">
                     <div
-                      class="bg-green-500 h-2 rounded-full transition-all"
+                      class="bg-semantic-success-500 h-2 rounded-full transition-all"
                       :style="{ width: `${(unit.strength / unit.maxStrength) * 100}%` }"
                     ></div>
                   </div>
@@ -48,24 +54,26 @@
         </div>
 
         <!-- Enemy Force -->
-        <div class="bg-red-900/30 rounded p-3">
-          <div class="text-sm text-gray-300 mb-2 font-semibold">Enemy Force</div>
-          <div v-if="enemyForce.length === 0" class="text-green-400 font-semibold">Defeated!</div>
+        <div class="bg-feedback-dangerSoft rounded p-3">
+          <div class="text-sm text-semantic-neutral-300 mb-2 font-semibold">Enemy Force</div>
+          <div v-if="enemyForce.length === 0" class="text-semantic-success-400 font-semibold">
+            Defeated!
+          </div>
           <div v-else class="space-y-2">
             <div
               v-for="enemy in enemyForce"
               :key="enemy.id"
-              class="text-sm bg-gray-800 rounded p-2"
+              class="text-sm bg-semantic-neutral-800 rounded p-2"
             >
               <div class="flex items-center justify-between">
                 <span class="font-semibold">{{ enemy.type }}</span>
-                <span class="text-xs text-gray-400">Rank {{ enemy.rank }}</span>
+                <span class="text-xs text-semantic-neutral-400">Rank {{ enemy.rank }}</span>
               </div>
               <div class="mt-1">
                 <div class="flex items-center gap-2">
-                  <div class="flex-1 bg-gray-700 rounded-full h-2">
+                  <div class="flex-1 bg-semantic-neutral-700 rounded-full h-2">
                     <div
-                      class="bg-red-500 h-2 rounded-full transition-all"
+                      class="bg-semantic-danger-500 h-2 rounded-full transition-all"
                       :style="{ width: `${(enemy.strength / enemy.maxStrength) * 100}%` }"
                     ></div>
                   </div>
@@ -81,18 +89,20 @@
 
       <!-- Dice Area -->
       <div class="mb-4">
-        <div class="text-sm text-gray-300 mb-2 text-center">Round {{ roundNumber }} Results</div>
+        <div class="text-sm text-semantic-neutral-300 mb-2 text-center">
+          Round {{ roundNumber }} Results
+        </div>
         <BattleDice :dice-roll="lastDiceRoll" :is-rolling="isRolling" />
       </div>
 
       <!-- Battle Log -->
-      <div class="bg-gray-700 rounded p-3 mb-4 max-h-48 overflow-y-auto">
-        <div class="text-sm text-gray-300 mb-2">Battle Log</div>
+      <div class="bg-semantic-neutral-700 rounded p-3 mb-4 max-h-48 overflow-y-auto">
+        <div class="text-sm text-semantic-neutral-300 mb-2">Battle Log</div>
         <div class="space-y-1 text-sm">
-          <div v-for="(log, index) in battleLog" :key="index" class="text-gray-200">
+          <div v-for="(log, index) in battleLog" :key="index" class="text-semantic-neutral-200">
             {{ log }}
           </div>
-          <div v-if="battleLog.length === 0" class="text-gray-400 italic">
+          <div v-if="battleLog.length === 0" class="text-semantic-neutral-400 italic">
             Battle hasn't started yet...
           </div>
         </div>
@@ -103,7 +113,7 @@
         <button
           v-if="!isBattleOver"
           :disabled="isRolling"
-          class="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-semibold py-2 px-4 rounded transition-colors"
+          class="flex-1 bg-semantic-info-600 hover:bg-semantic-info-700 disabled:bg-semantic-neutral-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-semibold py-2 px-4 rounded transition-colors"
           @click="autoResolve"
         >
           Auto-Resolve Battle
@@ -111,14 +121,14 @@
         <button
           v-if="!isBattleOver"
           :disabled="isRolling"
-          class="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-semibold py-2 px-4 rounded transition-colors"
+          class="flex-1 bg-semantic-danger-600 hover:bg-semantic-danger-700 disabled:bg-semantic-neutral-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-semibold py-2 px-4 rounded transition-colors"
           @click="executeRound"
         >
           {{ isRolling ? 'Rolling...' : 'Step Through Rounds' }}
         </button>
         <button
           v-if="isBattleOver"
-          class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+          class="flex-1 bg-semantic-success-600 hover:bg-semantic-success-700 text-white font-semibold py-2 px-4 rounded transition-colors"
           @click="endBattle"
         >
           View Results

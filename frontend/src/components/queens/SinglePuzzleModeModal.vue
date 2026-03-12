@@ -3,7 +3,7 @@
     <div>
       <h2 class="text-2xl font-bold mb-4" :class="titleColorClass">{{ title }}</h2>
       <p class="text-white mb-2">{{ description }}</p>
-      <p v-if="mode === 'rotate'" class="text-gray-400 text-sm mb-4">
+      <p v-if="mode === 'rotate'" class="text-semantic-neutral-400 text-sm mb-4">
         Place queens and flags as normal — the whole board spins clockwise after each move. Swipe to
         place multiple flags, and the rotation waits until you lift your finger.
       </p>
@@ -51,7 +51,9 @@ const router = useRouter();
 const isRotate = computed(() => props.mode === 'rotate');
 
 const title = computed(() => (isRotate.value ? 'Rotate Mode 🔄' : 'Single Puzzle Mode'));
-const titleColorClass = computed(() => (isRotate.value ? 'text-green-400' : 'text-blue-400'));
+const titleColorClass = computed(() =>
+  isRotate.value ? 'text-semantic-success-400' : 'text-semantic-info-400'
+);
 const description = computed(() =>
   isRotate.value ? 'The board rotates 90° after every placement!' : 'Choose a puzzle size to play'
 );
@@ -79,10 +81,11 @@ function getPuzzleInProgress(sizeKey: string): PuzzleInProgress | null {
 }
 
 function sizeButtonClass(size: string): string {
-  if (isRotate.value) return 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600';
+  if (isRotate.value)
+    return 'bg-semantic-neutral-700 hover:bg-semantic-neutral-600 text-white border-semantic-neutral-600';
   return hasProgress(size)
-    ? 'bg-green-600 hover:bg-green-500 text-white border-green-400'
-    : 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600';
+    ? 'bg-semantic-success-600 hover:bg-semantic-success-500 text-white border-semantic-success-400'
+    : 'bg-semantic-neutral-700 hover:bg-semantic-neutral-600 text-white border-semantic-neutral-600';
 }
 
 function sizeSubtext(size: string): string {

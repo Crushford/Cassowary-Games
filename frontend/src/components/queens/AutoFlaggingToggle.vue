@@ -1,7 +1,7 @@
 <template>
   <div
     id="auto-flagging-toggle"
-    class="rounded-xl border border-slate-700 bg-slate-900/90 flex items-center justify-center p-2 rounded-lg z-50"
+    class="rounded-xl border border-semantic-neutral-700 bg-surface-overlay flex items-center justify-center p-2 rounded-lg z-50"
   >
     <SelectButton
       v-model="autoFlagging"

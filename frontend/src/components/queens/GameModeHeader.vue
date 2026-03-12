@@ -18,7 +18,9 @@ const props = defineProps<{
 }>();
 
 const bgClass = computed(() =>
-  props.color === 'yellow' ? 'bg-yellow-900 bg-opacity-50' : 'bg-green-900 bg-opacity-50'
+  props.color === 'yellow'
+    ? 'bg-semantic-warning-900 bg-opacity-50'
+    : 'bg-semantic-success-900 bg-opacity-50'
 );
 </script>
 

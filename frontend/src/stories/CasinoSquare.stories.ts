@@ -53,7 +53,7 @@ const createStoryWithPinia = (rowIndex: number, colIndex: number) => ({
     return { roundStore };
   },
   template: `
-    <div class="w-32 h-32 border border-gray-300 rounded-lg overflow-hidden relative">
+    <div class="w-32 h-32 border border-semantic-neutral-300 rounded-lg overflow-hidden relative">
       <CasinoSquare :row-index="0" :col-index="0" :store="roundStore" />
     </div>
   `,
@@ -104,7 +104,7 @@ export const WithFlag: Story = {
       return { roundStore };
     },
     template: `
-      <div class="w-32 h-32 border border-gray-300 rounded-lg overflow-hidden relative">
+      <div class="w-32 h-32 border border-semantic-neutral-300 rounded-lg overflow-hidden relative">
         <CasinoSquare :row-index="0" :col-index="0" :store="roundStore" />
       </div>
     `,
@@ -151,7 +151,7 @@ export const WithQueen: Story = {
       return { roundStore };
     },
     template: `
-      <div class="w-32 h-32 border border-gray-300 rounded-lg overflow-hidden relative">
+      <div class="w-32 h-32 border border-semantic-neutral-300 rounded-lg overflow-hidden relative">
         <CasinoSquare :row-index="0" :col-index="0" :store="roundStore" />
       </div>
     `,
@@ -198,7 +198,7 @@ export const WithInvalid: Story = {
       return { roundStore };
     },
     template: `
-      <div class="w-32 h-32 border border-gray-300 rounded-lg overflow-hidden relative">
+      <div class="w-32 h-32 border border-semantic-neutral-300 rounded-lg overflow-hidden relative">
         <CasinoSquare :row-index="0" :col-index="0" :store="roundStore" />
       </div>
     `,

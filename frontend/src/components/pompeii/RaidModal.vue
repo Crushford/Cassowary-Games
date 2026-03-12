@@ -4,59 +4,63 @@
       <h2 class="text-2xl font-bold mb-4 block">Raid Alert!</h2>
       <div class="space-y-3 mb-6">
         <div>
-          <span class="text-gray-400">Year:</span>
+          <span class="text-semantic-neutral-400">Year:</span>
           <span class="ml-2 font-semibold">{{ turnCounter }}</span>
         </div>
         <div>
-          <span class="text-gray-400">Raid Number:</span>
+          <span class="text-semantic-neutral-400">Raid Number:</span>
           <span class="ml-2 font-semibold">#{{ raidNumber }}</span>
         </div>
-        <div class="bg-red-900 bg-red-900/30 rounded p-3 mt-4">
-          <div class="text-sm text-gray-300 mb-2">Enemy Force:</div>
+        <div class="bg-semantic-danger-900 bg-feedback-dangerSoft rounded p-3 mt-4">
+          <div class="text-sm text-semantic-neutral-300 mb-2">Enemy Force:</div>
           <div v-for="enemy in enemyForce" :key="enemy.id" class="text-white font-semibold">
             {{ enemy.type }} - Strength: {{ enemy.strength }}, Rank: {{ enemy.rank }} (d{{
               getDieSize(enemy.rank)
             }})
           </div>
         </div>
-        <div class="bg-blue-900/30 rounded p-3 mt-4">
-          <div class="text-sm text-gray-300 mb-2">Your Army:</div>
+        <div class="bg-feedback-infoSoft rounded p-3 mt-4">
+          <div class="text-sm text-semantic-neutral-300 mb-2">Your Army:</div>
           <div class="text-white">
             {{ armyCount }} units, {{ totalArmyStrength }} total strength
           </div>
-          <div class="text-sm text-gray-400 mt-1">
+          <div class="text-sm text-semantic-neutral-400 mt-1">
             Average rank: {{ averageArmyRank }} (d{{ getAverageDieSize() }})
           </div>
-          <div class="text-sm text-gray-400 mt-1">Wall defense bonus: +{{ wallDefenseBonus }}</div>
+          <div class="text-sm text-semantic-neutral-400 mt-1">
+            Wall defense bonus: +{{ wallDefenseBonus }}
+          </div>
         </div>
 
         <!-- Win Chance Forecast -->
-        <div class="bg-gray-700 rounded p-3 mt-4">
-          <div class="text-sm text-gray-300 mb-2">Win Chance Forecast:</div>
+        <div class="bg-semantic-neutral-700 rounded p-3 mt-4">
+          <div class="text-sm text-semantic-neutral-300 mb-2">Win Chance Forecast:</div>
           <div class="text-lg font-semibold" :class="winChanceClass">
             {{ winChance }}
           </div>
-          <div class="text-xs text-gray-400 mt-1">Based on total strength comparison</div>
+          <div class="text-xs text-semantic-neutral-400 mt-1">
+            Based on total strength comparison
+          </div>
         </div>
       </div>
-      <div class="border-t border-gray-600 pt-4 mb-4">
+      <div class="border-t border-semantic-neutral-600 pt-4 mb-4">
         <div class="text-lg font-semibold mb-3">Choose your defense:</div>
         <div class="space-y-3">
           <button
-            class="w-full bg-green-700 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded transition-colors"
+            class="w-full bg-semantic-success-700 hover:bg-semantic-success-600 text-white font-semibold py-3 px-4 rounded transition-colors"
             @click="chooseBattle('countryside')"
           >
             Fight in Countryside
-            <div class="text-sm font-normal mt-1 text-gray-200">
+            <div class="text-sm font-normal mt-1 text-semantic-neutral-200">
               Protect farms • No wall bonus • Countryside damaged if defeated
             </div>
           </button>
           <button
-            class="w-full bg-orange-700 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded transition-colors"
+            class="w-full bg-semantic-warning-700 hover:bg-semantic-warning-600 text-white font-semibold py-3 px-4 rounded transition-colors"
             @click="chooseBattle('wall')"
           >
             Defend at Wall
-            <div class="text-sm font-normal mt-1 text-gray-200">
+            <div class="text-sm font-normal mt-1 text-semantic-neutral-200">
               Use wall defense (+{{ wallDefenseBonus }}) • Lose all units if defeated
             </div>
           </button>
@@ -125,10 +129,10 @@ const winChance = computed(() => {
 
 const winChanceClass = computed(() => {
   const chance = winChance.value;
-  if (chance === 'High') return 'text-green-400';
-  if (chance === 'Medium') return 'text-yellow-400';
-  if (chance === 'Low' || chance === 'Very Low') return 'text-red-400';
-  return 'text-gray-400';
+  if (chance === 'High') return 'text-semantic-success-400';
+  if (chance === 'Medium') return 'text-semantic-warning-400';
+  if (chance === 'Low' || chance === 'Very Low') return 'text-semantic-danger-400';
+  return 'text-semantic-neutral-400';
 });
 
 function chooseBattle(location: 'countryside' | 'wall'): void {

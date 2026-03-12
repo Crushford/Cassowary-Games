@@ -1,34 +1,34 @@
 <template>
-  <div class="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8">
+  <div class="min-h-screen bg-semantic-neutral-950 text-semantic-neutral-100 p-4 md:p-8">
     <div class="max-w-7xl mx-auto space-y-6">
       <header class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Queens Diversity Lab</h1>
-          <p class="text-slate-300 mt-2">
+          <p class="text-semantic-neutral-300 mt-2">
             Internal tool for comparing two random puzzles and seeing exactly how the numeric
             diversity attributes differ.
           </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
-          <label class="text-sm text-slate-300" for="size-select">Size</label>
+          <label class="text-sm text-semantic-neutral-300" for="size-select">Size</label>
           <select
             id="size-select"
             v-model.number="selectedSize"
-            class="bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm"
+            class="bg-semantic-neutral-900 border border-semantic-neutral-700 rounded-md px-3 py-2 text-sm"
           >
             <option v-for="optionSize in sizes" :key="optionSize" :value="optionSize">
               {{ optionSize }}x{{ optionSize }}
             </option>
           </select>
 
-          <label class="inline-flex items-center gap-2 text-sm text-slate-300">
+          <label class="inline-flex items-center gap-2 text-sm text-semantic-neutral-300">
             <input v-model="originalsOnly" type="checkbox" class="accent-cyan-400" />
             Originals Only (`-0`)
           </label>
 
           <button
-            class="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-semibold"
+            class="px-4 py-2 rounded-md bg-semantic-info-600 hover:bg-semantic-info-500 text-white text-sm font-semibold"
             :disabled="loading"
             @click="loadPair"
           >
@@ -39,33 +39,37 @@
 
       <div
         v-if="errorMessage"
-        class="rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-3 text-red-200"
+        class="rounded-lg border border-edge-dangerSoft bg-feedback-dangerFaint px-4 py-3 text-semantic-danger-200"
       >
         {{ errorMessage }}
       </div>
 
       <section v-if="pair" class="space-y-4">
         <div class="grid gap-4 md:grid-cols-3">
-          <div class="rounded-lg border border-slate-800 bg-slate-900 p-4">
-            <p class="text-xs uppercase tracking-wide text-slate-400">Left Puzzle</p>
+          <div class="rounded-lg border border-semantic-neutral-800 bg-semantic-neutral-900 p-4">
+            <p class="text-xs uppercase tracking-wide text-semantic-neutral-400">Left Puzzle</p>
             <p class="font-semibold mt-1">{{ pair.left.puzzle.id }}</p>
           </div>
-          <div class="rounded-lg border border-cyan-400/30 bg-cyan-500/10 p-4 text-center">
-            <p class="text-xs uppercase tracking-wide text-cyan-200">Overall Distance</p>
-            <p class="text-3xl font-bold text-cyan-100 mt-1">
+          <div class="rounded-lg border border-edge-infoSoft bg-feedback-infoFaint p-4 text-center">
+            <p class="text-xs uppercase tracking-wide text-semantic-info-200">Overall Distance</p>
+            <p class="text-3xl font-bold text-semantic-info-100 mt-1">
               {{ formatNumber(pair.comparison.distance) }}
             </p>
-            <p class="text-xs text-cyan-100/80 mt-1">0 = very similar, 1 = very different</p>
+            <p class="text-xs text-ink-infoSoft mt-1">0 = very similar, 1 = very different</p>
           </div>
-          <div class="rounded-lg border border-slate-800 bg-slate-900 p-4 text-right">
-            <p class="text-xs uppercase tracking-wide text-slate-400">Right Puzzle</p>
+          <div
+            class="rounded-lg border border-semantic-neutral-800 bg-semantic-neutral-900 p-4 text-right"
+          >
+            <p class="text-xs uppercase tracking-wide text-semantic-neutral-400">Right Puzzle</p>
             <p class="font-semibold mt-1">{{ pair.right.puzzle.id }}</p>
           </div>
         </div>
 
         <div class="grid gap-4 lg:grid-cols-2">
-          <article class="rounded-xl border border-slate-800 bg-slate-900 p-4 space-y-3">
-            <h2 class="font-semibold text-slate-100">{{ pair.left.puzzle.id }}</h2>
+          <article
+            class="rounded-xl border border-semantic-neutral-800 bg-semantic-neutral-900 p-4 space-y-3"
+          >
+            <h2 class="font-semibold text-semantic-neutral-100">{{ pair.left.puzzle.id }}</h2>
             <PuzzleBoard
               :layout="pair.left.puzzle.layout"
               :queens="pair.left.puzzle.queens"
@@ -73,8 +77,10 @@
             />
           </article>
 
-          <article class="rounded-xl border border-slate-800 bg-slate-900 p-4 space-y-3">
-            <h2 class="font-semibold text-slate-100">{{ pair.right.puzzle.id }}</h2>
+          <article
+            class="rounded-xl border border-semantic-neutral-800 bg-semantic-neutral-900 p-4 space-y-3"
+          >
+            <h2 class="font-semibold text-semantic-neutral-100">{{ pair.right.puzzle.id }}</h2>
             <PuzzleBoard
               :layout="pair.right.puzzle.layout"
               :queens="pair.right.puzzle.queens"
@@ -83,9 +89,11 @@
           </article>
         </div>
 
-        <section class="rounded-xl border border-slate-800 bg-slate-900 p-4 md:p-6">
-          <h2 class="text-lg font-semibold text-slate-100">Attribute Comparison</h2>
-          <p class="text-sm text-slate-300 mt-1">
+        <section
+          class="rounded-xl border border-semantic-neutral-800 bg-semantic-neutral-900 p-4 md:p-6"
+        >
+          <h2 class="text-lg font-semibold text-semantic-neutral-100">Attribute Comparison</h2>
+          <p class="text-sm text-semantic-neutral-300 mt-1">
             Each attribute is normalized to 0..1. Weighted Difference controls how much that
             attribute contributes to the overall distance.
           </p>
@@ -93,30 +101,30 @@
           <div class="mt-4 overflow-x-auto">
             <table class="w-full text-sm border-collapse">
               <thead>
-                <tr class="text-left border-b border-slate-800">
-                  <th class="py-2 pr-4 text-slate-400 font-medium">Attribute</th>
-                  <th class="py-2 pr-4 text-slate-400 font-medium">Left</th>
-                  <th class="py-2 pr-4 text-slate-400 font-medium">Right</th>
-                  <th class="py-2 pr-4 text-slate-400 font-medium">Abs Diff</th>
-                  <th class="py-2 pr-4 text-slate-400 font-medium">Weight</th>
-                  <th class="py-2 text-slate-400 font-medium">Weighted Diff</th>
+                <tr class="text-left border-b border-semantic-neutral-800">
+                  <th class="py-2 pr-4 text-semantic-neutral-400 font-medium">Attribute</th>
+                  <th class="py-2 pr-4 text-semantic-neutral-400 font-medium">Left</th>
+                  <th class="py-2 pr-4 text-semantic-neutral-400 font-medium">Right</th>
+                  <th class="py-2 pr-4 text-semantic-neutral-400 font-medium">Abs Diff</th>
+                  <th class="py-2 pr-4 text-semantic-neutral-400 font-medium">Weight</th>
+                  <th class="py-2 text-semantic-neutral-400 font-medium">Weighted Diff</th>
                 </tr>
               </thead>
               <tbody>
                 <tr
                   v-for="row in sortedFeatureRows"
                   :key="row.key"
-                  class="align-top border-b border-slate-900"
+                  class="align-top border-b border-semantic-neutral-900"
                 >
                   <td class="py-3 pr-4">
-                    <div class="font-medium text-slate-100">{{ row.label }}</div>
-                    <div class="text-xs text-slate-400 mt-1">{{ row.meaning }}</div>
+                    <div class="font-medium text-semantic-neutral-100">{{ row.label }}</div>
+                    <div class="text-xs text-semantic-neutral-400 mt-1">{{ row.meaning }}</div>
                   </td>
                   <td class="py-3 pr-4">{{ formatNumber(row.left) }}</td>
                   <td class="py-3 pr-4">{{ formatNumber(row.right) }}</td>
                   <td class="py-3 pr-4">{{ formatNumber(row.absDiff) }}</td>
                   <td class="py-3 pr-4">{{ formatNumber(row.weight) }}</td>
-                  <td class="py-3 font-semibold text-cyan-200">
+                  <td class="py-3 font-semibold text-semantic-info-200">
                     {{ formatNumber(row.weightedDiff) }}
                   </td>
                 </tr>
@@ -281,7 +289,8 @@ const PuzzleBoard = defineComponent({
       h(
         'div',
         {
-          class: 'grid gap-[2px] bg-slate-950 border border-slate-800 rounded-md p-1',
+          class:
+            'grid gap-[2px] bg-semantic-neutral-950 border border-semantic-neutral-800 rounded-md p-1',
           style: { gridTemplateColumns: `repeat(${props.size}, minmax(0, 1fr))` },
         },
         props.layout.split('').map((symbol, index) => {
@@ -290,7 +299,7 @@ const PuzzleBoard = defineComponent({
             'div',
             {
               class:
-                'aspect-square relative rounded-[3px] flex items-center justify-center text-[10px] font-semibold text-slate-100',
+                'aspect-square relative rounded-[3px] flex items-center justify-center text-[10px] font-semibold text-semantic-neutral-100',
               style: { backgroundColor: getSymbolColor(symbol) },
               title: `Cell ${index} | Region ${symbol} | ${hasQueen ? 'Queen' : 'No queen'}`,
             },

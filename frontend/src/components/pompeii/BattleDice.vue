@@ -7,7 +7,7 @@
         getDiceClass(diceRoll.winner, 'player'),
       ]"
     >
-      <div class="text-sm text-gray-400 mb-1">Player</div>
+      <div class="text-sm text-semantic-neutral-400 mb-1">Player</div>
       <div :class="['text-2xl font-bold mb-2', getDieColorClass(diceRoll.playerDieSize)]">
         d{{ diceRoll.playerDieSize }}
       </div>
@@ -15,26 +15,31 @@
         v-if="!isRolling"
         :class="[
           'text-4xl font-bold',
-          diceRoll.winner === 'player' ? 'text-green-400' : 'text-white',
+          diceRoll.winner === 'player' ? 'text-semantic-success-400' : 'text-white',
         ]"
       >
         {{ diceRoll.playerBaseRoll }}
       </div>
-      <div v-else class="text-4xl font-bold text-gray-500 animate-pulse">?</div>
-      <div v-if="diceRoll.playerBonus > 0 && !isRolling" class="text-sm text-yellow-400 mt-1">
+      <div v-else class="text-4xl font-bold text-semantic-neutral-500 animate-pulse">?</div>
+      <div
+        v-if="diceRoll.playerBonus > 0 && !isRolling"
+        class="text-sm text-semantic-warning-400 mt-1"
+      >
         +{{ diceRoll.playerBonus }} wall
       </div>
       <div
         v-if="!isRolling"
         class="text-lg font-semibold mt-2"
-        :class="diceRoll.winner === 'player' ? 'text-green-400' : 'text-gray-400'"
+        :class="
+          diceRoll.winner === 'player' ? 'text-semantic-success-400' : 'text-semantic-neutral-400'
+        "
       >
         Total: {{ diceRoll.playerRoll }}
       </div>
     </div>
 
     <!-- VS -->
-    <div class="text-2xl font-bold text-gray-500">VS</div>
+    <div class="text-2xl font-bold text-semantic-neutral-500">VS</div>
 
     <!-- Enemy Dice -->
     <div
@@ -43,21 +48,26 @@
         getDiceClass(diceRoll.winner, 'enemy'),
       ]"
     >
-      <div class="text-sm text-gray-400 mb-1">Enemy</div>
+      <div class="text-sm text-semantic-neutral-400 mb-1">Enemy</div>
       <div :class="['text-2xl font-bold mb-2', getDieColorClass(diceRoll.enemyDieSize)]">
         d{{ diceRoll.enemyDieSize }}
       </div>
       <div
         v-if="!isRolling"
-        :class="['text-4xl font-bold', diceRoll.winner === 'enemy' ? 'text-red-400' : 'text-white']"
+        :class="[
+          'text-4xl font-bold',
+          diceRoll.winner === 'enemy' ? 'text-semantic-danger-400' : 'text-white',
+        ]"
       >
         {{ diceRoll.enemyRoll }}
       </div>
-      <div v-else class="text-4xl font-bold text-gray-500 animate-pulse">?</div>
+      <div v-else class="text-4xl font-bold text-semantic-neutral-500 animate-pulse">?</div>
       <div
         v-if="!isRolling"
         class="text-lg font-semibold mt-2"
-        :class="diceRoll.winner === 'enemy' ? 'text-red-400' : 'text-gray-400'"
+        :class="
+          diceRoll.winner === 'enemy' ? 'text-semantic-danger-400' : 'text-semantic-neutral-400'
+        "
       >
         Total: {{ diceRoll.enemyRoll }}
       </div>
@@ -76,26 +86,28 @@ const props = defineProps<{
 
 function getDiceClass(winner: 'player' | 'enemy' | 'tie', side: 'player' | 'enemy'): string {
   if (props.isRolling) {
-    return 'border-gray-600 bg-gray-800';
+    return 'border-semantic-neutral-600 bg-semantic-neutral-800';
   }
   if (winner === 'tie') {
-    return 'border-gray-500 bg-gray-800';
+    return 'border-semantic-neutral-500 bg-semantic-neutral-800';
   }
   if (winner === side) {
-    return side === 'player' ? 'border-green-500 bg-green-900/20' : 'border-red-500 bg-red-900/20';
+    return side === 'player'
+      ? 'border-semantic-success-500 bg-feedback-successSubtle'
+      : 'border-semantic-danger-500 bg-feedback-dangerSubtle';
   }
-  return 'border-gray-600 bg-gray-800';
+  return 'border-semantic-neutral-600 bg-semantic-neutral-800';
 }
 
 function getDieColorClass(dieSize: number): string {
   const colorMap: Record<number, string> = {
-    4: 'text-gray-400',
-    6: 'text-blue-400',
-    8: 'text-green-400',
-    10: 'text-purple-400',
-    12: 'text-yellow-400',
+    4: 'text-semantic-neutral-400',
+    6: 'text-semantic-info-400',
+    8: 'text-semantic-success-400',
+    10: 'text-semantic-info-400',
+    12: 'text-semantic-warning-400',
   };
-  return colorMap[dieSize] || 'text-gray-400';
+  return colorMap[dieSize] || 'text-semantic-neutral-400';
 }
 
 defineOptions({

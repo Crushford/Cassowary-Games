@@ -1,9 +1,9 @@
 <template>
   <div class="flex justify-between items-center px-4">
     <div class="flex items-center space-x-2">
-      <span class="text-amber-400">🍯</span>
+      <span class="text-semantic-warning-400">🍯</span>
       <span>{{ harvestStore.honeyPots }}</span>
-      <span v-if="harvestStore.isTrainingDay" class="text-green-400 text-sm ml-2">
+      <span v-if="harvestStore.isTrainingDay" class="text-semantic-success-400 text-sm ml-2">
         (Training)
       </span>
     </div>

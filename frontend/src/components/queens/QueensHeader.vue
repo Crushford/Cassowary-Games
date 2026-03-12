@@ -4,12 +4,14 @@
     <div class="flex items-center space-x-4">
       <div class="text-sm">
         <div v-if="isSinglePuzzleMode" class="font-semibold text-lg">
-          <router-link to="/" class="text-white hover:text-gray-300 cursor-pointer"
+          <router-link to="/" class="text-white hover:text-semantic-neutral-300 cursor-pointer"
             >Queens</router-link
           >
         </div>
         <div v-else class="font-semibold text-lg">Queens</div>
-        <div class="text-gray-400">{{ queensStore.gridSize }}x{{ queensStore.gridSize }}</div>
+        <div class="text-semantic-neutral-400">
+          {{ queensStore.gridSize }}x{{ queensStore.gridSize }}
+        </div>
       </div>
     </div>
 

@@ -4,35 +4,39 @@
       <h2 class="text-2xl font-semibold mb-4">Privacy Settings</h2>
 
       <div class="mb-6">
-        <p class="text-gray-300 mb-4">
+        <p class="text-semantic-neutral-300 mb-4">
           We use Google Analytics to understand how visitors use our site. This helps us improve the
           user experience by analyzing basic usage patterns like page views and session duration.
         </p>
 
-        <div class="bg-gray-800 p-4 rounded-lg mb-4">
+        <div class="bg-semantic-neutral-800 p-4 rounded-lg mb-4">
           <h3 class="font-semibold mb-2">Current Status:</h3>
-          <p v-if="hasAccepted" class="text-green-400">✓ Analytics tracking is enabled</p>
-          <p v-else-if="hasConsented" class="text-yellow-400">✗ Analytics tracking is disabled</p>
-          <p v-else class="text-gray-400">No preference set</p>
+          <p v-if="hasAccepted" class="text-semantic-success-400">
+            ✓ Analytics tracking is enabled
+          </p>
+          <p v-else-if="hasConsented" class="text-semantic-warning-400">
+            ✗ Analytics tracking is disabled
+          </p>
+          <p v-else class="text-semantic-neutral-400">No preference set</p>
         </div>
 
         <div class="space-y-3">
           <button
-            class="w-full px-6 py-3 bg-yellow-600 hover:bg-yellow-500 text-white font-semibold rounded-lg transition-colors"
+            class="w-full px-6 py-3 bg-semantic-warning-600 hover:bg-semantic-warning-500 text-white font-semibold rounded-lg transition-colors"
             @click="handleAccept"
           >
             Enable Analytics Tracking
           </button>
 
           <button
-            class="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+            class="w-full px-6 py-3 bg-semantic-neutral-700 hover:bg-semantic-neutral-600 text-white font-semibold rounded-lg transition-colors"
             @click="handleDecline"
           >
             Disable Analytics Tracking
           </button>
         </div>
 
-        <p class="text-sm text-gray-400 mt-4">
+        <p class="text-sm text-semantic-neutral-400 mt-4">
           Your preference is saved locally in your browser and will persist across visits.
         </p>
       </div>

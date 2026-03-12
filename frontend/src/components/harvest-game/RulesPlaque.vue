@@ -3,18 +3,18 @@
     <div
       role="region"
       aria-labelledby="rules-title"
-      class="w-full max-h-full bg-[#0f3b2e] border-[1.5px] border-[#d4af37] rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.35)] px-4 py-2 transition-all duration-120 ease-out transform scale-100 hover:scale-[1.02] motion-reduce:transition-none motion-reduce:hover:scale-100 overflow-y-auto"
+      class="w-full max-h-full bg-plaque-forest border-[1.5px] border-plaque-gold rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.35)] px-4 py-2 transition-all duration-120 ease-out transform scale-100 hover:scale-[1.02] motion-reduce:transition-none motion-reduce:hover:scale-100 overflow-y-auto"
     >
       <!-- Title row -->
       <div class="flex justify-between items-center mb-2">
         <h2
           id="rules-title"
-          class="text-[#f2f1ea] text-opacity-90 font-semibold tracking-wider text-shadow-[0_1px_0_rgba(0,0,0,0.35)]"
+          class="text-plaque-parchment text-opacity-90 font-semibold tracking-wider text-shadow-[0_1px_0_rgba(0,0,0,0.35)]"
         >
           The rules of this farm:
         </h2>
         <button
-          class="px-3 py-1 bg-[#d4af37] hover:bg-[#e6c766] text-[#131313] font-semibold rounded-full text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2 focus:ring-offset-[#0f3b2e]"
+          class="px-3 py-1 bg-plaque-gold hover:bg-plaque-goldLight text-plaque-ink font-semibold rounded-full text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-plaque-gold focus:ring-offset-2 focus:ring-offset-plaque-forest"
           aria-label="Open full rules"
           @click="globalStore.setShowRules(true)"
         >
@@ -25,28 +25,36 @@
 
       <!-- Rules list with inline icons -->
       <ul class="space-y-1 mb-2">
-        <li class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm">
+        <li
+          class="text-plaque-parchment text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm"
+        >
           There is only 1
           <span class="inline-flex items-center mx-1">
             <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-5 h-5" />
           </span>
           honeypot per column.
         </li>
-        <li class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm">
+        <li
+          class="text-plaque-parchment text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm"
+        >
           There is only 1
           <span class="inline-flex items-center mx-1">
             <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-5 h-5" />
           </span>
           honeypot per row.
         </li>
-        <li class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm">
+        <li
+          class="text-plaque-parchment text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm"
+        >
           There is only 1
           <span class="inline-flex items-center mx-1">
             <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-5 h-5" />
           </span>
           honeypot per color group.
         </li>
-        <li class="text-[#f2f1ea] text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm">
+        <li
+          class="text-plaque-parchment text-opacity-90 text-shadow-[0_1px_0_rgba(0,0,0,0.35)] text-sm"
+        >
           <span class="inline-flex items-center mx-1">
             <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-5 h-5" />
           </span>
@@ -58,18 +66,20 @@
       <div class="flex flex-row gap-2 justify-center">
         <!-- Loss capsule -->
         <div
-          class="flex items-center justify-center px-3 py-2 bg-[#4a1111] border border-[#a33] rounded-full"
+          class="flex items-center justify-center px-3 py-2 bg-plaque-maroon border border-semantic-danger-700 rounded-full"
         >
           <img src="/assets/card-backs/ant.png" alt="ant" class="w-8 h-8 mr-4" />
-          <span class="text-red-300 font-semibold">–{{ levelPayouts.ant }} gold</span>
+          <span class="text-semantic-danger-300 font-semibold">–{{ levelPayouts.ant }} gold</span>
         </div>
 
         <!-- Win capsule -->
         <div
-          class="flex items-center justify-center px-3 py-2 bg-[#144b1a] border border-[#2d8b3a] rounded-full"
+          class="flex items-center justify-center px-3 py-2 bg-plaque-forestDeep border border-plaque-forestBright rounded-full"
         >
           <img src="/assets/card-backs/honey.png" alt="honeypot" class="w-8 h-8 mr-4" />
-          <span class="text-green-300 font-semibold">+{{ levelPayouts.honeypot }} gold</span>
+          <span class="text-semantic-success-300 font-semibold"
+            >+{{ levelPayouts.honeypot }} gold</span
+          >
         </div>
       </div>
     </div>
