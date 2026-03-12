@@ -7,8 +7,8 @@
         class="px-4 py-3 rounded-lg transition-colors duration-150 text-sm font-medium"
         :class="
           store.selectedAction === 'forage'
-            ? 'bg-green-600 text-white'
-            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            ? 'bg-semantic-success-600 text-white'
+            : 'bg-semantic-neutral-700 text-semantic-neutral-300 hover:bg-semantic-neutral-600'
         "
         @click="selectAction('forage')"
       >
@@ -18,8 +18,8 @@
         class="px-4 py-3 rounded-lg transition-colors duration-150 text-sm font-medium"
         :class="
           store.selectedAction === 'nest'
-            ? 'bg-green-600 text-white'
-            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            ? 'bg-semantic-success-600 text-white'
+            : 'bg-semantic-neutral-700 text-semantic-neutral-300 hover:bg-semantic-neutral-600'
         "
         @click="selectAction('nest')"
       >
@@ -29,8 +29,8 @@
         class="px-4 py-3 rounded-lg transition-colors duration-150 text-sm font-medium"
         :class="
           store.selectedAction === 'hunt'
-            ? 'bg-green-600 text-white'
-            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            ? 'bg-semantic-success-600 text-white'
+            : 'bg-semantic-neutral-700 text-semantic-neutral-300 hover:bg-semantic-neutral-600'
         "
         @click="selectAction('hunt')"
       >

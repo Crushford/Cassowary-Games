@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-gray-700 rounded p-3">
+  <div class="bg-semantic-neutral-700 rounded p-3">
     <div class="flex items-center justify-between mb-2 gap-2 min-w-0">
       <div class="flex items-center gap-2 min-w-0 flex-1">
         <span class="text-white font-semibold truncate" :title="unit.type">{{ unit.type }}</span>
@@ -25,10 +25,10 @@
     <!-- Strength Bar -->
     <div class="mb-3">
       <div class="flex items-center gap-2 mb-1">
-        <span class="text-xs text-gray-400">Strength</span>
+        <span class="text-xs text-semantic-neutral-400">Strength</span>
         <span class="text-sm font-semibold"> {{ unit.strength }}/{{ unit.maxStrength }} </span>
       </div>
-      <div class="flex-1 bg-gray-600 rounded-full h-2">
+      <div class="flex-1 bg-semantic-neutral-600 rounded-full h-2">
         <div
           class="h-2 rounded-full transition-all"
           :class="getStrengthBarColor(unit.strength, unit.maxStrength)"
@@ -41,7 +41,7 @@
     <div class="flex gap-2">
       <button
         :disabled="!canUpgradeRank || gold < rankUpgradeCost || gameOver"
-        class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50 text-white text-xs font-semibold py-1.5 px-2 rounded transition-colors"
+        class="flex-1 bg-semantic-info-600 hover:bg-semantic-info-700 disabled:bg-semantic-neutral-600 disabled:cursor-not-allowed disabled:opacity-50 text-white text-xs font-semibold py-1.5 px-2 rounded transition-colors"
         @click="upgradeRank"
       >
         Rank ↑<br />
@@ -49,7 +49,7 @@
       </button>
       <button
         :disabled="gold < strengthUpgradeCost || gameOver"
-        class="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50 text-white text-xs font-semibold py-1.5 px-2 rounded transition-colors"
+        class="flex-1 bg-semantic-success-600 hover:bg-semantic-success-700 disabled:bg-semantic-neutral-600 disabled:cursor-not-allowed disabled:opacity-50 text-white text-xs font-semibold py-1.5 px-2 rounded transition-colors"
         @click="upgradeStrength"
       >
         Strength ↑<br />
@@ -89,32 +89,32 @@ function getDieSize(rank: number): number {
 
 function getRankBadgeClass(rank: number): string {
   const classMap: Record<number, string> = {
-    1: 'bg-gray-500 text-white',
-    2: 'bg-blue-500 text-white',
-    3: 'bg-green-500 text-white',
-    4: 'bg-purple-500 text-white',
-    5: 'bg-yellow-500 text-black',
+    1: 'bg-semantic-neutral-500 text-white',
+    2: 'bg-semantic-info-500 text-white',
+    3: 'bg-semantic-success-500 text-white',
+    4: 'bg-semantic-info-500 text-white',
+    5: 'bg-semantic-warning-500 text-black',
   };
-  return classMap[rank] || 'bg-gray-500 text-white';
+  return classMap[rank] || 'bg-semantic-neutral-500 text-white';
 }
 
 function getDieBadgeClass(rank: number): string {
   const dieSize = getDieSize(rank);
   const classMap: Record<number, string> = {
-    4: 'bg-gray-600 text-gray-200',
-    6: 'bg-blue-600 text-blue-200',
-    8: 'bg-green-600 text-green-200',
-    10: 'bg-purple-600 text-purple-200',
-    12: 'bg-yellow-600 text-yellow-200',
+    4: 'bg-semantic-neutral-600 text-semantic-neutral-200',
+    6: 'bg-semantic-info-600 text-semantic-info-200',
+    8: 'bg-semantic-success-600 text-semantic-success-200',
+    10: 'bg-semantic-info-600 text-semantic-info-200',
+    12: 'bg-semantic-warning-600 text-semantic-warning-200',
   };
-  return classMap[dieSize] || 'bg-gray-600 text-gray-200';
+  return classMap[dieSize] || 'bg-semantic-neutral-600 text-semantic-neutral-200';
 }
 
 function getStrengthBarColor(strength: number, maxStrength: number): string {
   const percentage = (strength / maxStrength) * 100;
-  if (percentage > 60) return 'bg-green-500';
-  if (percentage > 30) return 'bg-yellow-500';
-  return 'bg-red-500';
+  if (percentage > 60) return 'bg-semantic-success-500';
+  if (percentage > 30) return 'bg-semantic-warning-500';
+  return 'bg-semantic-danger-500';
 }
 
 function upgradeRank(): void {

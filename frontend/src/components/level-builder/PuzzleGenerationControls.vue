@@ -1,5 +1,5 @@
 <template>
-  <aside class="bg-slate-800 p-4 rounded-lg flex flex-col gap-4">
+  <aside class="bg-semantic-neutral-800 p-4 rounded-lg flex flex-col gap-4">
     <h2 class="text-2xl font-semibold text-white">Puzzle Generation Controls</h2>
 
     <!-- Grid Size Control -->
@@ -11,7 +11,7 @@
         min="4"
         max="8"
         :disabled="hasCompletedGame"
-        class="w-16 p-2 border border-slate-600 rounded-lg bg-slate-700 text-white"
+        class="w-16 p-2 border border-semantic-neutral-600 rounded-lg bg-semantic-neutral-700 text-white"
         @change="handleGridSizeChange"
       />
     </div>
@@ -19,7 +19,7 @@
     <!-- Main Run All Steps Button -->
     <div class="flex flex-col gap-2">
       <BaseButton
-        class="bg-indigo-600 hover:bg-indigo-500 text-lg font-medium"
+        class="bg-semantic-info-600 hover:bg-semantic-info-500 text-lg font-medium"
         @click="
           () => {
             levelBuilderStore.placeQueensAndAssignColors();
@@ -32,21 +32,21 @@
       <BaseButton
         :disabled="!hasAnyColors"
         disabled-title="Assign colors first"
-        class="bg-blue-600 hover:bg-blue-500 text-lg font-medium"
+        class="bg-semantic-info-600 hover:bg-semantic-info-500 text-lg font-medium"
         @click="handleExpandRandomColors"
       >
         🔄 Expand Random Colors safely until board is full
       </BaseButton>
 
       <BaseButton
-        class="bg-green-600 hover:bg-green-500 text-lg font-medium"
+        class="bg-semantic-success-600 hover:bg-semantic-success-500 text-lg font-medium"
         @click="handleGenerateWithRetry"
       >
         🔁 Generate & Expand with Retry
       </BaseButton>
 
       <BaseButton
-        class="bg-pink-600 hover:bg-pink-500 text-lg font-medium"
+        class="bg-semantic-danger-600 hover:bg-semantic-danger-500 text-lg font-medium"
         @click="levelBuilderStore.experimentCreateValidBoard()"
       >
         Experiment: Create Valid Board
@@ -57,19 +57,22 @@
     <Accordion title="Step-by-Step Controls" :default-open="true">
       <!-- Step 1: Reset Board -->
       <div class="flex flex-col gap-2">
-        <span class="text-sm text-slate-400">Step 0: Reset Board</span>
-        <BaseButton class="bg-red-950 hover:bg-red-900" @click="levelBuilderStore.initializeGrid()">
+        <span class="text-sm text-semantic-neutral-400">Step 0: Reset Board</span>
+        <BaseButton
+          class="bg-semantic-danger-950 hover:bg-semantic-danger-900"
+          @click="levelBuilderStore.initializeGrid()"
+        >
           Reset Grid to Initial State
         </BaseButton>
       </div>
 
       <!-- Step 2: Place Queens -->
       <div class="flex flex-col gap-2">
-        <span class="text-sm text-slate-400">Step 1: Place Queens</span>
+        <span class="text-sm text-semantic-neutral-400">Step 1: Place Queens</span>
 
         <BaseButton
           disabled-title="Board is full"
-          class="bg-blue-950 hover:bg-blue-900 text-sm"
+          class="bg-semantic-info-950 hover:bg-semantic-info-900 text-sm"
           @click="levelBuilderStore.placeAllQueens()"
         >
           Place All Queens
@@ -78,10 +81,10 @@
 
       <!-- Step 3: Color Each Queen -->
       <div class="flex flex-col gap-2">
-        <span class="text-sm text-slate-400">Step 2: Color Each Queen</span>
+        <span class="text-sm text-semantic-neutral-400">Step 2: Color Each Queen</span>
         <BaseButton
           disabled-title="Place queens first"
-          class="bg-purple-950 hover:bg-purple-900"
+          class="bg-semantic-info-950 hover:bg-semantic-info-900"
           @click="levelBuilderStore.assignInitialColorsToQueens()"
         >
           Assign Initial Colors to Queens
@@ -90,11 +93,11 @@
 
       <!-- Step 4: Expand Color Groups -->
       <div class="flex flex-col gap-2">
-        <span class="text-sm text-slate-400">Step 3: Expand Color Groups</span>
+        <span class="text-sm text-semantic-neutral-400">Step 3: Expand Color Groups</span>
         <BaseButton
           :disabled="!hasAnyColors"
           disabled-title="Assign colors first"
-          class="bg-teal-950 hover:bg-teal-900"
+          class="bg-semantic-success-950 hover:bg-semantic-success-900"
           @click="levelBuilderStore.expandColorGroups()"
         >
           Expand Color Groups
@@ -103,11 +106,11 @@
 
       <!-- Step 5: Color One Per Row -->
       <div class="flex flex-col gap-2">
-        <span class="text-sm text-slate-400">Step 4: Color One Square Per Row</span>
+        <span class="text-sm text-semantic-neutral-400">Step 4: Color One Square Per Row</span>
         <BaseButton
           :disabled="!hasAnyColors"
           disabled-title="Assign colors first"
-          class="bg-emerald-950 hover:bg-emerald-900"
+          class="bg-semantic-success-950 hover:bg-semantic-success-900"
           @click="levelBuilderStore.addColorOnePerRow()"
         >
           Color One Square Per Row
@@ -116,11 +119,11 @@
 
       <!-- Step 6: Fill Remaining -->
       <div class="flex flex-col gap-2">
-        <span class="text-sm text-slate-400">Step 5: Fill Remaining</span>
+        <span class="text-sm text-semantic-neutral-400">Step 5: Fill Remaining</span>
         <BaseButton
           :disabled="!hasAnyColors"
           disabled-title="Assign colors first"
-          class="bg-cyan-950 hover:bg-cyan-900"
+          class="bg-semantic-info-950 hover:bg-semantic-info-900"
           @click="levelBuilderStore.fillRemainingSingleSquares()"
         >
           Fill Remaining Squares

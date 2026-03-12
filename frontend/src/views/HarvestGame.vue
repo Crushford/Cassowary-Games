@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden',
+      'w-full max-w-[480px] mx-auto bg-semantic-neutral-800 text-white flex flex-col overflow-hidden',
       isGameOnly ? 'h-auto' : 'h-dvh',
     ]"
   >
@@ -25,7 +25,7 @@
     <!-- Tool Selector -->
     <ToolSelector
       :is-game-only="isGameOnly"
-      class="basis-[10%] flex-none border-t border-gray-700"
+      class="basis-[10%] flex-none border-t border-semantic-neutral-700"
     />
 
     <!-- Modals -->

@@ -1,58 +1,68 @@
 <template>
-  <div class="h-svh w-full max-w-[980px] mx-auto bg-gray-900 text-white p-4 overflow-auto">
+  <div
+    class="h-svh w-full max-w-[980px] mx-auto bg-semantic-neutral-900 text-white p-4 overflow-auto"
+  >
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-bold text-emerald-400">Pattern Card Designer</h1>
-      <router-link to="/queens" class="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-sm">
+      <h1 class="text-2xl font-bold text-semantic-success-400">Pattern Card Designer</h1>
+      <router-link
+        to="/queens"
+        class="px-3 py-1 rounded bg-semantic-neutral-700 hover:bg-semantic-neutral-600 text-sm"
+      >
         Back
       </router-link>
     </div>
 
-    <p class="text-sm text-gray-300 mb-4">
+    <p class="text-sm text-semantic-neutral-300 mb-4">
       Build pattern cards by painting
-      <span class="text-emerald-400 font-semibold">active (green)</span>,
-      <span class="text-gray-300 font-semibold">other (grey)</span>, and
-      <span class="text-yellow-300 font-semibold">flag outputs</span>. Default size is 5x5.
+      <span class="text-semantic-success-400 font-semibold">active (green)</span>,
+      <span class="text-semantic-neutral-300 font-semibold">other (grey)</span>, and
+      <span class="text-semantic-warning-300 font-semibold">flag outputs</span>. Default size is
+      5x5.
     </p>
 
     <div class="grid md:grid-cols-2 gap-4">
-      <div class="bg-gray-800 rounded-lg p-4 space-y-4">
+      <div class="bg-semantic-neutral-800 rounded-lg p-4 space-y-4">
         <div class="grid grid-cols-2 gap-2">
           <label class="text-sm">
-            <div class="text-gray-300 mb-1">ID</div>
+            <div class="text-semantic-neutral-300 mb-1">ID</div>
             <input
               v-model="id"
-              class="w-full px-2 py-1 rounded bg-gray-700 border border-gray-600"
+              class="w-full px-2 py-1 rounded bg-semantic-neutral-700 border border-semantic-neutral-600"
             />
           </label>
           <label class="text-sm">
-            <div class="text-gray-300 mb-1">Cost</div>
+            <div class="text-semantic-neutral-300 mb-1">Cost</div>
             <input
               v-model.number="cost"
               type="number"
               min="0"
-              class="w-full px-2 py-1 rounded bg-gray-700 border border-gray-600"
+              class="w-full px-2 py-1 rounded bg-semantic-neutral-700 border border-semantic-neutral-600"
             />
           </label>
           <label class="text-sm">
-            <div class="text-gray-300 mb-1">Size</div>
+            <div class="text-semantic-neutral-300 mb-1">Size</div>
             <input
               v-model.number="size"
               type="number"
               min="3"
               max="9"
-              class="w-full px-2 py-1 rounded bg-gray-700 border border-gray-600"
+              class="w-full px-2 py-1 rounded bg-semantic-neutral-700 border border-semantic-neutral-600"
             />
           </label>
         </div>
 
         <div>
-          <div class="text-sm text-gray-300 mb-2">Tool</div>
+          <div class="text-sm text-semantic-neutral-300 mb-2">Tool</div>
           <div class="flex gap-2">
             <button
               v-for="tool in tools"
               :key="tool.id"
               class="px-3 py-1 rounded text-sm font-semibold"
-              :class="selectedTool === tool.id ? tool.activeClass : 'bg-gray-700 hover:bg-gray-600'"
+              :class="
+                selectedTool === tool.id
+                  ? tool.activeClass
+                  : 'bg-semantic-neutral-700 hover:bg-semantic-neutral-600'
+              "
               @click="selectedTool = tool.id"
             >
               {{ tool.label }}
@@ -61,12 +71,12 @@
         </div>
 
         <div class="space-y-2">
-          <div class="text-sm text-gray-300">Grid</div>
+          <div class="text-sm text-semantic-neutral-300">Grid</div>
           <div class="inline-grid gap-1" :style="gridStyle">
             <button
               v-for="cell in gridCells"
               :key="cell.key"
-              class="w-8 h-8 rounded border border-gray-500 flex items-center justify-center text-xs"
+              class="w-8 h-8 rounded border border-semantic-neutral-500 flex items-center justify-center text-xs"
               :class="cell.cellClass"
               @click="applyTool(cell.row, cell.col)"
             >
@@ -77,34 +87,37 @@
 
         <div class="flex gap-2">
           <button
-            class="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-sm"
+            class="px-3 py-1 rounded bg-semantic-neutral-700 hover:bg-semantic-neutral-600 text-sm"
             @click="clearFlags"
           >
             Clear Flags
           </button>
           <button
-            class="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-sm"
+            class="px-3 py-1 rounded bg-semantic-neutral-700 hover:bg-semantic-neutral-600 text-sm"
             @click="clearActive"
           >
             Clear Active
           </button>
-          <button class="px-3 py-1 rounded bg-red-700 hover:bg-red-600 text-sm" @click="resetAll">
+          <button
+            class="px-3 py-1 rounded bg-semantic-danger-700 hover:bg-semantic-danger-600 text-sm"
+            @click="resetAll"
+          >
             Reset
           </button>
         </div>
       </div>
 
-      <div class="bg-gray-800 rounded-lg p-4">
+      <div class="bg-semantic-neutral-800 rounded-lg p-4">
         <div class="flex items-center justify-between mb-2">
-          <div class="text-sm text-gray-300">Generated Code</div>
+          <div class="text-sm text-semantic-neutral-300">Generated Code</div>
           <button
-            class="px-3 py-1 rounded bg-emerald-700 hover:bg-emerald-600 text-sm"
+            class="px-3 py-1 rounded bg-semantic-success-700 hover:bg-semantic-success-600 text-sm"
             @click="copyCode"
           >
             Copy
           </button>
         </div>
-        <pre class="text-xs bg-gray-900 p-3 rounded overflow-auto max-h-[70svh]">{{
+        <pre class="text-xs bg-semantic-neutral-900 p-3 rounded overflow-auto max-h-[70svh]">{{
           generatedCode
         }}</pre>
       </div>
@@ -126,9 +139,9 @@ const activeCells = ref(new Set<string>());
 const flagCells = ref(new Set<string>());
 
 const tools: Array<{ id: DesignerTool; label: string; activeClass: string }> = [
-  { id: 'active', label: 'Active (Green)', activeClass: 'bg-emerald-700' },
-  { id: 'other', label: 'Other (Grey)', activeClass: 'bg-gray-500' },
-  { id: 'flag', label: 'Flag Output', activeClass: 'bg-yellow-700' },
+  { id: 'active', label: 'Active (Green)', activeClass: 'bg-semantic-success-700' },
+  { id: 'other', label: 'Other (Grey)', activeClass: 'bg-semantic-neutral-500' },
+  { id: 'flag', label: 'Flag Output', activeClass: 'bg-semantic-warning-700' },
 ];
 
 function toKey(row: number, col: number): string {
@@ -211,7 +224,7 @@ const gridCells = computed(() => {
       const key = toKey(row, col);
       const isActive = activeCells.value.has(key);
       const hasFlag = flagCells.value.has(key);
-      const cellClass = isActive ? 'bg-emerald-600' : 'bg-gray-600';
+      const cellClass = isActive ? 'bg-semantic-success-600' : 'bg-semantic-neutral-600';
 
       cells.push({ key, row, col, hasFlag, cellClass });
     }

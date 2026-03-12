@@ -11,16 +11,16 @@
 
     <!-- Auto Test mode: show auto test marks -->
     <template v-else-if="props.mode === 'autoTest'">
-      <span v-if="autoTestMark === 'flag'" class="text-yellow-400">🚧</span>
+      <span v-if="autoTestMark === 'flag'" class="text-semantic-warning-400">🚧</span>
       <span v-else-if="autoTestMark === 'queen'" class="text-white">🍯</span>
-      <span v-else-if="autoTestMark === 'invalid'" class="text-red-500">🐜</span>
+      <span v-else-if="autoTestMark === 'invalid'" class="text-semantic-danger-500">🐜</span>
     </template>
 
     <!-- Player mode: show player marks (flags, queens, invalid) -->
     <template v-else>
-      <span v-if="playerMark === 'flag'" class="text-yellow-400">🚧</span>
+      <span v-if="playerMark === 'flag'" class="text-semantic-warning-400">🚧</span>
       <span v-else-if="playerMark === 'queen'" class="text-white">🍯</span>
-      <span v-else-if="playerMark === 'invalid'" class="text-red-500">🐜</span>
+      <span v-else-if="playerMark === 'invalid'" class="text-semantic-danger-500">🐜</span>
     </template>
   </button>
 </template>

@@ -7,7 +7,8 @@
       backgroundColorClass,
       hoverClass,
       {
-        'ring-4 ring-amber-500 ring-offset-2 ring-offset-slate-900 animate-pulse': isTutorialTarget,
+        'ring-4 ring-semantic-warning-500 ring-offset-2 ring-offset-semantic-neutral-900 animate-pulse':
+          isTutorialTarget,
         'auto-flag-tint-blocked': isAutoFlagAnimating && autoFlagAnimationSource === 'blocked',
         'auto-flag-tint-pattern': isAutoFlagAnimating && autoFlagAnimationSource === 'pattern',
       },
@@ -48,7 +49,7 @@
     </div>
 
     <!-- Border overlay -->
-    <div class="absolute inset-0 pointer-events-none z-20 border border-slate-400/70" />
+    <div class="absolute inset-0 pointer-events-none z-20 border border-edge-neutralSoft" />
   </button>
 </template>
 
@@ -140,7 +141,7 @@ const backgroundColorClass = computed(() => {
   if (color && DARK_PASTEL_COLORS[color]) {
     return DARK_PASTEL_COLORS[color].bg;
   }
-  return 'bg-gray-700';
+  return 'bg-semantic-neutral-700';
 });
 
 // Remove hover class - no hover effect

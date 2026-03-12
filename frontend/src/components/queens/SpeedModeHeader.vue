@@ -1,21 +1,25 @@
 <template>
   <GameModeHeader color="yellow">
     <template #label>
-      <span class="text-yellow-400 font-semibold">⚡ Speed Mode</span>
+      <span class="text-semantic-warning-400 font-semibold">⚡ Speed Mode</span>
     </template>
     <template #stats>
-      <span class="text-yellow-200 text-sm"> Completed: {{ speedModeStore.completedCount }} </span>
-      <span class="text-yellow-300 font-bold">{{ speedModeStore.getFormattedTimeRemaining }}</span>
+      <span class="text-semantic-warning-200 text-sm">
+        Completed: {{ speedModeStore.completedCount }}
+      </span>
+      <span class="text-semantic-warning-300 font-bold">{{
+        speedModeStore.getFormattedTimeRemaining
+      }}</span>
     </template>
     <template #actions>
       <button
-        class="flex-1 p-1 bg-red-600 hover:bg-red-500 text-white font-semibold text-sm rounded-lg transition-colors duration-200"
+        class="flex-1 p-1 bg-semantic-danger-600 hover:bg-semantic-danger-500 text-white font-semibold text-sm rounded-lg transition-colors duration-200"
         @click="handleEndRound"
       >
         End Round
       </button>
       <button
-        class="flex-1 p-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm rounded-lg transition-colors duration-200"
+        class="flex-1 p-1 bg-semantic-info-600 hover:bg-semantic-info-500 text-white font-semibold text-sm rounded-lg transition-colors duration-200"
         @click="handleRestart"
       >
         Restart

@@ -24,7 +24,7 @@
 
           <!-- Honey Pot Counter -->
           <div class="text-center">
-            <p class="text-sm text-gray-600">
+            <p class="text-sm text-semantic-neutral-600">
               {{ plantStore.honeyPotsPlaced }} / {{ plantStore.gridSize }} placed
             </p>
           </div>

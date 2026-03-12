@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-slate-800 p-4 rounded-lg shadow-lg">
+  <div class="bg-semantic-neutral-800 p-4 rounded-lg shadow-lg">
     <div class="flex justify-between items-center mb-4">
       <h3 class="text-lg font-semibold text-white">Color Palette</h3>
 
@@ -8,8 +8,8 @@
         :class="[
           'px-4 py-2 rounded font-medium transition',
           levelBuilderStore.colorToolActive
-            ? 'bg-green-600 text-white'
-            : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
+            ? 'bg-semantic-success-600 text-white'
+            : 'bg-semantic-neutral-700 text-semantic-neutral-300 hover:bg-semantic-neutral-600',
         ]"
         @click="levelBuilderStore.toggleColorToolActive()"
       >
@@ -25,8 +25,8 @@
         :class="[
           'w-10 h-10 rounded-full border-2 flex items-center justify-center transition',
           levelBuilderStore.colorToolSelectedColor === color
-            ? 'ring-4 ring-yellow-400 border-yellow-400'
-            : 'border-slate-500',
+            ? 'ring-4 ring-semantic-warning-400 border-semantic-warning-400'
+            : 'border-semantic-neutral-500',
           isColorUsed(color) ? 'opacity-100' : 'opacity-50',
         ]"
         :style="{ backgroundColor: color }"
@@ -44,7 +44,7 @@
         :style="{ color: levelBuilderStore.colorToolSelectedColor }"
         >{{ levelBuilderStore.colorToolSelectedColor }}</span
       >
-      <span v-else class="text-slate-400">None Selected</span>
+      <span v-else class="text-semantic-neutral-400">None Selected</span>
     </div>
 
     <!-- Color Groups -->
@@ -54,7 +54,7 @@
         <div
           v-for="(positions, color) in colorGroups"
           :key="String(color)"
-          class="flex items-center justify-between bg-slate-700 p-2 rounded"
+          class="flex items-center justify-between bg-semantic-neutral-700 p-2 rounded"
         >
           <div class="flex items-center gap-2">
             <div class="w-4 h-4 rounded-full" :style="{ backgroundColor: color }"></div>
@@ -62,13 +62,13 @@
           </div>
           <div class="flex items-center gap-2">
             <button
-              class="text-blue-400 hover:text-blue-300 text-sm"
+              class="text-semantic-info-400 hover:text-semantic-info-300 text-sm"
               @click="levelBuilderStore.expandColorGroupSafely(color)"
             >
               Expand
             </button>
             <button
-              class="text-red-400 hover:text-red-300 text-sm"
+              class="text-semantic-danger-400 hover:text-semantic-danger-300 text-sm"
               @click="handleDeleteColorGroup(color)"
             >
               Delete

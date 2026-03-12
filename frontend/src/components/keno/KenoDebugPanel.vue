@@ -1,6 +1,6 @@
 <template>
   <!-- KenoDebugPanel -->
-  <div class="h-svh bg-gray-900 text-white p-4 overflow-y-auto">
+  <div class="h-svh bg-semantic-neutral-900 text-white p-4 overflow-y-auto">
     <h2 class="text-xl font-bold mb-4">Debug Panel</h2>
     <div class="space-y-4">
       <!-- Puzzle Size Selector -->
@@ -15,7 +15,9 @@
         <button
           class="w-full px-4 py-2 rounded transition-colors duration-150"
           :class="
-            store.showBoard ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-600'
+            store.showBoard
+              ? 'bg-semantic-success-600 hover:bg-semantic-success-700'
+              : 'bg-semantic-neutral-700 hover:bg-semantic-neutral-600'
           "
           @click="store.toggleShowBoard()"
         >
@@ -24,7 +26,7 @@
       </div>
 
       <!-- Game Info -->
-      <div class="pt-4 border-t border-gray-700">
+      <div class="pt-4 border-t border-semantic-neutral-700">
         <h3 class="text-lg font-semibold mb-2">Game Info</h3>
         <div class="space-y-1 text-sm">
           <div>Grid Size: {{ store.gridSize }}×{{ store.gridSize }}</div>

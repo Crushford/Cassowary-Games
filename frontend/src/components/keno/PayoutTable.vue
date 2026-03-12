@@ -16,7 +16,7 @@
         <tbody>
           <tr v-for="r in rows" :key="r.k">
             <td class="text-right py-1">{{ r.k }}</td>
-            <td class="text-right py-1 font-semibold text-yellow-400">
+            <td class="text-right py-1 font-semibold text-semantic-warning-400">
               {{ formatNumber(r.fairPayoutTo1) }}
             </td>
           </tr>
@@ -41,7 +41,7 @@
           <tbody>
             <tr v-for="r in leftColumnRows" :key="r.k">
               <td class="text-right py-1">{{ r.k }}</td>
-              <td class="text-right py-1 font-semibold text-yellow-400">
+              <td class="text-right py-1 font-semibold text-semantic-warning-400">
                 {{ formatNumber(r.fairPayoutTo1) }}
               </td>
             </tr>
@@ -64,7 +64,7 @@
           <tbody>
             <tr v-for="r in rightColumnRows" :key="r.k">
               <td class="text-right py-1">{{ r.k }}</td>
-              <td class="text-right py-1 font-semibold text-yellow-400">
+              <td class="text-right py-1 font-semibold text-semantic-warning-400">
                 {{ formatNumber(r.fairPayoutTo1) }}
               </td>
             </tr>
@@ -78,7 +78,7 @@
       </div>
     </div>
   </div>
-  <div v-else class="text-sm text-gray-500" style="min-height: 4.5rem">
+  <div v-else class="text-sm text-semantic-neutral-500" style="min-height: 4.5rem">
     Select at least one square to see payouts.
   </div>
 </template>

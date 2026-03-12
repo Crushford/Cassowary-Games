@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen w-full bg-gray-900 text-white p-6">
+  <div class="min-h-screen w-full bg-semantic-neutral-900 text-white p-6">
     <div class="max-w-6xl mx-auto">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6 gap-4 flex-wrap">
@@ -7,13 +7,15 @@
           <h1 class="text-2xl sm:text-3xl font-bold mb-2">Pompeii</h1>
           <div class="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm flex-wrap">
             <div class="whitespace-nowrap">
-              <span class="text-gray-400">Year</span>
+              <span class="text-semantic-neutral-400">Year</span>
               <span class="ml-2 font-bold text-base sm:text-lg">{{ turnCounter }}</span>
             </div>
-            <span class="text-gray-600 hidden sm:inline">|</span>
+            <span class="text-semantic-neutral-600 hidden sm:inline">|</span>
             <div class="whitespace-nowrap">
-              <span class="text-gray-400">Gold</span>
-              <span class="ml-2 font-bold text-base sm:text-lg text-yellow-400">🪙 {{ gold }}</span>
+              <span class="text-semantic-neutral-400">Gold</span>
+              <span class="ml-2 font-bold text-base sm:text-lg text-semantic-warning-400"
+                >🪙 {{ gold }}</span
+              >
             </div>
           </div>
         </div>
@@ -21,7 +23,7 @@
           <DivineFavourWidget />
           <button
             :disabled="gameOver || currentBattle?.isActive"
-            class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-semibold py-2 px-4 sm:px-6 rounded transition-colors whitespace-nowrap text-sm sm:text-base"
+            class="bg-semantic-info-600 hover:bg-semantic-info-700 disabled:bg-semantic-neutral-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-semibold py-2 px-4 sm:px-6 rounded transition-colors whitespace-nowrap text-sm sm:text-base"
             @click="endTurn"
           >
             End Turn

@@ -1,14 +1,14 @@
 <template>
   <!-- KenoGame -->
   <div
-    class="h-svh w-full w-[480px] bg-gray-800 text-white flex flex-col overflow-hidden"
+    class="h-svh w-full w-[480px] bg-semantic-neutral-800 text-white flex flex-col overflow-hidden"
     :class="{ shake: kenoStore.shouldShake }"
   >
     <!-- Game Info Display -->
     <div class="flex-none p-4">
       <div class="max-w-full">
         <KenoHeader />
-        <div v-if="kenoStore.gameOver" class="text-sm text-yellow-400 text-center mt-2">
+        <div v-if="kenoStore.gameOver" class="text-sm text-semantic-warning-400 text-center mt-2">
           Game Over - All cards revealed!
         </div>
       </div>
@@ -34,8 +34,8 @@
           class="px-6 py-3 text-white font-bold text-lg rounded-lg transition-colors duration-200 w-full max-w-xs"
           :class="
             kenoStore.canEndTurn
-              ? 'bg-green-600 hover:bg-green-700 cursor-pointer'
-              : 'bg-gray-600 cursor-not-allowed opacity-50'
+              ? 'bg-semantic-success-600 hover:bg-semantic-success-700 cursor-pointer'
+              : 'bg-semantic-neutral-600 cursor-not-allowed opacity-50'
           "
           :disabled="!kenoStore.canEndTurn"
           @click="handleEndTurn"
@@ -52,7 +52,7 @@
     <Transition name="toast">
       <div
         v-if="kenoStore.showMaxReachedToast"
-        class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-yellow-600 text-white px-6 py-3 rounded-lg shadow-lg max-w-sm text-center"
+        class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-semantic-warning-600 text-white px-6 py-3 rounded-lg shadow-lg max-w-sm text-center"
       >
         <p class="font-semibold">Maximum selections reached!</p>
         <p class="text-sm mt-1">Click "End Turn" when ready.</p>

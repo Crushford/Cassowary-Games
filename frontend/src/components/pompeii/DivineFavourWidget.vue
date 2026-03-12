@@ -1,15 +1,15 @@
 <template>
-  <div class="bg-gray-800/50 rounded-lg p-2 border border-gray-600">
+  <div class="bg-surface-muted rounded-lg p-2 border border-semantic-neutral-600">
     <div class="flex items-center gap-2 min-w-0">
-      <span class="text-xs text-gray-400 whitespace-nowrap">Divine Favour:</span>
+      <span class="text-xs text-semantic-neutral-400 whitespace-nowrap">Divine Favour:</span>
       <button
-        class="flex items-center gap-1.5 text-sm hover:bg-gray-700 rounded px-2 py-1 transition-colors min-w-0 flex-shrink"
+        class="flex items-center gap-1.5 text-sm hover:bg-semantic-neutral-700 rounded px-2 py-1 transition-colors min-w-0 flex-shrink"
         @click="showModal = true"
       >
         <span class="text-xs whitespace-nowrap">🛡️ {{ wallTokens }}</span>
         <span class="text-xs whitespace-nowrap">🏛️ {{ cityTokens }}</span>
         <span class="text-xs whitespace-nowrap">🌾 {{ countrysideTokens }}</span>
-        <span class="text-xs text-gray-500 whitespace-nowrap"
+        <span class="text-xs text-semantic-neutral-500 whitespace-nowrap"
           >({{ usedTokens }}/{{ totalTokens }})</span
         >
       </button>
@@ -19,7 +19,7 @@
   <Modal :is-visible="showModal" @close="showModal = false">
     <div class="text-white">
       <h2 class="text-xl font-bold mb-4">Divine Favour</h2>
-      <div class="text-xs text-gray-400 mb-4">
+      <div class="text-xs text-semantic-neutral-400 mb-4">
         Choose how the gods smile on Pompeii this turn ({{ usedTokens }}/{{ totalTokens }} tokens)
       </div>
       <div class="space-y-4">
@@ -27,7 +27,7 @@
         <div>
           <div class="flex items-center justify-between mb-2">
             <span class="text-sm font-semibold text-white">🛡️ Wall</span>
-            <span v-if="wallTokens > 0" class="text-xs text-yellow-400">
+            <span v-if="wallTokens > 0" class="text-xs text-semantic-warning-400">
               x{{ (1 + 0.25 * wallTokens).toFixed(2) }}
             </span>
           </div>
@@ -38,8 +38,8 @@
               :class="[
                 'flex-1 py-2 rounded transition-colors text-sm font-semibold',
                 wallTokens >= i
-                  ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
-                  : 'bg-gray-700 hover:bg-gray-600 text-gray-300',
+                  ? 'bg-semantic-warning-600 hover:bg-semantic-warning-700 text-white'
+                  : 'bg-semantic-neutral-700 hover:bg-semantic-neutral-600 text-semantic-neutral-300',
               ]"
               :disabled="usedTokens >= totalTokens && wallTokens < i - 1"
               @click="setTokens('wall', i - 1)"
@@ -53,7 +53,7 @@
         <div>
           <div class="flex items-center justify-between mb-2">
             <span class="text-sm font-semibold text-white">🏛️ City</span>
-            <span v-if="cityTokens > 0" class="text-xs text-green-400">
+            <span v-if="cityTokens > 0" class="text-xs text-semantic-success-400">
               x{{ (1 + 0.25 * cityTokens).toFixed(2) }}
             </span>
           </div>
@@ -64,8 +64,8 @@
               :class="[
                 'flex-1 py-2 rounded transition-colors text-sm font-semibold',
                 cityTokens >= i
-                  ? 'bg-green-600 hover:bg-green-700 text-white'
-                  : 'bg-gray-700 hover:bg-gray-600 text-gray-300',
+                  ? 'bg-semantic-success-600 hover:bg-semantic-success-700 text-white'
+                  : 'bg-semantic-neutral-700 hover:bg-semantic-neutral-600 text-semantic-neutral-300',
               ]"
               :disabled="usedTokens >= totalTokens && cityTokens < i - 1"
               @click="setTokens('city', i - 1)"
@@ -79,7 +79,7 @@
         <div>
           <div class="flex items-center justify-between mb-2">
             <span class="text-sm font-semibold text-white">🌾 Countryside</span>
-            <span v-if="countrysideTokens > 0" class="text-xs text-green-400">
+            <span v-if="countrysideTokens > 0" class="text-xs text-semantic-success-400">
               x{{ (1 + 0.25 * countrysideTokens).toFixed(2) }}
             </span>
           </div>
@@ -90,8 +90,8 @@
               :class="[
                 'flex-1 py-2 rounded transition-colors text-sm font-semibold',
                 countrysideTokens >= i
-                  ? 'bg-green-600 hover:bg-green-700 text-white'
-                  : 'bg-gray-700 hover:bg-gray-600 text-gray-300',
+                  ? 'bg-semantic-success-600 hover:bg-semantic-success-700 text-white'
+                  : 'bg-semantic-neutral-700 hover:bg-semantic-neutral-600 text-semantic-neutral-300',
               ]"
               :disabled="usedTokens >= totalTokens && countrysideTokens < i - 1"
               @click="setTokens('countryside', i - 1)"

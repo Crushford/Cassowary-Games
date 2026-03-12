@@ -5,7 +5,7 @@
     :class="[
       props.embedded
         ? 'bg-transparent border-0 p-0'
-        : 'rounded-xl border border-slate-700 bg-slate-900/90',
+        : 'rounded-xl border border-semantic-neutral-700 bg-surface-overlay',
       isDisabled ? 'opacity-50 grayscale pointer-events-none z-30' : 'z-50',
       {
         'z-50': queensStore.isTutorialMode && queensStore.highlightToolSelector,
@@ -16,8 +16,8 @@
       class="flex items-center gap-1 rounded-lg p-1"
       :class="
         props.embedded
-          ? 'border border-slate-600/80 bg-slate-900/60'
-          : 'border border-slate-700 bg-slate-900/90'
+          ? 'border border-edge-neutralStrong bg-surface-overlaySoft'
+          : 'border border-semantic-neutral-700 bg-surface-overlay'
       "
     >
       <Button
@@ -28,10 +28,10 @@
         class="h-12 rounded-md border"
         :class="[
           queensStore.uiState.placementMode === mode.value
-            ? '!border-blue-600 !bg-blue-700 !text-sky-100'
-            : '!border-slate-700 !bg-slate-800 !text-slate-300 hover:!border-slate-600 hover:!bg-slate-700',
+            ? '!border-semantic-info-600 !bg-semantic-info-700 !text-semantic-info-100'
+            : '!border-semantic-neutral-700 !bg-semantic-neutral-800 !text-semantic-neutral-300 hover:!border-semantic-neutral-600 hover:!bg-semantic-neutral-700',
           {
-            'ring-2 ring-amber-500 ring-offset-1 ring-offset-slate-900 animate-pulse':
+            'ring-2 ring-semantic-warning-500 ring-offset-1 ring-offset-semantic-neutral-900 animate-pulse':
               isTutorialTarget(mode.value),
           },
         ]"
@@ -51,13 +51,13 @@
       </Button>
     </div>
 
-    <div v-if="props.showAutoFlagToggle" class="h-10 border-l border-slate-500"></div>
+    <div v-if="props.showAutoFlagToggle" class="h-10 border-l border-semantic-neutral-500"></div>
 
     <div
       v-if="props.showAutoFlagToggle"
-      class="flex items-center gap-2 rounded-lg border border-slate-700/80 bg-slate-900 px-2 py-1"
+      class="flex items-center gap-2 rounded-lg border border-edge-neutralMuted bg-semantic-neutral-900 px-2 py-1"
     >
-      <span class="text-sm font-semibold text-slate-300">auto-flag</span>
+      <span class="text-sm font-semibold text-semantic-neutral-300">auto-flag</span>
       <ToggleSwitch
         id="auto-flagging-toggle"
         v-model="autoFlagging"

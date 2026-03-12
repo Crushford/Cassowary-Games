@@ -1,6 +1,6 @@
 <template>
   <!-- KenoGameWrapper -->
-  <div class="h-svh w-full flex bg-gray-900 overflow-hidden">
+  <div class="h-svh w-full flex bg-semantic-neutral-900 overflow-hidden">
     <!-- Keno Game on the left -->
     <div class="flex-shrink-0">
       <KenoGame />

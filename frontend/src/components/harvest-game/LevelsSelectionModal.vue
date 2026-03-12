@@ -1,15 +1,15 @@
 <template>
   <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
     <div
-      class="bg-gradient-to-br from-amber-900 via-amber-800 to-yellow-700 rounded-lg p-6 w-full h-full max-w-4xl h-[100dvh] overflow-y-auto shadow-2xl border-2 border-amber-600"
+      class="bg-gradient-to-br from-semantic-warning-900 via-amber-800 to-semantic-warning-700 rounded-lg p-6 w-full h-full max-w-4xl h-[100dvh] overflow-y-auto shadow-2xl border-2 border-semantic-warning-600"
     >
       <!-- Header -->
       <div class="text-center mb-6">
-        <h1 class="text-4xl font-bold text-yellow-100 mb-2">Honey Pot Ant Farming</h1>
-        <p class="text-yellow-200">Select what size of farm you want to work on</p>
-        <div class="mt-4 text-yellow-100">
+        <h1 class="text-4xl font-bold text-semantic-warning-100 mb-2">Honey Pot Ant Farming</h1>
+        <p class="text-semantic-warning-200">Select what size of farm you want to work on</p>
+        <div class="mt-4 text-semantic-warning-100">
           <span class="text-lg">Your Gold: </span>
-          <span class="text-2xl font-bold text-yellow-300"
+          <span class="text-2xl font-bold text-semantic-warning-300"
             >{{ globalStore.player.totalChips }} gold</span
           >
         </div>
@@ -17,14 +17,14 @@
 
       <!-- Loading state -->
       <div v-if="!levelStore.loaded" class="text-center py-12">
-        <div class="text-yellow-200 text-xl">Loading farms...</div>
+        <div class="text-semantic-warning-200 text-xl">Loading farms...</div>
       </div>
 
       <!-- Farms grid -->
       <div v-else>
         <!-- No farms available message -->
         <div v-if="levels.length === 0" class="text-center py-12">
-          <div class="text-yellow-200 text-xl mb-4">No farms available</div>
+          <div class="text-semantic-warning-200 text-xl mb-4">No farms available</div>
         </div>
 
         <!-- Farms grid -->
@@ -32,30 +32,34 @@
           <div
             v-for="level in levels"
             :key="level.boardSize"
-            class="bg-gradient-to-br from-amber-800 to-amber-700 rounded-lg p-4 shadow-lg border-2 border-amber-600 hover:border-amber-400 transition-all duration-200"
+            class="bg-gradient-to-br from-semantic-warning-800 to-semantic-warning-700 rounded-lg p-4 shadow-lg border-2 border-semantic-warning-600 hover:border-semantic-warning-400 transition-all duration-200"
           >
             <div class="text-center">
               <div class="flex items-center justify-center gap-2 mb-2">
-                <h3 class="text-xl font-bold text-yellow-100">{{ level.boardSize }} Farm</h3>
+                <h3 class="text-xl font-bold text-semantic-warning-100">
+                  {{ level.boardSize }} Farm
+                </h3>
               </div>
-              <div class="space-y-2 text-yellow-200 text-sm">
+              <div class="space-y-2 text-semantic-warning-200 text-sm">
                 <div class="flex justify-between">
                   <span>Farm Size:</span>
-                  <span class="font-semibold text-yellow-300">{{ level.boardSize }}</span>
+                  <span class="font-semibold text-semantic-warning-300">{{ level.boardSize }}</span>
                 </div>
                 <div class="flex justify-between">
                   <span>Multiplier:</span>
-                  <span class="font-semibold text-purple-300">{{ level.payoutMultiplier }}x</span>
+                  <span class="font-semibold text-semantic-info-300"
+                    >{{ level.payoutMultiplier }}x</span
+                  >
                 </div>
                 <div class="flex justify-between">
                   <span>Honeypot Reward:</span>
-                  <span class="font-semibold text-green-300"
+                  <span class="font-semibold text-semantic-success-300"
                     >+{{ getLevelPayouts(level).honeypot }} gold</span
                   >
                 </div>
                 <div class="flex justify-between">
                   <span>Ant Penalty:</span>
-                  <span class="font-semibold text-red-300"
+                  <span class="font-semibold text-semantic-danger-300"
                     >-{{ getLevelPayouts(level).ant }} gold</span
                   >
                 </div>
@@ -64,7 +68,7 @@
               <div class="mt-4">
                 <button
                   v-if="isUnlocked(level)"
-                  class="w-full py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-200 bg-gradient-to-r from-yellow-500 to-yellow-400 text-amber-900 hover:from-yellow-400 hover:to-yellow-300 shadow-lg hover:shadow-xl"
+                  class="w-full py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-200 bg-gradient-to-r from-semantic-warning-500 to-semantic-warning-400 text-semantic-warning-900 hover:from-semantic-warning-400 hover:to-semantic-warning-300 shadow-lg hover:shadow-xl"
                   @click="playLevel(level.boardSize)"
                 >
                   {{ getLevelButtonText(level) }}
@@ -75,8 +79,8 @@
                   class="w-full py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   :class="
                     globalStore.player.totalChips >= level.purchaseCost
-                      ? 'bg-gradient-to-r from-green-500 to-green-400 text-white hover:from-green-400 hover:to-green-300 shadow-lg hover:shadow-xl'
-                      : 'bg-gray-600 text-gray-300'
+                      ? 'bg-gradient-to-r from-semantic-success-500 to-semantic-success-400 text-white hover:from-semantic-success-400 hover:to-semantic-success-300 shadow-lg hover:shadow-xl'
+                      : 'bg-semantic-neutral-600 text-semantic-neutral-300'
                   "
                   @click="purchaseLevel(level)"
                 >
@@ -90,9 +94,11 @@
                   isUnlocked(level) &&
                   globalStore.sizeProgress[level.boardSize]?.currentPuzzleIdOrName
                 "
-                class="mt-3 text-xs text-yellow-200"
+                class="mt-3 text-xs text-semantic-warning-200"
               >
-                <div class="text-center text-green-300 font-semibold">Game in Progress</div>
+                <div class="text-center text-semantic-success-300 font-semibold">
+                  Game in Progress
+                </div>
               </div>
             </div>
           </div>

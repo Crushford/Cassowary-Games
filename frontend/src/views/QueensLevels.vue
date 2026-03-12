@@ -1,20 +1,23 @@
 <template>
   <div
-    class="h-svh w-full max-w-[480px] mx-auto bg-gray-800 text-white flex flex-col overflow-hidden"
+    class="h-svh w-full max-w-[480px] mx-auto bg-semantic-neutral-800 text-white flex flex-col overflow-hidden"
   >
     <!-- Header -->
     <div class="flex-none p-6 text-center">
-      <h1 class="text-4xl font-bold mb-2 text-pink-400">Queens Game</h1>
-      <p class="text-gray-300">Choose a game mode</p>
+      <h1 class="text-4xl font-bold mb-2 text-semantic-danger-400">Queens Game</h1>
+      <p class="text-semantic-neutral-300">Choose a game mode</p>
     </div>
 
     <!-- Loading state -->
     <div v-if="queensStore.isLoadingPuzzles" class="flex-1 flex items-center justify-center">
       <div class="text-center">
-        <div class="text-yellow-200 text-xl mb-4">{{ queensStore.loadingMessage }}</div>
-        <div v-if="queensStore.loadingProgress > 0" class="w-64 bg-gray-700 rounded-full h-2">
+        <div class="text-semantic-warning-200 text-xl mb-4">{{ queensStore.loadingMessage }}</div>
+        <div
+          v-if="queensStore.loadingProgress > 0"
+          class="w-64 bg-semantic-neutral-700 rounded-full h-2"
+        >
           <div
-            class="bg-yellow-500 h-2 rounded-full transition-all duration-300"
+            class="bg-semantic-warning-500 h-2 rounded-full transition-all duration-300"
             :style="{ width: `${queensStore.loadingProgress}%` }"
           ></div>
         </div>
@@ -26,7 +29,7 @@
       <div class="w-full space-y-4">
         <!-- Single Puzzle Mode Button -->
         <button
-          class="w-full py-4 px-6 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          class="w-full py-4 px-6 bg-semantic-info-600 hover:bg-semantic-info-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
           @click="queensStore.openSinglePuzzleModeModal()"
         >
           <div class="text-xl font-bold mb-1">Single Puzzle Mode</div>
@@ -35,7 +38,7 @@
 
         <!-- Speed Mode Button -->
         <button
-          class="w-full py-4 px-6 bg-yellow-600 hover:bg-yellow-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          class="w-full py-4 px-6 bg-semantic-warning-600 hover:bg-semantic-warning-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
           @click="speedModeStore.openModal()"
         >
           <div class="text-xl font-bold mb-1">Speed Mode ⚡</div>
@@ -44,7 +47,7 @@
 
         <!-- Rotate Mode Button -->
         <button
-          class="w-full py-4 px-6 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          class="w-full py-4 px-6 bg-semantic-success-600 hover:bg-semantic-success-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
           @click="showRotateModeModal = true"
         >
           <div class="text-xl font-bold mb-1">Rotate Mode 🔄</div>
@@ -53,7 +56,7 @@
 
         <!-- Incremental Mode Button -->
         <button
-          class="w-full py-4 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          class="w-full py-4 px-6 bg-semantic-success-600 hover:bg-semantic-success-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
           @click="goToIncrementalMode"
         >
           <div class="text-xl font-bold mb-1">Incremental Queens 🧪</div>
@@ -62,7 +65,7 @@
 
         <!-- Records Button -->
         <button
-          class="w-full py-4 px-6 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          class="w-full py-4 px-6 bg-semantic-info-600 hover:bg-semantic-info-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
           @click="queensStore.openRecordsModal()"
         >
           <div class="text-xl font-bold mb-1">Records 🏆</div>

@@ -131,45 +131,45 @@ function getWrapperBorderClasses() {
   // Check right neighbor
   if (props.colIndex < maxCol) {
     if (grid[props.rowIndex][props.colIndex + 1].groupColor !== gridCell.value.groupColor) {
-      classes.push('border-r-2 border-r-blue-700');
+      classes.push('border-r-2 border-r-semantic-info-700');
     } else {
-      classes.push('border-r-2 border-r-green-500/10');
+      classes.push('border-r-2 border-r-edge-successFaint');
     }
   } else {
-    classes.push('border-r-2 border-r-gray-500');
+    classes.push('border-r-2 border-r-semantic-neutral-500');
   }
 
   // Check left neighbor
   if (props.colIndex > 0) {
     if (grid[props.rowIndex][props.colIndex - 1].groupColor !== gridCell.value.groupColor) {
-      classes.push('border-l-2 border-l-blue-700');
+      classes.push('border-l-2 border-l-semantic-info-700');
     } else {
-      classes.push('border-l-2 border-l-green-500/10');
+      classes.push('border-l-2 border-l-edge-successFaint');
     }
   } else {
-    classes.push('border-l-2 border-l-gray-500');
+    classes.push('border-l-2 border-l-semantic-neutral-500');
   }
 
   // Check bottom neighbor
   if (props.rowIndex < maxRow) {
     if (grid[props.rowIndex + 1][props.colIndex].groupColor !== gridCell.value.groupColor) {
-      classes.push('border-b-2 border-b-blue-700');
+      classes.push('border-b-2 border-b-semantic-info-700');
     } else {
-      classes.push('border-b-2 border-b-green-500/10');
+      classes.push('border-b-2 border-b-edge-successFaint');
     }
   } else {
-    classes.push('border-b-2 border-b-gray-500');
+    classes.push('border-b-2 border-b-semantic-neutral-500');
   }
 
   // Check top neighbor
   if (props.rowIndex > 0) {
     if (grid[props.rowIndex - 1][props.colIndex].groupColor !== gridCell.value.groupColor) {
-      classes.push('border-t-2 border-t-blue-700');
+      classes.push('border-t-2 border-t-semantic-info-700');
     } else {
-      classes.push('border-t-2 border-t-green-500/10');
+      classes.push('border-t-2 border-t-edge-successFaint');
     }
   } else {
-    classes.push('border-t-2 border-t-gray-500');
+    classes.push('border-t-2 border-t-semantic-neutral-500');
   }
 
   return classes;

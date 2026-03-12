@@ -3,7 +3,7 @@
     <div
       v-for="cell in previewCells"
       :key="cell.key"
-      class="w-7 h-7 rounded border border-gray-500 flex items-center justify-center text-xs"
+      class="w-7 h-7 rounded border border-semantic-neutral-500 flex items-center justify-center text-xs"
       :class="cell.cellClass"
     >
       <span v-if="cell.hasFlag">🚧</span>
@@ -43,9 +43,9 @@ const previewCells = computed(() => {
       const flag = hasFlag(row, col);
 
       // Non-green cells are "other" by default.
-      let cellClass = 'bg-gray-600';
+      let cellClass = 'bg-semantic-neutral-600';
       if (isActive) {
-        cellClass = 'bg-emerald-600';
+        cellClass = 'bg-semantic-success-600';
       }
 
       cells.push({

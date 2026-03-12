@@ -1,6 +1,6 @@
 <template>
   <div
-    class="px-4 py-2 bg-gray-900 border-b border-gray-700 relative flex items-center justify-between"
+    class="px-4 py-2 bg-semantic-neutral-900 border-b border-semantic-neutral-700 relative flex items-center justify-between"
   >
     <!-- Gold Display -->
     <div class="flex-1">
@@ -10,7 +10,7 @@
     <!-- Back to Tables Button (right side) -->
     <button
       v-if="roundStore.boardSize"
-      class="bg-gradient-to-r from-amber-600 to-amber-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-amber-500 hover:to-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl z-10"
+      class="bg-gradient-to-r from-semantic-warning-600 to-semantic-warning-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-semantic-warning-500 hover:to-semantic-warning-400 transition-all duration-200 shadow-lg hover:shadow-xl z-10"
       @click="handleCashOut"
     >
       Back to Tables

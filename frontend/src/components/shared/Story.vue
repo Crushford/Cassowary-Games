@@ -1,6 +1,6 @@
 <template>
   <div
-    class="h-[33vh] w-full border-b border-gray-700 flex-shrink-0 flex flex-col overflow-hidden container-[inline-size]"
+    class="h-[33vh] w-full border-b border-semantic-neutral-700 flex-shrink-0 flex flex-col overflow-hidden container-[inline-size]"
     style="background-color: #3a4a1b"
   >
     <!-- Grid area: fills most of the container, leaving space for dialogue -->

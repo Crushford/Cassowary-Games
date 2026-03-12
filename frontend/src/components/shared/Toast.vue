@@ -6,7 +6,10 @@
       :role="role"
       :aria-live="ariaLive"
       class="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 text-white px-6 py-4 rounded-lg shadow-lg max-w-md text-center w-[calc(100%-2rem)]"
-      :class="[{ shake: shouldShake }, variant === 'error' ? 'bg-red-600' : 'bg-blue-600']"
+      :class="[
+        { shake: shouldShake },
+        variant === 'error' ? 'bg-semantic-danger-600' : 'bg-semantic-info-600',
+      ]"
     >
       <p class="font-semibold text-lg">{{ message }}</p>
     </div>

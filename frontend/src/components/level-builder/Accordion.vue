@@ -1,5 +1,5 @@
 <template>
-  <div class="mb-4 border border-slate-600 rounded-lg bg-slate-700">
+  <div class="mb-4 border border-semantic-neutral-600 rounded-lg bg-semantic-neutral-700">
     <button
       class="w-full p-3 flex justify-between items-center transition-colors hover:bg-opacity-5 hover:bg-white"
       :aria-expanded="isOpen"
@@ -9,7 +9,7 @@
         <div class="flex justify-between items-center w-full">
           <h3 class="m-0 text-base font-semibold text-white">{{ title }}</h3>
           <span
-            class="text-slate-400 transition-transform duration-300"
+            class="text-semantic-neutral-400 transition-transform duration-300"
             :class="{ 'rotate-180': isOpen }"
           >
             <svg

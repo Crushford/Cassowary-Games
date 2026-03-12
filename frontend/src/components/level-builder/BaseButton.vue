@@ -1,8 +1,9 @@
 <template>
   <button
-    class="inline-flex items-center justify-center px-4 py-2 bg-blue-500 text-white border-none rounded-lg font-medium cursor-pointer transition-all hover:bg-blue-600 hover:-translate-y-0.5 active:translate-y-0"
+    class="inline-flex items-center justify-center px-4 py-2 bg-semantic-info-500 text-white border-none rounded-lg font-medium cursor-pointer transition-all hover:bg-semantic-info-600 hover:-translate-y-0.5 active:translate-y-0"
     :class="{
-      'bg-slate-500 opacity-70 cursor-not-allowed hover:bg-slate-500 hover:translate-y-0': disabled,
+      'bg-semantic-neutral-500 opacity-70 cursor-not-allowed hover:bg-semantic-neutral-500 hover:translate-y-0':
+        disabled,
     }"
     :disabled="disabled"
     :title="disabled && disabledTitle ? disabledTitle : ''"

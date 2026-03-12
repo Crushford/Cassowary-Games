@@ -6,6 +6,7 @@ import Levels from '../views/Levels.vue';
 import KenoGameWrapper from '../views/KenoGameWrapper.vue';
 import QueensGame from '../views/QueensGame.vue';
 import QueensDiversityLab from '../views/QueensDiversityLab.vue';
+import IncrementalQueensEntry from '../views/IncrementalQueensEntry.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -54,7 +55,7 @@ const router = createRouter({
     {
       path: '/queens/incremental',
       name: 'queens-incremental',
-      component: () => import('../views/IncrementalQueensGame.vue'),
+      component: IncrementalQueensEntry,
     },
     {
       path: '/queens/:puzzleId',

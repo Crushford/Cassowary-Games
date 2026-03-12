@@ -1,7 +1,9 @@
 <template>
   <div class="flex items-center space-x-2">
-    <span class="text-yellow-400 text-2xl">💰</span>
-    <span class="text-yellow-400 text-xl font-bold">{{ globalStore.player.totalChips }}</span>
+    <span class="text-semantic-warning-400 text-2xl">💰</span>
+    <span class="text-semantic-warning-400 text-xl font-bold">{{
+      globalStore.player.totalChips
+    }}</span>
   </div>
 </template>
 

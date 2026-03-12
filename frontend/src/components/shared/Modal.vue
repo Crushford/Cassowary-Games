@@ -6,7 +6,7 @@
   >
     <div
       ref="dialogRef"
-      class="bg-gray-800 p-8 rounded-lg shadow-xl transform transition-all duration-500 scale-100 max-w-md w-full mx-4 max-h-[calc(100vh-2rem)] overflow-y-auto"
+      class="bg-semantic-neutral-800 p-8 rounded-lg shadow-xl transform transition-all duration-500 scale-100 max-w-md w-full mx-4 max-h-[calc(100vh-2rem)] overflow-y-auto"
       :role="role"
       aria-modal="true"
       :aria-labelledby="ariaLabelledby"
@@ -33,6 +33,9 @@ const props = withDefaults(
   }>(),
   {
     role: 'dialog',
+    ariaLabelledby: undefined,
+    ariaDescribedby: undefined,
+    ariaLabel: undefined,
   }
 );
 

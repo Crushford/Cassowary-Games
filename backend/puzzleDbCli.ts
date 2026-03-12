@@ -7,7 +7,7 @@
  * Usage: yarn puzzle-db <command> [args]
  */
 
-import { PuzzleDatabase } from './puzzleDatabase.ts';
+import { PuzzleDatabase } from './puzzleDatabase';
 
 function showHelp(): void {
   console.log(`

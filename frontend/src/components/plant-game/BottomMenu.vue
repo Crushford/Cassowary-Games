@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'border-t border-gray-700 flex items-center justify-center gap-3 px-2 py-1 relative',
+      'border-t border-semantic-neutral-700 flex items-center justify-center gap-3 px-2 py-1 relative',
       $attrs.class,
     ]"
   >
@@ -10,8 +10,9 @@
       :disabled="!plantStore.canUndo"
       class="px-3 py-2 text-white rounded-md font-medium transition-colors text-sm"
       :class="{
-        'bg-yellow-500 hover:bg-yellow-600': plantStore.canUndo,
-        'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60': !plantStore.canUndo,
+        'bg-semantic-warning-500 hover:bg-semantic-warning-600': plantStore.canUndo,
+        'bg-semantic-neutral-400 text-semantic-neutral-200 cursor-not-allowed opacity-60':
+          !plantStore.canUndo,
       }"
       @click="plantStore.undo()"
     >
@@ -20,7 +21,7 @@
 
     <!-- Reset Button -->
     <button
-      class="px-3 py-2 bg-red-500 text-white rounded-md font-medium hover:bg-red-600 transition-colors text-sm"
+      class="px-3 py-2 bg-semantic-danger-500 text-white rounded-md font-medium hover:bg-semantic-danger-600 transition-colors text-sm"
       @click="plantStore.resetCurrentStep()"
     >
       Reset
@@ -32,8 +33,9 @@
       :disabled="!plantStore.canProceedToNextStep"
       class="px-4 py-2 text-white rounded-md font-medium transition-colors text-sm"
       :class="{
-        'bg-blue-500 hover:bg-blue-600': plantStore.canProceedToNextStep,
-        'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60': !plantStore.canProceedToNextStep,
+        'bg-semantic-info-500 hover:bg-semantic-info-600': plantStore.canProceedToNextStep,
+        'bg-semantic-neutral-400 text-semantic-neutral-200 cursor-not-allowed opacity-60':
+          !plantStore.canProceedToNextStep,
       }"
       @click="plantStore.nextStep()"
     >
@@ -43,7 +45,7 @@
     <!-- Validate Puzzle Button -->
     <button
       v-if="plantStore.isColorCardStep"
-      class="px-4 py-2 bg-green-500 text-white rounded-md font-medium hover:bg-green-600 transition-colors text-sm"
+      class="px-4 py-2 bg-semantic-success-500 text-white rounded-md font-medium hover:bg-semantic-success-600 transition-colors text-sm"
       @click="plantStore.openValidationModal()"
     >
       Validate

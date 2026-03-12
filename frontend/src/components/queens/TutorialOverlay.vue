@@ -19,7 +19,7 @@
     >
       <!-- Glow effect around the highlighted element -->
       <div
-        class="absolute inset-0 rounded-lg ring-4 ring-yellow-400 ring-offset-4 ring-offset-black animate-pulse"
+        class="absolute inset-0 rounded-lg ring-4 ring-semantic-warning-400 ring-offset-4 ring-offset-black animate-pulse"
         style="box-shadow: 0 0 30px rgba(250, 204, 21, 0.8)"
       />
     </div>
@@ -30,7 +30,7 @@
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
 
 interface Props {
-  isVisible: boolean;
+  isVisible?: boolean;
   highlightToolSelector?: boolean;
   highlightElementId?: string;
 }

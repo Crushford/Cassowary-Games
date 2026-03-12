@@ -1,7 +1,7 @@
 <template>
   <!-- QueensGame -->
   <div
-    class="w-full max-w-[480px] mx-auto bg-slate-950 text-slate-100 bg-[radial-gradient(120%_120%_at_50%_-15%,var(--tw-gradient-from)_0%,var(--tw-gradient-to)_55%)] from-queens-gradientStart to-queens-gradientEnd flex flex-col overflow-hidden h-dvh"
+    class="w-full max-w-[480px] mx-auto bg-semantic-neutral-950 text-semantic-neutral-100 bg-[radial-gradient(120%_120%_at_50%_-15%,var(--tw-gradient-from)_0%,var(--tw-gradient-to)_55%)] from-queens-gradientStart to-queens-gradientEnd flex flex-col overflow-hidden h-dvh"
   >
     <!-- Puzzle Completion Modal -->
     <QueensCompletionModal v-if="!queensStore.isSpeedMode" :is-visible="queensStore.isComplete" />
@@ -42,7 +42,10 @@
     <div class="flex-none p-2">
       <div class="max-w-full">
         <QueensGameHeader />
-        <div v-if="queensStore.isComplete" class="text-sm text-green-400 text-center mt-2">
+        <div
+          v-if="queensStore.isComplete"
+          class="text-sm text-semantic-success-400 text-center mt-2"
+        >
           Puzzle Complete!
         </div>
         <div
@@ -50,7 +53,7 @@
             queensStore.queenPositions.length === queensStore.gridSize &&
             !queensStore.isValidPuzzleState.isValid
           "
-          class="text-sm text-red-400 text-center mt-2"
+          class="text-sm text-semantic-danger-400 text-center mt-2"
         >
           {{ queensStore.isValidPuzzleState.errorMessage }}
         </div>
@@ -80,13 +83,13 @@
 
       <!-- Action Buttons -->
       <div
-        class="rounded-2xl border border-slate-700 bg-slate-900/90 bg-[linear-gradient(180deg,rgba(21,28,40,0.95)_0%,rgba(14,20,32,0.95)_100%)] p-2 flex gap-2 justify-center"
+        class="rounded-2xl border border-semantic-neutral-700 bg-surface-overlay bg-[linear-gradient(180deg,rgba(21,28,40,0.95)_0%,rgba(14,20,32,0.95)_100%)] p-2 flex gap-2 justify-center"
       >
         <!-- Undo Button -->
         <Button
           label="Undo"
           unstyled
-          class="h-9 rounded-xl border !min-w-0 px-2.5 !py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-amber-700 bg-amber-800 text-amber-100 enabled:hover:bg-amber-700 enabled:hover:border-amber-600"
+          class="h-9 rounded-xl border !min-w-0 px-2.5 !py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-semantic-warning-700 bg-semantic-warning-800 text-semantic-warning-100 enabled:hover:bg-semantic-warning-700 enabled:hover:border-semantic-warning-600"
           :disabled="queensStore.moveHistory.length === 0"
           aria-label="Undo last move"
           @click="handleUndo"
@@ -96,7 +99,7 @@
         <Button
           label="Clear"
           unstyled
-          class="h-9 rounded-xl border !min-w-0 px-2.5 !py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-red-800 bg-red-900 text-red-100 enabled:hover:bg-red-800 enabled:hover:border-red-700"
+          class="h-9 rounded-xl border !min-w-0 px-2.5 !py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-semantic-danger-800 bg-semantic-danger-900 text-semantic-danger-100 enabled:hover:bg-semantic-danger-800 enabled:hover:border-semantic-danger-700"
           aria-label="Clear all marks from the board"
           @click="handleClear"
         />
@@ -104,7 +107,7 @@
         <!-- New Puzzle Button -->
         <Button
           label="Main Menu"
-          class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-slate-700 bg-slate-800 text-slate-200 enabled:hover:bg-slate-700 enabled:hover:border-slate-600"
+          class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-200 enabled:hover:bg-semantic-neutral-700 enabled:hover:border-semantic-neutral-600"
           @click="handleNewPuzzle"
         />
       </div>

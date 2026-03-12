@@ -3,7 +3,7 @@
     <div class="relative w-full h-full mx-auto flex items-center justify-center">
       <!-- Close Button -->
       <button
-        class="absolute -top-8 -right-8 z-10 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-600 hover:text-gray-800 rounded-full p-2 transition-all shadow-lg"
+        class="absolute -top-8 -right-8 z-10 bg-white bg-opacity-90 hover:bg-opacity-100 text-semantic-neutral-600 hover:text-semantic-neutral-800 rounded-full p-2 transition-all shadow-lg"
         @click="closeModal"
       >
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,14 +20,14 @@
       <div v-if="!isSaveMode" class="w-full max-w-md">
         <div class="text-center mb-4">
           <h2 class="text-xl font-bold text-white mb-2">Validate Your Puzzle</h2>
-          <p class="text-gray-300 text-sm">Play through your puzzle to test it</p>
+          <p class="text-semantic-neutral-300 text-sm">Play through your puzzle to test it</p>
         </div>
         <HarvestGame :is-game-only="true" :puzzle-data="currentPuzzleData" />
 
         <!-- Save Button (only show when running locally and game is complete) -->
         <div v-if="isRunningLocally && harvestStore.isComplete" class="mt-4 text-center">
           <button
-            class="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors font-medium"
+            class="px-6 py-2 bg-semantic-info-600 hover:bg-semantic-info-500 text-white rounded-lg transition-colors font-medium"
             @click="switchToSaveMode"
           >
             Save Puzzle
@@ -37,16 +37,19 @@
 
       <!-- Save Mode: Show puzzle preview and save functionality -->
       <div v-else class="w-full max-w-2xl">
-        <div class="w-full bg-gray-800 rounded-lg p-6 shadow-xl">
+        <div class="w-full bg-semantic-neutral-800 rounded-lg p-6 shadow-xl">
           <!-- Header -->
           <div class="text-center mb-6">
             <h2 class="text-2xl font-bold text-white mb-2">Save Puzzle</h2>
-            <p class="text-gray-300">Review and save your puzzle</p>
+            <p class="text-semantic-neutral-300">Review and save your puzzle</p>
           </div>
 
           <!-- Puzzle Name Input -->
           <div class="mb-6">
-            <label for="puzzleName" class="block text-sm font-medium text-gray-300 mb-2">
+            <label
+              for="puzzleName"
+              class="block text-sm font-medium text-semantic-neutral-300 mb-2"
+            >
               Puzzle Name (optional)
             </label>
             <input
@@ -54,13 +57,13 @@
               v-model="puzzleName"
               type="text"
               placeholder="Enter a name for this puzzle..."
-              class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full px-3 py-2 bg-semantic-neutral-700 border border-semantic-neutral-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-semantic-info-500 focus:border-transparent"
             />
           </div>
 
           <!-- Puzzle Grid -->
           <div class="flex justify-center mb-6">
-            <div class="bg-gray-900 p-4 rounded-lg">
+            <div class="bg-semantic-neutral-900 p-4 rounded-lg">
               <div
                 class="grid gap-1"
                 :style="{
@@ -73,7 +76,7 @@
                   <div
                     v-for="colIndex in gridSize"
                     :key="`${rowIndex}-${colIndex}`"
-                    class="w-14 h-14 border border-gray-600 rounded relative overflow-hidden"
+                    class="w-14 h-14 border border-semantic-neutral-600 rounded relative overflow-hidden"
                     :class="getCellClasses(rowIndex - 1, colIndex - 1)"
                   >
                     <img
@@ -96,23 +99,23 @@
           </div>
 
           <!-- Puzzle Info -->
-          <div class="bg-gray-700 rounded-lg p-4 mb-6">
+          <div class="bg-semantic-neutral-700 rounded-lg p-4 mb-6">
             <h3 class="text-lg font-semibold text-white mb-3">Puzzle Details</h3>
             <div class="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span class="text-gray-400">Grid Size:</span>
+                <span class="text-semantic-neutral-400">Grid Size:</span>
                 <span class="text-white ml-2">{{ gridSize }}x{{ gridSize }}</span>
               </div>
               <div>
-                <span class="text-gray-400">Honey Pots:</span>
+                <span class="text-semantic-neutral-400">Honey Pots:</span>
                 <span class="text-white ml-2">{{ honeyPotCount }}</span>
               </div>
               <div>
-                <span class="text-gray-400">Color Groups:</span>
+                <span class="text-semantic-neutral-400">Color Groups:</span>
                 <span class="text-white ml-2">{{ colorGroupCount }}</span>
               </div>
               <div>
-                <span class="text-gray-400">Empty Cells:</span>
+                <span class="text-semantic-neutral-400">Empty Cells:</span>
                 <span class="text-white ml-2">{{ emptyCellCount }}</span>
               </div>
             </div>
@@ -121,14 +124,14 @@
           <!-- Action Buttons -->
           <div class="flex gap-4 justify-center">
             <button
-              class="px-6 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors"
+              class="px-6 py-2 bg-semantic-neutral-600 hover:bg-semantic-neutral-500 text-white rounded-lg transition-colors"
               @click="closeModal"
             >
               Cancel
             </button>
             <button
               :disabled="isSaving"
-              class="px-6 py-2 bg-green-600 hover:bg-green-500 disabled:bg-gray-500 text-white rounded-lg transition-colors flex items-center gap-2"
+              class="px-6 py-2 bg-semantic-success-600 hover:bg-semantic-success-500 disabled:bg-semantic-neutral-500 text-white rounded-lg transition-colors flex items-center gap-2"
               @click="savePuzzle"
             >
               <svg
@@ -168,7 +171,9 @@
             v-if="saveMessage"
             class="mt-4 px-4 py-2 rounded-lg shadow-lg transition-all duration-300 text-center"
             :class="
-              saveMessage.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+              saveMessage.type === 'success'
+                ? 'bg-semantic-success-500 text-white'
+                : 'bg-semantic-danger-500 text-white'
             "
           >
             {{ saveMessage.text }}
@@ -299,11 +304,11 @@ const switchToSaveMode = () => {
 
 const getCellClasses = (row: number, col: number) => {
   const cell = plantStore.grid[row]?.[col];
-  if (!cell) return 'bg-gray-800';
+  if (!cell) return 'bg-semantic-neutral-800';
 
-  if (cell.base === 'honey') return 'bg-yellow-600';
-  if (cell.groupColor) return 'bg-gray-700';
-  return 'bg-gray-800';
+  if (cell.base === 'honey') return 'bg-semantic-warning-600';
+  if (cell.groupColor) return 'bg-semantic-neutral-700';
+  return 'bg-semantic-neutral-800';
 };
 
 const getCellImage = (row: number, col: number) => {
@@ -326,10 +331,10 @@ const getCellContent = (row: number, col: number) => {
 
 const getCellTextColor = (row: number, col: number) => {
   const cell = plantStore.grid[row]?.[col];
-  if (!cell) return 'text-gray-400';
+  if (!cell) return 'text-semantic-neutral-400';
 
-  if (cell.base === 'honey') return 'text-yellow-200';
-  return 'text-gray-400';
+  if (cell.base === 'honey') return 'text-semantic-warning-200';
+  return 'text-semantic-neutral-400';
 };
 
 const savePuzzle = async () => {

@@ -1,15 +1,15 @@
 <template>
-  <div class="min-h-screen bg-gray-900 text-white p-8 relative">
+  <div class="min-h-screen bg-semantic-neutral-900 text-white p-8 relative">
     <div class="max-w-4xl mx-auto">
       <h1 class="text-4xl font-bold mb-8">Cassowary Games</h1>
 
       <!-- Games Section -->
       <div class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4 text-blue-300">Choose a Game</h2>
+        <h2 class="text-2xl font-semibold mb-4 text-semantic-info-300">Choose a Game</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <router-link
             to="/queens"
-            class="block p-6 bg-pink-600 hover:bg-pink-700 rounded-lg transition-colors"
+            class="block p-6 bg-semantic-danger-600 hover:bg-semantic-danger-700 rounded-lg transition-colors"
           >
             <h3 class="text-xl font-bold mb-2">Queens Game</h3>
             <p>A clone of the game Queens</p>
@@ -17,7 +17,7 @@
 
           <router-link
             to="/levels"
-            class="block p-6 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors"
+            class="block p-6 bg-semantic-warning-600 hover:bg-semantic-warning-700 rounded-lg transition-colors"
           >
             <h3 class="text-xl font-bold mb-2">Honey Pot Ant Farming</h3>
             <p>A honey pot ant farming skin on the queens game</p>
@@ -29,7 +29,7 @@
     <!-- Works in Progress Button - Bottom Left -->
     <div class="fixed bottom-0 left-0 p-4">
       <button
-        class="inline-flex items-center justify-center px-6 py-3 bg-orange-500 text-white border-none rounded-lg font-medium cursor-pointer transition-all hover:bg-orange-600 hover:-translate-y-0.5 active:translate-y-0"
+        class="inline-flex items-center justify-center px-6 py-3 bg-semantic-warning-500 text-white border-none rounded-lg font-medium cursor-pointer transition-all hover:bg-semantic-warning-600 hover:-translate-y-0.5 active:translate-y-0"
         @click="showWorksInProgressModal = true"
       >
         Works in Progress
@@ -39,7 +39,7 @@
     <!-- Privacy Settings Link - Bottom Right -->
     <div class="fixed bottom-0 right-0 p-4">
       <button
-        class="text-sm text-gray-400 hover:text-gray-300 underline transition-colors"
+        class="text-sm text-semantic-neutral-400 hover:text-semantic-neutral-300 underline transition-colors"
         @click="showPrivacySettings = true"
       >
         Privacy Settings
@@ -53,38 +53,38 @@
     <Modal :is-visible="showWorksInProgressModal" @close="showWorksInProgressModal = false">
       <div>
         <h3 class="text-2xl font-semibold text-white mb-4">Works in Progress</h3>
-        <p class="text-gray-300 mb-4 text-sm">
+        <p class="text-semantic-neutral-300 mb-4 text-sm">
           These games are just here for testing and are not ready to be played.
         </p>
         <div class="space-y-3">
           <router-link
             to="/evolve"
-            class="block p-4 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+            class="block p-4 bg-semantic-success-600 hover:bg-semantic-success-700 rounded-lg transition-colors"
             @click="showWorksInProgressModal = false"
           >
             <h4 class="text-lg font-bold mb-1">Evolve</h4>
-            <p v-if="hasEvolveProgress" class="text-sm text-gray-200">
+            <p v-if="hasEvolveProgress" class="text-sm text-semantic-neutral-200">
               Generation {{ evolveStore.generation }} • {{ evolveStore.fruit }} fruit
             </p>
-            <p v-else class="text-sm text-gray-200">Start a new game</p>
+            <p v-else class="text-sm text-semantic-neutral-200">Start a new game</p>
           </router-link>
 
           <router-link
             to="/keno"
-            class="block p-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            class="block p-4 bg-semantic-info-600 hover:bg-semantic-info-700 rounded-lg transition-colors"
             @click="showWorksInProgressModal = false"
           >
             <h4 class="text-lg font-bold mb-1">Keno</h4>
-            <p class="text-sm text-gray-200">Play the Keno game</p>
+            <p class="text-sm text-semantic-neutral-200">Play the Keno game</p>
           </router-link>
 
           <router-link
             to="/pompeii"
-            class="block p-4 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+            class="block p-4 bg-semantic-danger-600 hover:bg-semantic-danger-700 rounded-lg transition-colors"
             @click="showWorksInProgressModal = false"
           >
             <h4 class="text-lg font-bold mb-1">Pompeii</h4>
-            <p class="text-sm text-gray-200">City building and defense game</p>
+            <p class="text-sm text-semantic-neutral-200">City building and defense game</p>
           </router-link>
         </div>
       </div>

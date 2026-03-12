@@ -1,17 +1,17 @@
 <template>
   <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
     <div
-      class="bg-gradient-to-br from-amber-800 to-amber-700 rounded-lg p-8 max-w-md w-full shadow-2xl border-2 border-amber-600"
+      class="bg-gradient-to-br from-semantic-warning-800 to-semantic-warning-700 rounded-lg p-8 max-w-md w-full shadow-2xl border-2 border-semantic-warning-600"
     >
       <div class="text-center">
-        <h2 class="text-3xl font-bold text-yellow-100 mb-6">
+        <h2 class="text-3xl font-bold text-semantic-warning-100 mb-6">
           {{ isWon ? 'Round Won!' : 'Busted!' }}
         </h2>
 
-        <div class="space-y-4 text-yellow-200 mb-8">
+        <div class="space-y-4 text-semantic-warning-200 mb-8">
           <div class="flex justify-between">
             <span class="text-lg">Current balance:</span>
-            <span class="font-semibold text-yellow-300"
+            <span class="font-semibold text-semantic-warning-300"
               >{{ globalStore.player.totalChips }} chips</span
             >
           </div>
@@ -24,12 +24,12 @@
             <span class="text-lg">Winnings this round:</span>
             <span
               class="font-semibold"
-              :class="roundWinnings < 0 ? 'text-red-300' : 'text-green-300'"
+              :class="roundWinnings < 0 ? 'text-semantic-danger-300' : 'text-semantic-success-300'"
               >{{ roundWinnings > 0 ? '+' : '' }}{{ roundWinnings }} chips</span
             >
           </div>
 
-          <div v-if="roundStore.boardSize" class="pt-4 border-t border-amber-600">
+          <div v-if="roundStore.boardSize" class="pt-4 border-t border-semantic-warning-600">
             <!-- Rounds Complete -->
             <div
               v-if="roundStore.boardSize && globalStore.sizeProgress[roundStore.boardSize]"
@@ -37,7 +37,7 @@
             >
               <div class="flex justify-between">
                 <span>Rounds Complete:</span>
-                <span class="text-green-300 font-semibold">{{
+                <span class="text-semantic-success-300 font-semibold">{{
                   globalStore.totalRoundsComplete
                 }}</span>
               </div>
@@ -46,7 +46,7 @@
                 class="flex justify-between"
               >
                 <span>Current Puzzle:</span>
-                <span class="text-blue-300 font-semibold text-xs truncate">
+                <span class="text-semantic-info-300 font-semibold text-xs truncate">
                   {{ globalStore.sizeProgress[roundStore.boardSize].currentPuzzleIdOrName }}
                 </span>
               </div>
@@ -58,14 +58,14 @@
           <!-- Show Cash Out and Next Round for winners -->
           <template v-if="isWon">
             <button
-              class="flex-1 bg-gradient-to-r from-amber-600 to-amber-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-amber-500 hover:to-amber-400 transition-all duration-200 shadow-lg hover:shadow-xl"
+              class="flex-1 bg-gradient-to-r from-semantic-warning-600 to-semantic-warning-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-semantic-warning-500 hover:to-semantic-warning-400 transition-all duration-200 shadow-lg hover:shadow-xl"
               @click="async () => await tableStore.goToTables()"
             >
               Back to Tables
             </button>
 
             <button
-              class="flex-1 bg-[#144b1a] border border-[#2d8b3a] text-green-300 py-3 px-6 rounded-lg font-semibold hover:bg-[#1a5a22] hover:border-[#3a9b4a] transition-all duration-200 shadow-lg hover:shadow-xl"
+              class="flex-1 bg-plaque-forestDeep border border-plaque-forestBright text-semantic-success-300 py-3 px-6 rounded-lg font-semibold hover:bg-nature-leafMid hover:border-nature-leafBrightest transition-all duration-200 shadow-lg hover:shadow-xl"
               @click="tableStore.handleNextRound"
             >
               Next Round
@@ -75,7 +75,7 @@
           <!-- Show only Restart for busted players -->
           <template v-else>
             <button
-              class="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-red-500 hover:to-red-400 transition-all duration-200 shadow-lg hover:shadow-xl"
+              class="w-full bg-gradient-to-r from-semantic-danger-600 to-semantic-danger-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-semantic-danger-500 hover:to-semantic-danger-400 transition-all duration-200 shadow-lg hover:shadow-xl"
               @click="globalStore.restart"
             >
               Restart Game
