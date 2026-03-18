@@ -1,25 +1,40 @@
 import { defineStore } from 'pinia';
-import { generateDeckWithStyle, type RiskProfile } from '../utils/ballaratDeckGenerator';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+import {
+  getAccessiblePositions,
+  isBoardExhausted,
+  isPositionSelectable,
+} from '@/game/ballarat/board/access';
+import { buildBoard } from '@/game/ballarat/board/buildBoard';
+import {
+  getBoardAverageAccessibleValue,
+  getRowAverageAccessibleValue,
+} from '@/game/ballarat/board/summaries';
+import { buildLevelDefinition } from '@/game/ballarat/builder/buildLevelDefinition';
+import { getDeckArchetype } from '@/game/ballarat/constants/deckArchetypes';
+import { getLevelDefinition } from '@/game/ballarat/constants/levels';
+import { clampBet, canAffordBet, getAllowedMaxBet } from '@/game/ballarat/rules/payouts';
+import { isLevelComplete } from '@/game/ballarat/rules/progression';
+import { resolveTurn } from '@/game/ballarat/turns/resolveTurn';
+import type {
+  BuiltLevelDefinition,
+  GameRunState,
+  LevelInput,
+  PositionRef,
+  RevealRecord,
+  RoundState,
+} from '@/game/ballarat/types';
 
-export type { RiskProfile };
+export type { RiskProfile } from '@/game/ballarat/types';
+export type { BuiltLevelDefinition, LevelInput, PositionRef } from '@/game/ballarat/types';
 
-export interface DeckDefinition {
+interface DeckDefinition {
   id: string;
   name: string;
   cards: number[];
   backingColor: string;
-  riskProfile: RiskProfile;
+  riskProfile: 'forty' | 'twenty' | 'single';
 }
-
-export type GamePhase =
-  | 'idle'
-  | 'deck-preview'
-  | 'playing'
-  | 'round-complete'
-  | 'level-complete'
-  | 'game-over';
 
 interface RevealedCard {
   value: number;
@@ -34,167 +49,405 @@ interface SupportCard {
   idx: number;
 }
 
-// ── Deck & level definitions ───────────────────────────────────────────────────
-// Future versions can expand these arrays to add archetypes and levels.
+type LevelSource = 'catalog' | 'custom';
 
-function makeDeckDefinition(
-  id: string,
-  name: string,
-  deckSize: number,
-  average: number,
-  riskProfile: RiskProfile
-): DeckDefinition {
-  const generated = generateDeckWithStyle({ deckSize, average, riskProfile });
-  return { id, name, ...generated };
+function toPreviewPhase(): GameRunState['phase'] {
+  return 'preview';
 }
 
-const LEVEL_1_DECK = makeDeckDefinition('level-1-deck', 'Blue Deck', 5, 1, 'forty');
+function createGameRunState(level: BuiltLevelDefinition, bank = level.startingBank): GameRunState {
+  return {
+    phase: 'idle',
+    bank,
+    currentLevel: level.id,
+    currentRound: 1,
+  };
+}
 
-const LEVEL_CONFIG: Array<{ rounds: number; deck: DeckDefinition }> = [
-  { rounds: 3, deck: LEVEL_1_DECK },
-];
+function createRoundState(bank: number): RoundState {
+  return {
+    board: null,
+    pendingBet: 1,
+    selectedPosition: null,
+    roundStartBank: bank,
+    history: [],
+    lastResolution: null,
+  };
+}
 
-const STARTING_BANK = 20;
-
-function shuffle<T>(arr: T[]): T[] {
-  const result = [...arr];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
+function getPrimaryDeck(level: BuiltLevelDefinition): DeckDefinition {
+  const primaryDeckId = level.deckMatrix[0]?.[0];
+  if (!primaryDeckId) {
+    throw new Error(`Level ${level.id} does not have a primary deck assignment`);
   }
-  return result;
+  return getDeckArchetype(primaryDeckId);
 }
 
-// ── Store ──────────────────────────────────────────────────────────────────────
+function toLegacyRevealedCard(record: RevealRecord): RevealedCard {
+  return {
+    value: record.cardValue,
+    bet: record.bet,
+    payout: record.payout,
+    net: record.net,
+  };
+}
+
+function getLegacyTopLayerCards(level: BuiltLevelDefinition, board: RoundState['board']): number[] {
+  if (!board) {
+    return [];
+  }
+
+  const cards: number[] = [];
+  for (let row = 0; row < board.rows; row += 1) {
+    for (let col = 0; col < board.columns; col += 1) {
+      const stack = board.stacks[row][col];
+      const topLayer = stack.cards[0];
+      if (topLayer) {
+        cards.push(topLayer.value);
+      }
+    }
+  }
+
+  if (cards.length > 0) {
+    return cards;
+  }
+
+  return getPrimaryDeck(level).cards;
+}
 
 export const useBallaratStore = defineStore('ballarat', {
-  state: () => ({
-    phase: 'idle' as GamePhase,
-    bank: STARTING_BANK,
-    currentLevel: 1,
-    currentRound: 1,
-    roundsPerLevel: LEVEL_CONFIG[0].rounds,
-    pendingBet: 1,
-    shuffledCards: [] as number[],
-    currentCardIndex: 0,
-    revealedBets: [] as number[],
-    lastPayoutDelta: null as number | null,
-    roundStartBank: STARTING_BANK,
-    deckDefinition: LEVEL_CONFIG[0].deck as DeckDefinition,
-  }),
+  state: () => {
+    const level = getLevelDefinition(1);
+
+    return {
+      level,
+      levelSource: 'catalog' as LevelSource,
+      game: createGameRunState(level),
+      round: createRoundState(level.startingBank),
+    };
+  },
 
   getters: {
-    revealedCards: (state): RevealedCard[] =>
-      state.shuffledCards.slice(0, state.currentCardIndex).map((value, index) => {
-        const bet = state.revealedBets[index] ?? 0;
-        return { value, bet, payout: value * bet, net: (value - 1) * bet };
-      }),
+    phase: (state) => (state.game.phase === 'preview' ? 'deck-preview' : state.game.phase),
 
-    averageRemainingValue: (state): number | null => {
-      const remaining = state.shuffledCards.slice(state.currentCardIndex);
-      if (remaining.length === 0) return null;
-      return remaining.reduce((a, b) => a + b, 0) / remaining.length;
+    bank: (state) => state.game.bank,
+
+    currentLevel: (state) => state.game.currentLevel,
+
+    currentRound: (state) => state.game.currentRound,
+
+    roundsPerLevel: (state) => state.level.rounds,
+
+    minBet: (state) => state.level.minBet,
+
+    pendingBet: (state) => state.round.pendingBet,
+
+    maxBet: (state) => getAllowedMaxBet(state.game.bank, state.level.maxBet),
+
+    board: (state) => state.round.board,
+
+    accessiblePositions: (state) =>
+      state.round.board ? getAccessiblePositions(state.round.board) : [],
+
+    boardAverageAccessibleValue: (state) =>
+      state.round.board ? getBoardAverageAccessibleValue(state.round.board) : null,
+
+    rowAverageAccessibleValue: (state) => {
+      return (row: number) => {
+        if (!state.round.board) {
+          return null;
+        }
+        return getRowAverageAccessibleValue(state.round.board, row);
+      };
     },
 
-    cardsRemaining: (state): number => state.shuffledCards.length - state.currentCardIndex,
+    canReveal(state): boolean {
+      if (state.game.phase !== 'playing') return false;
+      if (!state.round.board) return false;
+      if (state.round.pendingBet < state.level.minBet) return false;
+      if (!canAffordBet(state.game.bank, state.round.pendingBet)) return false;
 
-    totalCardsInRound: (state): number => state.shuffledCards.length,
+      const selected =
+        state.round.selectedPosition ?? getAccessiblePositions(state.round.board)[0] ?? null;
+      if (!selected) return false;
 
-    maxBet: (state): number => Math.min(5, Math.max(0, state.bank)),
+      return isPositionSelectable(state.round.board, selected);
+    },
 
-    canReveal: (state): boolean =>
-      state.phase === 'playing' &&
-      state.currentCardIndex < state.shuffledCards.length &&
-      state.bank >= state.pendingBet &&
-      state.pendingBet >= 1,
+    roundProfit: (state) => state.game.bank - state.round.roundStartBank,
 
-    isLastRound: (state): boolean => state.currentRound >= state.roundsPerLevel,
+    deckDefinition: (state): DeckDefinition => getPrimaryDeck(state.level),
 
-    roundProfit: (state): number => state.bank - state.roundStartBank,
+    shuffledCards(): number[] {
+      return getLegacyTopLayerCards(this.level, this.round.board);
+    },
 
-    // For the support panel: sorted known deck values, each marked revealed or not.
-    // Uses a greedy match (highest values marked revealed first).
-    supportPanelCards: (state): SupportCard[] => {
-      const sortedDeck = [...state.deckDefinition.cards].sort((a, b) => b - a);
+    totalCardsInRound(): number {
+      return this.shuffledCards.length;
+    },
+
+    currentCardIndex: (state) => state.round.history.length,
+
+    cardsRemaining(): number {
+      return this.accessiblePositions.length;
+    },
+
+    averageRemainingValue(): number | null {
+      return this.boardAverageAccessibleValue;
+    },
+
+    revealedCards: (state): RevealedCard[] =>
+      state.round.history.filter((item) => item.revealedBy === 'player').map(toLegacyRevealedCard),
+
+    lastPayoutDelta: (state) => state.round.lastResolution?.totalNet ?? null,
+
+    supportPanelCards(state): SupportCard[] {
+      const sortedDeck = [...getPrimaryDeck(state.level).cards].sort((a, b) => b - a);
       const revealedCounts = new Map<number, number>();
-      for (let i = 0; i < state.currentCardIndex; i++) {
-        const v = state.shuffledCards[i];
-        revealedCounts.set(v, (revealedCounts.get(v) ?? 0) + 1);
+
+      for (const record of state.round.history) {
+        if (record.revealedBy !== 'player') {
+          continue;
+        }
+        revealedCounts.set(record.cardValue, (revealedCounts.get(record.cardValue) ?? 0) + 1);
       }
+
       return sortedDeck.map((value, idx) => {
         const count = revealedCounts.get(value) ?? 0;
         const isRevealed = count > 0;
-        if (isRevealed) revealedCounts.set(value, count - 1);
-        return { value, isRevealed, idx };
+
+        if (isRevealed) {
+          revealedCounts.set(value, count - 1);
+        }
+
+        return {
+          value,
+          isRevealed,
+          idx,
+        };
       });
+    },
+
+    supportMode: (state) => state.level.supportMode,
+
+    deckMatrix: (state) => state.level.deckMatrix,
+
+    levelInspectorSnapshot(state) {
+      return {
+        id: state.level.id,
+        name: state.level.name,
+        source: state.levelSource,
+        board: {
+          rows: state.level.rows,
+          columns: state.level.columns,
+          depth: state.level.depth,
+        },
+        economy: {
+          startingBank: state.level.startingBank,
+          currentBank: state.game.bank,
+          minBet: state.level.minBet,
+          maxBet: state.level.maxBet,
+        },
+        rules: {
+          turnRule: state.level.turnRule,
+          dealerEnabled: state.level.dealerEnabled,
+          dealerAfterPlayer: state.level.dealerAfterPlayer,
+          supportMode: state.level.supportMode,
+        },
+        testing: state.level.testing ?? null,
+      };
     },
   },
 
   actions: {
-    startGame() {
-      this.bank = STARTING_BANK;
-      this.currentLevel = 1;
-      this.currentRound = 1;
-      const config = LEVEL_CONFIG[this.currentLevel - 1];
-      this.roundsPerLevel = config.rounds;
-      this.deckDefinition = config.deck;
-      this.phase = 'deck-preview';
-      this._initRound();
+    loadBuiltLevel(
+      level: BuiltLevelDefinition,
+      options?: { bank?: number; source?: LevelSource; phase?: GameRunState['phase'] }
+    ) {
+      const bank = options?.bank ?? level.startingBank;
+      this.level = level;
+      this.levelSource = options?.source ?? 'catalog';
+      this.game = createGameRunState(level, bank);
+      this.round = createRoundState(bank);
+      this.game.phase = options?.phase ?? 'idle';
     },
 
-    _initRound() {
-      this.shuffledCards = shuffle(this.deckDefinition.cards);
-      this.currentCardIndex = 0;
-      this.revealedBets = [];
-      this.lastPayoutDelta = null;
-      this.roundStartBank = this.bank;
-      this.pendingBet = 1;
+    loadLevel(levelNumber: number, options?: { bank?: number; phase?: GameRunState['phase'] }) {
+      this.loadBuiltLevel(getLevelDefinition(levelNumber), {
+        bank: options?.bank,
+        source: 'catalog',
+        phase: options?.phase,
+      });
+    },
+
+    loadLevelInput(
+      levelInput: LevelInput,
+      options?: { bank?: number; phase?: GameRunState['phase'] }
+    ) {
+      this.loadBuiltLevel(buildLevelDefinition(levelInput), {
+        bank: options?.bank,
+        source: 'custom',
+        phase: options?.phase,
+      });
+    },
+
+    startGame() {
+      this.loadLevel(1);
+      this.setupRound();
+      this.game.phase = toPreviewPhase();
+    },
+
+    previewLevel(levelNumber: number) {
+      this.loadLevel(levelNumber, { phase: toPreviewPhase() });
+      this.setupRound();
+    },
+
+    previewLevelInput(levelInput: LevelInput) {
+      this.loadLevelInput(levelInput, { phase: toPreviewPhase() });
+      this.setupRound();
+    },
+
+    setupRound() {
+      this.round = {
+        board: buildBoard(this.level),
+        pendingBet: this.level.minBet,
+        selectedPosition: null,
+        roundStartBank: this.game.bank,
+        history: [],
+        lastResolution: null,
+      };
     },
 
     beginRound() {
-      this.phase = 'playing';
+      if (this.game.phase !== 'preview') {
+        return;
+      }
+      this.game.phase = 'playing';
     },
 
     setPendingBet(amount: number) {
-      this.pendingBet = Math.max(1, Math.min(this.maxBet, Math.floor(amount)));
+      this.round.pendingBet = clampBet(amount, this.level.minBet, this.maxBet);
+    },
+
+    selectPosition(position: PositionRef | null) {
+      if (!this.round.board || !position) {
+        this.round.selectedPosition = null;
+        return;
+      }
+
+      if (!isPositionSelectable(this.round.board, position)) {
+        this.round.selectedPosition = null;
+        return;
+      }
+
+      this.round.selectedPosition = position;
+    },
+
+    revealSelected() {
+      if (!this.round.board) {
+        return;
+      }
+
+      const position =
+        this.round.selectedPosition ?? getAccessiblePositions(this.round.board)[0] ?? null;
+      if (!position || !this.canReveal) {
+        return;
+      }
+
+      const resolution = resolveTurn(
+        this.level,
+        this.round.board,
+        position,
+        this.game.bank,
+        this.round.pendingBet
+      );
+
+      this.round.board = resolution.board;
+      this.round.history.push(...resolution.playerReveals, ...resolution.dealerReveals);
+      this.round.lastResolution = resolution;
+      this.game.bank = resolution.nextBank;
+
+      if (this.level.testing?.debugLogging) {
+        console.debug('[Ballarat]', {
+          levelId: this.level.id,
+          turnRule: this.level.turnRule,
+          position,
+          resolution,
+        });
+      }
+
+      if (this.game.bank <= 0) {
+        this.game.bank = 0;
+        this.game.phase = 'game-over';
+        return;
+      }
+
+      if (isBoardExhausted(this.round.board)) {
+        this.game.phase = isLevelComplete(this.game.currentRound, this.level.rounds)
+          ? 'level-complete'
+          : 'round-complete';
+        return;
+      }
+
+      if (this.round.pendingBet > this.maxBet) {
+        this.round.pendingBet = Math.max(this.level.minBet, this.maxBet);
+      }
+
+      if (
+        this.round.selectedPosition &&
+        !isPositionSelectable(this.round.board, this.round.selectedPosition)
+      ) {
+        this.round.selectedPosition = null;
+      }
     },
 
     revealNext() {
-      if (!this.canReveal) return;
-
-      const bet = this.pendingBet;
-      const cardValue = this.shuffledCards[this.currentCardIndex];
-      const payout = cardValue * bet;
-
-      this.bank = this.bank - bet + payout;
-      this.revealedBets.push(bet);
-      this.currentCardIndex++;
-      this.lastPayoutDelta = payout - bet;
-
-      if (this.bank <= 0) {
-        this.bank = 0;
-        this.phase = 'game-over';
-        return;
-      }
-
-      if (this.currentCardIndex >= this.shuffledCards.length) {
-        this.phase = this.isLastRound ? 'level-complete' : 'round-complete';
-        return;
-      }
-
-      if (this.pendingBet > this.maxBet) {
-        this.pendingBet = Math.max(1, this.maxBet);
-      }
+      this.revealSelected();
     },
 
     nextRound() {
-      this.currentRound++;
-      this.phase = 'deck-preview';
-      this._initRound();
+      if (this.game.phase !== 'round-complete') {
+        return;
+      }
+
+      this.game.currentRound += 1;
+      this.setupRound();
+      this.game.phase = toPreviewPhase();
+    },
+
+    nextLevel() {
+      if (this.game.phase !== 'level-complete') {
+        return;
+      }
+
+      const nextLevelNumber = this.game.currentLevel + 1;
+
+      try {
+        this.loadLevel(nextLevelNumber, {
+          bank: this.game.bank,
+          phase: toPreviewPhase(),
+        });
+        this.setupRound();
+      } catch {
+        this.game.phase = 'game-complete';
+      }
+    },
+
+    restartLevel() {
+      const currentLevel = this.level;
+      const currentSource = this.levelSource;
+      const bank = currentLevel.startingBank;
+
+      this.loadBuiltLevel(currentLevel, {
+        bank,
+        source: currentSource,
+        phase: toPreviewPhase(),
+      });
+      this.setupRound();
     },
 
     restartGame() {
-      this.phase = 'idle';
+      this.loadLevel(1, { phase: 'idle' });
     },
   },
 });
