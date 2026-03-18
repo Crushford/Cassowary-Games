@@ -174,6 +174,14 @@ export default {
           disabledText: '#cbd5e1',
           disabledTextMuted: '#94a3b8',
         },
+        ballarat: {
+          gradientStart: '#0a1628', // shell radial gradient origin
+          title: '#93c5fd', // blue-300 — header accent
+          accentBg: '#0f766e',
+          accentBgHover: '#0d9488',
+          accentBorder: '#0f766e',
+          accentText: '#ecfeff',
+        },
         plaque: {
           ink: '#131313',
           forest: '#0f3b2e',
