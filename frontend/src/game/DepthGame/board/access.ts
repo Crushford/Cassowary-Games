@@ -5,7 +5,7 @@ export function getStack(board: BoardState, position: PositionRef): StackState {
   const stack = row?.[position.col];
 
   if (!stack) {
-    throw new Error(`Unknown Ballarat board position row ${position.row}, col ${position.col}`);
+    throw new Error(`Unknown Depth board position row ${position.row}, col ${position.col}`);
   }
 
   return stack;

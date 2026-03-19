@@ -58,11 +58,11 @@
         </p>
         <div class="space-y-3">
           <router-link
-            to="/ballarat"
+            to="/depth"
             class="block p-4 bg-semantic-info-700 hover:bg-semantic-info-600 rounded-lg transition-colors"
             @click="showWorksInProgressModal = false"
           >
-            <h4 class="text-lg font-bold mb-1">Ballarat</h4>
+            <h4 class="text-lg font-bold mb-1">Depth</h4>
             <p class="text-sm text-semantic-neutral-200">A probability and betting card game</p>
           </router-link>
 

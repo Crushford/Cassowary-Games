@@ -1,4 +1,4 @@
-export type BallaratPhase =
+export type DepthPhase =
   | 'idle'
   | 'preview'
   | 'playing'
@@ -9,7 +9,11 @@ export type BallaratPhase =
 
 export type RiskProfile = 'forty' | 'twenty' | 'single';
 
-export type TurnRuleType = 'basic-reveal' | 'column-reveal' | 'dealer-follow-up';
+export type TurnRuleType =
+  | 'basic-reveal'
+  | 'column-reveal'
+  | 'column-choice-reveal'
+  | 'dealer-follow-up';
 
 export type SupportMode = 'exact' | 'row-summary' | 'board-summary' | 'debug';
 
@@ -174,7 +178,7 @@ export interface TurnResolution {
 }
 
 export interface GameRunState {
-  phase: BallaratPhase;
+  phase: DepthPhase;
   bank: number;
   currentLevel: number;
   currentRound: number;

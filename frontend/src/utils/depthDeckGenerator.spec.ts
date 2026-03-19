@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { generateDeck, generateDeckWithStyle } from './ballaratDeckGenerator';
+import { generateDeck, generateDeckWithStyle } from './depthDeckGenerator';
 
 describe('generateDeckWithStyle', () => {
   it('forty / deckSize=5 / average=1 → [3,2,0,0,0] with blue backing', () => {

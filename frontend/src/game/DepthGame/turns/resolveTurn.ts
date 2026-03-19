@@ -2,6 +2,7 @@ import type { BoardState, BuiltLevelDefinition, PositionRef, TurnResolution } fr
 import type { ShuffleFn } from '../utils/shuffle';
 import { randomShuffle } from '../utils/shuffle';
 import { resolveBasicRevealTurn } from './rules/basicReveal';
+import { resolveColumnChoiceRevealTurn } from './rules/columnChoiceReveal';
 import { resolveColumnRevealTurn } from './rules/columnReveal';
 import { resolveDealerFollowUpTurn } from './rules/dealerFollowUp';
 
@@ -19,6 +20,9 @@ export function resolveTurn(
 
     case 'column-reveal':
       return resolveColumnRevealTurn(board, position, bank, bet);
+
+    case 'column-choice-reveal':
+      return resolveColumnChoiceRevealTurn(board, position, bank, bet);
 
     case 'dealer-follow-up':
       return resolveDealerFollowUpTurn(board, position, bank, bet, shuffleFn);

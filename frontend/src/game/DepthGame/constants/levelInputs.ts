@@ -1,6 +1,6 @@
 import type { LevelInput } from '../types';
 
-export const BALLARAT_LEVEL_INPUTS: LevelInput[] = [
+export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
   {
     metadata: {
       id: 1,
@@ -23,7 +23,7 @@ export const BALLARAT_LEVEL_INPUTS: LevelInput[] = [
       deckId: 'blue-starter',
     },
     rules: {
-      turnRule: 'basic-reveal',
+      turnRule: 'column-choice-reveal',
     },
     support: {
       supportMode: 'exact',
@@ -53,7 +53,7 @@ export const BALLARAT_LEVEL_INPUTS: LevelInput[] = [
       deckId: 'blue-starter',
     },
     rules: {
-      turnRule: 'basic-reveal',
+      turnRule: 'column-choice-reveal',
     },
     support: {
       supportMode: 'row-summary',
@@ -84,7 +84,7 @@ export const BALLARAT_LEVEL_INPUTS: LevelInput[] = [
       deckId: 'red-spike',
     },
     rules: {
-      turnRule: 'basic-reveal',
+      turnRule: 'column-choice-reveal',
     },
     support: {
       supportMode: 'row-summary',
@@ -115,7 +115,7 @@ export const BALLARAT_LEVEL_INPUTS: LevelInput[] = [
       deckId: 'orange-split-10',
     },
     rules: {
-      turnRule: 'basic-reveal',
+      turnRule: 'column-choice-reveal',
     },
     support: {
       supportMode: 'row-summary',
