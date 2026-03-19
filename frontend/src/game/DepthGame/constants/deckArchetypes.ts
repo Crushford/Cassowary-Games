@@ -1,6 +1,6 @@
 import type { DeckArchetype } from '../types';
 
-export const BALLARAT_DECKS: DeckArchetype[] = [
+export const DEPTH_DECKS: DeckArchetype[] = [
   {
     id: 'blue-starter',
     name: 'Blue Starter',
@@ -39,9 +39,9 @@ export const BALLARAT_DECKS: DeckArchetype[] = [
 ];
 
 export function getDeckArchetype(deckId: string): DeckArchetype {
-  const deck = BALLARAT_DECKS.find((item) => item.id === deckId);
+  const deck = DEPTH_DECKS.find((item) => item.id === deckId);
   if (!deck) {
-    throw new Error(`Unknown Ballarat deck archetype: ${deckId}`);
+    throw new Error(`Unknown Depth deck archetype: ${deckId}`);
   }
   return deck;
 }

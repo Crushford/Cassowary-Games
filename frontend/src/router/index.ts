@@ -63,9 +63,39 @@ const router = createRouter({
       component: QueensGame,
     },
     {
+      path: '/depth',
+      redirect: '/depth/levels',
+    },
+    {
+      path: '/depth/levels',
+      name: 'depth-levels',
+      component: () => import('../views/DepthGame/Game.vue'),
+    },
+    {
+      path: '/depth/level/:levelId',
+      name: 'depth-level',
+      component: () => import('../views/DepthGame/Game.vue'),
+    },
+    {
+      path: '/depth/dev',
+      name: 'depth-dev',
+      component: () => import('../views/DepthGame/DevGame.vue'),
+    },
+    {
       path: '/ballarat',
-      name: 'ballarat',
-      component: () => import('../views/BallaratGame.vue'),
+      redirect: '/depth',
+    },
+    {
+      path: '/ballarat/levels',
+      redirect: '/depth/levels',
+    },
+    {
+      path: '/ballarat/level/:levelId',
+      redirect: (to) => `/depth/level/${to.params.levelId}`,
+    },
+    {
+      path: '/ballarat/dev',
+      redirect: '/depth/dev',
     },
     {
       path: '/evolve',

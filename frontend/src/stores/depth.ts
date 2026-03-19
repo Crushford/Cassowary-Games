@@ -2,20 +2,21 @@ import { defineStore } from 'pinia';
 
 import {
   getAccessiblePositions,
+  getAccessiblePositionsForColumn,
   isBoardExhausted,
   isPositionSelectable,
-} from '@/game/ballarat/board/access';
-import { buildBoard } from '@/game/ballarat/board/buildBoard';
+} from '@/game/DepthGame/board/access';
+import { buildBoard } from '@/game/DepthGame/board/buildBoard';
 import {
   getBoardAverageAccessibleValue,
   getRowAverageAccessibleValue,
-} from '@/game/ballarat/board/summaries';
-import { buildLevelDefinition } from '@/game/ballarat/builder/buildLevelDefinition';
-import { getDeckArchetype } from '@/game/ballarat/constants/deckArchetypes';
-import { getLevelDefinition } from '@/game/ballarat/constants/levels';
-import { clampBet, canAffordBet, getAllowedMaxBet } from '@/game/ballarat/rules/payouts';
-import { isLevelComplete } from '@/game/ballarat/rules/progression';
-import { resolveTurn } from '@/game/ballarat/turns/resolveTurn';
+} from '@/game/DepthGame/board/summaries';
+import { buildLevelDefinition } from '@/game/DepthGame/builder/buildLevelDefinition';
+import { getDeckArchetype } from '@/game/DepthGame/constants/deckArchetypes';
+import { getLevelDefinition } from '@/game/DepthGame/constants/levels';
+import { clampBet, canAffordBet, getAllowedMaxBet } from '@/game/DepthGame/rules/payouts';
+import { isLevelComplete } from '@/game/DepthGame/rules/progression';
+import { resolveTurn } from '@/game/DepthGame/turns/resolveTurn';
 import type {
   BuiltLevelDefinition,
   GameRunState,
@@ -23,10 +24,10 @@ import type {
   PositionRef,
   RevealRecord,
   RoundState,
-} from '@/game/ballarat/types';
+} from '@/game/DepthGame/types';
 
-export type { RiskProfile } from '@/game/ballarat/types';
-export type { BuiltLevelDefinition, LevelInput, PositionRef } from '@/game/ballarat/types';
+export type { RiskProfile } from '@/game/DepthGame/types';
+export type { BuiltLevelDefinition, LevelInput, PositionRef } from '@/game/DepthGame/types';
 
 interface DeckDefinition {
   id: string;
@@ -115,7 +116,29 @@ function getLegacyTopLayerCards(level: BuiltLevelDefinition, board: RoundState['
   return getPrimaryDeck(level).cards;
 }
 
-export const useBallaratStore = defineStore('ballarat', {
+function getActiveColumnIndex(
+  level: BuiltLevelDefinition,
+  board: RoundState['board']
+): number | null {
+  if (!board) {
+    return null;
+  }
+
+  if (level.turnRule !== 'column-choice-reveal') {
+    const firstAccessible = getAccessiblePositions(board)[0];
+    return firstAccessible?.col ?? null;
+  }
+
+  for (let col = 0; col < board.columns; col += 1) {
+    if (getAccessiblePositionsForColumn(board, col).length > 0) {
+      return col;
+    }
+  }
+
+  return null;
+}
+
+export const useDepthStore = defineStore('depth', {
   state: () => {
     const level = getLevelDefinition(1);
 
@@ -149,6 +172,21 @@ export const useBallaratStore = defineStore('ballarat', {
     accessiblePositions: (state) =>
       state.round.board ? getAccessiblePositions(state.round.board) : [],
 
+    activeColumnIndex: (state) => getActiveColumnIndex(state.level, state.round.board),
+
+    activeColumnPositions(state): PositionRef[] {
+      if (!state.round.board) {
+        return [];
+      }
+
+      const activeColumn = getActiveColumnIndex(state.level, state.round.board);
+      if (activeColumn === null) {
+        return [];
+      }
+
+      return getAccessiblePositionsForColumn(state.round.board, activeColumn);
+    },
+
     boardAverageAccessibleValue: (state) =>
       state.round.board ? getBoardAverageAccessibleValue(state.round.board) : null,
 
@@ -167,9 +205,20 @@ export const useBallaratStore = defineStore('ballarat', {
       if (state.round.pendingBet < state.level.minBet) return false;
       if (!canAffordBet(state.game.bank, state.round.pendingBet)) return false;
 
-      const selected =
-        state.round.selectedPosition ?? getAccessiblePositions(state.round.board)[0] ?? null;
+      const fallbackSelection =
+        state.level.turnRule === 'column-choice-reveal'
+          ? (this.activeColumnPositions[0] ?? null)
+          : (getAccessiblePositions(state.round.board)[0] ?? null);
+
+      const selected = state.round.selectedPosition ?? fallbackSelection;
       if (!selected) return false;
+
+      if (
+        state.level.turnRule === 'column-choice-reveal' &&
+        selected.col !== this.activeColumnIndex
+      ) {
+        return false;
+      }
 
       return isPositionSelectable(state.round.board, selected);
     },
@@ -335,6 +384,15 @@ export const useBallaratStore = defineStore('ballarat', {
         return;
       }
 
+      if (
+        this.level.turnRule === 'column-choice-reveal' &&
+        this.activeColumnIndex !== null &&
+        position.col !== this.activeColumnIndex
+      ) {
+        this.round.selectedPosition = null;
+        return;
+      }
+
       if (!isPositionSelectable(this.round.board, position)) {
         this.round.selectedPosition = null;
         return;
@@ -349,7 +407,10 @@ export const useBallaratStore = defineStore('ballarat', {
       }
 
       const position =
-        this.round.selectedPosition ?? getAccessiblePositions(this.round.board)[0] ?? null;
+        this.round.selectedPosition ??
+        (this.level.turnRule === 'column-choice-reveal'
+          ? (this.activeColumnPositions[0] ?? null)
+          : (getAccessiblePositions(this.round.board)[0] ?? null));
       if (!position || !this.canReveal) {
         return;
       }
@@ -368,7 +429,7 @@ export const useBallaratStore = defineStore('ballarat', {
       this.game.bank = resolution.nextBank;
 
       if (this.level.testing?.debugLogging) {
-        console.debug('[Ballarat]', {
+        console.debug('[Depth]', {
           levelId: this.level.id,
           turnRule: this.level.turnRule,
           position,

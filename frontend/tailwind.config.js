@@ -42,6 +42,7 @@ export default {
           dangerFaint: '#ef44441a',
           dangerSubtle: '#7f1d1d33',
           dangerSoft: '#7f1d1d4d',
+          warningSubtle: '#78350f33',
           warningSoft: '#78350f4d',
           infoFaint: '#3b82f61a',
           infoSoft: '#1e3a8a4d',
@@ -174,13 +175,20 @@ export default {
           disabledText: '#cbd5e1',
           disabledTextMuted: '#94a3b8',
         },
-        ballarat: {
+        depth: {
           gradientStart: '#0a1628', // shell radial gradient origin
           title: '#93c5fd', // blue-300 — header accent
           accentBg: '#0f766e',
           accentBgHover: '#0d9488',
           accentBorder: '#0f766e',
           accentText: '#ecfeff',
+          panel: '#1e293be6',
+          panelSoft: '#1e293bd9',
+          panelMuted: '#1e293bb3',
+          baseFaint: '#0f172a66',
+          baseMuted: '#0f172a80',
+          baseSoft: '#0f172a99',
+          warningRing: '#fbbf24cc',
         },
         plaque: {
           ink: '#131313',

@@ -15,16 +15,16 @@ export function resolveColumnRevealTurn(
 
   let nextBoard = board;
   let totalPayout = 0;
-  let totalNet = 0;
   const reveals: RevealRecord[] = [];
 
   for (const columnPosition of positions) {
     const result = revealCardAtPosition(nextBoard, columnPosition, bet, 'player');
     nextBoard = result.board;
     totalPayout += result.reveal.payout;
-    totalNet += result.reveal.net;
     reveals.push(result.reveal);
   }
+
+  const totalNet = totalPayout - bet;
 
   return {
     board: nextBoard,
