@@ -63,6 +63,11 @@ const router = createRouter({
       component: QueensGame,
     },
     {
+      path: '/ballarat',
+      name: 'ballarat',
+      component: () => import('../views/BallaratGame.vue'),
+    },
+    {
       path: '/evolve',
       name: 'evolve',
       component: () => import('../views/Evolve.vue'),
