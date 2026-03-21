@@ -97,7 +97,7 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
     metadata: {
       id: 4,
       name: 'Level 4',
-      description: 'Larger board with ten-card columns.',
+      description: 'Full 5x5 surface board with ten-card columns.',
     },
     economy: {
       startingBank: 25,
@@ -107,7 +107,7 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
     },
     board: {
       rows: 5,
-      columns: 10,
+      columns: 5,
       depth: 1,
     },
     decks: {
@@ -128,7 +128,7 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
     metadata: {
       id: 5,
       name: 'Level 5',
-      description: 'Full 10x10 surface board.',
+      description: '5x5 surface board with a simpler reveal rule.',
     },
     economy: {
       startingBank: 25,
@@ -137,8 +137,8 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
       maxBet: 5,
     },
     board: {
-      rows: 10,
-      columns: 10,
+      rows: 5,
+      columns: 5,
       depth: 1,
     },
     decks: {
@@ -168,8 +168,8 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
       maxBet: 5,
     },
     board: {
-      rows: 10,
-      columns: 10,
+      rows: 5,
+      columns: 5,
       depth: 2,
     },
     decks: {
@@ -201,8 +201,8 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
       maxBet: 5,
     },
     board: {
-      rows: 10,
-      columns: 10,
+      rows: 5,
+      columns: 5,
       depth: 3,
     },
     decks: {
@@ -225,7 +225,7 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
     metadata: {
       id: 8,
       name: 'Level 8',
-      description: 'Full 10x10x10 board using mixed depth layers.',
+      description: 'Full 5x5x10 board using mixed depth layers.',
     },
     economy: {
       startingBank: 35,
@@ -234,8 +234,8 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
       maxBet: 5,
     },
     board: {
-      rows: 10,
-      columns: 10,
+      rows: 5,
+      columns: 5,
       depth: 10,
     },
     decks: {

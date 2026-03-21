@@ -108,6 +108,39 @@
       <div
         class="max-w-sm w-full rounded-xl border border-incremental-border bg-incremental-panelBgSoft p-4 space-y-3"
       >
+        <div
+          v-if="incrementalStore.savedRunSummary"
+          class="rounded-xl border border-incremental-infoBorder bg-incremental-panelBgOverlay p-3 space-y-3"
+        >
+          <div class="text-sm text-incremental-shellText leading-relaxed">
+            Continue your {{ incrementalStore.savedRunSummary.puzzleSize }}x{{
+              incrementalStore.savedRunSummary.puzzleSize
+            }}
+            run with
+            <span class="font-bold text-incremental-successText">
+              {{ incrementalStore.savedRunSummary.bank }}
+            </span>
+            bank and {{ incrementalStore.savedRunSummary.puzzlesSolved }} puzzle{{
+              incrementalStore.savedRunSummary.puzzlesSolved === 1 ? '' : 's'
+            }}
+            solved.
+          </div>
+          <div class="flex gap-2">
+            <Button
+              type="button"
+              label="Continue Run"
+              class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px !border-incremental-accentBorder !bg-incremental-accentBg !text-incremental-accentText enabled:hover:!bg-incremental-accentBgHover enabled:hover:!border-incremental-accentBgHover flex-1"
+              @click="handleContinueRun"
+            />
+            <Button
+              type="button"
+              label="Start Over"
+              class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px !border-incremental-border !bg-incremental-panelBgElevated !text-incremental-disabledText enabled:hover:!bg-incremental-disabledBgHover enabled:hover:!border-incremental-borderSoft flex-1"
+              @click="handleStartOver"
+            />
+          </div>
+        </div>
+
         <Button
           type="button"
           label="Start Run"
@@ -641,6 +674,8 @@ const showNextLevelConfirm = ref(false);
 const animatedTimeRemainingPercent = ref(0);
 const animatedScoreAward = ref(0);
 
+incrementalStore.initializePersistence();
+
 const hasAnyIncrementalAutomation = computed(() => {
   return (
     incrementalStore.autoFlagPurchased ||
@@ -839,6 +874,15 @@ async function handleStartRun() {
   await incrementalStore.startRun();
 }
 
+async function handleContinueRun() {
+  showShopModal.value = false;
+  await incrementalStore.continueSavedRun();
+}
+
+function handleStartOver() {
+  incrementalStore.resetRunState();
+}
+
 async function handleSaveCustomPatternCard(payload: {
   id?: string;
   size: number;
@@ -880,7 +924,6 @@ async function handleConfirmNextLevel() {
 
 onBeforeUnmount(() => {
   incrementalStore.cleanupSessionState();
-  incrementalStore.resetRunState();
 });
 
 defineOptions({

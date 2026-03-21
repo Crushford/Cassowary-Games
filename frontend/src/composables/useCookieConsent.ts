@@ -11,6 +11,11 @@ const consentStatus = ref<string | null>(null);
 
 // Initialize from localStorage
 function loadConsentStatus() {
+  if (typeof localStorage === 'undefined') {
+    consentStatus.value = null;
+    return;
+  }
+
   try {
     consentStatus.value = localStorage.getItem(CONSENT_KEY);
   } catch (error) {
@@ -49,6 +54,11 @@ export function useCookieConsent() {
   });
 
   const acceptConsent = () => {
+    if (typeof localStorage === 'undefined') {
+      consentStatus.value = CONSENT_VALUE_ACCEPTED;
+      return;
+    }
+
     try {
       localStorage.setItem(CONSENT_KEY, CONSENT_VALUE_ACCEPTED);
       consentStatus.value = CONSENT_VALUE_ACCEPTED;
@@ -58,6 +68,11 @@ export function useCookieConsent() {
   };
 
   const declineConsent = () => {
+    if (typeof localStorage === 'undefined') {
+      consentStatus.value = CONSENT_VALUE_DECLINED;
+      return;
+    }
+
     try {
       localStorage.setItem(CONSENT_KEY, CONSENT_VALUE_DECLINED);
       consentStatus.value = CONSENT_VALUE_DECLINED;

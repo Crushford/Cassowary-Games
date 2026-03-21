@@ -44,6 +44,40 @@
         </div>
 
         <div
+          v-if="canContinueSavedGame"
+          class="rounded-2xl border border-semantic-info-700 bg-app-surface p-4 space-y-4"
+        >
+          <div>
+            <div class="text-xs text-app-textMuted uppercase tracking-wide font-semibold">
+              Saved Run
+            </div>
+            <p class="mt-2 text-sm text-app-text leading-relaxed">
+              Continue {{ store.savedSessionSummary?.levelName }} on round
+              {{ store.savedSessionSummary?.currentRound }} with
+              <span class="font-bold text-semantic-success-400">
+                🪙 {{ store.savedSessionSummary?.bank }}
+              </span>
+              in the bank.
+            </p>
+          </div>
+
+          <div class="flex gap-2">
+            <button
+              class="flex-1 py-3 rounded-xl font-bold text-depth-accentText bg-depth-accentBg hover:bg-depth-accentBgHover border border-depth-accentBorder transition-all active:translate-y-px"
+              @click="continueSavedGame()"
+            >
+              Continue Game
+            </button>
+            <button
+              class="flex-1 py-3 rounded-xl font-bold text-app-text bg-app-bg hover:bg-app-surface border border-app-border transition-all active:translate-y-px"
+              @click="startOver()"
+            >
+              Start Over
+            </button>
+          </div>
+        </div>
+
+        <div
           v-for="level in presetLevels"
           :key="level.id"
           class="rounded-2xl border border-app-border bg-app-surface p-4 space-y-4"
@@ -188,7 +222,7 @@
         </div>
 
         <div
-          class="grid gap-2 py-2"
+          class="grid gap-1 py-2"
           :style="{
             gridTemplateColumns: `repeat(${Math.max(1, store.level.columns)}, minmax(0, 1fr))`,
           }"
@@ -199,22 +233,46 @@
             type="button"
             :disabled="!isPlayableStack(stack)"
             :class="stackCardClass(stack)"
-            class="w-[72px] h-24 rounded-xl border-2 flex items-center justify-center shadow-md transition-all duration-200 select-none disabled:cursor-not-allowed"
+            class="aspect-square w-full rounded-lg border flex items-center justify-center shadow-sm transition-all duration-200 select-none disabled:cursor-not-allowed"
             @click="handleStackClick(stack)"
           >
-            <template v-if="revealedCardForDisplay(stack)">
-              <span
-                :class="cardValueTextClass(revealedCardForDisplay(stack)?.value ?? 0)"
-                class="text-4xl font-black leading-none"
-              >
-                {{ revealedCardForDisplay(stack)?.value }}
-              </span>
+            <template v-if="stagedRevealFor(stack)">
+              <div class="flip-card h-[78%] w-[78%]">
+                <div class="flip-card__inner flip-card__inner--flipped">
+                  <div
+                    class="flip-card__face flip-card__face--back"
+                    :class="cardBackColorClass(stagedRevealFor(stack)?.backingColor ?? '')"
+                  />
+                  <div class="flip-card__face flip-card__face--front bg-app-surface">
+                    <span
+                      :class="[
+                        cardFrontAccentClass(stagedRevealFor(stack)?.backingColor ?? ''),
+                        cardValueSizeClass,
+                      ]"
+                      class="font-black leading-none"
+                    >
+                      {{ stagedRevealFor(stack)?.cardValue }}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </template>
-            <template v-else-if="isPlayableStack(stack)">
-              <div class="w-12 h-16 rounded-lg border border-semantic-info-600 opacity-40" />
+            <template v-else-if="topCardForDisplay(stack)">
+              <div
+                :class="cardBackColorClass(topCardForDisplay(stack)?.backingColor ?? '')"
+                class="h-[72%] w-[72%] rounded-md"
+              />
+            </template>
+            <template v-else-if="stack.cards.some((card) => card.revealed)">
+              <div class="text-[9px] font-semibold uppercase tracking-[0.18em] text-app-textMuted">
+                Cleared
+              </div>
             </template>
             <template v-else>
-              <div class="w-12 h-16 rounded-lg border border-semantic-info-700 opacity-25" />
+              <div
+                :class="cardBackColorClass(topCardForDisplay(stack)?.backingColor ?? '')"
+                class="h-[72%] w-[72%] rounded-md opacity-35"
+              />
             </template>
           </button>
         </div>
@@ -547,13 +605,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { DEPTH_LEVELS } from '@/game/DepthGame/constants/levels';
 import type {
   BuiltLevelDefinition,
   CardState,
+  RevealRecord,
   StackState,
   TurnRuleType,
 } from '@/game/DepthGame/types';
@@ -565,10 +624,15 @@ const router = useRouter();
 const presetLevels = DEPTH_LEVELS;
 const selectedLevelId = ref<number | null>(null);
 const showSupport = ref(true);
+const stagedReveals = ref<Array<RevealRecord & { stageId: string }>>([]);
+const stagedRevealTimeoutIds = new Set<number>();
 
 const showLevelSelect = computed(() => selectedLevelId.value === null || store.phase === 'idle');
 const selectedLevel = computed(
   () => presetLevels.find((level) => level.id === selectedLevelId.value) ?? null
+);
+const canContinueSavedGame = computed(
+  () => store.savedSessionSummary !== null && store.savedSessionSummary.levelSource === 'catalog'
 );
 const selectedRules = computed(() =>
   selectedLevel.value ? describeLevelRules(selectedLevel.value) : []
@@ -640,6 +704,22 @@ function returnToLevelSelect(): void {
   router.push({ name: 'depth-levels' });
 }
 
+function continueSavedGame(): void {
+  const resumed = store.continueSavedSession();
+  if (!resumed) {
+    return;
+  }
+
+  selectedLevelId.value = store.currentLevel;
+  router.push({ name: 'depth-level', params: { levelId: store.currentLevel } });
+}
+
+function startOver(): void {
+  selectedLevelId.value = null;
+  showSupport.value = true;
+  store.restartGame();
+}
+
 function describeLevelRules(level: BuiltLevelDefinition): string[] {
   const rules = [
     `The board is ${level.rows} rows by ${level.columns} columns with depth ${level.depth}.`,
@@ -676,12 +756,30 @@ function cardValueTextClass(value: number): string {
   return 'text-app-textMuted';
 }
 
-function revealedCardForDisplay(stack: StackState): CardState | null {
-  return [...stack.cards].reverse().find((card) => card.revealed) ?? null;
+function topCardForDisplay(stack: StackState): CardState | null {
+  return stack.cards.find((card) => !card.revealed) ?? null;
+}
+
+function stagedRevealFor(
+  stack: StackState
+): (RevealRecord & { stageId: string; backingColor?: string }) | null {
+  const stagedReveal = stagedReveals.value.find(
+    (reveal) => reveal.row === stack.row && reveal.col === stack.col
+  );
+
+  if (!stagedReveal) {
+    return null;
+  }
+
+  const matchingCard = stack.cards.find((card) => card.layerIndex === stagedReveal.layerIndex);
+  return {
+    ...stagedReveal,
+    backingColor: matchingCard?.backingColor,
+  };
 }
 
 function isPlayableStack(stack: StackState): boolean {
-  if (revealedCardForDisplay(stack)) {
+  if (stagedRevealFor(stack)) {
     return false;
   }
 
@@ -697,21 +795,60 @@ function isPlayableStack(stack: StackState): boolean {
 }
 
 function stackCardClass(stack: StackState): string {
-  if (revealedCardForDisplay(stack)) {
+  if (stagedRevealFor(stack)) {
     return 'border-app-border bg-app-surface';
   }
 
   const isActiveColumn = store.activeColumnIndex !== null && stack.col === store.activeColumnIndex;
+  const topCard = topCardForDisplay(stack);
+  if (!topCard) {
+    return 'border-app-border bg-app-surface text-app-textMuted';
+  }
+
+  const backColorClass = cardBackColorClass(topCardForDisplay(stack)?.backingColor ?? '');
 
   if (isPlayableStack(stack)) {
-    return 'border-semantic-info-700 bg-gradient-to-br from-semantic-info-800 to-semantic-info-900 hover:border-semantic-info-400';
+    return `${backColorClass} border-app-border hover:border-semantic-info-400`;
   }
 
   if (isActiveColumn) {
-    return 'border-semantic-info-700 bg-gradient-to-br from-semantic-info-800 to-semantic-info-900 opacity-70';
+    return `${backColorClass} border-app-border opacity-70`;
   }
 
-  return 'border-semantic-info-700 bg-gradient-to-br from-semantic-info-800 to-semantic-info-900 opacity-35';
+  return `${backColorClass} border-app-border opacity-35`;
+}
+
+const cardValueSizeClass = computed(() => {
+  if (store.level.columns >= 10) return 'text-sm';
+  if (store.level.columns >= 8) return 'text-base';
+  if (store.level.columns >= 6) return 'text-lg';
+  return 'text-2xl';
+});
+
+function cardBackColorClass(color: string): string {
+  switch (color) {
+    case 'blue':
+      return 'bg-semantic-info-700';
+    case 'orange':
+      return 'bg-semantic-warning-700';
+    case 'red':
+      return 'bg-semantic-danger-700';
+    default:
+      return 'bg-app-border';
+  }
+}
+
+function cardFrontAccentClass(color: string): string {
+  switch (color) {
+    case 'blue':
+      return 'text-semantic-info-400';
+    case 'orange':
+      return 'text-semantic-warning-400';
+    case 'red':
+      return 'text-semantic-danger-400';
+    default:
+      return 'text-app-text';
+  }
 }
 
 function betClass(amount: number): string {
@@ -734,15 +871,52 @@ function handleStackClick(stack: StackState): void {
 
   store.selectPosition({ row: stack.row, col: stack.col });
   store.revealNext();
+
+  const resolution = store.round.lastResolution;
+  if (!resolution) {
+    return;
+  }
+
+  stageReveals([...resolution.playerReveals, ...resolution.dealerReveals]);
+}
+
+function stageReveals(reveals: RevealRecord[]): void {
+  const nextStaged = reveals.map((reveal, index) => ({
+    ...reveal,
+    stageId: `${Date.now()}-${index}-${reveal.row}-${reveal.col}-${reveal.layerIndex}`,
+  }));
+
+  stagedReveals.value = [...nextStaged, ...stagedReveals.value];
+
+  for (const stagedReveal of nextStaged) {
+    const timeoutId = window.setTimeout(() => {
+      stagedReveals.value = stagedReveals.value.filter(
+        (item) => item.stageId !== stagedReveal.stageId
+      );
+      stagedRevealTimeoutIds.delete(timeoutId);
+    }, 3000);
+
+    stagedRevealTimeoutIds.add(timeoutId);
+  }
+}
+
+function clearStagedReveals(): void {
+  for (const timeoutId of stagedRevealTimeoutIds) {
+    window.clearTimeout(timeoutId);
+  }
+
+  stagedRevealTimeoutIds.clear();
+  stagedReveals.value = [];
 }
 
 watch(
   () => route.name,
   () => {
     if (route.name === 'depth-levels') {
+      clearStagedReveals();
       selectedLevelId.value = null;
       showSupport.value = true;
-      store.restartGame();
+      store.refreshSavedSessionSummary();
       return;
     }
 
@@ -759,11 +933,27 @@ watch(
     }
 
     if (selectedLevelId.value !== levelId) {
+      clearStagedReveals();
       loadLevelFromRoute(levelId);
     }
   },
   { immediate: true }
 );
+
+watch(
+  () => store.phase,
+  (phase) => {
+    if (phase === 'deck-preview' || phase === 'idle') {
+      clearStagedReveals();
+    }
+  }
+);
+
+onBeforeUnmount(() => {
+  clearStagedReveals();
+});
+
+store.initializePersistence();
 
 defineOptions({
   name: 'Game',
@@ -783,5 +973,35 @@ defineOptions({
 
 .h-18 {
   height: 4.5rem;
+}
+
+.flip-card {
+  perspective: 800px;
+}
+
+.flip-card__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.flip-card__inner--flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-card__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  backface-visibility: hidden;
+}
+
+.flip-card__face--front {
+  transform: rotateY(180deg);
 }
 </style>

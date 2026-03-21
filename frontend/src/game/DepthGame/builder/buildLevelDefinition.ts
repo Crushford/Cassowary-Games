@@ -1,6 +1,9 @@
 import { getDeckArchetype } from '../constants/deckArchetypes';
 import type { BuiltLevelDefinition, LevelInput } from '../types';
 
+const MAX_SURFACE_SIZE = 5;
+const MAX_DEPTH = 10;
+
 function assertPositiveInteger(value: number, label: string): void {
   if (!Number.isInteger(value) || value <= 0) {
     throw new Error(`${label} must be a positive integer`);
@@ -9,27 +12,39 @@ function assertPositiveInteger(value: number, label: string): void {
 
 function normalizeDeckMatrix(levelInput: LevelInput): string[][] {
   const {
-    board: { rows, depth },
+    board: { rows, columns, depth },
     decks,
   } = levelInput;
 
+  const validateDeck = (deckId: string) => {
+    const deck = getDeckArchetype(deckId);
+
+    if (deck.cards.length > 5) {
+      throw new Error(`Deck ${deckId} cannot contain more than 5 cards`);
+    }
+
+    if (deck.cards.length < columns) {
+      throw new Error(`Deck ${deckId} must contain at least ${columns} cards`);
+    }
+  };
+
   switch (decks.mode) {
     case 'uniform':
-      getDeckArchetype(decks.deckId);
+      validateDeck(decks.deckId);
       return Array.from({ length: rows }, () => Array.from({ length: depth }, () => decks.deckId));
 
     case 'by-depth':
       if (decks.depthDeckIds.length !== depth) {
         throw new Error(`Deck assignment depth count must equal depth (${depth})`);
       }
-      decks.depthDeckIds.forEach((deckId) => getDeckArchetype(deckId));
+      decks.depthDeckIds.forEach(validateDeck);
       return Array.from({ length: rows }, () => [...decks.depthDeckIds]);
 
     case 'by-row':
       if (decks.rowDeckIds.length !== rows) {
         throw new Error(`Deck assignment row count must equal rows (${rows})`);
       }
-      decks.rowDeckIds.forEach((deckId) => getDeckArchetype(deckId));
+      decks.rowDeckIds.forEach(validateDeck);
       return decks.rowDeckIds.map((deckId) => Array.from({ length: depth }, () => deckId));
 
     case 'row-depth-matrix':
@@ -41,7 +56,7 @@ function normalizeDeckMatrix(levelInput: LevelInput): string[][] {
         if (rowDeckIds.length !== depth) {
           throw new Error(`Deck matrix depth count must equal depth (${depth}) at row ${rowIndex}`);
         }
-        rowDeckIds.forEach((deckId) => getDeckArchetype(deckId));
+        rowDeckIds.forEach(validateDeck);
         return [...rowDeckIds];
       });
   }
@@ -61,6 +76,18 @@ export function buildLevelDefinition(levelInput: LevelInput): BuiltLevelDefiniti
 
   if (economy.minBet > economy.maxBet) {
     throw new Error('Min bet cannot exceed max bet');
+  }
+
+  if (board.rows > MAX_SURFACE_SIZE) {
+    throw new Error(`Rows cannot exceed ${MAX_SURFACE_SIZE}`);
+  }
+
+  if (board.columns > MAX_SURFACE_SIZE) {
+    throw new Error(`Columns cannot exceed ${MAX_SURFACE_SIZE}`);
+  }
+
+  if (board.depth > MAX_DEPTH) {
+    throw new Error(`Depth cannot exceed ${MAX_DEPTH}`);
   }
 
   const deckMatrix = normalizeDeckMatrix(levelInput);

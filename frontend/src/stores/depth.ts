@@ -51,6 +51,73 @@ interface SupportCard {
 }
 
 type LevelSource = 'catalog' | 'custom';
+const DEPTH_SAVE_KEY = 'depth-save-v1';
+
+interface DepthSavedSession {
+  version: 1;
+  savedAt: number;
+  level: BuiltLevelDefinition;
+  levelSource: LevelSource;
+  game: GameRunState;
+  round: RoundState;
+}
+
+interface DepthSavedSessionSummary {
+  levelId: number;
+  levelName: string;
+  bank: number;
+  currentRound: number;
+  rounds: number;
+  phase: GameRunState['phase'];
+  levelSource: LevelSource;
+}
+
+function canUseStorage(): boolean {
+  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+}
+
+function toSavedSessionSummary(snapshot: DepthSavedSession): DepthSavedSessionSummary {
+  return {
+    levelId: snapshot.level.id,
+    levelName: snapshot.level.name,
+    bank: snapshot.game.bank,
+    currentRound: snapshot.game.currentRound,
+    rounds: snapshot.level.rounds,
+    phase: snapshot.game.phase,
+    levelSource: snapshot.levelSource,
+  };
+}
+
+function shouldPersistSession(phase: GameRunState['phase']): boolean {
+  return !['idle', 'game-over', 'game-complete'].includes(phase);
+}
+
+function readSavedSession(): DepthSavedSession | null {
+  if (!canUseStorage()) {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(DEPTH_SAVE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as DepthSavedSession;
+    if (parsed?.version !== 1 || !parsed.level || !parsed.game || !parsed.round) {
+      return null;
+    }
+
+    return parsed;
+  } catch (error) {
+    console.error('[Depth] Failed to read saved session:', error);
+    return null;
+  }
+}
+
+function cloneSerializable<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
 
 function toPreviewPhase(): GameRunState['phase'] {
   return 'preview';
@@ -91,6 +158,14 @@ function toLegacyRevealedCard(record: RevealRecord): RevealedCard {
     payout: record.payout,
     net: record.net,
   };
+}
+
+function debugLog(enabled: boolean | undefined, event: string, payload: Record<string, unknown>) {
+  if (!enabled) {
+    return;
+  }
+
+  console.debug(`[Depth] ${event}`, payload);
 }
 
 function getLegacyTopLayerCards(level: BuiltLevelDefinition, board: RoundState['board']): number[] {
@@ -147,6 +222,9 @@ export const useDepthStore = defineStore('depth', {
       levelSource: 'catalog' as LevelSource,
       game: createGameRunState(level),
       round: createRoundState(level.startingBank),
+      savedSessionSummary: null as DepthSavedSessionSummary | null,
+      persistenceInitialized: false,
+      persistenceHydrating: false,
     };
   },
 
@@ -238,7 +316,18 @@ export const useDepthStore = defineStore('depth', {
     currentCardIndex: (state) => state.round.history.length,
 
     cardsRemaining(): number {
-      return this.accessiblePositions.length;
+      if (!this.round.board) {
+        return 0;
+      }
+
+      return this.round.board.stacks.reduce((total, row) => {
+        return (
+          total +
+          row.reduce((rowTotal, stack) => {
+            return rowTotal + stack.cards.filter((card) => !card.revealed).length;
+          }, 0)
+        );
+      }, 0);
     },
 
     averageRemainingValue(): number | null {
@@ -306,9 +395,86 @@ export const useDepthStore = defineStore('depth', {
         testing: state.level.testing ?? null,
       };
     },
+
+    hasSavedSession: (state) => state.savedSessionSummary !== null,
   },
 
   actions: {
+    initializePersistence() {
+      if (this.persistenceInitialized) {
+        return;
+      }
+
+      this.persistenceInitialized = true;
+      this.refreshSavedSessionSummary();
+
+      this.$subscribe(() => {
+        if (this.persistenceHydrating) {
+          return;
+        }
+
+        this.persistSession();
+      });
+    },
+
+    buildSavedSession(): DepthSavedSession {
+      return {
+        version: 1,
+        savedAt: Date.now(),
+        level: cloneSerializable(this.level),
+        levelSource: this.levelSource,
+        game: cloneSerializable(this.game),
+        round: cloneSerializable(this.round),
+      };
+    },
+
+    persistSession() {
+      if (!canUseStorage()) {
+        return;
+      }
+
+      if (!shouldPersistSession(this.game.phase)) {
+        this.clearSavedSession();
+        return;
+      }
+
+      try {
+        const snapshot = this.buildSavedSession();
+        window.localStorage.setItem(DEPTH_SAVE_KEY, JSON.stringify(snapshot));
+      } catch (error) {
+        console.error('[Depth] Failed to save session:', error);
+      }
+    },
+
+    refreshSavedSessionSummary() {
+      const snapshot = readSavedSession();
+      this.savedSessionSummary = snapshot ? toSavedSessionSummary(snapshot) : null;
+    },
+
+    clearSavedSession() {
+      if (canUseStorage()) {
+        window.localStorage.removeItem(DEPTH_SAVE_KEY);
+      }
+      this.savedSessionSummary = null;
+    },
+
+    continueSavedSession(): boolean {
+      const snapshot = readSavedSession();
+      if (!snapshot) {
+        this.savedSessionSummary = null;
+        return false;
+      }
+
+      this.persistenceHydrating = true;
+      this.level = snapshot.level;
+      this.levelSource = snapshot.levelSource;
+      this.game = snapshot.game;
+      this.round = snapshot.round;
+      this.savedSessionSummary = toSavedSessionSummary(snapshot);
+      this.persistenceHydrating = false;
+      return true;
+    },
+
     loadBuiltLevel(
       level: BuiltLevelDefinition,
       options?: { bank?: number; source?: LevelSource; phase?: GameRunState['phase'] }
@@ -399,6 +565,13 @@ export const useDepthStore = defineStore('depth', {
       }
 
       this.round.selectedPosition = position;
+      debugLog(this.level.testing?.debugLogging, 'player-select', {
+        levelId: this.level.id,
+        row: position.row,
+        col: position.col,
+        activeColumn: this.activeColumnIndex,
+        bet: this.round.pendingBet,
+      });
     },
 
     revealSelected() {
@@ -428,12 +601,31 @@ export const useDepthStore = defineStore('depth', {
       this.round.lastResolution = resolution;
       this.game.bank = resolution.nextBank;
 
-      if (this.level.testing?.debugLogging) {
-        console.debug('[Depth]', {
+      debugLog(this.level.testing?.debugLogging, 'turn-resolved', {
+        levelId: this.level.id,
+        turnRule: this.level.turnRule,
+        playerSelection: position,
+        bet: this.round.pendingBet,
+        playerReveals: resolution.playerReveals.map((reveal) => ({
+          row: reveal.row,
+          col: reveal.col,
+          value: reveal.cardValue,
+          actor: reveal.revealedBy,
+        })),
+        dealerReveals: resolution.dealerReveals.map((reveal) => ({
+          row: reveal.row,
+          col: reveal.col,
+          value: reveal.cardValue,
+          actor: reveal.revealedBy,
+        })),
+      });
+
+      for (const reveal of resolution.dealerReveals) {
+        debugLog(this.level.testing?.debugLogging, 'dealer-select', {
           levelId: this.level.id,
-          turnRule: this.level.turnRule,
-          position,
-          resolution,
+          row: reveal.row,
+          col: reveal.col,
+          value: reveal.cardValue,
         });
       }
 
@@ -508,6 +700,7 @@ export const useDepthStore = defineStore('depth', {
     },
 
     restartGame() {
+      this.clearSavedSession();
       this.loadLevel(1, { phase: 'idle' });
     },
   },
