@@ -7,7 +7,6 @@ function card(value: number, revealed = false): CardState {
   return {
     value,
     backingColor: 'blue',
-    archetypeId: 'blue-starter',
     layerIndex: 0,
     revealed,
     revealedBy: revealed ? 'player' : null,
@@ -96,7 +95,6 @@ describe('getRowAverageAccessibleValue', () => {
           {
             value: 3,
             backingColor: 'blue',
-            archetypeId: 'blue-starter',
             layerIndex: 0,
             revealed: true,
             revealedBy: 'player',

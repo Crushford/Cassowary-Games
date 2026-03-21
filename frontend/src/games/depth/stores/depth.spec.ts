@@ -9,7 +9,7 @@ function singleStackLevel(overrides: Partial<LevelInput> = {}): LevelInput {
     metadata: { id: 950, name: 'Single Stack' },
     economy: { startingBank: 10, rounds: 1, minBet: 1, maxBet: 5 },
     board: { rows: 1, columns: 1, depth: 1 },
-    decks: { mode: 'uniform', deckId: 'blue-starter' },
+    decks: { mode: 'uniform', deckId: 'blue' },
     rules: { turnRule: 'basic-reveal' },
     support: { supportMode: 'exact' },
     testing: { forcedDeckOrder: [3, 2, 0, 0, 0] },
@@ -62,8 +62,8 @@ describe('useDepthStore', () => {
       decks: {
         mode: 'row-depth-matrix',
         matrix: [
-          ['blue-starter', 'red-spike'],
-          ['red-spike', 'blue-starter'],
+          ['blue', 'red'],
+          ['red', 'blue'],
         ],
       },
       rules: {
@@ -88,8 +88,8 @@ describe('useDepthStore', () => {
     expect(store.board?.columns).toBe(5);
     expect(store.board?.depth).toBe(2);
     expect(store.deckMatrix).toEqual([
-      ['blue-starter', 'red-spike'],
-      ['red-spike', 'blue-starter'],
+      ['blue', 'red'],
+      ['red', 'blue'],
     ]);
   });
 
@@ -155,7 +155,7 @@ describe('useDepthStore', () => {
       },
       decks: {
         mode: 'uniform',
-        deckId: 'blue-starter',
+        deckId: 'blue',
       },
       rules: {
         turnRule: 'basic-reveal',
@@ -377,7 +377,7 @@ describe('useDepthStore', () => {
         metadata: { id: 951, name: 'Depth Test' },
         economy: { startingBank: 10, rounds: 1, minBet: 1, maxBet: 5 },
         board: { rows: 1, columns: 2, depth: 2 },
-        decks: { mode: 'by-depth', depthDeckIds: ['blue-starter', 'blue-starter'] },
+        decks: { mode: 'by-depth', depthDeckIds: ['blue', 'blue'] },
         rules: { turnRule: 'basic-reveal' },
         support: { supportMode: 'exact' },
         testing: { forcedDeckOrder: [3, 2, 0, 0, 0] },
@@ -433,7 +433,7 @@ describe('useDepthStore', () => {
       },
       decks: {
         mode: 'uniform',
-        deckId: 'blue-starter',
+        deckId: 'blue',
       },
       rules: {
         turnRule: 'dealer-follow-up',

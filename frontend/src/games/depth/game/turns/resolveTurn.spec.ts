@@ -10,7 +10,7 @@ function makeLevel(turnRule: LevelInput['rules']['turnRule'], extra: Partial<Lev
     metadata: { id: 1, name: 'Test' },
     economy: { startingBank: 10, rounds: 1, minBet: 1, maxBet: 5 },
     board: { rows: 1, columns: 3, depth: 1 },
-    decks: { mode: 'uniform', deckId: 'blue-starter' },
+    decks: { mode: 'uniform', deckId: 'blue' },
     rules: { turnRule },
     support: {},
     testing: { forcedDeckOrder: [3, 2, 0, 0, 0] },
@@ -33,7 +33,7 @@ describe('resolveTurn', () => {
     // 3-row × 1-col board, forced values [3, 2, 0] (one per row via forcedDeckOrder)
     const level = makeLevel('column-reveal', {
       board: { rows: 3, columns: 1, depth: 1 },
-      decks: { mode: 'uniform', deckId: 'blue-starter' },
+      decks: { mode: 'uniform', deckId: 'blue' },
       testing: { forcedDeckOrder: [3, 2, 0, 0, 0] },
     });
     const b = buildBoard(level);
@@ -50,7 +50,7 @@ describe('resolveTurn', () => {
   it('dispatches column-choice-reveal, reveals the whole column, and only pays on the chosen card', () => {
     const level = makeLevel('column-choice-reveal', {
       board: { rows: 3, columns: 1, depth: 1 },
-      decks: { mode: 'uniform', deckId: 'blue-starter' },
+      decks: { mode: 'uniform', deckId: 'blue' },
       testing: { forcedDeckOrder: [3, 2, 0, 0, 0] },
     });
     const b = buildBoard(level);
@@ -67,7 +67,7 @@ describe('resolveTurn', () => {
   it('dispatches dealer-follow-up and produces both player and dealer reveals', () => {
     const level = makeLevel('dealer-follow-up', {
       board: { rows: 1, columns: 2, depth: 1 },
-      decks: { mode: 'uniform', deckId: 'blue-starter' },
+      decks: { mode: 'uniform', deckId: 'blue' },
       testing: { forcedDeckOrder: [3, 2, 0, 0, 0] },
     });
     const b = buildBoard(level);

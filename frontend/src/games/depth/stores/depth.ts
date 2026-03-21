@@ -19,6 +19,7 @@ import { isLevelComplete } from '@/games/depth/game/rules/progression';
 import { resolveTurn } from '@/games/depth/game/turns/resolveTurn';
 import type {
   BuiltLevelDefinition,
+  DeckArchetype,
   GameRunState,
   LevelInput,
   PositionRef,
@@ -28,14 +29,6 @@ import type {
 
 export type { RiskProfile } from '@/games/depth/game/types';
 export type { BuiltLevelDefinition, LevelInput, PositionRef } from '@/games/depth/game/types';
-
-interface DeckDefinition {
-  id: string;
-  name: string;
-  cards: number[];
-  backingColor: string;
-  riskProfile: 'forty' | 'twenty' | 'single';
-}
 
 interface RevealedCard {
   value: number;
@@ -143,7 +136,7 @@ function createRoundState(bank: number): RoundState {
   };
 }
 
-function getPrimaryDeck(level: BuiltLevelDefinition): DeckDefinition {
+function getPrimaryDeck(level: BuiltLevelDefinition): DeckArchetype {
   const primaryDeckId = level.deckMatrix[0]?.[0];
   if (!primaryDeckId) {
     throw new Error(`Level ${level.id} does not have a primary deck assignment`);
@@ -303,7 +296,7 @@ export const useDepthStore = defineStore('depth', {
 
     roundProfit: (state) => state.game.bank - state.round.roundStartBank,
 
-    deckDefinition: (state): DeckDefinition => getPrimaryDeck(state.level),
+    deckDefinition: (state): DeckArchetype => getPrimaryDeck(state.level),
 
     shuffledCards(): number[] {
       return getLegacyTopLayerCards(this.level, this.round.board);

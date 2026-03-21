@@ -104,8 +104,8 @@
             <label class="builder-field">
               <span>Deck</span>
               <select :value="modelValue.decks.deckId" @change="updateUniformDeck">
-                <option v-for="deck in decks" :key="deck.id" :value="deck.id">
-                  {{ deck.name }}
+                <option v-for="deckColor in decks" :key="deckColor" :value="deckColor">
+                  {{ formatDeckColor(deckColor) }}
                 </option>
               </select>
             </label>
@@ -123,8 +123,8 @@
                   :value="deckId"
                   @change="updateDepthDeck(depthIndex, ($event.target as HTMLSelectElement).value)"
                 >
-                  <option v-for="deck in decks" :key="deck.id" :value="deck.id">
-                    {{ deck.name }}
+                  <option v-for="deckColor in decks" :key="deckColor" :value="deckColor">
+                    {{ formatDeckColor(deckColor) }}
                   </option>
                 </select>
               </label>
@@ -143,8 +143,8 @@
                   :value="deckId"
                   @change="updateRowDeck(rowIndex, ($event.target as HTMLSelectElement).value)"
                 >
-                  <option v-for="deck in decks" :key="deck.id" :value="deck.id">
-                    {{ deck.name }}
+                  <option v-for="deckColor in decks" :key="deckColor" :value="deckColor">
+                    {{ formatDeckColor(deckColor) }}
                   </option>
                 </select>
               </label>
@@ -183,8 +183,8 @@
                         )
                       "
                     >
-                      <option v-for="deck in decks" :key="deck.id" :value="deck.id">
-                        {{ deck.name }}
+                      <option v-for="deckColor in decks" :key="deckColor" :value="deckColor">
+                        {{ formatDeckColor(deckColor) }}
                       </option>
                     </select>
                   </label>
@@ -326,16 +326,17 @@
 
 <script setup lang="ts">
 import SharedAccordion from '@/shared/components/Accordion.vue';
+import { formatDeckColor, isDeckColor } from '@/games/depth/game/constants/deckArchetypes';
 import type {
-  DeckArchetype,
   DeckAssignmentMode,
+  DeckColor,
   LevelInput,
   TurnRuleType,
 } from '@/games/depth/game/types';
 
 const props = defineProps<{
   modelValue: LevelInput;
-  decks: DeckArchetype[];
+  decks: DeckColor[];
   error: string;
 }>();
 
@@ -372,8 +373,8 @@ function readNumber(path: string): number {
   return source[key];
 }
 
-function firstDeckId(): string {
-  return props.decks[0]?.id ?? 'blue-starter';
+function firstDeckId(): DeckColor {
+  return props.decks[0] ?? 'blue';
 }
 
 function normalizeDraft(draft: LevelInput): LevelInput {
@@ -499,14 +500,17 @@ function updateDeckMode(event: Event): void {
 function updateUniformDeck(event: Event): void {
   setValue((draft) => {
     if (draft.decks.mode === 'uniform') {
-      draft.decks.deckId = (event.target as HTMLSelectElement).value;
+      const deckColor = (event.target as HTMLSelectElement).value;
+      if (isDeckColor(deckColor)) {
+        draft.decks.deckId = deckColor;
+      }
     }
   });
 }
 
 function updateDepthDeck(index: number, deckId: string): void {
   setValue((draft) => {
-    if (draft.decks.mode === 'by-depth') {
+    if (draft.decks.mode === 'by-depth' && isDeckColor(deckId)) {
       draft.decks.depthDeckIds[index] = deckId;
     }
   });
@@ -514,7 +518,7 @@ function updateDepthDeck(index: number, deckId: string): void {
 
 function updateRowDeck(index: number, deckId: string): void {
   setValue((draft) => {
-    if (draft.decks.mode === 'by-row') {
+    if (draft.decks.mode === 'by-row' && isDeckColor(deckId)) {
       draft.decks.rowDeckIds[index] = deckId;
     }
   });
@@ -522,7 +526,7 @@ function updateRowDeck(index: number, deckId: string): void {
 
 function updateMatrixDeck(rowIndex: number, depthIndex: number, deckId: string): void {
   setValue((draft) => {
-    if (draft.decks.mode === 'row-depth-matrix') {
+    if (draft.decks.mode === 'row-depth-matrix' && isDeckColor(deckId)) {
       draft.decks.matrix[rowIndex][depthIndex] = deckId;
     }
   });
@@ -588,44 +592,29 @@ defineOptions({
 
 <style scoped>
 .builder-field {
-  display: grid;
-  gap: 0.5rem;
-  color: var(--color-text-muted, #9ca3af);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
+  @apply grid gap-2 text-app-textMuted text-xs font-semibold uppercase tracking-[0.12em];
 }
 
 .builder-field input,
 .builder-field select,
 .builder-field textarea {
-  width: 100%;
-  border-radius: 1rem;
+  @apply w-full rounded-2xl px-[0.85rem] py-[0.7rem] text-[0.85rem] font-medium normal-case tracking-normal;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(9, 13, 18, 0.8);
   color: #f5f7fb;
-  padding: 0.7rem 0.85rem;
-  font-size: 0.85rem;
-  font-weight: 500;
-  text-transform: none;
-  letter-spacing: normal;
 }
 
 .builder-field textarea {
-  resize: vertical;
+  @apply resize-y;
 }
 
 .toggle-field {
-  border-radius: 1rem;
+  @apply rounded-2xl p-[0.85rem];
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(9, 13, 18, 0.8);
-  padding: 0.85rem;
 }
 
 .toggle-field input {
-  width: 1rem;
-  height: 1rem;
-  padding: 0;
+  @apply size-4 p-0;
 }
 </style>

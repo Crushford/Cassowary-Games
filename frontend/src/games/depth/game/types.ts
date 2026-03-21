@@ -8,6 +8,7 @@ export type DepthPhase =
   | 'game-complete';
 
 export type RiskProfile = 'forty' | 'twenty' | 'single';
+export type DeckColor = 'blue' | 'red';
 
 export type TurnRuleType =
   | 'basic-reveal'
@@ -22,10 +23,7 @@ export type RevealActor = 'player' | 'dealer' | 'effect';
 export type DeckAssignmentMode = 'uniform' | 'by-depth' | 'by-row' | 'row-depth-matrix';
 
 export interface DeckArchetype {
-  id: string;
-  name: string;
   cards: number[];
-  backingColor: string;
   riskProfile: RiskProfile;
 }
 
@@ -52,22 +50,22 @@ export interface LevelBoardInput {
 
 export interface UniformDeckAssignmentInput {
   mode: 'uniform';
-  deckId: string;
+  deckId: DeckColor;
 }
 
 export interface ByDepthDeckAssignmentInput {
   mode: 'by-depth';
-  depthDeckIds: string[];
+  depthDeckIds: DeckColor[];
 }
 
 export interface ByRowDeckAssignmentInput {
   mode: 'by-row';
-  rowDeckIds: string[];
+  rowDeckIds: DeckColor[];
 }
 
 export interface RowDepthMatrixDeckAssignmentInput {
   mode: 'row-depth-matrix';
-  matrix: string[][];
+  matrix: DeckColor[][];
 }
 
 export type LevelDeckAssignmentInput =
@@ -126,14 +124,13 @@ export interface BuiltLevelDefinition {
   showBoardAverage: boolean;
   dealerEnabled: boolean;
   dealerAfterPlayer: boolean;
-  deckMatrix: string[][];
+  deckMatrix: DeckColor[][];
   testing?: LevelTestingInput;
 }
 
 export interface CardState {
   value: number;
   backingColor: string;
-  archetypeId: string;
   layerIndex: number;
   revealed: boolean;
   revealedBy: RevealActor | null;

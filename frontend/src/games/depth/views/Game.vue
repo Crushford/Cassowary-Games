@@ -222,7 +222,7 @@
         </div>
 
         <div
-          class="grid gap-1 py-2"
+          class="grid gap-2 py-2"
           :style="{
             gridTemplateColumns: `repeat(${Math.max(1, store.level.columns)}, minmax(0, 1fr))`,
           }"
@@ -233,17 +233,21 @@
             type="button"
             :disabled="!isPlayableStack(stack)"
             :class="stackCardClass(stack)"
-            class="aspect-square w-full rounded-lg border flex items-center justify-center shadow-sm transition-all duration-200 select-none disabled:cursor-not-allowed"
+            class="w-full min-h-[5.75rem] rounded-lg border px-2 py-3 flex items-center justify-center shadow-sm transition-all duration-200 select-none disabled:cursor-not-allowed"
             @click="handleStackClick(stack)"
           >
             <template v-if="stagedRevealFor(stack)">
-              <div class="flip-card h-[78%] w-[78%]">
-                <div class="flip-card__inner flip-card__inner--flipped">
+              <div class="[perspective:800px] h-[78%] w-[78%]">
+                <div
+                  class="relative w-full h-full [transform-style:preserve-3d] [transition:transform_0.55s_cubic-bezier(0.2,0.8,0.2,1)] [transform:rotateY(180deg)]"
+                >
                   <div
-                    class="flip-card__face flip-card__face--back"
+                    class="absolute inset-0 flex items-center justify-center rounded-lg [backface-visibility:hidden]"
                     :class="cardBackColorClass(stagedRevealFor(stack)?.backingColor ?? '')"
                   />
-                  <div class="flip-card__face flip-card__face--front bg-app-surface">
+                  <div
+                    class="absolute inset-0 flex items-center justify-center rounded-lg [backface-visibility:hidden] [transform:rotateY(180deg)] bg-app-surface"
+                  >
                     <span
                       :class="[
                         cardFrontAccentClass(stagedRevealFor(stack)?.backingColor ?? ''),
@@ -257,15 +261,32 @@
                 </div>
               </div>
             </template>
-            <template v-else-if="topCardForDisplay(stack)">
-              <div
-                :class="cardBackColorClass(topCardForDisplay(stack)?.backingColor ?? '')"
-                class="h-[72%] w-[72%] rounded-md"
-              />
+            <template v-else-if="visibleStackCards(stack).length > 0">
+              <div class="relative" :style="stackStageStyle(stack)">
+                <div
+                  v-for="card in visibleStackCards(stack)"
+                  :key="`${stack.row}-${stack.col}-${card.layerIndex}`"
+                  class="absolute w-7 h-10 [border-radius:0.45rem] border border-white/[0.14] [box-shadow:0_8px_18px_rgba(0,0,0,0.18)]"
+                  :class="cardBackColorClass(card.backingColor)"
+                  :style="stackCardStyle(card, stack)"
+                />
+              </div>
             </template>
-            <template v-else-if="stack.cards.some((card) => card.revealed)">
-              <div class="text-[9px] font-semibold uppercase tracking-[0.18em] text-app-textMuted">
-                Cleared
+            <template v-else-if="finalRevealedCard(stack)">
+              <div class="relative" :style="stackStageStyle(stack, 1)">
+                <div
+                  class="absolute w-7 h-10 [border-radius:0.45rem] border border-white/[0.14] [box-shadow:0_8px_18px_rgba(0,0,0,0.18)] right-0 bottom-0 flex items-center justify-center bg-app-surface"
+                >
+                  <span
+                    :class="[
+                      cardFrontAccentClass(finalRevealedCard(stack)?.backingColor ?? ''),
+                      cardValueSizeClass,
+                    ]"
+                    class="font-black leading-none"
+                  >
+                    {{ finalRevealedCard(stack)?.value }}
+                  </span>
+                </div>
               </div>
             </template>
             <template v-else>
@@ -639,7 +660,7 @@ const selectedRules = computed(() =>
 );
 const deckAverage = computed(() => {
   const cards = store.deckDefinition.cards;
-  return cards.reduce((a, b) => a + b, 0) / cards.length;
+  return cards.reduce((a: number, b: number) => a + b, 0) / cards.length;
 });
 const averageValueClass = computed(() => {
   const avg = store.averageRemainingValue;
@@ -760,6 +781,18 @@ function topCardForDisplay(stack: StackState): CardState | null {
   return stack.cards.find((card) => !card.revealed) ?? null;
 }
 
+function visibleStackCards(stack: StackState): CardState[] {
+  return stack.cards.filter((card) => !card.revealed);
+}
+
+function finalRevealedCard(stack: StackState): CardState | null {
+  if (visibleStackCards(stack).length > 0) {
+    return null;
+  }
+
+  return stack.cards.at(-1) ?? null;
+}
+
 function stagedRevealFor(
   stack: StackState
 ): (RevealRecord & { stageId: string; backingColor?: string }) | null {
@@ -805,17 +838,39 @@ function stackCardClass(stack: StackState): string {
     return 'border-app-border bg-app-surface text-app-textMuted';
   }
 
-  const backColorClass = cardBackColorClass(topCardForDisplay(stack)?.backingColor ?? '');
-
   if (isPlayableStack(stack)) {
-    return `${backColorClass} border-app-border hover:border-semantic-info-400`;
+    return 'border-app-border bg-app-surface hover:border-semantic-info-400';
   }
 
   if (isActiveColumn) {
-    return `${backColorClass} border-app-border opacity-70`;
+    return 'border-app-border bg-app-surface opacity-80';
   }
 
-  return `${backColorClass} border-app-border opacity-35`;
+  return 'border-app-border bg-app-surface opacity-45';
+}
+
+const stackLayerOffset = 4;
+const stackCardWidth = 28;
+const stackCardHeight = 40;
+
+function stackStageStyle(stack: StackState, forcedLayers?: number): Record<string, string> {
+  const layers = Math.max(1, forcedLayers ?? visibleStackCards(stack).length);
+  return {
+    width: `${stackCardWidth + (layers - 1) * stackLayerOffset}px`,
+    height: `${stackCardHeight + (layers - 1) * stackLayerOffset}px`,
+  };
+}
+
+function stackCardStyle(card: CardState, stack: StackState): Record<string, string> {
+  const cards = visibleStackCards(stack);
+  const index = cards.findIndex((item) => item.layerIndex === card.layerIndex);
+  const offset = Math.max(0, cards.length - 1 - index) * stackLayerOffset;
+
+  return {
+    right: `${offset}px`,
+    bottom: `${offset}px`,
+    zIndex: `${cards.length - index}`,
+  };
 }
 
 const cardValueSizeClass = computed(() => {
@@ -969,39 +1024,5 @@ defineOptions({
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-}
-
-.h-18 {
-  height: 4.5rem;
-}
-
-.flip-card {
-  perspective: 800px;
-}
-
-.flip-card__inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
-  transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.flip-card__inner--flipped {
-  transform: rotateY(180deg);
-}
-
-.flip-card__face {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.5rem;
-  backface-visibility: hidden;
-}
-
-.flip-card__face--front {
-  transform: rotateY(180deg);
 }
 </style>

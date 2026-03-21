@@ -10,8 +10,8 @@ export function buildBoard(
   const stacks: StackState[][] = [];
 
   for (let row = 0; row < level.rows; row += 1) {
-    const rowLayers = level.deckMatrix[row].map((deckId, layerIndex) => {
-      const archetype = getDeckArchetype(deckId);
+    const rowLayers = level.deckMatrix[row].map((deckColor, layerIndex) => {
+      const archetype = getDeckArchetype(deckColor);
       const forcedOrder = level.testing?.forcedDeckOrder;
       const cards =
         forcedOrder && forcedOrder.length === archetype.cards.length
@@ -23,11 +23,11 @@ export function buildBoard(
 
       if (cards.length < level.columns) {
         throw new Error(
-          `Deck ${deckId} does not have enough cards for ${level.columns} columns at row ${row}, depth ${layerIndex}`
+          `Deck ${deckColor} does not have enough cards for ${level.columns} columns at row ${row}, depth ${layerIndex}`
         );
       }
 
-      return { archetype, layerIndex, cards };
+      return { archetype, layerIndex, cards, deckColor };
     });
 
     const rowStacks: StackState[] = [];
@@ -35,8 +35,7 @@ export function buildBoard(
     for (let col = 0; col < level.columns; col += 1) {
       const stackCards: CardState[] = rowLayers.map((layerInfo) => ({
         value: layerInfo.cards[col],
-        backingColor: layerInfo.archetype.backingColor,
-        archetypeId: layerInfo.archetype.id,
+        backingColor: layerInfo.deckColor,
         layerIndex: layerInfo.layerIndex,
         revealed: false,
         revealedBy: null,

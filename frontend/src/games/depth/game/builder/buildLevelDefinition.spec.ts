@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildLevelDefinition } from './buildLevelDefinition';
-import type { LevelInput } from '../types';
+import type { DeckColor, LevelInput } from '../types';
 
 function baseInput(overrides: Partial<LevelInput> = {}): LevelInput {
   return {
     metadata: { id: 1, name: 'Test' },
     economy: { startingBank: 20, rounds: 3, minBet: 1, maxBet: 5 },
     board: { rows: 3, columns: 5, depth: 2 },
-    decks: { mode: 'uniform', deckId: 'blue-starter' },
+    decks: { mode: 'uniform', deckId: 'blue' },
     rules: { turnRule: 'basic-reveal' },
     support: {},
     ...overrides,
@@ -35,7 +35,7 @@ describe('buildLevelDefinition', () => {
       },
       decks: {
         mode: 'uniform',
-        deckId: 'blue-starter',
+        deckId: 'blue',
       },
       rules: {
         turnRule: 'basic-reveal',
@@ -46,8 +46,8 @@ describe('buildLevelDefinition', () => {
     const level = buildLevelDefinition(input);
 
     expect(level.deckMatrix).toEqual([
-      ['blue-starter', 'blue-starter'],
-      ['blue-starter', 'blue-starter'],
+      ['blue', 'blue'],
+      ['blue', 'blue'],
     ]);
     expect(level.supportMode).toBe('exact');
     expect(level.showExactRemainingValues).toBe(true);
@@ -72,7 +72,7 @@ describe('buildLevelDefinition', () => {
       },
       decks: {
         mode: 'row-depth-matrix',
-        matrix: [['blue-starter'], ['red-spike', 'blue-starter']],
+        matrix: [['blue'], ['red', 'blue']],
       },
       rules: {
         turnRule: 'basic-reveal',
@@ -91,14 +91,14 @@ describe('buildLevelDefinition', () => {
     const level = buildLevelDefinition(
       baseInput({
         board: { rows: 3, columns: 5, depth: 2 },
-        decks: { mode: 'by-depth', depthDeckIds: ['blue-starter', 'red-spike'] },
+        decks: { mode: 'by-depth', depthDeckIds: ['blue', 'red'] },
       })
     );
 
     expect(level.deckMatrix).toEqual([
-      ['blue-starter', 'red-spike'],
-      ['blue-starter', 'red-spike'],
-      ['blue-starter', 'red-spike'],
+      ['blue', 'red'],
+      ['blue', 'red'],
+      ['blue', 'red'],
     ]);
   });
 
@@ -106,17 +106,17 @@ describe('buildLevelDefinition', () => {
     const level = buildLevelDefinition(
       baseInput({
         board: { rows: 3, columns: 5, depth: 1 },
-        decks: { mode: 'by-row', rowDeckIds: ['blue-starter', 'red-spike', 'blue-starter'] },
+        decks: { mode: 'by-row', rowDeckIds: ['blue', 'red', 'blue'] },
       })
     );
 
-    expect(level.deckMatrix).toEqual([['blue-starter'], ['red-spike'], ['blue-starter']]);
+    expect(level.deckMatrix).toEqual([['blue'], ['red'], ['blue']]);
   });
 
   it('preserves an explicit row-depth matrix exactly', () => {
-    const matrix = [
-      ['blue-starter', 'red-spike'],
-      ['red-spike', 'blue-starter'],
+    const matrix: DeckColor[][] = [
+      ['blue', 'red'],
+      ['red', 'blue'],
     ];
     const level = buildLevelDefinition(
       baseInput({
@@ -142,7 +142,7 @@ describe('buildLevelDefinition', () => {
       buildLevelDefinition(
         baseInput({
           board: { rows: 3, columns: 5, depth: 3 },
-          decks: { mode: 'by-depth', depthDeckIds: ['blue-starter', 'red-spike'] },
+          decks: { mode: 'by-depth', depthDeckIds: ['blue', 'red'] },
         })
       )
     ).toThrow('depth (3)');
@@ -153,7 +153,7 @@ describe('buildLevelDefinition', () => {
       buildLevelDefinition(
         baseInput({
           board: { rows: 4, columns: 5, depth: 1 },
-          decks: { mode: 'by-row', rowDeckIds: ['blue-starter', 'red-spike', 'blue-starter'] },
+          decks: { mode: 'by-row', rowDeckIds: ['blue', 'red', 'blue'] },
         })
       )
     ).toThrow('rows (4)');
@@ -167,8 +167,8 @@ describe('buildLevelDefinition', () => {
           decks: {
             mode: 'row-depth-matrix',
             matrix: [
-              ['blue-starter', 'red-spike'],
-              ['red-spike', 'blue-starter'],
+              ['blue', 'red'],
+              ['red', 'blue'],
             ],
           },
         })
@@ -178,7 +178,9 @@ describe('buildLevelDefinition', () => {
 
   it('throws for an unknown deck id', () => {
     expect(() =>
-      buildLevelDefinition(baseInput({ decks: { mode: 'uniform', deckId: 'fake-deck' } }))
+      buildLevelDefinition(
+        baseInput({ decks: { mode: 'uniform', deckId: 'fake-deck' as DeckColor } })
+      )
     ).toThrow('Unknown Depth deck archetype');
   });
 
@@ -225,7 +227,7 @@ describe('buildLevelDefinition', () => {
       },
       decks: {
         mode: 'uniform',
-        deckId: 'blue-starter',
+        deckId: 'blue',
       },
       rules: {
         turnRule: 'dealer-follow-up',
