@@ -1,5 +1,5 @@
 import { createPinia, setActivePinia } from 'pinia';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LevelInput } from '@/game/DepthGame/types';
 import { useDepthStore } from './depth';
@@ -19,7 +19,26 @@ function singleStackLevel(overrides: Partial<LevelInput> = {}): LevelInput {
 
 describe('useDepthStore', () => {
   beforeEach(() => {
+    const storage = (() => {
+      const values = new Map<string, string>();
+      return {
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: (key: string, value: string) => values.set(key, value),
+        removeItem: (key: string) => values.delete(key),
+        clear: () => values.clear(),
+      };
+    })();
+
+    vi.stubGlobal('localStorage', storage);
+    vi.stubGlobal('window', {
+      localStorage: storage,
+      setTimeout,
+      clearTimeout,
+      setInterval,
+      clearInterval,
+    });
     setActivePinia(createPinia());
+    localStorage.clear();
   });
 
   it('builds a custom level input into a live round board', () => {
@@ -72,6 +91,48 @@ describe('useDepthStore', () => {
       ['blue-starter', 'red-spike'],
       ['red-spike', 'blue-starter'],
     ]);
+  });
+
+  it('persists and restores a saved depth session', () => {
+    const store = useDepthStore();
+    store.initializePersistence();
+    store.startGame();
+    store.beginRound();
+    store.setPendingBet(3);
+    store.selectPosition({ row: 0, col: 0 });
+    store.persistSession();
+
+    const saved = JSON.parse(localStorage.getItem('depth-save-v1') ?? 'null');
+
+    expect(saved).toMatchObject({
+      version: 1,
+      game: {
+        phase: 'playing',
+        bank: 20,
+        currentLevel: 1,
+        currentRound: 1,
+      },
+      round: {
+        pendingBet: 3,
+        selectedPosition: { row: 0, col: 0 },
+      },
+    });
+
+    setActivePinia(createPinia());
+    const restoredStore = useDepthStore();
+    restoredStore.initializePersistence();
+
+    expect(restoredStore.savedSessionSummary).toMatchObject({
+      levelId: 1,
+      bank: 20,
+      currentRound: 1,
+      phase: 'playing',
+      levelSource: 'catalog',
+    });
+    expect(restoredStore.continueSavedSession()).toBe(true);
+    expect(restoredStore.phase).toBe('playing');
+    expect(restoredStore.pendingBet).toBe(3);
+    expect(restoredStore.round.selectedPosition).toEqual({ row: 0, col: 0 });
   });
 
   it('resolves a player reveal and completes the round when the board is exhausted', () => {

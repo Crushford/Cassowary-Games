@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { useQueensStore } from './queensStore';
 import { useSpeedModeStore } from './speedModeStore';
+import type { MarkType } from './queensStore';
 import {
   PATTERN_CARD_DEFINITIONS,
   getPatternCardById,
@@ -68,6 +69,104 @@ interface AutomationUpgradeOption {
 const BASE_POINTS = 100;
 const AUTOMATION_STEP_DELAY_MS = 45;
 const AUTOMATION_INPUT_GRACE_MS = 900;
+const INCREMENTAL_QUEENS_SAVE_KEY = 'incremental-queens-save-v1';
+
+interface IncrementalSavedRunState {
+  runStatus: Exclude<IncrementalRunStatus, 'idle' | 'game-over'>;
+  runScore: number;
+  runBank: number;
+  puzzlesSolved: number;
+  riskLevel: number;
+  autoFlagPurchased: boolean;
+  autoNextPuzzlePurchased: boolean;
+  rotatePuzzlePurchased: boolean;
+  autoNextPuzzleEnabled: boolean;
+  autoQueenByColorPurchased: boolean;
+  autoQueenByRowPurchased: boolean;
+  autoQueenByColumnPurchased: boolean;
+  currentPuzzleSize: number;
+  currentPuzzleTimeLimit: number;
+  timeRemaining: number;
+  lastScoreBreakdown: PuzzleScoreBreakdown | null;
+  lastPuzzleId: string | null;
+  ownedPatternCardIds: string[];
+  customPatternCards: PatternCardDefinition[];
+  customPatternCardCounter: number;
+  selectedOneOffUpgradeId: OneOffUpgradeId | null;
+  automationEnabled: boolean;
+  previousPlacementMode: 'auto' | 'flag' | 'queen' | null;
+  previousAutoFlagging: boolean | null;
+}
+
+interface IncrementalSavedBoardState {
+  puzzleId: string;
+  currentMode: 'standard' | 'rotate';
+  placementMode: 'auto' | 'flag' | 'queen';
+  autoFlagging: boolean;
+  playerMarks: MarkType[][];
+  moveHistory: MarkType[][][];
+  lastManualInteractionAt: number;
+}
+
+interface IncrementalSavedRun {
+  version: 1;
+  savedAt: number;
+  run: IncrementalSavedRunState;
+  board: IncrementalSavedBoardState;
+}
+
+interface IncrementalSavedRunSummary {
+  bank: number;
+  puzzlesSolved: number;
+  puzzleSize: number;
+  runStatus: Exclude<IncrementalRunStatus, 'idle' | 'game-over'>;
+}
+
+function canUseStorage(): boolean {
+  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+}
+
+function shouldPersistRun(
+  status: IncrementalRunStatus
+): status is Exclude<IncrementalRunStatus, 'idle' | 'game-over'> {
+  return status === 'playing' || status === 'upgrade-select';
+}
+
+function toSavedRunSummary(snapshot: IncrementalSavedRun): IncrementalSavedRunSummary {
+  return {
+    bank: snapshot.run.runBank,
+    puzzlesSolved: snapshot.run.puzzlesSolved,
+    puzzleSize: snapshot.run.currentPuzzleSize,
+    runStatus: snapshot.run.runStatus,
+  };
+}
+
+function readSavedRun(): IncrementalSavedRun | null {
+  if (!canUseStorage()) {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(INCREMENTAL_QUEENS_SAVE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as IncrementalSavedRun;
+    if (parsed?.version !== 1 || !parsed.run || !parsed.board?.puzzleId) {
+      return null;
+    }
+
+    return parsed;
+  } catch (error) {
+    console.error('Error reading incremental queens save from localStorage:', error);
+    return null;
+  }
+}
+
+function cloneSerializable<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
 
 function createInitialRunState() {
   return {
@@ -106,6 +205,9 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
     ...createInitialRunState(),
     previousPlacementMode: null as 'auto' | 'flag' | 'queen' | null,
     previousAutoFlagging: null as boolean | null,
+    savedRunSummary: null as IncrementalSavedRunSummary | null,
+    persistenceInitialized: false,
+    persistenceHydrating: false,
   }),
 
   getters: {
@@ -238,9 +340,160 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
         this.availableOneOffUpgrades.find((u) => u.id === this.selectedOneOffUpgradeId) || null
       );
     },
+    hasSavedRun: (state) => state.savedRunSummary !== null,
   },
 
   actions: {
+    initializePersistence() {
+      if (this.persistenceInitialized) {
+        return;
+      }
+
+      this.persistenceInitialized = true;
+      this.refreshSavedRunSummary();
+
+      this.$subscribe(() => {
+        if (this.persistenceHydrating) {
+          return;
+        }
+
+        this.persistRunState();
+      });
+    },
+
+    buildSavedRunSnapshot(): IncrementalSavedRun | null {
+      if (!shouldPersistRun(this.runStatus)) {
+        return null;
+      }
+
+      const queensStore = useQueensStore();
+      const puzzleId = queensStore.currentPuzzleId;
+      if (puzzleId === null) {
+        return null;
+      }
+
+      return {
+        version: 1,
+        savedAt: Date.now(),
+        run: {
+          runStatus: this.runStatus,
+          runScore: this.runScore,
+          runBank: this.runBank,
+          puzzlesSolved: this.puzzlesSolved,
+          riskLevel: this.riskLevel,
+          autoFlagPurchased: this.autoFlagPurchased,
+          autoNextPuzzlePurchased: this.autoNextPuzzlePurchased,
+          rotatePuzzlePurchased: this.rotatePuzzlePurchased,
+          autoNextPuzzleEnabled: this.autoNextPuzzleEnabled,
+          autoQueenByColorPurchased: this.autoQueenByColorPurchased,
+          autoQueenByRowPurchased: this.autoQueenByRowPurchased,
+          autoQueenByColumnPurchased: this.autoQueenByColumnPurchased,
+          currentPuzzleSize: this.currentPuzzleSize,
+          currentPuzzleTimeLimit: this.currentPuzzleTimeLimit,
+          timeRemaining: this.timeRemaining,
+          lastScoreBreakdown: cloneSerializable(this.lastScoreBreakdown),
+          lastPuzzleId: this.lastPuzzleId,
+          ownedPatternCardIds: [...this.ownedPatternCardIds],
+          customPatternCards: cloneSerializable(this.customPatternCards),
+          customPatternCardCounter: this.customPatternCardCounter,
+          selectedOneOffUpgradeId: this.selectedOneOffUpgradeId,
+          automationEnabled: this.automationEnabled,
+          previousPlacementMode: this.previousPlacementMode,
+          previousAutoFlagging: this.previousAutoFlagging,
+        },
+        board: {
+          puzzleId: String(puzzleId),
+          currentMode: queensStore.currentMode === 'rotate' ? 'rotate' : 'standard',
+          placementMode: queensStore.uiState.placementMode,
+          autoFlagging: queensStore.uiState.autoFlagging,
+          playerMarks: cloneSerializable(queensStore.playerMarks),
+          moveHistory: cloneSerializable(queensStore.moveHistory),
+          lastManualInteractionAt: queensStore.lastManualInteractionAt,
+        },
+      };
+    },
+
+    persistRunState() {
+      if (!canUseStorage()) {
+        return;
+      }
+
+      const snapshot = this.buildSavedRunSnapshot();
+      if (!snapshot) {
+        this.clearSavedRun();
+        return;
+      }
+
+      try {
+        window.localStorage.setItem(INCREMENTAL_QUEENS_SAVE_KEY, JSON.stringify(snapshot));
+      } catch (error) {
+        console.error('Error saving incremental queens run to localStorage:', error);
+      }
+    },
+
+    clearSavedRun() {
+      if (canUseStorage()) {
+        window.localStorage.removeItem(INCREMENTAL_QUEENS_SAVE_KEY);
+      }
+      this.savedRunSummary = null;
+    },
+
+    refreshSavedRunSummary() {
+      const snapshot = readSavedRun();
+      this.savedRunSummary = snapshot ? toSavedRunSummary(snapshot) : null;
+    },
+
+    async continueSavedRun(): Promise<boolean> {
+      const snapshot = readSavedRun();
+      if (!snapshot) {
+        this.savedRunSummary = null;
+        return false;
+      }
+
+      const queensStore = useQueensStore();
+      const speedModeStore = useSpeedModeStore();
+
+      this.stopTimer();
+      this.stopPatternScan();
+      this.stopAutoNextPuzzleTimer();
+      this.isAutomationInProgress = false;
+
+      if (speedModeStore.timerDuration !== null) {
+        speedModeStore.reset();
+      }
+      if (queensStore.isTutorialMode) {
+        queensStore.exitTutorialMode();
+      }
+      queensStore.stopProgressSaving();
+      queensStore.stopErrorChecking();
+
+      this.persistenceHydrating = true;
+      Object.assign(this, createInitialRunState(), snapshot.run);
+      this.previousPlacementMode = snapshot.run.previousPlacementMode;
+      this.previousAutoFlagging = snapshot.run.previousAutoFlagging;
+      this.savedRunSummary = toSavedRunSummary(snapshot);
+
+      await this.ensurePuzzleDatabaseLoaded();
+      await queensStore.loadPuzzleById(snapshot.board.puzzleId, { persistProgress: false });
+      queensStore.setMode(snapshot.board.currentMode);
+      queensStore.playerMarks = cloneSerializable(snapshot.board.playerMarks);
+      queensStore.moveHistory = cloneSerializable(snapshot.board.moveHistory);
+      queensStore.setPlacementMode(snapshot.board.placementMode);
+      queensStore.setAutoFlagging(snapshot.board.autoFlagging);
+      queensStore.lastManualInteractionAt = snapshot.board.lastManualInteractionAt;
+      queensStore.puzzleStartTime = Date.now();
+      queensStore.checkBoardCompletion();
+      queensStore.startErrorChecking();
+
+      if (this.runStatus === 'playing') {
+        this.startTimer();
+        this.startPatternScan();
+      }
+
+      this.persistenceHydrating = false;
+      return true;
+    },
+
     rollOneOffUpgrade() {
       const pool = this.availableOneOffUpgrades;
       if (pool.length === 0) {
@@ -736,6 +989,7 @@ export const useIncrementalQueensStore = defineStore('incrementalQueens', {
       Object.assign(this, createInitialRunState());
       this.previousPlacementMode = null;
       this.previousAutoFlagging = null;
+      this.clearSavedRun();
     },
   },
 });

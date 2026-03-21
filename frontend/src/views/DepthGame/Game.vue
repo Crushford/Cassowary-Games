@@ -44,6 +44,40 @@
         </div>
 
         <div
+          v-if="canContinueSavedGame"
+          class="rounded-2xl border border-semantic-info-700 bg-app-surface p-4 space-y-4"
+        >
+          <div>
+            <div class="text-xs text-app-textMuted uppercase tracking-wide font-semibold">
+              Saved Run
+            </div>
+            <p class="mt-2 text-sm text-app-text leading-relaxed">
+              Continue {{ store.savedSessionSummary?.levelName }} on round
+              {{ store.savedSessionSummary?.currentRound }} with
+              <span class="font-bold text-semantic-success-400">
+                🪙 {{ store.savedSessionSummary?.bank }}
+              </span>
+              in the bank.
+            </p>
+          </div>
+
+          <div class="flex gap-2">
+            <button
+              class="flex-1 py-3 rounded-xl font-bold text-depth-accentText bg-depth-accentBg hover:bg-depth-accentBgHover border border-depth-accentBorder transition-all active:translate-y-px"
+              @click="continueSavedGame()"
+            >
+              Continue Game
+            </button>
+            <button
+              class="flex-1 py-3 rounded-xl font-bold text-app-text bg-app-bg hover:bg-app-surface border border-app-border transition-all active:translate-y-px"
+              @click="startOver()"
+            >
+              Start Over
+            </button>
+          </div>
+        </div>
+
+        <div
           v-for="level in presetLevels"
           :key="level.id"
           class="rounded-2xl border border-app-border bg-app-surface p-4 space-y-4"
@@ -570,6 +604,9 @@ const showLevelSelect = computed(() => selectedLevelId.value === null || store.p
 const selectedLevel = computed(
   () => presetLevels.find((level) => level.id === selectedLevelId.value) ?? null
 );
+const canContinueSavedGame = computed(
+  () => store.savedSessionSummary !== null && store.savedSessionSummary.levelSource === 'catalog'
+);
 const selectedRules = computed(() =>
   selectedLevel.value ? describeLevelRules(selectedLevel.value) : []
 );
@@ -638,6 +675,22 @@ function goToNextLevel(): void {
 
 function returnToLevelSelect(): void {
   router.push({ name: 'depth-levels' });
+}
+
+function continueSavedGame(): void {
+  const resumed = store.continueSavedSession();
+  if (!resumed) {
+    return;
+  }
+
+  selectedLevelId.value = store.currentLevel;
+  router.push({ name: 'depth-level', params: { levelId: store.currentLevel } });
+}
+
+function startOver(): void {
+  selectedLevelId.value = null;
+  showSupport.value = true;
+  store.restartGame();
 }
 
 function describeLevelRules(level: BuiltLevelDefinition): string[] {
@@ -742,7 +795,7 @@ watch(
     if (route.name === 'depth-levels') {
       selectedLevelId.value = null;
       showSupport.value = true;
-      store.restartGame();
+      store.refreshSavedSessionSummary();
       return;
     }
 
@@ -764,6 +817,8 @@ watch(
   },
   { immediate: true }
 );
+
+store.initializePersistence();
 
 defineOptions({
   name: 'Game',

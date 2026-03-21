@@ -50,6 +50,7 @@ function buildLayoutSymbolToColorMap(layout: string): Record<string, ColorName> 
 }
 
 export type GameMode = 'standard' | 'speed' | 'rotate';
+export type { MarkType };
 
 interface PuzzleRecord {
   id: string | number;
