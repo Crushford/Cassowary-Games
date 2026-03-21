@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import TableLimitReachedModal from '../components/casino/TableLimitReachedModal.vue';
-import { useGlobalStore } from '../stores/global';
-import { useTableStore } from '../stores/table';
-import { useRoundStore } from '../stores/round';
+import TableLimitReachedModal from '@/games/queens/components/casino/TableLimitReachedModal.vue';
+import { useGlobalStore } from '@/games/queens/stores/global';
+import { useTableStore } from '@/games/queens/stores/table';
+import { useRoundStore } from '@/games/queens/stores/round';
 import { createPinia, setActivePinia } from 'pinia';
 
 const meta: Meta<typeof TableLimitReachedModal> = {

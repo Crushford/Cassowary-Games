@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import ToolDrawer from '../components/casino/ToolDrawer.vue';
-import { useRoundStore } from '../stores/round';
+import ToolDrawer from '@/games/queens/components/casino/ToolDrawer.vue';
+import { useRoundStore } from '@/games/queens/stores/round';
 import { createPinia, setActivePinia } from 'pinia';
 
 const meta: Meta<typeof ToolDrawer> = {

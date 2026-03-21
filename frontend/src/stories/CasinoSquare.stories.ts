@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import CasinoSquare from '../components/casino/CasinoSquare.vue';
-import { useRoundStore } from '../stores/round';
+import CasinoSquare from '@/games/queens/components/casino/CasinoSquare.vue';
+import { useRoundStore } from '@/games/queens/stores/round';
 import { createPinia, setActivePinia } from 'pinia';
 
 const meta: Meta<typeof CasinoSquare> = {

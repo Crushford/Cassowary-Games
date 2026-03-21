@@ -103,9 +103,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useEvolveStore } from '@/stores/evolve';
-import Modal from '@/components/shared/Modal.vue';
-import PrivacySettingsModal from '@/components/shared/PrivacySettingsModal.vue';
+import { useEvolveStore } from '@/games/evolve/stores/evolve';
+import Modal from '@/shared/components/Modal.vue';
+import PrivacySettingsModal from '@/shared/components/PrivacySettingsModal.vue';
 
 const evolveStore = useEvolveStore();
 const showWorksInProgressModal = ref(false);

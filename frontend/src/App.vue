@@ -6,9 +6,9 @@
 <script setup lang="ts">
 import { watch } from 'vue';
 import { useRoute } from 'vue-router';
-import CookieConsentBanner from './components/shared/CookieConsentBanner.vue';
-import { useCookieConsent } from './composables/useCookieConsent';
-import { initGoogleAnalytics, trackPageView } from './utils/analytics';
+import CookieConsentBanner from '@/shared/components/CookieConsentBanner.vue';
+import { useCookieConsent } from '@/shared/composables/useCookieConsent';
+import { initGoogleAnalytics, trackPageView } from '@/shared/utils/analytics';
 
 const route = useRoute();
 const { isAnalyticsAllowed } = useCookieConsent();
