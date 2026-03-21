@@ -160,6 +160,14 @@ function toLegacyRevealedCard(record: RevealRecord): RevealedCard {
   };
 }
 
+function debugLog(enabled: boolean | undefined, event: string, payload: Record<string, unknown>) {
+  if (!enabled) {
+    return;
+  }
+
+  console.debug(`[Depth] ${event}`, payload);
+}
+
 function getLegacyTopLayerCards(level: BuiltLevelDefinition, board: RoundState['board']): number[] {
   if (!board) {
     return [];
@@ -308,7 +316,18 @@ export const useDepthStore = defineStore('depth', {
     currentCardIndex: (state) => state.round.history.length,
 
     cardsRemaining(): number {
-      return this.accessiblePositions.length;
+      if (!this.round.board) {
+        return 0;
+      }
+
+      return this.round.board.stacks.reduce((total, row) => {
+        return (
+          total +
+          row.reduce((rowTotal, stack) => {
+            return rowTotal + stack.cards.filter((card) => !card.revealed).length;
+          }, 0)
+        );
+      }, 0);
     },
 
     averageRemainingValue(): number | null {
@@ -546,6 +565,13 @@ export const useDepthStore = defineStore('depth', {
       }
 
       this.round.selectedPosition = position;
+      debugLog(this.level.testing?.debugLogging, 'player-select', {
+        levelId: this.level.id,
+        row: position.row,
+        col: position.col,
+        activeColumn: this.activeColumnIndex,
+        bet: this.round.pendingBet,
+      });
     },
 
     revealSelected() {
@@ -575,12 +601,31 @@ export const useDepthStore = defineStore('depth', {
       this.round.lastResolution = resolution;
       this.game.bank = resolution.nextBank;
 
-      if (this.level.testing?.debugLogging) {
-        console.debug('[Depth]', {
+      debugLog(this.level.testing?.debugLogging, 'turn-resolved', {
+        levelId: this.level.id,
+        turnRule: this.level.turnRule,
+        playerSelection: position,
+        bet: this.round.pendingBet,
+        playerReveals: resolution.playerReveals.map((reveal) => ({
+          row: reveal.row,
+          col: reveal.col,
+          value: reveal.cardValue,
+          actor: reveal.revealedBy,
+        })),
+        dealerReveals: resolution.dealerReveals.map((reveal) => ({
+          row: reveal.row,
+          col: reveal.col,
+          value: reveal.cardValue,
+          actor: reveal.revealedBy,
+        })),
+      });
+
+      for (const reveal of resolution.dealerReveals) {
+        debugLog(this.level.testing?.debugLogging, 'dealer-select', {
           levelId: this.level.id,
-          turnRule: this.level.turnRule,
-          position,
-          resolution,
+          row: reveal.row,
+          col: reveal.col,
+          value: reveal.cardValue,
         });
       }
 

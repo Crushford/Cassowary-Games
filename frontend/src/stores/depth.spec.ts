@@ -397,20 +397,20 @@ describe('useDepthStore', () => {
     expect(store.accessiblePositions).toHaveLength(2);
   });
 
-  it('level 8 builds a 10x10x10 board with 1000 cards and 100 accessible positions', () => {
+  it('level 8 builds a 5x5x10 board with 250 total cards and 25 accessible positions', () => {
     const store = useDepthStore();
     store.loadLevel(8);
     store.setupRound();
 
-    expect(store.board?.rows).toBe(10);
-    expect(store.board?.columns).toBe(10);
+    expect(store.board?.rows).toBe(5);
+    expect(store.board?.columns).toBe(5);
     expect(store.board?.depth).toBe(10);
 
     const totalCards = store
       .board!.stacks.flat()
       .reduce((sum, stack) => sum + stack.cards.length, 0);
-    expect(totalCards).toBe(1000);
-    expect(store.accessiblePositions).toHaveLength(100);
+    expect(totalCards).toBe(250);
+    expect(store.accessiblePositions).toHaveLength(25);
   });
 
   it('applies dealer-follow-up reveals without changing player payout totals', () => {

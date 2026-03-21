@@ -123,11 +123,11 @@ describe('buildBoard', () => {
     expect(board.stacks[0][0].cards[1].layerIndex).toBe(1);
   });
 
-  it('builds a 10x10x10 board with 1000 total cards', () => {
+  it('builds a 5x5x10 board with 250 total cards', () => {
     const level = buildLevelDefinition({
       metadata: { id: 200, name: 'Giant' },
       economy: { startingBank: 35, rounds: 3, minBet: 1, maxBet: 5 },
-      board: { rows: 10, columns: 10, depth: 10 },
+      board: { rows: 5, columns: 5, depth: 10 },
       decks: {
         mode: 'by-depth',
         depthDeckIds: Array(10).fill('orange-split-10') as string[],
@@ -137,10 +137,10 @@ describe('buildBoard', () => {
     });
     const board = buildBoard(level);
 
-    expect(board.rows).toBe(10);
-    expect(board.columns).toBe(10);
+    expect(board.rows).toBe(5);
+    expect(board.columns).toBe(5);
     expect(board.depth).toBe(10);
     const totalCards = board.stacks.flat().reduce((sum, stack) => sum + stack.cards.length, 0);
-    expect(totalCards).toBe(1000);
+    expect(totalCards).toBe(250);
   });
 });

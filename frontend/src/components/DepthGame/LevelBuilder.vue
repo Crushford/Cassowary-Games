@@ -377,12 +377,13 @@ function firstDeckId(): string {
 }
 
 function normalizeDraft(draft: LevelInput): LevelInput {
-  const rows = Math.max(1, Math.floor(draft.board.rows));
-  const depth = Math.max(1, Math.floor(draft.board.depth));
+  const rows = Math.min(5, Math.max(1, Math.floor(draft.board.rows)));
+  const columns = Math.min(5, Math.max(1, Math.floor(draft.board.columns)));
+  const depth = Math.min(10, Math.max(1, Math.floor(draft.board.depth)));
 
   draft.board.rows = rows;
   draft.board.depth = depth;
-  draft.board.columns = Math.max(1, Math.floor(draft.board.columns));
+  draft.board.columns = columns;
   draft.economy.startingBank = Math.max(1, Math.floor(draft.economy.startingBank));
   draft.economy.rounds = Math.max(1, Math.floor(draft.economy.rounds));
   draft.economy.minBet = Math.max(1, Math.floor(draft.economy.minBet));
