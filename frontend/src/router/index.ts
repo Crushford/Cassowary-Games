@@ -1,12 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HarvestGame from '../views/HarvestGame.vue';
-import PlantGame from '../views/PlantGame.vue';
-import LevelBuilder from '../views/LevelBuilder.vue';
-import Levels from '../views/Levels.vue';
-import KenoGameWrapper from '../views/KenoGameWrapper.vue';
-import QueensGame from '../views/QueensGame.vue';
-import QueensDiversityLab from '../views/QueensDiversityLab.vue';
-import IncrementalQueensEntry from '../views/IncrementalQueensEntry.vue';
+import HarvestGame from '@/games/queens/views/HarvestGame.vue';
+import PlantGame from '@/games/queens/views/PlantGame.vue';
+import LevelBuilder from '@/games/queens/views/LevelBuilder.vue';
+import Levels from '@/games/queens/views/Levels.vue';
+import KenoGameWrapper from '@/games/keno/views/KenoGameWrapper.vue';
+import QueensGame from '@/games/queens/views/QueensGame.vue';
+import QueensDiversityLab from '@/games/queens/views/QueensDiversityLab.vue';
+import IncrementalQueensEntry from '@/games/queens/views/IncrementalQueensEntry.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -15,7 +15,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('../views/Home.vue'),
+      component: () => import('@/views/Home.vue'),
     },
     {
       path: '/level-builder',
@@ -45,7 +45,7 @@ const router = createRouter({
     {
       path: '/queens',
       name: 'queens',
-      component: () => import('../views/QueensLevels.vue'),
+      component: () => import('@/games/queens/views/QueensLevels.vue'),
     },
     {
       path: '/queens/tutorial/:levelName',
@@ -69,17 +69,17 @@ const router = createRouter({
     {
       path: '/depth/levels',
       name: 'depth-levels',
-      component: () => import('../views/DepthGame/Game.vue'),
+      component: () => import('@/games/depth/views/Game.vue'),
     },
     {
       path: '/depth/level/:levelId',
       name: 'depth-level',
-      component: () => import('../views/DepthGame/Game.vue'),
+      component: () => import('@/games/depth/views/Game.vue'),
     },
     {
       path: '/depth/dev',
       name: 'depth-dev',
-      component: () => import('../views/DepthGame/DevGame.vue'),
+      component: () => import('@/games/depth/views/DevGame.vue'),
     },
     {
       path: '/ballarat',
@@ -100,12 +100,12 @@ const router = createRouter({
     {
       path: '/evolve',
       name: 'evolve',
-      component: () => import('../views/Evolve.vue'),
+      component: () => import('@/games/evolve/views/Evolve.vue'),
     },
     {
       path: '/pompeii',
       name: 'pompeii',
-      component: () => import('../views/PompeiiGame.vue'),
+      component: () => import('@/games/pompeii/views/PompeiiGame.vue'),
     },
     {
       path: '/storybook',
@@ -119,7 +119,7 @@ const router = createRouter({
     {
       path: '/internal/pattern-card-designer',
       name: 'internal-pattern-card-designer',
-      component: () => import('../views/PatternCardDesigner.vue'),
+      component: () => import('@/games/queens/views/PatternCardDesigner.vue'),
     },
     {
       path: '/:pathMatch(.*)*',

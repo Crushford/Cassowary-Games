@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import RulesPlaque from '@/components/casino/RulesPlaque.vue';
-import { useGlobalStore } from '../stores/global';
-import { useTableStore } from '../stores/table';
-import { useRoundStore } from '../stores/round';
+import RulesPlaque from '@/games/queens/components/casino/RulesPlaque.vue';
+import { useGlobalStore } from '@/games/queens/stores/global';
+import { useTableStore } from '@/games/queens/stores/table';
+import { useRoundStore } from '@/games/queens/stores/round';
 import { createPinia, setActivePinia } from 'pinia';
 
 const meta: Meta<typeof RulesPlaque> = {

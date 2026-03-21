@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import CasinoHUD from '../components/casino/CasinoHUD.vue';
-import { useGlobalStore } from '../stores/global';
-import { useRoundStore } from '../stores/round';
+import CasinoHUD from '@/games/queens/components/casino/CasinoHUD.vue';
+import { useGlobalStore } from '@/games/queens/stores/global';
+import { useRoundStore } from '@/games/queens/stores/round';
 import { createPinia, setActivePinia } from 'pinia';
 
 const meta: Meta<typeof CasinoHUD> = {

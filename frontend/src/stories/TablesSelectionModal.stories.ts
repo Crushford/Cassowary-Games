@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import TablesSelectionModal from '../components/casino/TablesSelectionModal.vue';
-import { useGlobalStore } from '../stores/global';
-import { useTableStore } from '../stores/table';
+import TablesSelectionModal from '@/games/queens/components/casino/TablesSelectionModal.vue';
+import { useGlobalStore } from '@/games/queens/stores/global';
+import { useTableStore } from '@/games/queens/stores/table';
 import { createPinia, setActivePinia } from 'pinia';
 
 const meta: Meta<typeof TablesSelectionModal> = {

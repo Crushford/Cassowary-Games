@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import GoldDisplay from '../components/casino/GoldDisplay.vue';
-import { useGlobalStore } from '../stores/global';
+import GoldDisplay from '@/games/queens/components/casino/GoldDisplay.vue';
+import { useGlobalStore } from '@/games/queens/stores/global';
 import { createPinia, setActivePinia } from 'pinia';
 
 const meta: Meta<typeof GoldDisplay> = {

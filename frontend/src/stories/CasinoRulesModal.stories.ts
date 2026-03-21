@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import CasinoRulesModal from '../components/casino/CasinoRulesModal.vue';
-import { useGlobalStore } from '../stores/global';
-import { useRoundStore } from '../stores/round';
-import { useTableStore } from '../stores/table';
+import CasinoRulesModal from '@/games/queens/components/casino/CasinoRulesModal.vue';
+import { useGlobalStore } from '@/games/queens/stores/global';
+import { useRoundStore } from '@/games/queens/stores/round';
+import { useTableStore } from '@/games/queens/stores/table';
 import { createPinia, setActivePinia } from 'pinia';
 
 const meta: Meta<typeof CasinoRulesModal> = {
