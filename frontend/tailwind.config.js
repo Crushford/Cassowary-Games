@@ -189,6 +189,9 @@ export default {
           baseMuted: '#0f172a80',
           baseSoft: '#0f172a99',
           warningRing: '#fbbf24cc',
+          warningBorderGlow: '#fcd34db3', // amber-300 at 70% — staged reveal border
+          borderFaint: '#33415559', // app-border at 35% — playable stack border
+          borderSubtle: '#33415533', // app-border at 20% — dim column border
         },
         plaque: {
           ink: '#131313',

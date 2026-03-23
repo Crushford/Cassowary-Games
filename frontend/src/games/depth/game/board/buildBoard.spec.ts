@@ -9,7 +9,7 @@ function makeLevel(overrides: Partial<LevelInput> = {}) {
     metadata: { id: 1, name: 'Test' },
     economy: { startingBank: 10, rounds: 1, minBet: 1, maxBet: 5 },
     board: { rows: 1, columns: 5, depth: 1 },
-    decks: { mode: 'uniform', deckId: 'blue-starter' },
+    decks: { mode: 'uniform', deckId: 'blue' },
     rules: { turnRule: 'basic-reveal' },
     support: {},
     ...overrides,
@@ -32,7 +32,7 @@ describe('buildBoard', () => {
   it('produces correct board dimensions for 2x3x1', () => {
     const level = makeLevel({
       board: { rows: 2, columns: 3, depth: 1 },
-      decks: { mode: 'uniform', deckId: 'blue-starter' },
+      decks: { mode: 'uniform', deckId: 'blue' },
     });
     const board = buildBoard(level);
 
@@ -46,7 +46,7 @@ describe('buildBoard', () => {
   it('every stack has exactly depth cards', () => {
     const level = makeLevel({
       board: { rows: 1, columns: 3, depth: 2 },
-      decks: { mode: 'by-depth', depthDeckIds: ['blue-starter', 'blue-starter'] },
+      decks: { mode: 'by-depth', depthDeckIds: ['blue', 'blue'] },
       testing: { forcedDeckOrder: [3, 2, 0, 0, 0] },
     });
     const board = buildBoard(level);
@@ -59,7 +59,7 @@ describe('buildBoard', () => {
   it('total card count equals rows × columns × depth', () => {
     const level = makeLevel({
       board: { rows: 2, columns: 3, depth: 2 },
-      decks: { mode: 'by-depth', depthDeckIds: ['blue-starter', 'blue-starter'] },
+      decks: { mode: 'by-depth', depthDeckIds: ['blue', 'blue'] },
       testing: { forcedDeckOrder: [3, 2, 0, 0, 0] },
     });
     const board = buildBoard(level);
@@ -80,24 +80,24 @@ describe('buildBoard', () => {
     }
   });
 
-  it('assigns correct archetypeId per layer from deckMatrix', () => {
+  it('assigns correct backingColor per layer from deckMatrix', () => {
     const level = makeLevel({
       board: { rows: 2, columns: 2, depth: 2 },
       decks: {
         mode: 'row-depth-matrix',
         matrix: [
-          ['blue-starter', 'red-spike'],
-          ['red-spike', 'blue-starter'],
+          ['blue', 'red'],
+          ['red', 'blue'],
         ],
       },
       testing: { forcedDeckOrder: [3, 2, 0, 0, 0] },
     });
     const board = buildBoard(level);
 
-    expect(board.stacks[0][0].cards[0].archetypeId).toBe('blue-starter');
-    expect(board.stacks[0][0].cards[1].archetypeId).toBe('red-spike');
-    expect(board.stacks[1][0].cards[0].archetypeId).toBe('red-spike');
-    expect(board.stacks[1][0].cards[1].archetypeId).toBe('blue-starter');
+    expect(board.stacks[0][0].cards[0].backingColor).toBe('blue');
+    expect(board.stacks[0][0].cards[1].backingColor).toBe('red');
+    expect(board.stacks[1][0].cards[0].backingColor).toBe('red');
+    expect(board.stacks[1][0].cards[1].backingColor).toBe('blue');
   });
 
   it('assigns card values from forced deck order deterministically', () => {
@@ -114,7 +114,7 @@ describe('buildBoard', () => {
   it('assigns correct layerIndex to cards by depth position', () => {
     const level = makeLevel({
       board: { rows: 1, columns: 2, depth: 2 },
-      decks: { mode: 'by-depth', depthDeckIds: ['blue-starter', 'blue-starter'] },
+      decks: { mode: 'by-depth', depthDeckIds: ['blue', 'blue'] },
       testing: { forcedDeckOrder: [3, 2, 0, 0, 0] },
     });
     const board = buildBoard(level);
@@ -130,7 +130,7 @@ describe('buildBoard', () => {
       board: { rows: 5, columns: 5, depth: 10 },
       decks: {
         mode: 'by-depth',
-        depthDeckIds: Array(10).fill('orange-split-10') as string[],
+        depthDeckIds: Array(10).fill('blue'),
       },
       rules: { turnRule: 'basic-reveal' },
       support: {},

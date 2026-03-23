@@ -1,5 +1,5 @@
 import { getDeckArchetype } from '../constants/deckArchetypes';
-import type { BuiltLevelDefinition, LevelInput } from '../types';
+import type { BuiltLevelDefinition, DeckColor, LevelInput } from '../types';
 
 const MAX_SURFACE_SIZE = 5;
 const MAX_DEPTH = 10;
@@ -10,21 +10,21 @@ function assertPositiveInteger(value: number, label: string): void {
   }
 }
 
-function normalizeDeckMatrix(levelInput: LevelInput): string[][] {
+function normalizeDeckMatrix(levelInput: LevelInput): DeckColor[][] {
   const {
     board: { rows, columns, depth },
     decks,
   } = levelInput;
 
-  const validateDeck = (deckId: string) => {
-    const deck = getDeckArchetype(deckId);
+  const validateDeck = (deckColor: DeckColor) => {
+    const deck = getDeckArchetype(deckColor);
 
     if (deck.cards.length > 5) {
-      throw new Error(`Deck ${deckId} cannot contain more than 5 cards`);
+      throw new Error(`Deck ${deckColor} cannot contain more than 5 cards`);
     }
 
     if (deck.cards.length < columns) {
-      throw new Error(`Deck ${deckId} must contain at least ${columns} cards`);
+      throw new Error(`Deck ${deckColor} must contain at least ${columns} cards`);
     }
   };
 

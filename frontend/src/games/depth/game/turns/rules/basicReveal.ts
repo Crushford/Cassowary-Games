@@ -14,7 +14,6 @@ function cloneBoard(board: BoardState): BoardState {
         cards: stack.cards.map((card) => ({
           value: card.value,
           backingColor: card.backingColor,
-          archetypeId: card.archetypeId,
           layerIndex: card.layerIndex,
           revealed: card.revealed,
           revealedBy: card.revealedBy,

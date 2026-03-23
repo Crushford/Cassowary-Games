@@ -1,47 +1,30 @@
-import type { DeckArchetype } from '../types';
+import type { DeckArchetype, DeckColor } from '../types';
 
-export const DEPTH_DECKS: DeckArchetype[] = [
-  {
-    id: 'blue-starter',
-    name: 'Blue Starter',
+export const DEPTH_DECKS: Record<DeckColor, DeckArchetype> = {
+  blue: {
     cards: [3, 2, 0, 0, 0],
-    backingColor: 'blue',
     riskProfile: 'forty',
   },
-  {
-    id: 'red-spike',
-    name: 'Red Spike',
+  red: {
     cards: [5, 0, 0, 0, 0],
-    backingColor: 'red',
     riskProfile: 'single',
   },
-  {
-    id: 'orange-split-10',
-    name: 'Orange Split',
-    cards: [3, 3, 2, 2, 0],
-    backingColor: 'orange',
-    riskProfile: 'forty',
-  },
-  {
-    id: 'red-spike-10',
-    name: 'Red Spike High',
-    cards: [10, 0, 0, 0, 0],
-    backingColor: 'red',
-    riskProfile: 'single',
-  },
-  {
-    id: 'amber-twenty-10',
-    name: 'Amber Twenty',
-    cards: [5, 5, 0, 0, 0],
-    backingColor: 'orange',
-    riskProfile: 'twenty',
-  },
-];
+};
 
-export function getDeckArchetype(deckId: string): DeckArchetype {
-  const deck = DEPTH_DECKS.find((item) => item.id === deckId);
+export const DEPTH_DECK_COLORS = Object.keys(DEPTH_DECKS) as DeckColor[];
+
+export function getDeckArchetype(deckColor: DeckColor): DeckArchetype {
+  const deck = DEPTH_DECKS[deckColor];
   if (!deck) {
-    throw new Error(`Unknown Depth deck archetype: ${deckId}`);
+    throw new Error(`Unknown Depth deck archetype: ${deckColor}`);
   }
   return deck;
+}
+
+export function isDeckColor(value: string): value is DeckColor {
+  return value in DEPTH_DECKS;
+}
+
+export function formatDeckColor(deckColor: DeckColor): string {
+  return `${deckColor.charAt(0).toUpperCase()}${deckColor.slice(1)} deck`;
 }

@@ -20,7 +20,7 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
     },
     decks: {
       mode: 'uniform',
-      deckId: 'blue-starter',
+      deckId: 'blue',
     },
     rules: {
       turnRule: 'column-choice-reveal',
@@ -50,7 +50,7 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
     },
     decks: {
       mode: 'uniform',
-      deckId: 'blue-starter',
+      deckId: 'blue',
     },
     rules: {
       turnRule: 'column-choice-reveal',
@@ -81,7 +81,7 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
     },
     decks: {
       mode: 'uniform',
-      deckId: 'red-spike',
+      deckId: 'red',
     },
     rules: {
       turnRule: 'column-choice-reveal',
@@ -112,7 +112,7 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
     },
     decks: {
       mode: 'uniform',
-      deckId: 'orange-split-10',
+      deckId: 'blue',
     },
     rules: {
       turnRule: 'column-choice-reveal',
@@ -143,7 +143,7 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
     },
     decks: {
       mode: 'uniform',
-      deckId: 'orange-split-10',
+      deckId: 'blue',
     },
     rules: {
       turnRule: 'basic-reveal',
@@ -174,7 +174,7 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
     },
     decks: {
       mode: 'by-depth',
-      depthDeckIds: ['orange-split-10', 'amber-twenty-10'],
+      depthDeckIds: ['blue', 'red'],
     },
     rules: {
       turnRule: 'dealer-follow-up',
@@ -207,7 +207,7 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
     },
     decks: {
       mode: 'by-depth',
-      depthDeckIds: ['orange-split-10', 'amber-twenty-10', 'red-spike-10'],
+      depthDeckIds: ['blue', 'red', 'blue'],
     },
     rules: {
       turnRule: 'dealer-follow-up',
@@ -240,18 +240,7 @@ export const DEPTH_LEVEL_INPUTS: LevelInput[] = [
     },
     decks: {
       mode: 'by-depth',
-      depthDeckIds: [
-        'orange-split-10',
-        'orange-split-10',
-        'amber-twenty-10',
-        'amber-twenty-10',
-        'amber-twenty-10',
-        'red-spike-10',
-        'red-spike-10',
-        'red-spike-10',
-        'red-spike-10',
-        'red-spike-10',
-      ],
+      depthDeckIds: ['blue', 'red', 'blue', 'red', 'blue', 'red', 'blue', 'red', 'blue', 'red'],
     },
     rules: {
       turnRule: 'dealer-follow-up',

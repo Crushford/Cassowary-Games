@@ -175,11 +175,11 @@
                       </div>
                       <div class="flex flex-wrap gap-2">
                         <span
-                          v-for="(deckId, depthIndex) in rowDecks"
+                          v-for="(deckColor, depthIndex) in rowDecks"
                           :key="`${rowIndex}-${depthIndex}`"
                           class="deck-chip"
                         >
-                          D{{ depthIndex + 1 }} · {{ deckName(deckId) }}
+                          D{{ depthIndex + 1 }} · {{ deckName(deckColor) }}
                         </span>
                       </div>
                     </div>
@@ -194,26 +194,28 @@
                   </p>
                   <div class="mt-3 grid gap-3">
                     <div
-                      v-for="deck in decksUsedByLevel"
-                      :key="deck.id"
+                      v-for="deckColor in decksUsedByLevel"
+                      :key="deckColor"
                       class="rounded-2xl border border-app-border bg-depth-panelMuted p-3"
                     >
                       <div class="flex items-center justify-between gap-3">
                         <div>
-                          <h4 class="text-sm font-bold text-app-text">{{ deck.name }}</h4>
-                          <p class="text-xs text-app-textMuted">{{ deck.riskProfile }} risk</p>
+                          <h4 class="text-sm font-bold text-app-text">{{ deckName(deckColor) }}</h4>
+                          <p class="text-xs text-app-textMuted">
+                            {{ getDeckArchetype(deckColor).riskProfile }} risk
+                          </p>
                         </div>
                         <span
                           class="rounded-full px-2 py-1 text-[10px] uppercase tracking-[0.25em]"
-                          :class="deckColorClass(deck.backingColor)"
+                          :class="deckColorClass(deckColor)"
                         >
-                          {{ deck.backingColor }}
+                          {{ deckColor }}
                         </span>
                       </div>
                       <div class="mt-3 flex flex-wrap gap-2">
                         <span
-                          v-for="(value, index) in deck.cards"
-                          :key="`${deck.id}-${index}`"
+                          v-for="(value, index) in getDeckArchetype(deckColor).cards"
+                          :key="`${deckColor}-${index}`"
                           class="rounded-xl border border-app-border bg-app-bg px-2 py-1 text-xs font-bold"
                           :class="cardValueTextClass(value)"
                         >
@@ -521,10 +523,14 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import Board from '@/games/depth/components/Board.vue';
 import LevelBuilder from '@/games/depth/components/LevelBuilder.vue';
 import LevelSelector from '@/games/depth/components/LevelSelector.vue';
-import { DEPTH_DECKS, getDeckArchetype } from '@/games/depth/game/constants/deckArchetypes';
+import {
+  DEPTH_DECK_COLORS,
+  formatDeckColor,
+  getDeckArchetype,
+} from '@/games/depth/game/constants/deckArchetypes';
 import { DEPTH_LEVEL_INPUTS } from '@/games/depth/game/constants/levelInputs';
 import { DEPTH_LEVELS } from '@/games/depth/game/constants/levels';
-import type { LevelInput, RevealRecord } from '@/games/depth/game/types';
+import type { DeckColor, LevelInput, RevealRecord } from '@/games/depth/game/types';
 import { useDepthStore } from '@/games/depth/stores/depth';
 
 interface StagedReveal extends RevealRecord {
@@ -535,7 +541,7 @@ interface StagedReveal extends RevealRecord {
 const store = useDepthStore();
 
 const presetLevels = DEPTH_LEVELS;
-const availableDecks = DEPTH_DECKS;
+const availableDecks = DEPTH_DECK_COLORS;
 
 const builderDraft = ref<LevelInput>(cloneLevelInput(DEPTH_LEVEL_INPUTS[0]));
 const builderError = ref('');
@@ -593,8 +599,7 @@ const showExactValues = computed(() => {
 });
 
 const decksUsedByLevel = computed(() => {
-  const ids = Array.from(new Set(store.deckMatrix.flat()));
-  return ids.map((deckId) => getDeckArchetype(deckId));
+  return Array.from(new Set(store.deckMatrix.flat()));
 });
 
 const isRevealAnimating = computed(() => stagedReveals.value.length > 0);
@@ -778,8 +783,8 @@ function rowAverageLabel(rowIndex: number): string {
   return value === null ? 'n/a' : value.toFixed(2);
 }
 
-function deckName(deckId: string): string {
-  return getDeckArchetype(deckId).name;
+function deckName(deckColor: DeckColor): string {
+  return formatDeckColor(deckColor);
 }
 
 function deckColorClass(color: string): string {
@@ -844,86 +849,61 @@ defineOptions({
 
 <style scoped>
 .hud-pill {
-  display: grid;
-  gap: 0.15rem;
-  border-radius: 9999px;
+  @apply grid gap-[0.15rem] rounded-full px-[0.95rem] py-[0.65rem] text-[0.72rem] text-app-textMuted uppercase tracking-[0.16em];
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(9, 13, 18, 0.7);
-  padding: 0.65rem 0.95rem;
-  font-size: 0.72rem;
-  color: #9ca3af;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
 }
 
 .hud-pill strong {
+  @apply text-[0.78rem] tracking-normal;
   color: #f5f7fb;
-  font-size: 0.78rem;
-  letter-spacing: normal;
 }
 
 .hud-pill--bank strong {
-  color: #8df0af;
+  @apply text-semantic-success-300;
 }
 
 .meta-chip,
 .deck-chip {
-  border-radius: 9999px;
+  @apply rounded-full px-[0.8rem] py-[0.55rem] text-[0.72rem];
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(9, 13, 18, 0.68);
-  padding: 0.55rem 0.8rem;
-  font-size: 0.72rem;
   color: #c9d2de;
 }
 
 .summary-card {
-  display: grid;
-  gap: 0.35rem;
-  border-radius: 1.4rem;
+  @apply grid gap-[0.35rem] rounded-[1.4rem] px-[1.1rem] py-4;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(9, 13, 18, 0.45);
-  padding: 1rem 1.1rem;
 }
 
 .summary-card span {
-  font-size: 0.72rem;
-  color: #9ca3af;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
+  @apply text-[0.72rem] text-app-textMuted uppercase tracking-[0.18em];
 }
 
 .summary-card strong {
-  font-size: 1.05rem;
+  @apply text-[1.05rem];
   color: #f5f7fb;
 }
 
 .primary-button,
 .secondary-button {
-  border-radius: 1rem;
-  padding: 0.9rem 1.2rem;
-  font-size: 0.92rem;
-  font-weight: 800;
-  transition:
-    transform 0.15s ease,
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
+  @apply rounded-2xl px-[1.2rem] py-[0.9rem] text-[0.92rem] font-extrabold transition-all;
 }
 
 .primary-button {
+  color: white;
   border: 1px solid rgba(125, 211, 252, 0.3);
   background: rgba(14, 116, 144, 0.92);
-  color: white;
 }
 
 .primary-button:hover:not(:disabled) {
-  transform: translateY(-1px);
+  @apply -translate-y-px;
   background: rgba(8, 145, 178, 0.92);
 }
 
 .primary-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
+  @apply cursor-not-allowed opacity-[0.45];
 }
 
 .secondary-button {
@@ -933,22 +913,17 @@ defineOptions({
 }
 
 .secondary-button:hover {
-  transform: translateY(-1px);
+  @apply -translate-y-px;
   color: #f5f7fb;
 }
 
 .support-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-radius: 1rem;
+  @apply flex items-center justify-between gap-4 rounded-2xl px-[0.95rem] py-[0.8rem];
   background: rgba(9, 13, 18, 0.55);
-  padding: 0.8rem 0.95rem;
 }
 
 .support-row span {
-  color: #9ca3af;
+  @apply text-app-textMuted;
 }
 
 .support-row strong {
@@ -956,49 +931,29 @@ defineOptions({
 }
 
 .result-shell {
-  display: grid;
-  gap: 1.25rem;
-  border-radius: 2rem;
+  @apply grid gap-5 rounded-[2rem] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.18)];
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(19, 24, 31, 0.92);
-  padding: 1.5rem;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
 }
 
 .result-header {
-  display: grid;
-  gap: 0.5rem;
+  @apply grid gap-2;
 }
 
 .result-kicker {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.24em;
-  color: #9ca3af;
+  @apply text-[0.72rem] font-bold uppercase tracking-[0.24em] text-app-textMuted;
 }
 
 .result-title {
-  font-size: 1.8rem;
-  font-weight: 900;
+  @apply text-[1.8rem] font-black;
   color: #f5f7fb;
 }
 
 .result-copy {
-  max-width: 42rem;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: #9ca3af;
+  @apply max-w-[42rem] text-[0.95rem] leading-[1.6] text-app-textMuted;
 }
 
 .result-stats {
-  display: grid;
-  gap: 0.75rem;
-}
-
-@media (min-width: 768px) {
-  .result-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  @apply grid gap-3 md:grid-cols-2;
 }
 </style>

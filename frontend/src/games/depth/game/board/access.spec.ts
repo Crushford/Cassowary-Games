@@ -12,7 +12,6 @@ function card(value: number, revealed = false): CardState {
   return {
     value,
     backingColor: 'blue',
-    archetypeId: 'blue-starter',
     layerIndex: 0,
     revealed,
     revealedBy: revealed ? 'player' : null,

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="grid gap-2"
+    class="grid gap-3"
     :style="{ gridTemplateColumns: `repeat(${board.columns}, minmax(0, 1fr))` }"
   >
     <button
@@ -8,7 +8,7 @@
       :key="`${stack.row}-${stack.col}`"
       type="button"
       :disabled="!isSelectable(stack) && !stagedRevealFor(stack)"
-      class="group relative min-h-[92px] overflow-hidden rounded-2xl border p-2 text-left transition-all"
+      class="group relative min-h-[112px] overflow-hidden rounded-2xl border p-2 text-left transition-all"
       :class="stackClass(stack)"
       @click="$emit('select-position', { row: stack.row, col: stack.col })"
     >
@@ -22,10 +22,12 @@
       <div class="mt-2 flex min-h-[42px] items-center justify-center">
         <template v-if="stagedRevealFor(stack)">
           <div class="text-center">
-            <div class="flip-card mx-auto">
-              <div class="flip-card__inner" :class="{ 'flip-card__inner--flipped': true }">
+            <div class="[perspective:900px] w-[2.4rem] h-[3.2rem] mx-auto">
+              <div
+                class="relative w-full h-full [transform-style:preserve-3d] [transition:transform_0.85s_cubic-bezier(0.2,0.8,0.2,1)] [transform:rotateY(180deg)]"
+              >
                 <div
-                  class="flip-card__face flip-card__face--back"
+                  class="absolute inset-0 flex items-center justify-center [border-radius:0.8rem] [backface-visibility:hidden] border border-white/[0.14] [box-shadow:0_10px_24px_rgba(0,0,0,0.18)]"
                   :class="backingSurfaceClass(stagedRevealFor(stack)?.backingColor ?? '')"
                 >
                   <div
@@ -33,7 +35,9 @@
                     :class="backingCardClass(stagedRevealFor(stack)?.backingColor ?? '')"
                   />
                 </div>
-                <div class="flip-card__face flip-card__face--front bg-app-surface">
+                <div
+                  class="absolute inset-0 flex items-center justify-center [border-radius:0.8rem] [backface-visibility:hidden] border border-white/[0.14] [box-shadow:0_10px_24px_rgba(0,0,0,0.18)] [transform:rotateY(180deg)] bg-app-surface"
+                >
                   <div
                     class="text-2xl font-black leading-none"
                     :class="valueClass(stagedRevealFor(stack)?.cardValue ?? 0)"
@@ -48,23 +52,31 @@
             </div>
           </div>
         </template>
-        <template v-else-if="topCard(stack)">
+        <template v-else-if="visibleStackCards(stack).length > 0">
           <div class="text-center">
             <template v-if="showExactValues">
-              <div
-                class="text-xl font-black leading-none"
-                :class="valueClass(topCard(stack)?.value ?? 0)"
-              >
-                {{ topCard(stack)?.value }}
+              <div class="stack-stage stack-stage--mahjong mx-auto" :style="stackStageStyle(stack)">
+                <div
+                  v-for="card in visibleStackCards(stack)"
+                  :key="`${stack.row}-${stack.col}-${card.layerIndex}`"
+                  class="stack-card stack-card--front"
+                  :class="card.revealed ? 'opacity-40' : 'bg-app-surface'"
+                  :style="stackCardStyle(card, stack)"
+                >
+                  <span class="text-xl font-black leading-none" :class="valueClass(card.value)">
+                    {{ card.value }}
+                  </span>
+                </div>
               </div>
             </template>
             <template v-else>
-              <div
-                class="mx-auto flex h-11 w-8 items-center justify-center rounded-lg border border-white/15 bg-black/20 shadow-inner"
-              >
+              <div class="stack-stage stack-stage--mahjong mx-auto" :style="stackStageStyle(stack)">
                 <div
-                  class="h-6 w-4 rounded-sm border border-white/15"
-                  :class="backingCardClass(topCard(stack)?.backingColor ?? '')"
+                  v-for="card in visibleStackCards(stack)"
+                  :key="`${stack.row}-${stack.col}-${card.layerIndex}`"
+                  class="stack-card"
+                  :class="backingCardClass(card.backingColor)"
+                  :style="stackCardStyle(card, stack)"
                 />
               </div>
             </template>
@@ -73,6 +85,19 @@
             </div>
           </div>
         </template>
+        <div v-else-if="finalRevealedCard(stack)" class="text-center">
+          <div class="stack-stage stack-stage--mahjong mx-auto" :style="stackStageStyle(stack, 1)">
+            <div class="stack-card stack-card--front bg-app-surface">
+              <span
+                class="text-xl font-black leading-none"
+                :class="valueClass(finalRevealedCard(stack)?.value ?? 0)"
+              >
+                {{ finalRevealedCard(stack)?.value }}
+              </span>
+            </div>
+          </div>
+          <div class="mt-2 text-[10px] uppercase tracking-[0.18em] text-app-textMuted">Cleared</div>
+        </div>
         <div v-else class="text-center">
           <div class="text-sm font-bold uppercase tracking-[0.2em] text-app-textMuted">Cleared</div>
           <div class="mt-1 text-[10px] text-app-textMuted">No cards left</div>
@@ -95,7 +120,13 @@
 import { computed } from 'vue';
 
 import { getTopAccessibleCard } from '@/games/depth/game/board/access';
-import type { BoardState, PositionRef, RevealRecord, StackState } from '@/games/depth/game/types';
+import type {
+  BoardState,
+  CardState,
+  PositionRef,
+  RevealRecord,
+  StackState,
+} from '@/games/depth/game/types';
 
 const props = defineProps<{
   board: BoardState;
@@ -134,6 +165,18 @@ function stagedRevealFor(stack: StackState): (RevealRecord & { backingColor?: st
 
 function remainingLayers(stack: StackState): number {
   return stack.cards.filter((card) => !card.revealed).length;
+}
+
+function visibleStackCards(stack: StackState): CardState[] {
+  return stack.cards.filter((card) => !card.revealed);
+}
+
+function finalRevealedCard(stack: StackState): CardState | null {
+  if (visibleStackCards(stack).length > 0) {
+    return null;
+  }
+
+  return stack.cards.at(-1) ?? null;
 }
 
 function isSelectable(stack: StackState): boolean {
@@ -216,43 +259,64 @@ function layerClass(color: string, revealed: boolean): string {
   }
 }
 
+const maxStackThickness = 10;
+
+function getStackLayerOffset(layers: number): number {
+  if (layers <= 1) return 0;
+  return Math.max(1, Math.floor(maxStackThickness / (layers - 1)));
+}
+
+function stackStageStyle(stack: StackState, forcedLayers?: number): Record<string, string> {
+  const layers = Math.max(1, forcedLayers ?? visibleStackCards(stack).length);
+  const thickness = (layers - 1) * getStackLayerOffset(layers);
+
+  return {
+    '--stack-thickness': `${thickness}px`,
+  };
+}
+
+function stackCardStyle(card: CardState, stack: StackState): Record<string, string> {
+  const cards = visibleStackCards(stack);
+  const index = cards.findIndex((item) => item.layerIndex === card.layerIndex);
+  const layerOffset = getStackLayerOffset(cards.length);
+  const offset = Math.max(0, index) * layerOffset;
+
+  return {
+    right: `${offset}px`,
+    bottom: `${offset}px`,
+    zIndex: `${cards.length - index}`,
+  };
+}
+
 defineOptions({
   name: 'Board',
 });
 </script>
 
 <style scoped>
-.flip-card {
-  perspective: 900px;
-  width: 2.4rem;
-  height: 3.2rem;
-}
-
-.flip-card__inner {
+.stack-stage {
   position: relative;
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
-  transition: transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1);
+  max-width: 100%;
+  max-height: 100%;
 }
 
-.flip-card__inner--flipped {
-  transform: rotateY(180deg);
+.stack-stage--mahjong {
+  width: 2rem;
+  height: 2.8rem;
 }
 
-.flip-card__face {
+.stack-card {
   position: absolute;
-  inset: 0;
+  width: calc(100% - var(--stack-thickness, 0px));
+  height: calc(100% - var(--stack-thickness, 0px));
+  border-radius: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+.stack-card--front {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.8rem;
-  backface-visibility: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
-}
-
-.flip-card__face--front {
-  transform: rotateY(180deg);
 }
 </style>
