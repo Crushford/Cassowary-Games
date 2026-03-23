@@ -55,11 +55,11 @@
         <template v-else-if="visibleStackCards(stack).length > 0">
           <div class="text-center">
             <template v-if="showExactValues">
-              <div class="relative mx-auto" :style="stackStageStyle(stack)">
+              <div class="stack-stage stack-stage--mahjong mx-auto" :style="stackStageStyle(stack)">
                 <div
                   v-for="card in visibleStackCards(stack)"
                   :key="`${stack.row}-${stack.col}-${card.layerIndex}`"
-                  class="absolute [border-radius:0.45rem] border border-white/[0.16] [box-shadow:0_8px_18px_rgba(0,0,0,0.18)] w-5 h-7 right-0 bottom-0 flex items-center justify-center"
+                  class="stack-card stack-card--front"
                   :class="card.revealed ? 'opacity-40' : 'bg-app-surface'"
                   :style="stackCardStyle(card, stack)"
                 >
@@ -70,11 +70,11 @@
               </div>
             </template>
             <template v-else>
-              <div class="relative mx-auto" :style="stackStageStyle(stack)">
+              <div class="stack-stage stack-stage--mahjong mx-auto" :style="stackStageStyle(stack)">
                 <div
                   v-for="card in visibleStackCards(stack)"
                   :key="`${stack.row}-${stack.col}-${card.layerIndex}`"
-                  class="absolute [border-radius:0.45rem] border border-white/[0.16] [box-shadow:0_8px_18px_rgba(0,0,0,0.18)] w-5 h-7"
+                  class="stack-card"
                   :class="backingCardClass(card.backingColor)"
                   :style="stackCardStyle(card, stack)"
                 />
@@ -86,10 +86,8 @@
           </div>
         </template>
         <div v-else-if="finalRevealedCard(stack)" class="text-center">
-          <div class="relative mx-auto" :style="stackStageStyle(stack, 1)">
-            <div
-              class="absolute [border-radius:0.45rem] border border-white/[0.16] [box-shadow:0_8px_18px_rgba(0,0,0,0.18)] w-5 h-7 right-0 bottom-0 flex items-center justify-center bg-app-surface"
-            >
+          <div class="stack-stage stack-stage--mahjong mx-auto" :style="stackStageStyle(stack, 1)">
+            <div class="stack-card stack-card--front bg-app-surface">
               <span
                 class="text-xl font-black leading-none"
                 :class="valueClass(finalRevealedCard(stack)?.value ?? 0)"
@@ -261,22 +259,27 @@ function layerClass(color: string, revealed: boolean): string {
   }
 }
 
-const stackLayerOffset = 4;
-const stackCardWidth = 20;
-const stackCardHeight = 28;
+const maxStackThickness = 10;
+
+function getStackLayerOffset(layers: number): number {
+  if (layers <= 1) return 0;
+  return Math.max(1, Math.floor(maxStackThickness / (layers - 1)));
+}
 
 function stackStageStyle(stack: StackState, forcedLayers?: number): Record<string, string> {
   const layers = Math.max(1, forcedLayers ?? visibleStackCards(stack).length);
+  const thickness = (layers - 1) * getStackLayerOffset(layers);
+
   return {
-    width: `${stackCardWidth + (layers - 1) * stackLayerOffset}px`,
-    height: `${stackCardHeight + (layers - 1) * stackLayerOffset}px`,
+    '--stack-thickness': `${thickness}px`,
   };
 }
 
 function stackCardStyle(card: CardState, stack: StackState): Record<string, string> {
   const cards = visibleStackCards(stack);
   const index = cards.findIndex((item) => item.layerIndex === card.layerIndex);
-  const offset = Math.max(0, cards.length - 1 - index) * stackLayerOffset;
+  const layerOffset = getStackLayerOffset(cards.length);
+  const offset = Math.max(0, index) * layerOffset;
 
   return {
     right: `${offset}px`,
@@ -289,3 +292,31 @@ defineOptions({
   name: 'Board',
 });
 </script>
+
+<style scoped>
+.stack-stage {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.stack-stage--mahjong {
+  width: 2rem;
+  height: 2.8rem;
+}
+
+.stack-card {
+  position: absolute;
+  width: calc(100% - var(--stack-thickness, 0px));
+  height: calc(100% - var(--stack-thickness, 0px));
+  border-radius: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+.stack-card--front {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>

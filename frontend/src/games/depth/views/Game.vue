@@ -233,7 +233,7 @@
             type="button"
             :disabled="!isPlayableStack(stack)"
             :class="stackCardClass(stack)"
-            class="w-full min-h-[5.75rem] rounded-lg border px-2 py-3 flex items-center justify-center shadow-sm transition-all duration-200 select-none disabled:cursor-not-allowed"
+            class="aspect-square w-full rounded-lg border px-1 py-1 flex items-center justify-center transition-all duration-200 select-none disabled:cursor-not-allowed"
             @click="handleStackClick(stack)"
           >
             <template v-if="stagedRevealFor(stack)">
@@ -262,21 +262,19 @@
               </div>
             </template>
             <template v-else-if="visibleStackCards(stack).length > 0">
-              <div class="relative" :style="stackStageStyle(stack)">
+              <div class="stack-stage stack-stage--mahjong" :style="stackStageStyle(stack)">
                 <div
                   v-for="card in visibleStackCards(stack)"
                   :key="`${stack.row}-${stack.col}-${card.layerIndex}`"
-                  class="absolute w-7 h-10 [border-radius:0.45rem] border border-white/[0.14] [box-shadow:0_8px_18px_rgba(0,0,0,0.18)]"
+                  class="stack-card"
                   :class="cardBackColorClass(card.backingColor)"
                   :style="stackCardStyle(card, stack)"
                 />
               </div>
             </template>
             <template v-else-if="finalRevealedCard(stack)">
-              <div class="relative" :style="stackStageStyle(stack, 1)">
-                <div
-                  class="absolute w-7 h-10 [border-radius:0.45rem] border border-white/[0.14] [box-shadow:0_8px_18px_rgba(0,0,0,0.18)] right-0 bottom-0 flex items-center justify-center bg-app-surface"
-                >
+              <div class="stack-stage stack-stage--mahjong" :style="stackStageStyle(stack, 1)">
+                <div class="stack-card stack-card--front bg-app-surface">
                   <span
                     :class="[
                       cardFrontAccentClass(finalRevealedCard(stack)?.backingColor ?? ''),
@@ -829,42 +827,47 @@ function isPlayableStack(stack: StackState): boolean {
 
 function stackCardClass(stack: StackState): string {
   if (stagedRevealFor(stack)) {
-    return 'border-app-border bg-app-surface';
+    return 'border-depth-warningBorderGlow';
   }
 
   const isActiveColumn = store.activeColumnIndex !== null && stack.col === store.activeColumnIndex;
   const topCard = topCardForDisplay(stack);
   if (!topCard) {
-    return 'border-app-border bg-app-surface text-app-textMuted';
+    return 'border-transparent text-app-textMuted';
   }
 
   if (isPlayableStack(stack)) {
-    return 'border-app-border bg-app-surface hover:border-semantic-info-400';
+    return 'border-depth-borderFaint hover:border-semantic-info-400';
   }
 
   if (isActiveColumn) {
-    return 'border-app-border bg-app-surface opacity-80';
+    return 'border-depth-borderSubtle opacity-80';
   }
 
-  return 'border-app-border bg-app-surface opacity-45';
+  return 'border-transparent opacity-45';
 }
 
-const stackLayerOffset = 4;
-const stackCardWidth = 28;
-const stackCardHeight = 40;
+const maxStackThickness = 14;
+
+function getStackLayerOffset(layers: number): number {
+  if (layers <= 1) return 0;
+  return Math.max(1, Math.floor(maxStackThickness / (layers - 1)));
+}
 
 function stackStageStyle(stack: StackState, forcedLayers?: number): Record<string, string> {
   const layers = Math.max(1, forcedLayers ?? visibleStackCards(stack).length);
+  const thickness = (layers - 1) * getStackLayerOffset(layers);
+
   return {
-    width: `${stackCardWidth + (layers - 1) * stackLayerOffset}px`,
-    height: `${stackCardHeight + (layers - 1) * stackLayerOffset}px`,
+    '--stack-thickness': `${thickness}px`,
   };
 }
 
 function stackCardStyle(card: CardState, stack: StackState): Record<string, string> {
   const cards = visibleStackCards(stack);
   const index = cards.findIndex((item) => item.layerIndex === card.layerIndex);
-  const offset = Math.max(0, cards.length - 1 - index) * stackLayerOffset;
+  const layerOffset = getStackLayerOffset(cards.length);
+  const offset = Math.max(0, index) * layerOffset;
 
   return {
     right: `${offset}px`,
@@ -1024,5 +1027,34 @@ defineOptions({
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.stack-stage {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.stack-stage--mahjong {
+  width: 74%;
+  height: 94%;
+  aspect-ratio: 7 / 10;
+}
+
+.stack-card {
+  position: absolute;
+  width: calc(100% - var(--stack-thickness, 0px));
+  height: calc(100% - var(--stack-thickness, 0px));
+  border-radius: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.stack-card--front {
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
