@@ -82,6 +82,11 @@ const router = createRouter({
       component: () => import('@/games/depth/views/DevGame.vue'),
     },
     {
+      path: '/mining',
+      name: 'mining',
+      component: () => import('@/games/mining/views/MiningGame.vue'),
+    },
+    {
       path: '/ballarat',
       redirect: '/depth',
     },

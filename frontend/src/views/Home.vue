@@ -95,6 +95,17 @@
             <h4 class="text-lg font-bold mb-1">Pompeii</h4>
             <p class="text-sm text-semantic-neutral-200">City building and defense game</p>
           </router-link>
+
+          <router-link
+            to="/mining"
+            class="block p-4 bg-semantic-warning-700 hover:bg-semantic-warning-600 rounded-lg transition-colors"
+            @click="showWorksInProgressModal = false"
+          >
+            <h4 class="text-lg font-bold mb-1">Gold Mining</h4>
+            <p class="text-sm text-semantic-neutral-200">
+              Mine a 5x5 claim and process rock for gold
+            </p>
+          </router-link>
         </div>
       </div>
     </Modal>
