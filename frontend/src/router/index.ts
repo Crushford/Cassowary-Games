@@ -5,6 +5,7 @@ import LevelBuilder from '@/games/queens/views/LevelBuilder.vue';
 import Levels from '@/games/queens/views/Levels.vue';
 import KenoGameWrapper from '@/games/keno/views/KenoGameWrapper.vue';
 import QueensGame from '@/games/queens/views/QueensGame.vue';
+import QueensAdmin from '@/games/queens/views/QueensAdmin.vue';
 import QueensDiversityLab from '@/games/queens/views/QueensDiversityLab.vue';
 import IncrementalQueensEntry from '@/games/queens/views/IncrementalQueensEntry.vue';
 
@@ -56,6 +57,11 @@ const router = createRouter({
       path: '/queens/incremental',
       name: 'queens-incremental',
       component: IncrementalQueensEntry,
+    },
+    {
+      path: '/queens/admin',
+      name: 'queens-admin',
+      component: QueensAdmin,
     },
     {
       path: '/queens/:puzzleId',

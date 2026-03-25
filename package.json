@@ -4,6 +4,9 @@
   "packageManager": "yarn@4.10.3",
   "scripts": {
     "prepare": "husky",
+    "dev": "sh -c 'trap \"kill 0\" EXIT; yarn dev:frontend & yarn dev:kotlin-backend & wait'",
+    "dev:frontend": "yarn --cwd frontend dev",
+    "dev:kotlin-backend": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle bootRun'",
     "lint": "sh -c 'yarn lint:frontend; f=$?; yarn lint:backend; b=$?; test $f -eq 0 -a $b -eq 0'",
     "lint:frontend": "yarn --cwd frontend lint",
     "lint:backend": "yarn --cwd backend lint",
