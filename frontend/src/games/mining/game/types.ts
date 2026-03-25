@@ -1,4 +1,4 @@
-export type MiningPhase = 'idle' | 'loading' | 'playing' | 'level-complete';
+export type MiningPhase = 'idle' | 'loading' | 'playing' | 'level-complete' | 'dead';
 export type MiningDepthLevel = 1 | 2 | 3 | 4;
 export type MiningUpgradeId = 'basic-pick' | 'reinforced-pick' | 'survey-scanner';
 

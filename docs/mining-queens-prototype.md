@@ -2,7 +2,7 @@
 
 ## Current Goal
 
-The mining game now uses a depth-based progression system built on top of a hidden 5x5 Queens-derived board.
+The mining game now uses a depth-based progression system built on top of a hidden 5x5 Queens-derived board, wrapped in a minimal survival-contract story.
 
 Every board still comes from a legal 5x5 Queens solution, but the presentation changes by depth:
 
@@ -22,6 +22,14 @@ For every board:
 
 The Queens `layout` string is also parsed into region ids so later depths can use region rules.
 
+## Narrative Wrapper
+
+- The player is a cassowary working under a mining contract.
+- Every dig costs supplies.
+- Gold keeps the cassowary alive.
+- Death is framed as starvation underground, followed by revival from a suspiciously angelic Andean condor.
+- Advice comes through lightweight text modals rather than new world screens.
+
 ## Economy
 
 - every dig costs `1` gold
@@ -32,7 +40,14 @@ The Queens `layout` string is also parsed into region ids so later depths can us
   - depth 3: `20`
   - depth 4: `40`
 
-The run starts with `25` gold so the player can always explore the first board.
+The run starts with `20` gold so the first contract feels survivable but still tight.
+
+Low-gold warnings currently trigger at:
+
+- `10` gold
+- `5` gold
+
+If gold reaches `0`, the current contract ends and the player must restart the run.
 
 ## Interaction
 
@@ -86,11 +101,13 @@ Quartz means the tile can never contain gold because it lies in:
 
 Depth unlocks are permanent within the current run:
 
-- `Basic Pick` → unlocks depth 2, cost `20`
-- `Reinforced Pick` → unlocks depth 3, cost `80`
+- `Magpie Starter Kit` → unlocks depth 2, cost `20`
+- `Reinforced Magpie Rig` → unlocks depth 3, cost `80`
 - `Survey Scanner` → unlocks depth 4, cost `320`
 
 The player can still return to earlier unlocked depths to farm them.
+
+The shop copy now frames these as contract tools and hired help, with the magpie introduced from the first upgrade onward.
 
 ## Runtime Structure
 
@@ -110,6 +127,11 @@ The store owns:
 - revealed tiles
 - manual flags
 - board completion and next-board loading
+- intro modal state
+- low-gold warning state
+- death/revival state
+- lightweight hint unlock state
+- one-time hint tracking by depth
 
 ### Utilities
 
@@ -181,6 +203,15 @@ The game keeps:
 - total days
 - unlocked depth upgrades
 - currently selected depth
+
+On death:
+
+- current board progress resets
+- run gold resets
+- days reset
+- unlocked depth upgrades survive
+- hints remain unlocked once the player has died once
+- current depth resets to depth 1
 
 ## Tests
 

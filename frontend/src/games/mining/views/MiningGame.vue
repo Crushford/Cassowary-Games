@@ -9,6 +9,7 @@
       variant="error"
       aria-live="assertive"
     />
+    <Toast :message="store.warningMessage" aria-live="polite" />
 
     <div class="flex-none border-b border-app-border px-4 py-3">
       <div class="flex items-center justify-between gap-3">
@@ -36,7 +37,7 @@
           <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.daysElapsed }}</div>
         </div>
         <div class="rounded-xl bg-app-surface px-3 py-2">
-          <div class="uppercase tracking-[0.18em] text-app-textMuted">Gold</div>
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Supplies</div>
           <div class="mt-1 font-bold tabular-nums text-semantic-warning-300">
             {{ store.goldTotal }}
           </div>
@@ -59,7 +60,9 @@
         <section class="rounded-2xl border border-app-border bg-app-surface p-4">
           <div class="mb-4 flex items-center justify-between gap-3">
             <div>
-              <div class="text-[10px] uppercase tracking-[0.18em] text-app-textMuted">Depth</div>
+              <div class="text-[10px] uppercase tracking-[0.18em] text-app-textMuted">
+                Contract Depth
+              </div>
               <div class="mt-1 text-base font-bold text-app-text">{{ store.depthTitle }}</div>
               <div class="mt-1 text-sm text-app-textMuted">{{ store.depthSummary }}</div>
             </div>
@@ -68,10 +71,22 @@
               :class="
                 store.phase === 'level-complete'
                   ? 'bg-semantic-success-900 text-semantic-success-300'
-                  : 'bg-app-bg text-app-textMuted'
+                  : store.goldTotal <= 5
+                    ? 'bg-semantic-danger-900 text-semantic-danger-300'
+                    : store.goldTotal <= 10
+                      ? 'bg-semantic-warning-900 text-semantic-warning-300'
+                      : 'bg-app-bg text-app-textMuted'
               "
             >
-              {{ store.phase === 'level-complete' ? 'Board Cleared' : 'Mining' }}
+              {{
+                store.phase === 'level-complete'
+                  ? 'Board Cleared'
+                  : store.goldTotal <= 5
+                    ? 'Supplies Critical'
+                    : store.goldTotal <= 10
+                      ? 'Supplies Low'
+                      : 'Contract Active'
+              }}
             </div>
           </div>
 
@@ -116,19 +131,28 @@
     <div class="flex-none border-t border-app-border bg-app-bgAlt px-4 py-3">
       <div class="flex items-center justify-between gap-3">
         <div class="min-w-0">
-          <div class="text-xs uppercase tracking-[0.18em] text-app-textMuted">Unlocks</div>
+          <div class="text-xs uppercase tracking-[0.18em] text-app-textMuted">Contract</div>
           <div class="mt-1 text-sm font-semibold text-app-text">
             Highest depth unlocked: {{ store.highestUnlockedDepthLevel }}
           </div>
         </div>
 
-        <button
-          type="button"
-          class="rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
-          @click="store.openShop()"
-        >
-          Shop
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="rounded-xl border border-app-border bg-app-bg px-4 py-2 text-sm font-bold text-app-text transition-colors hover:text-white"
+            @click="store.openHints()"
+          >
+            Ask Around
+          </button>
+          <button
+            type="button"
+            class="rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
+            @click="store.openShop()"
+          >
+            Shop
+          </button>
+        </div>
       </div>
     </div>
 
@@ -141,6 +165,51 @@
       @close="store.closeShop()"
       @buy-upgrade="store.buyUpgrade"
     />
+
+    <Modal
+      :is-visible="store.showIntroModal"
+      aria-label="Mining contract"
+      @close="store.dismissIntro()"
+    >
+      <div class="space-y-4 text-white">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-bold">Contract Signed</h2>
+            <p class="mt-1 text-sm text-semantic-neutral-300">
+              A cassowary has to eat, and this hill insists it hides a pattern.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="rounded-lg border border-semantic-neutral-600 px-3 py-1.5 text-sm font-semibold text-semantic-neutral-200 hover:bg-semantic-neutral-700"
+            @click="store.dismissIntro()"
+          >
+            Close
+          </button>
+        </div>
+
+        <div class="space-y-3 text-sm leading-relaxed text-semantic-neutral-200">
+          <p>
+            You have taken a mining contract. Every day underground costs food, nerve, and one gold
+            in supplies.
+          </p>
+          <p>
+            Gold seams keep the cassowary alive. Most miners break even. The sharp ones learn how
+            the earth arranges its secrets.
+          </p>
+          <p>The ground isn&apos;t random. It just looks that way.</p>
+          <p>Dig, profit, hire better help, and survive long enough to understand the hill.</p>
+        </div>
+
+        <button
+          type="button"
+          class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
+          @click="store.dismissIntro()"
+        >
+          Start Contract
+        </button>
+      </div>
+    </Modal>
 
     <Modal
       :is-visible="store.showUpgradeExplanation"
@@ -173,7 +242,72 @@
           class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
           @click="store.hideUpgradeExplanation()"
         >
-          Back to the Mine
+          Back to the Contract
+        </button>
+      </div>
+    </Modal>
+
+    <Modal
+      :is-visible="store.showHintModal"
+      aria-label="Old miners advice"
+      @close="store.closeHints()"
+    >
+      <div class="space-y-4 text-white">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-bold">Old Miners' Advice</h2>
+            <p class="mt-1 text-sm text-semantic-neutral-300">
+              Nobody agrees on the story. Everyone agrees the hill punishes lazy guesses.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="rounded-lg border border-semantic-neutral-600 px-3 py-1.5 text-sm font-semibold text-semantic-neutral-200 hover:bg-semantic-neutral-700"
+            @click="store.closeHints()"
+          >
+            Close
+          </button>
+        </div>
+
+        <p class="text-sm leading-relaxed text-semantic-neutral-200">
+          {{ store.currentHintText }}
+        </p>
+
+        <button
+          type="button"
+          class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
+          @click="store.closeHints()"
+        >
+          Back to the Shaft
+        </button>
+      </div>
+    </Modal>
+
+    <Modal
+      :is-visible="store.showDeathModal"
+      aria-label="Out of supplies"
+      @close="store.restartAfterDeath()"
+    >
+      <div class="space-y-4 text-white">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-bold">Out of Supplies</h2>
+            <p class="mt-1 text-sm text-semantic-neutral-300">
+              The contract keeps going. The cassowary did not.
+            </p>
+          </div>
+        </div>
+
+        <p class="text-sm leading-relaxed text-semantic-neutral-200">
+          {{ store.deathMessage }}
+        </p>
+
+        <button
+          type="button"
+          class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
+          @click="store.restartAfterDeath()"
+        >
+          Take Another Contract
         </button>
       </div>
     </Modal>
@@ -193,6 +327,7 @@ import { useMiningStore } from '../stores/mining';
 const store = useMiningStore();
 
 let errorTimeout: number | null = null;
+let warningTimeout: number | null = null;
 
 onMounted(() => {
   void store.initialize();
@@ -213,6 +348,24 @@ watch(
       store.clearError();
       errorTimeout = null;
     }, 2400);
+  }
+);
+
+watch(
+  () => store.warningTick,
+  () => {
+    if (warningTimeout) {
+      window.clearTimeout(warningTimeout);
+    }
+
+    if (!store.warningMessage) {
+      return;
+    }
+
+    warningTimeout = window.setTimeout(() => {
+      store.clearWarning();
+      warningTimeout = null;
+    }, 2800);
   }
 );
 </script>

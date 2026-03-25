@@ -5,7 +5,7 @@
         <div>
           <h2 class="text-xl font-bold text-white">Mining Shop</h2>
           <p class="mt-1 text-sm text-semantic-neutral-300">
-            Spend gold to unlock deeper layers with clearer information and better rewards.
+            Spend contract gold on tools, rumors, and birds clever enough to outlive a miner.
           </p>
         </div>
         <button

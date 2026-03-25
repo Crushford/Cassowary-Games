@@ -3,22 +3,24 @@ import type { MiningDepthLevel, MiningUpgradeDefinition, MiningUpgradeId } from 
 export const MINING_UPGRADES: MiningUpgradeDefinition[] = [
   {
     id: 'basic-pick',
-    title: 'Basic Pick',
-    description: 'Unlock the stone layer. Stone reveals quartz impossibilities and neutral rock.',
+    title: 'Magpie Starter Kit',
+    description:
+      'A heavier pick and a nosy magpie that learns to spot bad ground in the stone layer.',
     cost: 20,
     unlocksDepth: 2,
   },
   {
     id: 'reinforced-pick',
-    title: 'Reinforced Pick',
-    description: 'Unlock the region layer. Each color region can hold only one gold tile.',
+    title: 'Reinforced Magpie Rig',
+    description:
+      'A sturdier contract rig that helps the magpie read colored claims where each region hides only one seam.',
     cost: 80,
     unlocksDepth: 3,
   },
   {
     id: 'survey-scanner',
-    title: 'Survey Scanner',
-    description: 'Unlock the scanner layer. Region maps are visible before you dig.',
+    title: 'Magpie Survey Crew',
+    description: 'Hire a magpie crew to map region boundaries before the cassowary starts digging.',
     cost: 320,
     unlocksDepth: 4,
   },

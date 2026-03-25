@@ -47,11 +47,13 @@ describe('useMiningStore', () => {
     const store = useMiningStore();
 
     await store.initialize();
+    expect(store.showIntroModal).toBe(true);
+    store.dismissIntro();
     await store.dig({ row: 0, col: 1 });
 
     expect(store.currentDepthLevel).toBe(1);
     expect(store.currentLevel).toBe(1);
-    expect(store.goldTotal).toBe(24);
+    expect(store.goldTotal).toBe(19);
     expect(store.daysElapsed).toBe(1);
     expect(store.revealed[0][1]).toBe(true);
     expect(store.foundGoldCount).toBe(0);
@@ -69,13 +71,13 @@ describe('useMiningStore', () => {
     await store.dig({ row: 4, col: 3 });
     await vi.advanceTimersByTimeAsync(700);
 
-    expect(store.goldTotal).toBe(45);
+    expect(store.goldTotal).toBe(40);
 
     store.buyUpgrade('basic-pick');
 
     expect(store.highestUnlockedDepthLevel).toBe(2);
     expect(store.currentDepthLevel).toBe(2);
-    expect(store.goldTotal).toBe(25);
+    expect(store.goldTotal).toBe(20);
     expect(store.showUpgradeExplanation).toBe(true);
 
     await Promise.resolve();
@@ -83,7 +85,7 @@ describe('useMiningStore', () => {
 
     await store.dig({ row: 0, col: 0 });
 
-    expect(store.goldTotal).toBe(34);
+    expect(store.goldTotal).toBe(29);
     expect(store.foundGoldCount).toBe(1);
   });
 
@@ -102,5 +104,49 @@ describe('useMiningStore', () => {
     store.setDepthLevel(1);
 
     expect(store.currentDepthLevel).toBe(1);
+  });
+
+  it('warns on low gold and restarts after death while preserving unlocks', async () => {
+    const { useMiningStore } = await import('./mining');
+    const store = useMiningStore();
+
+    await store.initialize();
+    store.dismissIntro();
+    store.goldTotal = 11;
+
+    await store.dig({ row: 0, col: 1 });
+    expect(store.goldTotal).toBe(10);
+    expect(store.warningMessage).toContain('Supplies are running low');
+
+    store.clearWarning();
+    store.goldTotal = 6;
+    await store.dig({ row: 0, col: 2 });
+    expect(store.goldTotal).toBe(5);
+    expect(store.warningMessage).toContain("You're digging on borrowed time");
+
+    store.goldTotal = 120;
+    store.buyUpgrade('basic-pick');
+    expect(store.highestUnlockedDepthLevel).toBe(2);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    store.goldTotal = 0;
+    store.triggerDeath();
+
+    expect(store.phase).toBe('dead');
+    expect(store.showDeathModal).toBe(true);
+    expect(store.hintUnlocked).toBe(true);
+    expect(store.goldTotal).toBe(0);
+
+    store.restartAfterDeath();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(store.phase).toBe('playing');
+    expect(store.highestUnlockedDepthLevel).toBe(2);
+    expect(store.currentDepthLevel).toBe(1);
+    expect(store.goldTotal).toBe(20);
+    expect(store.hintUnlocked).toBe(true);
+    expect(store.shownHintDepths).toEqual([]);
   });
 });

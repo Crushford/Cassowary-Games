@@ -20,15 +20,17 @@ import { createBooleanGrid } from '../game/utils/createBooleanGrid';
 
 const DIG_COST = 1;
 const LEVEL_COMPLETE_DELAY_MS = 700;
-const STARTING_GOLD = 25;
+const STARTING_GOLD = 20;
+const LOW_GOLD_WARNING_THRESHOLD_MILD = 10;
+const LOW_GOLD_WARNING_THRESHOLD_SEVERE = 5;
 
 const UPGRADE_EXPLANATIONS: Record<MiningUpgradeId, string> = {
   'basic-pick':
-    'The Basic Pick unlocks the stone layer. Gold now pays 10, and dug stone can show quartz for impossible tiles or grey rock for unknown ground.',
+    'A young magpie starts working ahead of you. Gold pays 10 here, and the ground starts confessing through quartz and dull grey rock.',
   'reinforced-pick':
-    'The Reinforced Pick unlocks the region layer. Quartz disappears, and each color region can now hold only one gold tile.',
+    'Your magpie learns the colored claims. Quartz vanishes, but each region now permits only one gold seam.',
   'survey-scanner':
-    'The Survey Scanner unlocks the scanner layer. Region maps are visible immediately, so you can plan around them before digging.',
+    'The magpie crew becomes a proper survey gang. Region borders are visible before the first dig, which is more than most miners ever get.',
 };
 
 function createInitialState() {
@@ -48,20 +50,26 @@ function createInitialState() {
     highestUnlockedDepthLevel: 1 as MiningDepthLevel,
     currentDepthLevel: 1 as MiningDepthLevel,
     unlockedUpgradeIds: [] as MiningUpgradeId[],
+    showIntroModal: false,
+    hasSeenIntroThisRun: false,
+    showDeathModal: false,
+    deathMessage: null as string | null,
+    hintUnlocked: false,
+    showHintModal: false,
+    shownHintDepths: [] as MiningDepthLevel[],
     showUpgradeExplanation: false,
     upgradeExplanationTitle: null as string | null,
     upgradeExplanationMessage: null as string | null,
     shopOpen: false,
     errorMessage: null as string | null,
     errorTick: 0,
+    warningMessage: null as string | null,
+    warningTick: 0,
+    lastLowGoldWarningThreshold: null as number | null,
     lastActionMessage:
       'Start in the dirt layer. Efficient digging earns enough gold to unlock deeper mining methods.' as string,
     pendingLevelTimeout: null as number | null,
   };
-}
-
-function createRegionGrid(size: number): string[][] {
-  return Array.from({ length: size }, () => Array(size).fill('.'));
 }
 
 export const useMiningStore = defineStore('mining', {
@@ -102,18 +110,36 @@ export const useMiningStore = defineStore('mining', {
     depthSummary(state): string {
       switch (state.currentDepthLevel) {
         case 4:
-          return 'Region map visible before digging. Reward 40 gold per hit.';
+          return 'Your survey crew maps the boundaries before the first swing. Reward 40 gold per hit.';
         case 3:
-          return 'Color regions matter. Reward 20 gold per hit.';
+          return 'The earth breaks into colored claims. One gold seam per region. Reward 20 gold per hit.';
         case 2:
-          return 'Quartz marks impossible tiles once uncovered. Reward 10 gold per hit.';
+          return 'Stone starts talking. Quartz marks impossible ground. Reward 10 gold per hit.';
         default:
-          return 'No extra hints. Reward 5 gold per hit.';
+          return 'No hints. Just dirt, hunger, and the pattern you can learn. Reward 5 gold per hit.';
       }
     },
 
     canAffordDig(state): boolean {
       return state.goldTotal >= DIG_COST;
+    },
+
+    currentHintText(state): string {
+      const alreadySeen = state.shownHintDepths.includes(state.currentDepthLevel);
+      if (alreadySeen) {
+        return 'No one has anything new to add. The hill expects you to listen to what it already told you.';
+      }
+
+      switch (state.currentDepthLevel) {
+        case 4:
+          return 'The survey birds know the borderlines before you strike. Use the map before you trust your hunger.';
+        case 3:
+          return 'Old miners say a rich patch never shares a color region with another rich patch.';
+        case 2:
+          return 'White stone is the earth crossing out bad guesses for you.';
+        default:
+          return 'Most miners break even. The clever ones notice which seams refuse to crowd each other.';
+      }
     },
   },
 
@@ -124,6 +150,10 @@ export const useMiningStore = defineStore('mining', {
       }
 
       await this.loadNextLevel();
+      if (!this.hasSeenIntroThisRun) {
+        this.showIntroModal = true;
+        this.hasSeenIntroThisRun = true;
+      }
     },
 
     setError(message: string) {
@@ -135,8 +165,43 @@ export const useMiningStore = defineStore('mining', {
       this.errorMessage = null;
     },
 
+    setWarning(message: string) {
+      this.warningMessage = message;
+      this.warningTick += 1;
+    },
+
+    clearWarning() {
+      this.warningMessage = null;
+    },
+
+    dismissIntro() {
+      this.showIntroModal = false;
+    },
+
     hideUpgradeExplanation() {
       this.showUpgradeExplanation = false;
+    },
+
+    openHints() {
+      if (!this.hintUnlocked) {
+        this.setError(
+          'No one is offering advice yet. Survive a bad run and the town starts talking.'
+        );
+        return;
+      }
+
+      this.showHintModal = true;
+      if (!this.shownHintDepths.includes(this.currentDepthLevel)) {
+        this.shownHintDepths.push(this.currentDepthLevel);
+      }
+    },
+
+    closeHints() {
+      this.showHintModal = false;
+    },
+
+    dismissDeathModal() {
+      this.showDeathModal = false;
     },
 
     async loadNextLevel() {
@@ -163,6 +228,8 @@ export const useMiningStore = defineStore('mining', {
         this.revealed = createBooleanGrid(board.size);
         this.playerFlags = createBooleanGrid(board.size);
         this.foundGoldCount = 0;
+        this.showDeathModal = false;
+        this.deathMessage = null;
         this.currentLevel += 1;
         this.phase = 'playing';
         this.lastActionMessage = `Level ${this.currentLevel}: ${
@@ -204,6 +271,47 @@ export const useMiningStore = defineStore('mining', {
         : 'Flag removed.';
     },
 
+    checkLowGoldWarnings(previousGoldTotal: number) {
+      if (
+        previousGoldTotal > LOW_GOLD_WARNING_THRESHOLD_MILD &&
+        this.goldTotal <= LOW_GOLD_WARNING_THRESHOLD_MILD &&
+        this.lastLowGoldWarningThreshold !== LOW_GOLD_WARNING_THRESHOLD_MILD
+      ) {
+        this.lastLowGoldWarningThreshold = LOW_GOLD_WARNING_THRESHOLD_MILD;
+        this.setWarning('Supplies are running low.');
+        return;
+      }
+
+      if (
+        previousGoldTotal > LOW_GOLD_WARNING_THRESHOLD_SEVERE &&
+        this.goldTotal <= LOW_GOLD_WARNING_THRESHOLD_SEVERE &&
+        this.lastLowGoldWarningThreshold !== LOW_GOLD_WARNING_THRESHOLD_SEVERE
+      ) {
+        this.lastLowGoldWarningThreshold = LOW_GOLD_WARNING_THRESHOLD_SEVERE;
+        this.setWarning("You're digging on borrowed time.");
+      }
+    },
+
+    triggerDeath() {
+      if (this.pendingLevelTimeout !== null) {
+        window.clearTimeout(this.pendingLevelTimeout);
+        this.pendingLevelTimeout = null;
+      }
+
+      this.phase = 'dead';
+      this.goldTotal = 0;
+      this.shopOpen = false;
+      this.showHintModal = false;
+      this.showUpgradeExplanation = false;
+      this.showIntroModal = false;
+      this.showDeathModal = true;
+      this.hintUnlocked = true;
+      this.deathMessage =
+        'You starved underground.\nMost miners do.\n\nA condor drags you back to the surface.\nIt thinks you can do better.\n\nYou start listening more carefully.';
+      this.lastActionMessage = 'Out of supplies. The contract ends here.';
+      this.clearWarning();
+    },
+
     async dig(position: PositionRef) {
       if (this.phase !== 'playing') {
         return;
@@ -222,6 +330,7 @@ export const useMiningStore = defineStore('mining', {
 
       this.playerFlags[position.row][position.col] = false;
       this.revealed[position.row][position.col] = true;
+      const previousGoldTotal = this.goldTotal;
       this.goldTotal -= DIG_COST;
       this.daysElapsed += 1;
       this.clearError();
@@ -241,6 +350,8 @@ export const useMiningStore = defineStore('mining', {
           }, LEVEL_COMPLETE_DELAY_MS);
         }
 
+        this.checkLowGoldWarnings(previousGoldTotal);
+
         return;
       }
 
@@ -251,10 +362,16 @@ export const useMiningStore = defineStore('mining', {
 
       if (this.currentDepthLevel >= 3) {
         this.lastActionMessage = `Day ${this.daysElapsed}: You paid 1 gold to expose the region rock.`;
+      } else {
+        this.lastActionMessage = `Day ${this.daysElapsed}: You paid 1 gold to uncover plain dirt.`;
+      }
+
+      if (this.goldTotal <= 0) {
+        this.triggerDeath();
         return;
       }
 
-      this.lastActionMessage = `Day ${this.daysElapsed}: You paid 1 gold to uncover plain dirt.`;
+      this.checkLowGoldWarnings(previousGoldTotal);
     },
 
     openShop() {
@@ -302,6 +419,23 @@ export const useMiningStore = defineStore('mining', {
       this.shopOpen = false;
       this.lastActionMessage = `${upgrade.title} purchased. ${this.depthTitle} is now available.`;
       this.clearError();
+      void this.loadNextLevel();
+    },
+
+    restartAfterDeath() {
+      const unlockedUpgradeIds = [...this.unlockedUpgradeIds];
+      const highestUnlockedDepthLevel = this.highestUnlockedDepthLevel;
+      const hintUnlocked = this.hintUnlocked;
+
+      this.$patch({
+        ...createInitialState(),
+        unlockedUpgradeIds,
+        highestUnlockedDepthLevel,
+        currentDepthLevel: 1 as MiningDepthLevel,
+        hintUnlocked,
+        hasSeenIntroThisRun: true,
+      });
+
       void this.loadNextLevel();
     },
 
