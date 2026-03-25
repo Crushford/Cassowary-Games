@@ -1,12 +1,13 @@
 <template>
   <div class="grid grid-cols-5 gap-2">
     <MiningSquare
-      v-for="stack in stacks"
-      :key="`${stack.row}-${stack.col}`"
-      :tile="topTileForStack(stack)"
-      :floating-message="floatingMessageForStack(stack)"
-      :floating-tone="floatingToneForStack(stack)"
-      @dig="$emit('dig', { row: stack.row, col: stack.col })"
+      v-for="cell in cells"
+      :key="`${cell.row}-${cell.col}`"
+      :revealed="cell.revealed"
+      :has-gold="cell.hasGold"
+      :flagged="cell.flagged"
+      :disabled="disabled || cell.revealed || cell.flagged"
+      @dig="$emit('dig', { row: cell.row, col: cell.col })"
     />
   </div>
 </template>
@@ -14,38 +15,41 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import type { FloatingResult, GroundStackState, PositionRef } from '../game/types';
+import type { PositionRef } from '../game/types';
 import MiningSquare from './MiningSquare.vue';
 
 const props = defineProps<{
-  rows: GroundStackState[][];
-  topTileForStack: (stack: GroundStackState) => GroundStackState['tiles'][number] | null;
-  floatingResult?: FloatingResult | null;
+  truthGold: boolean[][];
+  revealed: boolean[][];
+  flagged: boolean[][];
+  disabled?: boolean;
 }>();
 
 defineEmits<{
   dig: [position: PositionRef];
 }>();
 
-const stacks = computed(() => props.rows.flat());
+const cells = computed(() => {
+  const values: Array<{
+    row: number;
+    col: number;
+    revealed: boolean;
+    hasGold: boolean;
+    flagged: boolean;
+  }> = [];
 
-function floatingMessageForStack(stack: GroundStackState): string | null {
-  if (!props.floatingResult) {
-    return null;
+  for (let row = 0; row < props.truthGold.length; row += 1) {
+    for (let col = 0; col < props.truthGold[row].length; col += 1) {
+      values.push({
+        row,
+        col,
+        revealed: props.revealed[row][col],
+        hasGold: props.truthGold[row][col],
+        flagged: props.flagged[row][col],
+      });
+    }
   }
 
-  return props.floatingResult.row === stack.row && props.floatingResult.col === stack.col
-    ? props.floatingResult.message
-    : null;
-}
-
-function floatingToneForStack(stack: GroundStackState): FloatingResult['tone'] | null {
-  if (!props.floatingResult) {
-    return null;
-  }
-
-  return props.floatingResult.row === stack.row && props.floatingResult.col === stack.col
-    ? props.floatingResult.tone
-    : null;
-}
+  return values;
+});
 </script>

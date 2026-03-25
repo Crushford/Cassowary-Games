@@ -24,23 +24,26 @@
         <button
           type="button"
           class="text-xs font-semibold text-app-textMuted transition-colors hover:text-app-text"
-          @click="store.leaseNewClaim()"
+          @click="store.openShop()"
         >
-          New Claim · {{ store.nextClaimCost }}
+          Shop
         </button>
       </div>
 
-      <div class="mt-3 flex items-center justify-between text-xs">
-        <div class="flex items-baseline gap-2">
-          <span class="uppercase tracking-[0.18em] text-app-textMuted">Day</span>
-          <span class="font-bold tabular-nums text-app-text">{{ store.daysElapsed }}</span>
+      <div class="mt-3 grid grid-cols-3 gap-2 text-xs">
+        <div class="rounded-xl bg-app-surface px-3 py-2">
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Day</div>
+          <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.daysElapsed }}</div>
         </div>
-
-        <div class="flex items-baseline gap-2">
-          <span class="uppercase tracking-[0.18em] text-app-textMuted">Gold</span>
-          <span class="font-bold tabular-nums text-semantic-warning-300">
+        <div class="rounded-xl bg-app-surface px-3 py-2">
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Gold</div>
+          <div class="mt-1 font-bold tabular-nums text-semantic-warning-300">
             {{ store.goldTotal }}
-          </span>
+          </div>
+        </div>
+        <div class="rounded-xl bg-app-surface px-3 py-2">
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Level</div>
+          <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.currentLevel }}</div>
         </div>
       </div>
     </div>
@@ -48,80 +51,54 @@
     <div class="flex-1 overflow-y-auto px-4 pt-4">
       <div class="space-y-4 pb-6">
         <section class="rounded-2xl border border-app-border bg-app-surface p-4">
-          <div class="mb-3 flex justify-end">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <div class="text-[10px] uppercase tracking-[0.18em] text-app-textMuted">
+                Hidden Pattern
+              </div>
+              <div class="mt-1 text-base font-bold text-app-text">Find all 5 gold tiles</div>
+            </div>
             <div
               class="rounded-full px-3 py-1 text-xs font-bold"
               :class="
-                store.phase === 'claim-complete'
+                store.phase === 'level-complete'
                   ? 'bg-semantic-success-900 text-semantic-success-300'
                   : 'bg-app-bg text-app-textMuted'
               "
             >
-              {{ store.phase === 'claim-complete' ? 'Claim Cleared' : 'Active Claim' }}
+              {{
+                store.phase === 'level-complete'
+                  ? 'Level Cleared'
+                  : store.hasAutoFlagUpgrade
+                    ? 'Survey Kit Active'
+                    : 'Manual Prospecting'
+              }}
             </div>
           </div>
 
-          <div class="mb-4 grid grid-cols-3 gap-2 rounded-xl bg-app-bg p-3">
-            <div class="flex items-center gap-2 rounded-lg bg-app-surface px-2 py-2">
-              <span
-                class="h-3 w-3 rounded-full bg-gradient-to-br from-semantic-warning-500 to-semantic-warning-800"
-              />
-              <div>
-                <div class="text-xs font-bold text-app-text">Dirt</div>
-                <div class="text-[10px] text-app-textMuted">Instant gold</div>
-              </div>
-            </div>
-            <div class="flex items-center gap-2 rounded-lg bg-app-surface px-2 py-2">
-              <span
-                class="h-3 w-3 rounded-full bg-gradient-to-br from-semantic-neutral-600 to-semantic-neutral-800"
-              />
-              <div>
-                <div class="text-xs font-bold text-app-text">Rock</div>
-                <div class="text-[10px] text-app-textMuted">1 day process</div>
-              </div>
-            </div>
-            <div class="flex items-center gap-2 rounded-lg bg-app-surface px-2 py-2">
-              <span
-                class="h-3 w-3 rounded-full bg-gradient-to-br from-semantic-warning-700 to-semantic-warning-900"
-              />
-              <div>
-                <div class="text-xs font-bold text-app-text">Quartz</div>
-                <div class="text-[10px] text-app-textMuted">3 day process</div>
-              </div>
-            </div>
+          <div class="mb-4 rounded-xl bg-app-bg p-3 text-sm text-app-textMuted">
+            <div>Gold found: {{ store.foundGoldCount }} / 5</div>
+            <div class="mt-1">{{ store.lastActionMessage }}</div>
           </div>
 
           <MiningBoard
-            :rows="store.gridRows"
-            :top-tile-for-stack="store.topTileForStack"
-            :floating-result="store.floatingResult"
+            :truth-gold="store.truthGold"
+            :revealed="store.revealed"
+            :flagged="store.flagged"
+            :disabled="store.phase !== 'playing'"
             @dig="store.dig"
           />
         </section>
-
-        <ProcessingArea
-          :processing-load="store.processingLoad"
-          :button-label="store.processingButtonLabel"
-          @process="store.processCurrentLoad()"
-        />
       </div>
     </div>
 
     <div class="flex-none border-t border-app-border bg-app-bgAlt px-4 py-3">
       <div class="flex items-center justify-between gap-3">
         <div class="min-w-0">
-          <div class="flex items-center gap-3 text-xs">
-            <div class="flex items-baseline gap-2">
-              <span class="uppercase tracking-[0.18em] text-app-textMuted">Tool</span>
-              <span class="truncate font-semibold text-app-text">{{ store.toolLabel }}</span>
-            </div>
-            <div class="flex items-baseline gap-2">
-              <span class="uppercase tracking-[0.18em] text-app-textMuted">Power</span>
-              <span class="font-semibold tabular-nums text-app-text">{{ store.shovelPower }}</span>
-            </div>
+          <div class="text-xs uppercase tracking-[0.18em] text-app-textMuted">Upgrade</div>
+          <div class="mt-1 text-sm font-semibold text-app-text">
+            {{ store.hasAutoFlagUpgrade ? 'Survey Kit Owned' : 'Survey Kit Available for 5 Gold' }}
           </div>
-
-          <div class="mt-1 text-xs text-app-textMuted">Tailings {{ store.tailingsTotal }}</div>
         </div>
 
         <button
@@ -137,35 +114,67 @@
     <MiningShopModal
       :is-visible="store.shopOpen"
       :gold-total="store.goldTotal"
-      :power-upgrade="store.powerUpgrade"
-      :can-buy-power-upgrade="store.canBuyPowerUpgrade"
-      :can-buy-rock-tool="store.canBuyRockTool"
-      :can-buy-quartz-tool="store.canBuyQuartzTool"
+      :upgrade="store.autoFlagUpgrade"
+      :can-buy-upgrade="store.canBuyAutoFlagUpgrade"
+      :has-upgrade="store.hasAutoFlagUpgrade"
       @close="store.closeShop()"
-      @buy-power="store.buyPowerUpgrade()"
-      @buy-rock-tool="store.buyRockTool()"
-      @buy-quartz-tool="store.buyQuartzTool()"
+      @buy-auto-flag="store.buyAutoFlagUpgrade()"
     />
+
+    <Modal
+      :is-visible="store.showUpgradeExplanation"
+      aria-label="Survey kit explanation"
+      @close="store.hideUpgradeExplanation()"
+    >
+      <div class="space-y-4 text-white">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-bold">Survey Kit Unlocked</h2>
+            <p class="mt-1 text-sm text-semantic-neutral-300">
+              Your prospecting crew can now rule out impossible tiles for you.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="rounded-lg border border-semantic-neutral-600 px-3 py-1.5 text-sm font-semibold text-semantic-neutral-200 hover:bg-semantic-neutral-700"
+            @click="store.hideUpgradeExplanation()"
+          >
+            Close
+          </button>
+        </div>
+
+        <p class="text-sm leading-relaxed text-semantic-neutral-200">
+          {{ store.upgradeExplanationMessage }}
+        </p>
+
+        <button
+          type="button"
+          class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
+          @click="store.hideUpgradeExplanation()"
+        >
+          Back to the Mine
+        </button>
+      </div>
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, watch } from 'vue';
 
+import Modal from '@/shared/components/Modal.vue';
 import Toast from '@/shared/components/Toast.vue';
 
 import MiningBoard from '../components/MiningBoard.vue';
 import MiningShopModal from '../components/MiningShopModal.vue';
-import ProcessingArea from '../components/ProcessingArea.vue';
 import { useMiningStore } from '../stores/mining';
 
 const store = useMiningStore();
 
 let errorTimeout: number | null = null;
-let floatingTimeout: number | null = null;
 
 onMounted(() => {
-  store.initialize();
+  void store.initialize();
 });
 
 watch(
@@ -183,24 +192,6 @@ watch(
       store.clearError();
       errorTimeout = null;
     }, 2400);
-  }
-);
-
-watch(
-  () => store.floatingResultTick,
-  () => {
-    if (floatingTimeout) {
-      window.clearTimeout(floatingTimeout);
-    }
-
-    if (!store.floatingResult) {
-      return;
-    }
-
-    floatingTimeout = window.setTimeout(() => {
-      store.clearFloatingResult();
-      floatingTimeout = null;
-    }, 650);
   }
 );
 </script>

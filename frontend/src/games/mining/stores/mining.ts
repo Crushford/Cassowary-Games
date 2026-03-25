@@ -1,48 +1,37 @@
 import { defineStore } from 'pinia';
 
-import { STARTING_CLAIM } from '../constants/claims';
-import { getGroundDeck } from '../constants/groundDecks';
-import { buildClaim } from '../game/board/buildClaim';
-import { getTopTile, isBoardCleared } from '../game/board/access';
-import {
-  QUARTZ_TOOL_UPGRADE,
-  ROCK_TOOL_UPGRADE,
-  getPowerUpgrade,
-  getToolTierLabel,
-} from '../game/rules/upgrades';
-import { digSquare } from '../game/turns/digSquare';
-import { processQueue } from '../game/turns/processQueue';
-import type {
-  ClaimBoardState,
-  FloatingResult,
-  GroundStackState,
-  MiningPhase,
-  PositionRef,
-  ProcessingLoad,
-  ToolTier,
-} from '../game/types';
+import { buildAutoFlagGrid } from '../game/rules/autoFlag';
+import { getFoundGoldPositions } from '../game/selectors/getFoundGoldPositions';
+import { loadRandomMiningPuzzle } from '../game/puzzles/loadMiningPuzzle';
+import { convertQueensPuzzleToMiningBoard } from '../game/puzzles/convertQueensPuzzleToMiningBoard';
+import type { MiningPhase, PositionRef } from '../game/types';
+import { AUTO_FLAG_UPGRADE } from '../game/upgrades/miningUpgrades';
+import { createBooleanGrid } from '../game/utils/createBooleanGrid';
 
-function createBoard(): ClaimBoardState {
-  return buildClaim(STARTING_CLAIM);
-}
+const LEVEL_COMPLETE_DELAY_MS = 700;
+const UPGRADE_EXPLANATION =
+  "You've bought the survey upgrade. In these mines, there is only one gold tile per row and one per column, and gold never touches diagonally. From now on, when you find gold, we will mark tiles where gold cannot be.";
 
 function createInitialState() {
   return {
     phase: 'idle' as MiningPhase,
-    board: createBoard(),
-    daysElapsed: 0,
+    currentLevel: 0,
+    currentPuzzleId: null as string | null,
+    boardSize: 5,
+    truthGold: createBooleanGrid(5),
+    revealed: createBooleanGrid(5),
+    flagged: createBooleanGrid(5),
     goldTotal: 0,
-    tailingsTotal: 0,
-    claimsLeased: 1,
-    shovelPower: 1,
-    toolTier: 'dirt' as ToolTier,
-    processingLoad: null as ProcessingLoad | null,
+    foundGoldCount: 0,
+    daysElapsed: 0,
+    hasAutoFlagUpgrade: false,
+    showUpgradeExplanation: false,
+    upgradeExplanationMessage: null as string | null,
+    shopOpen: false,
     errorMessage: null as string | null,
     errorTick: 0,
-    lastActionMessage: 'Start working the claim.' as string,
-    floatingResult: null as FloatingResult | null,
-    floatingResultTick: 0,
-    shopOpen: false,
+    lastActionMessage: 'Start digging and look for a pattern.' as string,
+    pendingLevelTimeout: null as number | null,
   };
 }
 
@@ -50,90 +39,39 @@ export const useMiningStore = defineStore('mining', {
   state: () => createInitialState(),
 
   getters: {
-    claim: () => STARTING_CLAIM,
+    autoFlagUpgrade: () => AUTO_FLAG_UPGRADE,
 
-    gridRows: (state): GroundStackState[][] => state.board.stacks,
-
-    processingButtonLabel: (state): string => {
-      if (!state.processingLoad) {
-        return 'No load to process';
-      }
-
-      return `Process ${state.processingLoad.label}`;
+    canBuyAutoFlagUpgrade(state): boolean {
+      return !state.hasAutoFlagUpgrade && state.goldTotal >= AUTO_FLAG_UPGRADE.cost;
     },
 
-    nextClaimCost: (state): number => {
-      if (state.claimsLeased <= 1) {
-        return 5;
-      }
-
-      const paidClaims = state.claimsLeased - 1;
-      return 5 + (paidClaims * (paidClaims + 3)) / 2;
+    remainingGold(state): number {
+      return state.boardSize - state.foundGoldCount;
     },
 
-    canLeaseNextClaim(): boolean {
-      return this.goldTotal >= this.nextClaimCost;
-    },
+    isRevealedGold:
+      (state) =>
+      (row: number, col: number): boolean =>
+        state.revealed[row][col] && state.truthGold[row][col],
 
-    toolLabel: (state): string => getToolTierLabel(state.toolTier),
+    isRevealedDirt:
+      (state) =>
+      (row: number, col: number): boolean =>
+        state.revealed[row][col] && !state.truthGold[row][col],
 
-    powerUpgrade: (state) => getPowerUpgrade(state.shovelPower),
-
-    canBuyRockTool(state): boolean {
-      return state.toolTier === 'dirt' && state.goldTotal >= ROCK_TOOL_UPGRADE.cost;
-    },
-
-    canBuyQuartzTool(state): boolean {
-      return state.toolTier !== 'quartz' && state.goldTotal >= QUARTZ_TOOL_UPGRADE.cost;
-    },
-
-    canBuyPowerUpgrade(state): boolean {
-      return state.goldTotal >= this.powerUpgrade.cost;
-    },
+    isHidden:
+      (state) =>
+      (row: number, col: number): boolean =>
+        !state.revealed[row][col],
   },
 
   actions: {
-    initialize() {
-      if (this.phase === 'idle') {
-        this.startFirstClaim();
-      }
-    },
-
-    startFirstClaim() {
-      this.$patch({
-        ...createInitialState(),
-        phase: 'playing',
-      });
-    },
-
-    leaseNewClaim() {
-      if (this.phase === 'idle') {
-        this.startFirstClaim();
+    async initialize() {
+      if (this.phase !== 'idle') {
         return;
       }
 
-      if (!this.canLeaseNextClaim) {
-        this.setError(`You need ${this.nextClaimCost} gold to lease a new claim.`);
-        return;
-      }
-
-      this.goldTotal -= this.nextClaimCost;
-      this.board = createBoard();
-      this.phase = 'playing';
-      this.daysElapsed = 0;
-      this.tailingsTotal = 0;
-      this.processingLoad = null;
-      this.claimsLeased += 1;
-      this.clearError();
-      this.lastActionMessage = `Leased a new claim for ${this.nextClaimCost} gold.`;
-    },
-
-    clearError() {
-      this.errorMessage = null;
-    },
-
-    clearFloatingResult() {
-      this.floatingResult = null;
+      await this.loadNextLevel();
     },
 
     setError(message: string) {
@@ -141,107 +79,92 @@ export const useMiningStore = defineStore('mining', {
       this.errorTick += 1;
     },
 
-    setFloatingResult(result: FloatingResult) {
-      this.floatingResult = result;
-      this.floatingResultTick += 1;
+    clearError() {
+      this.errorMessage = null;
     },
 
-    dig(position: PositionRef) {
+    hideUpgradeExplanation() {
+      this.showUpgradeExplanation = false;
+    },
+
+    async loadNextLevel() {
+      if (this.pendingLevelTimeout !== null) {
+        window.clearTimeout(this.pendingLevelTimeout);
+        this.pendingLevelTimeout = null;
+      }
+
+      this.phase = 'loading';
+      this.clearError();
+
+      try {
+        const puzzle = await loadRandomMiningPuzzle(this.currentPuzzleId);
+        const board = convertQueensPuzzleToMiningBoard(puzzle);
+
+        this.currentPuzzleId = board.puzzleId;
+        this.boardSize = board.size;
+        this.truthGold = board.truthGold;
+        this.revealed = createBooleanGrid(board.size);
+        this.flagged = createBooleanGrid(board.size);
+        this.foundGoldCount = 0;
+        this.currentLevel += 1;
+        this.phase = 'playing';
+        this.lastActionMessage = `Level ${this.currentLevel}: Dig for the hidden gold seam.`;
+      } catch (error) {
+        console.error('[mining] Failed to load next level', error);
+        this.phase = 'idle';
+        this.setError('Unable to load a mining board right now.');
+      }
+    },
+
+    recomputeFlags() {
+      if (!this.hasAutoFlagUpgrade) {
+        this.flagged = createBooleanGrid(this.boardSize);
+        return;
+      }
+
+      const foundGold = getFoundGoldPositions(this.truthGold, this.revealed);
+      this.flagged = buildAutoFlagGrid(foundGold, this.revealed, this.boardSize);
+    },
+
+    async dig(position: PositionRef) {
       if (this.phase !== 'playing') {
         return;
       }
 
-      const originalStack = this.board.stacks[position.row]?.[position.col] ?? null;
-      const originalTile = originalStack ? getTopTile(originalStack) : null;
-      const originalLabel = originalTile ? getGroundDeck(originalTile.groundType).label : 'ground';
-      const result = digSquare(
-        this.board,
-        position,
-        this.shovelPower,
-        this.toolTier,
-        this.processingLoad
-      );
-
-      if (!result.ok) {
-        this.setError(result.message ?? 'That ground cannot be worked right now.');
-        this.lastActionMessage = result.message ?? 'That ground cannot be worked right now.';
-        this.setFloatingResult({
-          row: position.row,
-          col: position.col,
-          message: 'Blocked',
-          tone: 'warning',
-        });
+      if (this.revealed[position.row]?.[position.col]) {
         return;
       }
 
-      const previousProcessingLoad = this.processingLoad;
-      this.board = result.board ?? this.board;
-      this.processingLoad = result.processingLoad ?? null;
-      this.goldTotal += result.goldAwarded ?? 0;
-      this.tailingsTotal += result.tailingsAdded ?? 0;
-      this.daysElapsed += result.daysSpent ?? 0;
+      if (this.flagged[position.row]?.[position.col]) {
+        return;
+      }
+
+      this.revealed[position.row][position.col] = true;
+      this.daysElapsed += 1;
       this.clearError();
-      this.updatePhase();
 
-      if (result.goldAwarded && result.goldAwarded > 0) {
-        this.lastActionMessage = `Day ${this.daysElapsed}: Worked ${originalLabel.toLowerCase()} and found ${result.goldAwarded} gold.`;
-        this.setFloatingResult({
-          row: position.row,
-          col: position.col,
-          message: `+${result.goldAwarded} gold`,
-          tone: 'success',
-        });
+      if (this.truthGold[position.row][position.col]) {
+        this.goldTotal += 5;
+        this.foundGoldCount += 1;
+        this.lastActionMessage = `Day ${this.daysElapsed}: You found gold worth 5.`;
+
+        if (this.hasAutoFlagUpgrade) {
+          this.recomputeFlags();
+        }
+
+        if (this.foundGoldCount === this.boardSize) {
+          this.phase = 'level-complete';
+          this.lastActionMessage = `Level ${this.currentLevel} cleared. Loading a new claim.`;
+          this.pendingLevelTimeout = window.setTimeout(() => {
+            this.pendingLevelTimeout = null;
+            void this.loadNextLevel();
+          }, LEVEL_COMPLETE_DELAY_MS);
+        }
+
         return;
       }
 
-      if (!previousProcessingLoad && this.processingLoad) {
-        this.lastActionMessage = `Day ${this.daysElapsed}: Broke ${this.processingLoad.label.toLowerCase()} and sent it to processing.`;
-        this.setFloatingResult({
-          row: position.row,
-          col: position.col,
-          message: 'To cradle',
-          tone: 'neutral',
-        });
-        return;
-      }
-
-      this.lastActionMessage = `Day ${this.daysElapsed}: Cut into ${originalLabel.toLowerCase()}.`;
-      this.setFloatingResult({
-        row: position.row,
-        col: position.col,
-        message: '0',
-        tone: 'neutral',
-      });
-    },
-
-    processCurrentLoad() {
-      if (this.phase !== 'playing') {
-        return;
-      }
-
-      const result = processQueue(this.processingLoad);
-
-      if (!result.ok) {
-        this.setError(result.message ?? 'There is nothing to process.');
-        this.lastActionMessage = result.message ?? 'There is nothing to process.';
-        return;
-      }
-
-      this.processingLoad = result.processingLoad ?? null;
-      this.goldTotal += result.goldAwarded ?? 0;
-      this.tailingsTotal += result.tailingsAdded ?? 0;
-      this.daysElapsed += result.daysSpent ?? 0;
-      this.clearError();
-      this.updatePhase();
-
-      if (result.goldAwarded && result.goldAwarded > 0) {
-        this.lastActionMessage = `Day ${this.daysElapsed}: Finished processing and recovered ${result.goldAwarded} gold.`;
-        return;
-      }
-
-      if (this.processingLoad) {
-        this.lastActionMessage = `Day ${this.daysElapsed}: Processing ${this.processingLoad.label.toLowerCase()} continues.`;
-      }
+      this.lastActionMessage = `Day ${this.daysElapsed}: Nothing here but dirt.`;
     },
 
     openShop() {
@@ -252,68 +175,26 @@ export const useMiningStore = defineStore('mining', {
       this.shopOpen = false;
     },
 
-    buyRockTool() {
-      if (this.toolTier !== 'dirt') {
-        this.setError('You already have a tool that can work rock.');
+    buyAutoFlagUpgrade() {
+      if (this.hasAutoFlagUpgrade) {
+        this.setError('You already own the survey kit.');
         return;
       }
 
-      if (this.goldTotal < ROCK_TOOL_UPGRADE.cost) {
+      if (this.goldTotal < AUTO_FLAG_UPGRADE.cost) {
         this.setError('Not enough gold for that upgrade.');
         return;
       }
 
-      this.goldTotal -= ROCK_TOOL_UPGRADE.cost;
-      this.toolTier = 'rock';
+      this.goldTotal -= AUTO_FLAG_UPGRADE.cost;
+      this.hasAutoFlagUpgrade = true;
+      this.upgradeExplanationMessage = UPGRADE_EXPLANATION;
+      this.showUpgradeExplanation = true;
+      this.shopOpen = false;
+      this.recomputeFlags();
+      this.lastActionMessage =
+        'Survey kit purchased. Future gold finds will mark impossible tiles.';
       this.clearError();
-    },
-
-    buyQuartzTool() {
-      if (this.toolTier === 'quartz') {
-        this.setError('You already have a quartz-grade tool.');
-        return;
-      }
-
-      if (this.goldTotal < QUARTZ_TOOL_UPGRADE.cost) {
-        this.setError('Not enough gold for that upgrade.');
-        return;
-      }
-
-      this.goldTotal -= QUARTZ_TOOL_UPGRADE.cost;
-      this.toolTier = 'quartz';
-      this.clearError();
-    },
-
-    buyPowerUpgrade() {
-      const upgrade = getPowerUpgrade(this.shovelPower);
-
-      if (this.goldTotal < upgrade.cost) {
-        this.setError('Not enough gold for that upgrade.');
-        return;
-      }
-
-      this.goldTotal -= upgrade.cost;
-      this.shovelPower += 1;
-      this.clearError();
-    },
-
-    updatePhase() {
-      if (isBoardCleared(this.board) && !this.processingLoad) {
-        this.phase = 'claim-complete';
-      }
-    },
-
-    topTileForStack(stack: GroundStackState) {
-      return getTopTile(stack);
-    },
-
-    groundLabelForStack(stack: GroundStackState): string {
-      const tile = getTopTile(stack);
-      if (!tile) {
-        return 'Worked';
-      }
-
-      return getGroundDeck(tile.groundType).label;
     },
   },
 });

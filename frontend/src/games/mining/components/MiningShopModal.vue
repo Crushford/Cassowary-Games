@@ -5,7 +5,7 @@
         <div>
           <h2 class="text-xl font-bold text-white">Mining Shop</h2>
           <p class="mt-1 text-sm text-semantic-neutral-300">
-            Spend gold to improve your tools and work deeper ground.
+            Spend gold on better information once you've uncovered enough of the field.
           </p>
         </div>
         <button
@@ -21,85 +21,36 @@
         Gold on hand: <span class="text-semantic-warning-300">{{ goldTotal }}</span>
       </div>
 
-      <div class="space-y-3">
-        <div class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-900 p-4">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <div class="text-base font-bold text-white">{{ powerUpgrade.title }}</div>
-              <div class="mt-1 text-sm text-semantic-neutral-300">
-                {{ powerUpgrade.description }}
-              </div>
-            </div>
-            <div class="text-sm font-bold text-semantic-warning-300">{{ powerUpgrade.cost }}</div>
-          </div>
-
-          <button
-            type="button"
-            class="mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
-            :class="
-              canBuyPowerUpgrade
-                ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
-                : 'border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-500'
-            "
-            @click="$emit('buy-power')"
-          >
-            Buy Power Upgrade
-          </button>
-        </div>
-
-        <div class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-900 p-4">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <div class="text-base font-bold text-white">{{ rockToolUpgrade.title }}</div>
-              <div class="mt-1 text-sm text-semantic-neutral-300">
-                {{ rockToolUpgrade.description }}
-              </div>
-            </div>
-            <div class="text-sm font-bold text-semantic-warning-300">
-              {{ rockToolUpgrade.cost }}
+      <div class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-900 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-base font-bold text-white">{{ upgrade.title }}</div>
+            <div class="mt-1 text-sm text-semantic-neutral-300">
+              {{ upgrade.description }}
             </div>
           </div>
-
-          <button
-            type="button"
-            class="mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
-            :class="
-              canBuyRockTool
-                ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
-                : 'border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-500'
-            "
-            @click="$emit('buy-rock-tool')"
-          >
-            Buy Rock Tool
-          </button>
+          <div class="text-sm font-bold text-semantic-warning-300">{{ upgrade.cost }}</div>
         </div>
 
-        <div class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-900 p-4">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <div class="text-base font-bold text-white">{{ quartzToolUpgrade.title }}</div>
-              <div class="mt-1 text-sm text-semantic-neutral-300">
-                {{ quartzToolUpgrade.description }}
-              </div>
-            </div>
-            <div class="text-sm font-bold text-semantic-warning-300">
-              {{ quartzToolUpgrade.cost }}
-            </div>
-          </div>
+        <p class="mt-3 text-sm text-semantic-neutral-400">
+          Unlocks permanent auto-flagging for later boards and explains the mine's hidden rule.
+        </p>
 
-          <button
-            type="button"
-            class="mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
-            :class="
-              canBuyQuartzTool
+        <button
+          type="button"
+          class="mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+          :class="
+            hasUpgrade
+              ? 'border-semantic-success-700 bg-semantic-success-900 text-semantic-success-200'
+              : canBuyUpgrade
                 ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
                 : 'border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-500'
-            "
-            @click="$emit('buy-quartz-tool')"
-          >
-            Buy Quartz Tool
-          </button>
-        </div>
+          "
+          :disabled="hasUpgrade || !canBuyUpgrade"
+          @click="$emit('buy-auto-flag')"
+        >
+          {{ hasUpgrade ? 'Purchased' : 'Buy Survey Kit' }}
+        </button>
       </div>
     </div>
   </Modal>
@@ -108,25 +59,18 @@
 <script setup lang="ts">
 import Modal from '@/shared/components/Modal.vue';
 
-import { QUARTZ_TOOL_UPGRADE, ROCK_TOOL_UPGRADE } from '../game/rules/upgrades';
-import type { UpgradeDefinition } from '../game/types';
+import type { MiningUpgradeDefinition } from '../game/types';
 
 defineProps<{
   isVisible: boolean;
   goldTotal: number;
-  powerUpgrade: UpgradeDefinition;
-  canBuyPowerUpgrade: boolean;
-  canBuyRockTool: boolean;
-  canBuyQuartzTool: boolean;
+  upgrade: MiningUpgradeDefinition;
+  canBuyUpgrade: boolean;
+  hasUpgrade: boolean;
 }>();
 
 defineEmits<{
   close: [];
-  'buy-power': [];
-  'buy-rock-tool': [];
-  'buy-quartz-tool': [];
+  'buy-auto-flag': [];
 }>();
-
-const rockToolUpgrade = ROCK_TOOL_UPGRADE;
-const quartzToolUpgrade = QUARTZ_TOOL_UPGRADE;
 </script>
