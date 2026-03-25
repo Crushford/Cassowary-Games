@@ -25,9 +25,9 @@
         <button
           type="button"
           class="text-xs font-semibold text-app-textMuted transition-colors hover:text-app-text"
-          @click="store.openShop()"
+          @click="store.openProgressionMenu()"
         >
-          Shop
+          Upgrades
         </button>
       </div>
 
@@ -110,6 +110,10 @@
           <div class="mb-4 rounded-xl bg-app-bg p-3 text-sm text-app-textMuted">
             <div>Gold found: {{ store.foundGoldCount }} / 5</div>
             <div class="mt-1">Tap to dig for 1 gold. Long press to place or remove a flag.</div>
+            <div class="mt-1">
+              Field: {{ store.selectedFieldTitle }}. Permit: {{ store.activePermitTitle }}.
+            </div>
+            <div class="mt-1">{{ store.magpieSummary }}</div>
             <div class="mt-1">{{ store.lastActionMessage }}</div>
           </div>
 
@@ -148,22 +152,41 @@
           <button
             type="button"
             class="rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
-            @click="store.openShop()"
+            @click="store.openProgressionMenu()"
           >
-            Shop
+            Upgrades
           </button>
         </div>
       </div>
     </div>
 
     <MiningShopModal
-      :is-visible="store.shopOpen"
+      :is-visible="store.progressionMenuOpen"
       :gold-total="store.goldTotal"
-      :upgrades="store.availableUpgrades"
-      :owned-upgrade-ids="store.unlockedUpgradeIds"
-      :can-buy-upgrade="(upgradeId) => store.canBuyUpgrade(upgradeId)"
-      @close="store.closeShop()"
-      @buy-upgrade="store.buyUpgrade"
+      :selected-tab="store.selectedProgressionTab"
+      :field-options="store.fieldOptions"
+      :current-field-id="store.selectedFieldId"
+      :owned-field-ids="store.ownedFieldIds"
+      :automation-options="store.automationOptions"
+      :has-magpie="store.hasMagpie"
+      :owned-automation-ids="store.magpieSkillIds"
+      :permit-options="store.permitOptions"
+      :owned-permit-tier-ids="store.ownedPermitTierIds"
+      :active-permit-tier-id="store.activePermitTierId"
+      :tool-upgrade-options="store.toolUpgradeOptions"
+      :owned-tool-upgrade-ids="store.ownedToolUpgradeIds"
+      :can-buy-field="(fieldId) => store.canBuyField(fieldId)"
+      :can-buy-automation="(skillId) => store.canBuyAutomation(skillId)"
+      :can-buy-permit="(permitId) => store.canBuyPermit(permitId)"
+      :can-buy-tool-upgrade="(upgradeId) => store.canBuyToolUpgrade(upgradeId)"
+      @close="store.closeProgressionMenu()"
+      @select-tab="store.setProgressionTab"
+      @buy-field="store.buyField"
+      @select-field="store.selectField"
+      @buy-automation="store.buyAutomation"
+      @buy-permit="store.buyPermit"
+      @activate-permit="store.activatePermit"
+      @buy-tool-upgrade="store.buyToolUpgrade"
     />
 
     <Modal

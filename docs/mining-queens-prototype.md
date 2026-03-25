@@ -1,15 +1,21 @@
-# Mining Prototype: Depth Progression
+# Mining Prototype: Progression Menu Sandbox
 
 ## Current Goal
 
-The mining game now uses a depth-based progression system built on top of a hidden 5x5 Queens-derived board, wrapped in a minimal survival-contract story.
+The mining game still runs on a hidden 5x5 Queens-derived board, but the progression layer is now a prototype menu for testing shape rather than balance.
 
-Every board still comes from a legal 5x5 Queens solution, but the presentation changes by depth:
+This version is intentionally cheap and permissive:
 
-- depth 1 teaches the pattern with almost no information
-- depth 2 adds quartz vs neutral stone
-- depth 3 introduces region logic
-- depth 4 reveals the full region map up front
+- every progression item costs `1`
+- all categories are available immediately
+- the purpose is to test structure, not economy tuning
+
+The loop underneath is still the same:
+
+- dig tiles on a hidden board
+- spend `1` gold per dig
+- earn gold from real seams
+- buy or select progression options from a single menu
 
 ## Hidden Truth
 
@@ -20,94 +26,148 @@ For every board:
 - there is exactly one gold per column
 - gold never touches diagonally
 
-The Queens `layout` string is also parsed into region ids so later depths can use region rules.
+The Queens `layout` string is also parsed into region ids so later depth layers can still use region logic.
 
-## Narrative Wrapper
+## Prototype Progression Menu
 
-- The player is a cassowary working under a mining contract.
-- Every dig costs supplies.
-- Gold keeps the cassowary alive.
-- Death is framed as starvation underground, followed by revival from a suspiciously angelic Andean condor.
-- Advice comes through lightweight text modals rather than new world screens.
+One overlay now contains four tabs:
 
-## Economy
+- `Field`
+- `Automation`
+- `Permits`
+- `Tools`
 
-- every dig costs `1` gold
-- every dig also costs `1` day
-- rewards depend on the selected depth:
-  - depth 1: `5`
-  - depth 2: `10`
-  - depth 3: `20`
-  - depth 4: `40`
+This keeps board profile, magpie training, contract payout, and equipment/depth progression mentally separate while still living in one simple UI panel.
 
-The run starts with `20` gold so the first contract feels survivable but still tight.
+## Current Categories
 
-Low-gold warnings currently trigger at:
+### Field
 
-- `10` gold
-- `5` gold
+Field is about board profile and puzzle pool, not depth.
 
-If gold reaches `0`, the current contract ends and the player must restart the run.
+Current options:
 
-## Interaction
+- `Training Field`
+- `Standard Field`
+- `Larger Fields`
 
-- tap: dig
-- long press: place or remove a manual flag
-- digging a flagged tile is allowed and clears the flag first
+`Training Field` and `Standard Field` are both 5x5 for now, but they are not identical:
 
-Flags are player-owned markers only. There is no forced flag-before-dig step.
+- `Training Field` draws from a smaller, steadier subset of the 5x5 puzzle pool
+- `Standard Field` uses the full current 5x5 pool
+
+`Larger Fields` is intentionally visible as a `Coming Soon` placeholder so the menu structure can be tested before larger boards exist.
+
+### Automation
+
+Automation is magpie training.
+
+Current lessons:
+
+- `Buy Magpie`
+- `Teach Row Rule`
+- `Teach Column Rule`
+- `Teach Diagonal Rule`
+- `Teach Simple Pattern Recognition`
+
+The row/column/diagonal lessons already have real board impact: after gold is found, the store computes system flags using only the rules the magpie has learned so far.
+
+`Buy Magpie` is a real prerequisite for the later lessons.
+
+Pattern recognition is still a visible placeholder for later design work and is not purchasable in this prototype.
+
+### Permits
+
+Permits are contract payout tiers.
+
+Current options:
+
+- `Basic Permit`
+- `Better Permit`
+- `Premium Permit`
+
+In this prototype they apply a real payout multiplier:
+
+- `1.0x`
+- `1.25x`
+- `1.5x`
+
+Owned permits can be reactivated without repurchasing them.
+
+### Tools
+
+Upgrades are physical tools and depth unlocks.
+
+Current options:
+
+- `Stronger Pick`
+- `Deeper Digging`
+- `Drill`
+- `Scanner`
+
+This is where depth progression lives now:
+
+- `Stronger Pick` unlocks depth 2
+- `Deeper Digging` unlocks depth 3
+- `Scanner` unlocks depth 4
+
+`Drill` is a visible placeholder slot for future tool effects and is not purchasable yet.
 
 ## Depth Rules
 
 ### Depth 1: Dirt Layer
 
-- reward: `5`
+- reward starts from `5`, then permit multiplier applies
 - reveals:
   - gold
   - plain dirt
-- no quartz
-- no region visibility
 
 ### Depth 2: Stone Layer
 
-- reward: `10`
+- reward starts from `10`, then permit multiplier applies
 - reveals:
   - gold
   - quartz for impossible tiles
   - grey rock for unknown tiles
 
-Quartz means the tile can never contain gold because it lies in:
-
-- the same row
-- the same column
-- an immediately diagonal-adjacent cell
-
 ### Depth 3: Region Layer
 
-- reward: `20`
+- reward starts from `20`, then permit multiplier applies
 - reveals:
   - colored region rock
-  - gold embedded in the region color
-- quartz is removed
-- the key new concept is: one gold per region
+  - gold embedded in region color
 
 ### Depth 4: Scanner Layer
 
-- reward: `40`
-- the full region map is visible immediately
-- digging is still needed to uncover gold, but region discovery is free
+- reward starts from `40`, then permit multiplier applies
+- region map is visible immediately
 
-## Upgrades
+## Economy
 
-Depth unlocks are permanent within the current run:
+- run starts with `20` gold
+- every dig costs `1` gold
+- every dig costs `1` day
+- every progression item costs `1` in this prototype
 
-- `Magpie Starter Kit` → unlocks depth 2, cost `20`
-- `Reinforced Magpie Rig` → unlocks depth 3, cost `80`
-- `Survey Scanner` → unlocks depth 4, cost `320`
+This is temporary scaffolding so the category structure can be tested without long grinding.
 
-The player can still return to earlier unlocked depths to farm them.
+Low-gold warnings still trigger at:
 
-The shop copy now frames these as contract tools and hired help, with the magpie introduced from the first upgrade onward.
+- `10` gold
+- `5` gold
+
+If gold reaches `0`, the contract ends and the player restarts.
+
+## Narrative Wrapper
+
+The current cassowary contract framing still exists, but it is not the focus of this prototype pass.
+
+- intro modal
+- low-gold warnings
+- death / condor revival
+- hint modal
+
+These continue to wrap the mining loop while the progression menu is being tested.
 
 ## Runtime Structure
 
@@ -115,67 +175,58 @@ The shop copy now frames these as contract tools and hired help, with the magpie
 
 Primary runtime:
 
-- `frontend/src/games/mining/stores/mining.ts`
+- `/Users/james/Documents/Honey-Pot-Ants/frontend/src/games/mining/stores/mining.ts`
 
-The store owns:
+The store now owns:
 
-- current puzzle loading
-- selected depth
-- highest unlocked depth
-- upgrade ownership
-- gold and day totals
+- puzzle loading
+- selected field
+- current depth
+- owned tool upgrades
+- magpie ownership and lessons
+- owned permits and active permit
+- progression menu tab state
 - revealed tiles
-- manual flags
-- board completion and next-board loading
-- intro modal state
-- low-gold warning state
-- death/revival state
-- lightweight hint unlock state
-- one-time hint tracking by depth
+- player flags
+- system flags
+- gold and day totals
+- intro / hint / death modal state
 
-### Utilities
+### Progression Config
 
-Puzzle loading and cache:
+Field options:
 
-- `frontend/src/games/mining/game/puzzles/loadMiningPuzzle.ts`
+- `/Users/james/Documents/Honey-Pot-Ants/frontend/src/games/mining/game/progression/fields.ts`
 
-Queens-to-mining conversion:
+Automation lessons:
 
-- `frontend/src/games/mining/game/puzzles/convertQueensPuzzleToMiningBoard.ts`
+- `/Users/james/Documents/Honey-Pot-Ants/frontend/src/games/mining/game/progression/automation.ts`
 
-Quartz truth generation:
+Permits:
 
-- `frontend/src/games/mining/game/rules/quartzTruth.ts`
+- `/Users/james/Documents/Honey-Pot-Ants/frontend/src/games/mining/game/progression/permits.ts`
 
-Gold position selector:
+Tool upgrades:
 
-- `frontend/src/games/mining/game/selectors/getFoundGoldPositions.ts`
-
-Upgrade definitions:
-
-- `frontend/src/games/mining/game/upgrades/miningUpgrades.ts`
-
-Region color styling:
-
-- `frontend/src/games/mining/game/utils/regionColor.ts`
+- `/Users/james/Documents/Honey-Pot-Ants/frontend/src/games/mining/game/progression/toolUpgrades.ts`
 
 ### UI
 
 Main view:
 
-- `frontend/src/games/mining/views/MiningGame.vue`
+- `/Users/james/Documents/Honey-Pot-Ants/frontend/src/games/mining/views/MiningGame.vue`
 
 Board:
 
-- `frontend/src/games/mining/components/MiningBoard.vue`
+- `/Users/james/Documents/Honey-Pot-Ants/frontend/src/games/mining/components/MiningBoard.vue`
 
-Square:
+Squares:
 
-- `frontend/src/games/mining/components/MiningSquare.vue`
+- `/Users/james/Documents/Honey-Pot-Ants/frontend/src/games/mining/components/MiningSquare.vue`
 
-Shop:
+Progression modal:
 
-- `frontend/src/games/mining/components/MiningShopModal.vue`
+- `/Users/james/Documents/Honey-Pot-Ants/frontend/src/games/mining/components/MiningShopModal.vue`
 
 ## Board Data Model
 
@@ -186,8 +237,11 @@ The current board uses:
 - `regionIds: string[][]`
 - `revealed: boolean[][]`
 - `playerFlags: boolean[][]`
+- `systemFlags: boolean[][]`
 
-`truthQuartz` exists because depth 2 needs a distinct reveal type for impossible non-gold tiles.
+`playerFlags` come from long-press interaction.
+
+`systemFlags` come from magpie lessons and only appear for the rules the bird has learned.
 
 ## Level Flow
 
@@ -201,36 +255,33 @@ The game keeps:
 
 - total gold
 - total days
-- unlocked depth upgrades
-- currently selected depth
+- owned fields
+- active permit
+- owned magpie lessons
+- owned tool upgrades
+- unlocked depths
 
 On death:
 
 - current board progress resets
 - run gold resets
 - days reset
-- unlocked depth upgrades survive
-- hints remain unlocked once the player has died once
-- current depth resets to depth 1
+- progression ownership survives
+- depth resets to 1
 
-## Tests
+## Deferred Balancing Work
 
-Focused tests exist for:
+This prototype does **not** answer the real economy yet.
 
-- Queens-to-mining conversion
-- quartz truth generation
-- auto-flag rule helper
-- mining store progression and depth unlock flow
+Still unresolved:
 
-Files:
+- real prices
+- actual upgrade ordering
+- true larger-board support
+- real tool effects for `Drill`
+- whether permits should stay this generous
+- what pattern-recognition should actually do
+- when automation lessons should become gated
+- how field profile and puzzle difficulty should scale together
 
-- `frontend/src/games/mining/game/puzzles/convertQueensPuzzleToMiningBoard.spec.ts`
-- `frontend/src/games/mining/game/rules/quartzTruth.spec.ts`
-- `frontend/src/games/mining/game/rules/autoFlag.spec.ts`
-- `frontend/src/games/mining/stores/mining.spec.ts`
-
-## Notes
-
-The `autoFlag.ts` helper still exists as a pure rule helper from the earlier prototype, but depth progression no longer depends on an auto-flag shop upgrade.
-
-If later work reintroduces automation or scanners with rule assistance, that helper can be reused.
+The current structure is intended to make that later tuning possible without another menu rewrite.

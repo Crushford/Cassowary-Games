@@ -48,6 +48,7 @@ describe('useMiningStore', () => {
 
     await store.initialize();
     expect(store.showIntroModal).toBe(true);
+    expect(store.selectedFieldId).toBe('training-field');
     store.dismissIntro();
     await store.dig({ row: 0, col: 1 });
 
@@ -59,54 +60,100 @@ describe('useMiningStore', () => {
     expect(store.foundGoldCount).toBe(0);
   });
 
-  it('unlocks the stone layer and pays the larger reward there', async () => {
+  it('opens the prototype progression structure and applies permit rewards', async () => {
     const { useMiningStore } = await import('./mining');
     const store = useMiningStore();
 
     await store.initialize();
-    await store.dig({ row: 0, col: 0 });
-    await store.dig({ row: 1, col: 2 });
-    await store.dig({ row: 2, col: 4 });
-    await store.dig({ row: 3, col: 1 });
-    await store.dig({ row: 4, col: 3 });
-    await vi.advanceTimersByTimeAsync(700);
+    store.openProgressionMenu();
+    store.setProgressionTab('permits');
+    store.buyPermit('premium-permit');
 
-    expect(store.goldTotal).toBe(40);
-
-    store.buyUpgrade('basic-pick');
-
-    expect(store.highestUnlockedDepthLevel).toBe(2);
-    expect(store.currentDepthLevel).toBe(2);
-    expect(store.goldTotal).toBe(20);
-    expect(store.showUpgradeExplanation).toBe(true);
-
-    await Promise.resolve();
-    await Promise.resolve();
+    expect(store.activePermitTierId).toBe('premium-permit');
+    expect(store.goldTotal).toBe(19);
+    expect(store.goldRewardPerTile).toBe(8);
 
     await store.dig({ row: 0, col: 0 });
 
-    expect(store.goldTotal).toBe(29);
+    expect(store.goldTotal).toBe(26);
     expect(store.foundGoldCount).toBe(1);
   });
 
-  it('allows farming earlier depths after deeper levels are unlocked', async () => {
+  it('lets the magpie learn row and diagonal rules and surfaces system flags from found gold', async () => {
     const { useMiningStore } = await import('./mining');
     const store = useMiningStore();
 
     await store.initialize();
-    store.goldTotal = 120;
-    store.buyUpgrade('basic-pick');
-    store.buyUpgrade('reinforced-pick');
+    store.buyAutomation('buy-magpie');
+    store.buyAutomation('teach-row-rule');
+    store.buyAutomation('teach-diagonal-rule');
 
-    expect(store.highestUnlockedDepthLevel).toBe(3);
-    expect(store.availableDepthLevels).toEqual([1, 2, 3]);
+    expect(store.hasMagpie).toBe(true);
+    expect(store.magpieSkillIds).toContain('buy-magpie');
+    expect(store.magpieSkillIds).toContain('teach-row-rule');
+    expect(store.magpieSkillIds).toContain('teach-diagonal-rule');
 
-    store.setDepthLevel(1);
+    await store.dig({ row: 0, col: 0 });
 
-    expect(store.currentDepthLevel).toBe(1);
+    expect(store.systemFlags[0][1]).toBe(true);
+    expect(store.systemFlags[1][1]).toBe(true);
+    expect(store.systemFlags[1][0]).toBe(false);
   });
 
-  it('warns on low gold and restarts after death while preserving unlocks', async () => {
+  it('treats field profile and depth unlocks as separate prototype categories', async () => {
+    const { useMiningStore } = await import('./mining');
+    const store = useMiningStore();
+
+    await store.initialize();
+    store.buyField('standard-field');
+
+    expect(store.selectedFieldId).toBe('standard-field');
+    expect(store.ownedFieldIds).toContain('standard-field');
+    expect(store.currentDepthLevel).toBe(1);
+
+    store.buyToolUpgrade('scanner');
+
+    expect(store.ownedToolUpgradeIds).toContain('scanner');
+    expect(store.highestUnlockedDepthLevel).toBe(4);
+    expect(store.currentDepthLevel).toBe(4);
+  });
+
+  it('keeps placeholder items visible but not purchasable', async () => {
+    const { useMiningStore } = await import('./mining');
+    const store = useMiningStore();
+
+    await store.initialize();
+
+    expect(store.canBuyField('large-field')).toBe(false);
+    store.buyField('large-field');
+    expect(store.errorMessage).toContain('not implemented yet');
+
+    store.clearError();
+    expect(store.canBuyAutomation('teach-pattern-recognition')).toBe(false);
+
+    store.clearError();
+    expect(store.canBuyToolUpgrade('drill')).toBe(false);
+  });
+
+  it('requires buying the magpie before lessons and keeps training field distinct from standard field', async () => {
+    const { useMiningStore } = await import('./mining');
+    const store = useMiningStore();
+
+    await store.initialize();
+
+    expect(store.canBuyAutomation('teach-column-rule')).toBe(false);
+    store.buyAutomation('teach-column-rule');
+    expect(store.errorMessage).toContain('Buy the magpie');
+
+    store.clearError();
+    store.buyField('standard-field');
+    expect(store.selectedFieldTitle).toBe('Standard Field');
+
+    store.selectField('training-field');
+    expect(store.selectedFieldTitle).toBe('Training Field');
+  });
+
+  it('warns on low gold and restarts after death while preserving prototype progression', async () => {
     const { useMiningStore } = await import('./mining');
     const store = useMiningStore();
 
@@ -124,13 +171,16 @@ describe('useMiningStore', () => {
     expect(store.goldTotal).toBe(5);
     expect(store.warningMessage).toContain("You're digging on borrowed time");
 
-    store.goldTotal = 120;
-    store.buyUpgrade('basic-pick');
-    expect(store.highestUnlockedDepthLevel).toBe(2);
-    await Promise.resolve();
-    await Promise.resolve();
+    store.buyField('standard-field');
+    store.buyAutomation('buy-magpie');
+    store.buyAutomation('teach-column-rule');
+    store.buyPermit('better-permit');
+    store.buyToolUpgrade('stronger-pick');
 
-    store.goldTotal = 0;
+    expect(store.highestUnlockedDepthLevel).toBe(2);
+    expect(store.selectedFieldId).toBe('standard-field');
+    expect(store.activePermitTierId).toBe('better-permit');
+
     store.triggerDeath();
 
     expect(store.phase).toBe('dead');
@@ -146,7 +196,10 @@ describe('useMiningStore', () => {
     expect(store.highestUnlockedDepthLevel).toBe(2);
     expect(store.currentDepthLevel).toBe(1);
     expect(store.goldTotal).toBe(20);
-    expect(store.hintUnlocked).toBe(true);
+    expect(store.selectedFieldId).toBe('standard-field');
+    expect(store.activePermitTierId).toBe('better-permit');
+    expect(store.magpieSkillIds).toContain('teach-column-rule');
+    expect(store.ownedToolUpgradeIds).toContain('stronger-pick');
     expect(store.shownHintDepths).toEqual([]);
   });
 });

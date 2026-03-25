@@ -1,6 +1,15 @@
 export type MiningPhase = 'idle' | 'loading' | 'playing' | 'level-complete' | 'dead';
 export type MiningDepthLevel = 1 | 2 | 3 | 4;
-export type MiningUpgradeId = 'basic-pick' | 'reinforced-pick' | 'survey-scanner';
+export type MiningProgressionTab = 'field' | 'automation' | 'permits' | 'upgrades';
+export type MiningFieldId = 'training-field' | 'standard-field' | 'large-field';
+export type MiningMagpieSkillId =
+  | 'buy-magpie'
+  | 'teach-row-rule'
+  | 'teach-column-rule'
+  | 'teach-diagonal-rule'
+  | 'teach-pattern-recognition';
+export type MiningPermitTierId = 'basic-permit' | 'better-permit' | 'premium-permit';
+export type MiningToolUpgradeId = 'stronger-pick' | 'deeper-digging' | 'drill' | 'scanner';
 
 export interface PositionRef {
   row: number;
@@ -21,10 +30,38 @@ export interface MiningLevelBoard {
   regionIds: string[][];
 }
 
-export interface MiningUpgradeDefinition {
-  id: MiningUpgradeId;
+export interface MiningFieldDefinition {
+  id: MiningFieldId;
   title: string;
   description: string;
   cost: number;
-  unlocksDepth: MiningDepthLevel;
+  boardSize: number;
+  implemented: boolean;
+}
+
+export interface MiningAutomationDefinition {
+  id: MiningMagpieSkillId;
+  title: string;
+  description: string;
+  cost: number;
+  effectSummary: string;
+  implemented: boolean;
+}
+
+export interface MiningPermitDefinition {
+  id: MiningPermitTierId;
+  title: string;
+  description: string;
+  cost: number;
+  payoutMultiplier: number;
+}
+
+export interface MiningToolUpgradeDefinition {
+  id: MiningToolUpgradeId;
+  title: string;
+  description: string;
+  cost: number;
+  unlocksDepth?: MiningDepthLevel;
+  effectSummary: string;
+  implemented: boolean;
 }
