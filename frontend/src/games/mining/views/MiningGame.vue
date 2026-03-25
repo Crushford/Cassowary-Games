@@ -78,15 +78,19 @@
 
           <div class="mb-4 rounded-xl bg-app-bg p-3 text-sm text-app-textMuted">
             <div>Gold found: {{ store.foundGoldCount }} / 5</div>
+            <div class="mt-1">Tap to dig for 1 gold. Long press to place or remove a flag.</div>
             <div class="mt-1">{{ store.lastActionMessage }}</div>
           </div>
 
           <MiningBoard
             :truth-gold="store.truthGold"
+            :truth-quartz="store.truthQuartz"
             :revealed="store.revealed"
-            :flagged="store.flagged"
+            :flagged="store.visibleFlags"
+            :auto-flags="store.autoFlags"
             :disabled="store.phase !== 'playing'"
             @dig="store.dig"
+            @toggle-flag="store.toggleFlag"
           />
         </section>
       </div>

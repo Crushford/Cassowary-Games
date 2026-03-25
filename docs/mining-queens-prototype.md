@@ -23,10 +23,12 @@ Colors and regions from Queens are ignored for gameplay.
 
 ### Before buying the upgrade
 
-- the player clicks hidden dirt tiles to dig
-- each valid dig costs 1 day
-- if the tile is dirt, it reveals as `0`
+- tap digs a hidden tile
+- long press places or removes a player flag for free
+- each dig costs `1` gold and `1` day
 - if the tile is gold, it reveals as `5` and adds 5 gold to the player's total
+- if the tile is a ruled-out location, it reveals as white quartz
+- if the tile is still ambiguous, it reveals as neutral grey rock
 - no auto-flagging happens yet
 
 This is meant to let the player notice the pattern on their own first.
@@ -50,9 +52,10 @@ When the player buys it:
 
 ### After buying the upgrade
 
-- whenever the player reveals a gold tile, the game recalculates authoritative flags
-- flagged cells are system-generated and non-clickable
-- flags mark cells that cannot contain gold based on currently revealed gold:
+- whenever the player reveals a gold tile, the game recalculates system flags
+- those flags are still diggable; they are guidance, not a lock
+- the player can keep using manual flags as well
+- system flags mark cells that cannot contain gold based on currently revealed gold:
   - same row
   - same column
   - immediately diagonal-adjacent cells
@@ -92,8 +95,10 @@ Primary runtime:
 The store owns:
 
 - loading the next Queens-derived board
+- the dig economy
 - revealed state
-- authoritative flagged state
+- manual player flags
+- auto-generated flags
 - day count
 - gold total
 - current level
@@ -142,14 +147,17 @@ Shop:
 
 ## Minimal Source of Truth
 
-The hidden board uses `truthGold: boolean[][]` as the source of truth.
+The hidden board uses:
 
-The game does **not** store a duplicate `goldValues` matrix, because the only gameplay values are:
+- `truthGold: boolean[][]`
+- `truthQuartz: boolean[][]`
+
+There is still no duplicate `goldValues` matrix. The only reward value is derived from `truthGold`:
 
 - `true => 5`
 - `false => 0`
 
-That keeps the board model small and avoids redundant state.
+`truthQuartz` is stored because the UI now needs to distinguish between dug non-gold tiles that are impossible by rule and dug non-gold tiles that remain ambiguous.
 
 ## Hidden Constraints We Intentionally Do Not Use
 

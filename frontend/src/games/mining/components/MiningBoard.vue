@@ -3,11 +3,12 @@
     <MiningSquare
       v-for="cell in cells"
       :key="`${cell.row}-${cell.col}`"
-      :revealed="cell.revealed"
-      :has-gold="cell.hasGold"
+      :tile-kind="cell.tileKind"
       :flagged="cell.flagged"
-      :disabled="disabled || cell.revealed || cell.flagged"
+      :auto-flagged="cell.autoFlagged"
+      :disabled="disabled || cell.tileKind !== 'hidden'"
       @dig="$emit('dig', { row: cell.row, col: cell.col })"
+      @toggle-flag="$emit('toggle-flag', { row: cell.row, col: cell.col })"
     />
   </div>
 </template>
@@ -20,32 +21,46 @@ import MiningSquare from './MiningSquare.vue';
 
 const props = defineProps<{
   truthGold: boolean[][];
+  truthQuartz: boolean[][];
   revealed: boolean[][];
   flagged: boolean[][];
+  autoFlags: boolean[][];
   disabled?: boolean;
 }>();
 
 defineEmits<{
   dig: [position: PositionRef];
+  'toggle-flag': [position: PositionRef];
 }>();
 
 const cells = computed(() => {
   const values: Array<{
     row: number;
     col: number;
-    revealed: boolean;
-    hasGold: boolean;
+    tileKind: 'hidden' | 'gold' | 'quartz' | 'rock';
     flagged: boolean;
+    autoFlagged: boolean;
   }> = [];
 
   for (let row = 0; row < props.truthGold.length; row += 1) {
     for (let col = 0; col < props.truthGold[row].length; col += 1) {
+      let tileKind: 'hidden' | 'gold' | 'quartz' | 'rock' = 'hidden';
+      if (props.revealed[row][col]) {
+        if (props.truthGold[row][col]) {
+          tileKind = 'gold';
+        } else if (props.truthQuartz[row][col]) {
+          tileKind = 'quartz';
+        } else {
+          tileKind = 'rock';
+        }
+      }
+
       values.push({
         row,
         col,
-        revealed: props.revealed[row][col],
-        hasGold: props.truthGold[row][col],
+        tileKind,
         flagged: props.flagged[row][col],
+        autoFlagged: props.autoFlags[row][col],
       });
     }
   }
