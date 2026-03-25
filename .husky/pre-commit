@@ -1,1 +1,14 @@
-yarn lint:fix && yarn --cwd frontend build
+#!/bin/sh
+
+set -e
+
+yarn lint:fix
+yarn --cwd frontend build
+
+if git diff --cached --name-only --diff-filter=ACMR | grep -q '^queens-admin-backend/'; then
+  echo "Staged Kotlin backend changes detected. Running Gradle build..."
+  (
+    cd queens-admin-backend
+    GRADLE_USER_HOME="$PWD/.gradle-local" gradle build
+  )
+fi

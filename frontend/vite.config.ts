@@ -11,6 +11,10 @@ export default defineConfig({
   base: '/',
   server: {
     proxy: {
+      '/api/queens/admin': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,

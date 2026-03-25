@@ -1,0 +1,9 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: queens-admin-backend
+  devtools:
+    restart:
+      enabled: true

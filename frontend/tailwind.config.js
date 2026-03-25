@@ -32,10 +32,16 @@ export default {
         surface: {
           overlay: '#0f172ae6',
           overlayStrong: '#0f172af2',
+          overlayMid: '#0f172acc',
+          overlayDim: '#0f172ab3',
           overlaySoft: '#0f172a99',
           muted: '#1e293b80',
           mutedAlt: '#33415580',
           mutedFaint: '#1e293b66',
+          darkStrong: '#020617e6',
+          darkFirm: '#020617d9',
+          darkMuted: '#020617cc',
+          darkSoft: '#020617b3',
         },
         feedback: {
           dangerLow: '#ef444433',
@@ -107,6 +113,7 @@ export default {
           gradientStart: '#1a2740',
           gradientEnd: '#0d1117',
           gridLine: '#94a3b8',
+          accentText: '#67e8f9',
         },
         incremental: {
           shellBg: '#020617',
