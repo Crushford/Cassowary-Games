@@ -5,7 +5,7 @@
         <div>
           <h2 class="text-xl font-bold text-white">Mining Shop</h2>
           <p class="mt-1 text-sm text-semantic-neutral-300">
-            Spend gold on better information once you've uncovered enough of the field.
+            Spend gold to unlock deeper layers with clearer information and better rewards.
           </p>
         </div>
         <button
@@ -21,36 +21,42 @@
         Gold on hand: <span class="text-semantic-warning-300">{{ goldTotal }}</span>
       </div>
 
-      <div class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-900 p-4">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <div class="text-base font-bold text-white">{{ upgrade.title }}</div>
-            <div class="mt-1 text-sm text-semantic-neutral-300">
-              {{ upgrade.description }}
-            </div>
-          </div>
-          <div class="text-sm font-bold text-semantic-warning-300">{{ upgrade.cost }}</div>
-        </div>
-
-        <p class="mt-3 text-sm text-semantic-neutral-400">
-          Unlocks permanent auto-flagging for later boards and explains the mine's hidden rule.
-        </p>
-
-        <button
-          type="button"
-          class="mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
-          :class="
-            hasUpgrade
-              ? 'border-semantic-success-700 bg-semantic-success-900 text-semantic-success-200'
-              : canBuyUpgrade
-                ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
-                : 'border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-500'
-          "
-          :disabled="hasUpgrade || !canBuyUpgrade"
-          @click="$emit('buy-auto-flag')"
+      <div class="space-y-3">
+        <div
+          v-for="upgrade in upgrades"
+          :key="upgrade.id"
+          class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-900 p-4"
         >
-          {{ hasUpgrade ? 'Purchased' : 'Buy Survey Kit' }}
-        </button>
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="text-base font-bold text-white">{{ upgrade.title }}</div>
+              <div class="mt-1 text-sm text-semantic-neutral-300">
+                {{ upgrade.description }}
+              </div>
+            </div>
+            <div class="text-sm font-bold text-semantic-warning-300">{{ upgrade.cost }}</div>
+          </div>
+
+          <div class="mt-3 text-xs uppercase tracking-[0.18em] text-semantic-neutral-500">
+            Unlocks depth {{ upgrade.unlocksDepth }}
+          </div>
+
+          <button
+            type="button"
+            class="mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+            :class="
+              ownedUpgradeIds.includes(upgrade.id)
+                ? 'border-semantic-success-700 bg-semantic-success-900 text-semantic-success-200'
+                : canBuyUpgrade(upgrade.id)
+                  ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
+                  : 'border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-500'
+            "
+            :disabled="ownedUpgradeIds.includes(upgrade.id) || !canBuyUpgrade(upgrade.id)"
+            @click="$emit('buy-upgrade', upgrade.id)"
+          >
+            {{ ownedUpgradeIds.includes(upgrade.id) ? 'Purchased' : `Buy ${upgrade.title}` }}
+          </button>
+        </div>
       </div>
     </div>
   </Modal>
@@ -59,18 +65,18 @@
 <script setup lang="ts">
 import Modal from '@/shared/components/Modal.vue';
 
-import type { MiningUpgradeDefinition } from '../game/types';
+import type { MiningUpgradeDefinition, MiningUpgradeId } from '../game/types';
 
 defineProps<{
   isVisible: boolean;
   goldTotal: number;
-  upgrade: MiningUpgradeDefinition;
-  canBuyUpgrade: boolean;
-  hasUpgrade: boolean;
+  upgrades: MiningUpgradeDefinition[];
+  ownedUpgradeIds: MiningUpgradeId[];
+  canBuyUpgrade: (upgradeId: MiningUpgradeId) => boolean;
 }>();
 
 defineEmits<{
   close: [];
-  'buy-auto-flag': [];
+  'buy-upgrade': [upgradeId: MiningUpgradeId];
 }>();
 </script>

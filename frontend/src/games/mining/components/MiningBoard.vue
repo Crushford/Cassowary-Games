@@ -5,7 +5,8 @@
       :key="`${cell.row}-${cell.col}`"
       :tile-kind="cell.tileKind"
       :flagged="cell.flagged"
-      :auto-flagged="cell.autoFlagged"
+      :region-id="cell.regionId"
+      :depth-level="depthLevel"
       :disabled="disabled || cell.tileKind !== 'hidden'"
       @dig="$emit('dig', { row: cell.row, col: cell.col })"
       @toggle-flag="$emit('toggle-flag', { row: cell.row, col: cell.col })"
@@ -16,15 +17,16 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import type { PositionRef } from '../game/types';
+import type { MiningDepthLevel, PositionRef } from '../game/types';
 import MiningSquare from './MiningSquare.vue';
 
 const props = defineProps<{
   truthGold: boolean[][];
   truthQuartz: boolean[][];
+  regionIds: string[][];
   revealed: boolean[][];
   flagged: boolean[][];
-  autoFlags: boolean[][];
+  depthLevel: MiningDepthLevel;
   disabled?: boolean;
 }>();
 
@@ -39,16 +41,17 @@ const cells = computed(() => {
     col: number;
     tileKind: 'hidden' | 'gold' | 'quartz' | 'rock';
     flagged: boolean;
-    autoFlagged: boolean;
+    regionId: string | null;
   }> = [];
 
   for (let row = 0; row < props.truthGold.length; row += 1) {
     for (let col = 0; col < props.truthGold[row].length; col += 1) {
       let tileKind: 'hidden' | 'gold' | 'quartz' | 'rock' = 'hidden';
+
       if (props.revealed[row][col]) {
         if (props.truthGold[row][col]) {
           tileKind = 'gold';
-        } else if (props.truthQuartz[row][col]) {
+        } else if (props.depthLevel === 2 && props.truthQuartz[row][col]) {
           tileKind = 'quartz';
         } else {
           tileKind = 'rock';
@@ -60,7 +63,7 @@ const cells = computed(() => {
         col,
         tileKind,
         flagged: props.flagged[row][col],
-        autoFlagged: props.autoFlags[row][col],
+        regionId: props.regionIds[row][col] ?? null,
       });
     }
   }

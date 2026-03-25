@@ -18,6 +18,7 @@ describe('convertQueensPuzzleToMiningBoard', () => {
       [false, true, false, false, false],
       [false, false, false, true, false],
     ]);
+    expect(board.regionIds[0]).toEqual(['A', 'B', 'C', 'D', 'E']);
   });
 
   it('rejects non-5x5 puzzle payloads', () => {

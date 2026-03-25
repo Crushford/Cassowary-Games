@@ -10,10 +10,14 @@ export function convertQueensPuzzleToMiningBoard(puzzle: MiningPuzzleRecord): Mi
   const truthGold = Array.from({ length: size }, (_, row) =>
     Array.from({ length: size }, (_, col) => puzzle.queens[row * size + col] === 'Q')
   );
+  const regionIds = Array.from({ length: size }, (_, row) =>
+    Array.from({ length: size }, (_, col) => puzzle.layout[row * size + col] ?? '.')
+  );
 
   return {
     puzzleId: puzzle.id,
     size,
     truthGold,
+    regionIds,
   };
 }

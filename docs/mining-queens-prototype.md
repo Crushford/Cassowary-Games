@@ -1,88 +1,96 @@
-# Mining Prototype: Queens-Derived Board
+# Mining Prototype: Depth Progression
 
 ## Current Goal
 
-The mining game now uses a hidden 5x5 board derived from the public Queens puzzle data.
+The mining game now uses a depth-based progression system built on top of a hidden 5x5 Queens-derived board.
 
-This replaces the older layered claim/deck/prospecting prototype. The game still feels like mining, but the hidden gold pattern is taken from a legal 5x5 Queens solution.
+Every board still comes from a legal 5x5 Queens solution, but the presentation changes by depth:
 
-## Core Rule
+- depth 1 teaches the pattern with almost no information
+- depth 2 adds quartz vs neutral stone
+- depth 3 introduces region logic
+- depth 4 reveals the full region map up front
 
-For each 5x5 mining board:
+## Hidden Truth
 
-- every queen position from a Queens puzzle becomes a hidden gold tile
-- every gold tile is worth `5`
-- every non-queen tile becomes dirt worth `0`
-- there is exactly one gold tile per row
-- there is exactly one gold tile per column
+For every board:
+
+- each queen position becomes hidden gold
+- there is exactly one gold per row
+- there is exactly one gold per column
 - gold never touches diagonally
 
-Colors and regions from Queens are ignored for gameplay.
+The Queens `layout` string is also parsed into region ids so later depths can use region rules.
 
-## Player Flow
+## Economy
 
-### Before buying the upgrade
+- every dig costs `1` gold
+- every dig also costs `1` day
+- rewards depend on the selected depth:
+  - depth 1: `5`
+  - depth 2: `10`
+  - depth 3: `20`
+  - depth 4: `40`
 
-- tap digs a hidden tile
-- long press places or removes a player flag for free
-- each dig costs `1` gold and `1` day
-- if the tile is gold, it reveals as `5` and adds 5 gold to the player's total
-- if the tile is a ruled-out location, it reveals as white quartz
-- if the tile is still ambiguous, it reveals as neutral grey rock
-- no auto-flagging happens yet
+The run starts with `25` gold so the player can always explore the first board.
 
-This is meant to let the player notice the pattern on their own first.
+## Interaction
 
-### Buying the upgrade
+- tap: dig
+- long press: place or remove a manual flag
+- digging a flagged tile is allowed and clears the flag first
 
-The shop now sells a single upgrade:
+Flags are player-owned markers only. There is no forced flag-before-dig step.
 
-- `Survey Kit`
-- cost: `5` gold
+## Depth Rules
 
-When the player buys it:
+### Depth 1: Dirt Layer
 
-- the upgrade becomes permanently active for later levels in the current run
-- the full explanation modal is shown once
-- the modal explains:
-  - one gold per row
-  - one gold per column
-  - no diagonal touching
-  - the game will now mark impossible tiles automatically after gold is found
+- reward: `5`
+- reveals:
+  - gold
+  - plain dirt
+- no quartz
+- no region visibility
 
-### After buying the upgrade
+### Depth 2: Stone Layer
 
-- whenever the player reveals a gold tile, the game recalculates system flags
-- those flags are still diggable; they are guidance, not a lock
-- the player can keep using manual flags as well
-- system flags mark cells that cannot contain gold based on currently revealed gold:
-  - same row
-  - same column
-  - immediately diagonal-adjacent cells
+- reward: `10`
+- reveals:
+  - gold
+  - quartz for impossible tiles
+  - grey rock for unknown tiles
 
-## Level Progression
+Quartz means the tile can never contain gold because it lies in:
 
-- a level ends when all 5 gold tiles on the current board are found
-- the game briefly enters `level-complete`
-- then it loads another random 5x5 Queens-derived board
-- these values persist between levels:
-  - total gold
-  - total days elapsed
-  - purchased Survey Kit upgrade
+- the same row
+- the same column
+- an immediately diagonal-adjacent cell
 
-## Data Source
+### Depth 3: Region Layer
 
-Puzzle source:
+- reward: `20`
+- reveals:
+  - colored region rock
+  - gold embedded in the region color
+- quartz is removed
+- the key new concept is: one gold per region
 
-- `/queens/puzzles.json`
-- file on disk: `frontend/public/queens/puzzles.json`
+### Depth 4: Scanner Layer
 
-The mining game:
+- reward: `40`
+- the full region map is visible immediately
+- digging is still needed to uncover gold, but region discovery is free
 
-- reads only the `"5x5"` pool
-- caches the pool after the first fetch
-- prefers original puzzle variants only (`id.endsWith('-0')`)
-- avoids immediately repeating the current puzzle when possible
+## Upgrades
+
+Depth unlocks are permanent within the current run:
+
+- `Basic Pick` → unlocks depth 2, cost `20`
+- `Reinforced Pick` → unlocks depth 3, cost `80`
+- `Survey Scanner` → unlocks depth 4, cost `320`
+
+The player can still return to earlier unlocked depths to farm them.
 
 ## Runtime Structure
 
@@ -94,20 +102,18 @@ Primary runtime:
 
 The store owns:
 
-- loading the next Queens-derived board
-- the dig economy
-- revealed state
-- manual player flags
-- auto-generated flags
-- day count
-- gold total
-- current level
-- Survey Kit ownership
-- upgrade explanation modal state
+- current puzzle loading
+- selected depth
+- highest unlocked depth
+- upgrade ownership
+- gold and day totals
+- revealed tiles
+- manual flags
+- board completion and next-board loading
 
 ### Utilities
 
-Puzzle loading:
+Puzzle loading and cache:
 
 - `frontend/src/games/mining/game/puzzles/loadMiningPuzzle.ts`
 
@@ -115,17 +121,21 @@ Queens-to-mining conversion:
 
 - `frontend/src/games/mining/game/puzzles/convertQueensPuzzleToMiningBoard.ts`
 
-Auto-flag rule:
+Quartz truth generation:
 
-- `frontend/src/games/mining/game/rules/autoFlag.ts`
+- `frontend/src/games/mining/game/rules/quartzTruth.ts`
 
-Found-gold selector:
+Gold position selector:
 
 - `frontend/src/games/mining/game/selectors/getFoundGoldPositions.ts`
 
-Upgrade config:
+Upgrade definitions:
 
 - `frontend/src/games/mining/game/upgrades/miningUpgrades.ts`
+
+Region color styling:
+
+- `frontend/src/games/mining/game/utils/regionColor.ts`
 
 ### UI
 
@@ -145,46 +155,51 @@ Shop:
 
 - `frontend/src/games/mining/components/MiningShopModal.vue`
 
-## Minimal Source of Truth
+## Board Data Model
 
-The hidden board uses:
+The current board uses:
 
 - `truthGold: boolean[][]`
 - `truthQuartz: boolean[][]`
+- `regionIds: string[][]`
+- `revealed: boolean[][]`
+- `playerFlags: boolean[][]`
 
-There is still no duplicate `goldValues` matrix. The only reward value is derived from `truthGold`:
+`truthQuartz` exists because depth 2 needs a distinct reveal type for impossible non-gold tiles.
 
-- `true => 5`
-- `false => 0`
+## Level Flow
 
-`truthQuartz` is stored because the UI now needs to distinguish between dug non-gold tiles that are impossible by rule and dug non-gold tiles that remain ambiguous.
+- load a random cached `5x5` Queens puzzle
+- convert it into gold truth plus region ids
+- play one 5x5 board
+- when all 5 gold tiles are found, briefly show completion
+- then load another random board at the currently selected depth
 
-## Hidden Constraints We Intentionally Do Not Use
+The game keeps:
 
-The Queens source data still comes from full Queens puzzles, but mining intentionally does **not** use:
-
-- color-group constraints
-- region/layout constraints
-- Queens runtime store state
-
-Only the queen-placement geometry is used.
+- total gold
+- total days
+- unlocked depth upgrades
+- currently selected depth
 
 ## Tests
 
 Focused tests exist for:
 
 - Queens-to-mining conversion
-- auto-flagging
-- mining store progression
+- quartz truth generation
+- auto-flag rule helper
+- mining store progression and depth unlock flow
 
 Files:
 
 - `frontend/src/games/mining/game/puzzles/convertQueensPuzzleToMiningBoard.spec.ts`
+- `frontend/src/games/mining/game/rules/quartzTruth.spec.ts`
 - `frontend/src/games/mining/game/rules/autoFlag.spec.ts`
 - `frontend/src/games/mining/stores/mining.spec.ts`
 
-## Notes For Future Work
+## Notes
 
-If later versions add scanners, colors, deeper layers, or more shop upgrades, keep those as mining-specific systems.
+The `autoFlag.ts` helper still exists as a pure rule helper from the earlier prototype, but depth progression no longer depends on an auto-flag shop upgrade.
 
-Do not re-couple mining to the Queens store runtime unless there is a strong reason to share logic.
+If later work reintroduces automation or scanners with rule assistance, that helper can be reused.

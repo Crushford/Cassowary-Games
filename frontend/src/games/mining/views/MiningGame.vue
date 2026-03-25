@@ -30,7 +30,7 @@
         </button>
       </div>
 
-      <div class="mt-3 grid grid-cols-3 gap-2 text-xs">
+      <div class="mt-3 grid grid-cols-4 gap-2 text-xs">
         <div class="rounded-xl bg-app-surface px-3 py-2">
           <div class="uppercase tracking-[0.18em] text-app-textMuted">Day</div>
           <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.daysElapsed }}</div>
@@ -42,7 +42,13 @@
           </div>
         </div>
         <div class="rounded-xl bg-app-surface px-3 py-2">
-          <div class="uppercase tracking-[0.18em] text-app-textMuted">Level</div>
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Reward</div>
+          <div class="mt-1 font-bold tabular-nums text-app-text">
+            {{ store.goldRewardPerTile }}
+          </div>
+        </div>
+        <div class="rounded-xl bg-app-surface px-3 py-2">
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Board</div>
           <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.currentLevel }}</div>
         </div>
       </div>
@@ -51,12 +57,11 @@
     <div class="flex-1 overflow-y-auto px-4 pt-4">
       <div class="space-y-4 pb-6">
         <section class="rounded-2xl border border-app-border bg-app-surface p-4">
-          <div class="mb-3 flex items-center justify-between gap-3">
+          <div class="mb-4 flex items-center justify-between gap-3">
             <div>
-              <div class="text-[10px] uppercase tracking-[0.18em] text-app-textMuted">
-                Hidden Pattern
-              </div>
-              <div class="mt-1 text-base font-bold text-app-text">Find all 5 gold tiles</div>
+              <div class="text-[10px] uppercase tracking-[0.18em] text-app-textMuted">Depth</div>
+              <div class="mt-1 text-base font-bold text-app-text">{{ store.depthTitle }}</div>
+              <div class="mt-1 text-sm text-app-textMuted">{{ store.depthSummary }}</div>
             </div>
             <div
               class="rounded-full px-3 py-1 text-xs font-bold"
@@ -66,14 +71,25 @@
                   : 'bg-app-bg text-app-textMuted'
               "
             >
-              {{
-                store.phase === 'level-complete'
-                  ? 'Level Cleared'
-                  : store.hasAutoFlagUpgrade
-                    ? 'Survey Kit Active'
-                    : 'Manual Prospecting'
-              }}
+              {{ store.phase === 'level-complete' ? 'Board Cleared' : 'Mining' }}
             </div>
+          </div>
+
+          <div class="mb-4 grid grid-cols-4 gap-2">
+            <button
+              v-for="depthLevel in store.availableDepthLevels"
+              :key="depthLevel"
+              type="button"
+              class="rounded-xl border px-3 py-2 text-xs font-bold transition-colors"
+              :class="
+                store.currentDepthLevel === depthLevel
+                  ? 'border-semantic-warning-300 bg-semantic-warning-700 text-white'
+                  : 'border-app-border bg-app-bg text-app-textMuted hover:text-app-text'
+              "
+              @click="store.setDepthLevel(depthLevel)"
+            >
+              Depth {{ depthLevel }}
+            </button>
           </div>
 
           <div class="mb-4 rounded-xl bg-app-bg p-3 text-sm text-app-textMuted">
@@ -85,9 +101,10 @@
           <MiningBoard
             :truth-gold="store.truthGold"
             :truth-quartz="store.truthQuartz"
+            :region-ids="store.regionIds"
             :revealed="store.revealed"
             :flagged="store.visibleFlags"
-            :auto-flags="store.autoFlags"
+            :depth-level="store.currentDepthLevel"
             :disabled="store.phase !== 'playing'"
             @dig="store.dig"
             @toggle-flag="store.toggleFlag"
@@ -99,9 +116,9 @@
     <div class="flex-none border-t border-app-border bg-app-bgAlt px-4 py-3">
       <div class="flex items-center justify-between gap-3">
         <div class="min-w-0">
-          <div class="text-xs uppercase tracking-[0.18em] text-app-textMuted">Upgrade</div>
+          <div class="text-xs uppercase tracking-[0.18em] text-app-textMuted">Unlocks</div>
           <div class="mt-1 text-sm font-semibold text-app-text">
-            {{ store.hasAutoFlagUpgrade ? 'Survey Kit Owned' : 'Survey Kit Available for 5 Gold' }}
+            Highest depth unlocked: {{ store.highestUnlockedDepthLevel }}
           </div>
         </div>
 
@@ -118,24 +135,24 @@
     <MiningShopModal
       :is-visible="store.shopOpen"
       :gold-total="store.goldTotal"
-      :upgrade="store.autoFlagUpgrade"
-      :can-buy-upgrade="store.canBuyAutoFlagUpgrade"
-      :has-upgrade="store.hasAutoFlagUpgrade"
+      :upgrades="store.availableUpgrades"
+      :owned-upgrade-ids="store.unlockedUpgradeIds"
+      :can-buy-upgrade="(upgradeId) => store.canBuyUpgrade(upgradeId)"
       @close="store.closeShop()"
-      @buy-auto-flag="store.buyAutoFlagUpgrade()"
+      @buy-upgrade="store.buyUpgrade"
     />
 
     <Modal
       :is-visible="store.showUpgradeExplanation"
-      aria-label="Survey kit explanation"
+      aria-label="Depth upgrade explanation"
       @close="store.hideUpgradeExplanation()"
     >
       <div class="space-y-4 text-white">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 class="text-xl font-bold">Survey Kit Unlocked</h2>
+            <h2 class="text-xl font-bold">{{ store.upgradeExplanationTitle }}</h2>
             <p class="mt-1 text-sm text-semantic-neutral-300">
-              Your prospecting crew can now rule out impossible tiles for you.
+              Deeper layers trade gold for clearer information and bigger rewards.
             </p>
           </div>
           <button

@@ -1,18 +1,35 @@
 import { defineStore } from 'pinia';
 
-import { buildAutoFlagGrid } from '../game/rules/autoFlag';
-import { buildQuartzTruthGrid } from '../game/rules/quartzTruth';
-import { getFoundGoldPositions } from '../game/selectors/getFoundGoldPositions';
 import { loadRandomMiningPuzzle } from '../game/puzzles/loadMiningPuzzle';
 import { convertQueensPuzzleToMiningBoard } from '../game/puzzles/convertQueensPuzzleToMiningBoard';
-import type { MiningPhase, PositionRef } from '../game/types';
-import { AUTO_FLAG_UPGRADE } from '../game/upgrades/miningUpgrades';
+import { buildQuartzTruthGrid } from '../game/rules/quartzTruth';
+import { getFoundGoldPositions } from '../game/selectors/getFoundGoldPositions';
+import type {
+  MiningDepthLevel,
+  MiningPhase,
+  MiningUpgradeDefinition,
+  MiningUpgradeId,
+  PositionRef,
+} from '../game/types';
+import {
+  getGoldRewardForDepth,
+  getMiningUpgrade,
+  MINING_UPGRADES,
+} from '../game/upgrades/miningUpgrades';
 import { createBooleanGrid } from '../game/utils/createBooleanGrid';
 
-const LEVEL_COMPLETE_DELAY_MS = 700;
 const DIG_COST = 1;
-const UPGRADE_EXPLANATION =
-  "You've bought the survey upgrade. In these mines, there is only one gold tile per row and one per column, and gold never touches diagonally. From now on, when you find gold, we will mark tiles where gold cannot be.";
+const LEVEL_COMPLETE_DELAY_MS = 700;
+const STARTING_GOLD = 25;
+
+const UPGRADE_EXPLANATIONS: Record<MiningUpgradeId, string> = {
+  'basic-pick':
+    'The Basic Pick unlocks the stone layer. Gold now pays 10, and dug stone can show quartz for impossible tiles or grey rock for unknown ground.',
+  'reinforced-pick':
+    'The Reinforced Pick unlocks the region layer. Quartz disappears, and each color region can now hold only one gold tile.',
+  'survey-scanner':
+    'The Survey Scanner unlocks the scanner layer. Region maps are visible immediately, so you can plan around them before digging.',
+};
 
 function createInitialState() {
   return {
@@ -22,62 +39,82 @@ function createInitialState() {
     boardSize: 5,
     truthGold: createBooleanGrid(5),
     truthQuartz: createBooleanGrid(5),
+    regionIds: Array.from({ length: 5 }, () => Array(5).fill('.')),
     revealed: createBooleanGrid(5),
     playerFlags: createBooleanGrid(5),
-    autoFlags: createBooleanGrid(5),
-    goldTotal: 0,
+    goldTotal: STARTING_GOLD,
     foundGoldCount: 0,
     daysElapsed: 0,
-    hasAutoFlagUpgrade: false,
+    highestUnlockedDepthLevel: 1 as MiningDepthLevel,
+    currentDepthLevel: 1 as MiningDepthLevel,
+    unlockedUpgradeIds: [] as MiningUpgradeId[],
     showUpgradeExplanation: false,
+    upgradeExplanationTitle: null as string | null,
     upgradeExplanationMessage: null as string | null,
     shopOpen: false,
     errorMessage: null as string | null,
     errorTick: 0,
-    lastActionMessage: 'Start digging and look for a pattern.' as string,
+    lastActionMessage:
+      'Start in the dirt layer. Efficient digging earns enough gold to unlock deeper mining methods.' as string,
     pendingLevelTimeout: null as number | null,
   };
+}
+
+function createRegionGrid(size: number): string[][] {
+  return Array.from({ length: size }, () => Array(size).fill('.'));
 }
 
 export const useMiningStore = defineStore('mining', {
   state: () => createInitialState(),
 
   getters: {
-    autoFlagUpgrade: () => AUTO_FLAG_UPGRADE,
-
-    canBuyAutoFlagUpgrade(state): boolean {
-      return !state.hasAutoFlagUpgrade && state.goldTotal >= AUTO_FLAG_UPGRADE.cost;
-    },
-
-    remainingGoldToFind(state): number {
-      return state.boardSize - state.foundGoldCount;
-    },
-
     visibleFlags(state): boolean[][] {
-      return state.playerFlags.map((row, rowIndex) =>
-        row.map((flagged, colIndex) => flagged || state.autoFlags[rowIndex][colIndex])
-      );
+      return state.playerFlags;
     },
 
-    isRevealedGold:
-      (state) =>
-      (row: number, col: number): boolean =>
-        state.revealed[row][col] && state.truthGold[row][col],
+    availableDepthLevels(state): MiningDepthLevel[] {
+      return [1, 2, 3, 4].filter(
+        (depthLevel) => depthLevel <= state.highestUnlockedDepthLevel
+      ) as MiningDepthLevel[];
+    },
 
-    isRevealedQuartz:
-      (state) =>
-      (row: number, col: number): boolean =>
-        state.revealed[row][col] && !state.truthGold[row][col] && state.truthQuartz[row][col],
+    availableUpgrades(state): MiningUpgradeDefinition[] {
+      return MINING_UPGRADES.filter((upgrade) => !state.unlockedUpgradeIds.includes(upgrade.id));
+    },
 
-    isRevealedRock:
-      (state) =>
-      (row: number, col: number): boolean =>
-        state.revealed[row][col] && !state.truthGold[row][col] && !state.truthQuartz[row][col],
+    goldRewardPerTile(state): number {
+      return getGoldRewardForDepth(state.currentDepthLevel);
+    },
 
-    isHidden:
-      (state) =>
-      (row: number, col: number): boolean =>
-        !state.revealed[row][col],
+    depthTitle(state): string {
+      switch (state.currentDepthLevel) {
+        case 4:
+          return 'Scanner Layer';
+        case 3:
+          return 'Region Layer';
+        case 2:
+          return 'Stone Layer';
+        default:
+          return 'Dirt Layer';
+      }
+    },
+
+    depthSummary(state): string {
+      switch (state.currentDepthLevel) {
+        case 4:
+          return 'Region map visible before digging. Reward 40 gold per hit.';
+        case 3:
+          return 'Color regions matter. Reward 20 gold per hit.';
+        case 2:
+          return 'Quartz marks impossible tiles once uncovered. Reward 10 gold per hit.';
+        default:
+          return 'No extra hints. Reward 5 gold per hit.';
+      }
+    },
+
+    canAffordDig(state): boolean {
+      return state.goldTotal >= DIG_COST;
+    },
   },
 
   actions: {
@@ -118,17 +155,19 @@ export const useMiningStore = defineStore('mining', {
         this.currentPuzzleId = board.puzzleId;
         this.boardSize = board.size;
         this.truthGold = board.truthGold;
+        this.regionIds = board.regionIds;
         this.truthQuartz = buildQuartzTruthGrid(
           getFoundGoldPositions(board.truthGold, board.truthGold),
           board.size
         );
         this.revealed = createBooleanGrid(board.size);
         this.playerFlags = createBooleanGrid(board.size);
-        this.autoFlags = createBooleanGrid(board.size);
         this.foundGoldCount = 0;
         this.currentLevel += 1;
         this.phase = 'playing';
-        this.lastActionMessage = `Level ${this.currentLevel}: Dig for the hidden gold seam.`;
+        this.lastActionMessage = `Level ${this.currentLevel}: ${
+          this.depthTitle
+        }. Each dig costs 1 gold.`;
       } catch (error) {
         console.error('[mining] Failed to load next level', error);
         this.phase = 'idle';
@@ -136,14 +175,18 @@ export const useMiningStore = defineStore('mining', {
       }
     },
 
-    recomputeFlags() {
-      if (!this.hasAutoFlagUpgrade) {
-        this.autoFlags = createBooleanGrid(this.boardSize);
+    setDepthLevel(depthLevel: MiningDepthLevel) {
+      if (depthLevel > this.highestUnlockedDepthLevel) {
+        this.setError('That depth has not been unlocked yet.');
         return;
       }
 
-      const foundGold = getFoundGoldPositions(this.truthGold, this.revealed);
-      this.autoFlags = buildAutoFlagGrid(foundGold, this.revealed, this.boardSize);
+      if (this.currentDepthLevel === depthLevel) {
+        return;
+      }
+
+      this.currentDepthLevel = depthLevel;
+      void this.loadNextLevel();
     },
 
     toggleFlag(position: PositionRef) {
@@ -152,10 +195,6 @@ export const useMiningStore = defineStore('mining', {
       }
 
       if (this.revealed[position.row]?.[position.col]) {
-        return;
-      }
-
-      if (this.autoFlags[position.row]?.[position.col]) {
         return;
       }
 
@@ -174,6 +213,13 @@ export const useMiningStore = defineStore('mining', {
         return;
       }
 
+      if (this.goldTotal < DIG_COST) {
+        this.setError(
+          'You need 1 gold to dig. Farm an earlier depth or finish the board efficiently.'
+        );
+        return;
+      }
+
       this.playerFlags[position.row][position.col] = false;
       this.revealed[position.row][position.col] = true;
       this.goldTotal -= DIG_COST;
@@ -181,17 +227,14 @@ export const useMiningStore = defineStore('mining', {
       this.clearError();
 
       if (this.truthGold[position.row][position.col]) {
-        this.goldTotal += 5;
+        const reward = this.goldRewardPerTile;
+        this.goldTotal += reward;
         this.foundGoldCount += 1;
-        this.lastActionMessage = `Day ${this.daysElapsed}: You paid 1 gold to dig and found 5 gold.`;
-
-        if (this.hasAutoFlagUpgrade) {
-          this.recomputeFlags();
-        }
+        this.lastActionMessage = `Day ${this.daysElapsed}: You paid 1 gold to dig and found ${reward} gold.`;
 
         if (this.foundGoldCount === this.boardSize) {
           this.phase = 'level-complete';
-          this.lastActionMessage = `Level ${this.currentLevel} cleared. Loading a new claim.`;
+          this.lastActionMessage = `Level ${this.currentLevel} cleared in the ${this.depthTitle.toLowerCase()}.`;
           this.pendingLevelTimeout = window.setTimeout(() => {
             this.pendingLevelTimeout = null;
             void this.loadNextLevel();
@@ -201,16 +244,17 @@ export const useMiningStore = defineStore('mining', {
         return;
       }
 
-      if (this.hasAutoFlagUpgrade) {
-        this.recomputeFlags();
-      }
-
-      if (this.truthQuartz[position.row][position.col]) {
+      if (this.currentDepthLevel === 2 && this.truthQuartz[position.row][position.col]) {
         this.lastActionMessage = `Day ${this.daysElapsed}: You paid 1 gold to uncover quartz. That tile can never hold gold.`;
         return;
       }
 
-      this.lastActionMessage = `Day ${this.daysElapsed}: You paid 1 gold to uncover neutral rock.`;
+      if (this.currentDepthLevel >= 3) {
+        this.lastActionMessage = `Day ${this.daysElapsed}: You paid 1 gold to expose the region rock.`;
+        return;
+      }
+
+      this.lastActionMessage = `Day ${this.daysElapsed}: You paid 1 gold to uncover plain dirt.`;
     },
 
     openShop() {
@@ -221,26 +265,49 @@ export const useMiningStore = defineStore('mining', {
       this.shopOpen = false;
     },
 
-    buyAutoFlagUpgrade() {
-      if (this.hasAutoFlagUpgrade) {
-        this.setError('You already own the survey kit.');
+    canBuyUpgrade(upgradeId: MiningUpgradeId): boolean {
+      const upgrade = getMiningUpgrade(upgradeId);
+      return (
+        !this.unlockedUpgradeIds.includes(upgrade.id) &&
+        this.goldTotal >= upgrade.cost &&
+        upgrade.unlocksDepth === this.highestUnlockedDepthLevel + 1
+      );
+    },
+
+    buyUpgrade(upgradeId: MiningUpgradeId) {
+      const upgrade = getMiningUpgrade(upgradeId);
+
+      if (this.unlockedUpgradeIds.includes(upgrade.id)) {
+        this.setError('That upgrade is already owned.');
         return;
       }
 
-      if (this.goldTotal < AUTO_FLAG_UPGRADE.cost) {
+      if (upgrade.unlocksDepth !== this.highestUnlockedDepthLevel + 1) {
+        this.setError('Unlock the previous depth before buying this upgrade.');
+        return;
+      }
+
+      if (this.goldTotal < upgrade.cost) {
         this.setError('Not enough gold for that upgrade.');
         return;
       }
 
-      this.goldTotal -= AUTO_FLAG_UPGRADE.cost;
-      this.hasAutoFlagUpgrade = true;
-      this.upgradeExplanationMessage = UPGRADE_EXPLANATION;
+      this.goldTotal -= upgrade.cost;
+      this.unlockedUpgradeIds.push(upgrade.id);
+      this.highestUnlockedDepthLevel = upgrade.unlocksDepth;
+      this.currentDepthLevel = upgrade.unlocksDepth;
+      this.upgradeExplanationTitle = `${upgrade.title} Unlocked`;
+      this.upgradeExplanationMessage = UPGRADE_EXPLANATIONS[upgrade.id];
       this.showUpgradeExplanation = true;
       this.shopOpen = false;
-      this.recomputeFlags();
-      this.lastActionMessage =
-        'Survey kit purchased. Future gold finds will mark impossible tiles.';
+      this.lastActionMessage = `${upgrade.title} purchased. ${this.depthTitle} is now available.`;
       this.clearError();
+      void this.loadNextLevel();
+    },
+
+    resetRun() {
+      this.$patch(createInitialState());
+      void this.initialize();
     },
   },
 });
