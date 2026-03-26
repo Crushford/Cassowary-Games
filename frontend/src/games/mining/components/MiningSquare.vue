@@ -5,13 +5,15 @@
     :class="squareClass"
     :style="squareStyle"
     :disabled="disabled"
-    @pointerdown="handlePointerDown"
-    @pointerup="handlePointerUp"
-    @pointerleave="cancelLongPress"
-    @pointercancel="cancelLongPress"
-    @contextmenu.prevent="handleContextMenu"
-    @click="handleClick"
+    @click="handleTap"
   >
+    <div
+      v-if="flagged && tileKind === 'hidden'"
+      class="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
+    >
+      <span class="text-3xl [text-shadow:0_0_10px_rgba(15,23,42,0.5)]">🚧</span>
+    </div>
+
     <template v-if="tileKind === 'gold'">
       <div class="flex h-full flex-col items-center justify-center">
         <div
@@ -35,37 +37,20 @@
 
     <template v-else-if="tileKind === 'rock'">
       <div class="flex h-full flex-col items-center justify-center">
-        <div class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80">
-          {{ depthLevel === 1 ? 'Dirt' : depthLevel === 2 ? 'Stone' : 'Region' }}
-        </div>
-        <div class="mt-2 text-2xl font-black text-white/85">
+        <div class="text-2xl font-black text-white/85">
           {{ depthLevel === 1 ? '0' : depthLevel === 2 ? '?' : '•' }}
         </div>
       </div>
     </template>
 
-    <template v-else-if="flagged">
-      <div class="flex h-full flex-col items-center justify-center">
-        <div class="text-[11px] font-semibold uppercase tracking-[0.2em] text-semantic-info-200">
-          Flagged
-        </div>
-        <div class="mt-2 text-2xl font-black text-semantic-info-100">×</div>
-      </div>
-    </template>
+    <template v-else-if="flagged" />
 
-    <template v-else>
-      <div class="flex h-full flex-col items-center justify-center">
-        <div class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75">
-          {{ depthLevel <= 2 ? 'Dirt' : depthLevel === 3 ? 'Hidden' : 'Mapped' }}
-        </div>
-        <div class="mt-2 text-xs text-white/70">{{ depthHint }}</div>
-      </div>
-    </template>
+    <template v-else />
   </button>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 
 import type { MiningDepthLevel } from '../game/types';
 import { getGoldRewardForDepth } from '../game/upgrades/miningUpgrades';
@@ -84,12 +69,7 @@ const emit = defineEmits<{
   'toggle-flag': [];
 }>();
 
-const LONG_PRESS_MS = 350;
-const longPressTimeout = ref<number | null>(null);
-const suppressClick = ref(false);
-
 const rewardLabel = computed(() => String(getGoldRewardForDepth(props.depthLevel)));
-const depthHint = computed(() => (props.depthLevel === 4 ? 'Dig' : 'Tap to dig'));
 
 const squareStyle = computed(() => {
   const shouldShowRegion =
@@ -102,60 +82,17 @@ const squareStyle = computed(() => {
   return undefined;
 });
 
-function cancelLongPress() {
-  if (longPressTimeout.value !== null) {
-    window.clearTimeout(longPressTimeout.value);
-    longPressTimeout.value = null;
-  }
-}
-
-function toggleFlag() {
+function handleTap() {
   if (props.disabled || props.tileKind !== 'hidden') {
     return;
   }
 
-  suppressClick.value = true;
+  if (props.flagged) {
+    emit('dig');
+    return;
+  }
+
   emit('toggle-flag');
-}
-
-function handlePointerDown() {
-  if (props.disabled || props.tileKind !== 'hidden') {
-    return;
-  }
-
-  suppressClick.value = false;
-  cancelLongPress();
-  longPressTimeout.value = window.setTimeout(() => {
-    longPressTimeout.value = null;
-    toggleFlag();
-  }, LONG_PRESS_MS);
-}
-
-function handlePointerUp(event: PointerEvent) {
-  cancelLongPress();
-
-  if (suppressClick.value) {
-    event.preventDefault();
-    event.stopPropagation();
-    window.setTimeout(() => {
-      suppressClick.value = false;
-    }, 0);
-  }
-}
-
-function handleContextMenu() {
-  toggleFlag();
-}
-
-function handleClick(event: MouseEvent) {
-  if (suppressClick.value) {
-    event.preventDefault();
-    event.stopPropagation();
-    suppressClick.value = false;
-    return;
-  }
-
-  emit('dig');
 }
 
 const squareClass = computed(() => {
@@ -177,10 +114,6 @@ const squareClass = computed(() => {
     return props.depthLevel === 2
       ? 'border-semantic-neutral-500 bg-gradient-to-br from-semantic-neutral-600 to-semantic-neutral-800 shadow-lg shadow-black/20'
       : 'border-app-border bg-app-surface opacity-80';
-  }
-
-  if (props.flagged) {
-    return 'border-semantic-info-400 bg-gradient-to-br from-semantic-info-700 to-semantic-info-900';
   }
 
   if (props.depthLevel === 4) {

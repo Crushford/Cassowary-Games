@@ -1,6 +1,12 @@
-export type MiningPhase = 'idle' | 'loading' | 'playing' | 'level-complete' | 'dead';
+export type MiningPhase =
+  | 'idle'
+  | 'loading'
+  | 'playing'
+  | 'level-complete'
+  | 'out-of-food'
+  | 'dead';
 export type MiningDepthLevel = 1 | 2 | 3 | 4;
-export type MiningProgressionTab = 'field' | 'automation' | 'permits' | 'upgrades';
+export type MiningProgressionTab = 'food-shop' | 'gold-exchange' | 'animal-trainer' | 'ui-upgrades';
 export type MiningFieldId = 'training-field' | 'standard-field' | 'large-field';
 export type MiningMagpieSkillId =
   | 'buy-magpie'
@@ -9,7 +15,12 @@ export type MiningMagpieSkillId =
   | 'teach-diagonal-rule'
   | 'teach-pattern-recognition';
 export type MiningPermitTierId = 'basic-permit' | 'better-permit' | 'premium-permit';
-export type MiningToolUpgradeId = 'stronger-pick' | 'deeper-digging' | 'drill' | 'scanner';
+export type MiningToolUpgradeId =
+  | 'stronger-pick'
+  | 'deeper-digging'
+  | 'drill'
+  | 'scanner'
+  | 'auto-hauler';
 
 export interface PositionRef {
   row: number;

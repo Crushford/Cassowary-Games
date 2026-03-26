@@ -39,6 +39,15 @@ export const TOOL_UPGRADES: MiningToolUpgradeDefinition[] = [
     effectSummary: 'Unlocks depth 4.',
     implemented: true,
   },
+  {
+    id: 'auto-hauler',
+    title: 'Auto Hauler',
+    description:
+      'Moves you to the next field after a full clear instead of waiting for a manual trip.',
+    cost: 1,
+    effectSummary: 'Automatically pays the 1 coin next-field cost after a full clear.',
+    implemented: true,
+  },
 ];
 
 export function getToolUpgrade(upgradeId: MiningToolUpgradeId): MiningToolUpgradeDefinition {
