@@ -1,14 +1,29 @@
-import { getPermitOption } from '../game/progression/permits';
-import { getFieldOption } from '../game/progression/fields';
 import { buildMiningAutomationPlan } from '../game/progression/miningAutomationEngine';
 import { loadRandomMiningPuzzle } from '../game/puzzles/loadMiningPuzzle';
 import { convertQueensPuzzleToMiningBoard } from '../game/puzzles/convertQueensPuzzleToMiningBoard';
 import { getFoundGoldPositions } from '../game/selectors/getFoundGoldPositions';
-import type { MiningDepthLevel, MiningFlagType, PositionRef } from '../game/types';
+import type {
+  MiningDepthLevel,
+  MiningFlagType,
+  MiningPuzzleRecord,
+  PositionRef,
+} from '../game/types';
 import { getGoldRewardForDepth } from '../game/upgrades/miningUpgrades';
 import { createBooleanGrid } from '../game/utils/createBooleanGrid';
 import { DIG_COST, LEVEL_COMPLETE_DELAY_MS, NEXT_FIELD_COST } from './miningConfig';
 import type { MiningStoreState } from './miningState';
+
+export type MiningPuzzleLoader = (lastPuzzleId: string | null) => Promise<MiningPuzzleRecord>;
+
+let _activePuzzleLoader: MiningPuzzleLoader = loadRandomMiningPuzzle;
+
+export function __setPuzzleLoaderForTests(loader: MiningPuzzleLoader): void {
+  _activePuzzleLoader = loader;
+}
+
+export function __resetPuzzleLoaderForTests(): void {
+  _activePuzzleLoader = loadRandomMiningPuzzle;
+}
 
 interface RunDeps {
   setError(message: string): void;
@@ -122,10 +137,7 @@ export async function loadNextLevel(state: MiningStoreState, deps: RunDeps) {
   deps.clearError();
 
   try {
-    const puzzle = await loadRandomMiningPuzzle(
-      state.board.currentPuzzleId,
-      state.progression.selectedFieldId
-    );
+    const puzzle = await _activePuzzleLoader(state.board.currentPuzzleId);
     const board = convertQueensPuzzleToMiningBoard(puzzle);
 
     state.board.currentPuzzleId = board.puzzleId;
@@ -140,7 +152,7 @@ export async function loadNextLevel(state: MiningStoreState, deps: RunDeps) {
     state.run.deathMessage = null;
     state.run.currentLevel += 1;
     state.run.phase = 'playing';
-    state.ui.lastActionMessage = `Level ${state.run.currentLevel}: ${getFieldOption(state.progression.selectedFieldId).title}. Each dig uses 1 day this month.`;
+    state.ui.lastActionMessage = `Level ${state.run.currentLevel}. Each dig uses 1 day this month.`;
     recomputeSystemFlags(state);
   } catch (error) {
     console.error('[mining] Failed to load next level', error);
@@ -249,6 +261,40 @@ export async function goToNextField(
   await deps.loadNextLevel();
 }
 
+function applyGoldReward(state: MiningStoreState, position: PositionRef) {
+  const reward = getGoldRewardForDepth(state.run.currentDepthLevel);
+  state.economy.goldTotal += reward;
+  state.run.goldCollectedThisMonth += reward;
+  state.run.foundGoldCount += 1;
+  state.ui.lastActionMessage = `Day ${state.run.daysElapsed}: You found ${reward} gold.`;
+  logMiningInteraction('dig-success', state, position, { result: 'gold', reward });
+
+  if (state.run.foundGoldCount === state.board.boardSize) {
+    state.ui.lastActionMessage =
+      'You found all the gold in this field. You can keep digging out the rest of it.';
+  }
+}
+
+function handleFieldComplete(state: MiningStoreState, deps: DigDeps) {
+  state.run.phase = 'level-complete';
+
+  if (
+    state.progression.ownedToolUpgradeIds.includes('auto-hauler') &&
+    state.economy.coinsTotal >= NEXT_FIELD_COST
+  ) {
+    state.ui.lastActionMessage =
+      'You cleared the whole field. Auto hauler is lining up the next one.';
+    state.board.pendingLevelTimeout = window.setTimeout(() => {
+      state.board.pendingLevelTimeout = null;
+      void deps.goToNextField({ automatic: true });
+    }, LEVEL_COMPLETE_DELAY_MS);
+  } else {
+    state.ui.showFieldExhaustedModal = true;
+    state.ui.lastActionMessage =
+      'You dug this entire field. You can move to the next field whenever you are ready.';
+  }
+}
+
 export async function dig(state: MiningStoreState, position: PositionRef, deps: DigDeps) {
   logMiningInteraction('dig-attempt', state, position, {
     revealed: state.board.revealed[position.row]?.[position.col] ?? null,
@@ -258,16 +304,12 @@ export async function dig(state: MiningStoreState, position: PositionRef, deps: 
   });
 
   if (state.run.phase !== 'playing') {
-    logMiningInteraction('dig-blocked', state, position, {
-      reason: 'phase-not-playing',
-    });
+    logMiningInteraction('dig-blocked', state, position, { reason: 'phase-not-playing' });
     return;
   }
 
   if (state.board.revealed[position.row]?.[position.col]) {
-    logMiningInteraction('dig-blocked', state, position, {
-      reason: 'tile-already-revealed',
-    });
+    logMiningInteraction('dig-blocked', state, position, { reason: 'tile-already-revealed' });
     return;
   }
 
@@ -285,80 +327,19 @@ export async function dig(state: MiningStoreState, position: PositionRef, deps: 
   state.run.daysLeftInMonth = Math.max(0, state.run.daysLeftInMonth - 1);
   state.run.daysElapsed += 1;
   deps.clearError();
+
   const allTilesRevealed = state.board.revealed.every((row) => row.every(Boolean));
 
   if (state.board.truthGold[position.row][position.col]) {
-    const permitMultiplier = state.progression.activePermitTierId
-      ? getPermitOption(state.progression.activePermitTierId).payoutMultiplier
-      : 1;
-    const reward = Math.round(
-      getGoldRewardForDepth(state.run.currentDepthLevel) * permitMultiplier
-    );
-    state.economy.goldTotal += reward;
-    state.run.goldCollectedThisMonth += reward;
-    state.run.foundGoldCount += 1;
-    state.ui.lastActionMessage = `Day ${state.run.daysElapsed}: You found ${reward} gold.`;
-    logMiningInteraction('dig-success', state, position, {
-      result: 'gold',
-      reward,
-    });
+    applyGoldReward(state, position);
     recomputeSystemFlags(state);
-
-    if (state.run.foundGoldCount === state.board.boardSize) {
-      state.ui.lastActionMessage =
-        'You found all the gold in this field. You can keep digging out the rest of it.';
-    }
-
-    if (allTilesRevealed) {
-      state.run.phase = 'level-complete';
-
-      if (
-        state.progression.ownedToolUpgradeIds.includes('auto-hauler') &&
-        state.economy.coinsTotal >= NEXT_FIELD_COST
-      ) {
-        state.ui.lastActionMessage =
-          'You cleared the whole field. Auto hauler is lining up the next one.';
-        state.board.pendingLevelTimeout = window.setTimeout(() => {
-          state.board.pendingLevelTimeout = null;
-          void deps.goToNextField({ automatic: true });
-        }, LEVEL_COMPLETE_DELAY_MS);
-      } else {
-        state.ui.showFieldExhaustedModal = true;
-        state.ui.lastActionMessage =
-          'You dug this entire field. You can move to the next field whenever you are ready.';
-      }
-    }
-
-    if (state.run.phase === 'playing' && state.run.daysLeftInMonth === 0) {
-      endMonthAndGoToTown(state);
-    }
-
-    return;
+  } else {
+    state.ui.lastActionMessage = `Day ${state.run.daysElapsed}: You dug an empty tile.`;
+    logMiningInteraction('dig-success', state, position, { result: 'empty' });
   }
 
-  state.ui.lastActionMessage = `Day ${state.run.daysElapsed}: You dug an empty tile.`;
-  logMiningInteraction('dig-success', state, position, {
-    result: 'empty',
-  });
   if (allTilesRevealed) {
-    state.run.phase = 'level-complete';
-
-    if (
-      state.progression.ownedToolUpgradeIds.includes('auto-hauler') &&
-      state.economy.coinsTotal >= NEXT_FIELD_COST
-    ) {
-      state.ui.lastActionMessage =
-        'You cleared the whole field. Auto hauler is lining up the next one.';
-      state.board.pendingLevelTimeout = window.setTimeout(() => {
-        state.board.pendingLevelTimeout = null;
-        void deps.goToNextField({ automatic: true });
-      }, LEVEL_COMPLETE_DELAY_MS);
-    } else {
-      state.ui.showFieldExhaustedModal = true;
-      state.ui.lastActionMessage =
-        'You dug this entire field. You can move to the next field whenever you are ready.';
-    }
-
+    handleFieldComplete(state, deps);
     return;
   }
 

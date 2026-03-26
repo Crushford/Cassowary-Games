@@ -1,6 +1,7 @@
 import type { MiningExchangeLevelDefinition, MiningToolUpgradeId } from '../game/types';
 
 export const MINING_SAVE_KEY = 'mining-save-v1';
+export const MINING_SAVE_VERSION = 1;
 export const DIG_COST = 1;
 export const LEVEL_COMPLETE_DELAY_MS = 700;
 export const DAYS_PER_MONTH = 28;

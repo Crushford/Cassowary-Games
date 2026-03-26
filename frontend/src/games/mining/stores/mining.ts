@@ -1,8 +1,6 @@
 import { defineStore } from 'pinia';
 
 import { AUTOMATION_OPTIONS } from '../game/progression/automation';
-import { FIELD_OPTIONS, getFieldOption } from '../game/progression/fields';
-import { getPermitOption, PERMIT_OPTIONS } from '../game/progression/permits';
 import { TOOL_UPGRADES } from '../game/progression/toolUpgrades';
 import type {
   MiningAutomationDefinition,
@@ -19,12 +17,12 @@ import { getGoldRewardForDepth } from '../game/upgrades/miningUpgrades';
 import { EXCHANGE_LEVELS } from './miningConfig';
 import {
   clearMiningSave,
+  isSaveCompatible,
   readMiningSave,
   restoreMiningState,
   writeMiningSave,
 } from './miningPersistence';
 import {
-  activatePermit as activatePermitInProgression,
   buyAutomation as buyAutomationInProgression,
   buyFood as buyFoodInProgression,
   buyToolUpgrade as buyToolUpgradeInProgression,
@@ -75,11 +73,7 @@ export const useMiningStore = defineStore('mining', {
     selectedProgressionTab: (state) => state.progression.selectedTab,
     townStep: (state) => state.progression.townStep,
     showPurchasedUpgrades: (state) => state.progression.showPurchasedUpgrades,
-    ownedFieldIds: (state) => state.progression.ownedFieldIds,
-    selectedFieldId: (state) => state.progression.selectedFieldId,
     magpieSkillIds: (state) => state.progression.magpieSkillIds,
-    ownedPermitTierIds: (state) => state.progression.ownedPermitTierIds,
-    activePermitTierId: (state) => state.progression.activePermitTierId,
     ownedToolUpgradeIds: (state) => state.progression.ownedToolUpgradeIds,
     showSettingsModal: (state) => state.ui.showSettingsModal,
     showIntroModal: (state) => state.ui.showIntroModal,
@@ -107,10 +101,6 @@ export const useMiningStore = defineStore('mining', {
       );
     },
 
-    fieldOptions() {
-      return FIELD_OPTIONS;
-    },
-
     exchangeLevels(): MiningExchangeLevelDefinition[] {
       return EXCHANGE_LEVELS;
     },
@@ -135,30 +125,12 @@ export const useMiningStore = defineStore('mining', {
       });
     },
 
-    permitMultiplier(state): number {
-      if (!state.progression.activePermitTierId) {
-        return 1;
-      }
-
-      return getPermitOption(state.progression.activePermitTierId).payoutMultiplier;
-    },
-
     baseGoldRewardPerTile(state): number {
       return getGoldRewardForDepth(state.run.currentDepthLevel);
     },
 
     goldRewardPerTile(state): number {
-      return Math.round(getGoldRewardForDepth(state.run.currentDepthLevel) * this.permitMultiplier);
-    },
-
-    selectedFieldTitle(state): string {
-      return getFieldOption(state.progression.selectedFieldId).title;
-    },
-
-    activePermitTitle(state): string {
-      return state.progression.activePermitTierId
-        ? getPermitOption(state.progression.activePermitTierId).title
-        : 'None';
+      return getGoldRewardForDepth(state.run.currentDepthLevel);
     },
 
     magpieSummary(state): string {
@@ -236,12 +208,13 @@ export const useMiningStore = defineStore('mining', {
         this.initializePersistence();
       }
 
-      const restored = this.restoreFromStorage();
-      if (restored && this.run.phase !== 'idle') {
+      const restoreResult = this.restoreFromStorage();
+
+      if (restoreResult === 'restored' && this.run.phase !== 'idle') {
         return;
       }
 
-      if (restored && this.run.phase === 'idle') {
+      if (restoreResult === 'restored' && this.run.phase === 'idle') {
         this.ui.showIntroModal = true;
         this.ui.hasSeenIntroThisRun = true;
       }
@@ -251,6 +224,13 @@ export const useMiningStore = defineStore('mining', {
       }
 
       await this.loadNextLevel();
+
+      if (restoreResult === 'beta-reset') {
+        this.ui.lastActionMessage =
+          'This game is in beta and your previous save was from an older version. ' +
+          'Your progress has been reset — sorry for the inconvenience!';
+      }
+
       if (!this.ui.hasSeenIntroThisRun) {
         this.ui.showIntroModal = true;
         this.ui.hasSeenIntroThisRun = true;
@@ -368,10 +348,15 @@ export const useMiningStore = defineStore('mining', {
       }
     },
 
-    restoreFromStorage(): boolean {
+    restoreFromStorage(): 'restored' | 'beta-reset' | 'no-save' {
       const snapshot = readMiningSave();
       if (!snapshot) {
-        return false;
+        return 'no-save';
+      }
+
+      if (!isSaveCompatible(snapshot)) {
+        clearMiningSave();
+        return 'beta-reset';
       }
 
       this.system.persistenceHydrating = true;
@@ -380,7 +365,7 @@ export const useMiningStore = defineStore('mining', {
       });
       this.ensureVisibleBlockingUi();
 
-      return true;
+      return 'restored';
     },
 
     clearPersistedState() {

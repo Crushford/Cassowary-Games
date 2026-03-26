@@ -324,44 +324,18 @@ describe('useMiningStore', () => {
     expect(restoredStore.showIntroModal).toBe(false);
   });
 
-  it('restores older flat mining saves without crashing', async () => {
+  it('clears an older unversioned save and starts fresh with a beta reset message', async () => {
     window.localStorage.setItem(
       MINING_SAVE_KEY,
       JSON.stringify({
+        // No `version` field — treated as incompatible
         currentPuzzleId: 'legacy-puzzle',
-        boardSize: 5,
-        truthGold: Array.from({ length: 5 }, () => Array(5).fill(false)),
-        truthQuartz: Array.from({ length: 5 }, () => Array(5).fill(false)),
-        regionIds: Array.from({ length: 5 }, () => Array(5).fill('.')),
-        revealed: Array.from({ length: 5 }, () => Array(5).fill(false)),
-        playerFlags: Array.from({ length: 5 }, () => Array(5).fill(false)),
-        systemFlags: Array.from({ length: 5 }, () => Array(5).fill(false)),
         phase: 'town',
         currentLevel: 4,
-        foundGoldCount: 2,
-        daysElapsed: 7,
-        daysPerMonth: 28,
-        daysLeftInMonth: 14,
-        currentMonthLevel: 1,
         bestLevel: 2,
-        goldCollectedThisMonth: 25,
-        highestUnlockedDepthLevel: 2,
-        currentDepthLevel: 2,
-        deathMessage: null,
-        hintUnlocked: false,
-        shownHintDepths: [1],
-        goldTotal: 9,
         coinsTotal: 3,
-        foodTotal: 14,
-        selectedProgressionTab: 'gold-exchange',
-        ownedFieldIds: ['training-field', 'standard-field'],
-        selectedFieldId: 'standard-field',
-        magpieSkillIds: ['buy-magpie'],
-        ownedPermitTierIds: ['better-permit'],
-        activePermitTierId: 'better-permit',
-        ownedToolUpgradeIds: ['auto-hauler'],
+        goldTotal: 9,
         hasSeenIntroThisRun: true,
-        lastActionMessage: 'Legacy save restored.',
       })
     );
 
@@ -370,16 +344,16 @@ describe('useMiningStore', () => {
 
     await store.initialize();
 
-    expect(store.currentPuzzleId).toBe('legacy-puzzle');
-    expect(store.currentLevel).toBe(4);
-    expect(store.selectedFieldId).toBe('standard-field');
-    expect(store.ownedFieldIds).toContain('standard-field');
-    expect(store.coinsTotal).toBe(3);
-    expect(store.goldTotal).toBe(9);
-    expect(store.daysLeftInMonth).toBe(14);
-    expect(store.currentMonthLevel).toBe(1);
-    expect(store.bestLevel).toBe(2);
-    expect(store.showIntroModal).toBe(false);
+    // Legacy save was discarded — player is on a fresh board
+    expect(store.currentPuzzleId).not.toBe('legacy-puzzle');
+    expect(store.phase).toBe('playing');
+    expect(store.currentLevel).toBe(1);
+    expect(store.bestLevel).toBe(0);
+    expect(store.coinsTotal).toBe(20); // starting coins
+    // Beta reset message is surfaced to the player
+    expect(store.lastActionMessage).toContain('beta');
+    // localStorage no longer contains the old save
+    expect(window.localStorage.getItem(MINING_SAVE_KEY)).not.toContain('legacy-puzzle');
   });
 
   it('deleting the saved game returns to a fresh board with the instructions open', async () => {

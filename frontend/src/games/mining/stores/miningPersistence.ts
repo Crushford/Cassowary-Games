@@ -1,16 +1,15 @@
 import type {
-  MiningFieldId,
   MiningFlagType,
   MiningMagpieSkillId,
-  MiningPermitTierId,
   MiningPhase,
   MiningProgressionTab,
   MiningToolUpgradeId,
 } from '../game/types';
-import { MINING_SAVE_KEY } from './miningConfig';
+import { MINING_SAVE_KEY, MINING_SAVE_VERSION } from './miningConfig';
 import { createInitialMiningState, type MiningStoreState } from './miningState';
 
 interface MiningSaveSnapshot {
+  version?: number;
   board?: Partial<MiningStoreState['board']>;
   run?: Partial<Omit<MiningStoreState['run'], 'phase'>> & {
     phase?: Exclude<MiningPhase, 'loading'>;
@@ -22,7 +21,9 @@ interface MiningSaveSnapshot {
   [key: string]: unknown;
 }
 
-type MiningSaveSource = MiningSaveSnapshot | Record<string, unknown>;
+export function isSaveCompatible(snapshot: MiningSaveSnapshot): boolean {
+  return snapshot.version === MINING_SAVE_VERSION;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -119,6 +120,7 @@ export function writeMiningSave(state: MiningStoreState) {
   }
 
   const snapshot: MiningSaveSnapshot = {
+    version: MINING_SAVE_VERSION,
     board: {
       ...state.board,
       pendingLevelTimeout: null,
@@ -131,9 +133,7 @@ export function writeMiningSave(state: MiningStoreState) {
     exchange: { ...state.exchange },
     progression: {
       ...state.progression,
-      ownedFieldIds: [...state.progression.ownedFieldIds],
       magpieSkillIds: [...state.progression.magpieSkillIds],
-      ownedPermitTierIds: [...state.progression.ownedPermitTierIds],
       ownedToolUpgradeIds: [...state.progression.ownedToolUpgradeIds],
       selectedTab: state.progression.selectedTab as MiningProgressionTab,
     },
@@ -198,18 +198,10 @@ export function restoreMiningState(target: MiningStoreState, snapshot: MiningSav
       rootSnapshot,
       base.progression.selectedTab
     ),
-    ownedFieldIds: readStringArray(
-      progressionSnapshot.ownedFieldIds ?? rootSnapshot.ownedFieldIds,
-      base.progression.ownedFieldIds
-    ) as MiningFieldId[],
     magpieSkillIds: readStringArray(
       progressionSnapshot.magpieSkillIds ?? rootSnapshot.magpieSkillIds,
       base.progression.magpieSkillIds
     ) as MiningMagpieSkillId[],
-    ownedPermitTierIds: readStringArray(
-      progressionSnapshot.ownedPermitTierIds ?? rootSnapshot.ownedPermitTierIds,
-      base.progression.ownedPermitTierIds
-    ) as MiningPermitTierId[],
     ownedToolUpgradeIds: readStringArray(
       progressionSnapshot.ownedToolUpgradeIds ?? rootSnapshot.ownedToolUpgradeIds,
       base.progression.ownedToolUpgradeIds
