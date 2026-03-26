@@ -1,203 +1,201 @@
 import { defineStore } from 'pinia';
 
-import { AUTOMATION_OPTIONS, getAutomationOption } from '../game/progression/automation';
-import { FIELD_OPTIONS, getFieldOption } from '../game/progression/fields';
-import { getPermitOption, PERMIT_OPTIONS } from '../game/progression/permits';
-import { getToolUpgrade, TOOL_UPGRADES } from '../game/progression/toolUpgrades';
-import { loadRandomMiningPuzzle } from '../game/puzzles/loadMiningPuzzle';
-import { convertQueensPuzzleToMiningBoard } from '../game/puzzles/convertQueensPuzzleToMiningBoard';
-import { buildSelectiveAutoFlagGrid } from '../game/rules/autoFlag';
-import { buildQuartzTruthGrid } from '../game/rules/quartzTruth';
-import { getFoundGoldPositions } from '../game/selectors/getFoundGoldPositions';
+import { AUTOMATION_OPTIONS } from '../game/progression/automation';
+import { TOOL_UPGRADES } from '../game/progression/toolUpgrades';
 import type {
   MiningAutomationDefinition,
-  MiningDepthLevel,
-  MiningFieldDefinition,
-  MiningFieldId,
+  MiningExchangeLevelDefinition,
+  MiningFlagType,
   MiningMagpieSkillId,
-  MiningPermitDefinition,
-  MiningPermitTierId,
-  MiningPhase,
   MiningProgressionTab,
+  MiningTownStep,
   MiningToolUpgradeDefinition,
   MiningToolUpgradeId,
   PositionRef,
 } from '../game/types';
 import { getGoldRewardForDepth } from '../game/upgrades/miningUpgrades';
-import { createBooleanGrid } from '../game/utils/createBooleanGrid';
-
-const DIG_COST = 1;
-const LEVEL_COMPLETE_DELAY_MS = 700;
-const STARTING_GOLD = 20;
-const LOW_GOLD_WARNING_THRESHOLD_MILD = 10;
-const LOW_GOLD_WARNING_THRESHOLD_SEVERE = 5;
-
-const TOOL_EXPLANATIONS: Partial<Record<MiningToolUpgradeId, string>> = {
-  'stronger-pick':
-    'The first equipment step unlocks the stone layer. Depth lives in Tools; field profile stays separate in the new menu.',
-  'deeper-digging':
-    'The rig now reaches region logic. The board is the same hidden Queens seam, but the layer explains more.',
-  scanner:
-    'The scanner unlocks the mapped region layer without changing the underlying board model.',
-};
-
-function createInitialState() {
-  return {
-    phase: 'idle' as MiningPhase,
-    currentLevel: 0,
-    currentPuzzleId: null as string | null,
-    boardSize: 5,
-    truthGold: createBooleanGrid(5),
-    truthQuartz: createBooleanGrid(5),
-    regionIds: Array.from({ length: 5 }, () => Array(5).fill('.')),
-    revealed: createBooleanGrid(5),
-    playerFlags: createBooleanGrid(5),
-    systemFlags: createBooleanGrid(5),
-    goldTotal: STARTING_GOLD,
-    foundGoldCount: 0,
-    daysElapsed: 0,
-    highestUnlockedDepthLevel: 1 as MiningDepthLevel,
-    currentDepthLevel: 1 as MiningDepthLevel,
-    progressionMenuOpen: false,
-    selectedProgressionTab: 'field' as MiningProgressionTab,
-    ownedFieldIds: ['training-field'] as MiningFieldId[],
-    selectedFieldId: 'training-field' as MiningFieldId,
-    hasMagpie: false,
-    magpieSkillIds: [] as MiningMagpieSkillId[],
-    ownedPermitTierIds: [] as MiningPermitTierId[],
-    activePermitTierId: null as MiningPermitTierId | null,
-    ownedToolUpgradeIds: [] as MiningToolUpgradeId[],
-    showIntroModal: false,
-    hasSeenIntroThisRun: false,
-    showDeathModal: false,
-    deathMessage: null as string | null,
-    hintUnlocked: false,
-    showHintModal: false,
-    shownHintDepths: [] as MiningDepthLevel[],
-    showUpgradeExplanation: false,
-    upgradeExplanationTitle: null as string | null,
-    upgradeExplanationMessage: null as string | null,
-    errorMessage: null as string | null,
-    errorTick: 0,
-    warningMessage: null as string | null,
-    warningTick: 0,
-    lastLowGoldWarningThreshold: null as number | null,
-    lastActionMessage:
-      'Prototype mode: every menu item costs 1 so field, permits, automation, and tool categories can be tested quickly.' as string,
-    pendingLevelTimeout: null as number | null,
-  };
-}
+import { EXCHANGE_LEVELS } from './miningConfig';
+import {
+  clearMiningSave,
+  isSaveCompatible,
+  readMiningSave,
+  restoreMiningState,
+  writeMiningSave,
+} from './miningPersistence';
+import {
+  buyAutomation as buyAutomationInProgression,
+  buyFood as buyFoodInProgression,
+  buyToolUpgrade as buyToolUpgradeInProgression,
+  canBuyAutomation as canBuyAutomationInProgression,
+  canBuyFood as canBuyFoodInProgression,
+  canBuyToolUpgrade as canBuyToolUpgradeInProgression,
+  canExchangeGold as canExchangeGoldInProgression,
+  exchangeGoldForCoins as exchangeGoldForCoinsInProgression,
+} from './miningProgressionService';
+import {
+  canTravelToNextField as canTravelToNextFieldInRun,
+  dig as digInRun,
+  endMonthAndGoToTown,
+  goToNextField as goToNextFieldInRun,
+  loadNextLevel as loadNextLevelInRun,
+  recomputeSystemFlags,
+  toggleFlag as toggleFlagInRun,
+} from './miningRunService';
+import { createInitialMiningState } from './miningState';
 
 export const useMiningStore = defineStore('mining', {
-  state: () => createInitialState(),
+  state: () => createInitialMiningState(),
 
   getters: {
-    visibleFlags(state): boolean[][] {
-      return state.playerFlags.map((row, rowIndex) =>
-        row.map((flagged, colIndex) => flagged || state.systemFlags[rowIndex][colIndex])
+    phase: (state) => state.run.phase,
+    currentLevel: (state) => state.run.currentLevel,
+    currentPuzzleId: (state) => state.board.currentPuzzleId,
+    boardSize: (state) => state.board.boardSize,
+    truthGold: (state) => state.board.truthGold,
+    truthQuartz: (state) => state.board.truthQuartz,
+    regionIds: (state) => state.board.regionIds,
+    revealed: (state) => state.board.revealed,
+    playerFlags: (state) => state.board.playerFlags,
+    systemFlags: (state) => state.board.systemFlags,
+    goldTotal: (state) => state.economy.goldTotal,
+    coinsTotal: (state) => state.economy.coinsTotal,
+    foodTotal: (state) => state.economy.foodTotal,
+    daysLeftInMonth: (state) => state.run.daysLeftInMonth,
+    daysPerMonth: (state) => state.run.daysPerMonth,
+    foundGoldCount: (state) => state.run.foundGoldCount,
+    daysElapsed: (state) => state.run.daysElapsed,
+    highestUnlockedDepthLevel: (state) => state.run.highestUnlockedDepthLevel,
+    currentDepthLevel: (state) => state.run.currentDepthLevel,
+    currentMonthLevel: (state) => state.run.currentMonthLevel,
+    bestLevel: (state) => state.run.bestLevel,
+    displayLevel: (state) => state.exchange.lastReachedLevel,
+    goldCollectedThisMonth: (state) => state.run.goldCollectedThisMonth,
+    selectedProgressionTab: (state) => state.progression.selectedTab,
+    townStep: (state) => state.progression.townStep,
+    showPurchasedUpgrades: (state) => state.progression.showPurchasedUpgrades,
+    magpieSkillIds: (state) => state.progression.magpieSkillIds,
+    ownedToolUpgradeIds: (state) => state.progression.ownedToolUpgradeIds,
+    showSettingsModal: (state) => state.ui.showSettingsModal,
+    showIntroModal: (state) => state.ui.showIntroModal,
+    showMonthOverModal: (state) => state.ui.showMonthOverModal,
+    showDeathModal: (state) => state.ui.showDeathModal,
+    showFieldExhaustedModal: (state) => state.ui.showFieldExhaustedModal,
+    levelCelebration: (state) => state.ui.levelCelebration,
+    deathMessage: (state) => state.run.deathMessage,
+    hintUnlocked: (state) => state.run.hintUnlocked,
+    showHintModal: (state) => state.ui.showHintModal,
+    shownHintDepths: (state) => state.run.shownHintDepths,
+    showUpgradeExplanation: (state) => state.ui.showUpgradeExplanation,
+    upgradeExplanationTitle: (state) => state.ui.upgradeExplanationTitle,
+    upgradeExplanationMessage: (state) => state.ui.upgradeExplanationMessage,
+    errorMessage: (state) => state.ui.errorMessage,
+    errorTick: (state) => state.ui.errorTick,
+    lastActionMessage: (state) => state.ui.lastActionMessage,
+    progressionMenuOpen: (state) => state.ui.progressionMenuOpen,
+    hasSeenIntroThisRun: (state) => state.ui.hasSeenIntroThisRun,
+    hasMagpie: (state) => state.progression.magpieSkillIds.includes('buy-magpie'),
+
+    visibleFlags(state): Array<Array<MiningFlagType | null>> {
+      return state.board.playerFlags.map((row, rowIndex) =>
+        row.map((flagged, colIndex) => flagged ?? state.board.systemFlags[rowIndex][colIndex])
       );
     },
 
-    fieldOptions(): MiningFieldDefinition[] {
-      return FIELD_OPTIONS;
+    exchangeLevels(): MiningExchangeLevelDefinition[] {
+      return EXCHANGE_LEVELS;
     },
 
-    automationOptions(): MiningAutomationDefinition[] {
-      return AUTOMATION_OPTIONS;
+    visibleAutomationOptions(state): MiningAutomationDefinition[] {
+      const hasMagpie = state.progression.magpieSkillIds.includes('buy-magpie');
+      return AUTOMATION_OPTIONS.filter((option) => {
+        const visible = option.requiredLevel <= state.run.bestLevel;
+        const purchased = state.progression.magpieSkillIds.includes(option.id);
+        if (!hasMagpie && option.id !== 'buy-magpie') {
+          return false;
+        }
+        return visible && !purchased;
+      });
     },
 
-    permitOptions(): MiningPermitDefinition[] {
-      return PERMIT_OPTIONS;
-    },
-
-    toolUpgradeOptions(): MiningToolUpgradeDefinition[] {
-      return TOOL_UPGRADES;
-    },
-
-    availableDepthLevels(state): MiningDepthLevel[] {
-      return [1, 2, 3, 4].filter(
-        (depthLevel) => depthLevel <= state.highestUnlockedDepthLevel
-      ) as MiningDepthLevel[];
-    },
-
-    permitMultiplier(state): number {
-      if (!state.activePermitTierId) {
-        return 1;
-      }
-
-      return getPermitOption(state.activePermitTierId).payoutMultiplier;
+    visibleToolUpgradeOptions(state): MiningToolUpgradeDefinition[] {
+      return TOOL_UPGRADES.filter((option) => {
+        const visible = option.requiredLevel <= state.run.bestLevel;
+        const purchased = state.progression.ownedToolUpgradeIds.includes(option.id);
+        return visible && !purchased;
+      });
     },
 
     baseGoldRewardPerTile(state): number {
-      return getGoldRewardForDepth(state.currentDepthLevel);
+      return getGoldRewardForDepth(state.run.currentDepthLevel);
     },
 
     goldRewardPerTile(state): number {
-      return Math.round(getGoldRewardForDepth(state.currentDepthLevel) * this.permitMultiplier);
-    },
-
-    depthTitle(state): string {
-      switch (state.currentDepthLevel) {
-        case 4:
-          return 'Scanner Layer';
-        case 3:
-          return 'Region Layer';
-        case 2:
-          return 'Stone Layer';
-        default:
-          return 'Dirt Layer';
-      }
-    },
-
-    depthSummary(state): string {
-      switch (state.currentDepthLevel) {
-        case 4:
-          return 'Your survey tools expose region borders before the first swing.';
-        case 3:
-          return 'The earth breaks into colored claims. One seam per region.';
-        case 2:
-          return 'Stone starts talking. Quartz marks impossible ground.';
-        default:
-          return 'No hints. Just dirt, cost pressure, and the pattern you can learn.';
-      }
-    },
-
-    selectedFieldTitle(state): string {
-      return getFieldOption(state.selectedFieldId).title;
-    },
-
-    activePermitTitle(state): string {
-      return state.activePermitTierId ? getPermitOption(state.activePermitTierId).title : 'None';
+      return getGoldRewardForDepth(state.run.currentDepthLevel);
     },
 
     magpieSummary(state): string {
-      if (!state.hasMagpie) {
+      if (!state.progression.magpieSkillIds.includes('buy-magpie')) {
         return 'No magpie hired yet.';
       }
 
-      const lessonCount = state.magpieSkillIds.filter((skillId) => skillId !== 'buy-magpie').length;
+      const lessonCount = state.progression.magpieSkillIds.filter(
+        (skillId) => skillId !== 'buy-magpie'
+      ).length;
       return lessonCount > 0
         ? `Magpie trained with ${lessonCount} lesson${lessonCount === 1 ? '' : 's'}.`
         : 'Magpie hired, waiting for lessons.';
     },
 
     canAffordDig(state): boolean {
-      return state.goldTotal >= DIG_COST;
+      return state.run.phase === 'playing' && state.run.daysLeftInMonth > 0;
+    },
+
+    canShowScannerRegions(state): boolean {
+      return state.progression.ownedToolUpgradeIds.includes('scanner');
+    },
+
+    exchangeSummary(state) {
+      return {
+        soldGold: state.exchange.lastSoldGold,
+        baseValue: state.exchange.lastBaseValue,
+        returnPercent: state.exchange.lastReturnPercent,
+        bonus: state.exchange.lastBonus,
+        payout: state.exchange.lastPayout,
+        reachedLevel: state.exchange.lastReachedLevel,
+        bestLevel: state.run.bestLevel,
+        nextThreshold: state.exchange.nextThreshold,
+        progressRatio: state.exchange.progressRatio,
+        processed: state.progression.exchangeProcessedThisTown,
+      };
+    },
+
+    canAdvanceTownStep(state): boolean {
+      switch (state.progression.townStep) {
+        case 'exchange':
+          return state.progression.exchangeProcessedThisTown;
+        case 'food-shop':
+          return state.progression.monthlyUpkeepPaid;
+        case 'magpie-trainer':
+        case 'tool-store':
+          return true;
+        default:
+          return false;
+      }
     },
 
     currentHintText(state): string {
-      const alreadySeen = state.shownHintDepths.includes(state.currentDepthLevel);
+      const alreadySeen = state.run.shownHintDepths.includes(state.run.currentDepthLevel);
       if (alreadySeen) {
         return 'No one has anything new to add. The hill expects you to listen to what it already told you.';
       }
 
-      switch (state.currentDepthLevel) {
+      switch (state.run.currentDepthLevel) {
         case 4:
           return 'The survey birds know the borderlines before you strike. Use the map before you trust your hunger.';
         case 3:
           return 'Old miners say a rich patch never shares a color region with another rich patch.';
         case 2:
-          return 'White stone is the earth crossing out bad guesses for you.';
+          return 'The better survey notes start crossing out bad guesses for you.';
         default:
           return 'Most miners break even. The clever ones notice which seams refuse to crowd each other.';
       }
@@ -206,483 +204,330 @@ export const useMiningStore = defineStore('mining', {
 
   actions: {
     async initialize() {
-      if (this.phase !== 'idle') {
+      if (!this.system.persistenceInitialized) {
+        this.initializePersistence();
+      }
+
+      const restoreResult = this.restoreFromStorage();
+
+      if (restoreResult === 'restored' && this.run.phase !== 'idle') {
+        return;
+      }
+
+      if (restoreResult === 'restored' && this.run.phase === 'idle') {
+        this.ui.showIntroModal = true;
+        this.ui.hasSeenIntroThisRun = true;
+      }
+
+      if (this.run.phase !== 'idle') {
         return;
       }
 
       await this.loadNextLevel();
-      if (!this.hasSeenIntroThisRun) {
-        this.showIntroModal = true;
-        this.hasSeenIntroThisRun = true;
+
+      if (restoreResult === 'beta-reset') {
+        this.ui.lastActionMessage =
+          'This game is in beta and your previous save was from an older version. ' +
+          'Your progress has been reset — sorry for the inconvenience!';
+      }
+
+      if (!this.ui.hasSeenIntroThisRun) {
+        this.ui.showIntroModal = true;
+        this.ui.hasSeenIntroThisRun = true;
       }
     },
 
     setError(message: string) {
-      this.errorMessage = message;
-      this.errorTick += 1;
+      this.ui.errorMessage = message;
+      this.ui.errorTick += 1;
     },
 
     clearError() {
-      this.errorMessage = null;
-    },
-
-    setWarning(message: string) {
-      this.warningMessage = message;
-      this.warningTick += 1;
-    },
-
-    clearWarning() {
-      this.warningMessage = null;
+      this.ui.errorMessage = null;
     },
 
     dismissIntro() {
-      this.showIntroModal = false;
+      this.ui.showIntroModal = false;
+    },
+
+    dismissMonthOverModal() {
+      this.ui.showMonthOverModal = false;
+      this.ui.progressionMenuOpen = true;
+      this.progression.townStep = 'exchange';
+    },
+
+    openSettingsModal() {
+      this.ui.showSettingsModal = true;
+    },
+
+    closeSettingsModal() {
+      this.ui.showSettingsModal = false;
     },
 
     hideUpgradeExplanation() {
-      this.showUpgradeExplanation = false;
+      this.ui.showUpgradeExplanation = false;
     },
 
     openHints() {
-      if (!this.hintUnlocked) {
+      if (!this.run.hintUnlocked) {
         this.setError(
           'No one is offering advice yet. Survive a bad run and the town starts talking.'
         );
         return;
       }
 
-      this.showHintModal = true;
-      if (!this.shownHintDepths.includes(this.currentDepthLevel)) {
-        this.shownHintDepths.push(this.currentDepthLevel);
+      this.ui.showHintModal = true;
+      if (!this.run.shownHintDepths.includes(this.run.currentDepthLevel)) {
+        this.run.shownHintDepths.push(this.run.currentDepthLevel);
       }
     },
 
     closeHints() {
-      this.showHintModal = false;
+      this.ui.showHintModal = false;
     },
 
     dismissDeathModal() {
-      this.showDeathModal = false;
+      this.ui.showDeathModal = false;
+    },
+
+    dismissFieldExhaustedModal() {
+      this.ui.showFieldExhaustedModal = false;
+    },
+
+    dismissLevelCelebration() {
+      this.ui.levelCelebration = null;
+    },
+
+    initializePersistence() {
+      if (this.system.persistenceInitialized) {
+        return;
+      }
+
+      this.system.persistenceInitialized = true;
+      this.$subscribe(
+        () => {
+          if (this.system.persistenceHydrating) {
+            return;
+          }
+
+          writeMiningSave(this.$state);
+        },
+        { detached: true }
+      );
+    },
+
+    ensureVisibleBlockingUi() {
+      console.log('[mining][ui-restore]', {
+        phase: this.run.phase,
+        showIntroModal: this.ui.showIntroModal,
+        showMonthOverModal: this.ui.showMonthOverModal,
+        progressionMenuOpen: this.ui.progressionMenuOpen,
+        showFieldExhaustedModal: this.ui.showFieldExhaustedModal,
+        showDeathModal: this.ui.showDeathModal,
+        townStep: this.progression.townStep,
+      });
+
+      if (this.run.phase === 'playing') {
+        return;
+      }
+
+      if (this.run.phase === 'town') {
+        if (!this.ui.showMonthOverModal && !this.ui.progressionMenuOpen) {
+          this.ui.progressionMenuOpen = true;
+        }
+        return;
+      }
+
+      if (this.run.phase === 'level-complete') {
+        this.ui.showFieldExhaustedModal = true;
+        return;
+      }
+
+      if (this.run.phase === 'out-of-food' || this.run.phase === 'dead') {
+        this.ui.showDeathModal = true;
+      }
+    },
+
+    restoreFromStorage(): 'restored' | 'beta-reset' | 'no-save' {
+      const snapshot = readMiningSave();
+      if (!snapshot) {
+        return 'no-save';
+      }
+
+      if (!isSaveCompatible(snapshot)) {
+        clearMiningSave();
+        return 'beta-reset';
+      }
+
+      this.system.persistenceHydrating = true;
+      this.$patch((state) => {
+        restoreMiningState(state, snapshot);
+      });
+      this.ensureVisibleBlockingUi();
+
+      return 'restored';
+    },
+
+    clearPersistedState() {
+      clearMiningSave();
     },
 
     openProgressionMenu() {
-      this.progressionMenuOpen = true;
+      if (this.run.phase !== 'town') {
+        return;
+      }
+      this.ui.progressionMenuOpen = true;
     },
 
     closeProgressionMenu() {
-      this.progressionMenuOpen = false;
+      this.ui.progressionMenuOpen = false;
     },
 
     setProgressionTab(tab: MiningProgressionTab) {
-      this.selectedProgressionTab = tab;
+      this.progression.selectedTab = tab;
+    },
+
+    toggleShowPurchasedUpgrades() {
+      this.progression.showPurchasedUpgrades = !this.progression.showPurchasedUpgrades;
+    },
+
+    canBuyFood(): boolean {
+      return canBuyFoodInProgression(this.$state);
+    },
+
+    buyFood() {
+      buyFoodInProgression(this.$state, {
+        setError: this.setError,
+      });
+    },
+
+    canExchangeGold(): boolean {
+      return canExchangeGoldInProgression(this.$state);
+    },
+
+    exchangeGoldForCoins() {
+      exchangeGoldForCoinsInProgression(this.$state, {
+        setError: this.setError,
+      });
+    },
+
+    continueTownSequence() {
+      const nextStep: Record<Exclude<MiningTownStep, 'none'>, MiningTownStep> = {
+        exchange: 'food-shop',
+        'food-shop': 'magpie-trainer',
+        'magpie-trainer': 'tool-store',
+        'tool-store': 'none',
+      };
+
+      if (!this.canAdvanceTownStep) {
+        return;
+      }
+
+      if (this.progression.townStep === 'tool-store') {
+        this.beginNextMonth();
+        return;
+      }
+
+      this.progression.townStep =
+        nextStep[this.progression.townStep as Exclude<MiningTownStep, 'none'>];
+    },
+
+    beginNextMonth() {
+      if (!this.progression.monthlyUpkeepPaid) {
+        this.setError('Pay the monthly food bill before returning to the field.');
+        return;
+      }
+
+      this.run.phase = 'playing';
+      this.run.daysLeftInMonth = this.run.daysPerMonth;
+      this.run.currentMonthLevel = 0;
+      this.run.goldCollectedThisMonth = 0;
+      this.progression.townStep = 'none';
+      this.progression.exchangeProcessedThisTown = false;
+      this.progression.monthlyUpkeepPaid = false;
+      this.ui.progressionMenuOpen = false;
+      this.ui.showMonthOverModal = false;
+      this.ui.lastActionMessage = 'A new month begins underground.';
+    },
+
+    canTravelToNextField(): boolean {
+      return canTravelToNextFieldInRun(this.$state);
+    },
+
+    async goToNextField(options?: { automatic?: boolean }) {
+      await goToNextFieldInRun(
+        this.$state,
+        {
+          setError: this.setError,
+          loadNextLevel: () => this.loadNextLevel(),
+        },
+        options
+      );
     },
 
     recomputeSystemFlags() {
-      if (!this.hasMagpie) {
-        this.systemFlags = createBooleanGrid(this.boardSize);
-        return;
-      }
-
-      const foundGold = getFoundGoldPositions(this.truthGold, this.revealed);
-      if (foundGold.length === 0) {
-        this.systemFlags = createBooleanGrid(this.boardSize);
-        return;
-      }
-
-      const row = this.magpieSkillIds.includes('teach-row-rule');
-      const column = this.magpieSkillIds.includes('teach-column-rule');
-      const diagonal = this.magpieSkillIds.includes('teach-diagonal-rule');
-
-      if (!row && !column && !diagonal) {
-        this.systemFlags = createBooleanGrid(this.boardSize);
-        return;
-      }
-
-      this.systemFlags = buildSelectiveAutoFlagGrid(foundGold, this.revealed, this.boardSize, {
-        row,
-        column,
-        diagonal,
-      });
+      recomputeSystemFlags(this.$state);
     },
 
     async loadNextLevel() {
-      if (this.pendingLevelTimeout !== null) {
-        window.clearTimeout(this.pendingLevelTimeout);
-        this.pendingLevelTimeout = null;
-      }
-
-      this.phase = 'loading';
-      this.clearError();
-
-      try {
-        const puzzle = await loadRandomMiningPuzzle(this.currentPuzzleId, this.selectedFieldId);
-        const board = convertQueensPuzzleToMiningBoard(puzzle);
-
-        this.currentPuzzleId = board.puzzleId;
-        this.boardSize = board.size;
-        this.truthGold = board.truthGold;
-        this.regionIds = board.regionIds;
-        this.truthQuartz = buildQuartzTruthGrid(
-          getFoundGoldPositions(board.truthGold, board.truthGold),
-          board.size
-        );
-        this.revealed = createBooleanGrid(board.size);
-        this.playerFlags = createBooleanGrid(board.size);
-        this.systemFlags = createBooleanGrid(board.size);
-        this.foundGoldCount = 0;
-        this.showDeathModal = false;
-        this.deathMessage = null;
-        this.currentLevel += 1;
-        this.phase = 'playing';
-        this.lastActionMessage = `Level ${this.currentLevel}: ${this.selectedFieldTitle}, ${this.depthTitle}. Each dig costs 1 gold.`;
-        this.recomputeSystemFlags();
-      } catch (error) {
-        console.error('[mining] Failed to load next level', error);
-        this.phase = 'idle';
-        this.setError('Unable to load a mining board right now.');
-      }
-    },
-
-    setDepthLevel(depthLevel: MiningDepthLevel) {
-      if (depthLevel > this.highestUnlockedDepthLevel) {
-        this.setError('That depth has not been unlocked yet.');
-        return;
-      }
-
-      if (this.currentDepthLevel === depthLevel) {
-        return;
-      }
-
-      this.currentDepthLevel = depthLevel;
-      void this.loadNextLevel();
+      this.ui.showFieldExhaustedModal = false;
+      await loadNextLevelInRun(this.$state, {
+        setError: this.setError,
+        clearError: this.clearError,
+      });
     },
 
     toggleFlag(position: PositionRef) {
-      if (this.phase !== 'playing') {
-        return;
-      }
-
-      if (this.revealed[position.row]?.[position.col]) {
-        return;
-      }
-
-      this.playerFlags[position.row][position.col] = !this.playerFlags[position.row][position.col];
-      this.lastActionMessage = this.playerFlags[position.row][position.col]
-        ? 'Flag placed.'
-        : 'Flag removed.';
+      toggleFlagInRun(this.$state, position);
     },
 
-    checkLowGoldWarnings(previousGoldTotal: number) {
-      if (
-        previousGoldTotal > LOW_GOLD_WARNING_THRESHOLD_MILD &&
-        this.goldTotal <= LOW_GOLD_WARNING_THRESHOLD_MILD &&
-        this.lastLowGoldWarningThreshold !== LOW_GOLD_WARNING_THRESHOLD_MILD
-      ) {
-        this.lastLowGoldWarningThreshold = LOW_GOLD_WARNING_THRESHOLD_MILD;
-        this.setWarning('Supplies are running low.');
-        return;
-      }
-
-      if (
-        previousGoldTotal > LOW_GOLD_WARNING_THRESHOLD_SEVERE &&
-        this.goldTotal <= LOW_GOLD_WARNING_THRESHOLD_SEVERE &&
-        this.lastLowGoldWarningThreshold !== LOW_GOLD_WARNING_THRESHOLD_SEVERE
-      ) {
-        this.lastLowGoldWarningThreshold = LOW_GOLD_WARNING_THRESHOLD_SEVERE;
-        this.setWarning("You're digging on borrowed time.");
-      }
-    },
-
-    triggerDeath() {
-      if (this.pendingLevelTimeout !== null) {
-        window.clearTimeout(this.pendingLevelTimeout);
-        this.pendingLevelTimeout = null;
-      }
-
-      this.phase = 'dead';
-      this.goldTotal = 0;
-      this.progressionMenuOpen = false;
-      this.showHintModal = false;
-      this.showUpgradeExplanation = false;
-      this.showIntroModal = false;
-      this.showDeathModal = true;
-      this.hintUnlocked = true;
-      this.deathMessage =
-        'You starved underground.\nMost miners do.\n\nA condor drags you back to the surface.\nIt thinks you can do better.\n\nYou start listening more carefully.';
-      this.lastActionMessage = 'Out of supplies. The contract ends here.';
-      this.clearWarning();
+    triggerMonthEnd() {
+      endMonthAndGoToTown(this.$state);
     },
 
     async dig(position: PositionRef) {
-      if (this.phase !== 'playing') {
-        return;
-      }
-
-      if (this.revealed[position.row]?.[position.col]) {
-        return;
-      }
-
-      if (this.goldTotal < DIG_COST) {
-        this.setError('You need 1 gold to dig. Adjust the loadout or restart the contract.');
-        return;
-      }
-
-      this.playerFlags[position.row][position.col] = false;
-      this.revealed[position.row][position.col] = true;
-      const previousGoldTotal = this.goldTotal;
-      this.goldTotal -= DIG_COST;
-      this.daysElapsed += 1;
-      this.clearError();
-
-      if (this.truthGold[position.row][position.col]) {
-        const reward = this.goldRewardPerTile;
-        this.goldTotal += reward;
-        this.foundGoldCount += 1;
-        this.lastActionMessage = `Day ${this.daysElapsed}: You paid 1 gold to dig and found ${reward} gold.`;
-        this.recomputeSystemFlags();
-
-        if (this.foundGoldCount === this.boardSize) {
-          this.phase = 'level-complete';
-          this.lastActionMessage = `Level ${this.currentLevel} cleared in the ${this.depthTitle.toLowerCase()}.`;
-          this.pendingLevelTimeout = window.setTimeout(() => {
-            this.pendingLevelTimeout = null;
-            void this.loadNextLevel();
-          }, LEVEL_COMPLETE_DELAY_MS);
-        }
-
-        this.checkLowGoldWarnings(previousGoldTotal);
-        return;
-      }
-
-      if (this.currentDepthLevel === 2 && this.truthQuartz[position.row][position.col]) {
-        this.lastActionMessage = `Day ${this.daysElapsed}: You paid 1 gold to uncover quartz. That tile can never hold gold.`;
-      } else if (this.currentDepthLevel >= 3) {
-        this.lastActionMessage = `Day ${this.daysElapsed}: You paid 1 gold to expose the region rock.`;
-      } else {
-        this.lastActionMessage = `Day ${this.daysElapsed}: You paid 1 gold to uncover plain dirt.`;
-      }
-
-      if (this.goldTotal <= 0) {
-        this.triggerDeath();
-        return;
-      }
-
-      this.checkLowGoldWarnings(previousGoldTotal);
-    },
-
-    canBuyField(fieldId: MiningFieldId): boolean {
-      const field = getFieldOption(fieldId);
-      return (
-        field.implemented && !this.ownedFieldIds.includes(fieldId) && this.goldTotal >= field.cost
-      );
-    },
-
-    buyField(fieldId: MiningFieldId) {
-      const field = getFieldOption(fieldId);
-
-      if (this.ownedFieldIds.includes(fieldId)) {
-        this.selectField(fieldId);
-        return;
-      }
-
-      if (!field.implemented) {
-        this.setError('That field profile is visible for testing, but not implemented yet.');
-        return;
-      }
-
-      if (this.goldTotal < field.cost) {
-        this.setError('Not enough gold for that field profile.');
-        return;
-      }
-
-      this.goldTotal -= field.cost;
-      this.ownedFieldIds.push(fieldId);
-      this.selectedFieldId = fieldId;
-      this.lastActionMessage = field.implemented
-        ? `${field.title} unlocked and selected.`
-        : `${field.title} unlocked. It still uses the current 5x5 board under the hood in this prototype.`;
-      void this.loadNextLevel();
-    },
-
-    selectField(fieldId: MiningFieldId) {
-      if (!this.ownedFieldIds.includes(fieldId)) {
-        this.setError('Buy that field profile first.');
-        return;
-      }
-
-      if (this.selectedFieldId === fieldId) {
-        return;
-      }
-
-      this.selectedFieldId = fieldId;
-      this.lastActionMessage = `${getFieldOption(fieldId).title} selected.`;
-      void this.loadNextLevel();
+      await digInRun(this.$state, position, {
+        setError: this.setError,
+        clearError: this.clearError,
+        goToNextField: (options) => this.goToNextField(options),
+      });
     },
 
     canBuyAutomation(skillId: MiningMagpieSkillId): boolean {
-      const skill = getAutomationOption(skillId);
-      if (!skill.implemented) {
-        return false;
-      }
-
-      if (skillId !== 'buy-magpie' && !this.magpieSkillIds.includes('buy-magpie')) {
-        return false;
-      }
-
-      return !this.magpieSkillIds.includes(skillId) && this.goldTotal >= skill.cost;
+      return canBuyAutomationInProgression(this.$state, skillId);
     },
 
     buyAutomation(skillId: MiningMagpieSkillId) {
-      const skill = getAutomationOption(skillId);
-
-      if (this.magpieSkillIds.includes(skillId)) {
-        this.setError('That magpie lesson is already owned.');
-        return;
-      }
-
-      if (!skill.implemented) {
-        this.setError('That magpie lesson is still a prototype placeholder.');
-        return;
-      }
-
-      if (skillId !== 'buy-magpie' && !this.magpieSkillIds.includes('buy-magpie')) {
-        this.setError('Buy the magpie before purchasing lessons.');
-        return;
-      }
-
-      if (this.goldTotal < skill.cost) {
-        this.setError('Not enough gold for that lesson.');
-        return;
-      }
-
-      this.goldTotal -= skill.cost;
-
-      if (skillId === 'buy-magpie') {
-        this.hasMagpie = true;
-      }
-
-      this.magpieSkillIds.push(skillId);
-      this.recomputeSystemFlags();
-      this.lastActionMessage = `${skill.title} purchased. ${skill.effectSummary}`;
-    },
-
-    canBuyPermit(permitId: MiningPermitTierId): boolean {
-      const permit = getPermitOption(permitId);
-      return !this.ownedPermitTierIds.includes(permitId) && this.goldTotal >= permit.cost;
-    },
-
-    buyPermit(permitId: MiningPermitTierId) {
-      const permit = getPermitOption(permitId);
-
-      if (this.ownedPermitTierIds.includes(permitId)) {
-        this.activatePermit(permitId);
-        return;
-      }
-
-      if (this.goldTotal < permit.cost) {
-        this.setError('Not enough gold for that permit.');
-        return;
-      }
-
-      this.goldTotal -= permit.cost;
-      this.ownedPermitTierIds.push(permitId);
-      this.activePermitTierId = permitId;
-      this.lastActionMessage = `${permit.title} activated. Payouts now run at ${permit.payoutMultiplier}x.`;
-    },
-
-    activatePermit(permitId: MiningPermitTierId) {
-      if (!this.ownedPermitTierIds.includes(permitId)) {
-        this.setError('Buy that permit first.');
-        return;
-      }
-
-      this.activePermitTierId = permitId;
-      this.lastActionMessage = `${getPermitOption(permitId).title} set as the active permit.`;
+      buyAutomationInProgression(this.$state, skillId, {
+        setError: this.setError,
+      });
     },
 
     canBuyToolUpgrade(upgradeId: MiningToolUpgradeId): boolean {
-      const upgrade = getToolUpgrade(upgradeId);
-      return (
-        upgrade.implemented &&
-        !this.ownedToolUpgradeIds.includes(upgradeId) &&
-        this.goldTotal >= upgrade.cost
-      );
+      return canBuyToolUpgradeInProgression(this.$state, upgradeId);
     },
 
     buyToolUpgrade(upgradeId: MiningToolUpgradeId) {
-      const upgrade = getToolUpgrade(upgradeId);
-
-      if (this.ownedToolUpgradeIds.includes(upgradeId)) {
-        this.setError('That tool upgrade is already owned.');
-        return;
-      }
-
-      if (!upgrade.implemented) {
-        this.setError('That tool slot is visible for prototype planning, but not live yet.');
-        return;
-      }
-
-      if (this.goldTotal < upgrade.cost) {
-        this.setError('Not enough gold for that tool upgrade.');
-        return;
-      }
-
-      this.goldTotal -= upgrade.cost;
-      this.ownedToolUpgradeIds.push(upgradeId);
-
-      if (upgrade.unlocksDepth) {
-        this.highestUnlockedDepthLevel = Math.max(
-          this.highestUnlockedDepthLevel,
-          upgrade.unlocksDepth
-        ) as MiningDepthLevel;
-        this.currentDepthLevel = upgrade.unlocksDepth;
-      }
-
-      if (TOOL_EXPLANATIONS[upgradeId]) {
-        this.upgradeExplanationTitle = `${upgrade.title} Purchased`;
-        this.upgradeExplanationMessage = TOOL_EXPLANATIONS[upgradeId] ?? '';
-        this.showUpgradeExplanation = true;
-      }
-
-      this.progressionMenuOpen = false;
-      this.lastActionMessage = `${upgrade.title} purchased. ${upgrade.effectSummary}`;
-
-      if (upgrade.unlocksDepth) {
-        void this.loadNextLevel();
-      }
-    },
-
-    restartAfterDeath() {
-      const highestUnlockedDepthLevel = this.highestUnlockedDepthLevel;
-      const hintUnlocked = this.hintUnlocked;
-      const ownedFieldIds = [...this.ownedFieldIds];
-      const selectedFieldId = this.selectedFieldId;
-      const hasMagpie = this.hasMagpie;
-      const magpieSkillIds = [...this.magpieSkillIds];
-      const ownedPermitTierIds = [...this.ownedPermitTierIds];
-      const activePermitTierId = this.activePermitTierId;
-      const ownedToolUpgradeIds = [...this.ownedToolUpgradeIds];
-
-      this.$patch({
-        ...createInitialState(),
-        highestUnlockedDepthLevel,
-        currentDepthLevel: 1 as MiningDepthLevel,
-        hintUnlocked,
-        hasSeenIntroThisRun: true,
-        ownedFieldIds,
-        selectedFieldId,
-        hasMagpie,
-        magpieSkillIds,
-        ownedPermitTierIds,
-        activePermitTierId,
-        ownedToolUpgradeIds,
+      buyToolUpgradeInProgression(this.$state, upgradeId, {
+        setError: this.setError,
+        loadNextLevel: () => this.loadNextLevel(),
       });
-
-      void this.loadNextLevel();
     },
 
     resetRun() {
-      this.$patch(createInitialState());
+      this.clearPersistedState();
+      this.$patch(createInitialMiningState());
+      this.ui.showIntroModal = true;
+      this.ui.hasSeenIntroThisRun = true;
+      void this.initialize();
+    },
+
+    deleteSavedGame() {
+      this.clearPersistedState();
+      this.$patch(createInitialMiningState());
+      this.ui.showSettingsModal = false;
+      this.ui.showIntroModal = true;
+      this.ui.hasSeenIntroThisRun = true;
       void this.initialize();
     },
   },

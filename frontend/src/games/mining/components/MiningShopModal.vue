@@ -1,12 +1,11 @@
 <template>
-  <Modal :is-visible="isVisible" aria-label="Mining progression menu" @close="$emit('close')">
+  <Modal :is-visible="isVisible" aria-label="Town sequence" @close="$emit('close')">
     <div class="space-y-4">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <h2 class="text-xl font-bold text-white">Progression Menu</h2>
+          <h2 class="text-xl font-bold text-white">Town</h2>
           <p class="mt-1 text-sm text-semantic-neutral-300">
-            Prototype mode: every item costs 1 so field, automation, permits, and tools can be
-            tested quickly.
+            Exchange your haul, pay monthly upkeep, then improve the crew.
           </p>
         </div>
         <button
@@ -18,82 +17,129 @@
         </button>
       </div>
 
-      <div class="rounded-xl bg-semantic-neutral-900 px-4 py-3 text-sm font-semibold text-white">
-        Gold on hand: <span class="text-semantic-warning-300">{{ goldTotal }}</span>
-      </div>
-
-      <div class="grid grid-cols-4 gap-2">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          type="button"
-          class="rounded-xl border px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] transition-colors"
-          :class="
-            selectedTab === tab.id
-              ? 'border-semantic-warning-300 bg-semantic-warning-700 text-white'
-              : 'border-semantic-neutral-700 bg-semantic-neutral-900 text-semantic-neutral-300 hover:text-white'
-          "
-          @click="$emit('select-tab', tab.id)"
-        >
-          {{ tab.label }}
-        </button>
-      </div>
-
-      <div v-if="selectedTab === 'field'" class="space-y-3">
-        <div
-          v-for="field in fieldOptions"
-          :key="field.id"
-          class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-900 p-4"
-        >
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <div class="text-base font-bold text-white">{{ field.title }}</div>
-              <div class="mt-1 text-sm text-semantic-neutral-300">
-                {{ field.description }}
-              </div>
-            </div>
-            <div class="text-sm font-bold text-semantic-warning-300">{{ field.cost }}</div>
-          </div>
-
-          <div class="mt-3 text-xs uppercase tracking-[0.18em] text-semantic-neutral-500">
-            {{ field.implemented ? 'Live profile' : 'Coming soon' }}
-          </div>
-
-          <div class="mt-3 flex gap-2">
-            <button
-              v-if="!ownedFieldIds.includes(field.id)"
-              type="button"
-              class="flex-1 rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
-              :class="
-                field.implemented && canBuyField(field.id)
-                  ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
-                  : 'border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-500'
-              "
-              :disabled="!field.implemented || !canBuyField(field.id)"
-              @click="$emit('buy-field', field.id)"
-            >
-              {{ field.implemented ? `Unlock ${field.title}` : 'Coming Soon' }}
-            </button>
-            <button
-              v-else
-              type="button"
-              class="flex-1 rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
-              :class="
-                currentFieldId === field.id
-                  ? 'border-semantic-success-700 bg-semantic-success-900 text-semantic-success-200'
-                  : 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
-              "
-              @click="$emit('select-field', field.id)"
-            >
-              {{ currentFieldId === field.id ? 'Selected' : 'Select Field' }}
-            </button>
-          </div>
+      <div class="grid grid-cols-3 gap-2">
+        <div class="rounded-xl bg-semantic-neutral-900 px-4 py-3 text-sm font-semibold text-white">
+          Level: <span class="text-semantic-warning-300">{{ displayLevel }}</span>
+        </div>
+        <div class="rounded-xl bg-semantic-neutral-900 px-4 py-3 text-sm font-semibold text-white">
+          Gold: <span class="text-semantic-warning-300">{{ goldTotal }}</span>
+        </div>
+        <div class="rounded-xl bg-semantic-neutral-900 px-4 py-3 text-sm font-semibold text-white">
+          Coins: <span class="text-semantic-warning-300">{{ coinsTotal }}</span>
         </div>
       </div>
 
-      <div v-else-if="selectedTab === 'automation'" class="space-y-3">
-        <div class="rounded-xl bg-semantic-neutral-900 px-4 py-3 text-sm text-semantic-neutral-200">
-          {{ hasMagpie ? 'Magpie on payroll.' : 'No magpie hired yet.' }}
+      <div class="grid grid-cols-4 gap-2">
+        <div
+          v-for="step in orderedSteps"
+          :key="step.id"
+          class="rounded-xl border px-3 py-2 text-xs font-bold uppercase tracking-[0.18em]"
+          :class="
+            townStep === step.id
+              ? 'border-semantic-warning-300 bg-semantic-warning-700 text-white'
+              : 'border-semantic-neutral-700 bg-semantic-neutral-900 text-semantic-neutral-400'
+          "
+        >
+          {{ step.label }}
+        </div>
+      </div>
+
+      <div v-if="townStep === 'exchange'" class="space-y-3">
+        <div class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-900 p-4">
+          <div class="text-base font-bold text-white">Gold Exchange</div>
+          <div class="mt-1 text-sm text-semantic-neutral-300">
+            Close out the month, count your haul, and see how far you climbed.
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div class="rounded-lg bg-semantic-neutral-950 px-3 py-2 text-semantic-neutral-200">
+              Gold Sold:
+              <span class="font-bold text-semantic-warning-300">{{
+                exchangeSummary.processed ? exchangeSummary.soldGold : goldTotal
+              }}</span>
+            </div>
+            <div class="rounded-lg bg-semantic-neutral-950 px-3 py-2 text-semantic-neutral-200">
+              Base Value:
+              <span class="font-bold text-semantic-warning-300">{{
+                exchangeSummary.processed ? exchangeSummary.baseValue : goldTotal
+              }}</span>
+            </div>
+            <div class="rounded-lg bg-semantic-neutral-950 px-3 py-2 text-semantic-neutral-200">
+              Return:
+              <span class="font-bold text-semantic-warning-300"
+                >{{ exchangeSummary.processed ? exchangeSummary.returnPercent : 0 }}%</span
+              >
+            </div>
+            <div class="rounded-lg bg-semantic-neutral-950 px-3 py-2 text-semantic-neutral-200">
+              Total Payout:
+              <span class="font-bold text-semantic-warning-300">{{
+                exchangeSummary.processed ? exchangeSummary.payout : 0
+              }}</span>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <div
+              class="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.18em] text-semantic-neutral-400"
+            >
+              <span>Progress To Next Level</span>
+              <span v-if="exchangeSummary.nextThreshold !== null">
+                {{ exchangeSummary.soldGold }} / {{ exchangeSummary.nextThreshold }}
+              </span>
+              <span v-else>Maxed This Schedule</span>
+            </div>
+            <div class="h-3 overflow-hidden rounded-full bg-semantic-neutral-950">
+              <div
+                class="h-full bg-gradient-to-r from-semantic-warning-500 to-semantic-warning-300 transition-all duration-700"
+                :style="{ width: `${Math.round(exchangeSummary.progressRatio * 100)}%` }"
+              />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="mt-4 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+            :class="
+              canExchangeGold
+                ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
+                : 'border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-500'
+            "
+            :disabled="!canExchangeGold"
+            @click="$emit('exchange-gold')"
+          >
+            {{ exchangeSummary.processed ? 'Exchange Complete' : 'Close Out The Month' }}
+          </button>
+        </div>
+      </div>
+
+      <div v-else-if="townStep === 'food-shop'" class="space-y-3">
+        <div class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-900 p-4">
+          <div class="text-base font-bold text-white">Food Shop</div>
+          <div class="mt-1 text-sm text-semantic-neutral-300">
+            Pay the monthly food bill before the next month can begin.
+          </div>
+          <div class="mt-3 text-xs uppercase tracking-[0.18em] text-semantic-neutral-500">
+            Monthly upkeep: 1 coin
+          </div>
+          <button
+            type="button"
+            class="mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+            :class="
+              canBuyFood
+                ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
+                : 'border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-500'
+            "
+            :disabled="!canBuyFood"
+            @click="$emit('buy-food')"
+          >
+            {{ monthlyUpkeepPaid ? 'Monthly Upkeep Paid' : 'Pay Food Upkeep' }}
+          </button>
+        </div>
+      </div>
+
+      <div v-else-if="townStep === 'magpie-trainer'" class="space-y-3">
+        <div class="text-sm text-semantic-neutral-300">
+          Exchange level controls what the magpie trainer can show you.
         </div>
 
         <div
@@ -106,14 +152,19 @@
               <div class="text-base font-bold text-white">{{ skill.title }}</div>
               <div class="mt-1 text-sm text-semantic-neutral-300">{{ skill.description }}</div>
             </div>
-            <div class="text-sm font-bold text-semantic-warning-300">{{ skill.cost }}</div>
+            <div class="text-right">
+              <div class="text-sm font-bold text-semantic-warning-300">{{ skill.cost }}</div>
+              <div class="text-[10px] uppercase tracking-[0.18em] text-semantic-neutral-500">
+                Level {{ skill.requiredLevel }}
+              </div>
+            </div>
           </div>
 
           <div
             class="mt-3 text-xs uppercase tracking-[0.18em]"
             :class="skill.implemented ? 'text-semantic-neutral-500' : 'text-semantic-warning-300'"
           >
-            {{ skill.implemented ? skill.effectSummary : 'Prototype lesson placeholder' }}
+            {{ skill.implemented ? skill.effectSummary : 'Pattern scaffolding placeholder' }}
           </div>
 
           <button
@@ -144,57 +195,11 @@
         </div>
       </div>
 
-      <div v-else-if="selectedTab === 'permits'" class="space-y-3">
-        <div
-          v-for="permit in permitOptions"
-          :key="permit.id"
-          class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-900 p-4"
-        >
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <div class="text-base font-bold text-white">{{ permit.title }}</div>
-              <div class="mt-1 text-sm text-semantic-neutral-300">{{ permit.description }}</div>
-            </div>
-            <div class="text-sm font-bold text-semantic-warning-300">{{ permit.cost }}</div>
-          </div>
-
-          <div class="mt-3 text-xs uppercase tracking-[0.18em] text-semantic-neutral-500">
-            Pays {{ permit.payoutMultiplier }}x the base depth reward
-          </div>
-
-          <div class="mt-3 flex gap-2">
-            <button
-              v-if="!ownedPermitTierIds.includes(permit.id)"
-              type="button"
-              class="flex-1 rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
-              :class="
-                canBuyPermit(permit.id)
-                  ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
-                  : 'border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-500'
-              "
-              :disabled="!canBuyPermit(permit.id)"
-              @click="$emit('buy-permit', permit.id)"
-            >
-              Buy {{ permit.title }}
-            </button>
-            <button
-              v-else
-              type="button"
-              class="flex-1 rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
-              :class="
-                activePermitTierId === permit.id
-                  ? 'border-semantic-success-700 bg-semantic-success-900 text-semantic-success-200'
-                  : 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
-              "
-              @click="$emit('activate-permit', permit.id)"
-            >
-              {{ activePermitTierId === permit.id ? 'Active Permit' : 'Activate Permit' }}
-            </button>
-          </div>
+      <div v-else-if="townStep === 'tool-store'" class="space-y-3">
+        <div class="text-sm text-semantic-neutral-300">
+          Flow upgrades and scanner access are gated by your best exchange level.
         </div>
-      </div>
 
-      <div v-else class="space-y-3">
         <div
           v-for="upgrade in toolUpgradeOptions"
           :key="upgrade.id"
@@ -205,7 +210,12 @@
               <div class="text-base font-bold text-white">{{ upgrade.title }}</div>
               <div class="mt-1 text-sm text-semantic-neutral-300">{{ upgrade.description }}</div>
             </div>
-            <div class="text-sm font-bold text-semantic-warning-300">{{ upgrade.cost }}</div>
+            <div class="text-right">
+              <div class="text-sm font-bold text-semantic-warning-300">{{ upgrade.cost }}</div>
+              <div class="text-[10px] uppercase tracking-[0.18em] text-semantic-neutral-500">
+                Level {{ upgrade.requiredLevel }}
+              </div>
+            </div>
           </div>
 
           <div
@@ -242,6 +252,20 @@
           </button>
         </div>
       </div>
+
+      <button
+        type="button"
+        class="w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+        :class="
+          canAdvance
+            ? 'border-semantic-warning-300 bg-semantic-warning-700 text-white hover:bg-semantic-warning-600'
+            : 'border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-500'
+        "
+        :disabled="!canAdvance"
+        @click="$emit('continue')"
+      >
+        {{ townStep === 'tool-store' ? 'Begin Next Month' : 'Continue' }}
+      </button>
     </div>
   </Modal>
 </template>
@@ -251,52 +275,55 @@ import Modal from '@/shared/components/Modal.vue';
 
 import type {
   MiningAutomationDefinition,
-  MiningFieldDefinition,
-  MiningFieldId,
   MiningMagpieSkillId,
-  MiningPermitDefinition,
-  MiningPermitTierId,
-  MiningProgressionTab,
   MiningToolUpgradeDefinition,
   MiningToolUpgradeId,
+  MiningTownStep,
 } from '../game/types';
 
-const tabs: Array<{ id: MiningProgressionTab; label: string }> = [
-  { id: 'field', label: 'Field' },
-  { id: 'automation', label: 'Automation' },
-  { id: 'permits', label: 'Permits' },
-  { id: 'upgrades', label: 'Tools' },
+const orderedSteps: Array<{ id: Exclude<MiningTownStep, 'none'>; label: string }> = [
+  { id: 'exchange', label: 'Exchange' },
+  { id: 'food-shop', label: 'Food Shop' },
+  { id: 'magpie-trainer', label: 'Magpie' },
+  { id: 'tool-store', label: 'Tools' },
 ];
 
 defineProps<{
   isVisible: boolean;
+  townStep: MiningTownStep;
+  displayLevel: number;
   goldTotal: number;
-  selectedTab: MiningProgressionTab;
-  fieldOptions: MiningFieldDefinition[];
-  currentFieldId: MiningFieldId;
-  ownedFieldIds: MiningFieldId[];
+  coinsTotal: number;
+  exchangeSummary: {
+    soldGold: number;
+    baseValue: number;
+    returnPercent: number;
+    bonus: number;
+    payout: number;
+    reachedLevel: number;
+    bestLevel: number;
+    nextThreshold: number | null;
+    progressRatio: number;
+    processed: boolean;
+  };
+  monthlyUpkeepPaid: boolean;
   automationOptions: MiningAutomationDefinition[];
-  hasMagpie: boolean;
   ownedAutomationIds: MiningMagpieSkillId[];
-  permitOptions: MiningPermitDefinition[];
-  ownedPermitTierIds: MiningPermitTierId[];
-  activePermitTierId: MiningPermitTierId | null;
   toolUpgradeOptions: MiningToolUpgradeDefinition[];
   ownedToolUpgradeIds: MiningToolUpgradeId[];
-  canBuyField: (fieldId: MiningFieldId) => boolean;
+  canAdvance: boolean;
+  canBuyFood: boolean;
+  canExchangeGold: boolean;
   canBuyAutomation: (skillId: MiningMagpieSkillId) => boolean;
-  canBuyPermit: (permitId: MiningPermitTierId) => boolean;
   canBuyToolUpgrade: (upgradeId: MiningToolUpgradeId) => boolean;
 }>();
 
 defineEmits<{
   close: [];
-  'select-tab': [tab: MiningProgressionTab];
-  'buy-field': [fieldId: MiningFieldId];
-  'select-field': [fieldId: MiningFieldId];
+  continue: [];
+  'buy-food': [];
+  'exchange-gold': [];
   'buy-automation': [skillId: MiningMagpieSkillId];
-  'buy-permit': [permitId: MiningPermitTierId];
-  'activate-permit': [permitId: MiningPermitTierId];
   'buy-tool-upgrade': [upgradeId: MiningToolUpgradeId];
 }>();
 </script>
