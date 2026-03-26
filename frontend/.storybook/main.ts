@@ -10,7 +10,11 @@ const config = {
   docs: {
     autodocs: 'tag',
   },
-  staticDirs: ['../public'],
+  // During CI builds, static files are copied manually via `cp -rp` to avoid a
+  // Node 20 race condition in fs.cp where parallel mkdir calls throw EEXIST.
+  // Set STORYBOOK_SKIP_STATIC=1 (see build-storybook script) to skip this copy;
+  // leave it unset for local dev so storybook dev serves static assets normally.
+  staticDirs: process.env.STORYBOOK_SKIP_STATIC === '1' ? [] : ['../public'],
   outDir: 'dist/storybook-static',
   async viteFinal(config, { configType }) {
     // Mirror project Vite config for aliases and defines

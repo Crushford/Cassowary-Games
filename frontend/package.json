@@ -16,7 +16,7 @@
     "server": "cd cli-tools && yarn server",
     "dev:server": "cd cli-tools && yarn dev:server",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "rm -rf dist/storybook-static storybook-static; storybook build",
+    "build-storybook": "rm -rf dist/storybook-static storybook-static && STORYBOOK_SKIP_STATIC=1 storybook build && cp -rp public/. storybook-static/",
     "build:all": "yarn build && yarn build-storybook",
     "chromatic": "npx chromatic --project-token=chpt_21e63b4cf6a8756",
     "print:odds": "tsx scripts/printOddsTables.ts"
