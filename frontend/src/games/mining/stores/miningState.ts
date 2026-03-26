@@ -1,10 +1,8 @@
 import type {
   MiningDepthLevel,
   MiningExchangeLevelDefinition,
-  MiningFieldId,
   MiningFlagType,
   MiningMagpieSkillId,
-  MiningPermitTierId,
   MiningPhase,
   MiningProgressionTab,
   MiningTownStep,
@@ -58,11 +56,7 @@ export interface MiningProgressionState {
   showPurchasedUpgrades: boolean;
   exchangeProcessedThisTown: boolean;
   monthlyUpkeepPaid: boolean;
-  ownedFieldIds: MiningFieldId[];
-  selectedFieldId: MiningFieldId;
   magpieSkillIds: MiningMagpieSkillId[];
-  ownedPermitTierIds: MiningPermitTierId[];
-  activePermitTierId: MiningPermitTierId | null;
   ownedToolUpgradeIds: MiningToolUpgradeId[];
 }
 
@@ -166,11 +160,7 @@ export function createInitialMiningState(): MiningStoreState {
       showPurchasedUpgrades: false,
       exchangeProcessedThisTown: false,
       monthlyUpkeepPaid: false,
-      ownedFieldIds: ['training-field'],
-      selectedFieldId: 'training-field',
       magpieSkillIds: [],
-      ownedPermitTierIds: [],
-      activePermitTierId: null,
       ownedToolUpgradeIds: [],
     },
     ui: {

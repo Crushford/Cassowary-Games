@@ -1,13 +1,6 @@
 import { getAutomationOption } from '../game/progression/automation';
-import { getFieldOption } from '../game/progression/fields';
-import { getPermitOption } from '../game/progression/permits';
 import { getToolUpgrade } from '../game/progression/toolUpgrades';
-import type {
-  MiningFieldId,
-  MiningMagpieSkillId,
-  MiningPermitTierId,
-  MiningToolUpgradeId,
-} from '../game/types';
+import type { MiningMagpieSkillId, MiningToolUpgradeId } from '../game/types';
 import {
   DEFAULT_LEVEL_RETURN_PERCENT,
   EXCHANGE_LEVELS,
@@ -99,59 +92,6 @@ export function exchangeGoldForCoins(
   }
 }
 
-export function canBuyField(state: MiningStoreState, fieldId: MiningFieldId): boolean {
-  const field = getFieldOption(fieldId);
-  return (
-    field.implemented &&
-    !state.progression.ownedFieldIds.includes(fieldId) &&
-    state.economy.coinsTotal >= field.cost
-  );
-}
-
-export function buyField(state: MiningStoreState, fieldId: MiningFieldId, deps: ProgressionDeps) {
-  const field = getFieldOption(fieldId);
-
-  if (state.progression.ownedFieldIds.includes(fieldId)) {
-    selectField(state, fieldId, deps);
-    return;
-  }
-
-  if (!field.implemented) {
-    deps.setError('That field profile is visible for testing, but not implemented yet.');
-    return;
-  }
-
-  if (state.economy.coinsTotal < field.cost) {
-    deps.setError('Not enough coins for that field profile.');
-    return;
-  }
-
-  state.economy.coinsTotal -= field.cost;
-  state.progression.ownedFieldIds.push(fieldId);
-  state.progression.selectedFieldId = fieldId;
-  state.ui.lastActionMessage = `${field.title} unlocked and selected.`;
-  void deps.loadNextLevel();
-}
-
-export function selectField(
-  state: MiningStoreState,
-  fieldId: MiningFieldId,
-  deps: ProgressionDeps | Pick<ProgressionDeps, 'setError' | 'loadNextLevel'>
-) {
-  if (!state.progression.ownedFieldIds.includes(fieldId)) {
-    deps.setError('Buy that field profile first.');
-    return;
-  }
-
-  if (state.progression.selectedFieldId === fieldId) {
-    return;
-  }
-
-  state.progression.selectedFieldId = fieldId;
-  state.ui.lastActionMessage = `${getFieldOption(fieldId).title} selected.`;
-  void deps.loadNextLevel();
-}
-
 export function canBuyAutomation(state: MiningStoreState, skillId: MiningMagpieSkillId): boolean {
   const skill = getAutomationOption(skillId);
   if (!skill.implemented) {
@@ -226,51 +166,6 @@ export function buyAutomation(
   state.progression.magpieSkillIds.push(skillId);
   recomputeSystemFlags(state);
   state.ui.lastActionMessage = `${skill.title} purchased. ${skill.effectSummary}`;
-}
-
-export function canBuyPermit(state: MiningStoreState, permitId: MiningPermitTierId): boolean {
-  const permit = getPermitOption(permitId);
-  return (
-    !state.progression.ownedPermitTierIds.includes(permitId) &&
-    state.economy.coinsTotal >= permit.cost
-  );
-}
-
-export function buyPermit(
-  state: MiningStoreState,
-  permitId: MiningPermitTierId,
-  deps: Pick<ProgressionDeps, 'setError'>
-) {
-  const permit = getPermitOption(permitId);
-
-  if (state.progression.ownedPermitTierIds.includes(permitId)) {
-    activatePermit(state, permitId, deps);
-    return;
-  }
-
-  if (state.economy.coinsTotal < permit.cost) {
-    deps.setError('Not enough coins for that permit.');
-    return;
-  }
-
-  state.economy.coinsTotal -= permit.cost;
-  state.progression.ownedPermitTierIds.push(permitId);
-  state.progression.activePermitTierId = permitId;
-  state.ui.lastActionMessage = `${permit.title} activated. Payouts now run at ${permit.payoutMultiplier}x.`;
-}
-
-export function activatePermit(
-  state: MiningStoreState,
-  permitId: MiningPermitTierId,
-  deps: Pick<ProgressionDeps, 'setError'>
-) {
-  if (!state.progression.ownedPermitTierIds.includes(permitId)) {
-    deps.setError('Buy that permit first.');
-    return;
-  }
-
-  state.progression.activePermitTierId = permitId;
-  state.ui.lastActionMessage = `${getPermitOption(permitId).title} set as the active permit.`;
 }
 
 export function canBuyToolUpgrade(

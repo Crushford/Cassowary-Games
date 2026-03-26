@@ -265,9 +265,9 @@
           v-if="store.levelCelebration?.scannerUnlocked"
           class="text-sm leading-relaxed text-semantic-neutral-200"
         >
-          You have been cleared for a new kind of field. Gold still follows one per row, one per
-          column, and no diagonal touching, but now there is also one gold per color group. The
-          scanner reveals those groups so you can reason instead of guessing.
+          Gold still follows one per row, one per column, and no diagonal touching, but now there is
+          also one gold per color group. The scanner reveals those groups so you can reason instead
+          of guessing.
         </p>
 
         <button

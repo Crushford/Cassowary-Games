@@ -10,7 +10,6 @@ export type MiningDepthLevel = 1 | 2 | 3 | 4;
 export type MiningProgressionTab = 'food-shop' | 'gold-exchange' | 'animal-trainer' | 'ui-upgrades';
 export type MiningTownStep = 'none' | 'exchange' | 'food-shop' | 'magpie-trainer' | 'tool-store';
 export type MiningUpgradeCategory = 'magpie' | 'flow' | 'scanner' | 'pattern';
-export type MiningFieldId = 'training-field' | 'standard-field' | 'large-field';
 export type MiningFlagType = 'gold-here' | 'not-gold';
 export type MiningMagpieSkillId =
   | 'buy-magpie'
@@ -22,7 +21,6 @@ export type MiningMagpieSkillId =
   | 'gold-here-region'
   | 'pattern-automation-1'
   | 'pattern-automation-2';
-export type MiningPermitTierId = 'basic-permit' | 'better-permit' | 'premium-permit';
 export type MiningToolUpgradeId =
   | 'stronger-pick'
   | 'deeper-digging'
@@ -49,15 +47,6 @@ export interface MiningLevelBoard {
   regionIds: string[][];
 }
 
-export interface MiningFieldDefinition {
-  id: MiningFieldId;
-  title: string;
-  description: string;
-  cost: number;
-  boardSize: number;
-  implemented: boolean;
-}
-
 export interface MiningAutomationDefinition {
   id: MiningMagpieSkillId;
   title: string;
@@ -69,14 +58,6 @@ export interface MiningAutomationDefinition {
   implemented: boolean;
   requires?: MiningMagpieSkillId[];
   minDepthLevel?: MiningDepthLevel;
-}
-
-export interface MiningPermitDefinition {
-  id: MiningPermitTierId;
-  title: string;
-  description: string;
-  cost: number;
-  payoutMultiplier: number;
 }
 
 export interface MiningToolUpgradeDefinition {
