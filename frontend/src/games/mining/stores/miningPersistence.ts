@@ -1,5 +1,6 @@
 import type {
   MiningFieldId,
+  MiningFlagType,
   MiningMagpieSkillId,
   MiningPermitTierId,
   MiningPhase,
@@ -15,6 +16,7 @@ interface MiningSaveSnapshot {
     phase?: Exclude<MiningPhase, 'loading'>;
   };
   economy?: Partial<MiningStoreState['economy']>;
+  exchange?: Partial<MiningStoreState['exchange']>;
   progression?: Partial<MiningStoreState['progression']>;
   ui?: Partial<Pick<MiningStoreState['ui'], 'hasSeenIntroThisRun' | 'lastActionMessage'>>;
   [key: string]: unknown;
@@ -34,10 +36,41 @@ function readStringArray<T extends string>(value: unknown, fallback: T[]): T[] {
   return value.filter((item): item is T => typeof item === 'string');
 }
 
+function isMiningFlagType(value: unknown): value is MiningFlagType {
+  return value === 'gold-here' || value === 'not-gold';
+}
+
+function readFlagGrid(
+  value: unknown,
+  fallback: Array<Array<MiningFlagType | null>>
+): Array<Array<MiningFlagType | null>> {
+  if (!Array.isArray(value)) {
+    return fallback.map((row) => [...row]);
+  }
+
+  return fallback.map((fallbackRow, rowIndex) => {
+    const sourceRow = Array.isArray(value[rowIndex]) ? value[rowIndex] : [];
+    return fallbackRow.map((fallbackCell, colIndex) => {
+      const sourceCell = sourceRow[colIndex];
+
+      if (sourceCell === true) {
+        return 'gold-here';
+      }
+
+      if (sourceCell === false || sourceCell === null || typeof sourceCell === 'undefined') {
+        return null;
+      }
+
+      return isMiningFlagType(sourceCell) ? sourceCell : fallbackCell;
+    });
+  });
+}
+
 function readPhase(value: unknown, fallback: MiningStoreState['run']['phase']) {
   if (
     value === 'idle' ||
     value === 'playing' ||
+    value === 'town' ||
     value === 'level-complete' ||
     value === 'out-of-food' ||
     value === 'dead'
@@ -95,6 +128,7 @@ export function writeMiningSave(state: MiningStoreState) {
       phase: state.run.phase === 'loading' ? 'playing' : state.run.phase,
     },
     economy: { ...state.economy },
+    exchange: { ...state.exchange },
     progression: {
       ...state.progression,
       ownedFieldIds: [...state.progression.ownedFieldIds],
@@ -133,11 +167,14 @@ export function restoreMiningState(target: MiningStoreState, snapshot: MiningSav
   const progressionSnapshot = isRecord(rootSnapshot.progression)
     ? rootSnapshot.progression
     : rootSnapshot;
+  const exchangeSnapshot = isRecord(rootSnapshot.exchange) ? rootSnapshot.exchange : rootSnapshot;
   const uiSnapshot = isRecord(rootSnapshot.ui) ? rootSnapshot.ui : rootSnapshot;
 
   target.board = {
     ...base.board,
     ...boardSnapshot,
+    playerFlags: readFlagGrid(boardSnapshot.playerFlags, base.board.playerFlags),
+    systemFlags: readFlagGrid(boardSnapshot.systemFlags, base.board.systemFlags),
     pendingLevelTimeout: null,
   };
   target.run = {
@@ -148,6 +185,10 @@ export function restoreMiningState(target: MiningStoreState, snapshot: MiningSav
   target.economy = {
     ...base.economy,
     ...economySnapshot,
+  };
+  target.exchange = {
+    ...base.exchange,
+    ...exchangeSnapshot,
   };
   target.progression = {
     ...base.progression,

@@ -3,13 +3,17 @@
     <MiningSquare
       v-for="cell in cells"
       :key="`${cell.row}-${cell.col}`"
+      :row="cell.row"
+      :col="cell.col"
       :tile-kind="cell.tileKind"
       :flagged="cell.flagged"
+      :reward-label="rewardLabel"
       :region-id="cell.regionId"
-      :depth-level="depthLevel"
+      :show-region="showRegions"
       :disabled="disabled || cell.tileKind !== 'hidden'"
-      @dig="$emit('dig', { row: cell.row, col: cell.col })"
-      @toggle-flag="$emit('toggle-flag', { row: cell.row, col: cell.col })"
+      :can-excavate-all-hidden="canExcavateAllHidden"
+      @dig="handleDig(cell.row, cell.col)"
+      @toggle-flag="handleToggleFlag(cell.row, cell.col)"
     />
   </div>
 </template>
@@ -17,45 +21,63 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import type { MiningDepthLevel, PositionRef } from '../game/types';
+import type { MiningFlagType, PositionRef } from '../game/types';
 import MiningSquare from './MiningSquare.vue';
 
 const props = defineProps<{
   truthGold: boolean[][];
-  truthQuartz: boolean[][];
   regionIds: string[][];
   revealed: boolean[][];
-  flagged: boolean[][];
-  depthLevel: MiningDepthLevel;
+  flagged: Array<Array<MiningFlagType | null>>;
+  rewardLabel: string;
+  showRegions: boolean;
+  canExcavateAllHidden: boolean;
   disabled?: boolean;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   dig: [position: PositionRef];
   'toggle-flag': [position: PositionRef];
 }>();
+
+function handleDig(row: number, col: number) {
+  console.log('[mining][board] forwarding dig request', {
+    row,
+    col,
+    boardDisabled: Boolean(props.disabled),
+    canExcavateAllHidden: props.canExcavateAllHidden,
+    flagAtCell: props.flagged[row]?.[col] ?? null,
+    revealed: props.revealed[row]?.[col] ?? false,
+  });
+  emit('dig', { row, col });
+}
+
+function handleToggleFlag(row: number, col: number) {
+  console.log('[mining][board] forwarding toggle-flag request', {
+    row,
+    col,
+    boardDisabled: Boolean(props.disabled),
+    flagAtCell: props.flagged[row]?.[col] ?? null,
+    revealed: props.revealed[row]?.[col] ?? false,
+  });
+  emit('toggle-flag', { row, col });
+}
 
 const cells = computed(() => {
   const values: Array<{
     row: number;
     col: number;
-    tileKind: 'hidden' | 'gold' | 'quartz' | 'rock';
-    flagged: boolean;
+    tileKind: 'hidden' | 'gold' | 'empty';
+    flagged: MiningFlagType | null;
     regionId: string | null;
   }> = [];
 
   for (let row = 0; row < props.truthGold.length; row += 1) {
     for (let col = 0; col < props.truthGold[row].length; col += 1) {
-      let tileKind: 'hidden' | 'gold' | 'quartz' | 'rock' = 'hidden';
+      let tileKind: 'hidden' | 'gold' | 'empty' = 'hidden';
 
       if (props.revealed[row][col]) {
-        if (props.truthGold[row][col]) {
-          tileKind = 'gold';
-        } else if (props.depthLevel === 2 && props.truthQuartz[row][col]) {
-          tileKind = 'quartz';
-        } else {
-          tileKind = 'rock';
-        }
+        tileKind = props.truthGold[row][col] ? 'gold' : 'empty';
       }
 
       values.push({

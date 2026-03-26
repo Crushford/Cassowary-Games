@@ -9,9 +9,11 @@ import type {
   MiningToolUpgradeId,
 } from '../game/types';
 import {
-  FOOD_SHOP_AMOUNT,
-  FOOD_SHOP_COST,
-  GOLD_EXCHANGE_RATE,
+  DEFAULT_LEVEL_RETURN_PERCENT,
+  EXCHANGE_LEVELS,
+  getExchangeLevelForMonthlyGold,
+  getNextExchangeLevel,
+  MONTHLY_UPKEEP_COST,
   TOOL_EXPLANATIONS,
 } from './miningConfig';
 import type { MiningStoreState } from './miningState';
@@ -23,40 +25,78 @@ interface ProgressionDeps {
 }
 
 export function canBuyFood(state: MiningStoreState): boolean {
-  return state.economy.coinsTotal >= FOOD_SHOP_COST;
+  return !state.progression.monthlyUpkeepPaid && state.economy.coinsTotal >= MONTHLY_UPKEEP_COST;
 }
 
 export function buyFood(state: MiningStoreState, deps: Pick<ProgressionDeps, 'setError'>) {
-  if (state.economy.coinsTotal < FOOD_SHOP_COST) {
+  if (state.progression.monthlyUpkeepPaid) {
+    return;
+  }
+
+  if (state.economy.coinsTotal < MONTHLY_UPKEEP_COST) {
     deps.setError('Not enough coins for food.');
     return;
   }
 
-  state.economy.coinsTotal -= FOOD_SHOP_COST;
-  state.economy.foodTotal += FOOD_SHOP_AMOUNT;
-  if (state.run.phase === 'out-of-food') {
-    state.run.phase = 'playing';
-    state.ui.showDeathModal = false;
-  }
-  state.ui.lastActionMessage = `You bought ${FOOD_SHOP_AMOUNT} food in town.`;
+  state.economy.coinsTotal -= MONTHLY_UPKEEP_COST;
+  state.progression.monthlyUpkeepPaid = true;
+  state.ui.lastActionMessage = 'You paid the monthly food bill for the next shift underground.';
 }
 
 export function canExchangeGold(state: MiningStoreState): boolean {
-  return state.economy.goldTotal >= GOLD_EXCHANGE_RATE;
+  return !state.progression.exchangeProcessedThisTown;
 }
 
 export function exchangeGoldForCoins(
   state: MiningStoreState,
   deps: Pick<ProgressionDeps, 'setError'>
 ) {
-  if (state.economy.goldTotal < GOLD_EXCHANGE_RATE) {
-    deps.setError('You need gold before you can exchange it for coins.');
+  if (state.progression.exchangeProcessedThisTown) {
     return;
   }
 
-  state.economy.goldTotal -= GOLD_EXCHANGE_RATE;
-  state.economy.coinsTotal += GOLD_EXCHANGE_RATE;
-  state.ui.lastActionMessage = 'You exchanged 1 gold for 1 coin.';
+  const soldGold = state.economy.goldTotal;
+  const previousBestLevel = state.run.bestLevel;
+  const reachedLevel = getExchangeLevelForMonthlyGold(soldGold);
+  const returnPercent = reachedLevel.returnPercent ?? DEFAULT_LEVEL_RETURN_PERCENT;
+  const baseValue = soldGold;
+  const bonus = Math.round((baseValue * returnPercent) / 100);
+  const payout = baseValue + bonus;
+  const nextLevel = getNextExchangeLevel(soldGold);
+
+  state.exchange.lastSoldGold = soldGold;
+  state.exchange.lastBaseValue = baseValue;
+  state.exchange.lastReturnPercent = returnPercent;
+  state.exchange.lastBonus = bonus;
+  state.exchange.lastPayout = payout;
+  state.exchange.lastReachedLevel = reachedLevel.level;
+  state.exchange.lastBestLevel = Math.max(previousBestLevel, reachedLevel.level);
+  state.exchange.nextThreshold = nextLevel?.threshold ?? null;
+  if (nextLevel) {
+    const previousThreshold = EXCHANGE_LEVELS[Math.max(0, reachedLevel.level)].threshold;
+    const span = Math.max(1, nextLevel.threshold - previousThreshold);
+    state.exchange.progressRatio = Math.max(0, Math.min(1, (soldGold - previousThreshold) / span));
+  } else {
+    state.exchange.progressRatio = 1;
+  }
+
+  state.economy.goldTotal = 0;
+  state.economy.coinsTotal += payout;
+  state.run.currentMonthLevel = reachedLevel.level;
+  state.run.bestLevel = Math.max(state.run.bestLevel, reachedLevel.level);
+  state.progression.exchangeProcessedThisTown = true;
+  state.ui.lastActionMessage =
+    soldGold > 0
+      ? `The exchange closed out ${soldGold} gold for ${payout} coins.`
+      : 'The exchange closed out a lean month with no gold to sell.';
+
+  if (state.run.bestLevel > previousBestLevel) {
+    state.ui.levelCelebration = {
+      level: state.run.bestLevel,
+      returnPercent,
+      scannerUnlocked: state.run.bestLevel >= 3 && previousBestLevel < 3,
+    };
+  }
 }
 
 export function canBuyField(state: MiningStoreState, fieldId: MiningFieldId): boolean {
@@ -118,7 +158,20 @@ export function canBuyAutomation(state: MiningStoreState, skillId: MiningMagpieS
     return false;
   }
 
-  if (skillId !== 'buy-magpie' && !state.progression.magpieSkillIds.includes('buy-magpie')) {
+  if (skill.requiredLevel > state.run.bestLevel) {
+    return false;
+  }
+
+  if (
+    skill.requires?.some((requiredId) => !state.progression.magpieSkillIds.includes(requiredId))
+  ) {
+    return false;
+  }
+
+  if (
+    typeof skill.minDepthLevel === 'number' &&
+    state.run.highestUnlockedDepthLevel < skill.minDepthLevel
+  ) {
     return false;
   }
 
@@ -139,13 +192,28 @@ export function buyAutomation(
     return;
   }
 
+  if (skill.requiredLevel > state.run.bestLevel) {
+    deps.setError('Reach a better exchange level before buying that lesson.');
+    return;
+  }
+
   if (!skill.implemented) {
     deps.setError('That magpie lesson is still a prototype placeholder.');
     return;
   }
 
-  if (skillId !== 'buy-magpie' && !state.progression.magpieSkillIds.includes('buy-magpie')) {
-    deps.setError('Buy the magpie before purchasing lessons.');
+  if (
+    skill.requires?.some((requiredId) => !state.progression.magpieSkillIds.includes(requiredId))
+  ) {
+    deps.setError('Buy the earlier magpie lesson first.');
+    return;
+  }
+
+  if (
+    typeof skill.minDepthLevel === 'number' &&
+    state.run.highestUnlockedDepthLevel < skill.minDepthLevel
+  ) {
+    deps.setError('Unlock more survey tools before buying that lesson.');
     return;
   }
 
@@ -212,6 +280,7 @@ export function canBuyToolUpgrade(
   const upgrade = getToolUpgrade(upgradeId);
   return (
     upgrade.implemented &&
+    upgrade.requiredLevel <= state.run.bestLevel &&
     !state.progression.ownedToolUpgradeIds.includes(upgradeId) &&
     state.economy.coinsTotal >= upgrade.cost
   );
@@ -231,6 +300,11 @@ export function buyToolUpgrade(
 
   if (!upgrade.implemented) {
     deps.setError('That tool slot is visible for prototype planning, but not live yet.');
+    return;
+  }
+
+  if (upgrade.requiredLevel > state.run.bestLevel) {
+    deps.setError('Reach a better exchange level before buying that tool.');
     return;
   }
 

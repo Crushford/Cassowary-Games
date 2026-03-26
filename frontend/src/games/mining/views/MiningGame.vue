@@ -26,22 +26,24 @@
 
       <div class="mt-3 grid grid-cols-4 gap-2 text-xs">
         <div class="rounded-xl bg-app-surface px-3 py-2">
-          <div class="uppercase tracking-[0.18em] text-app-textMuted">Day</div>
-          <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.daysElapsed }}</div>
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Days Left</div>
+          <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.daysLeftInMonth }}</div>
         </div>
         <div class="rounded-xl bg-app-surface px-3 py-2">
-          <div class="uppercase tracking-[0.18em] text-app-textMuted">Food</div>
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Level</div>
           <div class="mt-1 font-bold tabular-nums text-semantic-warning-300">
-            {{ store.foodTotal }}
+            {{ store.displayLevel }}
+          </div>
+        </div>
+        <div class="rounded-xl bg-app-surface px-3 py-2">
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Gold This Month</div>
+          <div class="mt-1 font-bold tabular-nums text-app-text">
+            {{ store.goldCollectedThisMonth }}
           </div>
         </div>
         <div class="rounded-xl bg-app-surface px-3 py-2">
           <div class="uppercase tracking-[0.18em] text-app-textMuted">Coins</div>
           <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.coinsTotal }}</div>
-        </div>
-        <div class="rounded-xl bg-app-surface px-3 py-2">
-          <div class="uppercase tracking-[0.18em] text-app-textMuted">Gold</div>
-          <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.goldTotal }}</div>
         </div>
       </div>
     </div>
@@ -49,30 +51,14 @@
     <div class="flex-1 overflow-y-auto px-4 pt-4">
       <div class="space-y-4 pb-6">
         <section class="rounded-2xl border border-app-border bg-app-surface p-4">
-          <div v-if="store.availableDepthLevels.length > 1" class="mb-4 grid grid-cols-4 gap-2">
-            <button
-              v-for="depthLevel in store.availableDepthLevels"
-              :key="depthLevel"
-              type="button"
-              class="rounded-xl border px-3 py-2 text-xs font-bold transition-colors"
-              :class="
-                store.currentDepthLevel === depthLevel
-                  ? 'border-semantic-warning-300 bg-semantic-warning-700 text-white'
-                  : 'border-app-border bg-app-bg text-app-textMuted hover:text-app-text'
-              "
-              @click="store.setDepthLevel(depthLevel)"
-            >
-              Depth {{ depthLevel }}
-            </button>
-          </div>
-
           <MiningBoard
             :truth-gold="store.truthGold"
-            :truth-quartz="store.truthQuartz"
             :region-ids="store.regionIds"
             :revealed="store.revealed"
             :flagged="store.visibleFlags"
-            :depth-level="store.currentDepthLevel"
+            :reward-label="String(store.goldRewardPerTile)"
+            :show-regions="store.canShowScannerRegions"
+            :can-excavate-all-hidden="store.foundGoldCount === store.boardSize"
             :disabled="store.phase !== 'playing'"
             @dig="store.dig"
             @toggle-flag="store.toggleFlag"
@@ -83,13 +69,9 @@
 
     <div class="flex-none border-t border-app-border bg-app-bgAlt px-4 py-3">
       <div class="flex items-center justify-between gap-3">
-        <button
-          type="button"
-          class="rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
-          @click="store.openProgressionMenu()"
-        >
-          Go to Town
-        </button>
+        <div class="text-sm text-app-textMuted">
+          A month is 28 digs. When the days run out, you must head back into town for more food.
+        </div>
         <button
           type="button"
           class="rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
@@ -108,20 +90,23 @@
 
     <MiningShopModal
       :is-visible="store.progressionMenuOpen"
+      :town-step="store.townStep"
+      :display-level="store.displayLevel"
       :gold-total="store.goldTotal"
       :coins-total="store.coinsTotal"
-      :food-total="store.foodTotal"
-      :selected-tab="store.selectedProgressionTab"
-      :automation-options="store.automationOptions"
+      :exchange-summary="store.exchangeSummary"
+      :monthly-upkeep-paid="store.progression.monthlyUpkeepPaid"
+      :automation-options="store.visibleAutomationOptions"
       :owned-automation-ids="store.magpieSkillIds"
-      :tool-upgrade-options="store.toolUpgradeOptions"
+      :tool-upgrade-options="store.visibleToolUpgradeOptions"
       :owned-tool-upgrade-ids="store.ownedToolUpgradeIds"
+      :can-advance="store.canAdvanceTownStep"
       :can-buy-food="store.canBuyFood()"
       :can-exchange-gold="store.canExchangeGold()"
       :can-buy-automation="(skillId) => store.canBuyAutomation(skillId)"
       :can-buy-tool-upgrade="(upgradeId) => store.canBuyToolUpgrade(upgradeId)"
       @close="store.closeProgressionMenu()"
-      @select-tab="store.setProgressionTab"
+      @continue="store.continueTownSequence()"
       @buy-food="store.buyFood()"
       @exchange-gold="store.exchangeGoldForCoins()"
       @buy-automation="store.buyAutomation"
@@ -178,10 +163,16 @@
         </div>
 
         <div class="space-y-3 text-sm leading-relaxed text-semantic-neutral-200">
-          <p>Tap once to place a flag.</p>
-          <p>Tap a flag to dig for gold.</p>
-          <p>Digging takes 1 day and costs you 1 food.</p>
-          <p>Moving to the next field costs 1 coin, and you can do it whenever you want.</p>
+          <p>A month is 28 digs.</p>
+          <p>Each dig uses 1 day.</p>
+          <p>When the month ends, you go to town to sell gold, pay upkeep, and buy upgrades.</p>
+          <p>Tap once to place a gold-here flag.</p>
+          <p>
+            Tap a gold-here flag to dig for gold. After all gold is found, any hidden tile can be
+            dug.
+          </p>
+          <p>The magpie marks not-gold tiles with an x and likely gold with a target.</p>
+          <p>Better months at the exchange unlock new town opportunities.</p>
         </div>
 
         <button
@@ -195,8 +186,29 @@
     </Modal>
 
     <Modal
+      :is-visible="store.showMonthOverModal"
+      aria-label="Month over"
+      @close="store.dismissMonthOverModal()"
+    >
+      <div class="space-y-4 text-white">
+        <div>
+          <h2 class="text-xl font-bold">The Month Is Over</h2>
+          <p class="mt-1 text-sm text-semantic-neutral-300">Time to head into town.</p>
+        </div>
+
+        <button
+          type="button"
+          class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
+          @click="store.dismissMonthOverModal()"
+        >
+          Head To Town
+        </button>
+      </div>
+    </Modal>
+
+    <Modal
       :is-visible="store.showUpgradeExplanation"
-      aria-label="Depth upgrade explanation"
+      aria-label="Tool upgrade explanation"
       @close="store.hideUpgradeExplanation()"
     >
       <div class="space-y-4 text-white">
@@ -204,7 +216,7 @@
           <div>
             <h2 class="text-xl font-bold">{{ store.upgradeExplanationTitle }}</h2>
             <p class="mt-1 text-sm text-semantic-neutral-300">
-              Deeper layers trade gold for clearer information and bigger rewards.
+              New tools make the contract easier to read and more valuable to work.
             </p>
           </div>
           <button
@@ -226,6 +238,44 @@
           @click="store.hideUpgradeExplanation()"
         >
           Back to the Contract
+        </button>
+      </div>
+    </Modal>
+
+    <Modal
+      :is-visible="Boolean(store.levelCelebration)"
+      aria-label="Exchange level reached"
+      @close="store.dismissLevelCelebration()"
+    >
+      <div class="space-y-4 text-white">
+        <div>
+          <h2 class="text-xl font-bold">
+            Congratulations, you reached Level {{ store.levelCelebration?.level }}.
+          </h2>
+          <p class="mt-1 text-sm text-semantic-neutral-300">
+            Your return this month is now {{ store.levelCelebration?.returnPercent }}%.
+          </p>
+        </div>
+
+        <p class="text-sm leading-relaxed text-semantic-neutral-200">
+          New upgrades are now available in town.
+        </p>
+
+        <p
+          v-if="store.levelCelebration?.scannerUnlocked"
+          class="text-sm leading-relaxed text-semantic-neutral-200"
+        >
+          You have been cleared for a new kind of field. Gold still follows one per row, one per
+          column, and no diagonal touching, but now there is also one gold per color group. The
+          scanner reveals those groups so you can reason instead of guessing.
+        </p>
+
+        <button
+          type="button"
+          class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
+          @click="store.dismissLevelCelebration()"
+        >
+          Continue
         </button>
       </div>
     </Modal>
@@ -294,6 +344,34 @@
           "
         >
           Go To Town
+        </button>
+      </div>
+    </Modal>
+
+    <Modal
+      :is-visible="store.showFieldExhaustedModal"
+      aria-label="Field fully dug"
+      @close="store.dismissFieldExhaustedModal()"
+    >
+      <div class="space-y-4 text-white">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-bold">Field Fully Dug</h2>
+            <p class="mt-1 text-sm text-semantic-neutral-300">There is nothing left buried here.</p>
+          </div>
+        </div>
+
+        <p class="text-sm leading-relaxed text-semantic-neutral-200">
+          You've dug this entire field! You can move to the next field at any time by clicking "Next
+          Field".
+        </p>
+
+        <button
+          type="button"
+          class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
+          @click="store.dismissFieldExhaustedModal()"
+        >
+          Keep Looking Around
         </button>
       </div>
     </Modal>

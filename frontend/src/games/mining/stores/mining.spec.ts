@@ -60,6 +60,14 @@ describe('useMiningStore', () => {
     vi.restoreAllMocks();
   });
 
+  async function createStore() {
+    const { useMiningStore } = await import('./mining');
+    const store = useMiningStore();
+    await store.initialize();
+    store.dismissIntro();
+    return store;
+  }
+
   function getGoldPositions(grid: boolean[][]) {
     const positions: Array<{ row: number; col: number }> = [];
 
@@ -74,97 +82,245 @@ describe('useMiningStore', () => {
     return positions;
   }
 
-  it('starts with food and coins, then resolves a flagged dig for 1 food', async () => {
-    const { useMiningStore } = await import('./mining');
-    const store = useMiningStore();
+  it('starts a month with 28 days and spends 1 day per dig', async () => {
+    const store = await createStore();
 
-    await store.initialize();
-    expect(store.showIntroModal).toBe(true);
-    expect(store.selectedFieldId).toBe('training-field');
-    store.dismissIntro();
+    expect(store.daysPerMonth).toBe(28);
+    expect(store.daysLeftInMonth).toBe(28);
+
     store.toggleFlag({ row: 0, col: 1 });
     await store.dig({ row: 0, col: 1 });
 
-    expect(store.currentDepthLevel).toBe(1);
-    expect(store.currentLevel).toBe(1);
-    expect(store.foodTotal).toBe(29);
-    expect(store.coinsTotal).toBe(20);
-    expect(store.goldTotal).toBe(0);
+    expect(store.daysLeftInMonth).toBe(27);
     expect(store.daysElapsed).toBe(1);
     expect(store.revealed[0][1]).toBe(true);
-    expect(store.foundGoldCount).toBe(0);
-  });
-
-  it('opens the prototype progression structure and applies permit rewards', async () => {
-    const { useMiningStore } = await import('./mining');
-    const store = useMiningStore();
-
-    await store.initialize();
-    store.openProgressionMenu();
-    store.buyPermit('premium-permit');
-
-    expect(store.activePermitTierId).toBe('premium-permit');
-    expect(store.coinsTotal).toBe(19);
-    expect(store.goldRewardPerTile).toBe(8);
-
-    store.toggleFlag({ row: 0, col: 0 });
-    await store.dig({ row: 0, col: 0 });
-
-    expect(store.goldTotal).toBe(8);
-    expect(store.coinsTotal).toBe(19);
-    expect(store.foodTotal).toBe(29);
-    expect(store.foundGoldCount).toBe(1);
-  });
-
-  it('lets town convert gold into coins and coins into food', async () => {
-    const { useMiningStore } = await import('./mining');
-    const store = useMiningStore();
-
-    await store.initialize();
-    store.toggleFlag({ row: 0, col: 0 });
-    await store.dig({ row: 0, col: 0 });
-
-    expect(store.goldTotal).toBe(5);
     expect(store.coinsTotal).toBe(20);
+  });
+
+  it('moves to town when the month ends and opens the month-over modal', async () => {
+    const store = await createStore();
+
+    store.run.daysLeftInMonth = 1;
+    store.toggleFlag({ row: 0, col: 1 });
+    await store.dig({ row: 0, col: 1 });
+
+    expect(store.daysLeftInMonth).toBe(0);
+    expect(store.phase).toBe('town');
+    expect(store.townStep).toBe('exchange');
+    expect(store.showMonthOverModal).toBe(true);
+    expect(store.progressionMenuOpen).toBe(false);
+
+    store.dismissMonthOverModal();
+
+    expect(store.showMonthOverModal).toBe(false);
+    expect(store.progressionMenuOpen).toBe(true);
+  });
+
+  it('processes the exchange, updates month level and unlocks level-gated shops', async () => {
+    const store = await createStore();
+
+    store.run.phase = 'town';
+    store.progression.townStep = 'exchange';
+    store.ui.progressionMenuOpen = true;
+    store.economy.goldTotal = 100;
+    store.run.goldCollectedThisMonth = 100;
 
     store.exchangeGoldForCoins();
-    expect(store.goldTotal).toBe(4);
-    expect(store.coinsTotal).toBe(21);
+
+    expect(store.goldTotal).toBe(0);
+    expect(store.coinsTotal).toBe(123);
+    expect(store.currentMonthLevel).toBe(1);
+    expect(store.bestLevel).toBe(1);
+    expect(store.exchangeSummary.soldGold).toBe(100);
+    expect(store.exchangeSummary.returnPercent).toBe(3);
+    expect(store.exchangeSummary.payout).toBe(103);
+    expect(store.levelCelebration).toEqual({
+      level: 1,
+      returnPercent: 3,
+      scannerUnlocked: false,
+    });
+    expect(store.visibleAutomationOptions.map((option) => option.id)).toEqual(['buy-magpie']);
+    expect(store.visibleToolUpgradeOptions.map((option) => option.id)).toEqual(['auto-hauler']);
+  });
+
+  it('allows a zero-gold month to clear the exchange step', async () => {
+    const store = await createStore();
+
+    store.run.phase = 'town';
+    store.progression.townStep = 'exchange';
+    store.ui.progressionMenuOpen = true;
+
+    store.exchangeGoldForCoins();
+
+    expect(store.exchangeSummary.processed).toBe(true);
+    expect(store.currentMonthLevel).toBe(0);
+    expect(store.bestLevel).toBe(0);
+    expect(store.coinsTotal).toBe(20);
+    expect(store.errorMessage).toBe(null);
+    expect(store.canAdvanceTownStep).toBe(true);
+  });
+
+  it('runs the town sequence in order and starts a new month after upkeep is paid', async () => {
+    const store = await createStore();
+
+    store.run.phase = 'town';
+    store.progression.townStep = 'exchange';
+    store.ui.progressionMenuOpen = true;
+    store.economy.goldTotal = 100;
+    store.run.goldCollectedThisMonth = 100;
+
+    store.exchangeGoldForCoins();
+    store.continueTownSequence();
+    expect(store.townStep).toBe('food-shop');
+
+    store.continueTownSequence();
+    expect(store.townStep).toBe('food-shop');
 
     store.buyFood();
-    expect(store.coinsTotal).toBe(20);
-    expect(store.foodTotal).toBe(59);
+    expect(store.progression.monthlyUpkeepPaid).toBe(true);
+    expect(store.coinsTotal).toBe(122);
+
+    store.continueTownSequence();
+    expect(store.townStep).toBe('magpie-trainer');
+
+    store.buyAutomation('buy-magpie');
+    store.buyAutomation('auto-flag-row');
+    expect(store.magpieSkillIds).toEqual(['buy-magpie', 'auto-flag-row']);
+
+    store.continueTownSequence();
+    expect(store.townStep).toBe('tool-store');
+
+    store.buyToolUpgrade('auto-hauler');
+    expect(store.ownedToolUpgradeIds).toContain('auto-hauler');
+
+    store.continueTownSequence();
+    expect(store.phase).toBe('playing');
+    expect(store.daysLeftInMonth).toBe(28);
+    expect(store.currentMonthLevel).toBe(0);
+    expect(store.goldCollectedThisMonth).toBe(0);
+    expect(store.townStep).toBe('none');
+    expect(store.progressionMenuOpen).toBe(false);
+  });
+
+  it('unlocks higher-level magpie lessons, scanner, and pattern scaffolding by best level', async () => {
+    const store = await createStore();
+
+    store.run.bestLevel = 3;
+
+    expect(store.visibleAutomationOptions.map((option) => option.id)).toEqual(['buy-magpie']);
+
+    store.buyAutomation('buy-magpie');
+    expect(store.visibleAutomationOptions.map((option) => option.id)).toEqual([
+      'auto-flag-row',
+      'auto-flag-column',
+      'auto-flag-diagonal',
+      'gold-here-row',
+      'gold-here-column',
+      'gold-here-region',
+      'pattern-automation-1',
+      'pattern-automation-2',
+    ]);
+    expect(store.visibleToolUpgradeOptions.map((option) => option.id)).toEqual([
+      'scanner',
+      'auto-hauler',
+    ]);
+
+    expect(store.canBuyAutomation('pattern-automation-1')).toBe(false);
+    expect(store.canBuyToolUpgrade('scanner')).toBe(true);
+
+    store.buyToolUpgrade('scanner');
+
+    expect(store.ownedToolUpgradeIds).toContain('scanner');
+    expect(store.canShowScannerRegions).toBe(true);
+  });
+
+  it('keeps the field playable after all gold is found and only completes when fully dug', async () => {
+    const store = await createStore();
+
+    const goldPositions = getGoldPositions(store.truthGold);
+
+    for (const position of goldPositions) {
+      store.toggleFlag(position);
+      await store.dig(position);
+    }
+
+    expect(store.foundGoldCount).toBe(store.boardSize);
+    expect(store.phase).toBe('playing');
+    expect(store.showFieldExhaustedModal).toBe(false);
+
+    let extraDug = false;
+    for (let row = 0; row < store.boardSize && !extraDug; row += 1) {
+      for (let col = 0; col < store.boardSize && !extraDug; col += 1) {
+        if (!store.revealed[row][col]) {
+          await store.dig({ row, col });
+          expect(store.revealed[row][col]).toBe(true);
+          extraDug = true;
+        }
+      }
+    }
+
+    for (let row = 0; row < store.boardSize; row += 1) {
+      for (let col = 0; col < store.boardSize; col += 1) {
+        if (!store.revealed[row][col]) {
+          await store.dig({ row, col });
+        }
+      }
+    }
+
+    expect(store.phase).toBe('level-complete');
+    expect(store.showFieldExhaustedModal).toBe(true);
+  });
+
+  it('places a system gold-here flag when one row candidate remains after the lesson is owned', async () => {
+    const store = await createStore();
+
+    store.run.bestLevel = 3;
+    store.buyAutomation('buy-magpie');
+    expect(store.visibleAutomationOptions.map((option) => option.id)).not.toContain('buy-magpie');
+    store.buyAutomation('auto-flag-row');
+    expect(store.visibleAutomationOptions.map((option) => option.id)).not.toContain(
+      'auto-flag-row'
+    );
+    store.buyAutomation('gold-here-row');
+
+    store.board.systemFlags[0][0] = 'not-gold';
+    store.board.systemFlags[0][1] = 'not-gold';
+    store.board.systemFlags[0][2] = 'not-gold';
+    store.board.systemFlags[0][3] = 'not-gold';
+    store.recomputeSystemFlags();
+
+    expect(store.systemFlags[0][4]).toBe('gold-here');
   });
 
   it('persists and restores the current mining run from local storage', async () => {
-    const { useMiningStore } = await import('./mining');
-    const store = useMiningStore();
+    const store = await createStore();
 
-    await store.initialize();
-    store.dismissIntro();
     store.toggleFlag({ row: 0, col: 0 });
     await store.dig({ row: 0, col: 0 });
-    store.buyFood();
+    store.run.phase = 'town';
+    store.progression.townStep = 'exchange';
 
     const savedPuzzleId = store.currentPuzzleId;
-    const savedFood = store.foodTotal;
     const savedCoins = store.coinsTotal;
     const savedGold = store.goldTotal;
+    const savedDaysLeft = store.daysLeftInMonth;
     const savedRevealed = store.revealed.map((row) => [...row]);
-    const savedFlags = store.playerFlags.map((row) => [...row]);
     await Promise.resolve();
 
     setActivePinia(createPinia());
+    const { useMiningStore } = await import('./mining');
     const restoredStore = useMiningStore();
 
     await restoredStore.initialize();
 
     expect(restoredStore.currentPuzzleId).toBe(savedPuzzleId);
-    expect(restoredStore.foodTotal).toBe(savedFood);
     expect(restoredStore.coinsTotal).toBe(savedCoins);
     expect(restoredStore.goldTotal).toBe(savedGold);
+    expect(restoredStore.daysLeftInMonth).toBe(savedDaysLeft);
     expect(restoredStore.revealed).toEqual(savedRevealed);
-    expect(restoredStore.playerFlags).toEqual(savedFlags);
+    expect(restoredStore.phase).toBe('town');
+    expect(restoredStore.townStep).toBe('exchange');
+    expect(restoredStore.progressionMenuOpen).toBe(true);
     expect(restoredStore.showIntroModal).toBe(false);
   });
 
@@ -180,10 +336,15 @@ describe('useMiningStore', () => {
         revealed: Array.from({ length: 5 }, () => Array(5).fill(false)),
         playerFlags: Array.from({ length: 5 }, () => Array(5).fill(false)),
         systemFlags: Array.from({ length: 5 }, () => Array(5).fill(false)),
-        phase: 'playing',
+        phase: 'town',
         currentLevel: 4,
         foundGoldCount: 2,
         daysElapsed: 7,
+        daysPerMonth: 28,
+        daysLeftInMonth: 14,
+        currentMonthLevel: 1,
+        bestLevel: 2,
+        goldCollectedThisMonth: 25,
         highestUnlockedDepthLevel: 2,
         currentDepthLevel: 2,
         deathMessage: null,
@@ -198,7 +359,7 @@ describe('useMiningStore', () => {
         magpieSkillIds: ['buy-magpie'],
         ownedPermitTierIds: ['better-permit'],
         activePermitTierId: 'better-permit',
-        ownedToolUpgradeIds: ['stronger-pick'],
+        ownedToolUpgradeIds: ['auto-hauler'],
         hasSeenIntroThisRun: true,
         lastActionMessage: 'Legacy save restored.',
       })
@@ -213,198 +374,29 @@ describe('useMiningStore', () => {
     expect(store.currentLevel).toBe(4);
     expect(store.selectedFieldId).toBe('standard-field');
     expect(store.ownedFieldIds).toContain('standard-field');
-    expect(store.selectedProgressionTab).toBe('gold-exchange');
     expect(store.coinsTotal).toBe(3);
     expect(store.goldTotal).toBe(9);
-    expect(store.foodTotal).toBe(14);
+    expect(store.daysLeftInMonth).toBe(14);
+    expect(store.currentMonthLevel).toBe(1);
+    expect(store.bestLevel).toBe(2);
     expect(store.showIntroModal).toBe(false);
   });
 
-  it('moves to the next field only when requested and charges 1 coin', async () => {
-    const { useMiningStore } = await import('./mining');
-    const store = useMiningStore();
+  it('deleting the saved game returns to a fresh board with the instructions open', async () => {
+    const store = await createStore();
 
-    await store.initialize();
-    const startingPuzzleId = store.currentPuzzleId;
-    const startingLevel = store.currentLevel;
-    const startingCoins = store.coinsTotal;
-
-    expect(store.canTravelToNextField()).toBe(true);
-
-    await store.goToNextField();
-
-    expect(store.currentLevel).toBe(startingLevel + 1);
-    expect(store.coinsTotal).toBe(startingCoins - 1);
-    expect(store.currentPuzzleId).not.toBe(startingPuzzleId);
-    expect(store.phase).toBe('playing');
-  });
-
-  it('does not auto-advance on clear until the auto hauler upgrade is owned', async () => {
-    const { useMiningStore } = await import('./mining');
-    const store = useMiningStore();
-
-    await store.initialize();
-
-    const firstFieldGold = getGoldPositions(store.truthGold);
-
-    for (const position of firstFieldGold) {
-      store.toggleFlag(position);
-      await store.dig(position);
-    }
-
-    expect(store.foundGoldCount).toBe(5);
-    expect(store.phase).toBe('level-complete');
-
-    vi.runAllTimers();
-    await Promise.resolve();
+    store.run.phase = 'town';
+    store.progression.townStep = 'exchange';
     await Promise.resolve();
 
-    expect(store.currentLevel).toBe(1);
-
-    store.buyToolUpgrade('auto-hauler');
-    await store.goToNextField();
-    const levelBeforeAutoClear = store.currentLevel;
-    const coinsBeforeAutoClear = store.coinsTotal;
-    const secondFieldGold = getGoldPositions(store.truthGold);
-
-    for (const position of secondFieldGold) {
-      store.toggleFlag(position);
-      await store.dig(position);
-    }
-
-    expect(store.phase).toBe('level-complete');
-
-    vi.runAllTimers();
+    store.deleteSavedGame();
     await Promise.resolve();
     await Promise.resolve();
-
-    expect(store.currentLevel).toBe(levelBeforeAutoClear + 1);
-    expect(store.coinsTotal).toBeGreaterThanOrEqual(coinsBeforeAutoClear - 1);
-    expect(store.phase).toBe('playing');
-  });
-
-  it('lets the magpie learn row and diagonal rules and surfaces system flags from found gold', async () => {
-    const { useMiningStore } = await import('./mining');
-    const store = useMiningStore();
-
-    await store.initialize();
-    store.buyAutomation('buy-magpie');
-    store.buyAutomation('teach-row-rule');
-    store.buyAutomation('teach-diagonal-rule');
-
-    expect(store.hasMagpie).toBe(true);
-    expect(store.magpieSkillIds).toContain('buy-magpie');
-    expect(store.magpieSkillIds).toContain('teach-row-rule');
-    expect(store.magpieSkillIds).toContain('teach-diagonal-rule');
-
-    store.toggleFlag({ row: 0, col: 0 });
-    await store.dig({ row: 0, col: 0 });
-
-    expect(store.systemFlags[0][1]).toBe(true);
-    expect(store.systemFlags[1][1]).toBe(true);
-    expect(store.systemFlags[1][0]).toBe(false);
-  });
-
-  it('treats field profile and depth unlocks as separate prototype categories', async () => {
-    const { useMiningStore } = await import('./mining');
-    const store = useMiningStore();
-
-    await store.initialize();
-    store.buyField('standard-field');
-
-    expect(store.selectedFieldId).toBe('standard-field');
-    expect(store.ownedFieldIds).toContain('standard-field');
-    expect(store.currentDepthLevel).toBe(1);
-
-    store.buyToolUpgrade('scanner');
-
-    expect(store.ownedToolUpgradeIds).toContain('scanner');
-    expect(store.highestUnlockedDepthLevel).toBe(4);
-    expect(store.currentDepthLevel).toBe(4);
-  });
-
-  it('keeps placeholder items visible but not purchasable', async () => {
-    const { useMiningStore } = await import('./mining');
-    const store = useMiningStore();
-
-    await store.initialize();
-
-    expect(store.canBuyField('large-field')).toBe(false);
-    store.buyField('large-field');
-    expect(store.errorMessage).toContain('not implemented yet');
-
-    store.clearError();
-    expect(store.canBuyAutomation('teach-pattern-recognition')).toBe(false);
-
-    store.clearError();
-    expect(store.canBuyToolUpgrade('drill')).toBe(false);
-  });
-
-  it('requires buying the magpie before lessons and keeps training field distinct from standard field', async () => {
-    const { useMiningStore } = await import('./mining');
-    const store = useMiningStore();
-
-    await store.initialize();
-
-    expect(store.canBuyAutomation('teach-column-rule')).toBe(false);
-    store.buyAutomation('teach-column-rule');
-    expect(store.errorMessage).toContain('Buy the magpie');
-
-    store.clearError();
-    store.buyField('standard-field');
-    expect(store.selectedFieldTitle).toBe('Standard Field');
-
-    store.selectField('training-field');
-    expect(store.selectedFieldTitle).toBe('Training Field');
-  });
-
-  it('locks digging when food runs out until more food is bought in town', async () => {
-    const { useMiningStore } = await import('./mining');
-    const store = useMiningStore();
-
-    await store.initialize();
-    store.dismissIntro();
-    store.economy.foodTotal = 1;
-    store.toggleFlag({ row: 0, col: 2 });
-    await store.dig({ row: 0, col: 2 });
-    expect(store.foodTotal).toBe(0);
-
-    store.buyField('standard-field');
-    store.buyAutomation('buy-magpie');
-    store.buyAutomation('teach-column-rule');
-    store.buyPermit('better-permit');
-    store.buyToolUpgrade('stronger-pick');
-
-    expect(store.highestUnlockedDepthLevel).toBe(2);
-    expect(store.selectedFieldId).toBe('standard-field');
-    expect(store.activePermitTierId).toBe('better-permit');
-
-    store.triggerDeath();
-
-    expect(store.phase).toBe('out-of-food');
-    expect(store.showDeathModal).toBe(true);
-    expect(store.goldTotal).toBe(0);
-    expect(store.foodTotal).toBe(0);
-
-    store.toggleFlag({ row: 0, col: 0 });
-    expect(store.playerFlags[0][0]).toBe(false);
-
-    await store.dig({ row: 0, col: 0 });
-    expect(store.revealed[0][0]).toBe(false);
-
-    store.buyFood();
 
     expect(store.phase).toBe('playing');
-    expect(store.showDeathModal).toBe(false);
-    expect(store.foodTotal).toBe(30);
-
-    store.economy.foodTotal = 0;
-    store.toggleFlag({ row: 0, col: 0 });
-    await store.dig({ row: 0, col: 0 });
-
-    expect(store.showDeathModal).toBe(true);
-    expect(store.deathMessage).toContain('buy more food');
-    expect(store.deathMessage).toContain('convert your gold into coins');
-    expect(store.errorMessage).toBe(null);
+    expect(store.currentPuzzleId).toBeTruthy();
+    expect(store.showIntroModal).toBe(true);
+    expect(store.showMonthOverModal).toBe(false);
+    expect(store.progressionMenuOpen).toBe(false);
   });
 });
