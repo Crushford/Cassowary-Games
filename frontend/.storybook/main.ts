@@ -1,4 +1,5 @@
 import path from 'path';
+import type { UserConfig } from 'vite';
 
 const config = {
   stories: ['../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
@@ -16,7 +17,7 @@ const config = {
   // leave it unset for local dev so storybook dev serves static assets normally.
   staticDirs: process.env.STORYBOOK_SKIP_STATIC === '1' ? [] : ['../public'],
   outDir: 'dist/storybook-static',
-  async viteFinal(config, { configType }) {
+  async viteFinal(config: UserConfig) {
     // Mirror project Vite config for aliases and defines
     config.resolve = config.resolve || {};
     config.resolve.alias = {
