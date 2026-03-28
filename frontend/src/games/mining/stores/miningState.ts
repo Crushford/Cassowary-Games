@@ -1,5 +1,4 @@
 import type {
-  MiningDepthLevel,
   MiningExchangeLevelDefinition,
   MiningFlagType,
   MiningMagpieSkillId,
@@ -13,6 +12,12 @@ import { DAYS_PER_MONTH, EXCHANGE_LEVELS, STARTING_COINS, STARTING_FOOD } from '
 
 function createFlagGrid(size: number): Array<Array<MiningFlagType | null>> {
   return Array.from({ length: size }, () => Array<MiningFlagType | null>(size).fill(null));
+}
+
+export function cloneFlagGrid(
+  grid: Array<Array<MiningFlagType | null>>
+): Array<Array<MiningFlagType | null>> {
+  return grid.map((row) => [...row]);
 }
 
 export interface MiningBoardState {
@@ -37,11 +42,8 @@ export interface MiningRunState {
   currentMonthLevel: number;
   bestLevel: number;
   goldCollectedThisMonth: number;
-  highestUnlockedDepthLevel: MiningDepthLevel;
-  currentDepthLevel: MiningDepthLevel;
   deathMessage: string | null;
-  hintUnlocked: boolean;
-  shownHintDepths: MiningDepthLevel[];
+  hasSeenHint: boolean;
 }
 
 export interface MiningEconomyState {
@@ -97,6 +99,7 @@ export interface MiningExchangeState {
 export interface MiningSystemState {
   persistenceInitialized: boolean;
   persistenceHydrating: boolean;
+  flagHistory: Array<Array<Array<MiningFlagType | null>>>;
 }
 
 export interface MiningStoreState {
@@ -132,11 +135,8 @@ export function createInitialMiningState(): MiningStoreState {
       currentMonthLevel: 0,
       bestLevel: 0,
       goldCollectedThisMonth: 0,
-      highestUnlockedDepthLevel: 1,
-      currentDepthLevel: 1,
       deathMessage: null,
-      hintUnlocked: false,
-      shownHintDepths: [],
+      hasSeenHint: false,
     },
     economy: {
       goldTotal: 0,
@@ -184,6 +184,7 @@ export function createInitialMiningState(): MiningStoreState {
     system: {
       persistenceInitialized: false,
       persistenceHydrating: false,
+      flagHistory: [],
     },
   };
 }

@@ -13,8 +13,7 @@ import type {
   MiningToolUpgradeId,
   PositionRef,
 } from '../game/types';
-import { getGoldRewardForDepth } from '../game/upgrades/miningUpgrades';
-import { EXCHANGE_LEVELS } from './miningConfig';
+import { EXCHANGE_LEVELS, GOLD_REWARD_PER_TILE } from './miningConfig';
 import {
   clearMiningSave,
   isSaveCompatible,
@@ -31,6 +30,7 @@ import {
   canBuyToolUpgrade as canBuyToolUpgradeInProgression,
   canExchangeGold as canExchangeGoldInProgression,
   exchangeGoldForCoins as exchangeGoldForCoinsInProgression,
+  triggerFoodGameOverIfNeeded,
 } from './miningProgressionService';
 import {
   canTravelToNextField as canTravelToNextFieldInRun,
@@ -41,7 +41,7 @@ import {
   recomputeSystemFlags,
   toggleFlag as toggleFlagInRun,
 } from './miningRunService';
-import { createInitialMiningState } from './miningState';
+import { cloneFlagGrid, createInitialMiningState } from './miningState';
 
 export const useMiningStore = defineStore('mining', {
   state: () => createInitialMiningState(),
@@ -64,8 +64,6 @@ export const useMiningStore = defineStore('mining', {
     daysPerMonth: (state) => state.run.daysPerMonth,
     foundGoldCount: (state) => state.run.foundGoldCount,
     daysElapsed: (state) => state.run.daysElapsed,
-    highestUnlockedDepthLevel: (state) => state.run.highestUnlockedDepthLevel,
-    currentDepthLevel: (state) => state.run.currentDepthLevel,
     currentMonthLevel: (state) => state.run.currentMonthLevel,
     bestLevel: (state) => state.run.bestLevel,
     displayLevel: (state) => state.exchange.lastReachedLevel,
@@ -82,9 +80,7 @@ export const useMiningStore = defineStore('mining', {
     showFieldExhaustedModal: (state) => state.ui.showFieldExhaustedModal,
     levelCelebration: (state) => state.ui.levelCelebration,
     deathMessage: (state) => state.run.deathMessage,
-    hintUnlocked: (state) => state.run.hintUnlocked,
     showHintModal: (state) => state.ui.showHintModal,
-    shownHintDepths: (state) => state.run.shownHintDepths,
     showUpgradeExplanation: (state) => state.ui.showUpgradeExplanation,
     upgradeExplanationTitle: (state) => state.ui.upgradeExplanationTitle,
     upgradeExplanationMessage: (state) => state.ui.upgradeExplanationMessage,
@@ -106,31 +102,46 @@ export const useMiningStore = defineStore('mining', {
     },
 
     visibleAutomationOptions(state): MiningAutomationDefinition[] {
-      const hasMagpie = state.progression.magpieSkillIds.includes('buy-magpie');
       return AUTOMATION_OPTIONS.filter((option) => {
-        const visible = option.requiredLevel <= state.run.bestLevel;
-        const purchased = state.progression.magpieSkillIds.includes(option.id);
-        if (!hasMagpie && option.id !== 'buy-magpie') {
+        if (option.requiredLevel > state.run.bestLevel) {
           return false;
         }
-        return visible && !purchased;
+
+        if (state.progression.showPurchasedUpgrades) {
+          return true;
+        }
+
+        return !state.progression.magpieSkillIds.includes(option.id);
       });
     },
 
     visibleToolUpgradeOptions(state): MiningToolUpgradeDefinition[] {
       return TOOL_UPGRADES.filter((option) => {
-        const visible = option.requiredLevel <= state.run.bestLevel;
-        const purchased = state.progression.ownedToolUpgradeIds.includes(option.id);
-        return visible && !purchased;
+        if (option.requiredLevel > state.run.bestLevel) {
+          return false;
+        }
+
+        if (state.progression.showPurchasedUpgrades) {
+          return true;
+        }
+
+        return !state.progression.ownedToolUpgradeIds.includes(option.id);
       });
     },
 
     baseGoldRewardPerTile(state): number {
-      return getGoldRewardForDepth(state.run.currentDepthLevel);
+      return GOLD_REWARD_PER_TILE;
     },
 
     goldRewardPerTile(state): number {
-      return getGoldRewardForDepth(state.run.currentDepthLevel);
+      return GOLD_REWARD_PER_TILE;
+    },
+
+    totalGoldOnBoard(state): number {
+      return state.board.truthGold.reduce(
+        (count, row) => count + row.filter((hasGold) => hasGold).length,
+        0
+      );
     },
 
     magpieSummary(state): string {
@@ -154,11 +165,25 @@ export const useMiningStore = defineStore('mining', {
       return state.progression.ownedToolUpgradeIds.includes('scanner');
     },
 
+    canUndoFlags(state): boolean {
+      return state.system.flagHistory.length > 0;
+    },
+
+    hasPlayerFlags(state): boolean {
+      return state.board.playerFlags.some((row) => row.some((flag) => flag !== null));
+    },
+
     exchangeSummary(state) {
+      const soldGold = state.exchange.lastSoldGold;
+      const baseValue = state.exchange.lastBaseValue;
+      const returnPercent = state.exchange.lastReturnPercent;
+      const payoutPerGold = Math.round((GOLD_REWARD_PER_TILE * 100 * returnPercent) / 100);
+
       return {
-        soldGold: state.exchange.lastSoldGold,
-        baseValue: state.exchange.lastBaseValue,
-        returnPercent: state.exchange.lastReturnPercent,
+        soldGold,
+        baseValue,
+        returnPercent,
+        payoutPerGold,
         bonus: state.exchange.lastBonus,
         payout: state.exchange.lastPayout,
         reachedLevel: state.exchange.lastReachedLevel,
@@ -184,21 +209,11 @@ export const useMiningStore = defineStore('mining', {
     },
 
     currentHintText(state): string {
-      const alreadySeen = state.run.shownHintDepths.includes(state.run.currentDepthLevel);
-      if (alreadySeen) {
+      if (state.run.hasSeenHint) {
         return 'No one has anything new to add. The hill expects you to listen to what it already told you.';
       }
 
-      switch (state.run.currentDepthLevel) {
-        case 4:
-          return 'The survey birds know the borderlines before you strike. Use the map before you trust your hunger.';
-        case 3:
-          return 'Old miners say a rich patch never shares a color region with another rich patch.';
-        case 2:
-          return 'The better survey notes start crossing out bad guesses for you.';
-        default:
-          return 'Most miners break even. The clever ones notice which seams refuse to crowd each other.';
-      }
+      return 'Most miners break even. The clever ones notice which seams refuse to crowd each other.';
     },
   },
 
@@ -269,17 +284,15 @@ export const useMiningStore = defineStore('mining', {
     },
 
     openHints() {
-      if (!this.run.hintUnlocked) {
+      if (this.run.hasSeenHint) {
         this.setError(
-          'No one is offering advice yet. Survive a bad run and the town starts talking.'
+          'No one has anything new to add. The hill expects you to listen to what it already told you.'
         );
         return;
       }
 
       this.ui.showHintModal = true;
-      if (!this.run.shownHintDepths.includes(this.run.currentDepthLevel)) {
-        this.run.shownHintDepths.push(this.run.currentDepthLevel);
-      }
+      this.run.hasSeenHint = true;
     },
 
     closeHints() {
@@ -428,8 +441,12 @@ export const useMiningStore = defineStore('mining', {
         return;
       }
 
-      this.progression.townStep =
-        nextStep[this.progression.townStep as Exclude<MiningTownStep, 'none'>];
+      const upcomingStep = nextStep[this.progression.townStep as Exclude<MiningTownStep, 'none'>];
+      this.progression.townStep = upcomingStep;
+
+      if (upcomingStep === 'food-shop') {
+        triggerFoodGameOverIfNeeded(this.$state);
+      }
     },
 
     beginNextMonth() {
@@ -471,6 +488,7 @@ export const useMiningStore = defineStore('mining', {
 
     async loadNextLevel() {
       this.ui.showFieldExhaustedModal = false;
+      this.system.flagHistory = [];
       await loadNextLevelInRun(this.$state, {
         setError: this.setError,
         clearError: this.clearError,
@@ -478,7 +496,12 @@ export const useMiningStore = defineStore('mining', {
     },
 
     toggleFlag(position: PositionRef) {
+      const previousFlags = cloneFlagGrid(this.board.playerFlags);
       toggleFlagInRun(this.$state, position);
+
+      if (!areFlagGridsEqual(previousFlags, this.board.playerFlags)) {
+        this.system.flagHistory.push(previousFlags);
+      }
     },
 
     triggerMonthEnd() {
@@ -486,11 +509,35 @@ export const useMiningStore = defineStore('mining', {
     },
 
     async dig(position: PositionRef) {
+      this.system.flagHistory = [];
       await digInRun(this.$state, position, {
         setError: this.setError,
         clearError: this.clearError,
         goToNextField: (options) => this.goToNextField(options),
       });
+    },
+
+    undoFlags() {
+      const previousFlags = this.system.flagHistory.pop();
+
+      if (!previousFlags) {
+        return;
+      }
+
+      this.board.playerFlags = cloneFlagGrid(previousFlags);
+      this.ui.lastActionMessage = 'Previous flags restored.';
+      this.clearError();
+    },
+
+    clearPlayerFlags() {
+      if (!this.hasPlayerFlags) {
+        return;
+      }
+
+      this.system.flagHistory.push(cloneFlagGrid(this.board.playerFlags));
+      this.board.playerFlags = this.board.playerFlags.map((row) => row.map(() => null));
+      this.ui.lastActionMessage = 'Cleared your flags.';
+      this.clearError();
     },
 
     canBuyAutomation(skillId: MiningMagpieSkillId): boolean {
@@ -510,7 +557,6 @@ export const useMiningStore = defineStore('mining', {
     buyToolUpgrade(upgradeId: MiningToolUpgradeId) {
       buyToolUpgradeInProgression(this.$state, upgradeId, {
         setError: this.setError,
-        loadNextLevel: () => this.loadNextLevel(),
       });
     },
 
@@ -532,3 +578,18 @@ export const useMiningStore = defineStore('mining', {
     },
   },
 });
+
+function areFlagGridsEqual(
+  left: Array<Array<MiningFlagType | null>>,
+  right: Array<Array<MiningFlagType | null>>
+) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every(
+    (row, rowIndex) =>
+      row.length === right[rowIndex]?.length &&
+      row.every((flag, colIndex) => flag === right[rowIndex][colIndex])
+  );
+}

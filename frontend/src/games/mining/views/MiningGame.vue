@@ -58,8 +58,8 @@
             :flagged="store.visibleFlags"
             :reward-label="String(store.goldRewardPerTile)"
             :show-regions="store.canShowScannerRegions"
-            :can-excavate-all-hidden="store.foundGoldCount === store.boardSize"
-            :disabled="store.phase !== 'playing'"
+            :can-excavate-all-hidden="store.foundGoldCount === store.totalGoldOnBoard"
+            :disabled="store.phase === 'loading'"
             @dig="store.dig"
             @toggle-flag="store.toggleFlag"
           />
@@ -68,13 +68,52 @@
     </div>
 
     <div class="flex-none border-t border-app-border bg-app-bgAlt px-4 py-3">
-      <div class="flex items-center justify-between gap-3">
-        <div class="text-sm text-app-textMuted">
-          A month is 28 digs. When the days run out, you must head back into town for more food.
-        </div>
+      <div class="mb-3 grid grid-cols-2 gap-2">
         <button
           type="button"
-          class="rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+          class="rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
+          :class="
+            store.canUndoFlags
+              ? 'border-semantic-warning-700 bg-semantic-warning-800 text-semantic-warning-100 hover:bg-semantic-warning-700'
+              : 'border-app-border bg-app-bg text-app-textMuted'
+          "
+          :disabled="!store.canUndoFlags"
+          @click="store.undoFlags()"
+        >
+          Undo
+        </button>
+        <button
+          type="button"
+          class="rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
+          :class="
+            store.hasPlayerFlags
+              ? 'border-semantic-danger-800 bg-semantic-danger-900 text-semantic-danger-100 hover:bg-semantic-danger-800'
+              : 'border-app-border bg-app-bg text-app-textMuted'
+          "
+          :disabled="!store.hasPlayerFlags"
+          @click="store.clearPlayerFlags()"
+        >
+          Clear Flags
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          class="rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
+          :class="
+            store.phase === 'playing'
+              ? 'border-app-border bg-app-surface text-app-text hover:bg-app-bg'
+              : 'border-app-border bg-app-bg text-app-textMuted'
+          "
+          :disabled="store.phase !== 'playing'"
+          @click="store.triggerMonthEnd()"
+        >
+          Return To Town
+        </button>
+        <button
+          type="button"
+          class="rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
           :class="
             store.canTravelToNextField()
               ? 'border-semantic-warning-300 bg-semantic-warning-700 text-white hover:bg-semantic-warning-600'
@@ -83,7 +122,7 @@
           :disabled="!store.canTravelToNextField()"
           @click="store.goToNextField()"
         >
-          Next Field
+          Next Field (1 Coin)
         </button>
       </div>
     </div>
@@ -103,6 +142,7 @@
       :can-advance="store.canAdvanceTownStep"
       :can-buy-food="store.canBuyFood()"
       :can-exchange-gold="store.canExchangeGold()"
+      :show-purchased-upgrades="store.showPurchasedUpgrades"
       :can-buy-automation="(skillId) => store.canBuyAutomation(skillId)"
       :can-buy-tool-upgrade="(upgradeId) => store.canBuyToolUpgrade(upgradeId)"
       @close="store.closeProgressionMenu()"
@@ -111,6 +151,7 @@
       @exchange-gold="store.exchangeGoldForCoins()"
       @buy-automation="store.buyAutomation"
       @buy-tool-upgrade="store.buyToolUpgrade"
+      @toggle-purchased="store.toggleShowPurchasedUpgrades()"
     />
 
     <Modal
@@ -167,6 +208,7 @@
           <p>Each dig uses 1 day.</p>
           <p>When the month ends, you go to town to sell gold, pay upkeep, and buy upgrades.</p>
           <p>Tap once to place a gold-here flag.</p>
+          <p>Swipe across hidden tiles to place gold-here flags quickly.</p>
           <p>
             Tap a gold-here flag to dig for gold. After all gold is found, any hidden tile can be
             dug.
@@ -324,9 +366,15 @@
       <div class="space-y-4 text-white">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 class="text-xl font-bold">Out of Food</h2>
+            <h2 class="text-xl font-bold">
+              {{ store.phase === 'dead' ? 'Game Over' : 'Out of Food' }}
+            </h2>
             <p class="mt-1 text-sm text-semantic-neutral-300">
-              Go to town to restock, exchange gold, and manage upgrades.
+              {{
+                store.phase === 'dead'
+                  ? 'You cannot fund another month underground.'
+                  : 'Go to town to restock, exchange gold, and manage upgrades.'
+              }}
             </p>
           </div>
         </div>
@@ -336,6 +384,16 @@
         </p>
 
         <button
+          v-if="store.phase === 'dead'"
+          type="button"
+          class="w-full rounded-xl border border-semantic-danger-500 bg-semantic-danger-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-danger-600"
+          @click="store.deleteSavedGame()"
+        >
+          Restart
+        </button>
+
+        <button
+          v-else
           type="button"
           class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
           @click="

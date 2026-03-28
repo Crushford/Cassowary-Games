@@ -2,15 +2,14 @@ import { buildMiningAutomationPlan } from '../game/progression/miningAutomationE
 import { loadRandomMiningPuzzle } from '../game/puzzles/loadMiningPuzzle';
 import { convertQueensPuzzleToMiningBoard } from '../game/puzzles/convertQueensPuzzleToMiningBoard';
 import { getFoundGoldPositions } from '../game/selectors/getFoundGoldPositions';
-import type {
-  MiningDepthLevel,
-  MiningFlagType,
-  MiningPuzzleRecord,
-  PositionRef,
-} from '../game/types';
-import { getGoldRewardForDepth } from '../game/upgrades/miningUpgrades';
+import type { MiningFlagType, MiningPuzzleRecord, PositionRef } from '../game/types';
 import { createBooleanGrid } from '../game/utils/createBooleanGrid';
-import { DIG_COST, LEVEL_COMPLETE_DELAY_MS, NEXT_FIELD_COST } from './miningConfig';
+import {
+  DIG_COST,
+  GOLD_REWARD_PER_TILE,
+  LEVEL_COMPLETE_DELAY_MS,
+  NEXT_FIELD_COST,
+} from './miningConfig';
 import type { MiningStoreState } from './miningState';
 
 export type MiningPuzzleLoader = (lastPuzzleId: string | null) => Promise<MiningPuzzleRecord>;
@@ -84,27 +83,15 @@ export function recomputeSystemFlags(state: MiningStoreState) {
       revealedGoldPositions: foundGold,
       regionIds: state.board.regionIds,
       ownedSkillIds: state.progression.magpieSkillIds,
-      depthLevel: state.run.currentDepthLevel,
+      scannerEnabled: state.progression.ownedToolUpgradeIds.includes('scanner'),
     });
     const nextSystemFlags = seedSystemFlags.map((row) => [...row]);
 
     for (const action of actions) {
-      nextSystemFlags[action.row][action.col] =
-        action.type === 'placeGoldHereFlag' ? 'gold-here' : 'not-gold';
+      nextSystemFlags[action.row][action.col] = 'not-gold';
     }
 
     state.board.systemFlags = nextSystemFlags;
-  }
-
-  for (let row = 0; row < state.board.boardSize; row += 1) {
-    for (let col = 0; col < state.board.boardSize; col += 1) {
-      if (
-        state.board.playerFlags[row][col] === 'gold-here' &&
-        state.board.systemFlags[row][col] === 'not-gold'
-      ) {
-        state.board.playerFlags[row][col] = null;
-      }
-    }
   }
 }
 
@@ -119,10 +106,6 @@ function canDigAt(state: MiningStoreState, position: PositionRef): boolean {
 }
 
 function setPlayerGoldHereFlag(state: MiningStoreState, position: PositionRef) {
-  if (state.board.systemFlags[position.row]?.[position.col] === 'not-gold') {
-    return;
-  }
-
   state.board.playerFlags[position.row][position.col] =
     state.board.playerFlags[position.row][position.col] === 'gold-here' ? null : 'gold-here';
 }
@@ -161,29 +144,22 @@ export async function loadNextLevel(state: MiningStoreState, deps: RunDeps) {
   }
 }
 
-export function setDepthLevel(
-  state: MiningStoreState,
-  depthLevel: MiningDepthLevel,
-  deps: { setError(message: string): void; loadNextLevel(): Promise<void> }
-) {
-  if (depthLevel > state.run.highestUnlockedDepthLevel) {
-    deps.setError('That depth has not been unlocked yet.');
-    return;
-  }
-
-  if (state.run.currentDepthLevel === depthLevel) {
-    return;
-  }
-
-  state.run.currentDepthLevel = depthLevel;
-  void deps.loadNextLevel();
-}
-
 export function toggleFlag(state: MiningStoreState, position: PositionRef) {
+  if (state.run.daysLeftInMonth <= 0) {
+    logMiningInteraction('toggle-flag-blocked', state, position, {
+      reason: 'no-days-left',
+    });
+    state.ui.errorMessage = 'You need at least 1 day left this month to place or remove a flag.';
+    state.ui.errorTick += 1;
+    return;
+  }
+
   if (state.run.phase !== 'playing') {
     logMiningInteraction('toggle-flag-blocked', state, position, {
       reason: 'phase-not-playing',
     });
+    state.ui.errorMessage = 'Finish town business before returning to the field.';
+    state.ui.errorTick += 1;
     return;
   }
 
@@ -194,15 +170,15 @@ export function toggleFlag(state: MiningStoreState, position: PositionRef) {
     return;
   }
 
-  const blockedBySystemNotGold =
-    state.board.systemFlags[position.row]?.[position.col] === 'not-gold';
   setPlayerGoldHereFlag(state, position);
   state.ui.lastActionMessage =
     state.board.playerFlags[position.row][position.col] === 'gold-here'
       ? 'Gold-here flag placed.'
       : 'Gold-here flag removed.';
   logMiningInteraction('toggle-flag', state, position, {
-    blockedBySystemNotGold,
+    overridingSystemNotGold:
+      state.board.systemFlags[position.row]?.[position.col] === 'not-gold' &&
+      state.board.playerFlags[position.row][position.col] === 'gold-here',
     resultingPlayerFlag: state.board.playerFlags[position.row][position.col],
     systemFlag: state.board.systemFlags[position.row][position.col],
   });
@@ -262,7 +238,7 @@ export async function goToNextField(
 }
 
 function applyGoldReward(state: MiningStoreState, position: PositionRef) {
-  const reward = getGoldRewardForDepth(state.run.currentDepthLevel);
+  const reward = GOLD_REWARD_PER_TILE;
   state.economy.goldTotal += reward;
   state.run.goldCollectedThisMonth += reward;
   state.run.foundGoldCount += 1;
@@ -303,8 +279,15 @@ export async function dig(state: MiningStoreState, position: PositionRef, deps: 
     canDigAt: canDigAt(state, position),
   });
 
+  if (state.run.daysLeftInMonth <= 0) {
+    logMiningInteraction('dig-blocked', state, position, { reason: 'no-days-left' });
+    deps.setError('You need at least 1 day left this month to dig or place flags.');
+    return;
+  }
+
   if (state.run.phase !== 'playing') {
     logMiningInteraction('dig-blocked', state, position, { reason: 'phase-not-playing' });
+    deps.setError('Finish town business before returning to the field.');
     return;
   }
 

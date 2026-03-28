@@ -1,8 +1,15 @@
+import type { GridSquare, MarkType } from '@/games/queens/types/types';
+import {
+  collectPatternFlagPlacements,
+  getPatternCardById,
+  type PatternCardDefinition,
+} from '@/games/queens/utils/incrementalPatternCards';
+
 import { buildSelectiveAutoFlagGrid } from '../rules/autoFlag';
-import type { MiningDepthLevel, MiningFlagType, MiningMagpieSkillId, PositionRef } from '../types';
+import type { MiningFlagType, MiningMagpieSkillId, PositionRef } from '../types';
 
 export interface MiningAutomationAction {
-  type: 'placeNotGoldFlag' | 'placeGoldHereFlag';
+  type: 'placeNotGoldFlag';
   row: number;
   col: number;
 }
@@ -14,9 +21,14 @@ interface MiningAutomationOptions {
   revealedGoldPositions: PositionRef[];
   regionIds: string[][];
   ownedSkillIds: MiningMagpieSkillId[];
-  depthLevel: MiningDepthLevel;
+  scannerEnabled: boolean;
   maxIterations?: number;
 }
+
+const PATTERN_CARD_BY_SKILL: Partial<Record<MiningMagpieSkillId, string>> = {
+  'pattern-automation-1': 'pc-1',
+  'pattern-automation-2': 'pc-2',
+};
 
 function cloneFlagGrid(
   flags: Array<Array<MiningFlagType | null>>
@@ -24,30 +36,36 @@ function cloneFlagGrid(
   return flags.map((row) => [...row]);
 }
 
-function collectConfirmedGoldPositions(
-  revealedGoldPositions: PositionRef[],
-  flags: Array<Array<MiningFlagType | null>>
-): PositionRef[] {
-  const positions = [...revealedGoldPositions];
-  const seen = new Set(positions.map((position) => `${position.row},${position.col}`));
+function buildQueensGrid(size: number, regionIds: string[][]): GridSquare[][] {
+  return Array.from({ length: size }, (_, row) =>
+    Array.from({ length: size }, (_, col) => ({
+      position: { row, col },
+      groupColor: regionIds[row]?.[col] ?? undefined,
+    }))
+  );
+}
 
-  for (let row = 0; row < flags.length; row += 1) {
-    for (let col = 0; col < flags[row].length; col += 1) {
-      if (flags[row][col] !== 'gold-here') {
-        continue;
+function buildQueensMarks(
+  flags: Array<Array<MiningFlagType | null>>,
+  revealed: boolean[][]
+): MarkType[][] {
+  return flags.map((row, rowIndex) =>
+    row.map((flag, colIndex) => {
+      if (revealed[rowIndex][colIndex]) {
+        return 'invalid';
       }
 
-      const key = `${row},${col}`;
-      if (seen.has(key)) {
-        continue;
+      if (flag === 'not-gold') {
+        return 'flag';
       }
 
-      seen.add(key);
-      positions.push({ row, col });
-    }
-  }
+      if (flag === 'gold-here') {
+        return 'queen';
+      }
 
-  return positions;
+      return null;
+    })
+  );
 }
 
 function collectAutoFlagActions(
@@ -85,125 +103,161 @@ function collectAutoFlagActions(
   return actions;
 }
 
-function collectSingleCandidateActions(options: {
+function collectScannerActions(options: {
   size: number;
   revealed: boolean[][];
   currentFlags: Array<Array<MiningFlagType | null>>;
   confirmedGoldPositions: PositionRef[];
   regionIds: string[][];
-  ownedSkillIds: MiningMagpieSkillId[];
-  depthLevel: MiningDepthLevel;
+  scannerEnabled: boolean;
 }): MiningAutomationAction[] {
-  const {
-    size,
-    revealed,
-    currentFlags,
-    confirmedGoldPositions,
-    regionIds,
-    ownedSkillIds,
-    depthLevel,
-  } = options;
-  const actions: MiningAutomationAction[] = [];
-  const seen = new Set<string>();
-  const confirmedByRow = new Set<number>();
-  const confirmedByColumn = new Set<number>();
-  const confirmedByRegion = new Set<string>();
+  const { size, revealed, currentFlags, confirmedGoldPositions, regionIds, scannerEnabled } =
+    options;
+  if (!scannerEnabled) {
+    return [];
+  }
 
+  const confirmedRegions = new Set<string>();
   for (const position of confirmedGoldPositions) {
-    confirmedByRow.add(position.row);
-    confirmedByColumn.add(position.col);
     const regionId = regionIds[position.row]?.[position.col];
     if (regionId && regionId !== '.') {
-      confirmedByRegion.add(regionId);
+      confirmedRegions.add(regionId);
     }
   }
 
-  const tryAdd = (row: number, col: number) => {
-    if (revealed[row][col] || currentFlags[row][col] !== null) {
-      return;
-    }
-
-    const key = `${row},${col}`;
-    if (seen.has(key)) {
-      return;
-    }
-
-    seen.add(key);
-    actions.push({
-      type: 'placeGoldHereFlag',
-      row,
-      col,
-    });
-  };
-
-  const isCandidate = (row: number, col: number) =>
-    !revealed[row][col] &&
-    currentFlags[row][col] !== 'not-gold' &&
-    currentFlags[row][col] !== 'gold-here';
-
-  if (ownedSkillIds.includes('gold-here-row')) {
-    for (let row = 0; row < size; row += 1) {
-      if (confirmedByRow.has(row)) {
-        continue;
-      }
-
-      const candidates: PositionRef[] = [];
-      for (let col = 0; col < size; col += 1) {
-        if (isCandidate(row, col)) {
-          candidates.push({ row, col });
-        }
-      }
-
-      if (candidates.length === 1) {
-        tryAdd(candidates[0].row, candidates[0].col);
-      }
-    }
+  if (confirmedRegions.size === 0) {
+    return [];
   }
 
-  if (ownedSkillIds.includes('gold-here-column')) {
+  const actions: MiningAutomationAction[] = [];
+
+  for (let row = 0; row < size; row += 1) {
     for (let col = 0; col < size; col += 1) {
-      if (confirmedByColumn.has(col)) {
+      const regionId = regionIds[row]?.[col];
+      if (!regionId || regionId === '.' || !confirmedRegions.has(regionId)) {
         continue;
       }
 
-      const candidates: PositionRef[] = [];
-      for (let row = 0; row < size; row += 1) {
-        if (isCandidate(row, col)) {
-          candidates.push({ row, col });
-        }
+      const isConfirmedGold = confirmedGoldPositions.some(
+        (position) => position.row === row && position.col === col
+      );
+      if (isConfirmedGold || revealed[row][col] || currentFlags[row][col] !== null) {
+        continue;
       }
 
-      if (candidates.length === 1) {
-        tryAdd(candidates[0].row, candidates[0].col);
+      actions.push({
+        type: 'placeNotGoldFlag',
+        row,
+        col,
+      });
+    }
+  }
+
+  return actions;
+}
+
+function getOwnedPatternCards(ownedSkillIds: MiningMagpieSkillId[]): PatternCardDefinition[] {
+  return ownedSkillIds
+    .map((skillId) => PATTERN_CARD_BY_SKILL[skillId])
+    .filter((cardId): cardId is string => Boolean(cardId))
+    .map((cardId) => getPatternCardById(cardId))
+    .filter((card): card is PatternCardDefinition => card !== null);
+}
+
+function summarizeMarks(marks: MarkType[][]) {
+  let open = 0;
+  let flagged = 0;
+  let blocked = 0;
+  let queens = 0;
+
+  for (const row of marks) {
+    for (const mark of row) {
+      if (mark === null) {
+        open += 1;
+      } else if (mark === 'flag') {
+        flagged += 1;
+      } else if (mark === 'queen') {
+        queens += 1;
+      } else {
+        blocked += 1;
       }
     }
   }
 
-  if (depthLevel >= 3 && ownedSkillIds.includes('gold-here-region')) {
-    const regionCandidates = new Map<string, PositionRef[]>();
+  return { open, flagged, queens, blocked };
+}
 
-    for (let row = 0; row < size; row += 1) {
-      for (let col = 0; col < size; col += 1) {
-        const regionId = regionIds[row]?.[col];
-        if (!regionId || regionId === '.' || confirmedByRegion.has(regionId)) {
+function collectPatternActions(options: {
+  size: number;
+  revealed: boolean[][];
+  currentFlags: Array<Array<MiningFlagType | null>>;
+  regionIds: string[][];
+  ownedSkillIds: MiningMagpieSkillId[];
+}): MiningAutomationAction[] {
+  const { size, revealed, currentFlags, regionIds, ownedSkillIds } = options;
+  const patternCards = getOwnedPatternCards(ownedSkillIds);
+  if (patternCards.length === 0) {
+    return [];
+  }
+
+  const grid = buildQueensGrid(size, regionIds);
+  const marks = buildQueensMarks(currentFlags, revealed);
+  const workingMarks = marks.map((row) => [...row]);
+  const actions: MiningAutomationAction[] = [];
+  const seen = new Set<string>();
+
+  console.log('[mining][pattern-automation] starting pass', {
+    ownedCards: patternCards.map((card) => card.id),
+    markSummary: summarizeMarks(workingMarks),
+  });
+
+  for (let wave = 0; wave < size * size; wave += 1) {
+    let addedAny = false;
+
+    for (const card of patternCards) {
+      const matches = collectPatternFlagPlacements(grid, workingMarks, card);
+
+      console.log('[mining][pattern-automation] card evaluation', {
+        cardId: card.id,
+        wave,
+        matches,
+        markSummary: summarizeMarks(workingMarks),
+      });
+
+      if (matches.length === 0) {
+        continue;
+      }
+
+      for (const match of matches) {
+        const key = `${match.row},${match.col}`;
+        if (workingMarks[match.row][match.col] !== null || seen.has(key)) {
           continue;
         }
 
-        if (!regionCandidates.has(regionId)) {
-          regionCandidates.set(regionId, []);
-        }
-
-        if (isCandidate(row, col)) {
-          regionCandidates.get(regionId)!.push({ row, col });
-        }
+        workingMarks[match.row][match.col] = 'flag';
+        seen.add(key);
+        actions.push({
+          type: 'placeNotGoldFlag',
+          row: match.row,
+          col: match.col,
+        });
+        addedAny = true;
       }
     }
 
-    for (const candidates of regionCandidates.values()) {
-      if (candidates.length === 1) {
-        tryAdd(candidates[0].row, candidates[0].col);
-      }
+    if (!addedAny) {
+      console.log('[mining][pattern-automation] no further placements', {
+        wave,
+        totalPlacements: actions,
+      });
+      break;
     }
+  }
+
+  if (actions.length > 0) {
+    console.log('[mining][pattern-automation] placements applied', {
+      placements: actions,
+    });
   }
 
   return actions;
@@ -216,7 +270,7 @@ export function buildMiningAutomationPlan({
   revealedGoldPositions,
   regionIds,
   ownedSkillIds,
-  depthLevel,
+  scannerEnabled,
   maxIterations = 100,
 }: MiningAutomationOptions): MiningAutomationAction[] {
   const actions: MiningAutomationAction[] = [];
@@ -224,46 +278,32 @@ export function buildMiningAutomationPlan({
 
   for (let wave = 0; wave < maxIterations; wave += 1) {
     let changed = false;
-    const confirmedGoldPositions = collectConfirmedGoldPositions(
-      revealedGoldPositions,
-      workingFlags
-    );
 
-    for (const action of collectAutoFlagActions(
-      size,
-      revealed,
-      workingFlags,
-      confirmedGoldPositions,
-      ownedSkillIds
-    )) {
+    const waveActions = [
+      ...collectAutoFlagActions(size, revealed, workingFlags, revealedGoldPositions, ownedSkillIds),
+      ...collectScannerActions({
+        size,
+        revealed,
+        currentFlags: workingFlags,
+        confirmedGoldPositions: revealedGoldPositions,
+        regionIds,
+        scannerEnabled,
+      }),
+      ...collectPatternActions({
+        size,
+        revealed,
+        currentFlags: workingFlags,
+        regionIds,
+        ownedSkillIds,
+      }),
+    ];
+
+    for (const action of waveActions) {
       if (workingFlags[action.row][action.col] !== null) {
         continue;
       }
 
       workingFlags[action.row][action.col] = 'not-gold';
-      actions.push(action);
-      changed = true;
-    }
-
-    const updatedConfirmedGoldPositions = collectConfirmedGoldPositions(
-      revealedGoldPositions,
-      workingFlags
-    );
-
-    for (const action of collectSingleCandidateActions({
-      size,
-      revealed,
-      currentFlags: workingFlags,
-      confirmedGoldPositions: updatedConfirmedGoldPositions,
-      regionIds,
-      ownedSkillIds,
-      depthLevel,
-    })) {
-      if (workingFlags[action.row][action.col] !== null) {
-        continue;
-      }
-
-      workingFlags[action.row][action.col] = 'gold-here';
       actions.push(action);
       changed = true;
     }

@@ -33,7 +33,7 @@
         <div
           v-for="step in orderedSteps"
           :key="step.id"
-          class="rounded-xl border px-3 py-2 text-xs font-bold uppercase tracking-[0.18em]"
+          class="rounded-xl border px-2 py-2 text-center text-[11px] font-bold uppercase leading-tight tracking-[0.14em]"
           :class="
             townStep === step.id
               ? 'border-semantic-warning-300 bg-semantic-warning-700 text-white'
@@ -51,6 +51,22 @@
             Close out the month, count your haul, and see how far you climbed.
           </div>
 
+          <div
+            class="mt-3 rounded-lg bg-semantic-neutral-950 px-3 py-2 text-sm text-semantic-neutral-200"
+          >
+            Each gold is worth <span class="font-bold text-semantic-warning-300">100</span> coins.
+            Level {{ exchangeSummary.processed ? exchangeSummary.reachedLevel : displayLevel || 1 }}
+            pays out
+            <span class="font-bold text-semantic-warning-300"
+              >{{ exchangeSummary.processed ? exchangeSummary.returnPercent : 0 }}%</span
+            >
+            of that value, which is
+            <span class="font-bold text-semantic-warning-300">{{
+              exchangeSummary.processed ? exchangeSummary.payoutPerGold : 0
+            }}</span>
+            coins per gold.
+          </div>
+
           <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
             <div class="rounded-lg bg-semantic-neutral-950 px-3 py-2 text-semantic-neutral-200">
               Gold Sold:
@@ -61,11 +77,11 @@
             <div class="rounded-lg bg-semantic-neutral-950 px-3 py-2 text-semantic-neutral-200">
               Base Value:
               <span class="font-bold text-semantic-warning-300">{{
-                exchangeSummary.processed ? exchangeSummary.baseValue : goldTotal
+                exchangeSummary.processed ? exchangeSummary.baseValue : goldTotal * 100
               }}</span>
             </div>
             <div class="rounded-lg bg-semantic-neutral-950 px-3 py-2 text-semantic-neutral-200">
-              Return:
+              Payout Rate:
               <span class="font-bold text-semantic-warning-300"
                 >{{ exchangeSummary.processed ? exchangeSummary.returnPercent : 0 }}%</span
               >
@@ -98,7 +114,7 @@
 
           <button
             type="button"
-            class="mt-4 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+            class="mt-4 w-full rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
             :class="
               canExchangeGold
                 ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
@@ -123,7 +139,7 @@
           </div>
           <button
             type="button"
-            class="mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+            class="mt-3 w-full rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
             :class="
               canBuyFood
                 ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
@@ -138,8 +154,22 @@
       </div>
 
       <div v-else-if="townStep === 'magpie-trainer'" class="space-y-3">
-        <div class="text-sm text-semantic-neutral-300">
-          Exchange level controls what the magpie trainer can show you.
+        <div class="flex items-center justify-between gap-3">
+          <div class="text-sm text-semantic-neutral-300">
+            Exchange level controls what the magpie trainer can show you.
+          </div>
+          <button
+            type="button"
+            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
+            :class="
+              showPurchasedUpgrades
+                ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
+                : 'border-semantic-neutral-700 bg-semantic-neutral-900 text-semantic-neutral-200 hover:bg-semantic-neutral-800'
+            "
+            @click="$emit('toggle-purchased')"
+          >
+            {{ showPurchasedUpgrades ? 'Hide Purchased' : 'Show Purchased' }}
+          </button>
         </div>
 
         <div
@@ -160,44 +190,53 @@
             </div>
           </div>
 
-          <div
-            class="mt-3 text-xs uppercase tracking-[0.18em]"
-            :class="skill.implemented ? 'text-semantic-neutral-500' : 'text-semantic-warning-300'"
-          >
-            {{ skill.implemented ? skill.effectSummary : 'Pattern scaffolding placeholder' }}
+          <div class="mt-3 text-xs uppercase tracking-[0.18em] text-semantic-neutral-500">
+            {{ skill.effectSummary }}
           </div>
 
           <button
             type="button"
-            class="mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+            class="mt-3 w-full rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
             :class="
               ownedAutomationIds.includes(skill.id)
                 ? 'border-semantic-success-700 bg-semantic-success-900 text-semantic-success-200'
-                : skill.implemented && canBuyAutomation(skill.id)
+                : canBuyAutomation(skill.id)
                   ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
                   : 'border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-500'
             "
-            :disabled="
-              ownedAutomationIds.includes(skill.id) ||
-              !skill.implemented ||
-              !canBuyAutomation(skill.id)
-            "
+            :disabled="ownedAutomationIds.includes(skill.id) || !canBuyAutomation(skill.id)"
             @click="$emit('buy-automation', skill.id)"
           >
             {{
               ownedAutomationIds.includes(skill.id)
                 ? 'Owned'
-                : skill.implemented
+                : canBuyAutomation(skill.id)
                   ? `Buy ${skill.title}`
-                  : 'Coming Soon'
+                  : skill.id !== 'buy-magpie' && !ownedAutomationIds.includes('buy-magpie')
+                    ? 'Requires Magpie'
+                    : `Buy ${skill.title}`
             }}
           </button>
         </div>
       </div>
 
       <div v-else-if="townStep === 'tool-store'" class="space-y-3">
-        <div class="text-sm text-semantic-neutral-300">
-          Flow upgrades and scanner access are gated by your best exchange level.
+        <div class="flex items-center justify-between gap-3">
+          <div class="text-sm text-semantic-neutral-300">
+            Flow upgrades and scanner access are gated by your best exchange level.
+          </div>
+          <button
+            type="button"
+            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
+            :class="
+              showPurchasedUpgrades
+                ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
+                : 'border-semantic-neutral-700 bg-semantic-neutral-900 text-semantic-neutral-200 hover:bg-semantic-neutral-800'
+            "
+            @click="$emit('toggle-purchased')"
+          >
+            {{ showPurchasedUpgrades ? 'Hide Purchased' : 'Show Purchased' }}
+          </button>
         </div>
 
         <div
@@ -218,44 +257,31 @@
             </div>
           </div>
 
-          <div
-            class="mt-3 text-xs uppercase tracking-[0.18em]"
-            :class="upgrade.implemented ? 'text-semantic-neutral-500' : 'text-semantic-warning-300'"
-          >
-            {{ upgrade.implemented ? upgrade.effectSummary : 'Prototype tool placeholder' }}
+          <div class="mt-3 text-xs uppercase tracking-[0.18em] text-semantic-neutral-500">
+            {{ upgrade.effectSummary }}
           </div>
 
           <button
             type="button"
-            class="mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+            class="mt-3 w-full rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
             :class="
               ownedToolUpgradeIds.includes(upgrade.id)
                 ? 'border-semantic-success-700 bg-semantic-success-900 text-semantic-success-200'
-                : upgrade.implemented && canBuyToolUpgrade(upgrade.id)
+                : canBuyToolUpgrade(upgrade.id)
                   ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
                   : 'border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-500'
             "
-            :disabled="
-              ownedToolUpgradeIds.includes(upgrade.id) ||
-              !upgrade.implemented ||
-              !canBuyToolUpgrade(upgrade.id)
-            "
+            :disabled="ownedToolUpgradeIds.includes(upgrade.id) || !canBuyToolUpgrade(upgrade.id)"
             @click="$emit('buy-tool-upgrade', upgrade.id)"
           >
-            {{
-              ownedToolUpgradeIds.includes(upgrade.id)
-                ? 'Owned'
-                : upgrade.implemented
-                  ? `Buy ${upgrade.title}`
-                  : 'Coming Soon'
-            }}
+            {{ ownedToolUpgradeIds.includes(upgrade.id) ? 'Owned' : `Buy ${upgrade.title}` }}
           </button>
         </div>
       </div>
 
       <button
         type="button"
-        class="w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+        class="w-full rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
         :class="
           canAdvance
             ? 'border-semantic-warning-300 bg-semantic-warning-700 text-white hover:bg-semantic-warning-600'
@@ -298,6 +324,7 @@ defineProps<{
     soldGold: number;
     baseValue: number;
     returnPercent: number;
+    payoutPerGold: number;
     bonus: number;
     payout: number;
     reachedLevel: number;
@@ -314,6 +341,7 @@ defineProps<{
   canAdvance: boolean;
   canBuyFood: boolean;
   canExchangeGold: boolean;
+  showPurchasedUpgrades: boolean;
   canBuyAutomation: (skillId: MiningMagpieSkillId) => boolean;
   canBuyToolUpgrade: (upgradeId: MiningToolUpgradeId) => boolean;
 }>();
@@ -325,5 +353,6 @@ defineEmits<{
   'exchange-gold': [];
   'buy-automation': [skillId: MiningMagpieSkillId];
   'buy-tool-upgrade': [upgradeId: MiningToolUpgradeId];
+  'toggle-purchased': [];
 }>();
 </script>

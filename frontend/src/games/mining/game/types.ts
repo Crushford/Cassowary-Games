@@ -6,7 +6,6 @@ export type MiningPhase =
   | 'level-complete'
   | 'out-of-food'
   | 'dead';
-export type MiningDepthLevel = 1 | 2 | 3 | 4;
 export type MiningProgressionTab = 'food-shop' | 'gold-exchange' | 'animal-trainer' | 'ui-upgrades';
 export type MiningTownStep = 'none' | 'exchange' | 'food-shop' | 'magpie-trainer' | 'tool-store';
 export type MiningUpgradeCategory = 'magpie' | 'flow' | 'scanner' | 'pattern';
@@ -16,17 +15,9 @@ export type MiningMagpieSkillId =
   | 'auto-flag-row'
   | 'auto-flag-column'
   | 'auto-flag-diagonal'
-  | 'gold-here-row'
-  | 'gold-here-column'
-  | 'gold-here-region'
   | 'pattern-automation-1'
   | 'pattern-automation-2';
-export type MiningToolUpgradeId =
-  | 'stronger-pick'
-  | 'deeper-digging'
-  | 'drill'
-  | 'scanner'
-  | 'auto-hauler';
+export type MiningToolUpgradeId = 'scanner' | 'auto-hauler';
 
 export interface PositionRef {
   row: number;
@@ -55,9 +46,7 @@ export interface MiningAutomationDefinition {
   requiredLevel: number;
   cost: number;
   effectSummary: string;
-  implemented: boolean;
   requires?: MiningMagpieSkillId[];
-  minDepthLevel?: MiningDepthLevel;
 }
 
 export interface MiningToolUpgradeDefinition {
@@ -67,14 +56,11 @@ export interface MiningToolUpgradeDefinition {
   category: Exclude<MiningUpgradeCategory, 'magpie'>;
   requiredLevel: number;
   cost: number;
-  unlocksDepth?: MiningDepthLevel;
   effectSummary: string;
-  implemented: boolean;
 }
 
 export interface MiningExchangeLevelDefinition {
   level: number;
   threshold: number;
   returnPercent: number;
-  title: string;
 }

@@ -91,8 +91,7 @@ describe('Mining headless E2E — monthly loop', () => {
     await game.digAllGold();
 
     expect(store.foundGoldCount).toBe(store.boardSize);
-    // Each gold tile at depth 1 = 5 gold
-    expect(store.goldTotal).toBe(store.boardSize * 5);
+    expect(store.goldTotal).toBe(store.boardSize);
     // Field not complete yet (non-gold tiles remain)
     expect(store.phase).toBe('playing');
     expect(store.coinsTotal).toBe(startingCoins); // gold doesn't become coins until exchange
@@ -112,20 +111,20 @@ describe('Mining headless E2E — monthly loop', () => {
 });
 
 describe('Mining headless E2E — exchange progression', () => {
-  it('exchanges gold for coins with 3% bonus at level 1 threshold', async () => {
+  it('exchanges gold for coins at a 3% payout rate at level 1 threshold', async () => {
     const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
     const { store } = game;
 
     store.run.phase = 'town';
     store.progression.townStep = 'exchange';
-    store.economy.goldTotal = 100;
+    store.economy.goldTotal = 1;
 
     store.exchangeGoldForCoins();
 
     expect(store.goldTotal).toBe(0);
     expect(store.bestLevel).toBe(1);
     expect(store.exchangeSummary.returnPercent).toBe(3);
-    expect(store.exchangeSummary.payout).toBe(103);
+    expect(store.exchangeSummary.payout).toBe(3);
     expect(store.levelCelebration?.level).toBe(1);
     game.cleanup();
   });
@@ -136,11 +135,13 @@ describe('Mining headless E2E — exchange progression', () => {
 
     store.run.phase = 'town';
     store.progression.townStep = 'exchange';
+    store.economy.goldTotal = 0;
+    store.run.bestLevel = 0;
 
     store.exchangeGoldForCoins();
 
     expect(store.exchangeSummary.processed).toBe(true);
-    expect(store.bestLevel).toBe(0);
+    expect(store.bestLevel).toBe(1);
     expect(store.canAdvanceTownStep).toBe(true);
     game.cleanup();
   });
@@ -157,7 +158,7 @@ describe('Mining headless E2E — exchange progression', () => {
 });
 
 describe('Mining headless E2E — magpie automation', () => {
-  it('buying a magpie lesson immediately recomputes system flags', async () => {
+  it('buying a row lesson immediately recomputes system flags', async () => {
     const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
     const { store } = game;
 
@@ -165,34 +166,29 @@ describe('Mining headless E2E — magpie automation', () => {
     store.economy.coinsTotal = 20;
     store.buyAutomation('buy-magpie');
     store.buyAutomation('auto-flag-row');
-    store.buyAutomation('gold-here-row');
 
-    // Manually seed: 4 of 5 cells in row 0 are not-gold
-    store.board.systemFlags[0][0] = 'not-gold';
-    store.board.systemFlags[0][1] = 'not-gold';
-    store.board.systemFlags[0][2] = 'not-gold';
-    store.board.systemFlags[0][3] = 'not-gold';
+    store.board.revealed[0][0] = true;
     store.recomputeSystemFlags();
 
-    expect(store.systemFlags[0][4]).toBe('gold-here');
+    expect(store.systemFlags[0][1]).toBe('not-gold');
+    expect(store.systemFlags[0][2]).toBe('not-gold');
+    expect(store.systemFlags[0][3]).toBe('not-gold');
+    expect(store.systemFlags[0][4]).toBe('not-gold');
     game.cleanup();
   });
 
-  it('magpie lesson chain requires prerequisites in order', async () => {
+  it('visible magpie lessons still require owning the magpie before purchase', async () => {
     const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
     const { store } = game;
 
     store.run.bestLevel = 2;
     store.economy.coinsTotal = 20;
 
-    // Cannot buy gold-here-row before auto-flag-row
-    expect(store.canBuyAutomation('gold-here-row')).toBe(false);
+    expect(store.visibleAutomationOptions.map((option) => option.id)).toContain('auto-flag-row');
+    expect(store.canBuyAutomation('auto-flag-row')).toBe(false);
 
     store.buyAutomation('buy-magpie');
-    expect(store.canBuyAutomation('gold-here-row')).toBe(false);
-
-    store.buyAutomation('auto-flag-row');
-    expect(store.canBuyAutomation('gold-here-row')).toBe(true);
+    expect(store.canBuyAutomation('auto-flag-row')).toBe(true);
     game.cleanup();
   });
 });

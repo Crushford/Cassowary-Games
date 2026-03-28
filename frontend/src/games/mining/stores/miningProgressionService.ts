@@ -4,6 +4,7 @@ import type { MiningMagpieSkillId, MiningToolUpgradeId } from '../game/types';
 import {
   DEFAULT_LEVEL_RETURN_PERCENT,
   EXCHANGE_LEVELS,
+  GOLD_EXCHANGE_RATE,
   getExchangeLevelForMonthlyGold,
   getNextExchangeLevel,
   MONTHLY_UPKEEP_COST,
@@ -14,7 +15,16 @@ import { recomputeSystemFlags } from './miningRunService';
 
 interface ProgressionDeps {
   setError(message: string): void;
-  loadNextLevel(): Promise<void>;
+}
+
+function triggerFoodGameOver(state: MiningStoreState) {
+  state.run.phase = 'dead';
+  state.ui.progressionMenuOpen = false;
+  state.ui.showMonthOverModal = false;
+  state.ui.showDeathModal = true;
+  state.run.deathMessage =
+    'You cannot afford the next month of food.\n\nThe mining contract is over. Restart to begin again from a fresh save.';
+  state.ui.lastActionMessage = 'Game over. You could not afford food for the next month.';
 }
 
 export function canBuyFood(state: MiningStoreState): boolean {
@@ -27,13 +37,28 @@ export function buyFood(state: MiningStoreState, deps: Pick<ProgressionDeps, 'se
   }
 
   if (state.economy.coinsTotal < MONTHLY_UPKEEP_COST) {
-    deps.setError('Not enough coins for food.');
+    triggerFoodGameOver(state);
     return;
   }
 
   state.economy.coinsTotal -= MONTHLY_UPKEEP_COST;
   state.progression.monthlyUpkeepPaid = true;
-  state.ui.lastActionMessage = 'You paid the monthly food bill for the next shift underground.';
+  state.run.daysLeftInMonth = state.run.daysPerMonth;
+  state.ui.lastActionMessage =
+    'You paid the monthly food bill. The next month now has a full 28-day shift ready.';
+}
+
+export function shouldTriggerFoodGameOver(state: MiningStoreState): boolean {
+  return !state.progression.monthlyUpkeepPaid && state.economy.coinsTotal < MONTHLY_UPKEEP_COST;
+}
+
+export function triggerFoodGameOverIfNeeded(state: MiningStoreState): boolean {
+  if (!shouldTriggerFoodGameOver(state)) {
+    return false;
+  }
+
+  triggerFoodGameOver(state);
+  return true;
 }
 
 export function canExchangeGold(state: MiningStoreState): boolean {
@@ -52,15 +77,14 @@ export function exchangeGoldForCoins(
   const previousBestLevel = state.run.bestLevel;
   const reachedLevel = getExchangeLevelForMonthlyGold(soldGold);
   const returnPercent = reachedLevel.returnPercent ?? DEFAULT_LEVEL_RETURN_PERCENT;
-  const baseValue = soldGold;
-  const bonus = Math.round((baseValue * returnPercent) / 100);
-  const payout = baseValue + bonus;
+  const baseValue = soldGold * GOLD_EXCHANGE_RATE;
+  const payout = Math.round((baseValue * returnPercent) / 100);
   const nextLevel = getNextExchangeLevel(soldGold);
 
   state.exchange.lastSoldGold = soldGold;
   state.exchange.lastBaseValue = baseValue;
   state.exchange.lastReturnPercent = returnPercent;
-  state.exchange.lastBonus = bonus;
+  state.exchange.lastBonus = 0;
   state.exchange.lastPayout = payout;
   state.exchange.lastReachedLevel = reachedLevel.level;
   state.exchange.lastBestLevel = Math.max(previousBestLevel, reachedLevel.level);
@@ -94,23 +118,17 @@ export function exchangeGoldForCoins(
 
 export function canBuyAutomation(state: MiningStoreState, skillId: MiningMagpieSkillId): boolean {
   const skill = getAutomationOption(skillId);
-  if (!skill.implemented) {
+  if (skill.requiredLevel > state.run.bestLevel) {
     return false;
   }
 
-  if (skill.requiredLevel > state.run.bestLevel) {
+  const hasMagpie = state.progression.magpieSkillIds.includes('buy-magpie');
+  if (skill.id !== 'buy-magpie' && !hasMagpie) {
     return false;
   }
 
   if (
     skill.requires?.some((requiredId) => !state.progression.magpieSkillIds.includes(requiredId))
-  ) {
-    return false;
-  }
-
-  if (
-    typeof skill.minDepthLevel === 'number' &&
-    state.run.highestUnlockedDepthLevel < skill.minDepthLevel
   ) {
     return false;
   }
@@ -137,8 +155,8 @@ export function buyAutomation(
     return;
   }
 
-  if (!skill.implemented) {
-    deps.setError('That magpie lesson is still a prototype placeholder.');
+  if (skill.id !== 'buy-magpie' && !state.progression.magpieSkillIds.includes('buy-magpie')) {
+    deps.setError('Requires Magpie.');
     return;
   }
 
@@ -146,14 +164,6 @@ export function buyAutomation(
     skill.requires?.some((requiredId) => !state.progression.magpieSkillIds.includes(requiredId))
   ) {
     deps.setError('Buy the earlier magpie lesson first.');
-    return;
-  }
-
-  if (
-    typeof skill.minDepthLevel === 'number' &&
-    state.run.highestUnlockedDepthLevel < skill.minDepthLevel
-  ) {
-    deps.setError('Unlock more survey tools before buying that lesson.');
     return;
   }
 
@@ -174,7 +184,6 @@ export function canBuyToolUpgrade(
 ): boolean {
   const upgrade = getToolUpgrade(upgradeId);
   return (
-    upgrade.implemented &&
     upgrade.requiredLevel <= state.run.bestLevel &&
     !state.progression.ownedToolUpgradeIds.includes(upgradeId) &&
     state.economy.coinsTotal >= upgrade.cost
@@ -193,11 +202,6 @@ export function buyToolUpgrade(
     return;
   }
 
-  if (!upgrade.implemented) {
-    deps.setError('That tool slot is visible for prototype planning, but not live yet.');
-    return;
-  }
-
   if (upgrade.requiredLevel > state.run.bestLevel) {
     deps.setError('Reach a better exchange level before buying that tool.');
     return;
@@ -211,14 +215,6 @@ export function buyToolUpgrade(
   state.economy.coinsTotal -= upgrade.cost;
   state.progression.ownedToolUpgradeIds.push(upgradeId);
 
-  if (upgrade.unlocksDepth) {
-    state.run.highestUnlockedDepthLevel = Math.max(
-      state.run.highestUnlockedDepthLevel,
-      upgrade.unlocksDepth
-    ) as typeof state.run.highestUnlockedDepthLevel;
-    state.run.currentDepthLevel = upgrade.unlocksDepth;
-  }
-
   if (TOOL_EXPLANATIONS[upgradeId]) {
     state.ui.upgradeExplanationTitle = `${upgrade.title} Purchased`;
     state.ui.upgradeExplanationMessage = TOOL_EXPLANATIONS[upgradeId] ?? '';
@@ -227,8 +223,4 @@ export function buyToolUpgrade(
 
   state.ui.progressionMenuOpen = false;
   state.ui.lastActionMessage = `${upgrade.title} purchased. ${upgrade.effectSummary}`;
-
-  if (upgrade.unlocksDepth) {
-    void deps.loadNextLevel();
-  }
 }
