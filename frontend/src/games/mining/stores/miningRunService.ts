@@ -93,17 +93,6 @@ export function recomputeSystemFlags(state: MiningStoreState) {
 
     state.board.systemFlags = nextSystemFlags;
   }
-
-  for (let row = 0; row < state.board.boardSize; row += 1) {
-    for (let col = 0; col < state.board.boardSize; col += 1) {
-      if (
-        state.board.playerFlags[row][col] === 'gold-here' &&
-        state.board.systemFlags[row][col] === 'not-gold'
-      ) {
-        state.board.playerFlags[row][col] = null;
-      }
-    }
-  }
 }
 
 function canDigAt(state: MiningStoreState, position: PositionRef): boolean {
@@ -117,10 +106,6 @@ function canDigAt(state: MiningStoreState, position: PositionRef): boolean {
 }
 
 function setPlayerGoldHereFlag(state: MiningStoreState, position: PositionRef) {
-  if (state.board.systemFlags[position.row]?.[position.col] === 'not-gold') {
-    return;
-  }
-
   state.board.playerFlags[position.row][position.col] =
     state.board.playerFlags[position.row][position.col] === 'gold-here' ? null : 'gold-here';
 }
@@ -185,15 +170,15 @@ export function toggleFlag(state: MiningStoreState, position: PositionRef) {
     return;
   }
 
-  const blockedBySystemNotGold =
-    state.board.systemFlags[position.row]?.[position.col] === 'not-gold';
   setPlayerGoldHereFlag(state, position);
   state.ui.lastActionMessage =
     state.board.playerFlags[position.row][position.col] === 'gold-here'
       ? 'Gold-here flag placed.'
       : 'Gold-here flag removed.';
   logMiningInteraction('toggle-flag', state, position, {
-    blockedBySystemNotGold,
+    overridingSystemNotGold:
+      state.board.systemFlags[position.row]?.[position.col] === 'not-gold' &&
+      state.board.playerFlags[position.row][position.col] === 'gold-here',
     resultingPlayerFlag: state.board.playerFlags[position.row][position.col],
     systemFlag: state.board.systemFlags[position.row][position.col],
   });

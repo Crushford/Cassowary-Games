@@ -166,10 +166,16 @@ export const useMiningStore = defineStore('mining', {
     },
 
     exchangeSummary(state) {
+      const soldGold = state.exchange.lastSoldGold;
+      const baseValue = state.exchange.lastBaseValue;
+      const returnPercent = state.exchange.lastReturnPercent;
+      const payoutPerGold = Math.round((GOLD_REWARD_PER_TILE * 100 * returnPercent) / 100);
+
       return {
-        soldGold: state.exchange.lastSoldGold,
-        baseValue: state.exchange.lastBaseValue,
-        returnPercent: state.exchange.lastReturnPercent,
+        soldGold,
+        baseValue,
+        returnPercent,
+        payoutPerGold,
         bonus: state.exchange.lastBonus,
         payout: state.exchange.lastPayout,
         reachedLevel: state.exchange.lastReachedLevel,

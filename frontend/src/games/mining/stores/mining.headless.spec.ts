@@ -111,7 +111,7 @@ describe('Mining headless E2E — monthly loop', () => {
 });
 
 describe('Mining headless E2E — exchange progression', () => {
-  it('exchanges gold for coins with 3% bonus at level 1 threshold', async () => {
+  it('exchanges gold for coins at a 3% payout rate at level 1 threshold', async () => {
     const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
     const { store } = game;
 
@@ -124,7 +124,7 @@ describe('Mining headless E2E — exchange progression', () => {
     expect(store.goldTotal).toBe(0);
     expect(store.bestLevel).toBe(1);
     expect(store.exchangeSummary.returnPercent).toBe(3);
-    expect(store.exchangeSummary.payout).toBe(103);
+    expect(store.exchangeSummary.payout).toBe(3);
     expect(store.levelCelebration?.level).toBe(1);
     game.cleanup();
   });

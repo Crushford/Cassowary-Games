@@ -3,6 +3,9 @@
     type="button"
     class="relative aspect-square w-full rounded-2xl border p-2 text-center transition-all duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:active:translate-y-0"
     :class="squareClass"
+    :style="squareStyle"
+    :data-row="row"
+    :data-col="col"
     :aria-disabled="disabled ? 'true' : 'false'"
     @click="handleTap"
   >
@@ -22,10 +25,12 @@
 
     <template v-else-if="tileKind === 'empty'">
       <div class="flex h-full flex-col items-center justify-center">
-        <div class="text-[11px] font-semibold uppercase tracking-[0.2em] text-app-textMuted">
+        <div
+          class="text-[9px] font-semibold uppercase leading-none tracking-[0.14em] text-app-textMuted"
+        >
           Empty
         </div>
-        <div class="mt-2 text-2xl font-black text-app-textMuted">0</div>
+        <div class="mt-1 text-xl font-black leading-none text-app-textMuted">0</div>
       </div>
     </template>
 
@@ -95,17 +100,10 @@ function handleTap() {
     return;
   }
 
-  if (props.flagged === 'not-gold') {
-    console.log('[mining][square-click] blocked because tile is marked not-gold', {
-      row: props.row,
-      col: props.col,
-    });
-    return;
-  }
-
   console.log('[mining][square-click] emitting toggle-flag to place gold-here marker', {
     row: props.row,
     col: props.col,
+    overridingNotGold: props.flagged === 'not-gold',
   });
   emit('toggle-flag');
 }
@@ -119,6 +117,10 @@ const squareClass = computed(() => {
     return 'border-app-border bg-app-surface opacity-80';
   }
 
+  if (props.showRegion) {
+    return 'shadow-lg shadow-semantic-warning-950/15';
+  }
+
   return 'border-semantic-warning-700 bg-gradient-to-br from-semantic-warning-500 to-semantic-warning-800 shadow-lg shadow-semantic-warning-950/15';
 });
 
@@ -127,6 +129,6 @@ const squareStyle = computed(() => {
     return undefined;
   }
 
-  return getRegionColorStyle(props.regionId ?? null, props.tileKind === 'hidden');
+  return getRegionColorStyle(props.regionId ?? null, false);
 });
 </script>

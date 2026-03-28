@@ -116,6 +116,17 @@ describe('useMiningStore', () => {
     expect(store.progressionMenuOpen).toBe(true);
   });
 
+  it('can end the month early and return to town from the field', async () => {
+    const store = await createStore();
+
+    expect(store.phase).toBe('playing');
+    store.triggerMonthEnd();
+
+    expect(store.phase).toBe('town');
+    expect(store.townStep).toBe('exchange');
+    expect(store.showMonthOverModal).toBe(true);
+  });
+
   it('requires at least 1 day left to place flags or dig', async () => {
     const store = await createStore();
 
@@ -129,6 +140,27 @@ describe('useMiningStore', () => {
     await store.dig({ row: 0, col: 1 });
     expect(store.revealed[0][1]).toBe(false);
     expect(store.errorMessage).toContain('1 day left');
+  });
+
+  it('allows the player to override automatic not-gold flags and dig anyway', async () => {
+    const store = await createStore();
+
+    store.progression.magpieSkillIds = ['buy-magpie', 'auto-flag-row'];
+    store.revealed[0][0] = true;
+    store.run.foundGoldCount = 1;
+    store.recomputeSystemFlags();
+
+    expect(store.systemFlags[0][1]).toBe('not-gold');
+    expect(store.visibleFlags[0][1]).toBe('not-gold');
+
+    store.toggleFlag({ row: 0, col: 1 });
+
+    expect(store.playerFlags[0][1]).toBe('gold-here');
+    expect(store.visibleFlags[0][1]).toBe('gold-here');
+
+    await store.dig({ row: 0, col: 1 });
+
+    expect(store.revealed[0][1]).toBe(true);
   });
 
   it('triggers game over if you cannot afford food for the next month', async () => {
@@ -161,13 +193,14 @@ describe('useMiningStore', () => {
     store.exchangeGoldForCoins();
 
     expect(store.goldTotal).toBe(0);
-    expect(store.coinsTotal).toBe(123);
+    expect(store.coinsTotal).toBe(23);
     expect(store.currentMonthLevel).toBe(1);
     expect(store.bestLevel).toBe(1);
     expect(store.exchangeSummary.soldGold).toBe(1);
     expect(store.exchangeSummary.baseValue).toBe(100);
     expect(store.exchangeSummary.returnPercent).toBe(3);
-    expect(store.exchangeSummary.payout).toBe(103);
+    expect(store.exchangeSummary.payoutPerGold).toBe(3);
+    expect(store.exchangeSummary.payout).toBe(3);
     expect(store.levelCelebration).toEqual({
       level: 1,
       returnPercent: 3,
@@ -217,7 +250,7 @@ describe('useMiningStore', () => {
 
     store.buyFood();
     expect(store.progression.monthlyUpkeepPaid).toBe(true);
-    expect(store.coinsTotal).toBe(122);
+    expect(store.coinsTotal).toBe(22);
     expect(store.daysLeftInMonth).toBe(28);
 
     store.continueTownSequence();

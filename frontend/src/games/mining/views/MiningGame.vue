@@ -68,13 +68,23 @@
     </div>
 
     <div class="flex-none border-t border-app-border bg-app-bgAlt px-4 py-3">
-      <div class="flex items-center justify-between gap-3">
-        <div class="text-sm text-app-textMuted">
-          A month is 28 digs. When the days run out, you must head back into town for more food.
-        </div>
+      <div class="grid grid-cols-2 gap-3">
         <button
           type="button"
-          class="rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+          class="rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
+          :class="
+            store.phase === 'playing'
+              ? 'border-app-border bg-app-surface text-app-text hover:bg-app-bg'
+              : 'border-app-border bg-app-bg text-app-textMuted'
+          "
+          :disabled="store.phase !== 'playing'"
+          @click="store.triggerMonthEnd()"
+        >
+          Return To Town
+        </button>
+        <button
+          type="button"
+          class="rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
           :class="
             store.canTravelToNextField()
               ? 'border-semantic-warning-300 bg-semantic-warning-700 text-white hover:bg-semantic-warning-600'
@@ -83,7 +93,7 @@
           :disabled="!store.canTravelToNextField()"
           @click="store.goToNextField()"
         >
-          Next Field
+          Next Field (1 Coin)
         </button>
       </div>
     </div>
@@ -169,6 +179,7 @@
           <p>Each dig uses 1 day.</p>
           <p>When the month ends, you go to town to sell gold, pay upkeep, and buy upgrades.</p>
           <p>Tap once to place a gold-here flag.</p>
+          <p>Swipe across hidden tiles to place gold-here flags quickly.</p>
           <p>
             Tap a gold-here flag to dig for gold. After all gold is found, any hidden tile can be
             dug.

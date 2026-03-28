@@ -33,7 +33,7 @@
         <div
           v-for="step in orderedSteps"
           :key="step.id"
-          class="rounded-xl border px-3 py-2 text-xs font-bold uppercase tracking-[0.18em]"
+          class="rounded-xl border px-2 py-2 text-center text-[11px] font-bold uppercase leading-tight tracking-[0.14em]"
           :class="
             townStep === step.id
               ? 'border-semantic-warning-300 bg-semantic-warning-700 text-white'
@@ -51,6 +51,22 @@
             Close out the month, count your haul, and see how far you climbed.
           </div>
 
+          <div
+            class="mt-3 rounded-lg bg-semantic-neutral-950 px-3 py-2 text-sm text-semantic-neutral-200"
+          >
+            Each gold is worth <span class="font-bold text-semantic-warning-300">100</span> coins.
+            Level {{ exchangeSummary.processed ? exchangeSummary.reachedLevel : displayLevel || 1 }}
+            pays out
+            <span class="font-bold text-semantic-warning-300"
+              >{{ exchangeSummary.processed ? exchangeSummary.returnPercent : 0 }}%</span
+            >
+            of that value, which is
+            <span class="font-bold text-semantic-warning-300">{{
+              exchangeSummary.processed ? exchangeSummary.payoutPerGold : 0
+            }}</span>
+            coins per gold.
+          </div>
+
           <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
             <div class="rounded-lg bg-semantic-neutral-950 px-3 py-2 text-semantic-neutral-200">
               Gold Sold:
@@ -61,11 +77,11 @@
             <div class="rounded-lg bg-semantic-neutral-950 px-3 py-2 text-semantic-neutral-200">
               Base Value:
               <span class="font-bold text-semantic-warning-300">{{
-                exchangeSummary.processed ? exchangeSummary.baseValue : goldTotal
+                exchangeSummary.processed ? exchangeSummary.baseValue : goldTotal * 100
               }}</span>
             </div>
             <div class="rounded-lg bg-semantic-neutral-950 px-3 py-2 text-semantic-neutral-200">
-              Return:
+              Payout Rate:
               <span class="font-bold text-semantic-warning-300"
                 >{{ exchangeSummary.processed ? exchangeSummary.returnPercent : 0 }}%</span
               >
@@ -98,7 +114,7 @@
 
           <button
             type="button"
-            class="mt-4 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+            class="mt-4 w-full rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
             :class="
               canExchangeGold
                 ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
@@ -123,7 +139,7 @@
           </div>
           <button
             type="button"
-            class="mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+            class="mt-3 w-full rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
             :class="
               canBuyFood
                 ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
@@ -180,7 +196,7 @@
 
           <button
             type="button"
-            class="mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+            class="mt-3 w-full rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
             :class="
               ownedAutomationIds.includes(skill.id)
                 ? 'border-semantic-success-700 bg-semantic-success-900 text-semantic-success-200'
@@ -247,7 +263,7 @@
 
           <button
             type="button"
-            class="mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+            class="mt-3 w-full rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
             :class="
               ownedToolUpgradeIds.includes(upgrade.id)
                 ? 'border-semantic-success-700 bg-semantic-success-900 text-semantic-success-200'
@@ -265,7 +281,7 @@
 
       <button
         type="button"
-        class="w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+        class="w-full rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
         :class="
           canAdvance
             ? 'border-semantic-warning-300 bg-semantic-warning-700 text-white hover:bg-semantic-warning-600'
@@ -308,6 +324,7 @@ defineProps<{
     soldGold: number;
     baseValue: number;
     returnPercent: number;
+    payoutPerGold: number;
     bonus: number;
     payout: number;
     reachedLevel: number;

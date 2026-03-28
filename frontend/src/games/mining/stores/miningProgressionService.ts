@@ -78,14 +78,13 @@ export function exchangeGoldForCoins(
   const reachedLevel = getExchangeLevelForMonthlyGold(soldGold);
   const returnPercent = reachedLevel.returnPercent ?? DEFAULT_LEVEL_RETURN_PERCENT;
   const baseValue = soldGold * GOLD_EXCHANGE_RATE;
-  const bonus = Math.round((baseValue * returnPercent) / 100);
-  const payout = baseValue + bonus;
+  const payout = Math.round((baseValue * returnPercent) / 100);
   const nextLevel = getNextExchangeLevel(soldGold);
 
   state.exchange.lastSoldGold = soldGold;
   state.exchange.lastBaseValue = baseValue;
   state.exchange.lastReturnPercent = returnPercent;
-  state.exchange.lastBonus = bonus;
+  state.exchange.lastBonus = 0;
   state.exchange.lastPayout = payout;
   state.exchange.lastReachedLevel = reachedLevel.level;
   state.exchange.lastBestLevel = Math.max(previousBestLevel, reachedLevel.level);
