@@ -30,6 +30,7 @@ import {
   canBuyToolUpgrade as canBuyToolUpgradeInProgression,
   canExchangeGold as canExchangeGoldInProgression,
   exchangeGoldForCoins as exchangeGoldForCoinsInProgression,
+  triggerFoodGameOverIfNeeded,
 } from './miningProgressionService';
 import {
   canTravelToNextField as canTravelToNextFieldInRun,
@@ -426,8 +427,12 @@ export const useMiningStore = defineStore('mining', {
         return;
       }
 
-      this.progression.townStep =
-        nextStep[this.progression.townStep as Exclude<MiningTownStep, 'none'>];
+      const upcomingStep = nextStep[this.progression.townStep as Exclude<MiningTownStep, 'none'>];
+      this.progression.townStep = upcomingStep;
+
+      if (upcomingStep === 'food-shop') {
+        triggerFoodGameOverIfNeeded(this.$state);
+      }
     },
 
     beginNextMonth() {

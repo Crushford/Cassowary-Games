@@ -326,9 +326,15 @@
       <div class="space-y-4 text-white">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 class="text-xl font-bold">Out of Food</h2>
+            <h2 class="text-xl font-bold">
+              {{ store.phase === 'dead' ? 'Game Over' : 'Out of Food' }}
+            </h2>
             <p class="mt-1 text-sm text-semantic-neutral-300">
-              Go to town to restock, exchange gold, and manage upgrades.
+              {{
+                store.phase === 'dead'
+                  ? 'You cannot fund another month underground.'
+                  : 'Go to town to restock, exchange gold, and manage upgrades.'
+              }}
             </p>
           </div>
         </div>
@@ -338,6 +344,16 @@
         </p>
 
         <button
+          v-if="store.phase === 'dead'"
+          type="button"
+          class="w-full rounded-xl border border-semantic-danger-500 bg-semantic-danger-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-danger-600"
+          @click="store.deleteSavedGame()"
+        >
+          Restart
+        </button>
+
+        <button
+          v-else
           type="button"
           class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
           @click="

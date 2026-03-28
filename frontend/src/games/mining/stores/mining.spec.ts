@@ -131,6 +131,24 @@ describe('useMiningStore', () => {
     expect(store.errorMessage).toContain('1 day left');
   });
 
+  it('triggers game over if you cannot afford food for the next month', async () => {
+    const store = await createStore();
+
+    store.run.phase = 'town';
+    store.progression.townStep = 'exchange';
+    store.ui.progressionMenuOpen = true;
+    store.economy.goldTotal = 0;
+    store.economy.coinsTotal = 0;
+
+    store.exchangeGoldForCoins();
+    store.continueTownSequence();
+
+    expect(store.phase).toBe('dead');
+    expect(store.showDeathModal).toBe(true);
+    expect(store.progressionMenuOpen).toBe(false);
+    expect(store.deathMessage).toContain('cannot afford');
+  });
+
   it('processes the exchange, updates month level and unlocks level-gated shops', async () => {
     const store = await createStore();
 

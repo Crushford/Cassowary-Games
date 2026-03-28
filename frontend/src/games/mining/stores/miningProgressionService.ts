@@ -17,6 +17,16 @@ interface ProgressionDeps {
   setError(message: string): void;
 }
 
+function triggerFoodGameOver(state: MiningStoreState) {
+  state.run.phase = 'dead';
+  state.ui.progressionMenuOpen = false;
+  state.ui.showMonthOverModal = false;
+  state.ui.showDeathModal = true;
+  state.run.deathMessage =
+    'You cannot afford the next month of food.\n\nThe mining contract is over. Restart to begin again from a fresh save.';
+  state.ui.lastActionMessage = 'Game over. You could not afford food for the next month.';
+}
+
 export function canBuyFood(state: MiningStoreState): boolean {
   return !state.progression.monthlyUpkeepPaid && state.economy.coinsTotal >= MONTHLY_UPKEEP_COST;
 }
@@ -27,7 +37,7 @@ export function buyFood(state: MiningStoreState, deps: Pick<ProgressionDeps, 'se
   }
 
   if (state.economy.coinsTotal < MONTHLY_UPKEEP_COST) {
-    deps.setError('Not enough coins for food.');
+    triggerFoodGameOver(state);
     return;
   }
 
@@ -36,6 +46,19 @@ export function buyFood(state: MiningStoreState, deps: Pick<ProgressionDeps, 'se
   state.run.daysLeftInMonth = state.run.daysPerMonth;
   state.ui.lastActionMessage =
     'You paid the monthly food bill. The next month now has a full 28-day shift ready.';
+}
+
+export function shouldTriggerFoodGameOver(state: MiningStoreState): boolean {
+  return !state.progression.monthlyUpkeepPaid && state.economy.coinsTotal < MONTHLY_UPKEEP_COST;
+}
+
+export function triggerFoodGameOverIfNeeded(state: MiningStoreState): boolean {
+  if (!shouldTriggerFoodGameOver(state)) {
+    return false;
+  }
+
+  triggerFoodGameOver(state);
+  return true;
 }
 
 export function canExchangeGold(state: MiningStoreState): boolean {
