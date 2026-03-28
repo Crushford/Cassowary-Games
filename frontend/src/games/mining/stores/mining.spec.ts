@@ -163,6 +163,44 @@ describe('useMiningStore', () => {
     expect(store.revealed[0][1]).toBe(true);
   });
 
+  it('can undo the last flag change and clear player flags', async () => {
+    const store = await createStore();
+
+    store.toggleFlag({ row: 0, col: 0 });
+    store.toggleFlag({ row: 0, col: 1 });
+
+    expect(store.playerFlags[0][0]).toBe('gold-here');
+    expect(store.playerFlags[0][1]).toBe('gold-here');
+    expect(store.canUndoFlags).toBe(true);
+    expect(store.hasPlayerFlags).toBe(true);
+
+    store.undoFlags();
+
+    expect(store.playerFlags[0][0]).toBe('gold-here');
+    expect(store.playerFlags[0][1]).toBe(null);
+
+    store.clearPlayerFlags();
+
+    expect(store.hasPlayerFlags).toBe(false);
+    expect(store.playerFlags.every((row) => row.every((flag) => flag === null))).toBe(true);
+
+    store.undoFlags();
+
+    expect(store.playerFlags[0][0]).toBe('gold-here');
+    expect(store.playerFlags[0][1]).toBe(null);
+  });
+
+  it('clears flag undo history after digging', async () => {
+    const store = await createStore();
+
+    store.toggleFlag({ row: 0, col: 1 });
+    expect(store.canUndoFlags).toBe(true);
+
+    await store.dig({ row: 0, col: 1 });
+
+    expect(store.canUndoFlags).toBe(false);
+  });
+
   it('triggers game over if you cannot afford food for the next month', async () => {
     const store = await createStore();
 

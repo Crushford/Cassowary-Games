@@ -14,6 +14,12 @@ function createFlagGrid(size: number): Array<Array<MiningFlagType | null>> {
   return Array.from({ length: size }, () => Array<MiningFlagType | null>(size).fill(null));
 }
 
+export function cloneFlagGrid(
+  grid: Array<Array<MiningFlagType | null>>
+): Array<Array<MiningFlagType | null>> {
+  return grid.map((row) => [...row]);
+}
+
 export interface MiningBoardState {
   currentPuzzleId: string | null;
   boardSize: number;
@@ -93,6 +99,7 @@ export interface MiningExchangeState {
 export interface MiningSystemState {
   persistenceInitialized: boolean;
   persistenceHydrating: boolean;
+  flagHistory: Array<Array<Array<MiningFlagType | null>>>;
 }
 
 export interface MiningStoreState {
@@ -177,6 +184,7 @@ export function createInitialMiningState(): MiningStoreState {
     system: {
       persistenceInitialized: false,
       persistenceHydrating: false,
+      flagHistory: [],
     },
   };
 }

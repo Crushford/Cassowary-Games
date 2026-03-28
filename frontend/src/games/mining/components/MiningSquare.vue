@@ -18,8 +18,12 @@
 
     <template v-if="tileKind === 'gold'">
       <div class="flex h-full flex-col items-center justify-center">
-        <div class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80">Gold</div>
-        <div class="mt-2 text-3xl font-black text-white">{{ props.rewardLabel }}</div>
+        <div
+          class="text-[9px] font-semibold uppercase leading-none tracking-[0.14em] text-white/80"
+        >
+          Gold
+        </div>
+        <div class="mt-1 text-xl font-black leading-none text-white">{{ props.rewardLabel }}</div>
       </div>
     </template>
 
@@ -109,10 +113,6 @@ function handleTap() {
 }
 
 const squareClass = computed(() => {
-  if (props.tileKind === 'gold') {
-    return 'border-semantic-warning-300 bg-gradient-to-br from-semantic-warning-600 to-semantic-warning-900 shadow-lg shadow-semantic-warning-950/20';
-  }
-
   if (props.tileKind === 'empty') {
     return 'border-app-border bg-app-surface opacity-80';
   }
@@ -125,7 +125,7 @@ const squareClass = computed(() => {
 });
 
 const squareStyle = computed(() => {
-  if (!props.showRegion || props.tileKind === 'gold') {
+  if (!props.showRegion) {
     return undefined;
   }
 

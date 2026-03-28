@@ -41,7 +41,7 @@ import {
   recomputeSystemFlags,
   toggleFlag as toggleFlagInRun,
 } from './miningRunService';
-import { createInitialMiningState } from './miningState';
+import { cloneFlagGrid, createInitialMiningState } from './miningState';
 
 export const useMiningStore = defineStore('mining', {
   state: () => createInitialMiningState(),
@@ -163,6 +163,14 @@ export const useMiningStore = defineStore('mining', {
 
     canShowScannerRegions(state): boolean {
       return state.progression.ownedToolUpgradeIds.includes('scanner');
+    },
+
+    canUndoFlags(state): boolean {
+      return state.system.flagHistory.length > 0;
+    },
+
+    hasPlayerFlags(state): boolean {
+      return state.board.playerFlags.some((row) => row.some((flag) => flag !== null));
     },
 
     exchangeSummary(state) {
@@ -480,6 +488,7 @@ export const useMiningStore = defineStore('mining', {
 
     async loadNextLevel() {
       this.ui.showFieldExhaustedModal = false;
+      this.system.flagHistory = [];
       await loadNextLevelInRun(this.$state, {
         setError: this.setError,
         clearError: this.clearError,
@@ -487,7 +496,12 @@ export const useMiningStore = defineStore('mining', {
     },
 
     toggleFlag(position: PositionRef) {
+      const previousFlags = cloneFlagGrid(this.board.playerFlags);
       toggleFlagInRun(this.$state, position);
+
+      if (!areFlagGridsEqual(previousFlags, this.board.playerFlags)) {
+        this.system.flagHistory.push(previousFlags);
+      }
     },
 
     triggerMonthEnd() {
@@ -495,11 +509,35 @@ export const useMiningStore = defineStore('mining', {
     },
 
     async dig(position: PositionRef) {
+      this.system.flagHistory = [];
       await digInRun(this.$state, position, {
         setError: this.setError,
         clearError: this.clearError,
         goToNextField: (options) => this.goToNextField(options),
       });
+    },
+
+    undoFlags() {
+      const previousFlags = this.system.flagHistory.pop();
+
+      if (!previousFlags) {
+        return;
+      }
+
+      this.board.playerFlags = cloneFlagGrid(previousFlags);
+      this.ui.lastActionMessage = 'Previous flags restored.';
+      this.clearError();
+    },
+
+    clearPlayerFlags() {
+      if (!this.hasPlayerFlags) {
+        return;
+      }
+
+      this.system.flagHistory.push(cloneFlagGrid(this.board.playerFlags));
+      this.board.playerFlags = this.board.playerFlags.map((row) => row.map(() => null));
+      this.ui.lastActionMessage = 'Cleared your flags.';
+      this.clearError();
     },
 
     canBuyAutomation(skillId: MiningMagpieSkillId): boolean {
@@ -540,3 +578,18 @@ export const useMiningStore = defineStore('mining', {
     },
   },
 });
+
+function areFlagGridsEqual(
+  left: Array<Array<MiningFlagType | null>>,
+  right: Array<Array<MiningFlagType | null>>
+) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every(
+    (row, rowIndex) =>
+      row.length === right[rowIndex]?.length &&
+      row.every((flag, colIndex) => flag === right[rowIndex][colIndex])
+  );
+}

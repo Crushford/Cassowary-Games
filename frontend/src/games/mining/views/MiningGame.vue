@@ -68,6 +68,35 @@
     </div>
 
     <div class="flex-none border-t border-app-border bg-app-bgAlt px-4 py-3">
+      <div class="mb-3 grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          class="rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
+          :class="
+            store.canUndoFlags
+              ? 'border-semantic-warning-700 bg-semantic-warning-800 text-semantic-warning-100 hover:bg-semantic-warning-700'
+              : 'border-app-border bg-app-bg text-app-textMuted'
+          "
+          :disabled="!store.canUndoFlags"
+          @click="store.undoFlags()"
+        >
+          Undo
+        </button>
+        <button
+          type="button"
+          class="rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
+          :class="
+            store.hasPlayerFlags
+              ? 'border-semantic-danger-800 bg-semantic-danger-900 text-semantic-danger-100 hover:bg-semantic-danger-800'
+              : 'border-app-border bg-app-bg text-app-textMuted'
+          "
+          :disabled="!store.hasPlayerFlags"
+          @click="store.clearPlayerFlags()"
+        >
+          Clear Flags
+        </button>
+      </div>
+
       <div class="grid grid-cols-2 gap-3">
         <button
           type="button"
