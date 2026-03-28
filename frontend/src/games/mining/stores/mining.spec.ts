@@ -185,6 +185,7 @@ describe('useMiningStore', () => {
     store.buyFood();
     expect(store.progression.monthlyUpkeepPaid).toBe(true);
     expect(store.coinsTotal).toBe(122);
+    expect(store.daysLeftInMonth).toBe(28);
 
     store.continueTownSequence();
     expect(store.townStep).toBe('magpie-trainer');

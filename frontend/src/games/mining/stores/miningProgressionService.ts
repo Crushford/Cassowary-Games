@@ -33,7 +33,9 @@ export function buyFood(state: MiningStoreState, deps: Pick<ProgressionDeps, 'se
 
   state.economy.coinsTotal -= MONTHLY_UPKEEP_COST;
   state.progression.monthlyUpkeepPaid = true;
-  state.ui.lastActionMessage = 'You paid the monthly food bill for the next shift underground.';
+  state.run.daysLeftInMonth = state.run.daysPerMonth;
+  state.ui.lastActionMessage =
+    'You paid the monthly food bill. The next month now has a full 28-day shift ready.';
 }
 
 export function canExchangeGold(state: MiningStoreState): boolean {
