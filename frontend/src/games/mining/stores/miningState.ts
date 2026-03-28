@@ -1,5 +1,4 @@
 import type {
-  MiningDepthLevel,
   MiningExchangeLevelDefinition,
   MiningFlagType,
   MiningMagpieSkillId,
@@ -37,11 +36,8 @@ export interface MiningRunState {
   currentMonthLevel: number;
   bestLevel: number;
   goldCollectedThisMonth: number;
-  highestUnlockedDepthLevel: MiningDepthLevel;
-  currentDepthLevel: MiningDepthLevel;
   deathMessage: string | null;
-  hintUnlocked: boolean;
-  shownHintDepths: MiningDepthLevel[];
+  hasSeenHint: boolean;
 }
 
 export interface MiningEconomyState {
@@ -132,11 +128,8 @@ export function createInitialMiningState(): MiningStoreState {
       currentMonthLevel: 0,
       bestLevel: 0,
       goldCollectedThisMonth: 0,
-      highestUnlockedDepthLevel: 1,
-      currentDepthLevel: 1,
       deathMessage: null,
-      hintUnlocked: false,
-      shownHintDepths: [],
+      hasSeenHint: false,
     },
     economy: {
       goldTotal: 0,

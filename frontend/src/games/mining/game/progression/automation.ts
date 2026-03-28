@@ -79,7 +79,6 @@ export const AUTOMATION_OPTIONS: MiningAutomationDefinition[] = [
     effectSummary: 'Single-candidate region logic places gold-here flags.',
     implemented: false,
     requires: ['buy-magpie'],
-    minDepthLevel: 3,
   },
   {
     id: 'pattern-automation-1',

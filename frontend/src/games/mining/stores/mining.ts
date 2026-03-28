@@ -13,8 +13,7 @@ import type {
   MiningToolUpgradeId,
   PositionRef,
 } from '../game/types';
-import { getGoldRewardForDepth } from '../game/upgrades/miningUpgrades';
-import { EXCHANGE_LEVELS } from './miningConfig';
+import { EXCHANGE_LEVELS, GOLD_REWARD_PER_TILE } from './miningConfig';
 import {
   clearMiningSave,
   isSaveCompatible,
@@ -64,8 +63,6 @@ export const useMiningStore = defineStore('mining', {
     daysPerMonth: (state) => state.run.daysPerMonth,
     foundGoldCount: (state) => state.run.foundGoldCount,
     daysElapsed: (state) => state.run.daysElapsed,
-    highestUnlockedDepthLevel: (state) => state.run.highestUnlockedDepthLevel,
-    currentDepthLevel: (state) => state.run.currentDepthLevel,
     currentMonthLevel: (state) => state.run.currentMonthLevel,
     bestLevel: (state) => state.run.bestLevel,
     displayLevel: (state) => state.exchange.lastReachedLevel,
@@ -82,9 +79,7 @@ export const useMiningStore = defineStore('mining', {
     showFieldExhaustedModal: (state) => state.ui.showFieldExhaustedModal,
     levelCelebration: (state) => state.ui.levelCelebration,
     deathMessage: (state) => state.run.deathMessage,
-    hintUnlocked: (state) => state.run.hintUnlocked,
     showHintModal: (state) => state.ui.showHintModal,
-    shownHintDepths: (state) => state.run.shownHintDepths,
     showUpgradeExplanation: (state) => state.ui.showUpgradeExplanation,
     upgradeExplanationTitle: (state) => state.ui.upgradeExplanationTitle,
     upgradeExplanationMessage: (state) => state.ui.upgradeExplanationMessage,
@@ -126,11 +121,18 @@ export const useMiningStore = defineStore('mining', {
     },
 
     baseGoldRewardPerTile(state): number {
-      return getGoldRewardForDepth(state.run.currentDepthLevel);
+      return GOLD_REWARD_PER_TILE;
     },
 
     goldRewardPerTile(state): number {
-      return getGoldRewardForDepth(state.run.currentDepthLevel);
+      return GOLD_REWARD_PER_TILE;
+    },
+
+    totalGoldOnBoard(state): number {
+      return state.board.truthGold.reduce(
+        (count, row) => count + row.filter((hasGold) => hasGold).length,
+        0
+      );
     },
 
     magpieSummary(state): string {
@@ -184,21 +186,11 @@ export const useMiningStore = defineStore('mining', {
     },
 
     currentHintText(state): string {
-      const alreadySeen = state.run.shownHintDepths.includes(state.run.currentDepthLevel);
-      if (alreadySeen) {
+      if (state.run.hasSeenHint) {
         return 'No one has anything new to add. The hill expects you to listen to what it already told you.';
       }
 
-      switch (state.run.currentDepthLevel) {
-        case 4:
-          return 'The survey birds know the borderlines before you strike. Use the map before you trust your hunger.';
-        case 3:
-          return 'Old miners say a rich patch never shares a color region with another rich patch.';
-        case 2:
-          return 'The better survey notes start crossing out bad guesses for you.';
-        default:
-          return 'Most miners break even. The clever ones notice which seams refuse to crowd each other.';
-      }
+      return 'Most miners break even. The clever ones notice which seams refuse to crowd each other.';
     },
   },
 
@@ -269,17 +261,15 @@ export const useMiningStore = defineStore('mining', {
     },
 
     openHints() {
-      if (!this.run.hintUnlocked) {
+      if (this.run.hasSeenHint) {
         this.setError(
-          'No one is offering advice yet. Survive a bad run and the town starts talking.'
+          'No one has anything new to add. The hill expects you to listen to what it already told you.'
         );
         return;
       }
 
       this.ui.showHintModal = true;
-      if (!this.run.shownHintDepths.includes(this.run.currentDepthLevel)) {
-        this.run.shownHintDepths.push(this.run.currentDepthLevel);
-      }
+      this.run.hasSeenHint = true;
     },
 
     closeHints() {
@@ -510,7 +500,6 @@ export const useMiningStore = defineStore('mining', {
     buyToolUpgrade(upgradeId: MiningToolUpgradeId) {
       buyToolUpgradeInProgression(this.$state, upgradeId, {
         setError: this.setError,
-        loadNextLevel: () => this.loadNextLevel(),
       });
     },
 

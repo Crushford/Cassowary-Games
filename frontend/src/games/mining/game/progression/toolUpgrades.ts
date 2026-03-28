@@ -4,12 +4,11 @@ export const TOOL_UPGRADES: MiningToolUpgradeDefinition[] = [
   {
     id: 'stronger-pick',
     title: 'Stronger Pick',
-    description: 'A sturdier pick improves payout and unlocks more training options for the crew.',
+    description: 'A sturdier pick improves the crew and unlocks more training options.',
     category: 'scanner',
     requiredLevel: 4,
     cost: 1,
-    unlocksDepth: 2,
-    effectSummary: 'Improves payout and unlocks the next survey tier.',
+    effectSummary: 'Unlocks the next survey tier.',
     implemented: false,
   },
   {
@@ -19,8 +18,7 @@ export const TOOL_UPGRADES: MiningToolUpgradeDefinition[] = [
     category: 'scanner',
     requiredLevel: 4,
     cost: 1,
-    unlocksDepth: 3,
-    effectSummary: 'Unlocks region-based lessons and bigger payouts.',
+    effectSummary: 'Unlocks region-based lessons.',
     implemented: false,
   },
   {
@@ -41,8 +39,7 @@ export const TOOL_UPGRADES: MiningToolUpgradeDefinition[] = [
     category: 'scanner',
     requiredLevel: 3,
     cost: 1,
-    unlocksDepth: 4,
-    effectSummary: 'Improves payout and finishes the current survey ladder.',
+    effectSummary: 'Reveals region groups on the board.',
     implemented: true,
   },
   {

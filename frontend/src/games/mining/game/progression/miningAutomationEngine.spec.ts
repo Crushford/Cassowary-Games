@@ -32,7 +32,6 @@ function plan(opts: {
     revealedGoldPositions: opts.revealedGoldPositions ?? [],
     regionIds: makeRegions(size),
     ownedSkillIds: (opts.skills ?? ['buy-magpie']) as any,
-    depthLevel: 1,
   });
 }
 
@@ -215,7 +214,6 @@ describe('buildMiningAutomationPlan — iteration cap', () => {
         'gold-here-row',
         'gold-here-column',
       ] as any,
-      depthLevel: 1,
       maxIterations: 1,
     });
     expect(Array.isArray(actions)).toBe(true);

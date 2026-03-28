@@ -4,6 +4,7 @@ import type { MiningMagpieSkillId, MiningToolUpgradeId } from '../game/types';
 import {
   DEFAULT_LEVEL_RETURN_PERCENT,
   EXCHANGE_LEVELS,
+  GOLD_EXCHANGE_RATE,
   getExchangeLevelForMonthlyGold,
   getNextExchangeLevel,
   MONTHLY_UPKEEP_COST,
@@ -14,7 +15,6 @@ import { recomputeSystemFlags } from './miningRunService';
 
 interface ProgressionDeps {
   setError(message: string): void;
-  loadNextLevel(): Promise<void>;
 }
 
 export function canBuyFood(state: MiningStoreState): boolean {
@@ -52,7 +52,7 @@ export function exchangeGoldForCoins(
   const previousBestLevel = state.run.bestLevel;
   const reachedLevel = getExchangeLevelForMonthlyGold(soldGold);
   const returnPercent = reachedLevel.returnPercent ?? DEFAULT_LEVEL_RETURN_PERCENT;
-  const baseValue = soldGold;
+  const baseValue = soldGold * GOLD_EXCHANGE_RATE;
   const bonus = Math.round((baseValue * returnPercent) / 100);
   const payout = baseValue + bonus;
   const nextLevel = getNextExchangeLevel(soldGold);
@@ -108,13 +108,6 @@ export function canBuyAutomation(state: MiningStoreState, skillId: MiningMagpieS
     return false;
   }
 
-  if (
-    typeof skill.minDepthLevel === 'number' &&
-    state.run.highestUnlockedDepthLevel < skill.minDepthLevel
-  ) {
-    return false;
-  }
-
   return (
     !state.progression.magpieSkillIds.includes(skillId) && state.economy.coinsTotal >= skill.cost
   );
@@ -146,14 +139,6 @@ export function buyAutomation(
     skill.requires?.some((requiredId) => !state.progression.magpieSkillIds.includes(requiredId))
   ) {
     deps.setError('Buy the earlier magpie lesson first.');
-    return;
-  }
-
-  if (
-    typeof skill.minDepthLevel === 'number' &&
-    state.run.highestUnlockedDepthLevel < skill.minDepthLevel
-  ) {
-    deps.setError('Unlock more survey tools before buying that lesson.');
     return;
   }
 
@@ -211,14 +196,6 @@ export function buyToolUpgrade(
   state.economy.coinsTotal -= upgrade.cost;
   state.progression.ownedToolUpgradeIds.push(upgradeId);
 
-  if (upgrade.unlocksDepth) {
-    state.run.highestUnlockedDepthLevel = Math.max(
-      state.run.highestUnlockedDepthLevel,
-      upgrade.unlocksDepth
-    ) as typeof state.run.highestUnlockedDepthLevel;
-    state.run.currentDepthLevel = upgrade.unlocksDepth;
-  }
-
   if (TOOL_EXPLANATIONS[upgradeId]) {
     state.ui.upgradeExplanationTitle = `${upgrade.title} Purchased`;
     state.ui.upgradeExplanationMessage = TOOL_EXPLANATIONS[upgradeId] ?? '';
@@ -227,8 +204,4 @@ export function buyToolUpgrade(
 
   state.ui.progressionMenuOpen = false;
   state.ui.lastActionMessage = `${upgrade.title} purchased. ${upgrade.effectSummary}`;
-
-  if (upgrade.unlocksDepth) {
-    void deps.loadNextLevel();
-  }
 }

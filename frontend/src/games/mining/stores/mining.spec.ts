@@ -122,8 +122,8 @@ describe('useMiningStore', () => {
     store.run.phase = 'town';
     store.progression.townStep = 'exchange';
     store.ui.progressionMenuOpen = true;
-    store.economy.goldTotal = 100;
-    store.run.goldCollectedThisMonth = 100;
+    store.economy.goldTotal = 1;
+    store.run.goldCollectedThisMonth = 1;
 
     store.exchangeGoldForCoins();
 
@@ -131,7 +131,8 @@ describe('useMiningStore', () => {
     expect(store.coinsTotal).toBe(123);
     expect(store.currentMonthLevel).toBe(1);
     expect(store.bestLevel).toBe(1);
-    expect(store.exchangeSummary.soldGold).toBe(100);
+    expect(store.exchangeSummary.soldGold).toBe(1);
+    expect(store.exchangeSummary.baseValue).toBe(100);
     expect(store.exchangeSummary.returnPercent).toBe(3);
     expect(store.exchangeSummary.payout).toBe(103);
     expect(store.levelCelebration).toEqual({
@@ -149,12 +150,14 @@ describe('useMiningStore', () => {
     store.run.phase = 'town';
     store.progression.townStep = 'exchange';
     store.ui.progressionMenuOpen = true;
+    store.economy.goldTotal = 0;
+    store.run.bestLevel = 0;
 
     store.exchangeGoldForCoins();
 
     expect(store.exchangeSummary.processed).toBe(true);
-    expect(store.currentMonthLevel).toBe(0);
-    expect(store.bestLevel).toBe(0);
+    expect(store.currentMonthLevel).toBe(1);
+    expect(store.bestLevel).toBe(1);
     expect(store.coinsTotal).toBe(20);
     expect(store.errorMessage).toBe(null);
     expect(store.canAdvanceTownStep).toBe(true);
@@ -166,8 +169,8 @@ describe('useMiningStore', () => {
     store.run.phase = 'town';
     store.progression.townStep = 'exchange';
     store.ui.progressionMenuOpen = true;
-    store.economy.goldTotal = 100;
-    store.run.goldCollectedThisMonth = 100;
+    store.economy.goldTotal = 1;
+    store.run.goldCollectedThisMonth = 1;
 
     store.exchangeGoldForCoins();
     store.continueTownSequence();
@@ -244,7 +247,7 @@ describe('useMiningStore', () => {
       await store.dig(position);
     }
 
-    expect(store.foundGoldCount).toBe(store.boardSize);
+    expect(store.foundGoldCount).toBe(goldPositions.length);
     expect(store.phase).toBe('playing');
     expect(store.showFieldExhaustedModal).toBe(false);
 

@@ -1,5 +1,5 @@
 import { buildSelectiveAutoFlagGrid } from '../rules/autoFlag';
-import type { MiningDepthLevel, MiningFlagType, MiningMagpieSkillId, PositionRef } from '../types';
+import type { MiningFlagType, MiningMagpieSkillId, PositionRef } from '../types';
 
 export interface MiningAutomationAction {
   type: 'placeNotGoldFlag' | 'placeGoldHereFlag';
@@ -14,7 +14,6 @@ interface MiningAutomationOptions {
   revealedGoldPositions: PositionRef[];
   regionIds: string[][];
   ownedSkillIds: MiningMagpieSkillId[];
-  depthLevel: MiningDepthLevel;
   maxIterations?: number;
 }
 
@@ -92,17 +91,9 @@ function collectSingleCandidateActions(options: {
   confirmedGoldPositions: PositionRef[];
   regionIds: string[][];
   ownedSkillIds: MiningMagpieSkillId[];
-  depthLevel: MiningDepthLevel;
 }): MiningAutomationAction[] {
-  const {
-    size,
-    revealed,
-    currentFlags,
-    confirmedGoldPositions,
-    regionIds,
-    ownedSkillIds,
-    depthLevel,
-  } = options;
+  const { size, revealed, currentFlags, confirmedGoldPositions, regionIds, ownedSkillIds } =
+    options;
   const actions: MiningAutomationAction[] = [];
   const seen = new Set<string>();
   const confirmedByRow = new Set<number>();
@@ -179,7 +170,7 @@ function collectSingleCandidateActions(options: {
     }
   }
 
-  if (depthLevel >= 3 && ownedSkillIds.includes('gold-here-region')) {
+  if (ownedSkillIds.includes('gold-here-region')) {
     const regionCandidates = new Map<string, PositionRef[]>();
 
     for (let row = 0; row < size; row += 1) {
@@ -216,7 +207,6 @@ export function buildMiningAutomationPlan({
   revealedGoldPositions,
   regionIds,
   ownedSkillIds,
-  depthLevel,
   maxIterations = 100,
 }: MiningAutomationOptions): MiningAutomationAction[] {
   const actions: MiningAutomationAction[] = [];
@@ -257,7 +247,6 @@ export function buildMiningAutomationPlan({
       confirmedGoldPositions: updatedConfirmedGoldPositions,
       regionIds,
       ownedSkillIds,
-      depthLevel,
     })) {
       if (workingFlags[action.row][action.col] !== null) {
         continue;

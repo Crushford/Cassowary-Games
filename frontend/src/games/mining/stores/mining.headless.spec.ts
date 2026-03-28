@@ -91,8 +91,7 @@ describe('Mining headless E2E — monthly loop', () => {
     await game.digAllGold();
 
     expect(store.foundGoldCount).toBe(store.boardSize);
-    // Each gold tile at depth 1 = 5 gold
-    expect(store.goldTotal).toBe(store.boardSize * 5);
+    expect(store.goldTotal).toBe(store.boardSize);
     // Field not complete yet (non-gold tiles remain)
     expect(store.phase).toBe('playing');
     expect(store.coinsTotal).toBe(startingCoins); // gold doesn't become coins until exchange
@@ -118,7 +117,7 @@ describe('Mining headless E2E — exchange progression', () => {
 
     store.run.phase = 'town';
     store.progression.townStep = 'exchange';
-    store.economy.goldTotal = 100;
+    store.economy.goldTotal = 1;
 
     store.exchangeGoldForCoins();
 
@@ -136,11 +135,13 @@ describe('Mining headless E2E — exchange progression', () => {
 
     store.run.phase = 'town';
     store.progression.townStep = 'exchange';
+    store.economy.goldTotal = 0;
+    store.run.bestLevel = 0;
 
     store.exchangeGoldForCoins();
 
     expect(store.exchangeSummary.processed).toBe(true);
-    expect(store.bestLevel).toBe(0);
+    expect(store.bestLevel).toBe(1);
     expect(store.canAdvanceTownStep).toBe(true);
     game.cleanup();
   });
