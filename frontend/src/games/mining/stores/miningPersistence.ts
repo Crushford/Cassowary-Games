@@ -5,6 +5,8 @@ import type {
   MiningProgressionTab,
   MiningToolUpgradeId,
 } from '../game/types';
+import { AUTOMATION_OPTIONS } from '../game/progression/automation';
+import { TOOL_UPGRADES } from '../game/progression/toolUpgrades';
 import { MINING_SAVE_KEY, MINING_SAVE_VERSION } from './miningConfig';
 import { createInitialMiningState, type MiningStoreState } from './miningState';
 
@@ -159,6 +161,8 @@ export function clearMiningSave() {
 }
 
 export function restoreMiningState(target: MiningStoreState, snapshot: MiningSaveSnapshot) {
+  const validAutomationIds = new Set(AUTOMATION_OPTIONS.map((option) => option.id));
+  const validToolUpgradeIds = new Set(TOOL_UPGRADES.map((option) => option.id));
   const base = createInitialMiningState();
   const rootSnapshot = isRecord(snapshot) ? snapshot : {};
   const boardSnapshot = isRecord(rootSnapshot.board) ? rootSnapshot.board : rootSnapshot;
@@ -201,11 +205,11 @@ export function restoreMiningState(target: MiningStoreState, snapshot: MiningSav
     magpieSkillIds: readStringArray(
       progressionSnapshot.magpieSkillIds ?? rootSnapshot.magpieSkillIds,
       base.progression.magpieSkillIds
-    ) as MiningMagpieSkillId[],
+    ).filter((skillId): skillId is MiningMagpieSkillId => validAutomationIds.has(skillId)),
     ownedToolUpgradeIds: readStringArray(
       progressionSnapshot.ownedToolUpgradeIds ?? rootSnapshot.ownedToolUpgradeIds,
       base.progression.ownedToolUpgradeIds
-    ) as MiningToolUpgradeId[],
+    ).filter((upgradeId): upgradeId is MiningToolUpgradeId => validToolUpgradeIds.has(upgradeId)),
   };
   target.ui = {
     ...base.ui,

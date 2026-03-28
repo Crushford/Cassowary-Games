@@ -158,7 +158,7 @@ describe('Mining headless E2E — exchange progression', () => {
 });
 
 describe('Mining headless E2E — magpie automation', () => {
-  it('buying a magpie lesson immediately recomputes system flags', async () => {
+  it('buying a row lesson immediately recomputes system flags', async () => {
     const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
     const { store } = game;
 
@@ -166,34 +166,29 @@ describe('Mining headless E2E — magpie automation', () => {
     store.economy.coinsTotal = 20;
     store.buyAutomation('buy-magpie');
     store.buyAutomation('auto-flag-row');
-    store.buyAutomation('gold-here-row');
 
-    // Manually seed: 4 of 5 cells in row 0 are not-gold
-    store.board.systemFlags[0][0] = 'not-gold';
-    store.board.systemFlags[0][1] = 'not-gold';
-    store.board.systemFlags[0][2] = 'not-gold';
-    store.board.systemFlags[0][3] = 'not-gold';
+    store.board.revealed[0][0] = true;
     store.recomputeSystemFlags();
 
-    expect(store.systemFlags[0][4]).toBe('gold-here');
+    expect(store.systemFlags[0][1]).toBe('not-gold');
+    expect(store.systemFlags[0][2]).toBe('not-gold');
+    expect(store.systemFlags[0][3]).toBe('not-gold');
+    expect(store.systemFlags[0][4]).toBe('not-gold');
     game.cleanup();
   });
 
-  it('magpie lesson chain requires prerequisites in order', async () => {
+  it('visible magpie lessons still require owning the magpie before purchase', async () => {
     const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
     const { store } = game;
 
     store.run.bestLevel = 2;
     store.economy.coinsTotal = 20;
 
-    // Cannot buy gold-here-row before auto-flag-row
-    expect(store.canBuyAutomation('gold-here-row')).toBe(false);
+    expect(store.visibleAutomationOptions.map((option) => option.id)).toContain('auto-flag-row');
+    expect(store.canBuyAutomation('auto-flag-row')).toBe(false);
 
     store.buyAutomation('buy-magpie');
-    expect(store.canBuyAutomation('gold-here-row')).toBe(false);
-
-    store.buyAutomation('auto-flag-row');
-    expect(store.canBuyAutomation('gold-here-row')).toBe(true);
+    expect(store.canBuyAutomation('auto-flag-row')).toBe(true);
     game.cleanup();
   });
 });

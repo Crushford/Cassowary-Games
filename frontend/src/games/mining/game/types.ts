@@ -15,17 +15,9 @@ export type MiningMagpieSkillId =
   | 'auto-flag-row'
   | 'auto-flag-column'
   | 'auto-flag-diagonal'
-  | 'gold-here-row'
-  | 'gold-here-column'
-  | 'gold-here-region'
   | 'pattern-automation-1'
   | 'pattern-automation-2';
-export type MiningToolUpgradeId =
-  | 'stronger-pick'
-  | 'deeper-digging'
-  | 'drill'
-  | 'scanner'
-  | 'auto-hauler';
+export type MiningToolUpgradeId = 'scanner' | 'auto-hauler';
 
 export interface PositionRef {
   row: number;
@@ -54,7 +46,6 @@ export interface MiningAutomationDefinition {
   requiredLevel: number;
   cost: number;
   effectSummary: string;
-  implemented: boolean;
   requires?: MiningMagpieSkillId[];
 }
 
@@ -66,7 +57,6 @@ export interface MiningToolUpgradeDefinition {
   requiredLevel: number;
   cost: number;
   effectSummary: string;
-  implemented: boolean;
 }
 
 export interface MiningExchangeLevelDefinition {

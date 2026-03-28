@@ -94,11 +94,12 @@ export function exchangeGoldForCoins(
 
 export function canBuyAutomation(state: MiningStoreState, skillId: MiningMagpieSkillId): boolean {
   const skill = getAutomationOption(skillId);
-  if (!skill.implemented) {
+  if (skill.requiredLevel > state.run.bestLevel) {
     return false;
   }
 
-  if (skill.requiredLevel > state.run.bestLevel) {
+  const hasMagpie = state.progression.magpieSkillIds.includes('buy-magpie');
+  if (skill.id !== 'buy-magpie' && !hasMagpie) {
     return false;
   }
 
@@ -130,8 +131,8 @@ export function buyAutomation(
     return;
   }
 
-  if (!skill.implemented) {
-    deps.setError('That magpie lesson is still a prototype placeholder.');
+  if (skill.id !== 'buy-magpie' && !state.progression.magpieSkillIds.includes('buy-magpie')) {
+    deps.setError('Requires Magpie.');
     return;
   }
 
@@ -159,7 +160,6 @@ export function canBuyToolUpgrade(
 ): boolean {
   const upgrade = getToolUpgrade(upgradeId);
   return (
-    upgrade.implemented &&
     upgrade.requiredLevel <= state.run.bestLevel &&
     !state.progression.ownedToolUpgradeIds.includes(upgradeId) &&
     state.economy.coinsTotal >= upgrade.cost
@@ -175,11 +175,6 @@ export function buyToolUpgrade(
 
   if (state.progression.ownedToolUpgradeIds.includes(upgradeId)) {
     deps.setError('That tool upgrade is already owned.');
-    return;
-  }
-
-  if (!upgrade.implemented) {
-    deps.setError('That tool slot is visible for prototype planning, but not live yet.');
     return;
   }
 

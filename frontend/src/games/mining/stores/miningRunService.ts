@@ -83,12 +83,12 @@ export function recomputeSystemFlags(state: MiningStoreState) {
       revealedGoldPositions: foundGold,
       regionIds: state.board.regionIds,
       ownedSkillIds: state.progression.magpieSkillIds,
+      scannerEnabled: state.progression.ownedToolUpgradeIds.includes('scanner'),
     });
     const nextSystemFlags = seedSystemFlags.map((row) => [...row]);
 
     for (const action of actions) {
-      nextSystemFlags[action.row][action.col] =
-        action.type === 'placeGoldHereFlag' ? 'gold-here' : 'not-gold';
+      nextSystemFlags[action.row][action.col] = 'not-gold';
     }
 
     state.board.systemFlags = nextSystemFlags;

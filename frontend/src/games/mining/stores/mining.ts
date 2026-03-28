@@ -101,22 +101,30 @@ export const useMiningStore = defineStore('mining', {
     },
 
     visibleAutomationOptions(state): MiningAutomationDefinition[] {
-      const hasMagpie = state.progression.magpieSkillIds.includes('buy-magpie');
       return AUTOMATION_OPTIONS.filter((option) => {
-        const visible = option.requiredLevel <= state.run.bestLevel;
-        const purchased = state.progression.magpieSkillIds.includes(option.id);
-        if (!hasMagpie && option.id !== 'buy-magpie') {
+        if (option.requiredLevel > state.run.bestLevel) {
           return false;
         }
-        return visible && !purchased;
+
+        if (state.progression.showPurchasedUpgrades) {
+          return true;
+        }
+
+        return !state.progression.magpieSkillIds.includes(option.id);
       });
     },
 
     visibleToolUpgradeOptions(state): MiningToolUpgradeDefinition[] {
       return TOOL_UPGRADES.filter((option) => {
-        const visible = option.requiredLevel <= state.run.bestLevel;
-        const purchased = state.progression.ownedToolUpgradeIds.includes(option.id);
-        return visible && !purchased;
+        if (option.requiredLevel > state.run.bestLevel) {
+          return false;
+        }
+
+        if (state.progression.showPurchasedUpgrades) {
+          return true;
+        }
+
+        return !state.progression.ownedToolUpgradeIds.includes(option.id);
       });
     },
 

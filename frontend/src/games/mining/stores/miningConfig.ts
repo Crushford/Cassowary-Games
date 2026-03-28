@@ -21,11 +21,8 @@ export const EXCHANGE_LEVELS: MiningExchangeLevelDefinition[] = [
 ];
 
 export const TOOL_EXPLANATIONS: Partial<Record<MiningToolUpgradeId, string>> = {
-  'stronger-pick': 'The crew now works faster and can buy the next wave of survey upgrades.',
-  'deeper-digging':
-    'Surveying now supports region-based lessons without changing the underlying hidden seam layout.',
   scanner:
-    'The scanner reveals region groups so you can reason about the board instead of guessing.',
+    'The scanner reveals region groups and teaches the crew to rule out the rest of a group once a gold seam there is confirmed.',
   'auto-hauler':
     'Once the whole field is dug out, the crew can roll straight into the next field if 1 coin is available for travel.',
 };

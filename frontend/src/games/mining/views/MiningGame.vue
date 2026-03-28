@@ -103,6 +103,7 @@
       :can-advance="store.canAdvanceTownStep"
       :can-buy-food="store.canBuyFood()"
       :can-exchange-gold="store.canExchangeGold()"
+      :show-purchased-upgrades="store.showPurchasedUpgrades"
       :can-buy-automation="(skillId) => store.canBuyAutomation(skillId)"
       :can-buy-tool-upgrade="(upgradeId) => store.canBuyToolUpgrade(upgradeId)"
       @close="store.closeProgressionMenu()"
@@ -111,6 +112,7 @@
       @exchange-gold="store.exchangeGoldForCoins()"
       @buy-automation="store.buyAutomation"
       @buy-tool-upgrade="store.buyToolUpgrade"
+      @toggle-purchased="store.toggleShowPurchasedUpgrades()"
     />
 
     <Modal

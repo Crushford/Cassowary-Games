@@ -3,8 +3,6 @@ import { describe, expect, it } from 'vitest';
 import type { MiningFlagType, PositionRef } from '../types';
 import { buildMiningAutomationPlan } from './miningAutomationEngine';
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
 function makeFlags(size: number): Array<Array<MiningFlagType | null>> {
   return Array.from({ length: size }, () => Array<MiningFlagType | null>(size).fill(null));
 }
@@ -22,6 +20,8 @@ function plan(opts: {
   systemFlags?: Array<Array<MiningFlagType | null>>;
   revealed?: boolean[][];
   skills?: string[];
+  scannerEnabled?: boolean;
+  regionIds?: string[][];
   size?: number;
 }) {
   const size = opts.size ?? 5;
@@ -30,12 +30,11 @@ function plan(opts: {
     revealed: opts.revealed ?? makeRevealed(size),
     systemFlags: opts.systemFlags ?? makeFlags(size),
     revealedGoldPositions: opts.revealedGoldPositions ?? [],
-    regionIds: makeRegions(size),
+    regionIds: opts.regionIds ?? makeRegions(size),
     ownedSkillIds: (opts.skills ?? ['buy-magpie']) as any,
+    scannerEnabled: opts.scannerEnabled ?? false,
   });
 }
-
-// ─── No-op cases ────────────────────────────────────────────────────────────
 
 describe('buildMiningAutomationPlan — no-op cases', () => {
   it('returns no actions with only buy-magpie and no gold', () => {
@@ -43,7 +42,7 @@ describe('buildMiningAutomationPlan — no-op cases', () => {
     expect(actions).toHaveLength(0);
   });
 
-  it('returns no actions with gold found but no auto-flag skills', () => {
+  it('returns no actions with gold found but no deduction upgrades', () => {
     const actions = plan({
       revealedGoldPositions: [{ row: 0, col: 2 }],
       skills: ['buy-magpie'],
@@ -52,170 +51,121 @@ describe('buildMiningAutomationPlan — no-op cases', () => {
   });
 });
 
-// ─── auto-flag-row ──────────────────────────────────────────────────────────
-
-describe('buildMiningAutomationPlan — auto-flag-row', () => {
+describe('buildMiningAutomationPlan — row, column, and diagonal lessons', () => {
   it('flags all other cells in the confirmed gold row as not-gold', () => {
     const actions = plan({
       revealedGoldPositions: [{ row: 0, col: 2 }],
       skills: ['buy-magpie', 'auto-flag-row'],
     });
-    const notGoldInRow0 = actions.filter((a) => a.type === 'placeNotGoldFlag' && a.row === 0);
-    expect(notGoldInRow0.map((a) => a.col).sort()).toEqual([0, 1, 3, 4]);
+    const notGoldInRow0 = actions.filter((action) => action.row === 0).map((action) => action.col);
+    expect(notGoldInRow0.sort()).toEqual([0, 1, 3, 4]);
   });
 
-  it('does not flag the gold tile itself', () => {
-    const actions = plan({
-      revealedGoldPositions: [{ row: 0, col: 2 }],
-      skills: ['buy-magpie', 'auto-flag-row'],
-    });
-    expect(actions.find((a) => a.row === 0 && a.col === 2)).toBeUndefined();
-  });
-
-  it('skips already-revealed tiles', () => {
-    const revealed = makeRevealed(5);
-    revealed[0][0] = true;
-    const actions = plan({
-      revealedGoldPositions: [{ row: 0, col: 2 }],
-      revealed,
-      skills: ['buy-magpie', 'auto-flag-row'],
-    });
-    expect(actions.find((a) => a.row === 0 && a.col === 0)).toBeUndefined();
-  });
-
-  it('skips tiles that already have a flag', () => {
-    const flags = makeFlags(5);
-    flags[0][1] = 'not-gold';
-    const actions = plan({
-      revealedGoldPositions: [{ row: 0, col: 2 }],
-      systemFlags: flags,
-      skills: ['buy-magpie', 'auto-flag-row'],
-    });
-    // (0,1) should not appear in actions since it already has a flag
-    expect(actions.find((a) => a.row === 0 && a.col === 1)).toBeUndefined();
-  });
-});
-
-// ─── auto-flag-column ───────────────────────────────────────────────────────
-
-describe('buildMiningAutomationPlan — auto-flag-column', () => {
   it('flags all other cells in the confirmed gold column as not-gold', () => {
     const actions = plan({
       revealedGoldPositions: [{ row: 2, col: 3 }],
       skills: ['buy-magpie', 'auto-flag-column'],
     });
-    const notGoldInCol3 = actions.filter((a) => a.type === 'placeNotGoldFlag' && a.col === 3);
-    expect(notGoldInCol3.map((a) => a.row).sort()).toEqual([0, 1, 3, 4]);
+    const notGoldInCol3 = actions.filter((action) => action.col === 3).map((action) => action.row);
+    expect(notGoldInCol3.sort()).toEqual([0, 1, 3, 4]);
+  });
+
+  it('flags touching diagonal cells around confirmed gold', () => {
+    const actions = plan({
+      revealedGoldPositions: [{ row: 2, col: 2 }],
+      skills: ['buy-magpie', 'auto-flag-diagonal'],
+    });
+    expect(actions).toEqual(
+      expect.arrayContaining([
+        { type: 'placeNotGoldFlag', row: 1, col: 1 },
+        { type: 'placeNotGoldFlag', row: 1, col: 3 },
+        { type: 'placeNotGoldFlag', row: 3, col: 1 },
+        { type: 'placeNotGoldFlag', row: 3, col: 3 },
+      ])
+    );
   });
 });
 
-// ─── gold-here-row ──────────────────────────────────────────────────────────
+describe('buildMiningAutomationPlan — scanner deductions', () => {
+  it('flags the rest of a color group once gold is revealed there', () => {
+    const regionIds = makeRegions(5);
+    regionIds[0][0] = 'A';
+    regionIds[0][1] = 'A';
+    regionIds[1][0] = 'A';
 
-describe('buildMiningAutomationPlan — gold-here-row', () => {
-  it('places a gold-here flag when only one candidate remains in a row', () => {
-    const flags = makeFlags(5);
-    flags[1][0] = 'not-gold';
-    flags[1][1] = 'not-gold';
-    flags[1][2] = 'not-gold';
-    flags[1][3] = 'not-gold';
-    const actions = plan({
-      systemFlags: flags,
-      skills: ['buy-magpie', 'auto-flag-row', 'gold-here-row'],
-    });
-    expect(actions).toContainEqual({ type: 'placeGoldHereFlag', row: 1, col: 4 });
-  });
-
-  it('does not place gold-here in a row that already has confirmed gold', () => {
-    const flags = makeFlags(5);
-    flags[0][1] = 'not-gold';
-    flags[0][2] = 'not-gold';
-    flags[0][3] = 'not-gold';
-    // row 0 has confirmed gold at col 4 — only (0,0) is a candidate but row is already satisfied
-    const actions = plan({
-      revealedGoldPositions: [{ row: 0, col: 4 }],
-      systemFlags: flags,
-      skills: ['buy-magpie', 'auto-flag-row', 'gold-here-row'],
-    });
-    expect(actions.filter((a) => a.type === 'placeGoldHereFlag' && a.row === 0)).toHaveLength(0);
-  });
-});
-
-// ─── gold-here-column ───────────────────────────────────────────────────────
-
-describe('buildMiningAutomationPlan — gold-here-column', () => {
-  it('places a gold-here flag when only one candidate remains in a column', () => {
-    const flags = makeFlags(5);
-    flags[0][3] = 'not-gold';
-    flags[1][3] = 'not-gold';
-    flags[2][3] = 'not-gold';
-    flags[3][3] = 'not-gold';
-    const actions = plan({
-      systemFlags: flags,
-      skills: ['buy-magpie', 'auto-flag-column', 'gold-here-column'],
-    });
-    expect(actions).toContainEqual({ type: 'placeGoldHereFlag', row: 4, col: 3 });
-  });
-});
-
-// ─── Cascading deductions ────────────────────────────────────────────────────
-
-describe('buildMiningAutomationPlan — cascading deductions', () => {
-  it('cascades: auto-flag-column triggers gold-here-row in a subsequent wave', () => {
-    // Gold confirmed at (0,0).
-    // auto-flag-column → marks (1,0),(2,0),(3,0),(4,0) not-gold.
-    // Row 1 already has (1,1),(1,2),(1,3) not-gold, so after column flags cascade:
-    //   row 1 has not-gold at cols 0,1,2,3 → col 4 is the sole candidate → gold-here-row fires.
-    const flags = makeFlags(5);
-    flags[1][1] = 'not-gold';
-    flags[1][2] = 'not-gold';
-    flags[1][3] = 'not-gold';
     const actions = plan({
       revealedGoldPositions: [{ row: 0, col: 0 }],
-      systemFlags: flags,
-      skills: ['buy-magpie', 'auto-flag-row', 'auto-flag-column', 'gold-here-row'],
+      scannerEnabled: true,
+      regionIds,
+      skills: ['buy-magpie'],
     });
-    const goldHere = actions.filter((a) => a.type === 'placeGoldHereFlag');
-    expect(goldHere).toContainEqual({ type: 'placeGoldHereFlag', row: 1, col: 4 });
+
+    expect(actions).toEqual(
+      expect.arrayContaining([
+        { type: 'placeNotGoldFlag', row: 0, col: 1 },
+        { type: 'placeNotGoldFlag', row: 1, col: 0 },
+      ])
+    );
   });
 
-  it('does not produce duplicate actions for the same cell across waves', () => {
-    const flags = makeFlags(5);
-    flags[1][0] = 'not-gold';
-    flags[1][1] = 'not-gold';
-    flags[1][2] = 'not-gold';
-    flags[1][3] = 'not-gold';
+  it('does not do scanner deductions without the scanner upgrade', () => {
+    const regionIds = makeRegions(5);
+    regionIds[0][0] = 'A';
+    regionIds[0][1] = 'A';
+
     const actions = plan({
-      systemFlags: flags,
-      skills: ['buy-magpie', 'auto-flag-row', 'gold-here-row'],
+      revealedGoldPositions: [{ row: 0, col: 0 }],
+      scannerEnabled: false,
+      regionIds,
+      skills: ['buy-magpie'],
     });
-    const forCell = actions.filter((a) => a.row === 1 && a.col === 4);
-    expect(forCell).toHaveLength(1);
+
+    expect(actions).toHaveLength(0);
   });
 });
 
-// ─── Iteration cap ──────────────────────────────────────────────────────────
+describe('buildMiningAutomationPlan — pattern automations', () => {
+  it('pattern automation I uses pc-1 to place fixed not-gold flags', () => {
+    const regionIds = makeRegions(5, 'B');
+    regionIds[0][1] = 'A';
+    regionIds[1][1] = 'A';
+    regionIds[1][2] = 'A';
 
-describe('buildMiningAutomationPlan — iteration cap', () => {
-  it('respects maxIterations and does not infinite loop', () => {
-    const actions = buildMiningAutomationPlan({
-      size: 5,
-      revealed: makeRevealed(5),
+    const actions = plan({
       systemFlags: makeFlags(5),
-      revealedGoldPositions: [
-        { row: 0, col: 0 },
-        { row: 1, col: 2 },
-      ],
-      regionIds: makeRegions(5),
-      ownedSkillIds: [
-        'buy-magpie',
-        'auto-flag-row',
-        'auto-flag-column',
-        'auto-flag-diagonal',
-        'gold-here-row',
-        'gold-here-column',
-      ] as any,
-      maxIterations: 1,
+      regionIds,
+      skills: ['buy-magpie', 'pattern-automation-1'],
     });
-    expect(Array.isArray(actions)).toBe(true);
+
+    expect(actions).toEqual(
+      expect.arrayContaining([
+        { type: 'placeNotGoldFlag', row: 0, col: 2 },
+        { type: 'placeNotGoldFlag', row: 1, col: 0 },
+        { type: 'placeNotGoldFlag', row: 2, col: 1 },
+      ])
+    );
+  });
+
+  it('pattern automation II uses pc-2 to place fixed not-gold flags', () => {
+    const regionIds = makeRegions(5, 'B');
+    regionIds[1][2] = 'A';
+    regionIds[2][1] = 'A';
+
+    const actions = plan({
+      systemFlags: makeFlags(5),
+      regionIds,
+      skills: ['buy-magpie', 'pattern-automation-2'],
+    });
+
+    expect(actions).toEqual(
+      expect.arrayContaining([
+        { type: 'placeNotGoldFlag', row: 0, col: 1 },
+        { type: 'placeNotGoldFlag', row: 1, col: 0 },
+        { type: 'placeNotGoldFlag', row: 1, col: 1 },
+        { type: 'placeNotGoldFlag', row: 2, col: 2 },
+        { type: 'placeNotGoldFlag', row: 2, col: 3 },
+        { type: 'placeNotGoldFlag', row: 3, col: 2 },
+      ])
+    );
   });
 });

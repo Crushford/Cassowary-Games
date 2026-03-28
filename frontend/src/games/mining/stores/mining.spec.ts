@@ -140,7 +140,10 @@ describe('useMiningStore', () => {
       returnPercent: 3,
       scannerUnlocked: false,
     });
-    expect(store.visibleAutomationOptions.map((option) => option.id)).toEqual(['buy-magpie']);
+    expect(store.visibleAutomationOptions.map((option) => option.id)).toEqual([
+      'buy-magpie',
+      'auto-flag-row',
+    ]);
     expect(store.visibleToolUpgradeOptions.map((option) => option.id)).toEqual(['auto-hauler']);
   });
 
@@ -210,16 +213,21 @@ describe('useMiningStore', () => {
 
     store.run.bestLevel = 3;
 
-    expect(store.visibleAutomationOptions.map((option) => option.id)).toEqual(['buy-magpie']);
+    expect(store.visibleAutomationOptions.map((option) => option.id)).toEqual([
+      'buy-magpie',
+      'auto-flag-row',
+      'auto-flag-column',
+      'auto-flag-diagonal',
+      'pattern-automation-1',
+      'pattern-automation-2',
+    ]);
+    expect(store.canBuyAutomation('auto-flag-row')).toBe(false);
 
     store.buyAutomation('buy-magpie');
     expect(store.visibleAutomationOptions.map((option) => option.id)).toEqual([
       'auto-flag-row',
       'auto-flag-column',
       'auto-flag-diagonal',
-      'gold-here-row',
-      'gold-here-column',
-      'gold-here-region',
       'pattern-automation-1',
       'pattern-automation-2',
     ]);
@@ -228,7 +236,7 @@ describe('useMiningStore', () => {
       'auto-hauler',
     ]);
 
-    expect(store.canBuyAutomation('pattern-automation-1')).toBe(false);
+    expect(store.canBuyAutomation('pattern-automation-1')).toBe(true);
     expect(store.canBuyToolUpgrade('scanner')).toBe(true);
 
     store.buyToolUpgrade('scanner');
@@ -274,7 +282,7 @@ describe('useMiningStore', () => {
     expect(store.showFieldExhaustedModal).toBe(true);
   });
 
-  it('places a system gold-here flag when one row candidate remains after the lesson is owned', async () => {
+  it('shows purchased upgrades when the purchased toggle is enabled', async () => {
     const store = await createStore();
 
     store.run.bestLevel = 3;
@@ -284,15 +292,34 @@ describe('useMiningStore', () => {
     expect(store.visibleAutomationOptions.map((option) => option.id)).not.toContain(
       'auto-flag-row'
     );
-    store.buyAutomation('gold-here-row');
+    store.buyToolUpgrade('scanner');
 
-    store.board.systemFlags[0][0] = 'not-gold';
-    store.board.systemFlags[0][1] = 'not-gold';
-    store.board.systemFlags[0][2] = 'not-gold';
-    store.board.systemFlags[0][3] = 'not-gold';
-    store.recomputeSystemFlags();
+    store.toggleShowPurchasedUpgrades();
 
-    expect(store.systemFlags[0][4]).toBe('gold-here');
+    expect(store.visibleAutomationOptions.map((option) => option.id)).toContain('buy-magpie');
+    expect(store.visibleAutomationOptions.map((option) => option.id)).toContain('auto-flag-row');
+    expect(store.visibleToolUpgradeOptions.map((option) => option.id)).toContain('scanner');
+  });
+
+  it('restoring an old save drops removed placeholder upgrades', async () => {
+    window.localStorage.setItem(
+      MINING_SAVE_KEY,
+      JSON.stringify({
+        version: 1,
+        progression: {
+          magpieSkillIds: ['buy-magpie', 'gold-here-row', 'pattern-automation-1'],
+          ownedToolUpgradeIds: ['scanner', 'drill'],
+        },
+      })
+    );
+
+    const { useMiningStore } = await import('./mining');
+    const store = useMiningStore();
+
+    await store.initialize();
+
+    expect(store.magpieSkillIds).toEqual(['buy-magpie', 'pattern-automation-1']);
+    expect(store.ownedToolUpgradeIds).toEqual(['scanner']);
   });
 
   it('persists and restores the current mining run from local storage', async () => {
