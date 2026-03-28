@@ -323,8 +323,6 @@ describe('useMiningStore', () => {
       'auto-flag-row',
       'auto-flag-column',
       'auto-flag-diagonal',
-      'pattern-automation-1',
-      'pattern-automation-2',
     ]);
     expect(store.canBuyAutomation('auto-flag-row')).toBe(false);
 
@@ -333,21 +331,30 @@ describe('useMiningStore', () => {
       'auto-flag-row',
       'auto-flag-column',
       'auto-flag-diagonal',
-      'pattern-automation-1',
-      'pattern-automation-2',
     ]);
     expect(store.visibleToolUpgradeOptions.map((option) => option.id)).toEqual([
       'scanner',
       'auto-hauler',
     ]);
 
-    expect(store.canBuyAutomation('pattern-automation-1')).toBe(true);
     expect(store.canBuyToolUpgrade('scanner')).toBe(true);
 
     store.buyToolUpgrade('scanner');
 
     expect(store.ownedToolUpgradeIds).toContain('scanner');
     expect(store.canShowScannerRegions).toBe(true);
+
+    store.run.bestLevel = 4;
+
+    expect(store.visibleAutomationOptions.map((option) => option.id)).toEqual([
+      'auto-flag-row',
+      'auto-flag-column',
+      'auto-flag-diagonal',
+      'pattern-automation-1',
+      'pattern-automation-2',
+    ]);
+
+    expect(store.canBuyAutomation('pattern-automation-1')).toBe(true);
   });
 
   it('keeps the field playable after all gold is found and only completes when fully dug', async () => {

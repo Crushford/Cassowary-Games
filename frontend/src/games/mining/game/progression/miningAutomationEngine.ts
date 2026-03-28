@@ -1,6 +1,6 @@
 import type { GridSquare, MarkType } from '@/games/queens/types/types';
-import { collectWavePlacements } from '@/games/queens/utils/incrementalAutomation';
 import {
+  collectPatternFlagPlacements,
   getPatternCardById,
   type PatternCardDefinition,
 } from '@/games/queens/utils/incrementalPatternCards';
@@ -164,6 +164,29 @@ function getOwnedPatternCards(ownedSkillIds: MiningMagpieSkillId[]): PatternCard
     .filter((card): card is PatternCardDefinition => card !== null);
 }
 
+function summarizeMarks(marks: MarkType[][]) {
+  let open = 0;
+  let flagged = 0;
+  let blocked = 0;
+  let queens = 0;
+
+  for (const row of marks) {
+    for (const mark of row) {
+      if (mark === null) {
+        open += 1;
+      } else if (mark === 'flag') {
+        flagged += 1;
+      } else if (mark === 'queen') {
+        queens += 1;
+      } else {
+        blocked += 1;
+      }
+    }
+  }
+
+  return { open, flagged, queens, blocked };
+}
+
 function collectPatternActions(options: {
   size: number;
   revealed: boolean[][];
@@ -179,12 +202,65 @@ function collectPatternActions(options: {
 
   const grid = buildQueensGrid(size, regionIds);
   const marks = buildQueensMarks(currentFlags, revealed);
+  const workingMarks = marks.map((row) => [...row]);
+  const actions: MiningAutomationAction[] = [];
+  const seen = new Set<string>();
 
-  return collectWavePlacements(grid, marks, patternCards).map((placement) => ({
-    type: 'placeNotGoldFlag' as const,
-    row: placement.row,
-    col: placement.col,
-  }));
+  console.log('[mining][pattern-automation] starting pass', {
+    ownedCards: patternCards.map((card) => card.id),
+    markSummary: summarizeMarks(workingMarks),
+  });
+
+  for (let wave = 0; wave < size * size; wave += 1) {
+    let addedAny = false;
+
+    for (const card of patternCards) {
+      const matches = collectPatternFlagPlacements(grid, workingMarks, card);
+
+      console.log('[mining][pattern-automation] card evaluation', {
+        cardId: card.id,
+        wave,
+        matches,
+        markSummary: summarizeMarks(workingMarks),
+      });
+
+      if (matches.length === 0) {
+        continue;
+      }
+
+      for (const match of matches) {
+        const key = `${match.row},${match.col}`;
+        if (workingMarks[match.row][match.col] !== null || seen.has(key)) {
+          continue;
+        }
+
+        workingMarks[match.row][match.col] = 'flag';
+        seen.add(key);
+        actions.push({
+          type: 'placeNotGoldFlag',
+          row: match.row,
+          col: match.col,
+        });
+        addedAny = true;
+      }
+    }
+
+    if (!addedAny) {
+      console.log('[mining][pattern-automation] no further placements', {
+        wave,
+        totalPlacements: actions,
+      });
+      break;
+    }
+  }
+
+  if (actions.length > 0) {
+    console.log('[mining][pattern-automation] placements applied', {
+      placements: actions,
+    });
+  }
+
+  return actions;
 }
 
 export function buildMiningAutomationPlan({
