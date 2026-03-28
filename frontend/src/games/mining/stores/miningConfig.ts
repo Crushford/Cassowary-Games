@@ -16,8 +16,9 @@ export const DEFAULT_LEVEL_RETURN_PERCENT = 0;
 // TODO: all exchange thresholds and upgrade prices need real balancing later.
 export const EXCHANGE_LEVELS: MiningExchangeLevelDefinition[] = [
   { level: 1, threshold: 0, returnPercent: 3 },
-  { level: 2, threshold: 14, returnPercent: 6 },
-  { level: 3, threshold: 28, returnPercent: 10 },
+  { level: 2, threshold: 7, returnPercent: 6 },
+  { level: 3, threshold: 14, returnPercent: 9 },
+  { level: 4, threshold: 28, returnPercent: 12 },
 ];
 
 export const TOOL_EXPLANATIONS: Partial<Record<MiningToolUpgradeId, string>> = {
