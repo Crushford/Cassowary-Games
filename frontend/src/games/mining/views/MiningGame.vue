@@ -59,7 +59,7 @@
             :reward-label="String(store.goldRewardPerTile)"
             :show-regions="store.canShowScannerRegions"
             :can-excavate-all-hidden="store.foundGoldCount === store.totalGoldOnBoard"
-            :disabled="store.phase !== 'playing'"
+            :disabled="store.phase === 'loading'"
             @dig="store.dig"
             @toggle-flag="store.toggleFlag"
           />

@@ -160,10 +160,21 @@ export async function loadNextLevel(state: MiningStoreState, deps: RunDeps) {
 }
 
 export function toggleFlag(state: MiningStoreState, position: PositionRef) {
+  if (state.run.daysLeftInMonth <= 0) {
+    logMiningInteraction('toggle-flag-blocked', state, position, {
+      reason: 'no-days-left',
+    });
+    state.ui.errorMessage = 'You need at least 1 day left this month to place or remove a flag.';
+    state.ui.errorTick += 1;
+    return;
+  }
+
   if (state.run.phase !== 'playing') {
     logMiningInteraction('toggle-flag-blocked', state, position, {
       reason: 'phase-not-playing',
     });
+    state.ui.errorMessage = 'Finish town business before returning to the field.';
+    state.ui.errorTick += 1;
     return;
   }
 
@@ -283,8 +294,15 @@ export async function dig(state: MiningStoreState, position: PositionRef, deps: 
     canDigAt: canDigAt(state, position),
   });
 
+  if (state.run.daysLeftInMonth <= 0) {
+    logMiningInteraction('dig-blocked', state, position, { reason: 'no-days-left' });
+    deps.setError('You need at least 1 day left this month to dig or place flags.');
+    return;
+  }
+
   if (state.run.phase !== 'playing') {
     logMiningInteraction('dig-blocked', state, position, { reason: 'phase-not-playing' });
+    deps.setError('Finish town business before returning to the field.');
     return;
   }
 

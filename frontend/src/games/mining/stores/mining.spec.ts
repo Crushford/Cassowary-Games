@@ -116,6 +116,21 @@ describe('useMiningStore', () => {
     expect(store.progressionMenuOpen).toBe(true);
   });
 
+  it('requires at least 1 day left to place flags or dig', async () => {
+    const store = await createStore();
+
+    store.run.daysLeftInMonth = 0;
+
+    store.toggleFlag({ row: 0, col: 1 });
+    expect(store.playerFlags[0][1]).toBe(null);
+    expect(store.errorMessage).toContain('1 day left');
+
+    store.clearError();
+    await store.dig({ row: 0, col: 1 });
+    expect(store.revealed[0][1]).toBe(false);
+    expect(store.errorMessage).toContain('1 day left');
+  });
+
   it('processes the exchange, updates month level and unlocks level-gated shops', async () => {
     const store = await createStore();
 
