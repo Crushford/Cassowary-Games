@@ -81,9 +81,6 @@ export const useMiningStore = defineStore('mining', {
     levelCelebration: (state) => state.ui.levelCelebration,
     deathMessage: (state) => state.run.deathMessage,
     showHintModal: (state) => state.ui.showHintModal,
-    showUpgradeExplanation: (state) => state.ui.showUpgradeExplanation,
-    upgradeExplanationTitle: (state) => state.ui.upgradeExplanationTitle,
-    upgradeExplanationMessage: (state) => state.ui.upgradeExplanationMessage,
     errorMessage: (state) => state.ui.errorMessage,
     errorTick: (state) => state.ui.errorTick,
     lastActionMessage: (state) => state.ui.lastActionMessage,
@@ -277,10 +274,6 @@ export const useMiningStore = defineStore('mining', {
 
     closeSettingsModal() {
       this.ui.showSettingsModal = false;
-    },
-
-    hideUpgradeExplanation() {
-      this.ui.showUpgradeExplanation = false;
     },
 
     openHints() {

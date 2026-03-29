@@ -8,7 +8,6 @@ import {
   getExchangeLevelForMonthlyGold,
   getNextExchangeLevel,
   MONTHLY_UPKEEP_COST,
-  TOOL_EXPLANATIONS,
 } from './miningConfig';
 import type { MiningStoreState } from './miningState';
 import { recomputeSystemFlags } from './miningRunService';
@@ -215,12 +214,5 @@ export function buyToolUpgrade(
   state.economy.coinsTotal -= upgrade.cost;
   state.progression.ownedToolUpgradeIds.push(upgradeId);
 
-  if (TOOL_EXPLANATIONS[upgradeId]) {
-    state.ui.upgradeExplanationTitle = `${upgrade.title} Purchased`;
-    state.ui.upgradeExplanationMessage = TOOL_EXPLANATIONS[upgradeId] ?? '';
-    state.ui.showUpgradeExplanation = true;
-  }
-
-  state.ui.progressionMenuOpen = false;
   state.ui.lastActionMessage = `${upgrade.title} purchased. ${upgrade.effectSummary}`;
 }

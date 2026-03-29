@@ -413,6 +413,29 @@ describe('useMiningStore', () => {
     expect(store.visibleToolUpgradeOptions.map((option) => option.id)).toContain('scanner');
   });
 
+  it('buying a scanner keeps the tool shop active and lets town progression continue normally', async () => {
+    const store = await createStore();
+
+    store.run.phase = 'town';
+    store.progression.townStep = 'tool-store';
+    store.run.bestLevel = 3;
+    store.ui.progressionMenuOpen = true;
+    store.progression.monthlyUpkeepPaid = true;
+
+    store.buyToolUpgrade('scanner');
+
+    expect(store.progressionMenuOpen).toBe(true);
+    expect(store.phase).toBe('town');
+    expect(store.townStep).toBe('tool-store');
+    expect(store.ownedToolUpgradeIds).toContain('scanner');
+
+    store.continueTownSequence();
+
+    expect(store.phase).toBe('playing');
+    expect(store.townStep).toBe('none');
+    expect(store.progressionMenuOpen).toBe(false);
+  });
+
   it('restoring an old save drops removed placeholder upgrades', async () => {
     window.localStorage.setItem(
       MINING_SAVE_KEY,

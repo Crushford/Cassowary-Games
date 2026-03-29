@@ -71,14 +71,11 @@ export interface MiningUiState {
   showDeathModal: boolean;
   showFieldExhaustedModal: boolean;
   showHintModal: boolean;
-  showUpgradeExplanation: boolean;
   levelCelebration: {
     level: number;
     returnPercent: number;
     scannerUnlocked: boolean;
   } | null;
-  upgradeExplanationTitle: string | null;
-  upgradeExplanationMessage: string | null;
   errorMessage: string | null;
   errorTick: number;
   lastActionMessage: string;
@@ -172,10 +169,7 @@ export function createInitialMiningState(): MiningStoreState {
       showDeathModal: false,
       showFieldExhaustedModal: false,
       showHintModal: false,
-      showUpgradeExplanation: false,
       levelCelebration: null,
-      upgradeExplanationTitle: null,
-      upgradeExplanationMessage: null,
       errorMessage: null,
       errorTick: 0,
       lastActionMessage:
