@@ -203,10 +203,6 @@ function handleTouchStart(event: TouchEvent) {
   isSwiping.value = true;
   swipedCells.value.clear();
   swipedCells.value.add(getCellKey(position.row, position.col));
-
-  if (event.cancelable) {
-    event.preventDefault();
-  }
 }
 
 function handleTouchMove(event: TouchEvent) {
