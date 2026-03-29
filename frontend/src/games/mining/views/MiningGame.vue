@@ -249,42 +249,6 @@
     </Modal>
 
     <Modal
-      :is-visible="store.showUpgradeExplanation"
-      aria-label="Tool upgrade explanation"
-      @close="store.hideUpgradeExplanation()"
-    >
-      <div class="space-y-4 text-white">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 class="text-xl font-bold">{{ store.upgradeExplanationTitle }}</h2>
-            <p class="mt-1 text-sm text-semantic-neutral-300">
-              New tools make the contract easier to read and more valuable to work.
-            </p>
-          </div>
-          <button
-            type="button"
-            class="rounded-lg border border-semantic-neutral-600 px-3 py-1.5 text-sm font-semibold text-semantic-neutral-200 hover:bg-semantic-neutral-700"
-            @click="store.hideUpgradeExplanation()"
-          >
-            Close
-          </button>
-        </div>
-
-        <p class="text-sm leading-relaxed text-semantic-neutral-200">
-          {{ store.upgradeExplanationMessage }}
-        </p>
-
-        <button
-          type="button"
-          class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
-          @click="store.hideUpgradeExplanation()"
-        >
-          Back to the Contract
-        </button>
-      </div>
-    </Modal>
-
-    <Modal
       :is-visible="Boolean(store.levelCelebration)"
       aria-label="Exchange level reached"
       @close="store.dismissLevelCelebration()"

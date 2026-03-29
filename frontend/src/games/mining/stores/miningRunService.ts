@@ -193,7 +193,6 @@ export function triggerOutOfFood(state: MiningStoreState) {
   state.run.phase = 'out-of-food';
   state.economy.foodTotal = 0;
   state.ui.showHintModal = false;
-  state.ui.showUpgradeExplanation = false;
   state.ui.showDeathModal = true;
   state.ui.showFieldExhaustedModal = false;
   state.run.deathMessage =

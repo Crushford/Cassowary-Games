@@ -1,4 +1,4 @@
-import type { MiningExchangeLevelDefinition, MiningToolUpgradeId } from '../game/types';
+import type { MiningExchangeLevelDefinition } from '../game/types';
 
 export const MINING_SAVE_KEY = 'mining-save-v1';
 export const MINING_SAVE_VERSION = 1;
@@ -20,13 +20,6 @@ export const EXCHANGE_LEVELS: MiningExchangeLevelDefinition[] = [
   { level: 3, threshold: 14, returnPercent: 9 },
   { level: 4, threshold: 28, returnPercent: 12 },
 ];
-
-export const TOOL_EXPLANATIONS: Partial<Record<MiningToolUpgradeId, string>> = {
-  scanner:
-    'The scanner reveals region groups and teaches the crew to rule out the rest of a group once a gold seam there is confirmed.',
-  'auto-hauler':
-    'Once the whole field is dug out, the crew can roll straight into the next field if 1 coin is available for travel.',
-};
 
 export function getExchangeLevelForMonthlyGold(monthlyGold: number): MiningExchangeLevelDefinition {
   let current = EXCHANGE_LEVELS[0];
