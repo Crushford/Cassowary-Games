@@ -71,28 +71,22 @@ export function recomputeSystemFlags(state: MiningStoreState) {
 
   const foundGold = getFoundGoldPositions(state.board.truthGold, state.board.revealed);
   const seedSystemFlags = sanitizeSystemFlags(state);
-  const hasSeedFlags = seedSystemFlags.some((row) => row.some((flag) => flag !== null));
+  const actions = buildMiningAutomationPlan({
+    size: state.board.boardSize,
+    revealed: state.board.revealed,
+    systemFlags: seedSystemFlags,
+    revealedGoldPositions: foundGold,
+    regionIds: state.board.regionIds,
+    ownedSkillIds: state.progression.magpieSkillIds,
+    scannerEnabled: state.progression.ownedToolUpgradeIds.includes('scanner'),
+  });
+  const nextSystemFlags = seedSystemFlags.map((row) => [...row]);
 
-  if (foundGold.length === 0 && !hasSeedFlags) {
-    state.board.systemFlags = createFlagGrid(state.board.boardSize);
-  } else {
-    const actions = buildMiningAutomationPlan({
-      size: state.board.boardSize,
-      revealed: state.board.revealed,
-      systemFlags: seedSystemFlags,
-      revealedGoldPositions: foundGold,
-      regionIds: state.board.regionIds,
-      ownedSkillIds: state.progression.magpieSkillIds,
-      scannerEnabled: state.progression.ownedToolUpgradeIds.includes('scanner'),
-    });
-    const nextSystemFlags = seedSystemFlags.map((row) => [...row]);
-
-    for (const action of actions) {
-      nextSystemFlags[action.row][action.col] = 'not-gold';
-    }
-
-    state.board.systemFlags = nextSystemFlags;
+  for (const action of actions) {
+    nextSystemFlags[action.row][action.col] = 'not-gold';
   }
+
+  state.board.systemFlags = nextSystemFlags;
 }
 
 function canDigAt(state: MiningStoreState, position: PositionRef): boolean {

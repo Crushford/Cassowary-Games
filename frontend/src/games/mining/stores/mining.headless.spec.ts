@@ -25,6 +25,12 @@ const PUZZLE_B = {
   queens: '.Q......Q.Q......Q......Q',
 };
 
+const PATTERN_PUZZLE = {
+  id: 'headless-pattern',
+  layout: 'BABBBBAABBBBBBBBBBBBBBBBB',
+  queens: 'Q......Q......Q.Q......Q.',
+};
+
 // ─── Setup ───────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
@@ -174,6 +180,24 @@ describe('Mining headless E2E — magpie automation', () => {
     expect(store.systemFlags[0][2]).toBe('not-gold');
     expect(store.systemFlags[0][3]).toBe('not-gold');
     expect(store.systemFlags[0][4]).toBe('not-gold');
+    game.cleanup();
+  });
+
+  it('applies pattern auto-flags as part of field initialization', async () => {
+    const game = await createHeadlessGame({ puzzles: [PUZZLE_A, PATTERN_PUZZLE] });
+    const { store } = game;
+
+    store.run.bestLevel = 4;
+    store.economy.coinsTotal = 20;
+    store.buyAutomation('buy-magpie');
+    store.buyAutomation('pattern-automation-1');
+
+    await store.loadNextLevel();
+
+    expect(store.currentPuzzleId).toBe('headless-pattern');
+    expect(store.systemFlags[0][2]).toBe('not-gold');
+    expect(store.systemFlags[1][0]).toBe('not-gold');
+    expect(store.systemFlags[2][1]).toBe('not-gold');
     game.cleanup();
   });
 
