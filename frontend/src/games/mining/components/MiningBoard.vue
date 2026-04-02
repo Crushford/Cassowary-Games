@@ -18,6 +18,7 @@
       :gold-found-animating="goldFoundAnimatingKeys.has(getCellKey(cell.row, cell.col))"
       :reward-label="rewardLabel"
       :region-id="cell.regionId"
+      :region-color-class="cell.regionId ? (regionColorClassMap[cell.regionId] ?? '') : ''"
       :show-region="showRegions"
       :disabled="disabled || cell.tileKind !== 'hidden'"
       :can-excavate-all-hidden="canExcavateAllHidden"
@@ -31,6 +32,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
 import type { MiningFlagType, PositionRef } from '../game/types';
+import { buildRegionColorClassMap } from '../game/utils/regionColor';
 import MiningSquare from './MiningSquare.vue';
 
 const props = defineProps<{
@@ -48,6 +50,8 @@ const emit = defineEmits<{
   dig: [position: PositionRef];
   'toggle-flag': [position: PositionRef];
 }>();
+
+const regionColorClassMap = computed(() => buildRegionColorClassMap(props.regionIds));
 
 const isSwiping = ref(false);
 const swipedCells = ref<Set<string>>(new Set());

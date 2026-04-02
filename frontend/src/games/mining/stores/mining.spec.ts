@@ -32,6 +32,39 @@ const puzzlesPayload = {
       ),
     },
   ],
+  '8x8': [
+    {
+      id: 'pz-8-0',
+      layout: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
+      queens: [
+        'Q.......',
+        '..Q.....',
+        '....Q...',
+        '......Q.',
+        '.Q......',
+        '...Q....',
+        '.....Q..',
+        '.......Q',
+      ].join(''),
+    },
+  ],
+  '9x9': [
+    {
+      id: 'pz-9-0',
+      layout: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/!@#$%^&*()-_=',
+      queens: [
+        'Q........',
+        '..Q......',
+        '.....Q...',
+        '.......Q.',
+        '.Q.......',
+        '...Q.....',
+        '........Q',
+        '......Q..',
+        '....Q....',
+      ].join(''),
+    },
+  ],
 };
 
 describe('useMiningStore', () => {
@@ -39,6 +72,7 @@ describe('useMiningStore', () => {
     vi.useFakeTimers();
     __resetMiningPuzzleCacheForTests();
     vi.spyOn(Math, 'random').mockReturnValue(0);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
     const storage = (() => {
       const store = new Map<string, string>();
       return {
@@ -113,8 +147,27 @@ describe('useMiningStore', () => {
 
   async function completeLevel(store: Awaited<ReturnType<typeof createStore>>) {
     for (const position of getGoldPositions(store.truthGold)) {
+      if (store.revealed[position.row][position.col]) {
+        continue;
+      }
+
       store.toggleFlag(position);
       await store.dig(position);
+    }
+  }
+
+  async function advanceToLevel(
+    store: Awaited<ReturnType<typeof createStore>>,
+    levelNumber: number
+  ) {
+    while (store.currentLevelNumber < levelNumber) {
+      await completeLevel(store);
+      expect(
+        store.canStartNextLevel,
+        `expected level ${store.currentLevelNumber} to unlock the next level`
+      ).toBe(true);
+      await store.startNextLevel();
+      store.dismissLevelIntro();
     }
   }
 
@@ -225,5 +278,26 @@ describe('useMiningStore', () => {
     expect(store.currentLevelNumber).toBe(3);
     expect(store.boardSize).toBe(6);
     expect(store.showLevelIntroModal).toBe(true);
+  });
+
+  it('completes the full scanner campaign and saves a leaderboard score', async () => {
+    const store = await createStore();
+
+    await advanceToLevel(store, 9);
+    await completeLevel(store);
+
+    expect(store.isGameComplete).toBe(true);
+    expect(store.phase).toBe('game-complete');
+    expect(store.daysElapsed).toBeGreaterThan(0);
+    expect(store.showLevelResultModal).toBe(true);
+
+    store.setLeaderboardName('James');
+    store.submitLeaderboardScore();
+
+    expect(store.scoreSubmitted).toBe(true);
+    expect(store.leaderboardEntries[0]).toMatchObject({
+      name: 'James',
+      daysElapsed: store.daysElapsed,
+    });
   });
 });

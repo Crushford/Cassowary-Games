@@ -1,4 +1,4 @@
-export type MiningPhase = 'idle' | 'loading' | 'playing' | 'level-complete';
+export type MiningPhase = 'idle' | 'loading' | 'playing' | 'level-complete' | 'game-complete';
 export type MiningProgressionTab = 'gold-exchange' | 'animal-trainer' | 'ui-upgrades';
 export type MiningTownStep =
   | 'none'
@@ -68,6 +68,12 @@ export interface MiningCampaignLevel {
   winConditions: MiningLevelWinConditions;
   failure: MiningLevelFailureDefinition;
   reward?: MiningLevelRewardDefinition;
+}
+
+export interface MiningLeaderboardEntry {
+  name: string;
+  daysElapsed: number;
+  completedAt: string;
 }
 
 export interface MiningAutomationDefinition {
