@@ -32,7 +32,7 @@
           </div>
         </div>
         <div class="rounded-xl bg-app-surface px-3 py-2">
-          <div class="uppercase tracking-[0.18em] text-app-textMuted">Level Digs</div>
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Digs</div>
           <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.digsUsed }}</div>
         </div>
         <div class="rounded-xl bg-app-surface px-3 py-2">
@@ -42,27 +42,11 @@
           </div>
         </div>
         <div class="rounded-xl bg-app-surface px-3 py-2">
-          <div class="uppercase tracking-[0.18em] text-app-textMuted">Total Days</div>
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Days Played</div>
           <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.daysElapsed }}</div>
         </div>
       </div>
-
-      <div class="mt-2 grid grid-cols-2 gap-2 text-xs">
-        <div class="rounded-xl bg-app-surface px-3 py-2">
-          <div class="uppercase tracking-[0.18em] text-app-textMuted">Raven</div>
-          <div class="mt-1 font-bold tabular-nums text-app-text">
-            {{ store.unlockedRavenSkillIds.length }}
-          </div>
-        </div>
-        <div class="rounded-xl bg-app-surface px-3 py-2">
-          <div class="uppercase tracking-[0.18em] text-app-textMuted">Tools</div>
-          <div class="mt-1 font-bold tabular-nums text-app-text">
-            {{ store.unlockedToolUpgradeIds.length }}
-          </div>
-        </div>
-      </div>
     </div>
-
     <div class="flex-1 overflow-y-auto px-4 pt-4">
       <div class="space-y-4 pb-6">
         <section class="rounded-2xl border border-app-border bg-app-surface p-4">
