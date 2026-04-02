@@ -23,6 +23,8 @@
   },
   "dependencies": {
     "@primevue/themes": "^4.5.4",
+    "@vueuse/core": "^14.2.1",
+    "motion-v": "^2.2.0",
     "pinia": "^3.0.3",
     "primeicons": "^7.0.0",
     "primevue": "^4.5.4",

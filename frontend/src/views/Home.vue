@@ -106,6 +106,17 @@
               Mine a 5x5 claim and process rock for gold
             </p>
           </router-link>
+
+          <router-link
+            to="/queens/admin"
+            class="block p-4 bg-semantic-info-800 hover:bg-semantic-info-700 rounded-lg transition-colors"
+            @click="showWorksInProgressModal = false"
+          >
+            <h4 class="text-lg font-bold mb-1">Queens Admin Workshop</h4>
+            <p class="text-sm text-semantic-neutral-200">
+              Build and debug Queens boards step by step in the admin generator UI
+            </p>
+          </router-link>
         </div>
       </div>
     </Modal>

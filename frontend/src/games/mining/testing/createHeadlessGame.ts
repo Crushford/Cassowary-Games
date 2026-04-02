@@ -4,16 +4,36 @@ import type { MiningPuzzleRecord } from '../game/types';
 import { __resetPuzzleLoaderForTests, __setPuzzleLoaderForTests } from '../stores/miningRunService';
 
 export interface HeadlessGameOptions {
-  puzzles: MiningPuzzleRecord[];
+  puzzles?: MiningPuzzleRecord[];
+  puzzlesBySize?: Record<number, MiningPuzzleRecord[]>;
 }
 
 export async function createHeadlessGame(opts: HeadlessGameOptions) {
   const pinia = createPinia();
   setActivePinia(pinia);
 
-  const fixtureQueue = [...opts.puzzles];
-  __setPuzzleLoaderForTests(async () => {
-    return fixtureQueue.length > 0 ? (fixtureQueue.shift() as MiningPuzzleRecord) : opts.puzzles[0];
+  const fixtureQueue = opts.puzzles ? [...opts.puzzles] : null;
+  const fixturesBySize = opts.puzzlesBySize
+    ? Object.fromEntries(
+        Object.entries(opts.puzzlesBySize).map(([size, puzzles]) => [Number(size), [...puzzles]])
+      )
+    : null;
+
+  __setPuzzleLoaderForTests(async (_lastPuzzleId, size) => {
+    if (fixturesBySize) {
+      const puzzlesForSize = fixturesBySize[size];
+      if (!puzzlesForSize?.length) {
+        throw new Error(`No headless mining puzzle fixtures registered for size ${size}`);
+      }
+
+      return puzzlesForSize.shift() as MiningPuzzleRecord;
+    }
+
+    if (!fixtureQueue?.length || !opts.puzzles?.length) {
+      throw new Error('No headless mining puzzle fixtures available');
+    }
+
+    return fixtureQueue.shift() as MiningPuzzleRecord;
   });
 
   const { useMiningStore } = await import('../stores/mining');

@@ -36,7 +36,7 @@ export const MINING_CAMPAIGN_LEVELS: MiningCampaignLevel[] = [
     ],
     winConditions: {
       requireAllGold: true,
-      maxDigsExclusive: 13,
+      maxDigsExclusive: 15,
     },
     failure: {
       title: "You didn't make it this time.",
@@ -64,7 +64,7 @@ export const MINING_CAMPAIGN_LEVELS: MiningCampaignLevel[] = [
     ],
     winConditions: {
       requireAllGold: true,
-      maxDigsExclusive: 14,
+      maxDigsExclusive: 16,
     },
     failure: {
       title: "You didn't make it this time.",

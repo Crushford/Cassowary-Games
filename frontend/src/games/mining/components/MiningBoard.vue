@@ -1,37 +1,42 @@
 <template>
-  <div
-    class="grid gap-2 touch-manipulation overscroll-contain"
-    :style="boardStyle"
-    @touchstart="handleTouchStart"
-    @touchmove="handleTouchMove"
-    @touchend="handleTouchEnd"
-    @touchcancel="handleTouchEnd"
-  >
-    <MiningSquare
-      v-for="cell in cells"
-      :key="`${cell.row}-${cell.col}`"
-      :row="cell.row"
-      :col="cell.col"
-      :tile-kind="cell.tileKind"
-      :flagged="cell.flagged"
-      :auto-flag-animating="autoFlagAnimatingKeys.has(getCellKey(cell.row, cell.col))"
-      :gold-found-animating="goldFoundAnimatingKeys.has(getCellKey(cell.row, cell.col))"
-      :empty-found-animating="emptyFoundAnimatingKeys.has(getCellKey(cell.row, cell.col))"
-      :reward-label="rewardLabel"
-      :region-color-class="getRegionColorClass(cell.regionId)"
-      :show-region="showRegions"
-      :disabled="disabled || cell.tileKind !== 'hidden'"
-      @dig="handleDig(cell.row, cell.col)"
-      @toggle-flag="handleToggleFlag(cell.row, cell.col)"
-    />
-  </div>
+  <LazyMotion :features="domAnimation">
+    <div
+      class="grid gap-2 touch-manipulation overscroll-contain"
+      :style="boardStyle"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
+      @touchcancel="handleTouchEnd"
+    >
+      <MiningSquare
+        v-for="cell in cells"
+        :key="`${cell.row}-${cell.col}`"
+        :row="cell.row"
+        :col="cell.col"
+        :tile-kind="cell.tileKind"
+        :flagged="cell.flagged"
+        :auto-flag-animating="autoFlagAnimatingKeys.has(getCellKey(cell.row, cell.col))"
+        :auto-flag-delay-ms="autoFlagDelayMsByKey.get(getCellKey(cell.row, cell.col)) ?? 0"
+        :gold-found-animating="goldFoundAnimatingKeys.has(getCellKey(cell.row, cell.col))"
+        :empty-found-animating="emptyFoundAnimatingKeys.has(getCellKey(cell.row, cell.col))"
+        :reward-label="rewardLabel"
+        :region-color-class="getRegionColorClass(cell.regionId)"
+        :show-region="showRegions"
+        :disabled="disabled || cell.tileKind !== 'hidden'"
+        @dig="handleDig(cell.row, cell.col)"
+        @toggle-flag="handleToggleFlag(cell.row, cell.col)"
+      />
+    </div>
+  </LazyMotion>
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { LazyMotion, domAnimation } from 'motion-v';
 
 import type { MiningFlagType, PositionRef } from '../game/types';
 import { buildRegionColorClassMap } from '../game/utils/regionColor';
+import { AUTO_FLAG_DURATION_MS, AUTO_FLAG_STAGGER_MS } from './motion/miningTileMotion';
 import MiningSquare from './MiningSquare.vue';
 
 const props = defineProps<{
@@ -63,6 +68,7 @@ function getRegionColorClass(regionId: string | null): string | null {
 const isSwiping = ref(false);
 const swipedCells = ref<Set<string>>(new Set());
 const autoFlagAnimatingKeys = ref<Set<string>>(new Set());
+const autoFlagDelayMsByKey = ref<Map<string, number>>(new Map());
 const goldFoundAnimatingKeys = ref<Set<string>>(new Set());
 const emptyFoundAnimatingKeys = ref<Set<string>>(new Set());
 const autoFlagTimeouts = new Map<string, number>();
@@ -80,6 +86,8 @@ watch(
     }
 
     const nextAnimatingKeys = new Set(autoFlagAnimatingKeys.value);
+    const nextDelayMap = new Map(autoFlagDelayMsByKey.value);
+    let animationIndex = 0;
 
     for (let row = 0; row < nextFlagged.length; row += 1) {
       for (let col = 0; col < nextFlagged[row].length; col += 1) {
@@ -92,6 +100,9 @@ watch(
 
         const key = getCellKey(row, col);
         nextAnimatingKeys.add(key);
+        const delayMs = animationIndex * AUTO_FLAG_STAGGER_MS;
+        nextDelayMap.set(key, delayMs);
+        animationIndex += 1;
 
         const pendingTimeout = autoFlagTimeouts.get(key);
         if (pendingTimeout !== undefined) {
@@ -100,17 +111,24 @@ watch(
 
         autoFlagTimeouts.set(
           key,
-          window.setTimeout(() => {
-            autoFlagTimeouts.delete(key);
-            const remainingKeys = new Set(autoFlagAnimatingKeys.value);
-            remainingKeys.delete(key);
-            autoFlagAnimatingKeys.value = remainingKeys;
-          }, 340)
+          window.setTimeout(
+            () => {
+              autoFlagTimeouts.delete(key);
+              const remainingKeys = new Set(autoFlagAnimatingKeys.value);
+              remainingKeys.delete(key);
+              autoFlagAnimatingKeys.value = remainingKeys;
+              const remainingDelayMap = new Map(autoFlagDelayMsByKey.value);
+              remainingDelayMap.delete(key);
+              autoFlagDelayMsByKey.value = remainingDelayMap;
+            },
+            AUTO_FLAG_DURATION_MS + delayMs + 120
+          )
         );
       }
     }
 
     autoFlagAnimatingKeys.value = nextAnimatingKeys;
+    autoFlagDelayMsByKey.value = nextDelayMap;
   },
   { deep: true }
 );
