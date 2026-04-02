@@ -1,15 +1,8 @@
 <template>
   <button
     type="button"
-    class="relative aspect-square h-full w-full rounded-2xl border p-2 text-center transition-colors duration-150 touch-manipulation disabled:cursor-not-allowed"
-    :class="[
-      squareClass,
-      {
-        'auto-flag-tint-magpie': autoFlagAnimating,
-        'gold-found-tint': goldFoundAnimating,
-        'empty-found-tint': emptyFoundAnimating,
-      },
-    ]"
+    class="relative aspect-square h-full w-full overflow-hidden rounded-2xl border p-2 text-center transition-colors duration-150 touch-manipulation disabled:cursor-not-allowed"
+    :class="squareClass"
     :data-row="row"
     :data-col="col"
     :aria-disabled="disabled ? 'true' : 'false'"
@@ -20,40 +13,164 @@
     @pointercancel="clearLongPress"
     @contextmenu.prevent
   >
+    <AnimatePresence>
+      <m.span
+        v-if="showAutoFlagFlash"
+        key="auto-flag-flash"
+        class="auto-flag-flash pointer-events-none absolute inset-0 rounded-[inherit]"
+        :variants="autoFlagRippleVariants"
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        :transition="{ delay: autoFlagDelaySeconds }"
+      />
+    </AnimatePresence>
+
     <div
       v-if="flagged && tileKind === 'hidden'"
       class="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
     >
-      <span class="text-3xl [text-shadow:0_0_10px_rgba(15,23,42,0.5)]" :class="flagClass">🚧</span>
-      <span v-if="showAutoFlagRipple" class="auto-flag-ripple auto-flag-ripple-magpie" />
+      <m.span
+        class="text-shadow-mining-flag text-3xl text-white"
+        :class="{
+          'drop-shadow-mining-flag-glow': autoFlagAnimating && !prefersReducedMotion,
+        }"
+        :variants="autoFlagIconVariants"
+        :initial="autoFlagAnimating ? 'hidden' : 'visible'"
+        animate="visible"
+        :transition="{ delay: autoFlagDelaySeconds }"
+        >🚧</m.span
+      >
+      <AnimatePresence>
+        <m.span
+          v-if="showAutoFlagRipple"
+          key="auto-flag-ripple"
+          class="auto-flag-ripple-ring pointer-events-none absolute h-[62%] w-[62%] rounded-full border-2"
+          :variants="autoFlagRippleVariants"
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          :transition="{ delay: autoFlagDelaySeconds }"
+        />
+      </AnimatePresence>
     </div>
 
     <template v-if="tileKind === 'gold'">
-      <div class="relative flex h-full flex-col items-center justify-center overflow-hidden">
-        <span v-if="goldFoundAnimating" class="gold-found-ripple gold-found-ripple-inner" />
-        <span v-if="goldFoundAnimating" class="gold-found-ripple gold-found-ripple-outer" />
-        <span v-if="goldFoundAnimating" class="gold-found-burst" />
-        <span v-if="goldFoundAnimating" class="gold-found-spark gold-found-spark-left">✨</span>
-        <span v-if="goldFoundAnimating" class="gold-found-spark gold-found-spark-right">✨</span>
-        <div
-          class="relative z-10 text-3xl leading-none drop-shadow-[0_0_14px_rgba(255,215,64,0.45)] sm:text-4xl"
-          :class="{ 'gold-found-value': goldFoundAnimating }"
+      <div class="relative flex h-full items-center justify-center overflow-hidden">
+        <AnimatePresence>
+          <m.span
+            v-if="showGoldBurst"
+            key="gold-burst"
+            class="pointer-events-none absolute inset-[18%] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.55)_0%,rgba(255,255,255,0)_58%),radial-gradient(circle,rgba(250,204,21,0.5)_12%,rgba(250,204,21,0)_68%)]"
+            :variants="goldBurstVariants"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          />
+        </AnimatePresence>
+        <AnimatePresence>
+          <m.span
+            v-if="showGoldBurst"
+            key="gold-ripple-inner"
+            class="gold-ripple-inner pointer-events-none absolute inset-[20%] rounded-full border-2"
+            :variants="goldBurstVariants"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          />
+        </AnimatePresence>
+        <AnimatePresence>
+          <m.span
+            v-if="showGoldBurst"
+            key="gold-ripple-outer"
+            class="gold-ripple-outer pointer-events-none absolute inset-[8%] rounded-full border-2"
+            :variants="goldBurstVariants"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            :transition="{ delay: 0.04 }"
+          />
+        </AnimatePresence>
+        <AnimatePresence>
+          <m.span
+            v-if="showGoldBurst"
+            key="gold-spark-left"
+            class="pointer-events-none absolute left-[18%] top-[22%] z-[5] text-base leading-none"
+            :variants="goldSparkVariants"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            >✨</m.span
+          >
+        </AnimatePresence>
+        <AnimatePresence>
+          <m.span
+            v-if="showGoldBurst"
+            key="gold-spark-right"
+            class="pointer-events-none absolute bottom-[20%] right-[18%] z-[5] text-base leading-none"
+            :variants="goldSparkVariants"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            :transition="{ delay: 0.05 }"
+            >✨</m.span
+          >
+        </AnimatePresence>
+        <m.div
+          class="drop-shadow-mining-gold relative z-10 text-3xl leading-none sm:text-4xl"
+          :variants="goldIconVariants"
+          :initial="goldFoundAnimating ? 'hidden' : 'visible'"
+          animate="visible"
         >
           {{ GOLD_EMOJI }}
-        </div>
+        </m.div>
       </div>
     </template>
 
     <template v-else-if="tileKind === 'empty'">
-      <div class="relative flex h-full flex-col items-center justify-center overflow-hidden">
-        <span v-if="emptyFoundAnimating" class="empty-found-puff empty-found-puff-left" />
-        <span v-if="emptyFoundAnimating" class="empty-found-puff empty-found-puff-right" />
-        <div
+      <div class="relative flex h-full items-center justify-center overflow-hidden">
+        <AnimatePresence>
+          <m.span
+            v-if="showEmptyPuffs"
+            key="empty-puff-left"
+            class="pointer-events-none absolute bottom-[22%] left-[18%] h-[28%] w-[28%] rounded-full bg-[radial-gradient(circle,rgba(148,163,184,0.25)_0%,rgba(148,163,184,0)_70%)]"
+            :variants="emptyPuffVariants"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          />
+        </AnimatePresence>
+        <AnimatePresence>
+          <m.span
+            v-if="showEmptyPuffs"
+            key="empty-puff-right"
+            class="pointer-events-none absolute bottom-[16%] right-[18%] h-[28%] w-[28%] rounded-full bg-[radial-gradient(circle,rgba(148,163,184,0.25)_0%,rgba(148,163,184,0)_70%)]"
+            :variants="emptyPuffVariants"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            :transition="{ delay: 0.03 }"
+          />
+        </AnimatePresence>
+        <AnimatePresence>
+          <m.span
+            v-if="showEmptyPuffs"
+            key="empty-flash"
+            class="empty-found-flash pointer-events-none absolute inset-0 rounded-[inherit]"
+            :variants="emptyPuffVariants"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          />
+        </AnimatePresence>
+        <m.div
           class="text-lg font-black leading-none text-app-text sm:text-xl"
-          :class="{ 'empty-found-value': emptyFoundAnimating }"
+          :variants="emptyValueVariants"
+          :initial="emptyFoundAnimating ? 'hidden' : 'visible'"
+          animate="visible"
         >
           0
-        </div>
+        </m.div>
       </div>
     </template>
 
@@ -65,8 +182,18 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { AnimatePresence, m, useReducedMotion } from 'motion-v';
 
 import type { MiningFlagType } from '../game/types';
+import {
+  getAutoFlagIconVariants,
+  getAutoFlagRippleVariants,
+  getEmptyPuffVariants,
+  getEmptyValueVariants,
+  getGoldBurstVariants,
+  getGoldIconVariants,
+  getGoldSparkVariants,
+} from './motion/miningTileMotion';
 
 const props = defineProps<{
   row: number;
@@ -78,6 +205,7 @@ const props = defineProps<{
   showRegion?: boolean;
   disabled?: boolean;
   autoFlagAnimating?: boolean;
+  autoFlagDelayMs?: number;
   goldFoundAnimating?: boolean;
   emptyFoundAnimating?: boolean;
 }>();
@@ -88,6 +216,29 @@ const emit = defineEmits<{
 }>();
 
 const GOLD_EMOJI = '💰';
+const prefersReducedMotionRef = useReducedMotion();
+
+const prefersReducedMotion = computed(() => Boolean(prefersReducedMotionRef.value));
+const autoFlagDelaySeconds = computed(() => (props.autoFlagDelayMs ?? 0) / 1000);
+
+const autoFlagIconVariants = computed(() => getAutoFlagIconVariants(prefersReducedMotion.value));
+const autoFlagRippleVariants = computed(() =>
+  getAutoFlagRippleVariants(prefersReducedMotion.value)
+);
+const goldIconVariants = computed(() => getGoldIconVariants(prefersReducedMotion.value));
+const goldBurstVariants = computed(() => getGoldBurstVariants(prefersReducedMotion.value));
+const goldSparkVariants = computed(() => getGoldSparkVariants(prefersReducedMotion.value));
+const emptyValueVariants = computed(() => getEmptyValueVariants(prefersReducedMotion.value));
+const emptyPuffVariants = computed(() => getEmptyPuffVariants(prefersReducedMotion.value));
+
+const showAutoFlagRipple = computed(
+  () => props.tileKind === 'hidden' && props.autoFlagAnimating && !prefersReducedMotion.value
+);
+const showAutoFlagFlash = computed(() => props.tileKind === 'hidden' && props.autoFlagAnimating);
+const goldFoundAnimating = computed(() => props.tileKind === 'gold' && props.goldFoundAnimating);
+const emptyFoundAnimating = computed(() => props.tileKind === 'empty' && props.emptyFoundAnimating);
+const showGoldBurst = computed(() => goldFoundAnimating.value);
+const showEmptyPuffs = computed(() => emptyFoundAnimating.value);
 
 function handleTap() {
   console.log('[mining][square-click]', {
@@ -165,315 +316,26 @@ const squareClass = computed(() => {
 
   return 'border-semantic-warning-700 bg-gradient-to-br from-semantic-warning-500 to-semantic-warning-800 shadow-lg shadow-semantic-warning-950/15';
 });
-
-const showAutoFlagRipple = computed(() => props.tileKind === 'hidden' && props.autoFlagAnimating);
-const goldFoundAnimating = computed(() => props.tileKind === 'gold' && props.goldFoundAnimating);
-const emptyFoundAnimating = computed(() => props.tileKind === 'empty' && props.emptyFoundAnimating);
-
-const flagClass = computed(() => [
-  'text-white',
-  {
-    'auto-flag-pop auto-flag-magpie': props.autoFlagAnimating,
-  },
-]);
 </script>
 
 <style scoped>
-.auto-flag-pop {
-  animation: auto-flag-pop 220ms ease-out;
+.auto-flag-flash {
+  background-color: rgb(var(--color-semantic-warning-200) / 0.1);
 }
 
-.auto-flag-magpie {
-  filter: drop-shadow(0 0 9px rgba(253, 224, 71, 0.65));
+.auto-flag-ripple-ring {
+  border-color: rgb(var(--color-semantic-warning-300) / 0.65);
 }
 
-.auto-flag-ripple {
-  position: absolute;
-  width: 62%;
-  height: 62%;
-  border-radius: 9999px;
-  border: 2px solid transparent;
-  animation: auto-flag-ripple 320ms ease-out;
+.gold-ripple-inner {
+  border-color: rgba(255, 244, 180, 0.6);
 }
 
-.auto-flag-ripple-magpie {
-  border-color: rgba(253, 224, 71, 0.65);
+.gold-ripple-outer {
+  border-color: rgba(255, 244, 180, 0.45);
 }
 
-.auto-flag-tint-magpie {
-  animation: auto-flag-tint-magpie 180ms ease-out;
-}
-
-.gold-found-tint {
-  animation: gold-found-tint 280ms ease-out;
-}
-
-.gold-found-value {
-  animation: gold-found-pop 460ms cubic-bezier(0.18, 0.89, 0.32, 1.24);
-  text-shadow: 0 0 16px rgba(255, 244, 180, 0.5);
-}
-
-.gold-found-burst {
-  position: absolute;
-  inset: 18%;
-  border-radius: 9999px;
-  background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 58%),
-    radial-gradient(circle, rgba(250, 204, 21, 0.5) 12%, rgba(250, 204, 21, 0) 68%);
-  animation: gold-found-burst 360ms ease-out;
-}
-
-.gold-found-ripple {
-  position: absolute;
-  border-radius: 9999px;
-  border: 2px solid rgba(255, 244, 180, 0.6);
-}
-
-.gold-found-ripple-inner {
-  inset: 20%;
-  animation: gold-found-ripple 320ms ease-out;
-}
-
-.gold-found-ripple-outer {
-  inset: 8%;
-  animation: gold-found-ripple 420ms ease-out 40ms;
-}
-
-.gold-found-spark {
-  position: absolute;
-  z-index: 5;
-  font-size: 1rem;
-  line-height: 1;
-  filter: drop-shadow(0 0 8px rgba(255, 238, 170, 0.65));
-  animation: gold-found-spark 520ms ease-out;
-}
-
-.gold-found-spark-left {
-  left: 18%;
-  top: 22%;
-}
-
-.gold-found-spark-right {
-  right: 18%;
-  bottom: 20%;
-  animation-delay: 50ms;
-}
-
-.empty-found-tint {
-  animation: empty-found-tint 260ms ease-out;
-}
-
-.empty-found-value {
-  animation: empty-found-drop 340ms ease-out;
-}
-
-.empty-found-puff {
-  position: absolute;
-  width: 28%;
-  height: 28%;
-  border-radius: 9999px;
-  background: radial-gradient(circle, rgba(148, 163, 184, 0.25) 0%, rgba(148, 163, 184, 0) 70%);
-  animation: empty-found-puff 360ms ease-out;
-}
-
-.empty-found-puff-left {
-  left: 18%;
-  bottom: 22%;
-}
-
-.empty-found-puff-right {
-  right: 18%;
-  bottom: 16%;
-  animation-delay: 30ms;
-}
-
-@keyframes auto-flag-pop {
-  0% {
-    transform: scale(0.72);
-    opacity: 0.7;
-  }
-
-  65% {
-    transform: scale(1.15);
-    opacity: 1;
-  }
-
-  100% {
-    transform: scale(1);
-  }
-}
-
-@keyframes auto-flag-ripple {
-  0% {
-    transform: scale(0.45);
-    opacity: 0.45;
-  }
-
-  100% {
-    transform: scale(1.15);
-    opacity: 0;
-  }
-}
-
-@keyframes auto-flag-tint-magpie {
-  0% {
-    box-shadow: inset 0 0 0 9999px rgba(253, 224, 71, 0.12);
-  }
-
-  100% {
-    box-shadow: inset 0 0 0 9999px rgba(253, 224, 71, 0);
-  }
-}
-
-@keyframes gold-found-pop {
-  0% {
-    transform: translateY(5px) scale(0.72) rotate(-10deg);
-    opacity: 0.55;
-  }
-
-  42% {
-    transform: translateY(-8px) scale(1.18) rotate(8deg);
-    opacity: 1;
-  }
-
-  72% {
-    transform: translateY(1px) scale(0.96) rotate(-4deg);
-  }
-
-  100% {
-    transform: translateY(0) scale(1) rotate(0deg);
-  }
-}
-
-@keyframes gold-found-rise {
-  0% {
-    transform: translateY(4px);
-    opacity: 0.65;
-  }
-
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes gold-found-ripple {
-  0% {
-    transform: scale(0.6);
-    opacity: 0.45;
-  }
-
-  100% {
-    transform: scale(1.12);
-    opacity: 0;
-  }
-}
-
-@keyframes gold-found-burst {
-  0% {
-    transform: scale(0.5);
-    opacity: 0.22;
-  }
-
-  50% {
-    opacity: 0.42;
-  }
-
-  100% {
-    transform: scale(1.18);
-    opacity: 0;
-  }
-}
-
-@keyframes gold-found-spark {
-  0% {
-    transform: translateY(6px) scale(0.4) rotate(-18deg);
-    opacity: 0;
-  }
-
-  35% {
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateY(-12px) scale(1.2) rotate(14deg);
-    opacity: 0;
-  }
-}
-
-@keyframes gold-found-tint {
-  0% {
-    box-shadow:
-      inset 0 0 0 9999px rgba(255, 244, 180, 0.18),
-      0 0 0 rgba(250, 204, 21, 0);
-  }
-
-  100% {
-    box-shadow:
-      inset 0 0 0 9999px rgba(255, 244, 180, 0),
-      0 0 24px rgba(250, 204, 21, 0);
-  }
-}
-
-@keyframes empty-found-drop {
-  0% {
-    transform: translateY(-3px) scale(1.05);
-    opacity: 0.8;
-  }
-
-  45% {
-    transform: translateY(4px) scale(0.9);
-    opacity: 1;
-  }
-
-  72% {
-    transform: translateY(-1px) scale(1.02);
-  }
-
-  100% {
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes empty-found-puff {
-  0% {
-    transform: scale(0.45);
-    opacity: 0;
-  }
-
-  35% {
-    opacity: 0.45;
-  }
-
-  100% {
-    transform: scale(1.25);
-    opacity: 0;
-  }
-}
-
-@keyframes empty-found-tint {
-  0% {
-    box-shadow: inset 0 0 0 9999px rgba(148, 163, 184, 0.12);
-  }
-
-  100% {
-    box-shadow: inset 0 0 0 9999px rgba(148, 163, 184, 0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .auto-flag-pop,
-  .auto-flag-ripple,
-  .auto-flag-tint-magpie,
-  .gold-found-tint,
-  .gold-found-value,
-  .gold-found-burst,
-  .gold-found-ripple,
-  .gold-found-spark,
-  .empty-found-tint,
-  .empty-found-value,
-  .empty-found-puff {
-    animation: none;
-  }
+.empty-found-flash {
+  background-color: rgb(148 163 184 / 0.1);
 }
 </style>
