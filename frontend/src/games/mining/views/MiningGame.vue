@@ -26,22 +26,39 @@
 
       <div class="mt-3 grid grid-cols-4 gap-2 text-xs">
         <div class="rounded-xl bg-app-surface px-3 py-2">
-          <div class="uppercase tracking-[0.18em] text-app-textMuted">Days</div>
-          <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.daysElapsed }}</div>
-        </div>
-        <div class="rounded-xl bg-app-surface px-3 py-2">
           <div class="uppercase tracking-[0.18em] text-app-textMuted">Level</div>
           <div class="mt-1 font-bold tabular-nums text-semantic-warning-300">
-            {{ store.displayLevel }}
+            {{ store.currentLevelNumber }}
           </div>
         </div>
         <div class="rounded-xl bg-app-surface px-3 py-2">
-          <div class="uppercase tracking-[0.18em] text-app-textMuted">Gold Carried</div>
-          <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.goldTotal }}</div>
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Level Digs</div>
+          <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.digsUsed }}</div>
         </div>
         <div class="rounded-xl bg-app-surface px-3 py-2">
-          <div class="uppercase tracking-[0.18em] text-app-textMuted">Next Field</div>
-          <div class="mt-1 font-bold tabular-nums text-app-text">1 Gold</div>
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Gold Found</div>
+          <div class="mt-1 font-bold tabular-nums text-app-text">
+            {{ store.foundGoldCount }} / {{ store.currentLevelDefinition.goldTarget }}
+          </div>
+        </div>
+        <div class="rounded-xl bg-app-surface px-3 py-2">
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Total Days</div>
+          <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.daysElapsed }}</div>
+        </div>
+      </div>
+
+      <div class="mt-2 grid grid-cols-2 gap-2 text-xs">
+        <div class="rounded-xl bg-app-surface px-3 py-2">
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Raven</div>
+          <div class="mt-1 font-bold tabular-nums text-app-text">
+            {{ store.unlockedRavenSkillIds.length }}
+          </div>
+        </div>
+        <div class="rounded-xl bg-app-surface px-3 py-2">
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Tools</div>
+          <div class="mt-1 font-bold tabular-nums text-app-text">
+            {{ store.unlockedToolUpgradeIds.length }}
+          </div>
         </div>
       </div>
     </div>
@@ -49,15 +66,19 @@
     <div class="flex-1 overflow-y-auto px-4 pt-4">
       <div class="space-y-4 pb-6">
         <section class="rounded-2xl border border-app-border bg-app-surface p-4">
+          <div class="mb-4 rounded-xl bg-app-bg px-4 py-3 text-sm text-app-textMuted">
+            {{ store.currentLevelGoalText }}
+          </div>
+
           <MiningBoard
             :truth-gold="store.truthGold"
             :region-ids="store.regionIds"
             :revealed="store.revealed"
             :flagged="store.visibleFlags"
-            :reward-label="String(store.goldRewardPerTile)"
+            :reward-label="'1'"
             :show-regions="store.canShowScannerRegions"
-            :can-excavate-all-hidden="store.foundGoldCount === store.totalGoldOnBoard"
-            :disabled="store.phase === 'loading'"
+            :can-excavate-all-hidden="false"
+            :disabled="store.phase !== 'playing'"
             @dig="store.dig"
             @toggle-flag="store.toggleFlag"
           />
@@ -95,63 +116,14 @@
         </button>
       </div>
 
-      <div class="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          class="rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
-          :class="
-            store.phase === 'playing'
-              ? 'border-app-border bg-app-surface text-app-text hover:bg-app-bg'
-              : 'border-app-border bg-app-bg text-app-textMuted'
-          "
-          :disabled="store.phase !== 'playing'"
-          @click="store.openProgressionMenu()"
-        >
-          Open Town
-        </button>
-        <button
-          type="button"
-          class="rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
-          :class="
-            store.canTravelToNextField()
-              ? 'border-semantic-warning-300 bg-semantic-warning-700 text-white hover:bg-semantic-warning-600'
-              : 'border-app-border bg-app-bg text-app-textMuted'
-          "
-          :disabled="!store.canTravelToNextField()"
-          @click="store.goToNextField()"
-        >
-          Next Field (1 Gold)
-        </button>
-      </div>
+      <button
+        type="button"
+        class="w-full rounded-xl border border-app-border bg-app-surface px-4 py-2 text-center text-sm font-bold leading-tight text-app-text transition-colors hover:bg-app-bg"
+        @click="store.retryLevel()"
+      >
+        Replay Level
+      </button>
     </div>
-
-    <MiningShopModal
-      :is-visible="store.progressionMenuOpen"
-      :town-step="store.townStep"
-      :display-level="store.displayLevel"
-      :gold-total="store.goldTotal"
-      :exchange-summary="store.exchangeSummary"
-      :automation-options="store.visibleAutomationOptions"
-      :owned-automation-ids="store.magpieSkillIds"
-      :tool-upgrade-options="store.visibleToolUpgradeOptions"
-      :owned-tool-upgrade-ids="store.ownedToolUpgradeIds"
-      :plot-permit-options="store.visiblePlotPermitOptions"
-      :max-plot-size="store.maxPlotSize"
-      :show-permit-office="store.showPermitOffice"
-      :can-exchange-gold="store.canExchangeGold()"
-      :show-purchased-upgrades="store.showPurchasedUpgrades"
-      :can-buy-automation="(skillId) => store.canBuyAutomation(skillId)"
-      :can-buy-tool-upgrade="(upgradeId) => store.canBuyToolUpgrade(upgradeId)"
-      :can-buy-plot-permit="(permitId) => store.canBuyPlotPermit(permitId)"
-      @close="store.closeProgressionMenu()"
-      @return-to-mine="store.returnToMine()"
-      @select-step="store.selectTownStep"
-      @exchange-gold="store.exchangeGoldForCoins()"
-      @buy-automation="store.buyAutomation"
-      @buy-tool-upgrade="store.buyToolUpgrade"
-      @buy-plot-permit="store.buyPlotPermit"
-      @toggle-purchased="store.toggleShowPurchasedUpgrades()"
-    />
 
     <Modal
       :is-visible="store.showSettingsModal"
@@ -184,163 +156,137 @@
     </Modal>
 
     <Modal
-      :is-visible="store.showIntroModal"
-      aria-label="Mining contract"
-      @close="store.dismissIntro()"
+      :is-visible="store.showLevelIntroModal"
+      aria-label="Level introduction"
+      @close="store.dismissLevelIntro()"
     >
       <div class="space-y-4 text-white">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 class="text-xl font-bold">How To Dig</h2>
+            <h2 class="text-xl font-bold">{{ store.currentLevelDefinition.introTitle }}</h2>
           </div>
-          <button
-            type="button"
-            class="rounded-lg border border-semantic-neutral-600 px-3 py-1.5 text-sm font-semibold text-semantic-neutral-200 hover:bg-semantic-neutral-700"
-            @click="store.dismissIntro()"
-          >
-            Close
-          </button>
         </div>
 
         <div class="space-y-3 text-sm leading-relaxed text-semantic-neutral-200">
-          <p>Each dig adds 1 day to your run.</p>
-          <p>Days are just your score, so lower is better.</p>
-          <p>You can head to town whenever you want to grade gold and buy upgrades with it.</p>
-          <p>Tap once to place a gold-here flag.</p>
-          <p>Swipe across hidden tiles to place gold-here flags quickly.</p>
-          <p>
-            Tap a gold-here flag to dig for gold. After all gold is found, any hidden tile can be
-            dug.
+          <p v-for="line in store.currentLevelDefinition.introBody" :key="line">
+            {{ line }}
           </p>
-          <p>The magpie marks not-gold tiles with an x and likely gold with a target.</p>
-          <p>Better exchange results unlock new town opportunities.</p>
         </div>
 
         <button
           type="button"
           class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
-          @click="store.dismissIntro()"
+          @click="store.dismissLevelIntro()"
         >
-          Start Digging
+          Start Level
         </button>
       </div>
     </Modal>
 
     <Modal
-      :is-visible="Boolean(store.levelCelebration)"
-      aria-label="Exchange level reached"
-      @close="store.dismissLevelCelebration()"
+      :is-visible="store.showLevelResultModal"
+      aria-label="Level result"
+      @close="store.closeLevelResultModal()"
     >
       <div class="space-y-4 text-white">
-        <div>
-          <h2 class="text-xl font-bold">
-            Congratulations, you reached Level {{ store.levelCelebration?.level }}.
-          </h2>
-          <p class="mt-1 text-sm text-semantic-neutral-300">
-            Your exchange return is now {{ store.levelCelebration?.returnPercent }}%.
-          </p>
-        </div>
-
-        <p class="text-sm leading-relaxed text-semantic-neutral-200">
-          New upgrades are now available in town.
-        </p>
-
-        <p
-          v-if="store.levelCelebration?.scannerUnlocked"
-          class="text-sm leading-relaxed text-semantic-neutral-200"
-        >
-          Gold still follows one per row, one per column, and no diagonal touching, but now there is
-          also one gold per color group. The scanner reveals those groups so you can reason instead
-          of guessing.
-        </p>
-
-        <button
-          type="button"
-          class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
-          @click="store.dismissLevelCelebration()"
-        >
-          Continue
-        </button>
-      </div>
-    </Modal>
-
-    <Modal
-      :is-visible="store.showHintModal"
-      aria-label="Old miners advice"
-      @close="store.closeHints()"
-    >
-      <div class="space-y-4 text-white">
-        <div class="flex items-start justify-between gap-4">
+        <template v-if="store.levelResultPassed">
           <div>
-            <h2 class="text-xl font-bold">Old Miners' Advice</h2>
+            <h2 class="text-xl font-bold">
+              {{ store.currentLevelDefinition.reward?.title ?? 'Congratulations!' }}
+            </h2>
             <p class="mt-1 text-sm text-semantic-neutral-300">
-              Nobody agrees on the story. Everyone agrees the hill punishes lazy guesses.
+              {{ successSummary }}
             </p>
           </div>
-          <button
-            type="button"
-            class="rounded-lg border border-semantic-neutral-600 px-3 py-1.5 text-sm font-semibold text-semantic-neutral-200 hover:bg-semantic-neutral-700"
-            @click="store.closeHints()"
+
+          <p
+            v-if="store.currentLevelDefinition.reward"
+            class="text-sm leading-relaxed text-semantic-neutral-200"
           >
-            Close
-          </button>
-        </div>
+            {{ store.currentLevelDefinition.reward.body }}
+          </p>
 
-        <p class="text-sm leading-relaxed text-semantic-neutral-200">
-          {{ store.currentHintText }}
-        </p>
-
-        <button
-          type="button"
-          class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
-          @click="store.closeHints()"
-        >
-          Back to the Shaft
-        </button>
-      </div>
-    </Modal>
-
-    <Modal
-      :is-visible="store.showFieldExhaustedModal"
-      aria-label="Field fully dug"
-      @close="store.dismissFieldExhaustedModal()"
-    >
-      <div class="space-y-4 text-white">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 class="text-xl font-bold">Field Fully Dug</h2>
-            <p class="mt-1 text-sm text-semantic-neutral-300">There is nothing left buried here.</p>
+          <div class="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              class="rounded-xl border border-semantic-danger-700 bg-semantic-danger-900 px-4 py-2 text-sm font-bold text-semantic-danger-100 transition-colors hover:bg-semantic-danger-800"
+              @click="store.retryLevel()"
+            >
+              Replay Level
+            </button>
+            <button
+              type="button"
+              class="rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+              :class="
+                store.canStartNextLevel
+                  ? 'border-semantic-success-500 bg-semantic-success-700 text-white hover:bg-semantic-success-600'
+                  : 'border-app-border bg-app-bg text-app-textMuted'
+              "
+              :disabled="!store.canStartNextLevel"
+              @click="store.startNextLevel()"
+            >
+              {{ store.isLastLevel ? 'Last Level' : 'Start Next Level' }}
+            </button>
           </div>
-        </div>
+        </template>
 
-        <p class="text-sm leading-relaxed text-semantic-neutral-200">
-          You've dug this entire field! You can move to the next field at any time by clicking "Next
-          Field".
-        </p>
+        <template v-else-if="store.levelResultFailed">
+          <div>
+            <h2 class="text-xl font-bold">{{ store.currentLevelDefinition.failure.title }}</h2>
+            <p class="mt-1 text-sm text-semantic-neutral-300">
+              {{ store.currentLevelDefinition.failure.body }}
+            </p>
+          </div>
 
-        <button
-          type="button"
-          class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
-          @click="store.dismissFieldExhaustedModal()"
-        >
-          Keep Looking Around
-        </button>
+          <p
+            v-if="store.levelResult?.clueRevealed"
+            class="rounded-xl bg-semantic-neutral-900 px-4 py-3 text-sm leading-relaxed text-semantic-neutral-200"
+          >
+            {{ store.currentLevelDefinition.failure.clue }}
+          </p>
+
+          <div class="grid gap-3">
+            <button
+              v-if="!store.levelResult?.clueRevealed"
+              type="button"
+              class="w-full rounded-xl border border-semantic-warning-500 bg-semantic-warning-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-warning-600"
+              @click="store.revealLevelClue()"
+            >
+              Reveal Clue
+            </button>
+            <button
+              type="button"
+              class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
+              @click="store.retryLevel()"
+            >
+              Try Again
+            </button>
+          </div>
+        </template>
       </div>
     </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 
 import Modal from '@/shared/components/Modal.vue';
 import Toast from '@/shared/components/Toast.vue';
 
 import MiningBoard from '../components/MiningBoard.vue';
-import MiningShopModal from '../components/MiningShopModal.vue';
 import { useMiningStore } from '../stores/mining';
 
 const store = useMiningStore();
+
+const successSummary = computed(() => {
+  const maxDigs = store.currentLevelDefinition.winConditions.maxDigsExclusive;
+  if (typeof maxDigs === 'number') {
+    return `You found all ${store.currentLevelDefinition.goldTarget} gold in ${store.digsUsed} digs.`;
+  }
+
+  return `You found all ${store.currentLevelDefinition.goldTarget} gold.`;
+});
 
 let errorTimeout: number | null = null;
 

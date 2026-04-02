@@ -1,4 +1,4 @@
-export type MiningPhase = 'idle' | 'loading' | 'playing' | 'town' | 'level-complete';
+export type MiningPhase = 'idle' | 'loading' | 'playing' | 'level-complete';
 export type MiningProgressionTab = 'gold-exchange' | 'animal-trainer' | 'ui-upgrades';
 export type MiningTownStep =
   | 'none'
@@ -17,6 +17,7 @@ export type MiningMagpieSkillId =
   | 'pattern-automation-2';
 export type MiningToolUpgradeId = 'scanner' | 'auto-hauler';
 export type MiningPlotPermitId = 'plot-6x6' | 'plot-7x7' | 'plot-8x8' | 'plot-9x9';
+export type MiningRavenSkillId = 'auto-flag-row' | 'auto-flag-column' | 'auto-flag-diagonal';
 
 export interface PositionRef {
   row: number;
@@ -35,6 +36,38 @@ export interface MiningLevelBoard {
   size: number;
   truthGold: boolean[][];
   regionIds: string[][];
+}
+
+export interface MiningLevelWinConditions {
+  requireAllGold: true;
+  maxDigsExclusive?: number;
+}
+
+export interface MiningLevelFailureDefinition {
+  title: string;
+  body: string;
+  clue: string;
+}
+
+export interface MiningLevelRewardDefinition {
+  id: string;
+  title: string;
+  body: string;
+  unlocksRavenSkills?: MiningRavenSkillId[];
+  unlocksToolUpgradeIds?: MiningToolUpgradeId[];
+}
+
+export interface MiningCampaignLevel {
+  id: string;
+  number: number;
+  boardSize: 5 | 6 | 7 | 8 | 9;
+  goldTarget: number;
+  scannerEnabled: boolean;
+  introTitle: string;
+  introBody: string[];
+  winConditions: MiningLevelWinConditions;
+  failure: MiningLevelFailureDefinition;
+  reward?: MiningLevelRewardDefinition;
 }
 
 export interface MiningAutomationDefinition {

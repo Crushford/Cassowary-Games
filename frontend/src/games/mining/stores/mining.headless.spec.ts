@@ -1,17 +1,8 @@
-/**
- * Headless end-to-end tests for the mining game.
- *
- * These tests simulate full player-facing loops (field play → town visit → field)
- * without any UI. Puzzle fixtures are injected directly — no fetch required.
- */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { __resetMiningPuzzleCacheForTests } from '../game/puzzles/loadMiningPuzzle';
 import { createHeadlessGame } from '../testing/createHeadlessGame';
 import { __resetPuzzleLoaderForTests } from './miningRunService';
-
-// ─── Fixture puzzles ─────────────────────────────────────────────────────────
-// Valid 5x5 Queens puzzles (25-char layout + 25-char queens string).
 
 const PUZZLE_A = {
   id: 'headless-pz-a',
@@ -25,13 +16,11 @@ const PUZZLE_B = {
   queens: '.Q......Q.Q......Q......Q',
 };
 
-const PATTERN_PUZZLE = {
-  id: 'headless-pattern',
-  layout: 'BABBBBAABBBBBBBBBBBBBBBBB',
-  queens: 'Q......Q......Q.Q......Q.',
+const PUZZLE_C = {
+  id: 'headless-pz-c',
+  layout: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+  queens: ['Q.....', '..Q...', '....Q.', '.Q....', '...Q..', '.....Q'].join(''),
 };
-
-// ─── Setup ───────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -56,200 +45,75 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// ─── Tests ───────────────────────────────────────────────────────────────────
-
-describe('Mining headless E2E — run loop', () => {
-  it('starts in playing phase with 0 elapsed days', async () => {
+describe('Mining headless E2E - campaign loop', () => {
+  it('starts in playing phase on level 1 with 0 digs used and 0 total days', async () => {
     const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
+
     expect(game.store.phase).toBe('playing');
+    expect(game.store.currentLevelNumber).toBe(1);
+    expect(game.store.digsUsed).toBe(0);
     expect(game.store.daysElapsed).toBe(0);
     expect(game.store.currentPuzzleId).toBe('headless-pz-a');
     game.cleanup();
   });
 
-  it('completes a town visit: play → town → exchange → return to field', async () => {
+  it('completes level 1 after finding all gold', async () => {
     const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
     const { store } = game;
 
-    store.openProgressionMenu();
-    expect(store.phase).toBe('town');
-    expect(store.progressionMenuOpen).toBe(true);
-
-    await game.completeTownSequence();
-
-    expect(store.phase).toBe('playing');
-    expect(store.daysElapsed).toBe(0);
-    expect(store.progression.exchangeProcessedThisTown).toBe(false);
-    expect(store.progressionMenuOpen).toBe(false);
-    game.cleanup();
-  });
-
-  it('digging all gold earns the correct reward and does not end the field early', async () => {
-    const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
-    const { store } = game;
-
-    const startingGold = store.goldTotal;
     await game.digAllGold();
 
-    expect(store.foundGoldCount).toBe(store.boardSize);
-    expect(store.goldTotal).toBe(startingGold + store.boardSize);
-    // Field not complete yet (non-gold tiles remain)
-    expect(store.phase).toBe('playing');
+    expect(store.phase).toBe('level-complete');
+    expect(store.levelResult?.passed).toBe(true);
+    expect(store.foundGoldCount).toBe(5);
     game.cleanup();
   });
 
-  it('digging the entire field transitions to level-complete', async () => {
+  it('fails level 2 if the player needs 15 digs', async () => {
     const game = await createHeadlessGame({ puzzles: [PUZZLE_A, PUZZLE_B] });
     const { store } = game;
 
-    await game.digEntireField();
+    await game.digAllGold();
+    await store.startNextLevel();
+    store.dismissLevelIntro();
 
-    expect(store.phase).toBe('level-complete');
-    expect(store.showFieldExhaustedModal).toBe(true);
-    game.cleanup();
-  });
-});
+    await game.digEmptySquares(10);
+    await game.digAllGold();
 
-describe('Mining headless E2E — exchange progression', () => {
-  it('grades gold without consuming it at level 1 threshold', async () => {
-    const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
-    const { store } = game;
-
-    store.run.phase = 'town';
-    store.progression.townStep = 'exchange';
-    store.economy.goldTotal = 1;
-
-    store.exchangeGoldForCoins();
-
-    expect(store.goldTotal).toBe(1);
-    expect(store.bestLevel).toBe(1);
-    expect(store.exchangeSummary.returnPercent).toBe(3);
-    expect(store.exchangeSummary.payout).toBe(1);
-    expect(store.levelCelebration?.level).toBe(1);
+    expect(store.currentLevelNumber).toBe(2);
+    expect(store.digsUsed).toBe(15);
+    expect(store.daysElapsed).toBe(20);
+    expect(store.levelResult?.passed).toBe(false);
     game.cleanup();
   });
 
-  it('a zero-gold visit still clears the exchange step', async () => {
-    const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
-    const { store } = game;
-
-    store.run.phase = 'town';
-    store.progression.townStep = 'exchange';
-    store.economy.goldTotal = 0;
-    store.run.bestLevel = 0;
-
-    store.exchangeGoldForCoins();
-
-    expect(store.exchangeSummary.processed).toBe(true);
-    expect(store.bestLevel).toBe(1);
-    expect(store.exchangeSummary.reachedLevel).toBe(1);
-    game.cleanup();
-  });
-
-  it('unlocks auto-hauler after reaching level 1 exchange', async () => {
-    const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
-    const { store } = game;
-
-    store.run.bestLevel = 1;
-
-    expect(store.visibleToolUpgradeOptions.map((o) => o.id)).toContain('auto-hauler');
-    game.cleanup();
-  });
-});
-
-describe('Mining headless E2E — magpie automation', () => {
-  it('buying a row lesson immediately recomputes system flags', async () => {
-    const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
-    const { store } = game;
-
-    store.run.bestLevel = 2;
-    store.economy.goldTotal = 20;
-    store.buyAutomation('buy-magpie');
-    store.buyAutomation('auto-flag-row');
-
-    store.board.revealed[0][0] = true;
-    store.recomputeSystemFlags();
-
-    expect(store.systemFlags[0][1]).toBe('not-gold');
-    expect(store.systemFlags[0][2]).toBe('not-gold');
-    expect(store.systemFlags[0][3]).toBe('not-gold');
-    expect(store.systemFlags[0][4]).toBe('not-gold');
-    game.cleanup();
-  });
-
-  it('applies pattern auto-flags as part of field initialization', async () => {
-    const game = await createHeadlessGame({ puzzles: [PUZZLE_A, PATTERN_PUZZLE] });
-    const { store } = game;
-
-    store.run.bestLevel = 4;
-    store.economy.goldTotal = 20;
-    store.buyAutomation('buy-magpie');
-    store.buyAutomation('pattern-automation-1');
-
-    await store.loadNextLevel();
-
-    expect(store.currentPuzzleId).toBe('headless-pattern');
-    expect(store.systemFlags[0][2]).toBe('not-gold');
-    expect(store.systemFlags[1][0]).toBe('not-gold');
-    expect(store.systemFlags[2][1]).toBe('not-gold');
-    game.cleanup();
-  });
-
-  it('visible magpie lessons still require owning the magpie before purchase', async () => {
-    const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
-    const { store } = game;
-
-    store.run.bestLevel = 2;
-    store.economy.goldTotal = 20;
-
-    expect(store.visibleAutomationOptions.map((option) => option.id)).toContain('auto-flag-row');
-    expect(store.canBuyAutomation('auto-flag-row')).toBe(false);
-
-    store.buyAutomation('buy-magpie');
-    expect(store.canBuyAutomation('auto-flag-row')).toBe(true);
-    game.cleanup();
-  });
-});
-
-describe('Mining headless E2E — auto-hauler progression', () => {
-  it('auto-hauler triggers field transition after full dig with enough gold', async () => {
+  it('passing level 2 unlocks Raven row and column flags', async () => {
     const game = await createHeadlessGame({ puzzles: [PUZZLE_A, PUZZLE_B] });
     const { store } = game;
 
-    store.run.bestLevel = 1;
-    store.economy.goldTotal = 10;
-    store.buyToolUpgrade('auto-hauler');
-    expect(store.ownedToolUpgradeIds).toContain('auto-hauler');
+    await game.digAllGold();
+    await store.startNextLevel();
+    store.dismissLevelIntro();
+    await game.digAllGold();
 
-    await game.digEntireField();
-
-    // Field complete + auto-hauler pending timeout
-    expect(store.phase).toBe('level-complete');
-    expect(store.showFieldExhaustedModal).toBe(false); // auto-hauler suppresses modal
-
-    await vi.runAllTimersAsync();
-
-    // Now on the next puzzle
-    expect(store.currentPuzzleId).toBe('headless-pz-b');
-    expect(store.phase).toBe('playing');
+    expect(store.levelResult?.passed).toBe(true);
+    expect(store.unlockedRavenSkillIds).toEqual(['auto-flag-row', 'auto-flag-column']);
     game.cleanup();
   });
-});
 
-describe('Mining headless E2E — scanner unlock', () => {
-  it('buying the scanner reveals region IDs on the board', async () => {
-    const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
+  it('level 3 loads the larger 6x6 board', async () => {
+    const game = await createHeadlessGame({ puzzles: [PUZZLE_A, PUZZLE_B, PUZZLE_C] });
     const { store } = game;
 
-    store.run.bestLevel = 3;
-    store.economy.goldTotal = 10;
+    await game.digAllGold();
+    await store.startNextLevel();
+    store.dismissLevelIntro();
+    await game.digAllGold();
+    await store.startNextLevel();
 
-    expect(store.canShowScannerRegions).toBe(false);
-
-    store.buyToolUpgrade('scanner');
-
-    expect(store.canShowScannerRegions).toBe(true);
-    expect(store.ownedToolUpgradeIds).toContain('scanner');
+    expect(store.currentLevelNumber).toBe(3);
+    expect(store.boardSize).toBe(6);
+    expect(store.showLevelIntroModal).toBe(true);
     game.cleanup();
   });
 });

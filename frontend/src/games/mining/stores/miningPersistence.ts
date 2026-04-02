@@ -1,15 +1,13 @@
 import type {
   MiningFlagType,
-  MiningMagpieSkillId,
   MiningPhase,
-  MiningProgressionTab,
+  MiningRavenSkillId,
   MiningToolUpgradeId,
 } from '../game/types';
-import { AUTOMATION_OPTIONS } from '../game/progression/automation';
-import { PLOT_PERMITS } from '../game/progression/plotPermits';
-import { TOOL_UPGRADES } from '../game/progression/toolUpgrades';
-import { MINING_SAVE_KEY, MINING_SAVE_VERSION } from './miningConfig';
 import { createInitialMiningState, type MiningStoreState } from './miningState';
+
+const MINING_SAVE_KEY = 'mining-save-v1';
+const MINING_SAVE_VERSION = 4;
 
 interface MiningSaveSnapshot {
   version?: number;
@@ -17,8 +15,6 @@ interface MiningSaveSnapshot {
   run?: Partial<Omit<MiningStoreState['run'], 'phase'>> & {
     phase?: Exclude<MiningPhase, 'loading'>;
   };
-  economy?: Partial<MiningStoreState['economy']>;
-  exchange?: Partial<MiningStoreState['exchange']>;
   progression?: Partial<MiningStoreState['progression']>;
   ui?: Partial<Pick<MiningStoreState['ui'], 'hasSeenIntroThisRun' | 'lastActionMessage'>>;
   [key: string]: unknown;
@@ -71,22 +67,11 @@ function readFlagGrid(
 }
 
 function readPhase(value: unknown, fallback: MiningStoreState['run']['phase']) {
-  if (value === 'idle' || value === 'playing' || value === 'town' || value === 'level-complete') {
+  if (value === 'idle' || value === 'playing' || value === 'level-complete') {
     return value;
   }
 
   return fallback;
-}
-
-function readProgressionTab(
-  progressionSnapshot: Record<string, unknown>,
-  rootSnapshot: Record<string, unknown>,
-  fallback: MiningProgressionTab
-): MiningProgressionTab {
-  const value = progressionSnapshot.selectedTab ?? rootSnapshot.selectedProgressionTab;
-  return value === 'gold-exchange' || value === 'animal-trainer' || value === 'ui-upgrades'
-    ? value
-    : fallback;
 }
 
 export function canUseLocalStorage(): boolean {
@@ -116,19 +101,16 @@ export function writeMiningSave(state: MiningStoreState) {
     version: MINING_SAVE_VERSION,
     board: {
       ...state.board,
-      pendingLevelTimeout: null,
     },
     run: {
       ...state.run,
       phase: state.run.phase === 'loading' ? 'playing' : state.run.phase,
     },
-    economy: { ...state.economy },
-    exchange: { ...state.exchange },
     progression: {
       ...state.progression,
-      magpieSkillIds: [...state.progression.magpieSkillIds],
-      ownedToolUpgradeIds: [...state.progression.ownedToolUpgradeIds],
-      selectedTab: state.progression.selectedTab as MiningProgressionTab,
+      unlockedRavenSkillIds: [...state.progression.unlockedRavenSkillIds],
+      unlockedToolUpgradeIds: [...state.progression.unlockedToolUpgradeIds],
+      earnedRewardIds: [...state.progression.earnedRewardIds],
     },
     ui: {
       hasSeenIntroThisRun: state.ui.hasSeenIntroThisRun,
@@ -152,18 +134,19 @@ export function clearMiningSave() {
 }
 
 export function restoreMiningState(target: MiningStoreState, snapshot: MiningSaveSnapshot) {
-  const validAutomationIds = new Set(AUTOMATION_OPTIONS.map((option) => option.id));
-  const validToolUpgradeIds = new Set(TOOL_UPGRADES.map((option) => option.id));
-  const validPlotSizes = new Set(PLOT_PERMITS.map((option) => option.size));
+  const validRavenSkillIds = new Set<MiningRavenSkillId>([
+    'auto-flag-row',
+    'auto-flag-column',
+    'auto-flag-diagonal',
+  ]);
+  const validToolUpgradeIds = new Set<MiningToolUpgradeId>(['scanner', 'auto-hauler']);
   const base = createInitialMiningState();
   const rootSnapshot = isRecord(snapshot) ? snapshot : {};
   const boardSnapshot = isRecord(rootSnapshot.board) ? rootSnapshot.board : rootSnapshot;
   const runSnapshot = isRecord(rootSnapshot.run) ? rootSnapshot.run : rootSnapshot;
-  const economySnapshot = isRecord(rootSnapshot.economy) ? rootSnapshot.economy : rootSnapshot;
   const progressionSnapshot = isRecord(rootSnapshot.progression)
     ? rootSnapshot.progression
     : rootSnapshot;
-  const exchangeSnapshot = isRecord(rootSnapshot.exchange) ? rootSnapshot.exchange : rootSnapshot;
   const uiSnapshot = isRecord(rootSnapshot.ui) ? rootSnapshot.ui : rootSnapshot;
 
   target.board = {
@@ -171,42 +154,27 @@ export function restoreMiningState(target: MiningStoreState, snapshot: MiningSav
     ...boardSnapshot,
     playerFlags: readFlagGrid(boardSnapshot.playerFlags, base.board.playerFlags),
     systemFlags: readFlagGrid(boardSnapshot.systemFlags, base.board.systemFlags),
-    pendingLevelTimeout: null,
   };
   target.run = {
     ...base.run,
     ...runSnapshot,
     phase: readPhase(runSnapshot.phase, base.run.phase),
   };
-  target.economy = {
-    ...base.economy,
-    ...economySnapshot,
-  };
-  target.exchange = {
-    ...base.exchange,
-    ...exchangeSnapshot,
-  };
   target.progression = {
     ...base.progression,
     ...progressionSnapshot,
-    selectedTab: readProgressionTab(
-      progressionSnapshot,
-      rootSnapshot,
-      base.progression.selectedTab
-    ),
-    magpieSkillIds: readStringArray(
-      progressionSnapshot.magpieSkillIds ?? rootSnapshot.magpieSkillIds,
-      base.progression.magpieSkillIds
-    ).filter((skillId): skillId is MiningMagpieSkillId => validAutomationIds.has(skillId)),
-    ownedToolUpgradeIds: readStringArray(
-      progressionSnapshot.ownedToolUpgradeIds ?? rootSnapshot.ownedToolUpgradeIds,
-      base.progression.ownedToolUpgradeIds
+    unlockedRavenSkillIds: readStringArray(
+      progressionSnapshot.unlockedRavenSkillIds ?? rootSnapshot.unlockedRavenSkillIds,
+      base.progression.unlockedRavenSkillIds
+    ).filter((skillId): skillId is MiningRavenSkillId => validRavenSkillIds.has(skillId)),
+    unlockedToolUpgradeIds: readStringArray(
+      progressionSnapshot.unlockedToolUpgradeIds ?? rootSnapshot.unlockedToolUpgradeIds,
+      base.progression.unlockedToolUpgradeIds
     ).filter((upgradeId): upgradeId is MiningToolUpgradeId => validToolUpgradeIds.has(upgradeId)),
-    maxPlotSize:
-      typeof progressionSnapshot.maxPlotSize === 'number' &&
-      validPlotSizes.has(progressionSnapshot.maxPlotSize)
-        ? progressionSnapshot.maxPlotSize
-        : base.progression.maxPlotSize,
+    earnedRewardIds: readStringArray(
+      progressionSnapshot.earnedRewardIds ?? rootSnapshot.earnedRewardIds,
+      base.progression.earnedRewardIds
+    ),
   };
   target.ui = {
     ...base.ui,
