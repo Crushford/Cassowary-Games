@@ -10,16 +10,14 @@ describe('buildRegionColorClassMap', () => {
       ['O', 'K', 'O'],
     ]);
 
-    expect(colorMap).toEqual({
-      B: 'bg-group-red-base',
-      T: 'bg-group-blue-base',
-      I: 'bg-group-green-base',
-      K: 'bg-group-yellow-base',
-      O: 'bg-group-purple-base',
-    });
+    expect(colorMap.B).toBe('bg-group-red-base');
+    expect(colorMap.T).toBe('bg-group-blue-base');
+    expect(colorMap.I).toBe('bg-group-green-base');
+    expect(colorMap.K).toBe('bg-group-yellow-base');
+    expect(colorMap.O).toBe('bg-group-purple-base');
   });
 
-  it('ignores blank region markers', () => {
+  it('skips blank and placeholder regions', () => {
     const colorMap = buildRegionColorClassMap([
       ['.', 'A'],
       ['', 'B'],

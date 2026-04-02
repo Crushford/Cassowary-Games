@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative mx-auto flex h-dvh w-full max-w-[480px] flex-col overflow-hidden bg-app-bgAlt text-app-text bg-[radial-gradient(120%_120%_at_50%_-15%,var(--tw-gradient-from)_0%,var(--tw-gradient-to)_55%)] from-semantic-warning-950 to-app-bgAlt"
+    class="relative mx-auto flex h-dvh w-full max-w-[480px] touch-manipulation flex-col overflow-hidden overscroll-contain bg-app-bgAlt text-app-text bg-[radial-gradient(120%_120%_at_50%_-15%,var(--tw-gradient-from)_0%,var(--tw-gradient-to)_55%)] from-semantic-warning-950 to-app-bgAlt"
     data-game="mining"
   >
     <Toast
@@ -47,13 +47,23 @@
         </div>
       </div>
     </div>
-    <div class="flex-1 overflow-y-auto px-4 pt-4">
-      <div class="space-y-4 pb-6">
-        <section class="rounded-2xl border border-app-border bg-app-surface p-4">
-          <div class="mb-4 rounded-xl bg-app-bg px-4 py-3 text-sm text-app-textMuted">
-            {{ store.currentLevelGoalText }}
+    <div class="flex-1 min-h-0 overflow-hidden px-4 py-3">
+      <section
+        class="flex h-full min-h-0 flex-col rounded-2xl border border-app-border bg-app-surface p-4"
+      >
+        <div class="flex-none rounded-xl bg-app-bg px-4 py-3 text-sm text-app-textMuted">
+          <div>{{ store.currentLevelGoalText }}</div>
+          <div
+            class="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-semantic-warning-300"
+          >
+            Tap to flag. Tap and hold to dig.
           </div>
+        </div>
 
+        <div
+          ref="boardViewport"
+          class="mt-4 flex min-h-0 flex-1 items-center justify-center overflow-hidden"
+        >
           <MiningBoard
             :truth-gold="store.truthGold"
             :region-ids="store.regionIds"
@@ -61,17 +71,17 @@
             :flagged="store.visibleFlags"
             :reward-label="'1'"
             :show-regions="store.canShowScannerRegions"
-            :can-excavate-all-hidden="false"
+            :board-size-px="boardPixelSize"
             :disabled="store.phase !== 'playing'"
             @dig="store.dig"
             @toggle-flag="store.toggleFlag"
           />
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
 
     <div class="flex-none border-t border-app-border bg-app-bgAlt px-4 py-3">
-      <div class="mb-3 grid grid-cols-2 gap-2">
+      <div class="grid grid-cols-2 gap-2">
         <button
           type="button"
           class="rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
@@ -99,14 +109,6 @@
           Clear Flags
         </button>
       </div>
-
-      <button
-        type="button"
-        class="w-full rounded-xl border border-app-border bg-app-surface px-4 py-2 text-center text-sm font-bold leading-tight text-app-text transition-colors hover:bg-app-bg"
-        @click="store.retryLevel()"
-      >
-        Replay Level
-      </button>
     </div>
 
     <Modal
@@ -250,17 +252,10 @@
             </button>
           </div>
 
-          <div v-else class="grid grid-cols-2 gap-3">
+          <div v-else>
             <button
               type="button"
-              class="rounded-xl border border-semantic-danger-700 bg-semantic-danger-900 px-4 py-2 text-sm font-bold text-semantic-danger-100 transition-colors hover:bg-semantic-danger-800"
-              @click="store.retryLevel()"
-            >
-              Replay Level
-            </button>
-            <button
-              type="button"
-              class="rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+              class="w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
               :class="
                 store.canStartNextLevel
                   ? 'border-semantic-success-500 bg-semantic-success-700 text-white hover:bg-semantic-success-600'
@@ -313,7 +308,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import Modal from '@/shared/components/Modal.vue';
 import Toast from '@/shared/components/Toast.vue';
@@ -322,6 +317,21 @@ import MiningBoard from '../components/MiningBoard.vue';
 import { useMiningStore } from '../stores/mining';
 
 const store = useMiningStore();
+const boardViewport = ref<HTMLElement | null>(null);
+const boardPixelSize = ref<number | undefined>(undefined);
+let boardResizeObserver: ResizeObserver | null = null;
+
+function updateBoardPixelSize() {
+  const viewport = boardViewport.value;
+  if (!viewport) {
+    boardPixelSize.value = undefined;
+    return;
+  }
+
+  const { width, height } = viewport.getBoundingClientRect();
+  const nextSize = Math.max(0, Math.floor(Math.min(width, height)));
+  boardPixelSize.value = nextSize > 0 ? nextSize : undefined;
+}
 
 const successTitle = computed(() => {
   if (store.isGameComplete) {
@@ -348,6 +358,25 @@ let errorTimeout: number | null = null;
 
 onMounted(() => {
   void store.initialize();
+  updateBoardPixelSize();
+
+  if (typeof ResizeObserver !== 'undefined' && boardViewport.value) {
+    boardResizeObserver = new ResizeObserver(() => {
+      updateBoardPixelSize();
+    });
+    boardResizeObserver.observe(boardViewport.value);
+  } else {
+    window.addEventListener('resize', updateBoardPixelSize);
+  }
+});
+
+onBeforeUnmount(() => {
+  if (boardResizeObserver) {
+    boardResizeObserver.disconnect();
+    boardResizeObserver = null;
+  } else {
+    window.removeEventListener('resize', updateBoardPixelSize);
+  }
 });
 
 watch(
