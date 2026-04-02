@@ -64,7 +64,6 @@
 import { computed } from 'vue';
 
 import type { MiningFlagType } from '../game/types';
-import { getRegionColorClass } from '../game/utils/regionColor';
 
 const props = defineProps<{
   row: number;
@@ -73,6 +72,7 @@ const props = defineProps<{
   flagged: MiningFlagType | null;
   rewardLabel: string;
   regionId?: string | null;
+  regionColorClass?: string;
   showRegion?: boolean;
   canExcavateAllHidden?: boolean;
   disabled?: boolean;
@@ -147,7 +147,7 @@ const regionColorClass = computed(() => {
     return '';
   }
 
-  return getRegionColorClass(props.regionId ?? null);
+  return props.regionColorClass ?? '';
 });
 
 const showAutoFlagRipple = computed(() => props.tileKind === 'hidden' && props.autoFlagAnimating);

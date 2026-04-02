@@ -24,13 +24,21 @@ const REGION_COLOR_ORDER: ColorName[] = [
   'amber',
 ];
 
-export function getRegionColorClass(regionId: string | null): string {
-  if (!regionId || regionId === '.') {
-    return '';
+export function buildRegionColorClassMap(regionIds: string[][]): Record<string, string> {
+  const regionColorMap: Record<string, string> = {};
+  let colorIndex = 0;
+
+  for (const row of regionIds) {
+    for (const regionId of row) {
+      if (!regionId || regionId === '.' || regionColorMap[regionId]) {
+        continue;
+      }
+
+      const colorName = REGION_COLOR_ORDER[colorIndex % REGION_COLOR_ORDER.length];
+      regionColorMap[regionId] = DARK_PASTEL_COLORS[colorName].bg;
+      colorIndex += 1;
+    }
   }
 
-  const seed = regionId.charCodeAt(0);
-  const colorName = REGION_COLOR_ORDER[seed % REGION_COLOR_ORDER.length];
-
-  return DARK_PASTEL_COLORS[colorName].bg;
+  return regionColorMap;
 }
