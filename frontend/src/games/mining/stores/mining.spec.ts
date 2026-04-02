@@ -217,6 +217,16 @@ describe('useMiningStore', () => {
     expect(store.revealed[0][1]).toBe(true);
   });
 
+  it('allows digging an unrevealed tile without placing a gold flag first', async () => {
+    const store = await createStore();
+
+    await store.dig({ row: 0, col: 1 });
+
+    expect(store.revealed[0][1]).toBe(true);
+    expect(store.digsUsed).toBe(1);
+    expect(store.daysElapsed).toBe(1);
+  });
+
   it('completes the level when all gold is found', async () => {
     const store = await createStore();
 

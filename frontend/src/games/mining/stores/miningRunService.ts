@@ -94,12 +94,6 @@ export function recomputeSystemFlags(state: MiningStoreState) {
   state.board.systemFlags = nextSystemFlags;
 }
 
-function canDigAt(state: MiningStoreState, position: PositionRef): boolean {
-  const playerFlag = state.board.playerFlags[position.row]?.[position.col];
-  const systemFlag = state.board.systemFlags[position.row]?.[position.col];
-  return playerFlag === 'gold-here' || systemFlag === 'gold-here';
-}
-
 function setPlayerGoldHereFlag(state: MiningStoreState, position: PositionRef) {
   state.board.playerFlags[position.row][position.col] =
     state.board.playerFlags[position.row][position.col] === 'gold-here' ? null : 'gold-here';
@@ -247,7 +241,6 @@ export async function dig(state: MiningStoreState, position: PositionRef, deps: 
     revealed: state.board.revealed[position.row]?.[position.col] ?? null,
     playerFlag: state.board.playerFlags[position.row]?.[position.col] ?? null,
     systemFlag: state.board.systemFlags[position.row]?.[position.col] ?? null,
-    canDigAt: canDigAt(state, position),
   });
 
   if (state.run.phase !== 'playing') {
@@ -258,15 +251,6 @@ export async function dig(state: MiningStoreState, position: PositionRef, deps: 
 
   if (state.board.revealed[position.row]?.[position.col]) {
     logMiningInteraction('dig-blocked', state, position, { reason: 'tile-already-revealed' });
-    return;
-  }
-
-  if (!canDigAt(state, position)) {
-    logMiningInteraction('dig-blocked', state, position, {
-      reason: 'missing-gold-here-flag',
-      playerFlag: state.board.playerFlags[position.row]?.[position.col] ?? null,
-      systemFlag: state.board.systemFlags[position.row]?.[position.col] ?? null,
-    });
     return;
   }
 

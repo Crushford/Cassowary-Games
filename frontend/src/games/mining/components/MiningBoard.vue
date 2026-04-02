@@ -1,6 +1,6 @@
 <template>
   <div
-    class="grid gap-2 [touch-action:none] overscroll-none"
+    class="grid gap-2 touch-manipulation overscroll-contain"
     :style="boardStyle"
     @touchstart="handleTouchStart"
     @touchmove="handleTouchMove"
@@ -16,12 +16,11 @@
       :flagged="cell.flagged"
       :auto-flag-animating="autoFlagAnimatingKeys.has(getCellKey(cell.row, cell.col))"
       :gold-found-animating="goldFoundAnimatingKeys.has(getCellKey(cell.row, cell.col))"
+      :empty-found-animating="emptyFoundAnimatingKeys.has(getCellKey(cell.row, cell.col))"
       :reward-label="rewardLabel"
-      :region-id="cell.regionId"
-      :region-color-class="cell.regionId ? (regionColorClassMap[cell.regionId] ?? '') : ''"
+      :region-color-class="getRegionColorClass(cell.regionId)"
       :show-region="showRegions"
       :disabled="disabled || cell.tileKind !== 'hidden'"
-      :can-excavate-all-hidden="canExcavateAllHidden"
       @dig="handleDig(cell.row, cell.col)"
       @toggle-flag="handleToggleFlag(cell.row, cell.col)"
     />
@@ -42,7 +41,7 @@ const props = defineProps<{
   flagged: Array<Array<MiningFlagType | null>>;
   rewardLabel: string;
   showRegions: boolean;
-  canExcavateAllHidden: boolean;
+  boardSizePx?: number;
   disabled?: boolean;
 }>();
 
@@ -53,12 +52,22 @@ const emit = defineEmits<{
 
 const regionColorClassMap = computed(() => buildRegionColorClassMap(props.regionIds));
 
+function getRegionColorClass(regionId: string | null): string | null {
+  if (!regionId) {
+    return null;
+  }
+
+  return regionColorClassMap.value[regionId] ?? null;
+}
+
 const isSwiping = ref(false);
 const swipedCells = ref<Set<string>>(new Set());
 const autoFlagAnimatingKeys = ref<Set<string>>(new Set());
 const goldFoundAnimatingKeys = ref<Set<string>>(new Set());
+const emptyFoundAnimatingKeys = ref<Set<string>>(new Set());
 const autoFlagTimeouts = new Map<string, number>();
 const goldFoundTimeouts = new Map<string, number>();
+const emptyFoundTimeouts = new Map<string, number>();
 let hasHydratedFlagSnapshot = false;
 let hasHydratedRevealSnapshot = false;
 
@@ -116,6 +125,11 @@ onBeforeUnmount(() => {
     window.clearTimeout(timeoutId);
   }
   goldFoundTimeouts.clear();
+
+  for (const timeoutId of emptyFoundTimeouts.values()) {
+    window.clearTimeout(timeoutId);
+  }
+  emptyFoundTimeouts.clear();
 });
 
 watch(
@@ -126,38 +140,62 @@ watch(
       return;
     }
 
-    const nextAnimatingKeys = new Set(goldFoundAnimatingKeys.value);
+    const nextGoldAnimatingKeys = new Set(goldFoundAnimatingKeys.value);
+    const nextEmptyAnimatingKeys = new Set(emptyFoundAnimatingKeys.value);
 
     for (let row = 0; row < nextRevealed.length; row += 1) {
       for (let col = 0; col < nextRevealed[row].length; col += 1) {
         const wasRevealed = previousRevealed[row]?.[col] ?? false;
         const isRevealed = nextRevealed[row]?.[col] ?? false;
 
-        if (wasRevealed || !isRevealed || !props.truthGold[row]?.[col]) {
+        if (wasRevealed || !isRevealed) {
           continue;
         }
 
         const key = getCellKey(row, col);
-        nextAnimatingKeys.add(key);
 
-        const pendingTimeout = goldFoundTimeouts.get(key);
+        if (props.truthGold[row]?.[col]) {
+          nextGoldAnimatingKeys.add(key);
+
+          const pendingTimeout = goldFoundTimeouts.get(key);
+          if (pendingTimeout !== undefined) {
+            window.clearTimeout(pendingTimeout);
+          }
+
+          goldFoundTimeouts.set(
+            key,
+            window.setTimeout(() => {
+              goldFoundTimeouts.delete(key);
+              const remainingKeys = new Set(goldFoundAnimatingKeys.value);
+              remainingKeys.delete(key);
+              goldFoundAnimatingKeys.value = remainingKeys;
+            }, 620)
+          );
+
+          continue;
+        }
+
+        nextEmptyAnimatingKeys.add(key);
+
+        const pendingTimeout = emptyFoundTimeouts.get(key);
         if (pendingTimeout !== undefined) {
           window.clearTimeout(pendingTimeout);
         }
 
-        goldFoundTimeouts.set(
+        emptyFoundTimeouts.set(
           key,
           window.setTimeout(() => {
-            goldFoundTimeouts.delete(key);
-            const remainingKeys = new Set(goldFoundAnimatingKeys.value);
+            emptyFoundTimeouts.delete(key);
+            const remainingKeys = new Set(emptyFoundAnimatingKeys.value);
             remainingKeys.delete(key);
-            goldFoundAnimatingKeys.value = remainingKeys;
-          }, 520)
+            emptyFoundAnimatingKeys.value = remainingKeys;
+          }, 420)
         );
       }
     }
 
-    goldFoundAnimatingKeys.value = nextAnimatingKeys;
+    goldFoundAnimatingKeys.value = nextGoldAnimatingKeys;
+    emptyFoundAnimatingKeys.value = nextEmptyAnimatingKeys;
   },
   { deep: true }
 );
@@ -167,7 +205,6 @@ function handleDig(row: number, col: number) {
     row,
     col,
     boardDisabled: Boolean(props.disabled),
-    canExcavateAllHidden: props.canExcavateAllHidden,
     flagAtCell: props.flagged[row]?.[col] ?? null,
     revealed: props.revealed[row]?.[col] ?? false,
   });
@@ -352,5 +389,7 @@ const cells = computed(() => {
 
 const boardStyle = computed(() => ({
   gridTemplateColumns: `repeat(${props.truthGold.length || 1}, minmax(0, 1fr))`,
+  width: props.boardSizePx ? `${props.boardSizePx}px` : '100%',
+  height: props.boardSizePx ? `${props.boardSizePx}px` : 'auto',
 }));
 </script>

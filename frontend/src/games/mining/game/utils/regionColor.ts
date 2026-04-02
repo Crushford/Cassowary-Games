@@ -1,15 +1,15 @@
 import type { ColorName } from '@/games/queens/types/types';
 
-const DARK_PASTEL_COLORS: Record<ColorName, { bg: string; hover: string }> = {
-  red: { bg: 'bg-group-red-base', hover: 'hover:bg-group-red-hover' },
-  blue: { bg: 'bg-group-blue-base', hover: 'hover:bg-group-blue-hover' },
-  green: { bg: 'bg-group-green-base', hover: 'hover:bg-group-green-hover' },
-  yellow: { bg: 'bg-group-yellow-base', hover: 'hover:bg-group-yellow-hover' },
-  purple: { bg: 'bg-group-purple-base', hover: 'hover:bg-group-purple-hover' },
-  pink: { bg: 'bg-group-pink-base', hover: 'hover:bg-group-pink-hover' },
-  teal: { bg: 'bg-group-teal-base', hover: 'hover:bg-group-teal-hover' },
-  indigo: { bg: 'bg-group-indigo-base', hover: 'hover:bg-group-indigo-hover' },
-  amber: { bg: 'bg-group-amber-base', hover: 'hover:bg-group-amber-hover' },
+const DARK_PASTEL_COLORS: Record<ColorName, string> = {
+  red: 'bg-group-red-base',
+  blue: 'bg-group-blue-base',
+  green: 'bg-group-green-base',
+  yellow: 'bg-group-yellow-base',
+  purple: 'bg-group-purple-base',
+  pink: 'bg-group-pink-base',
+  teal: 'bg-group-teal-base',
+  indigo: 'bg-group-indigo-base',
+  amber: 'bg-group-amber-base',
 };
 
 const REGION_COLOR_ORDER: ColorName[] = [
@@ -35,7 +35,7 @@ export function buildRegionColorClassMap(regionIds: string[][]): Record<string, 
       }
 
       const colorName = REGION_COLOR_ORDER[colorIndex % REGION_COLOR_ORDER.length];
-      regionColorMap[regionId] = DARK_PASTEL_COLORS[colorName].bg;
+      regionColorMap[regionId] = DARK_PASTEL_COLORS[colorName];
       colorIndex += 1;
     }
   }
