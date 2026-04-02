@@ -1,63 +1,18 @@
 import { getAutomationOption } from '../game/progression/automation';
+import { getPlotPermit } from '../game/progression/plotPermits';
 import { getToolUpgrade } from '../game/progression/toolUpgrades';
-import type { MiningMagpieSkillId, MiningToolUpgradeId } from '../game/types';
+import type { MiningMagpieSkillId, MiningPlotPermitId, MiningToolUpgradeId } from '../game/types';
 import {
   DEFAULT_LEVEL_RETURN_PERCENT,
   EXCHANGE_LEVELS,
-  GOLD_EXCHANGE_RATE,
   getExchangeLevelForMonthlyGold,
   getNextExchangeLevel,
-  MONTHLY_UPKEEP_COST,
 } from './miningConfig';
 import type { MiningStoreState } from './miningState';
 import { recomputeSystemFlags } from './miningRunService';
 
 interface ProgressionDeps {
   setError(message: string): void;
-}
-
-function triggerFoodGameOver(state: MiningStoreState) {
-  state.run.phase = 'dead';
-  state.ui.progressionMenuOpen = false;
-  state.ui.showMonthOverModal = false;
-  state.ui.showDeathModal = true;
-  state.run.deathMessage =
-    'You cannot afford the next month of food.\n\nThe mining contract is over. Restart to begin again from a fresh save.';
-  state.ui.lastActionMessage = 'Game over. You could not afford food for the next month.';
-}
-
-export function canBuyFood(state: MiningStoreState): boolean {
-  return !state.progression.monthlyUpkeepPaid && state.economy.coinsTotal >= MONTHLY_UPKEEP_COST;
-}
-
-export function buyFood(state: MiningStoreState, deps: Pick<ProgressionDeps, 'setError'>) {
-  if (state.progression.monthlyUpkeepPaid) {
-    return;
-  }
-
-  if (state.economy.coinsTotal < MONTHLY_UPKEEP_COST) {
-    triggerFoodGameOver(state);
-    return;
-  }
-
-  state.economy.coinsTotal -= MONTHLY_UPKEEP_COST;
-  state.progression.monthlyUpkeepPaid = true;
-  state.run.daysLeftInMonth = state.run.daysPerMonth;
-  state.ui.lastActionMessage =
-    'You paid the monthly food bill. The next month now has a full 28-day shift ready.';
-}
-
-export function shouldTriggerFoodGameOver(state: MiningStoreState): boolean {
-  return !state.progression.monthlyUpkeepPaid && state.economy.coinsTotal < MONTHLY_UPKEEP_COST;
-}
-
-export function triggerFoodGameOverIfNeeded(state: MiningStoreState): boolean {
-  if (!shouldTriggerFoodGameOver(state)) {
-    return false;
-  }
-
-  triggerFoodGameOver(state);
-  return true;
 }
 
 export function canExchangeGold(state: MiningStoreState): boolean {
@@ -76,15 +31,13 @@ export function exchangeGoldForCoins(
   const previousBestLevel = state.run.bestLevel;
   const reachedLevel = getExchangeLevelForMonthlyGold(soldGold);
   const returnPercent = reachedLevel.returnPercent ?? DEFAULT_LEVEL_RETURN_PERCENT;
-  const baseValue = soldGold * GOLD_EXCHANGE_RATE;
-  const payout = Math.round((baseValue * returnPercent) / 100);
   const nextLevel = getNextExchangeLevel(soldGold);
 
   state.exchange.lastSoldGold = soldGold;
-  state.exchange.lastBaseValue = baseValue;
+  state.exchange.lastBaseValue = soldGold;
   state.exchange.lastReturnPercent = returnPercent;
   state.exchange.lastBonus = 0;
-  state.exchange.lastPayout = payout;
+  state.exchange.lastPayout = soldGold;
   state.exchange.lastReachedLevel = reachedLevel.level;
   state.exchange.lastBestLevel = Math.max(previousBestLevel, reachedLevel.level);
   state.exchange.nextThreshold = nextLevel?.threshold ?? null;
@@ -96,15 +49,13 @@ export function exchangeGoldForCoins(
     state.exchange.progressRatio = 1;
   }
 
-  state.economy.goldTotal = 0;
-  state.economy.coinsTotal += payout;
   state.run.currentMonthLevel = reachedLevel.level;
   state.run.bestLevel = Math.max(state.run.bestLevel, reachedLevel.level);
   state.progression.exchangeProcessedThisTown = true;
   state.ui.lastActionMessage =
     soldGold > 0
-      ? `The exchange closed out ${soldGold} gold for ${payout} coins.`
-      : 'The exchange closed out a lean month with no gold to sell.';
+      ? `The exchange graded ${soldGold} gold at level ${reachedLevel.level}.`
+      : 'The exchange had no gold to grade this visit.';
 
   if (state.run.bestLevel > previousBestLevel) {
     state.ui.levelCelebration = {
@@ -133,7 +84,7 @@ export function canBuyAutomation(state: MiningStoreState, skillId: MiningMagpieS
   }
 
   return (
-    !state.progression.magpieSkillIds.includes(skillId) && state.economy.coinsTotal >= skill.cost
+    !state.progression.magpieSkillIds.includes(skillId) && state.economy.goldTotal >= skill.cost
   );
 }
 
@@ -166,12 +117,12 @@ export function buyAutomation(
     return;
   }
 
-  if (state.economy.coinsTotal < skill.cost) {
-    deps.setError('Not enough coins for that lesson.');
+  if (state.economy.goldTotal < skill.cost) {
+    deps.setError('Not enough gold for that lesson.');
     return;
   }
 
-  state.economy.coinsTotal -= skill.cost;
+  state.economy.goldTotal -= skill.cost;
   state.progression.magpieSkillIds.push(skillId);
   recomputeSystemFlags(state);
   state.ui.lastActionMessage = `${skill.title} purchased. ${skill.effectSummary}`;
@@ -185,7 +136,7 @@ export function canBuyToolUpgrade(
   return (
     upgrade.requiredLevel <= state.run.bestLevel &&
     !state.progression.ownedToolUpgradeIds.includes(upgradeId) &&
-    state.economy.coinsTotal >= upgrade.cost
+    state.economy.goldTotal >= upgrade.cost
   );
 }
 
@@ -206,13 +157,54 @@ export function buyToolUpgrade(
     return;
   }
 
-  if (state.economy.coinsTotal < upgrade.cost) {
-    deps.setError('Not enough coins for that tool upgrade.');
+  if (state.economy.goldTotal < upgrade.cost) {
+    deps.setError('Not enough gold for that tool upgrade.');
     return;
   }
 
-  state.economy.coinsTotal -= upgrade.cost;
+  state.economy.goldTotal -= upgrade.cost;
   state.progression.ownedToolUpgradeIds.push(upgradeId);
 
   state.ui.lastActionMessage = `${upgrade.title} purchased. ${upgrade.effectSummary}`;
+}
+
+export function canBuyPlotPermit(state: MiningStoreState, permitId: MiningPlotPermitId): boolean {
+  const permit = getPlotPermit(permitId);
+  return (
+    permit.requiredLevel <= state.run.bestLevel &&
+    permit.size === state.progression.maxPlotSize + 1 &&
+    state.economy.goldTotal >= permit.cost
+  );
+}
+
+export function buyPlotPermit(
+  state: MiningStoreState,
+  permitId: MiningPlotPermitId,
+  deps: ProgressionDeps
+) {
+  const permit = getPlotPermit(permitId);
+
+  if (permit.requiredLevel > state.run.bestLevel) {
+    deps.setError('Reach exchange level 4 before filing a larger plot permit.');
+    return;
+  }
+
+  if (permit.size <= state.progression.maxPlotSize) {
+    deps.setError('That plot permit is already filed.');
+    return;
+  }
+
+  if (permit.size !== state.progression.maxPlotSize + 1) {
+    deps.setError('File the next plot size permit before jumping to a larger claim.');
+    return;
+  }
+
+  if (state.economy.goldTotal < permit.cost) {
+    deps.setError('Not enough gold for that plot permit.');
+    return;
+  }
+
+  state.economy.goldTotal -= permit.cost;
+  state.progression.maxPlotSize = permit.size;
+  state.ui.lastActionMessage = `${permit.title} purchased. ${permit.effectSummary}`;
 }

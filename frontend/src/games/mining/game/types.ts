@@ -1,14 +1,12 @@
-export type MiningPhase =
-  | 'idle'
-  | 'loading'
-  | 'playing'
-  | 'town'
-  | 'level-complete'
-  | 'out-of-food'
-  | 'dead';
-export type MiningProgressionTab = 'food-shop' | 'gold-exchange' | 'animal-trainer' | 'ui-upgrades';
-export type MiningTownStep = 'none' | 'exchange' | 'food-shop' | 'magpie-trainer' | 'tool-store';
-export type MiningUpgradeCategory = 'magpie' | 'flow' | 'scanner' | 'pattern';
+export type MiningPhase = 'idle' | 'loading' | 'playing' | 'town' | 'level-complete';
+export type MiningProgressionTab = 'gold-exchange' | 'animal-trainer' | 'ui-upgrades';
+export type MiningTownStep =
+  | 'none'
+  | 'exchange'
+  | 'magpie-trainer'
+  | 'tool-store'
+  | 'permit-office';
+export type MiningUpgradeCategory = 'magpie' | 'flow' | 'scanner' | 'pattern' | 'plot';
 export type MiningFlagType = 'gold-here' | 'not-gold';
 export type MiningMagpieSkillId =
   | 'buy-magpie'
@@ -18,6 +16,7 @@ export type MiningMagpieSkillId =
   | 'pattern-automation-1'
   | 'pattern-automation-2';
 export type MiningToolUpgradeId = 'scanner' | 'auto-hauler';
+export type MiningPlotPermitId = 'plot-6x6' | 'plot-7x7' | 'plot-8x8' | 'plot-9x9';
 
 export interface PositionRef {
   row: number;
@@ -56,6 +55,17 @@ export interface MiningToolUpgradeDefinition {
   category: Exclude<MiningUpgradeCategory, 'magpie'>;
   requiredLevel: number;
   cost: number;
+  effectSummary: string;
+}
+
+export interface MiningPlotPermitDefinition {
+  id: MiningPlotPermitId;
+  title: string;
+  description: string;
+  category: 'plot';
+  requiredLevel: number;
+  cost: number;
+  size: number;
   effectSummary: string;
 }
 

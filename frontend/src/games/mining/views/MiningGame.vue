@@ -26,8 +26,8 @@
 
       <div class="mt-3 grid grid-cols-4 gap-2 text-xs">
         <div class="rounded-xl bg-app-surface px-3 py-2">
-          <div class="uppercase tracking-[0.18em] text-app-textMuted">Days Left</div>
-          <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.daysLeftInMonth }}</div>
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Days</div>
+          <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.daysElapsed }}</div>
         </div>
         <div class="rounded-xl bg-app-surface px-3 py-2">
           <div class="uppercase tracking-[0.18em] text-app-textMuted">Level</div>
@@ -36,14 +36,12 @@
           </div>
         </div>
         <div class="rounded-xl bg-app-surface px-3 py-2">
-          <div class="uppercase tracking-[0.18em] text-app-textMuted">Gold This Month</div>
-          <div class="mt-1 font-bold tabular-nums text-app-text">
-            {{ store.goldCollectedThisMonth }}
-          </div>
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Gold Carried</div>
+          <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.goldTotal }}</div>
         </div>
         <div class="rounded-xl bg-app-surface px-3 py-2">
-          <div class="uppercase tracking-[0.18em] text-app-textMuted">Coins</div>
-          <div class="mt-1 font-bold tabular-nums text-app-text">{{ store.coinsTotal }}</div>
+          <div class="uppercase tracking-[0.18em] text-app-textMuted">Next Field</div>
+          <div class="mt-1 font-bold tabular-nums text-app-text">1 Gold</div>
         </div>
       </div>
     </div>
@@ -107,9 +105,9 @@
               : 'border-app-border bg-app-bg text-app-textMuted'
           "
           :disabled="store.phase !== 'playing'"
-          @click="store.triggerMonthEnd()"
+          @click="store.openProgressionMenu()"
         >
-          Return To Town
+          Open Town
         </button>
         <button
           type="button"
@@ -122,7 +120,7 @@
           :disabled="!store.canTravelToNextField()"
           @click="store.goToNextField()"
         >
-          Next Field (1 Coin)
+          Next Field (1 Gold)
         </button>
       </div>
     </div>
@@ -132,25 +130,26 @@
       :town-step="store.townStep"
       :display-level="store.displayLevel"
       :gold-total="store.goldTotal"
-      :coins-total="store.coinsTotal"
       :exchange-summary="store.exchangeSummary"
-      :monthly-upkeep-paid="store.progression.monthlyUpkeepPaid"
       :automation-options="store.visibleAutomationOptions"
       :owned-automation-ids="store.magpieSkillIds"
       :tool-upgrade-options="store.visibleToolUpgradeOptions"
       :owned-tool-upgrade-ids="store.ownedToolUpgradeIds"
-      :can-advance="store.canAdvanceTownStep"
-      :can-buy-food="store.canBuyFood()"
+      :plot-permit-options="store.visiblePlotPermitOptions"
+      :max-plot-size="store.maxPlotSize"
+      :show-permit-office="store.showPermitOffice"
       :can-exchange-gold="store.canExchangeGold()"
       :show-purchased-upgrades="store.showPurchasedUpgrades"
       :can-buy-automation="(skillId) => store.canBuyAutomation(skillId)"
       :can-buy-tool-upgrade="(upgradeId) => store.canBuyToolUpgrade(upgradeId)"
+      :can-buy-plot-permit="(permitId) => store.canBuyPlotPermit(permitId)"
       @close="store.closeProgressionMenu()"
-      @continue="store.continueTownSequence()"
-      @buy-food="store.buyFood()"
+      @return-to-mine="store.returnToMine()"
+      @select-step="store.selectTownStep"
       @exchange-gold="store.exchangeGoldForCoins()"
       @buy-automation="store.buyAutomation"
       @buy-tool-upgrade="store.buyToolUpgrade"
+      @buy-plot-permit="store.buyPlotPermit"
       @toggle-purchased="store.toggleShowPurchasedUpgrades()"
     />
 
@@ -204,9 +203,9 @@
         </div>
 
         <div class="space-y-3 text-sm leading-relaxed text-semantic-neutral-200">
-          <p>A month is 28 digs.</p>
-          <p>Each dig uses 1 day.</p>
-          <p>When the month ends, you go to town to sell gold, pay upkeep, and buy upgrades.</p>
+          <p>Each dig adds 1 day to your run.</p>
+          <p>Days are just your score, so lower is better.</p>
+          <p>You can head to town whenever you want to grade gold and buy upgrades with it.</p>
           <p>Tap once to place a gold-here flag.</p>
           <p>Swipe across hidden tiles to place gold-here flags quickly.</p>
           <p>
@@ -214,7 +213,7 @@
             dug.
           </p>
           <p>The magpie marks not-gold tiles with an x and likely gold with a target.</p>
-          <p>Better months at the exchange unlock new town opportunities.</p>
+          <p>Better exchange results unlock new town opportunities.</p>
         </div>
 
         <button
@@ -223,27 +222,6 @@
           @click="store.dismissIntro()"
         >
           Start Digging
-        </button>
-      </div>
-    </Modal>
-
-    <Modal
-      :is-visible="store.showMonthOverModal"
-      aria-label="Month over"
-      @close="store.dismissMonthOverModal()"
-    >
-      <div class="space-y-4 text-white">
-        <div>
-          <h2 class="text-xl font-bold">The Month Is Over</h2>
-          <p class="mt-1 text-sm text-semantic-neutral-300">Time to head into town.</p>
-        </div>
-
-        <button
-          type="button"
-          class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
-          @click="store.dismissMonthOverModal()"
-        >
-          Head To Town
         </button>
       </div>
     </Modal>
@@ -259,7 +237,7 @@
             Congratulations, you reached Level {{ store.levelCelebration?.level }}.
           </h2>
           <p class="mt-1 text-sm text-semantic-neutral-300">
-            Your return this month is now {{ store.levelCelebration?.returnPercent }}%.
+            Your exchange return is now {{ store.levelCelebration?.returnPercent }}%.
           </p>
         </div>
 
@@ -318,54 +296,6 @@
           @click="store.closeHints()"
         >
           Back to the Shaft
-        </button>
-      </div>
-    </Modal>
-
-    <Modal
-      :is-visible="store.showDeathModal"
-      aria-label="Out of food"
-      @close="store.dismissDeathModal()"
-    >
-      <div class="space-y-4 text-white">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 class="text-xl font-bold">
-              {{ store.phase === 'dead' ? 'Game Over' : 'Out of Food' }}
-            </h2>
-            <p class="mt-1 text-sm text-semantic-neutral-300">
-              {{
-                store.phase === 'dead'
-                  ? 'You cannot fund another month underground.'
-                  : 'Go to town to restock, exchange gold, and manage upgrades.'
-              }}
-            </p>
-          </div>
-        </div>
-
-        <p class="text-sm leading-relaxed text-semantic-neutral-200">
-          {{ store.deathMessage }}
-        </p>
-
-        <button
-          v-if="store.phase === 'dead'"
-          type="button"
-          class="w-full rounded-xl border border-semantic-danger-500 bg-semantic-danger-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-danger-600"
-          @click="store.deleteSavedGame()"
-        >
-          Restart
-        </button>
-
-        <button
-          v-else
-          type="button"
-          class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
-          @click="
-            store.dismissDeathModal();
-            store.openProgressionMenu();
-          "
-        >
-          Go To Town
         </button>
       </div>
     </Modal>

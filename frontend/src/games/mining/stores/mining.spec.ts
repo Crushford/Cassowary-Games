@@ -17,6 +17,13 @@ const puzzlesPayload = {
       queens: '.Q......Q.Q......Q......Q',
     },
   ],
+  '6x6': [
+    {
+      id: 'pz-6-0',
+      layout: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+      queens: ['Q.....', '..Q...', '....Q.', '.Q....', '...Q..', '.....Q'].join(''),
+    },
+  ],
 };
 
 describe('useMiningStore', () => {
@@ -82,64 +89,31 @@ describe('useMiningStore', () => {
     return positions;
   }
 
-  it('starts a month with 28 days and spends 1 day per dig', async () => {
+  it('starts with 0 elapsed days and adds 1 day per dig', async () => {
     const store = await createStore();
 
-    expect(store.daysPerMonth).toBe(28);
-    expect(store.daysLeftInMonth).toBe(28);
+    expect(store.daysElapsed).toBe(0);
 
     store.toggleFlag({ row: 0, col: 1 });
     await store.dig({ row: 0, col: 1 });
 
-    expect(store.daysLeftInMonth).toBe(27);
     expect(store.daysElapsed).toBe(1);
     expect(store.revealed[0][1]).toBe(true);
-    expect(store.coinsTotal).toBe(20);
+    expect(store.goldTotal).toBe(0);
   });
 
-  it('moves to town when the month ends and opens the month-over modal', async () => {
+  it('opens town on demand and returns to play when closed', async () => {
     const store = await createStore();
 
-    store.run.daysLeftInMonth = 1;
-    store.toggleFlag({ row: 0, col: 1 });
-    await store.dig({ row: 0, col: 1 });
-
-    expect(store.daysLeftInMonth).toBe(0);
+    store.openProgressionMenu();
     expect(store.phase).toBe('town');
     expect(store.townStep).toBe('exchange');
-    expect(store.showMonthOverModal).toBe(true);
-    expect(store.progressionMenuOpen).toBe(false);
-
-    store.dismissMonthOverModal();
-
-    expect(store.showMonthOverModal).toBe(false);
     expect(store.progressionMenuOpen).toBe(true);
-  });
 
-  it('can end the month early and return to town from the field', async () => {
-    const store = await createStore();
+    store.closeProgressionMenu();
 
     expect(store.phase).toBe('playing');
-    store.triggerMonthEnd();
-
-    expect(store.phase).toBe('town');
-    expect(store.townStep).toBe('exchange');
-    expect(store.showMonthOverModal).toBe(true);
-  });
-
-  it('requires at least 1 day left to place flags or dig', async () => {
-    const store = await createStore();
-
-    store.run.daysLeftInMonth = 0;
-
-    store.toggleFlag({ row: 0, col: 1 });
-    expect(store.playerFlags[0][1]).toBe(null);
-    expect(store.errorMessage).toContain('1 day left');
-
-    store.clearError();
-    await store.dig({ row: 0, col: 1 });
-    expect(store.revealed[0][1]).toBe(false);
-    expect(store.errorMessage).toContain('1 day left');
+    expect(store.progressionMenuOpen).toBe(false);
   });
 
   it('allows the player to override automatic not-gold flags and dig anyway', async () => {
@@ -201,44 +175,21 @@ describe('useMiningStore', () => {
     expect(store.canUndoFlags).toBe(false);
   });
 
-  it('triggers game over if you cannot afford food for the next month', async () => {
+  it('processes the exchange, updates exchange level and unlocks level-gated shops', async () => {
     const store = await createStore();
 
-    store.run.phase = 'town';
-    store.progression.townStep = 'exchange';
-    store.ui.progressionMenuOpen = true;
-    store.economy.goldTotal = 0;
-    store.economy.coinsTotal = 0;
-
-    store.exchangeGoldForCoins();
-    store.continueTownSequence();
-
-    expect(store.phase).toBe('dead');
-    expect(store.showDeathModal).toBe(true);
-    expect(store.progressionMenuOpen).toBe(false);
-    expect(store.deathMessage).toContain('cannot afford');
-  });
-
-  it('processes the exchange, updates month level and unlocks level-gated shops', async () => {
-    const store = await createStore();
-
-    store.run.phase = 'town';
-    store.progression.townStep = 'exchange';
-    store.ui.progressionMenuOpen = true;
+    store.openProgressionMenu();
     store.economy.goldTotal = 1;
-    store.run.goldCollectedThisMonth = 1;
 
     store.exchangeGoldForCoins();
 
-    expect(store.goldTotal).toBe(0);
-    expect(store.coinsTotal).toBe(23);
+    expect(store.goldTotal).toBe(1);
     expect(store.currentMonthLevel).toBe(1);
     expect(store.bestLevel).toBe(1);
     expect(store.exchangeSummary.soldGold).toBe(1);
-    expect(store.exchangeSummary.baseValue).toBe(100);
+    expect(store.exchangeSummary.baseValue).toBe(1);
     expect(store.exchangeSummary.returnPercent).toBe(3);
-    expect(store.exchangeSummary.payoutPerGold).toBe(3);
-    expect(store.exchangeSummary.payout).toBe(3);
+    expect(store.exchangeSummary.payout).toBe(1);
     expect(store.levelCelebration).toEqual({
       level: 1,
       returnPercent: 3,
@@ -251,12 +202,10 @@ describe('useMiningStore', () => {
     expect(store.visibleToolUpgradeOptions.map((option) => option.id)).toEqual(['auto-hauler']);
   });
 
-  it('allows a zero-gold month to clear the exchange step', async () => {
+  it('allows a zero-gold town visit to clear the exchange step', async () => {
     const store = await createStore();
 
-    store.run.phase = 'town';
-    store.progression.townStep = 'exchange';
-    store.ui.progressionMenuOpen = true;
+    store.openProgressionMenu();
     store.economy.goldTotal = 0;
     store.run.bestLevel = 0;
 
@@ -265,51 +214,49 @@ describe('useMiningStore', () => {
     expect(store.exchangeSummary.processed).toBe(true);
     expect(store.currentMonthLevel).toBe(1);
     expect(store.bestLevel).toBe(1);
-    expect(store.coinsTotal).toBe(20);
+    expect(store.goldTotal).toBe(0);
     expect(store.errorMessage).toBe(null);
-    expect(store.canAdvanceTownStep).toBe(true);
+    expect(store.exchangeSummary.processed).toBe(true);
   });
 
-  it('runs the town sequence in order and starts a new month after upkeep is paid', async () => {
+  it('lets the player visit shops in any order and close the town menu without losing town state', async () => {
     const store = await createStore();
 
-    store.run.phase = 'town';
-    store.progression.townStep = 'exchange';
-    store.ui.progressionMenuOpen = true;
-    store.economy.goldTotal = 1;
-    store.run.goldCollectedThisMonth = 1;
+    store.openProgressionMenu();
+    store.economy.goldTotal = 4;
+    store.run.bestLevel = 4;
 
     store.exchangeGoldForCoins();
-    store.continueTownSequence();
-    expect(store.townStep).toBe('food-shop');
 
-    store.continueTownSequence();
-    expect(store.townStep).toBe('food-shop');
-
-    store.buyFood();
-    expect(store.progression.monthlyUpkeepPaid).toBe(true);
-    expect(store.coinsTotal).toBe(22);
-    expect(store.daysLeftInMonth).toBe(28);
-
-    store.continueTownSequence();
-    expect(store.townStep).toBe('magpie-trainer');
-
-    store.buyAutomation('buy-magpie');
-    store.buyAutomation('auto-flag-row');
-    expect(store.magpieSkillIds).toEqual(['buy-magpie', 'auto-flag-row']);
-
-    store.continueTownSequence();
+    store.selectTownStep('tool-store');
     expect(store.townStep).toBe('tool-store');
 
     store.buyToolUpgrade('auto-hauler');
     expect(store.ownedToolUpgradeIds).toContain('auto-hauler');
+    expect(store.goldTotal).toBe(3);
 
-    store.continueTownSequence();
+    store.closeProgressionMenu();
+    expect(store.progressionMenuOpen).toBe(false);
     expect(store.phase).toBe('playing');
-    expect(store.daysLeftInMonth).toBe(28);
-    expect(store.currentMonthLevel).toBe(0);
-    expect(store.goldCollectedThisMonth).toBe(0);
-    expect(store.townStep).toBe('none');
+
+    store.openProgressionMenu();
+    expect(store.progressionMenuOpen).toBe(true);
+    expect(store.townStep).toBe('tool-store');
+
+    store.selectTownStep('permit-office');
+    store.buyPlotPermit('plot-6x6');
+    expect(store.maxPlotSize).toBe(6);
+    expect(store.goldTotal).toBe(2);
+
+    store.selectTownStep('magpie-trainer');
+    store.buyAutomation('buy-magpie');
+    store.buyAutomation('auto-flag-row');
+    expect(store.magpieSkillIds).toEqual(['buy-magpie', 'auto-flag-row']);
+    expect(store.goldTotal).toBe(0);
+
+    store.returnToMine();
+
+    expect(store.phase).toBe('playing');
     expect(store.progressionMenuOpen).toBe(false);
   });
 
@@ -317,6 +264,7 @@ describe('useMiningStore', () => {
     const store = await createStore();
 
     store.run.bestLevel = 3;
+    store.economy.goldTotal = 2;
 
     expect(store.visibleAutomationOptions.map((option) => option.id)).toEqual([
       'buy-magpie',
@@ -345,6 +293,7 @@ describe('useMiningStore', () => {
     expect(store.canShowScannerRegions).toBe(true);
 
     store.run.bestLevel = 4;
+    store.economy.goldTotal = 2;
 
     expect(store.visibleAutomationOptions.map((option) => option.id)).toEqual([
       'auto-flag-row',
@@ -355,6 +304,39 @@ describe('useMiningStore', () => {
     ]);
 
     expect(store.canBuyAutomation('pattern-automation-1')).toBe(true);
+    expect(store.visiblePlotPermitOptions.map((option) => option.id)).toEqual([
+      'plot-6x6',
+      'plot-7x7',
+      'plot-8x8',
+      'plot-9x9',
+    ]);
+  });
+
+  it('adds the permit office at level 4 and lets the next field load a larger plot', async () => {
+    const store = await createStore();
+
+    store.openProgressionMenu();
+    store.progression.exchangeProcessedThisTown = true;
+    store.run.bestLevel = 4;
+    store.economy.goldTotal = 1;
+
+    store.selectTownStep('permit-office');
+    expect(store.townStep).toBe('permit-office');
+
+    store.buyPlotPermit('plot-6x6');
+
+    expect(store.maxPlotSize).toBe(6);
+    expect(store.goldTotal).toBe(0);
+
+    store.returnToMine();
+
+    expect(store.phase).toBe('playing');
+    expect(store.progressionMenuOpen).toBe(false);
+
+    await store.loadNextLevel();
+
+    expect(store.boardSize).toBe(6);
+    expect(store.currentPuzzleId).toBe('pz-6-0');
   });
 
   it('keeps the field playable after all gold is found and only completes when fully dug', async () => {
@@ -398,6 +380,7 @@ describe('useMiningStore', () => {
     const store = await createStore();
 
     store.run.bestLevel = 3;
+    store.economy.goldTotal = 3;
     store.buyAutomation('buy-magpie');
     expect(store.visibleAutomationOptions.map((option) => option.id)).not.toContain('buy-magpie');
     store.buyAutomation('auto-flag-row');
@@ -416,11 +399,10 @@ describe('useMiningStore', () => {
   it('buying a scanner keeps the tool shop active and lets town progression continue normally', async () => {
     const store = await createStore();
 
-    store.run.phase = 'town';
+    store.openProgressionMenu();
     store.progression.townStep = 'tool-store';
     store.run.bestLevel = 3;
-    store.ui.progressionMenuOpen = true;
-    store.progression.monthlyUpkeepPaid = true;
+    store.economy.goldTotal = 1;
 
     store.buyToolUpgrade('scanner');
 
@@ -429,10 +411,9 @@ describe('useMiningStore', () => {
     expect(store.townStep).toBe('tool-store');
     expect(store.ownedToolUpgradeIds).toContain('scanner');
 
-    store.continueTownSequence();
+    store.returnToMine();
 
     expect(store.phase).toBe('playing');
-    expect(store.townStep).toBe('none');
     expect(store.progressionMenuOpen).toBe(false);
   });
 
@@ -440,7 +421,7 @@ describe('useMiningStore', () => {
     window.localStorage.setItem(
       MINING_SAVE_KEY,
       JSON.stringify({
-        version: 1,
+        version: 3,
         progression: {
           magpieSkillIds: ['buy-magpie', 'gold-here-row', 'pattern-automation-1'],
           ownedToolUpgradeIds: ['scanner', 'drill'],
@@ -462,13 +443,11 @@ describe('useMiningStore', () => {
 
     store.toggleFlag({ row: 0, col: 0 });
     await store.dig({ row: 0, col: 0 });
-    store.run.phase = 'town';
-    store.progression.townStep = 'exchange';
+    store.openProgressionMenu();
 
     const savedPuzzleId = store.currentPuzzleId;
-    const savedCoins = store.coinsTotal;
     const savedGold = store.goldTotal;
-    const savedDaysLeft = store.daysLeftInMonth;
+    const savedDaysElapsed = store.daysElapsed;
     const savedRevealed = store.revealed.map((row) => [...row]);
     await Promise.resolve();
 
@@ -479,9 +458,8 @@ describe('useMiningStore', () => {
     await restoredStore.initialize();
 
     expect(restoredStore.currentPuzzleId).toBe(savedPuzzleId);
-    expect(restoredStore.coinsTotal).toBe(savedCoins);
     expect(restoredStore.goldTotal).toBe(savedGold);
-    expect(restoredStore.daysLeftInMonth).toBe(savedDaysLeft);
+    expect(restoredStore.daysElapsed).toBe(savedDaysElapsed);
     expect(restoredStore.revealed).toEqual(savedRevealed);
     expect(restoredStore.phase).toBe('town');
     expect(restoredStore.townStep).toBe('exchange');
@@ -498,7 +476,6 @@ describe('useMiningStore', () => {
         phase: 'town',
         currentLevel: 4,
         bestLevel: 2,
-        coinsTotal: 3,
         goldTotal: 9,
         hasSeenIntroThisRun: true,
       })
@@ -514,7 +491,7 @@ describe('useMiningStore', () => {
     expect(store.phase).toBe('playing');
     expect(store.currentLevel).toBe(1);
     expect(store.bestLevel).toBe(0);
-    expect(store.coinsTotal).toBe(20); // starting coins
+    expect(store.goldTotal).toBe(0);
     // Beta reset message is surfaced to the player
     expect(store.lastActionMessage).toContain('beta');
     // localStorage no longer contains the old save
@@ -535,7 +512,6 @@ describe('useMiningStore', () => {
     expect(store.phase).toBe('playing');
     expect(store.currentPuzzleId).toBeTruthy();
     expect(store.showIntroModal).toBe(true);
-    expect(store.showMonthOverModal).toBe(false);
     expect(store.progressionMenuOpen).toBe(false);
   });
 });

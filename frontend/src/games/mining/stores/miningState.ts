@@ -8,7 +8,7 @@ import type {
   MiningToolUpgradeId,
 } from '../game/types';
 import { createBooleanGrid } from '../game/utils/createBooleanGrid';
-import { DAYS_PER_MONTH, EXCHANGE_LEVELS, STARTING_COINS, STARTING_FOOD } from './miningConfig';
+import { EXCHANGE_LEVELS, STARTING_GOLD } from './miningConfig';
 
 function createFlagGrid(size: number): Array<Array<MiningFlagType | null>> {
   return Array.from({ length: size }, () => Array<MiningFlagType | null>(size).fill(null));
@@ -37,19 +37,13 @@ export interface MiningRunState {
   currentLevel: number;
   foundGoldCount: number;
   daysElapsed: number;
-  daysPerMonth: number;
-  daysLeftInMonth: number;
   currentMonthLevel: number;
   bestLevel: number;
-  goldCollectedThisMonth: number;
-  deathMessage: string | null;
   hasSeenHint: boolean;
 }
 
 export interface MiningEconomyState {
   goldTotal: number;
-  coinsTotal: number;
-  foodTotal: number;
 }
 
 export interface MiningProgressionState {
@@ -57,18 +51,16 @@ export interface MiningProgressionState {
   townStep: MiningTownStep;
   showPurchasedUpgrades: boolean;
   exchangeProcessedThisTown: boolean;
-  monthlyUpkeepPaid: boolean;
   magpieSkillIds: MiningMagpieSkillId[];
   ownedToolUpgradeIds: MiningToolUpgradeId[];
+  maxPlotSize: number;
 }
 
 export interface MiningUiState {
   progressionMenuOpen: boolean;
   showSettingsModal: boolean;
   showIntroModal: boolean;
-  showMonthOverModal: boolean;
   hasSeenIntroThisRun: boolean;
-  showDeathModal: boolean;
   showFieldExhaustedModal: boolean;
   showHintModal: boolean;
   levelCelebration: {
@@ -127,18 +119,12 @@ export function createInitialMiningState(): MiningStoreState {
       currentLevel: 0,
       foundGoldCount: 0,
       daysElapsed: 0,
-      daysPerMonth: DAYS_PER_MONTH,
-      daysLeftInMonth: DAYS_PER_MONTH,
       currentMonthLevel: 0,
       bestLevel: 0,
-      goldCollectedThisMonth: 0,
-      deathMessage: null,
       hasSeenHint: false,
     },
     economy: {
-      goldTotal: 0,
-      coinsTotal: STARTING_COINS,
-      foodTotal: STARTING_FOOD,
+      goldTotal: STARTING_GOLD,
     },
     exchange: {
       lastSoldGold: 0,
@@ -152,28 +138,25 @@ export function createInitialMiningState(): MiningStoreState {
       progressRatio: 0,
     },
     progression: {
-      selectedTab: 'food-shop',
+      selectedTab: 'gold-exchange',
       townStep: 'none',
       showPurchasedUpgrades: false,
       exchangeProcessedThisTown: false,
-      monthlyUpkeepPaid: false,
       magpieSkillIds: [],
       ownedToolUpgradeIds: [],
+      maxPlotSize: 5,
     },
     ui: {
       progressionMenuOpen: false,
       showSettingsModal: false,
       showIntroModal: false,
-      showMonthOverModal: false,
       hasSeenIntroThisRun: false,
-      showDeathModal: false,
       showFieldExhaustedModal: false,
       showHintModal: false,
       levelCelebration: null,
       errorMessage: null,
       errorTick: 0,
-      lastActionMessage:
-        'Prototype mode: every progression item costs 1 coin, and each dig uses 1 day.',
+      lastActionMessage: 'Prototype mode: every dig adds 1 day to your run.',
     },
     system: {
       persistenceInitialized: false,

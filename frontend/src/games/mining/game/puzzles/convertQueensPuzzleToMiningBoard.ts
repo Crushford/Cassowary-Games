@@ -3,8 +3,8 @@ import type { MiningLevelBoard, MiningPuzzleRecord } from '../types';
 export function convertQueensPuzzleToMiningBoard(puzzle: MiningPuzzleRecord): MiningLevelBoard {
   const size = Math.sqrt(puzzle.queens.length);
 
-  if (!Number.isInteger(size) || size !== 5) {
-    throw new Error(`Mining expects a 5x5 Queens puzzle, received ${puzzle.id}`);
+  if (!Number.isInteger(size) || size < 5 || size > 9) {
+    throw new Error(`Mining expects a 5x5 through 9x9 Queens puzzle, received ${puzzle.id}`);
   }
 
   const truthGold = Array.from({ length: size }, (_, row) =>

@@ -1,14 +1,10 @@
 import type { MiningExchangeLevelDefinition } from '../game/types';
 
 export const MINING_SAVE_KEY = 'mining-save-v1';
-export const MINING_SAVE_VERSION = 1;
+export const MINING_SAVE_VERSION = 3;
 export const DIG_COST = 1;
 export const LEVEL_COMPLETE_DELAY_MS = 700;
-export const DAYS_PER_MONTH = 28;
-export const STARTING_COINS = 20;
-export const STARTING_FOOD = 0;
-export const MONTHLY_UPKEEP_COST = 1;
-export const GOLD_EXCHANGE_RATE = 100;
+export const STARTING_GOLD = 0;
 export const GOLD_REWARD_PER_TILE = 1;
 export const NEXT_FIELD_COST = 1;
 export const DEFAULT_LEVEL_RETURN_PERCENT = 0;

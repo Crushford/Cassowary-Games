@@ -1,7 +1,7 @@
 /**
  * Headless end-to-end tests for the mining game.
  *
- * These tests simulate full player-facing loops (field play → town → next month)
+ * These tests simulate full player-facing loops (field play → town visit → field)
  * without any UI. Puzzle fixtures are injected directly — no fetch required.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -58,34 +58,29 @@ afterEach(() => {
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
-describe('Mining headless E2E — monthly loop', () => {
-  it('starts in playing phase with 28 days', async () => {
+describe('Mining headless E2E — run loop', () => {
+  it('starts in playing phase with 0 elapsed days', async () => {
     const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
     expect(game.store.phase).toBe('playing');
-    expect(game.store.daysLeftInMonth).toBe(28);
+    expect(game.store.daysElapsed).toBe(0);
     expect(game.store.currentPuzzleId).toBe('headless-pz-a');
     game.cleanup();
   });
 
-  it('completes a full month loop: play → town → exchange → food → next month', async () => {
-    const game = await createHeadlessGame({ puzzles: [PUZZLE_A, PUZZLE_B] });
+  it('completes a town visit: play → town → exchange → return to field', async () => {
+    const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
     const { store } = game;
 
-    // Burn all but one day, then force month end
-    store.run.daysLeftInMonth = 0;
-    store.triggerMonthEnd();
-
+    store.openProgressionMenu();
     expect(store.phase).toBe('town');
-    expect(store.showMonthOverModal).toBe(true);
+    expect(store.progressionMenuOpen).toBe(true);
 
     await game.completeTownSequence();
 
     expect(store.phase).toBe('playing');
-    expect(store.daysLeftInMonth).toBe(28);
-    expect(store.goldCollectedThisMonth).toBe(0);
-    expect(store.townStep).toBe('none');
+    expect(store.daysElapsed).toBe(0);
     expect(store.progression.exchangeProcessedThisTown).toBe(false);
-    expect(store.progression.monthlyUpkeepPaid).toBe(false);
+    expect(store.progressionMenuOpen).toBe(false);
     game.cleanup();
   });
 
@@ -93,14 +88,13 @@ describe('Mining headless E2E — monthly loop', () => {
     const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
     const { store } = game;
 
-    const startingCoins = store.coinsTotal;
+    const startingGold = store.goldTotal;
     await game.digAllGold();
 
     expect(store.foundGoldCount).toBe(store.boardSize);
-    expect(store.goldTotal).toBe(store.boardSize);
+    expect(store.goldTotal).toBe(startingGold + store.boardSize);
     // Field not complete yet (non-gold tiles remain)
     expect(store.phase).toBe('playing');
-    expect(store.coinsTotal).toBe(startingCoins); // gold doesn't become coins until exchange
     game.cleanup();
   });
 
@@ -117,7 +111,7 @@ describe('Mining headless E2E — monthly loop', () => {
 });
 
 describe('Mining headless E2E — exchange progression', () => {
-  it('exchanges gold for coins at a 3% payout rate at level 1 threshold', async () => {
+  it('grades gold without consuming it at level 1 threshold', async () => {
     const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
     const { store } = game;
 
@@ -127,15 +121,15 @@ describe('Mining headless E2E — exchange progression', () => {
 
     store.exchangeGoldForCoins();
 
-    expect(store.goldTotal).toBe(0);
+    expect(store.goldTotal).toBe(1);
     expect(store.bestLevel).toBe(1);
     expect(store.exchangeSummary.returnPercent).toBe(3);
-    expect(store.exchangeSummary.payout).toBe(3);
+    expect(store.exchangeSummary.payout).toBe(1);
     expect(store.levelCelebration?.level).toBe(1);
     game.cleanup();
   });
 
-  it('a zero-gold month still clears the exchange step', async () => {
+  it('a zero-gold visit still clears the exchange step', async () => {
     const game = await createHeadlessGame({ puzzles: [PUZZLE_A] });
     const { store } = game;
 
@@ -148,7 +142,7 @@ describe('Mining headless E2E — exchange progression', () => {
 
     expect(store.exchangeSummary.processed).toBe(true);
     expect(store.bestLevel).toBe(1);
-    expect(store.canAdvanceTownStep).toBe(true);
+    expect(store.exchangeSummary.reachedLevel).toBe(1);
     game.cleanup();
   });
 
@@ -169,7 +163,7 @@ describe('Mining headless E2E — magpie automation', () => {
     const { store } = game;
 
     store.run.bestLevel = 2;
-    store.economy.coinsTotal = 20;
+    store.economy.goldTotal = 20;
     store.buyAutomation('buy-magpie');
     store.buyAutomation('auto-flag-row');
 
@@ -188,7 +182,7 @@ describe('Mining headless E2E — magpie automation', () => {
     const { store } = game;
 
     store.run.bestLevel = 4;
-    store.economy.coinsTotal = 20;
+    store.economy.goldTotal = 20;
     store.buyAutomation('buy-magpie');
     store.buyAutomation('pattern-automation-1');
 
@@ -206,7 +200,7 @@ describe('Mining headless E2E — magpie automation', () => {
     const { store } = game;
 
     store.run.bestLevel = 2;
-    store.economy.coinsTotal = 20;
+    store.economy.goldTotal = 20;
 
     expect(store.visibleAutomationOptions.map((option) => option.id)).toContain('auto-flag-row');
     expect(store.canBuyAutomation('auto-flag-row')).toBe(false);
@@ -218,12 +212,12 @@ describe('Mining headless E2E — magpie automation', () => {
 });
 
 describe('Mining headless E2E — auto-hauler progression', () => {
-  it('auto-hauler triggers field transition after full dig with enough coins', async () => {
+  it('auto-hauler triggers field transition after full dig with enough gold', async () => {
     const game = await createHeadlessGame({ puzzles: [PUZZLE_A, PUZZLE_B] });
     const { store } = game;
 
     store.run.bestLevel = 1;
-    store.economy.coinsTotal = 10;
+    store.economy.goldTotal = 10;
     store.buyToolUpgrade('auto-hauler');
     expect(store.ownedToolUpgradeIds).toContain('auto-hauler');
 
@@ -248,7 +242,7 @@ describe('Mining headless E2E — scanner unlock', () => {
     const { store } = game;
 
     store.run.bestLevel = 3;
-    store.economy.coinsTotal = 10;
+    store.economy.goldTotal = 10;
 
     expect(store.canShowScannerRegions).toBe(false);
 

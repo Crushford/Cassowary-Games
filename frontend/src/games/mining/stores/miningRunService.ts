@@ -12,7 +12,10 @@ import {
 } from './miningConfig';
 import type { MiningStoreState } from './miningState';
 
-export type MiningPuzzleLoader = (lastPuzzleId: string | null) => Promise<MiningPuzzleRecord>;
+export type MiningPuzzleLoader = (
+  lastPuzzleId: string | null,
+  size: number
+) => Promise<MiningPuzzleRecord>;
 
 let _activePuzzleLoader: MiningPuzzleLoader = loadRandomMiningPuzzle;
 
@@ -43,7 +46,7 @@ function logMiningInteraction(
     row: position?.row,
     col: position?.col,
     phase: state.run.phase,
-    daysLeftInMonth: state.run.daysLeftInMonth,
+    daysElapsed: state.run.daysElapsed,
     foundGoldCount: state.run.foundGoldCount,
     boardSize: state.board.boardSize,
     progressionMenuOpen: state.ui.progressionMenuOpen,
@@ -114,7 +117,10 @@ export async function loadNextLevel(state: MiningStoreState, deps: RunDeps) {
   deps.clearError();
 
   try {
-    const puzzle = await _activePuzzleLoader(state.board.currentPuzzleId);
+    const puzzle = await _activePuzzleLoader(
+      state.board.currentPuzzleId,
+      state.progression.maxPlotSize
+    );
     const board = convertQueensPuzzleToMiningBoard(puzzle);
 
     state.board.currentPuzzleId = board.puzzleId;
@@ -125,11 +131,9 @@ export async function loadNextLevel(state: MiningStoreState, deps: RunDeps) {
     state.board.playerFlags = createFlagGrid(board.size);
     state.board.systemFlags = createFlagGrid(board.size);
     state.run.foundGoldCount = 0;
-    state.ui.showDeathModal = false;
-    state.run.deathMessage = null;
     state.run.currentLevel += 1;
     state.run.phase = 'playing';
-    state.ui.lastActionMessage = `Level ${state.run.currentLevel}. Each dig uses 1 day this month.`;
+    state.ui.lastActionMessage = `Level ${state.run.currentLevel}. Each dig adds 1 day to your run.`;
     recomputeSystemFlags(state);
   } catch (error) {
     console.error('[mining] Failed to load next level', error);
@@ -139,15 +143,6 @@ export async function loadNextLevel(state: MiningStoreState, deps: RunDeps) {
 }
 
 export function toggleFlag(state: MiningStoreState, position: PositionRef) {
-  if (state.run.daysLeftInMonth <= 0) {
-    logMiningInteraction('toggle-flag-blocked', state, position, {
-      reason: 'no-days-left',
-    });
-    state.ui.errorMessage = 'You need at least 1 day left this month to place or remove a flag.';
-    state.ui.errorTick += 1;
-    return;
-  }
-
   if (state.run.phase !== 'playing') {
     logMiningInteraction('toggle-flag-blocked', state, position, {
       reason: 'phase-not-playing',
@@ -178,32 +173,6 @@ export function toggleFlag(state: MiningStoreState, position: PositionRef) {
   });
 }
 
-export function triggerOutOfFood(state: MiningStoreState) {
-  if (state.board.pendingLevelTimeout !== null) {
-    window.clearTimeout(state.board.pendingLevelTimeout);
-    state.board.pendingLevelTimeout = null;
-  }
-
-  state.run.phase = 'out-of-food';
-  state.economy.foodTotal = 0;
-  state.ui.showHintModal = false;
-  state.ui.showDeathModal = true;
-  state.ui.showFieldExhaustedModal = false;
-  state.run.deathMessage =
-    'When you run out of food, you must go into town and buy more food.\n\nWhile you are there, you can also convert your gold into coins and purchase upgrades.';
-  state.ui.lastActionMessage = 'Out of food. Go to town for supplies, exchange, and upgrades.';
-}
-
-export function endMonthAndGoToTown(state: MiningStoreState) {
-  state.run.phase = 'town';
-  state.progression.townStep = 'exchange';
-  state.progression.exchangeProcessedThisTown = false;
-  state.progression.monthlyUpkeepPaid = false;
-  state.ui.progressionMenuOpen = false;
-  state.ui.showMonthOverModal = true;
-  state.ui.lastActionMessage = 'The month is over. Time to head into town.';
-}
-
 export async function goToNextField(
   state: MiningStoreState,
   deps: { setError(message: string): void; loadNextLevel(): Promise<void> },
@@ -213,8 +182,8 @@ export async function goToNextField(
     return;
   }
 
-  if (state.economy.coinsTotal < NEXT_FIELD_COST) {
-    deps.setError('You need 1 coin to move to the next field.');
+  if (state.economy.goldTotal < NEXT_FIELD_COST) {
+    deps.setError('You need 1 gold to move to the next field.');
     return;
   }
 
@@ -223,17 +192,16 @@ export async function goToNextField(
     state.board.pendingLevelTimeout = null;
   }
 
-  state.economy.coinsTotal -= NEXT_FIELD_COST;
+  state.economy.goldTotal -= NEXT_FIELD_COST;
   state.ui.lastActionMessage = automatic
-    ? 'The auto hauler paid 1 coin and moved you to the next field.'
-    : 'You paid 1 coin and moved to the next field.';
+    ? 'The auto hauler spent 1 gold and moved you to the next field.'
+    : 'You spent 1 gold and moved to the next field.';
   await deps.loadNextLevel();
 }
 
 function applyGoldReward(state: MiningStoreState, position: PositionRef) {
   const reward = GOLD_REWARD_PER_TILE;
   state.economy.goldTotal += reward;
-  state.run.goldCollectedThisMonth += reward;
   state.run.foundGoldCount += 1;
   state.ui.lastActionMessage = `Day ${state.run.daysElapsed}: You found ${reward} gold.`;
   logMiningInteraction('dig-success', state, position, { result: 'gold', reward });
@@ -249,7 +217,7 @@ function handleFieldComplete(state: MiningStoreState, deps: DigDeps) {
 
   if (
     state.progression.ownedToolUpgradeIds.includes('auto-hauler') &&
-    state.economy.coinsTotal >= NEXT_FIELD_COST
+    state.economy.goldTotal >= NEXT_FIELD_COST
   ) {
     state.ui.lastActionMessage =
       'You cleared the whole field. Auto hauler is lining up the next one.';
@@ -271,12 +239,6 @@ export async function dig(state: MiningStoreState, position: PositionRef, deps: 
     systemFlag: state.board.systemFlags[position.row]?.[position.col] ?? null,
     canDigAt: canDigAt(state, position),
   });
-
-  if (state.run.daysLeftInMonth <= 0) {
-    logMiningInteraction('dig-blocked', state, position, { reason: 'no-days-left' });
-    deps.setError('You need at least 1 day left this month to dig or place flags.');
-    return;
-  }
 
   if (state.run.phase !== 'playing') {
     logMiningInteraction('dig-blocked', state, position, { reason: 'phase-not-playing' });
@@ -300,7 +262,6 @@ export async function dig(state: MiningStoreState, position: PositionRef, deps: 
 
   state.board.playerFlags[position.row][position.col] = null;
   state.board.revealed[position.row][position.col] = true;
-  state.run.daysLeftInMonth = Math.max(0, state.run.daysLeftInMonth - 1);
   state.run.daysElapsed += 1;
   deps.clearError();
 
@@ -316,17 +277,12 @@ export async function dig(state: MiningStoreState, position: PositionRef, deps: 
 
   if (allTilesRevealed) {
     handleFieldComplete(state, deps);
-    return;
-  }
-
-  if (state.run.daysLeftInMonth === 0) {
-    endMonthAndGoToTown(state);
   }
 }
 
 export function canTravelToNextField(state: MiningStoreState): boolean {
   return (
     (state.run.phase === 'playing' || state.run.phase === 'level-complete') &&
-    state.economy.coinsTotal >= NEXT_FIELD_COST
+    state.economy.goldTotal >= NEXT_FIELD_COST
   );
 }

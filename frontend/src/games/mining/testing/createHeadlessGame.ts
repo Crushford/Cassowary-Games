@@ -80,20 +80,11 @@ export async function createHeadlessGame(opts: HeadlessGameOptions) {
       }
     },
 
-    /**
-     * Run the standard town sequence in order:
-     * dismiss modal → exchange gold → pay food → skip trainer → skip tools → begin next month.
-     *
-     * Requires at least 1 coin for food upkeep. Override individual steps if needed.
-     */
+    /** Run a minimal town visit: open town, exchange gold, then return to the field. */
     async completeTownSequence() {
-      store.dismissMonthOverModal();
+      store.openProgressionMenu();
       store.exchangeGoldForCoins();
-      store.continueTownSequence(); // exchange → food-shop
-      store.buyFood();
-      store.continueTownSequence(); // food-shop → magpie-trainer
-      store.continueTownSequence(); // magpie-trainer → tool-store
-      store.continueTownSequence(); // tool-store → begin next month
+      store.returnToMine();
     },
 
     /** Reset puzzle loader to the real implementation. Call in afterEach. */

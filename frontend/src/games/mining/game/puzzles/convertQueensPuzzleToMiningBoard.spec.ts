@@ -21,13 +21,25 @@ describe('convertQueensPuzzleToMiningBoard', () => {
     expect(board.regionIds[0]).toEqual(['A', 'B', 'C', 'D', 'E']);
   });
 
-  it('rejects non-5x5 puzzle payloads', () => {
+  it('accepts larger queens payloads for bigger mining plots', () => {
+    const board = convertQueensPuzzleToMiningBoard({
+      id: '6x6-test-0',
+      layout: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+      queens: ['Q.....', '..Q...', '....Q.', '.Q....', '...Q..', '.....Q'].join(''),
+    });
+
+    expect(board.size).toBe(6);
+    expect(board.truthGold[5][5]).toBe(true);
+    expect(board.regionIds[0]).toEqual(['A', 'B', 'C', 'D', 'E', 'F']);
+  });
+
+  it('rejects unsupported puzzle payloads', () => {
     expect(() =>
       convertQueensPuzzleToMiningBoard({
         id: '4x4-test-0',
         layout: 'ABCDEFGHIJKLMNOP',
         queens: 'Q....Q....Q....Q',
       })
-    ).toThrow('Mining expects a 5x5 Queens puzzle');
+    ).toThrow('Mining expects a 5x5 through 9x9 Queens puzzle');
   });
 });

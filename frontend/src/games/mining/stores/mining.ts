@@ -1,13 +1,15 @@
 import { defineStore } from 'pinia';
 
 import { AUTOMATION_OPTIONS } from '../game/progression/automation';
+import { PLOT_PERMITS } from '../game/progression/plotPermits';
 import { TOOL_UPGRADES } from '../game/progression/toolUpgrades';
 import type {
   MiningAutomationDefinition,
   MiningExchangeLevelDefinition,
   MiningFlagType,
   MiningMagpieSkillId,
-  MiningProgressionTab,
+  MiningPlotPermitDefinition,
+  MiningPlotPermitId,
   MiningTownStep,
   MiningToolUpgradeDefinition,
   MiningToolUpgradeId,
@@ -23,19 +25,17 @@ import {
 } from './miningPersistence';
 import {
   buyAutomation as buyAutomationInProgression,
-  buyFood as buyFoodInProgression,
+  buyPlotPermit as buyPlotPermitInProgression,
   buyToolUpgrade as buyToolUpgradeInProgression,
   canBuyAutomation as canBuyAutomationInProgression,
-  canBuyFood as canBuyFoodInProgression,
+  canBuyPlotPermit as canBuyPlotPermitInProgression,
   canBuyToolUpgrade as canBuyToolUpgradeInProgression,
   canExchangeGold as canExchangeGoldInProgression,
   exchangeGoldForCoins as exchangeGoldForCoinsInProgression,
-  triggerFoodGameOverIfNeeded,
 } from './miningProgressionService';
 import {
   canTravelToNextField as canTravelToNextFieldInRun,
   dig as digInRun,
-  endMonthAndGoToTown,
   goToNextField as goToNextFieldInRun,
   loadNextLevel as loadNextLevelInRun,
   recomputeSystemFlags,
@@ -58,28 +58,20 @@ export const useMiningStore = defineStore('mining', {
     playerFlags: (state) => state.board.playerFlags,
     systemFlags: (state) => state.board.systemFlags,
     goldTotal: (state) => state.economy.goldTotal,
-    coinsTotal: (state) => state.economy.coinsTotal,
-    foodTotal: (state) => state.economy.foodTotal,
-    daysLeftInMonth: (state) => state.run.daysLeftInMonth,
-    daysPerMonth: (state) => state.run.daysPerMonth,
     foundGoldCount: (state) => state.run.foundGoldCount,
     daysElapsed: (state) => state.run.daysElapsed,
     currentMonthLevel: (state) => state.run.currentMonthLevel,
     bestLevel: (state) => state.run.bestLevel,
     displayLevel: (state) => state.exchange.lastReachedLevel,
-    goldCollectedThisMonth: (state) => state.run.goldCollectedThisMonth,
-    selectedProgressionTab: (state) => state.progression.selectedTab,
     townStep: (state) => state.progression.townStep,
     showPurchasedUpgrades: (state) => state.progression.showPurchasedUpgrades,
     magpieSkillIds: (state) => state.progression.magpieSkillIds,
     ownedToolUpgradeIds: (state) => state.progression.ownedToolUpgradeIds,
+    maxPlotSize: (state) => state.progression.maxPlotSize,
     showSettingsModal: (state) => state.ui.showSettingsModal,
     showIntroModal: (state) => state.ui.showIntroModal,
-    showMonthOverModal: (state) => state.ui.showMonthOverModal,
-    showDeathModal: (state) => state.ui.showDeathModal,
     showFieldExhaustedModal: (state) => state.ui.showFieldExhaustedModal,
     levelCelebration: (state) => state.ui.levelCelebration,
-    deathMessage: (state) => state.run.deathMessage,
     showHintModal: (state) => state.ui.showHintModal,
     errorMessage: (state) => state.ui.errorMessage,
     errorTick: (state) => state.ui.errorTick,
@@ -126,6 +118,20 @@ export const useMiningStore = defineStore('mining', {
       });
     },
 
+    visiblePlotPermitOptions(state): MiningPlotPermitDefinition[] {
+      return PLOT_PERMITS.filter((option) => {
+        if (option.requiredLevel > state.run.bestLevel) {
+          return false;
+        }
+
+        if (state.progression.showPurchasedUpgrades) {
+          return true;
+        }
+
+        return option.size > state.progression.maxPlotSize;
+      });
+    },
+
     baseGoldRewardPerTile(state): number {
       return GOLD_REWARD_PER_TILE;
     },
@@ -155,7 +161,7 @@ export const useMiningStore = defineStore('mining', {
     },
 
     canAffordDig(state): boolean {
-      return state.run.phase === 'playing' && state.run.daysLeftInMonth > 0;
+      return state.run.phase === 'playing';
     },
 
     canShowScannerRegions(state): boolean {
@@ -174,13 +180,11 @@ export const useMiningStore = defineStore('mining', {
       const soldGold = state.exchange.lastSoldGold;
       const baseValue = state.exchange.lastBaseValue;
       const returnPercent = state.exchange.lastReturnPercent;
-      const payoutPerGold = Math.round((GOLD_REWARD_PER_TILE * 100 * returnPercent) / 100);
 
       return {
         soldGold,
         baseValue,
         returnPercent,
-        payoutPerGold,
         bonus: state.exchange.lastBonus,
         payout: state.exchange.lastPayout,
         reachedLevel: state.exchange.lastReachedLevel,
@@ -191,18 +195,8 @@ export const useMiningStore = defineStore('mining', {
       };
     },
 
-    canAdvanceTownStep(state): boolean {
-      switch (state.progression.townStep) {
-        case 'exchange':
-          return state.progression.exchangeProcessedThisTown;
-        case 'food-shop':
-          return state.progression.monthlyUpkeepPaid;
-        case 'magpie-trainer':
-        case 'tool-store':
-          return true;
-        default:
-          return false;
-      }
+    showPermitOffice(state): boolean {
+      return state.run.bestLevel >= 4;
     },
 
     currentHintText(state): string {
@@ -262,12 +256,6 @@ export const useMiningStore = defineStore('mining', {
       this.ui.showIntroModal = false;
     },
 
-    dismissMonthOverModal() {
-      this.ui.showMonthOverModal = false;
-      this.ui.progressionMenuOpen = true;
-      this.progression.townStep = 'exchange';
-    },
-
     openSettingsModal() {
       this.ui.showSettingsModal = true;
     },
@@ -290,10 +278,6 @@ export const useMiningStore = defineStore('mining', {
 
     closeHints() {
       this.ui.showHintModal = false;
-    },
-
-    dismissDeathModal() {
-      this.ui.showDeathModal = false;
     },
 
     dismissFieldExhaustedModal() {
@@ -326,10 +310,8 @@ export const useMiningStore = defineStore('mining', {
       console.log('[mining][ui-restore]', {
         phase: this.run.phase,
         showIntroModal: this.ui.showIntroModal,
-        showMonthOverModal: this.ui.showMonthOverModal,
         progressionMenuOpen: this.ui.progressionMenuOpen,
         showFieldExhaustedModal: this.ui.showFieldExhaustedModal,
-        showDeathModal: this.ui.showDeathModal,
         townStep: this.progression.townStep,
       });
 
@@ -338,19 +320,16 @@ export const useMiningStore = defineStore('mining', {
       }
 
       if (this.run.phase === 'town') {
-        if (!this.ui.showMonthOverModal && !this.ui.progressionMenuOpen) {
-          this.ui.progressionMenuOpen = true;
+        if (this.progression.townStep === 'none') {
+          this.progression.townStep = 'exchange';
         }
+        this.ui.progressionMenuOpen = true;
         return;
       }
 
       if (this.run.phase === 'level-complete') {
         this.ui.showFieldExhaustedModal = true;
         return;
-      }
-
-      if (this.run.phase === 'out-of-food' || this.run.phase === 'dead') {
-        this.ui.showDeathModal = true;
       }
     },
 
@@ -379,32 +358,35 @@ export const useMiningStore = defineStore('mining', {
     },
 
     openProgressionMenu() {
-      if (this.run.phase !== 'town') {
+      if (this.run.phase !== 'playing' && this.run.phase !== 'town') {
         return;
       }
+
+      this.run.phase = 'town';
+      if (this.progression.townStep === 'none') {
+        this.progression.townStep = 'exchange';
+      }
+      this.progression.exchangeProcessedThisTown = false;
       this.ui.progressionMenuOpen = true;
     },
 
     closeProgressionMenu() {
+      if (this.run.phase === 'town') {
+        this.run.phase = 'playing';
+      }
       this.ui.progressionMenuOpen = false;
-    },
-
-    setProgressionTab(tab: MiningProgressionTab) {
-      this.progression.selectedTab = tab;
     },
 
     toggleShowPurchasedUpgrades() {
       this.progression.showPurchasedUpgrades = !this.progression.showPurchasedUpgrades;
     },
 
-    canBuyFood(): boolean {
-      return canBuyFoodInProgression(this.$state);
-    },
+    selectTownStep(step: Exclude<MiningTownStep, 'none'>) {
+      if (step === 'permit-office' && !this.showPermitOffice) {
+        return;
+      }
 
-    buyFood() {
-      buyFoodInProgression(this.$state, {
-        setError: this.setError,
-      });
+      this.progression.townStep = step;
     },
 
     canExchangeGold(): boolean {
@@ -417,47 +399,11 @@ export const useMiningStore = defineStore('mining', {
       });
     },
 
-    continueTownSequence() {
-      const nextStep: Record<Exclude<MiningTownStep, 'none'>, MiningTownStep> = {
-        exchange: 'food-shop',
-        'food-shop': 'magpie-trainer',
-        'magpie-trainer': 'tool-store',
-        'tool-store': 'none',
-      };
-
-      if (!this.canAdvanceTownStep) {
-        return;
-      }
-
-      if (this.progression.townStep === 'tool-store') {
-        this.beginNextMonth();
-        return;
-      }
-
-      const upcomingStep = nextStep[this.progression.townStep as Exclude<MiningTownStep, 'none'>];
-      this.progression.townStep = upcomingStep;
-
-      if (upcomingStep === 'food-shop') {
-        triggerFoodGameOverIfNeeded(this.$state);
-      }
-    },
-
-    beginNextMonth() {
-      if (!this.progression.monthlyUpkeepPaid) {
-        this.setError('Pay the monthly food bill before returning to the field.');
-        return;
-      }
-
+    returnToMine() {
       this.run.phase = 'playing';
-      this.run.daysLeftInMonth = this.run.daysPerMonth;
-      this.run.currentMonthLevel = 0;
-      this.run.goldCollectedThisMonth = 0;
-      this.progression.townStep = 'none';
       this.progression.exchangeProcessedThisTown = false;
-      this.progression.monthlyUpkeepPaid = false;
       this.ui.progressionMenuOpen = false;
-      this.ui.showMonthOverModal = false;
-      this.ui.lastActionMessage = 'A new month begins underground.';
+      this.ui.lastActionMessage = 'Back to the claim.';
     },
 
     canTravelToNextField(): boolean {
@@ -495,10 +441,6 @@ export const useMiningStore = defineStore('mining', {
       if (!areFlagGridsEqual(previousFlags, this.board.playerFlags)) {
         this.system.flagHistory.push(previousFlags);
       }
-    },
-
-    triggerMonthEnd() {
-      endMonthAndGoToTown(this.$state);
     },
 
     async dig(position: PositionRef) {
@@ -549,6 +491,16 @@ export const useMiningStore = defineStore('mining', {
 
     buyToolUpgrade(upgradeId: MiningToolUpgradeId) {
       buyToolUpgradeInProgression(this.$state, upgradeId, {
+        setError: this.setError,
+      });
+    },
+
+    canBuyPlotPermit(permitId: MiningPlotPermitId): boolean {
+      return canBuyPlotPermitInProgression(this.$state, permitId);
+    },
+
+    buyPlotPermit(permitId: MiningPlotPermitId) {
+      buyPlotPermitInProgression(this.$state, permitId, {
         setError: this.setError,
       });
     },

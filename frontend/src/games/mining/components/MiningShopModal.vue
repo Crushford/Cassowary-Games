@@ -1,11 +1,11 @@
 <template>
-  <Modal :is-visible="isVisible" aria-label="Town sequence" @close="$emit('close')">
+  <Modal :is-visible="isVisible" aria-label="Town" @close="$emit('close')">
     <div class="space-y-4">
       <div class="flex items-start justify-between gap-4">
         <div>
           <h2 class="text-xl font-bold text-white">Town</h2>
           <p class="mt-1 text-sm text-semantic-neutral-300">
-            Exchange your haul, pay monthly upkeep, then improve the crew.
+            Cash out your haul, improve the crew, then head back to the claim whenever you want.
           </p>
         </div>
         <button
@@ -25,71 +25,69 @@
           Gold: <span class="text-semantic-warning-300">{{ goldTotal }}</span>
         </div>
         <div class="rounded-xl bg-semantic-neutral-900 px-4 py-3 text-sm font-semibold text-white">
-          Coins: <span class="text-semantic-warning-300">{{ coinsTotal }}</span>
+          Next Field: <span class="text-semantic-warning-300">1 Gold</span>
         </div>
       </div>
 
-      <div class="grid grid-cols-4 gap-2">
-        <div
-          v-for="step in orderedSteps"
+      <div class="grid gap-2" :class="showPermitOffice ? 'grid-cols-5' : 'grid-cols-4'">
+        <button
+          v-for="step in visibleSteps"
           :key="step.id"
+          type="button"
           class="rounded-xl border px-2 py-2 text-center text-[11px] font-bold uppercase leading-tight tracking-[0.14em]"
           :class="
             townStep === step.id
               ? 'border-semantic-warning-300 bg-semantic-warning-700 text-white'
-              : 'border-semantic-neutral-700 bg-semantic-neutral-900 text-semantic-neutral-400'
+              : 'border-semantic-neutral-700 bg-semantic-neutral-900 text-semantic-neutral-400 hover:bg-semantic-neutral-800'
           "
+          @click="$emit('select-step', step.id)"
         >
           {{ step.label }}
-        </div>
+        </button>
       </div>
 
       <div v-if="townStep === 'exchange'" class="space-y-3">
         <div class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-900 p-4">
           <div class="text-base font-bold text-white">Gold Exchange</div>
           <div class="mt-1 text-sm text-semantic-neutral-300">
-            Close out the month, count your haul, and see how far you climbed.
+            Grade your haul and see how far you climbed. Your gold stays in your bag for spending.
           </div>
 
           <div
             class="mt-3 rounded-lg bg-semantic-neutral-950 px-3 py-2 text-sm text-semantic-neutral-200"
           >
-            Each gold is worth <span class="font-bold text-semantic-warning-300">100</span> coins.
-            Level {{ exchangeSummary.processed ? exchangeSummary.reachedLevel : displayLevel || 1 }}
-            pays out
+            Exchange level is based on the gold you bring in. Level
+            {{ exchangeSummary.processed ? exchangeSummary.reachedLevel : displayLevel || 1 }}
+            currently grades
             <span class="font-bold text-semantic-warning-300"
               >{{ exchangeSummary.processed ? exchangeSummary.returnPercent : 0 }}%</span
             >
-            of that value, which is
-            <span class="font-bold text-semantic-warning-300">{{
-              exchangeSummary.processed ? exchangeSummary.payoutPerGold : 0
-            }}</span>
-            coins per gold.
+            return.
           </div>
 
           <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
             <div class="rounded-lg bg-semantic-neutral-950 px-3 py-2 text-semantic-neutral-200">
-              Gold Sold:
+              Gold Graded:
               <span class="font-bold text-semantic-warning-300">{{
                 exchangeSummary.processed ? exchangeSummary.soldGold : goldTotal
               }}</span>
             </div>
             <div class="rounded-lg bg-semantic-neutral-950 px-3 py-2 text-semantic-neutral-200">
-              Base Value:
+              Gold Remaining:
               <span class="font-bold text-semantic-warning-300">{{
-                exchangeSummary.processed ? exchangeSummary.baseValue : goldTotal * 100
+                exchangeSummary.processed ? goldTotal : goldTotal
               }}</span>
             </div>
             <div class="rounded-lg bg-semantic-neutral-950 px-3 py-2 text-semantic-neutral-200">
-              Payout Rate:
+              Return Rate:
               <span class="font-bold text-semantic-warning-300"
                 >{{ exchangeSummary.processed ? exchangeSummary.returnPercent : 0 }}%</span
               >
             </div>
             <div class="rounded-lg bg-semantic-neutral-950 px-3 py-2 text-semantic-neutral-200">
-              Total Payout:
+              Best Level:
               <span class="font-bold text-semantic-warning-300">{{
-                exchangeSummary.processed ? exchangeSummary.payout : 0
+                exchangeSummary.processed ? exchangeSummary.reachedLevel : displayLevel
               }}</span>
             </div>
           </div>
@@ -123,32 +121,7 @@
             :disabled="!canExchangeGold"
             @click="$emit('exchange-gold')"
           >
-            {{ exchangeSummary.processed ? 'Exchange Complete' : 'Close Out The Month' }}
-          </button>
-        </div>
-      </div>
-
-      <div v-else-if="townStep === 'food-shop'" class="space-y-3">
-        <div class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-900 p-4">
-          <div class="text-base font-bold text-white">Food Shop</div>
-          <div class="mt-1 text-sm text-semantic-neutral-300">
-            Pay the monthly food bill before the next month can begin.
-          </div>
-          <div class="mt-3 text-xs uppercase tracking-[0.18em] text-semantic-neutral-500">
-            Monthly upkeep: 1 coin
-          </div>
-          <button
-            type="button"
-            class="mt-3 w-full rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
-            :class="
-              canBuyFood
-                ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
-                : 'border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-500'
-            "
-            :disabled="!canBuyFood"
-            @click="$emit('buy-food')"
-          >
-            {{ monthlyUpkeepPaid ? 'Monthly Upkeep Paid' : 'Pay Food Upkeep' }}
+            {{ exchangeSummary.processed ? 'Exchange Complete' : 'Grade Gold' }}
           </button>
         </div>
       </div>
@@ -183,7 +156,7 @@
               <div class="mt-1 text-sm text-semantic-neutral-300">{{ skill.description }}</div>
             </div>
             <div class="text-right">
-              <div class="text-sm font-bold text-semantic-warning-300">{{ skill.cost }}</div>
+              <div class="text-sm font-bold text-semantic-warning-300">{{ skill.cost }} Gold</div>
               <div class="text-[10px] uppercase tracking-[0.18em] text-semantic-neutral-500">
                 Level {{ skill.requiredLevel }}
               </div>
@@ -250,7 +223,7 @@
               <div class="mt-1 text-sm text-semantic-neutral-300">{{ upgrade.description }}</div>
             </div>
             <div class="text-right">
-              <div class="text-sm font-bold text-semantic-warning-300">{{ upgrade.cost }}</div>
+              <div class="text-sm font-bold text-semantic-warning-300">{{ upgrade.cost }} Gold</div>
               <div class="text-[10px] uppercase tracking-[0.18em] text-semantic-neutral-500">
                 Level {{ upgrade.requiredLevel }}
               </div>
@@ -279,29 +252,96 @@
         </div>
       </div>
 
+      <div v-else-if="townStep === 'permit-office'" class="space-y-3">
+        <div class="flex items-center justify-between gap-3">
+          <div class="text-sm text-semantic-neutral-300">
+            Exchange level 4 opens larger claims. New permits affect future fields, not the one you
+            are already working.
+          </div>
+          <button
+            type="button"
+            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
+            :class="
+              showPurchasedUpgrades
+                ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
+                : 'border-semantic-neutral-700 bg-semantic-neutral-900 text-semantic-neutral-200 hover:bg-semantic-neutral-800'
+            "
+            @click="$emit('toggle-purchased')"
+          >
+            {{ showPurchasedUpgrades ? 'Hide Purchased' : 'Show Purchased' }}
+          </button>
+        </div>
+
+        <div class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-900 p-4">
+          <div class="text-sm uppercase tracking-[0.18em] text-semantic-neutral-500">
+            Current Claim
+          </div>
+          <div class="mt-2 text-2xl font-black text-semantic-warning-300">
+            {{ maxPlotSize }}x{{ maxPlotSize }}
+          </div>
+        </div>
+
+        <div
+          v-for="permit in plotPermitOptions"
+          :key="permit.id"
+          class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-900 p-4"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="text-base font-bold text-white">{{ permit.title }}</div>
+              <div class="mt-1 text-sm text-semantic-neutral-300">{{ permit.description }}</div>
+            </div>
+            <div class="text-right">
+              <div class="text-sm font-bold text-semantic-warning-300">{{ permit.cost }} Gold</div>
+              <div class="text-[10px] uppercase tracking-[0.18em] text-semantic-neutral-500">
+                Level {{ permit.requiredLevel }}
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 text-xs uppercase tracking-[0.18em] text-semantic-neutral-500">
+            {{ permit.effectSummary }}
+          </div>
+
+          <button
+            type="button"
+            class="mt-3 w-full rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
+            :class="
+              permit.size <= maxPlotSize
+                ? 'border-semantic-success-700 bg-semantic-success-900 text-semantic-success-200'
+                : canBuyPlotPermit(permit.id)
+                  ? 'border-semantic-info-500 bg-semantic-info-700 text-white hover:bg-semantic-info-600'
+                  : 'border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-500'
+            "
+            :disabled="permit.size <= maxPlotSize || !canBuyPlotPermit(permit.id)"
+            @click="$emit('buy-plot-permit', permit.id)"
+          >
+            {{ permit.size <= maxPlotSize ? 'Owned' : `Buy ${permit.title}` }}
+          </button>
+        </div>
+      </div>
+
       <button
         type="button"
-        class="w-full rounded-xl border px-4 py-2 text-center text-sm font-bold leading-tight transition-colors"
-        :class="
-          canAdvance
-            ? 'border-semantic-warning-300 bg-semantic-warning-700 text-white hover:bg-semantic-warning-600'
-            : 'border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-500'
-        "
-        :disabled="!canAdvance"
-        @click="$emit('continue')"
+        class="w-full rounded-xl border border-semantic-warning-300 bg-semantic-warning-700 px-4 py-2 text-center text-sm font-bold leading-tight text-white transition-colors hover:bg-semantic-warning-600"
+        @click="$emit('return-to-mine')"
       >
-        {{ townStep === 'tool-store' ? 'Begin Next Month' : 'Continue' }}
+        Return To Mine
       </button>
     </div>
   </Modal>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+
 import Modal from '@/shared/components/Modal.vue';
 
 import type {
   MiningAutomationDefinition,
   MiningMagpieSkillId,
+  MiningPlotPermitDefinition,
+  MiningPlotPermitId,
   MiningToolUpgradeDefinition,
   MiningToolUpgradeId,
   MiningTownStep,
@@ -309,22 +349,20 @@ import type {
 
 const orderedSteps: Array<{ id: Exclude<MiningTownStep, 'none'>; label: string }> = [
   { id: 'exchange', label: 'Exchange' },
-  { id: 'food-shop', label: 'Food Shop' },
   { id: 'magpie-trainer', label: 'Magpie' },
   { id: 'tool-store', label: 'Tools' },
+  { id: 'permit-office', label: 'Permits' },
 ];
 
-defineProps<{
+const props = defineProps<{
   isVisible: boolean;
   townStep: MiningTownStep;
   displayLevel: number;
   goldTotal: number;
-  coinsTotal: number;
   exchangeSummary: {
     soldGold: number;
     baseValue: number;
     returnPercent: number;
-    payoutPerGold: number;
     bonus: number;
     payout: number;
     reachedLevel: number;
@@ -333,26 +371,32 @@ defineProps<{
     progressRatio: number;
     processed: boolean;
   };
-  monthlyUpkeepPaid: boolean;
   automationOptions: MiningAutomationDefinition[];
   ownedAutomationIds: MiningMagpieSkillId[];
   toolUpgradeOptions: MiningToolUpgradeDefinition[];
   ownedToolUpgradeIds: MiningToolUpgradeId[];
-  canAdvance: boolean;
-  canBuyFood: boolean;
+  plotPermitOptions: MiningPlotPermitDefinition[];
+  maxPlotSize: number;
+  showPermitOffice: boolean;
   canExchangeGold: boolean;
   showPurchasedUpgrades: boolean;
   canBuyAutomation: (skillId: MiningMagpieSkillId) => boolean;
   canBuyToolUpgrade: (upgradeId: MiningToolUpgradeId) => boolean;
+  canBuyPlotPermit: (permitId: MiningPlotPermitId) => boolean;
 }>();
+
+const visibleSteps = computed(() =>
+  orderedSteps.filter((step) => props.showPermitOffice || step.id !== 'permit-office')
+);
 
 defineEmits<{
   close: [];
-  continue: [];
-  'buy-food': [];
+  'return-to-mine': [];
+  'select-step': [step: Exclude<MiningTownStep, 'none'>];
   'exchange-gold': [];
   'buy-automation': [skillId: MiningMagpieSkillId];
   'buy-tool-upgrade': [upgradeId: MiningToolUpgradeId];
+  'buy-plot-permit': [permitId: MiningPlotPermitId];
   'toggle-purchased': [];
 }>();
 </script>

@@ -6,6 +6,7 @@ import type {
   MiningToolUpgradeId,
 } from '../game/types';
 import { AUTOMATION_OPTIONS } from '../game/progression/automation';
+import { PLOT_PERMITS } from '../game/progression/plotPermits';
 import { TOOL_UPGRADES } from '../game/progression/toolUpgrades';
 import { MINING_SAVE_KEY, MINING_SAVE_VERSION } from './miningConfig';
 import { createInitialMiningState, type MiningStoreState } from './miningState';
@@ -70,14 +71,7 @@ function readFlagGrid(
 }
 
 function readPhase(value: unknown, fallback: MiningStoreState['run']['phase']) {
-  if (
-    value === 'idle' ||
-    value === 'playing' ||
-    value === 'town' ||
-    value === 'level-complete' ||
-    value === 'out-of-food' ||
-    value === 'dead'
-  ) {
+  if (value === 'idle' || value === 'playing' || value === 'town' || value === 'level-complete') {
     return value;
   }
 
@@ -90,10 +84,7 @@ function readProgressionTab(
   fallback: MiningProgressionTab
 ): MiningProgressionTab {
   const value = progressionSnapshot.selectedTab ?? rootSnapshot.selectedProgressionTab;
-  return value === 'food-shop' ||
-    value === 'gold-exchange' ||
-    value === 'animal-trainer' ||
-    value === 'ui-upgrades'
+  return value === 'gold-exchange' || value === 'animal-trainer' || value === 'ui-upgrades'
     ? value
     : fallback;
 }
@@ -163,6 +154,7 @@ export function clearMiningSave() {
 export function restoreMiningState(target: MiningStoreState, snapshot: MiningSaveSnapshot) {
   const validAutomationIds = new Set(AUTOMATION_OPTIONS.map((option) => option.id));
   const validToolUpgradeIds = new Set(TOOL_UPGRADES.map((option) => option.id));
+  const validPlotSizes = new Set(PLOT_PERMITS.map((option) => option.size));
   const base = createInitialMiningState();
   const rootSnapshot = isRecord(snapshot) ? snapshot : {};
   const boardSnapshot = isRecord(rootSnapshot.board) ? rootSnapshot.board : rootSnapshot;
@@ -210,6 +202,11 @@ export function restoreMiningState(target: MiningStoreState, snapshot: MiningSav
       progressionSnapshot.ownedToolUpgradeIds ?? rootSnapshot.ownedToolUpgradeIds,
       base.progression.ownedToolUpgradeIds
     ).filter((upgradeId): upgradeId is MiningToolUpgradeId => validToolUpgradeIds.has(upgradeId)),
+    maxPlotSize:
+      typeof progressionSnapshot.maxPlotSize === 'number' &&
+      validPlotSizes.has(progressionSnapshot.maxPlotSize)
+        ? progressionSnapshot.maxPlotSize
+        : base.progression.maxPlotSize,
   };
   target.ui = {
     ...base.ui,
@@ -221,7 +218,6 @@ export function restoreMiningState(target: MiningStoreState, snapshot: MiningSav
       typeof uiSnapshot.lastActionMessage === 'string'
         ? uiSnapshot.lastActionMessage
         : base.ui.lastActionMessage,
-    showDeathModal: target.run.phase === 'out-of-food',
   };
   target.system = {
     ...base.system,
