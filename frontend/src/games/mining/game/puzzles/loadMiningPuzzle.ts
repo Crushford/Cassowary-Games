@@ -2,11 +2,12 @@ import { keepOnlyOriginalPuzzleVariants } from '@/games/queens/utils/puzzleDiver
 
 import type { MiningPuzzleRecord } from '../types';
 
-let cachedMiningPuzzlePool: MiningPuzzleRecord[] | null = null;
+const cachedMiningPuzzlePools = new Map<number, MiningPuzzleRecord[]>();
 
-async function loadPuzzlePool(): Promise<MiningPuzzleRecord[]> {
-  if (cachedMiningPuzzlePool) {
-    return cachedMiningPuzzlePool;
+async function loadPuzzlePool(size: number): Promise<MiningPuzzleRecord[]> {
+  const cachedPool = cachedMiningPuzzlePools.get(size);
+  if (cachedPool) {
+    return cachedPool;
   }
 
   const response = await fetch('/queens/puzzles.json', { cache: 'force-cache' });
@@ -15,21 +16,24 @@ async function loadPuzzlePool(): Promise<MiningPuzzleRecord[]> {
   }
 
   const payload = (await response.json()) as Record<string, MiningPuzzleRecord[]>;
-  const pool = payload['5x5'];
+  const sizeKey = `${size}x${size}`;
+  const pool = payload[sizeKey];
 
   if (!Array.isArray(pool) || pool.length === 0) {
-    throw new Error('No 5x5 Queens puzzles available for mining.');
+    throw new Error(`No ${sizeKey} Queens puzzles available for mining.`);
   }
 
   const originals = keepOnlyOriginalPuzzleVariants(pool);
-  cachedMiningPuzzlePool = originals.length > 0 ? originals : pool;
-  return cachedMiningPuzzlePool;
+  const dedupedPool = originals.length > 0 ? originals : pool;
+  cachedMiningPuzzlePools.set(size, dedupedPool);
+  return dedupedPool;
 }
 
 export async function loadRandomMiningPuzzle(
-  previousPuzzleId?: string | null
+  previousPuzzleId?: string | null,
+  size = 5
 ): Promise<MiningPuzzleRecord> {
-  const pool = await loadPuzzlePool();
+  const pool = await loadPuzzlePool(size);
   const candidatePool =
     previousPuzzleId && pool.length > 1
       ? pool.filter((puzzle) => puzzle.id !== previousPuzzleId)
@@ -40,5 +44,5 @@ export async function loadRandomMiningPuzzle(
 }
 
 export function __resetMiningPuzzleCacheForTests(): void {
-  cachedMiningPuzzlePool = null;
+  cachedMiningPuzzlePools.clear();
 }

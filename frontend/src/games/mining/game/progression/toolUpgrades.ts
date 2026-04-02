@@ -18,7 +18,7 @@ export const TOOL_UPGRADES: MiningToolUpgradeDefinition[] = [
     category: 'flow',
     requiredLevel: 1,
     cost: 1,
-    effectSummary: 'Automatically pays the 1 coin next-field cost after the whole field is dug.',
+    effectSummary: 'Automatically spends the 1 gold next-field cost after the whole field is dug.',
   },
 ];
 

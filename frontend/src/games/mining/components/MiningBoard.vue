@@ -1,6 +1,7 @@
 <template>
   <div
-    class="grid grid-cols-5 gap-2 [touch-action:none] overscroll-none"
+    class="grid gap-2 [touch-action:none] overscroll-none"
+    :style="boardStyle"
     @touchstart="handleTouchStart"
     @touchmove="handleTouchMove"
     @touchend="handleTouchEnd"
@@ -344,4 +345,8 @@ const cells = computed(() => {
 
   return values;
 });
+
+const boardStyle = computed(() => ({
+  gridTemplateColumns: `repeat(${props.truthGold.length || 1}, minmax(0, 1fr))`,
+}));
 </script>
