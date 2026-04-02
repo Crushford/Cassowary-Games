@@ -213,26 +213,30 @@ function applyLevelReward(state: MiningStoreState, level: MiningCampaignLevel) {
 function completeLevel(state: MiningStoreState) {
   const level = getActiveLevel(state);
   const passed = didPassLevel(state, level);
+  const isLastLevel = state.run.currentLevelIndex >= MINING_CAMPAIGN_LEVELS.length - 1;
 
-  state.run.phase = 'level-complete';
+  state.run.phase = passed && isLastLevel ? 'game-complete' : 'level-complete';
   state.ui.showLevelIntroModal = false;
   state.ui.showLevelResultModal = true;
   state.ui.levelResult = {
     passed,
     clueRevealed: false,
   };
+  state.ui.scoreSubmitted = false;
 
   if (passed) {
     applyLevelReward(state, level);
 
-    if (state.run.currentLevelIndex === state.run.highestUnlockedLevelIndex) {
-      state.run.highestUnlockedLevelIndex = Math.min(
-        MINING_CAMPAIGN_LEVELS.length - 1,
-        state.run.highestUnlockedLevelIndex + 1
+    if (!isLastLevel) {
+      state.run.highestUnlockedLevelIndex = Math.max(
+        state.run.highestUnlockedLevelIndex,
+        state.run.currentLevelIndex + 1
       );
     }
 
-    state.ui.lastActionMessage = `Level ${level.number} complete in ${state.run.digsUsed} digs.`;
+    state.ui.lastActionMessage = isLastLevel
+      ? `Game complete in ${state.run.daysElapsed} days.`
+      : `Level ${level.number} complete in ${state.run.digsUsed} digs.`;
   } else {
     state.ui.lastActionMessage = `Level ${level.number} complete, but the goal was missed.`;
   }

@@ -1,5 +1,6 @@
 import type {
   MiningFlagType,
+  MiningLeaderboardEntry,
   MiningPhase,
   MiningRavenSkillId,
   MiningToolUpgradeId,
@@ -56,6 +57,12 @@ export interface MiningUiState {
   errorMessage: string | null;
   errorTick: number;
   lastActionMessage: string;
+  leaderboardName: string;
+  scoreSubmitted: boolean;
+}
+
+export interface MiningLeaderboardState {
+  entries: MiningLeaderboardEntry[];
 }
 
 export interface MiningSystemState {
@@ -69,6 +76,7 @@ export interface MiningStoreState {
   run: MiningRunState;
   progression: MiningProgressionState;
   ui: MiningUiState;
+  leaderboard: MiningLeaderboardState;
   system: MiningSystemState;
 }
 
@@ -105,6 +113,11 @@ export function createInitialMiningState(): MiningStoreState {
       errorMessage: null,
       errorTick: 0,
       lastActionMessage: 'Find the gold and complete the level goals.',
+      leaderboardName: '',
+      scoreSubmitted: false,
+    },
+    leaderboard: {
+      entries: [],
     },
     system: {
       persistenceInitialized: false,

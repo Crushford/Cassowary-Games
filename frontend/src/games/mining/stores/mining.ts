@@ -5,8 +5,10 @@ import type { MiningCampaignLevel, MiningFlagType, PositionRef } from '../game/t
 import {
   clearMiningSave,
   isSaveCompatible,
+  readMiningLeaderboard,
   readMiningSave,
   restoreMiningState,
+  writeMiningLeaderboardEntry,
   writeMiningSave,
 } from './miningPersistence';
 import {
@@ -50,6 +52,7 @@ export const useMiningStore = defineStore('mining', {
     unlockedRavenSkillIds: (state) => state.progression.unlockedRavenSkillIds,
     unlockedToolUpgradeIds: (state) => state.progression.unlockedToolUpgradeIds,
     earnedRewardIds: (state) => state.progression.earnedRewardIds,
+    leaderboardEntries: (state) => state.leaderboard.entries,
     showSettingsModal: (state) => state.ui.showSettingsModal,
     showLevelIntroModal: (state) => state.ui.showLevelIntroModal,
     showLevelResultModal: (state) => state.ui.showLevelResultModal,
@@ -57,6 +60,8 @@ export const useMiningStore = defineStore('mining', {
     errorMessage: (state) => state.ui.errorMessage,
     errorTick: (state) => state.ui.errorTick,
     lastActionMessage: (state) => state.ui.lastActionMessage,
+    leaderboardName: (state) => state.ui.leaderboardName,
+    scoreSubmitted: (state) => state.ui.scoreSubmitted,
 
     currentLevelDefinition(state): MiningCampaignLevel {
       return MINING_CAMPAIGN_LEVELS[state.run.currentLevelIndex] ?? MINING_CAMPAIGN_LEVELS[0];
@@ -69,6 +74,10 @@ export const useMiningStore = defineStore('mining', {
     currentLevelGoalText(): string {
       const maxDigs = this.currentLevelDefinition.winConditions.maxDigsExclusive;
       if (typeof maxDigs === 'number') {
+        if (maxDigs === this.currentLevelDefinition.goldTarget + 1) {
+          return `Find all ${this.currentLevelDefinition.goldTarget} gold in ${this.currentLevelDefinition.goldTarget} digs.`;
+        }
+
         return `Find all ${this.currentLevelDefinition.goldTarget} gold in fewer than ${maxDigs} digs.`;
       }
 
@@ -127,6 +136,10 @@ export const useMiningStore = defineStore('mining', {
     isLastLevel(): boolean {
       return this.currentLevelIndex >= MINING_CAMPAIGN_LEVELS.length - 1;
     },
+
+    isGameComplete(): boolean {
+      return this.phase === 'game-complete' && this.levelResultPassed;
+    },
   },
 
   actions: {
@@ -135,8 +148,11 @@ export const useMiningStore = defineStore('mining', {
         this.initializePersistence();
       }
 
+      this.leaderboard.entries = readMiningLeaderboard();
+
       const restoreResult = this.restoreFromStorage();
       if (restoreResult === 'restored' && this.run.phase !== 'idle') {
+        this.ensureVisibleBlockingUi();
         return;
       }
 
@@ -175,6 +191,10 @@ export const useMiningStore = defineStore('mining', {
     },
 
     closeLevelResultModal() {
+      if (this.isGameComplete) {
+        return;
+      }
+
       this.ui.showLevelResultModal = false;
     },
 
@@ -205,7 +225,7 @@ export const useMiningStore = defineStore('mining', {
     },
 
     ensureVisibleBlockingUi() {
-      if (this.run.phase === 'level-complete') {
+      if (this.run.phase === 'level-complete' || this.run.phase === 'game-complete') {
         this.ui.showLevelResultModal = true;
       }
     },
@@ -249,7 +269,7 @@ export const useMiningStore = defineStore('mining', {
     },
 
     async startNextLevel() {
-      if (!this.canStartNextLevel) {
+      if (!this.canStartNextLevel || this.isGameComplete) {
         return;
       }
 
@@ -302,15 +322,59 @@ export const useMiningStore = defineStore('mining', {
       this.clearError();
     },
 
+    setLeaderboardName(value: string) {
+      this.ui.leaderboardName = value;
+    },
+
+    submitLeaderboardScore() {
+      if (!this.isGameComplete || this.scoreSubmitted) {
+        return;
+      }
+
+      const name = this.ui.leaderboardName.trim() || 'Anonymous';
+      this.leaderboard.entries = writeMiningLeaderboardEntry({
+        name,
+        daysElapsed: this.daysElapsed,
+        completedAt: new Date().toISOString(),
+      });
+      this.ui.leaderboardName = name;
+      this.ui.scoreSubmitted = true;
+      this.ui.lastActionMessage = `Score saved for ${name}.`;
+    },
+
     resetRun() {
       this.clearPersistedState();
-      this.$patch(createInitialMiningState());
+      const leaderboardEntries = [...this.leaderboard.entries];
+      const baseState = createInitialMiningState();
+      this.$patch({
+        ...baseState,
+        leaderboard: {
+          entries: leaderboardEntries,
+        },
+        system: {
+          ...baseState.system,
+          persistenceInitialized: true,
+          persistenceHydrating: false,
+        },
+      });
       void this.initialize();
     },
 
     deleteSavedGame() {
       this.clearPersistedState();
-      this.$patch(createInitialMiningState());
+      const leaderboardEntries = [...this.leaderboard.entries];
+      const baseState = createInitialMiningState();
+      this.$patch({
+        ...baseState,
+        leaderboard: {
+          entries: leaderboardEntries,
+        },
+        system: {
+          ...baseState.system,
+          persistenceInitialized: true,
+          persistenceHydrating: false,
+        },
+      });
       this.ui.showSettingsModal = false;
       void this.initialize();
     },

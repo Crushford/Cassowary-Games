@@ -4,12 +4,12 @@
     class="relative aspect-square w-full rounded-2xl border p-2 text-center transition-all duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:active:translate-y-0"
     :class="[
       squareClass,
+      regionColorClass,
       {
         'auto-flag-tint-magpie': autoFlagAnimating,
         'gold-found-tint': goldFoundAnimating,
       },
     ]"
-    :style="squareStyle"
     :data-row="row"
     :data-col="col"
     :aria-disabled="disabled ? 'true' : 'false'"
@@ -64,7 +64,7 @@
 import { computed } from 'vue';
 
 import type { MiningFlagType } from '../game/types';
-import { getRegionColorStyle } from '../game/utils/regionColor';
+import { getRegionColorClass } from '../game/utils/regionColor';
 
 const props = defineProps<{
   row: number;
@@ -136,18 +136,18 @@ const squareClass = computed(() => {
   }
 
   if (props.showRegion) {
-    return 'shadow-lg shadow-semantic-warning-950/15';
+    return 'border-app-border shadow-lg shadow-semantic-warning-950/15';
   }
 
   return 'border-semantic-warning-700 bg-gradient-to-br from-semantic-warning-500 to-semantic-warning-800 shadow-lg shadow-semantic-warning-950/15';
 });
 
-const squareStyle = computed(() => {
+const regionColorClass = computed(() => {
   if (!props.showRegion) {
-    return undefined;
+    return '';
   }
 
-  return getRegionColorStyle(props.regionId ?? null, false);
+  return getRegionColorClass(props.regionId ?? null);
 });
 
 const showAutoFlagRipple = computed(() => props.tileKind === 'hidden' && props.autoFlagAnimating);

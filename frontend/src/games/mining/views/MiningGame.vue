@@ -175,22 +175,82 @@
       <div class="space-y-4 text-white">
         <template v-if="store.levelResultPassed">
           <div>
-            <h2 class="text-xl font-bold">
-              {{ store.currentLevelDefinition.reward?.title ?? 'Congratulations!' }}
-            </h2>
+            <h2 class="text-xl font-bold">{{ successTitle }}</h2>
             <p class="mt-1 text-sm text-semantic-neutral-300">
               {{ successSummary }}
             </p>
           </div>
 
           <p
-            v-if="store.currentLevelDefinition.reward"
+            v-if="store.currentLevelDefinition.reward && !store.isGameComplete"
             class="text-sm leading-relaxed text-semantic-neutral-200"
           >
             {{ store.currentLevelDefinition.reward.body }}
           </p>
 
-          <div class="grid grid-cols-2 gap-3">
+          <div v-if="store.isGameComplete" class="space-y-4">
+            <div
+              class="rounded-xl bg-semantic-neutral-900 px-4 py-3 text-sm text-semantic-neutral-200"
+            >
+              You finished the full campaign in <strong>{{ store.daysElapsed }}</strong> days.
+            </div>
+
+            <label class="block space-y-2">
+              <span class="text-sm font-semibold text-semantic-neutral-200">Leaderboard Name</span>
+              <input
+                :value="store.leaderboardName"
+                type="text"
+                maxlength="24"
+                class="w-full rounded-xl border border-semantic-neutral-600 bg-semantic-neutral-950 px-4 py-2 text-sm text-white outline-none transition-colors focus:border-semantic-info-400"
+                placeholder="Enter your name"
+                @input="store.setLeaderboardName(($event.target as HTMLInputElement).value)"
+              />
+            </label>
+
+            <button
+              type="button"
+              class="w-full rounded-xl border px-4 py-2 text-sm font-bold transition-colors"
+              :class="
+                store.scoreSubmitted
+                  ? 'border-app-border bg-app-bg text-app-textMuted'
+                  : 'border-semantic-success-500 bg-semantic-success-700 text-white hover:bg-semantic-success-600'
+              "
+              :disabled="store.scoreSubmitted"
+              @click="store.submitLeaderboardScore()"
+            >
+              {{ store.scoreSubmitted ? 'Score Saved' : 'Save Score' }}
+            </button>
+
+            <div class="space-y-2">
+              <div class="text-sm font-semibold text-semantic-neutral-200">Local Leaderboard</div>
+              <div
+                v-if="store.leaderboardEntries.length === 0"
+                class="rounded-xl bg-semantic-neutral-900 px-4 py-3 text-sm text-semantic-neutral-300"
+              >
+                No scores saved yet.
+              </div>
+              <div v-else class="space-y-2">
+                <div
+                  v-for="(entry, index) in store.leaderboardEntries"
+                  :key="`${entry.name}-${entry.completedAt}`"
+                  class="flex items-center justify-between rounded-xl bg-semantic-neutral-900 px-4 py-3 text-sm text-semantic-neutral-200"
+                >
+                  <span>{{ index + 1 }}. {{ entry.name }}</span>
+                  <span class="font-bold tabular-nums">{{ entry.daysElapsed }} days</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="w-full rounded-xl border border-semantic-info-500 bg-semantic-info-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-semantic-info-600"
+              @click="store.resetRun()"
+            >
+              Play Again
+            </button>
+          </div>
+
+          <div v-else class="grid grid-cols-2 gap-3">
             <button
               type="button"
               class="rounded-xl border border-semantic-danger-700 bg-semantic-danger-900 px-4 py-2 text-sm font-bold text-semantic-danger-100 transition-colors hover:bg-semantic-danger-800"
@@ -263,7 +323,19 @@ import { useMiningStore } from '../stores/mining';
 
 const store = useMiningStore();
 
+const successTitle = computed(() => {
+  if (store.isGameComplete) {
+    return 'You completed the game!';
+  }
+
+  return store.currentLevelDefinition.reward?.title ?? 'Congratulations!';
+});
+
 const successSummary = computed(() => {
+  if (store.isGameComplete) {
+    return `You finished the final level in ${store.digsUsed} digs and completed the campaign.`;
+  }
+
   const maxDigs = store.currentLevelDefinition.winConditions.maxDigsExclusive;
   if (typeof maxDigs === 'number') {
     return `You found all ${store.currentLevelDefinition.goldTarget} gold in ${store.digsUsed} digs.`;

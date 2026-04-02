@@ -22,9 +22,47 @@ const PUZZLE_C = {
   queens: ['Q.....', '..Q...', '....Q.', '.Q....', '...Q..', '.....Q'].join(''),
 };
 
+const PUZZLE_D = {
+  id: 'headless-pz-d',
+  layout: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklm',
+  queens: ['Q......', '..Q....', '....Q..', '.Q.....', '......Q', '...Q...', '.....Q.'].join(''),
+};
+
+const PUZZLE_E = {
+  id: 'headless-pz-e',
+  layout: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
+  queens: [
+    'Q.......',
+    '..Q.....',
+    '....Q...',
+    '......Q.',
+    '.Q......',
+    '...Q....',
+    '.....Q..',
+    '.......Q',
+  ].join(''),
+};
+
+const PUZZLE_F = {
+  id: 'headless-pz-f',
+  layout: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/!@#$%^&*()-_=',
+  queens: [
+    'Q........',
+    '..Q......',
+    '.....Q...',
+    '.......Q.',
+    '.Q.......',
+    '...Q.....',
+    '........Q',
+    '......Q..',
+    '....Q....',
+  ].join(''),
+};
+
 beforeEach(() => {
   vi.useFakeTimers();
   __resetMiningPuzzleCacheForTests();
+  vi.spyOn(console, 'log').mockImplementation(() => {});
 
   const storage = (() => {
     const store = new Map<string, string>();
@@ -114,6 +152,41 @@ describe('Mining headless E2E - campaign loop', () => {
     expect(store.currentLevelNumber).toBe(3);
     expect(store.boardSize).toBe(6);
     expect(store.showLevelIntroModal).toBe(true);
+    game.cleanup();
+  });
+
+  it('finishes the campaign on the 9x9 scanner level and records a score', async () => {
+    const game = await createHeadlessGame({
+      puzzles: [
+        PUZZLE_A,
+        PUZZLE_B,
+        PUZZLE_C,
+        PUZZLE_D,
+        PUZZLE_A,
+        PUZZLE_C,
+        PUZZLE_D,
+        PUZZLE_E,
+        PUZZLE_F,
+      ],
+    });
+    const { store } = game;
+
+    while (store.currentLevelNumber < 9) {
+      await game.digAllGold();
+      await store.startNextLevel();
+      store.dismissLevelIntro();
+    }
+
+    await game.digAllGold();
+
+    expect(store.phase).toBe('game-complete');
+    expect(store.isGameComplete).toBe(true);
+
+    store.setLeaderboardName('Headless');
+    store.submitLeaderboardScore();
+
+    expect(store.scoreSubmitted).toBe(true);
+    expect(store.leaderboardEntries[0]?.name).toBe('Headless');
     game.cleanup();
   });
 });
