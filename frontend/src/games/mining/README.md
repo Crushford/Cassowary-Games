@@ -470,7 +470,6 @@ Main view:
 
 Shop modal:
 
-- `/Users/james/Documents/Honey-Pot-Ants/frontend/src/games/mining/components/MiningShopModal.vue`
 
 Board and square rendering:
 
