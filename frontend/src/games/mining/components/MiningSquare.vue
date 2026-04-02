@@ -31,9 +31,9 @@
       class="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
     >
       <m.span
-        class="text-3xl text-white [text-shadow:0_0_10px_rgba(15,23,42,0.5)]"
+        class="text-shadow-mining-flag text-3xl text-white"
         :class="{
-          'drop-shadow-[0_0_10px_rgba(253,224,71,0.6)]': autoFlagAnimating && !prefersReducedMotion,
+          'drop-shadow-mining-flag-glow': autoFlagAnimating && !prefersReducedMotion,
         }"
         :variants="autoFlagIconVariants"
         :initial="autoFlagAnimating ? 'hidden' : 'visible'"
@@ -117,7 +117,7 @@
           >
         </AnimatePresence>
         <m.div
-          class="relative z-10 text-3xl leading-none drop-shadow-[0_0_14px_rgba(255,215,64,0.45)] sm:text-4xl"
+          class="drop-shadow-mining-gold relative z-10 text-3xl leading-none sm:text-4xl"
           :variants="goldIconVariants"
           :initial="goldFoundAnimating ? 'hidden' : 'visible'"
           animate="visible"

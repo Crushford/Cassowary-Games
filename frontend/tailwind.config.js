@@ -1,4 +1,5 @@
 import colors from 'tailwindcss/colors';
+import plugin from 'tailwindcss/plugin';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -227,5 +228,19 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(({ addUtilities }) => {
+      addUtilities({
+        '.text-shadow-mining-flag': {
+          textShadow: '0 0 10px rgba(15, 23, 42, 0.5)',
+        },
+        '.drop-shadow-mining-flag-glow': {
+          filter: 'drop-shadow(0 0 10px rgba(253, 224, 71, 0.6))',
+        },
+        '.drop-shadow-mining-gold': {
+          filter: 'drop-shadow(0 0 14px rgba(255, 215, 64, 0.45))',
+        },
+      });
+    }),
+  ],
 };
