@@ -305,9 +305,9 @@ function startLongPress() {
   }
 
   clearLongPress();
-  clearTap();
   didLongPress = false;
   longPressTimeout = window.setTimeout(() => {
+    clearTap();
     didLongPress = true;
     console.log('[mining][square-click] emitting dig because long press threshold was met', {
       row: props.row,
