@@ -16,7 +16,7 @@
     <AnimatePresence>
       <m.span
         v-if="showAutoFlagFlash"
-        key="auto-flag-flash"
+        :key="`auto-flag-flash-${autoFlagEventId}`"
         class="auto-flag-flash pointer-events-none absolute inset-0 rounded-[inherit]"
         :variants="autoFlagRippleVariants"
         initial="hidden"
@@ -31,6 +31,7 @@
       class="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
     >
       <m.span
+        :key="`auto-flag-icon-${autoFlagEventId}`"
         class="text-shadow-mining-flag text-3xl text-white"
         :class="{
           'drop-shadow-mining-flag-glow': autoFlagAnimating && !prefersReducedMotion,
@@ -44,7 +45,7 @@
       <AnimatePresence>
         <m.span
           v-if="showAutoFlagRipple"
-          key="auto-flag-ripple"
+          :key="`auto-flag-ripple-${autoFlagEventId}`"
           class="auto-flag-ripple-ring pointer-events-none absolute h-[62%] w-[62%] rounded-full border-2"
           :variants="autoFlagRippleVariants"
           initial="hidden"
@@ -60,7 +61,7 @@
         <AnimatePresence>
           <m.span
             v-if="showGoldBurst"
-            key="gold-burst"
+            :key="`gold-burst-${goldFoundEventId}`"
             class="pointer-events-none absolute inset-[18%] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.55)_0%,rgba(255,255,255,0)_58%),radial-gradient(circle,rgba(250,204,21,0.5)_12%,rgba(250,204,21,0)_68%)]"
             :variants="goldBurstVariants"
             initial="hidden"
@@ -71,7 +72,7 @@
         <AnimatePresence>
           <m.span
             v-if="showGoldBurst"
-            key="gold-ripple-inner"
+            :key="`gold-ripple-inner-${goldFoundEventId}`"
             class="gold-ripple-inner pointer-events-none absolute inset-[20%] rounded-full border-2"
             :variants="goldBurstVariants"
             initial="hidden"
@@ -82,7 +83,7 @@
         <AnimatePresence>
           <m.span
             v-if="showGoldBurst"
-            key="gold-ripple-outer"
+            :key="`gold-ripple-outer-${goldFoundEventId}`"
             class="gold-ripple-outer pointer-events-none absolute inset-[8%] rounded-full border-2"
             :variants="goldBurstVariants"
             initial="hidden"
@@ -94,7 +95,7 @@
         <AnimatePresence>
           <m.span
             v-if="showGoldBurst"
-            key="gold-spark-left"
+            :key="`gold-spark-left-${goldFoundEventId}`"
             class="pointer-events-none absolute left-[18%] top-[22%] z-[5] text-base leading-none"
             :variants="goldSparkVariants"
             initial="hidden"
@@ -106,7 +107,7 @@
         <AnimatePresence>
           <m.span
             v-if="showGoldBurst"
-            key="gold-spark-right"
+            :key="`gold-spark-right-${goldFoundEventId}`"
             class="pointer-events-none absolute bottom-[20%] right-[18%] z-[5] text-base leading-none"
             :variants="goldSparkVariants"
             initial="hidden"
@@ -117,6 +118,7 @@
           >
         </AnimatePresence>
         <m.div
+          :key="`gold-icon-${goldFoundEventId}`"
           class="drop-shadow-mining-gold relative z-10 text-3xl leading-none sm:text-4xl"
           :variants="goldIconVariants"
           :initial="goldFoundAnimating ? 'hidden' : 'visible'"
@@ -132,7 +134,7 @@
         <AnimatePresence>
           <m.span
             v-if="showEmptyPuffs"
-            key="empty-puff-left"
+            :key="`empty-puff-left-${emptyFoundEventId}`"
             class="pointer-events-none absolute bottom-[22%] left-[18%] h-[28%] w-[28%] rounded-full bg-[radial-gradient(circle,rgba(148,163,184,0.25)_0%,rgba(148,163,184,0)_70%)]"
             :variants="emptyPuffVariants"
             initial="hidden"
@@ -143,7 +145,7 @@
         <AnimatePresence>
           <m.span
             v-if="showEmptyPuffs"
-            key="empty-puff-right"
+            :key="`empty-puff-right-${emptyFoundEventId}`"
             class="pointer-events-none absolute bottom-[16%] right-[18%] h-[28%] w-[28%] rounded-full bg-[radial-gradient(circle,rgba(148,163,184,0.25)_0%,rgba(148,163,184,0)_70%)]"
             :variants="emptyPuffVariants"
             initial="hidden"
@@ -155,7 +157,7 @@
         <AnimatePresence>
           <m.span
             v-if="showEmptyPuffs"
-            key="empty-flash"
+            :key="`empty-flash-${emptyFoundEventId}`"
             class="empty-found-flash pointer-events-none absolute inset-0 rounded-[inherit]"
             :variants="emptyPuffVariants"
             initial="hidden"
@@ -164,6 +166,7 @@
           />
         </AnimatePresence>
         <m.div
+          :key="`empty-value-${emptyFoundEventId}`"
           class="text-lg font-black leading-none text-app-text sm:text-xl"
           :variants="emptyValueVariants"
           :initial="emptyFoundAnimating ? 'hidden' : 'visible'"
@@ -206,8 +209,11 @@ const props = defineProps<{
   disabled?: boolean;
   autoFlagAnimating?: boolean;
   autoFlagDelayMs?: number;
+  autoFlagEventId?: number;
   goldFoundAnimating?: boolean;
+  goldFoundEventId?: number;
   emptyFoundAnimating?: boolean;
+  emptyFoundEventId?: number;
 }>();
 
 const emit = defineEmits<{
@@ -263,18 +269,34 @@ function handleTap() {
     return;
   }
 
-  console.log('[mining][square-click] emitting toggle-flag to toggle gold-here marker', {
-    row: props.row,
-    col: props.col,
-    overridingNotGold: props.flagged === 'not-gold',
-    wasFlagged: props.flagged === 'gold-here',
-  });
-  emit('toggle-flag');
+  if (tapTimeout !== null) {
+    window.clearTimeout(tapTimeout);
+    tapTimeout = null;
+    console.log('[mining][square-click] emitting dig because double tap threshold was met', {
+      row: props.row,
+      col: props.col,
+    });
+    emit('dig');
+    return;
+  }
+
+  tapTimeout = window.setTimeout(() => {
+    tapTimeout = null;
+    console.log('[mining][square-click] emitting toggle-flag to toggle gold-here marker', {
+      row: props.row,
+      col: props.col,
+      overridingNotGold: props.flagged === 'not-gold',
+      wasFlagged: props.flagged === 'gold-here',
+    });
+    emit('toggle-flag');
+  }, DOUBLE_TAP_MS);
 }
 
 const LONG_PRESS_MS = 300;
+const DOUBLE_TAP_MS = 240;
 
 let longPressTimeout: number | null = null;
+let tapTimeout: number | null = null;
 let didLongPress = false;
 
 function startLongPress() {
@@ -283,6 +305,7 @@ function startLongPress() {
   }
 
   clearLongPress();
+  clearTap();
   didLongPress = false;
   longPressTimeout = window.setTimeout(() => {
     didLongPress = true;
@@ -298,6 +321,13 @@ function clearLongPress() {
   if (longPressTimeout !== null) {
     window.clearTimeout(longPressTimeout);
     longPressTimeout = null;
+  }
+}
+
+function clearTap() {
+  if (tapTimeout !== null) {
+    window.clearTimeout(tapTimeout);
+    tapTimeout = null;
   }
 }
 

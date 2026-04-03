@@ -10,7 +10,7 @@ export const MINING_CAMPAIGN_LEVELS: MiningCampaignLevel[] = [
     introTitle: 'Level 1',
     introBody: [
       'In this game, there are 5 pieces of gold to find.',
-      'Tap to place a flag. Hold to dig.',
+      'Tap to place a flag. Double tap or hold to dig.',
       'Your first goal is simply to find all the gold. Dig as much as you want.',
     ],
     winConditions: {
@@ -32,7 +32,7 @@ export const MINING_CAMPAIGN_LEVELS: MiningCampaignLevel[] = [
     introBody: [
       'There are still 5 pieces of gold to find.',
       'This time, your goal is to find all 5 pieces of gold in fewer than 15 digs.',
-      'Tap to place a flag. Hold to dig.',
+      'Tap to place a flag. Double tap or hold to dig.',
     ],
     winConditions: {
       requireAllGold: true,

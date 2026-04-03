@@ -30,12 +30,16 @@ const props = withDefaults(
     ariaLabelledby?: string;
     ariaDescribedby?: string;
     ariaLabel?: string;
+    closeOnBackdrop?: boolean;
+    closeOnEscape?: boolean;
   }>(),
   {
     role: 'dialog',
     ariaLabelledby: undefined,
     ariaDescribedby: undefined,
     ariaLabel: undefined,
+    closeOnBackdrop: true,
+    closeOnEscape: true,
   }
 );
 
@@ -47,12 +51,16 @@ const dialogRef = ref<HTMLElement | null>(null);
 let previousActiveElement: HTMLElement | null = null;
 
 const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && props.isVisible) {
+  if (event.key === 'Escape' && props.isVisible && props.closeOnEscape) {
     emit('close');
   }
 };
 
 function handleBackdropClick() {
+  if (!props.closeOnBackdrop) {
+    return;
+  }
+
   emit('close');
 }
 

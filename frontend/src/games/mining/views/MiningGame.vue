@@ -56,7 +56,7 @@
           <div
             class="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-semantic-warning-300"
           >
-            Tap to flag. Tap and hold to dig.
+            Tap to flag. Double tap or tap and hold to dig.
           </div>
         </div>
 
@@ -171,8 +171,9 @@
 
     <Modal
       :is-visible="store.showLevelResultModal"
+      :close-on-backdrop="false"
+      :close-on-escape="false"
       aria-label="Level result"
-      @close="store.closeLevelResultModal()"
     >
       <div class="space-y-4 text-white">
         <template v-if="store.levelResultPassed">
