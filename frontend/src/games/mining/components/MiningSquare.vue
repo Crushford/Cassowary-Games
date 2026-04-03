@@ -269,18 +269,34 @@ function handleTap() {
     return;
   }
 
-  console.log('[mining][square-click] emitting toggle-flag to toggle gold-here marker', {
-    row: props.row,
-    col: props.col,
-    overridingNotGold: props.flagged === 'not-gold',
-    wasFlagged: props.flagged === 'gold-here',
-  });
-  emit('toggle-flag');
+  if (tapTimeout !== null) {
+    window.clearTimeout(tapTimeout);
+    tapTimeout = null;
+    console.log('[mining][square-click] emitting dig because double tap threshold was met', {
+      row: props.row,
+      col: props.col,
+    });
+    emit('dig');
+    return;
+  }
+
+  tapTimeout = window.setTimeout(() => {
+    tapTimeout = null;
+    console.log('[mining][square-click] emitting toggle-flag to toggle gold-here marker', {
+      row: props.row,
+      col: props.col,
+      overridingNotGold: props.flagged === 'not-gold',
+      wasFlagged: props.flagged === 'gold-here',
+    });
+    emit('toggle-flag');
+  }, DOUBLE_TAP_MS);
 }
 
 const LONG_PRESS_MS = 300;
+const DOUBLE_TAP_MS = 240;
 
 let longPressTimeout: number | null = null;
+let tapTimeout: number | null = null;
 let didLongPress = false;
 
 function startLongPress() {
@@ -289,6 +305,7 @@ function startLongPress() {
   }
 
   clearLongPress();
+  clearTap();
   didLongPress = false;
   longPressTimeout = window.setTimeout(() => {
     didLongPress = true;
@@ -304,6 +321,13 @@ function clearLongPress() {
   if (longPressTimeout !== null) {
     window.clearTimeout(longPressTimeout);
     longPressTimeout = null;
+  }
+}
+
+function clearTap() {
+  if (tapTimeout !== null) {
+    window.clearTimeout(tapTimeout);
+    tapTimeout = null;
   }
 }
 
