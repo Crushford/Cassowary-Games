@@ -17,8 +17,11 @@
         :flagged="cell.flagged"
         :auto-flag-animating="autoFlagAnimatingKeys.has(getCellKey(cell.row, cell.col))"
         :auto-flag-delay-ms="autoFlagDelayMsByKey.get(getCellKey(cell.row, cell.col)) ?? 0"
+        :auto-flag-event-id="autoFlagEventIdsByKey.get(getCellKey(cell.row, cell.col)) ?? 0"
         :gold-found-animating="goldFoundAnimatingKeys.has(getCellKey(cell.row, cell.col))"
+        :gold-found-event-id="goldFoundEventIdsByKey.get(getCellKey(cell.row, cell.col)) ?? 0"
         :empty-found-animating="emptyFoundAnimatingKeys.has(getCellKey(cell.row, cell.col))"
+        :empty-found-event-id="emptyFoundEventIdsByKey.get(getCellKey(cell.row, cell.col)) ?? 0"
         :reward-label="rewardLabel"
         :region-color-class="getRegionColorClass(cell.regionId)"
         :show-region="showRegions"
@@ -69,8 +72,11 @@ const isSwiping = ref(false);
 const swipedCells = ref<Set<string>>(new Set());
 const autoFlagAnimatingKeys = ref<Set<string>>(new Set());
 const autoFlagDelayMsByKey = ref<Map<string, number>>(new Map());
+const autoFlagEventIdsByKey = ref<Map<string, number>>(new Map());
 const goldFoundAnimatingKeys = ref<Set<string>>(new Set());
+const goldFoundEventIdsByKey = ref<Map<string, number>>(new Map());
 const emptyFoundAnimatingKeys = ref<Set<string>>(new Set());
+const emptyFoundEventIdsByKey = ref<Map<string, number>>(new Map());
 const autoFlagTimeouts = new Map<string, number>();
 const goldFoundTimeouts = new Map<string, number>();
 const emptyFoundTimeouts = new Map<string, number>();
@@ -87,6 +93,7 @@ watch(
 
     const nextAnimatingKeys = new Set(autoFlagAnimatingKeys.value);
     const nextDelayMap = new Map(autoFlagDelayMsByKey.value);
+    const nextEventIdMap = new Map(autoFlagEventIdsByKey.value);
     let animationIndex = 0;
 
     for (let row = 0; row < nextFlagged.length; row += 1) {
@@ -102,6 +109,7 @@ watch(
         nextAnimatingKeys.add(key);
         const delayMs = animationIndex * AUTO_FLAG_STAGGER_MS;
         nextDelayMap.set(key, delayMs);
+        nextEventIdMap.set(key, (nextEventIdMap.get(key) ?? 0) + 1);
         animationIndex += 1;
 
         const pendingTimeout = autoFlagTimeouts.get(key);
@@ -129,6 +137,7 @@ watch(
 
     autoFlagAnimatingKeys.value = nextAnimatingKeys;
     autoFlagDelayMsByKey.value = nextDelayMap;
+    autoFlagEventIdsByKey.value = nextEventIdMap;
   },
   { deep: true }
 );
@@ -159,7 +168,9 @@ watch(
     }
 
     const nextGoldAnimatingKeys = new Set(goldFoundAnimatingKeys.value);
+    const nextGoldEventIds = new Map(goldFoundEventIdsByKey.value);
     const nextEmptyAnimatingKeys = new Set(emptyFoundAnimatingKeys.value);
+    const nextEmptyEventIds = new Map(emptyFoundEventIdsByKey.value);
 
     for (let row = 0; row < nextRevealed.length; row += 1) {
       for (let col = 0; col < nextRevealed[row].length; col += 1) {
@@ -174,6 +185,7 @@ watch(
 
         if (props.truthGold[row]?.[col]) {
           nextGoldAnimatingKeys.add(key);
+          nextGoldEventIds.set(key, (nextGoldEventIds.get(key) ?? 0) + 1);
 
           const pendingTimeout = goldFoundTimeouts.get(key);
           if (pendingTimeout !== undefined) {
@@ -194,6 +206,7 @@ watch(
         }
 
         nextEmptyAnimatingKeys.add(key);
+        nextEmptyEventIds.set(key, (nextEmptyEventIds.get(key) ?? 0) + 1);
 
         const pendingTimeout = emptyFoundTimeouts.get(key);
         if (pendingTimeout !== undefined) {
@@ -213,7 +226,9 @@ watch(
     }
 
     goldFoundAnimatingKeys.value = nextGoldAnimatingKeys;
+    goldFoundEventIdsByKey.value = nextGoldEventIds;
     emptyFoundAnimatingKeys.value = nextEmptyAnimatingKeys;
+    emptyFoundEventIdsByKey.value = nextEmptyEventIds;
   },
   { deep: true }
 );
