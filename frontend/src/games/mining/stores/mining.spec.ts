@@ -237,6 +237,15 @@ describe('useMiningStore', () => {
     expect(store.levelResult?.passed).toBe(true);
   });
 
+  it('keeps the level result modal open until progression continues', async () => {
+    const store = await createStore();
+
+    await completeLevel(store);
+
+    expect(store.showLevelResultModal).toBe(true);
+    expect(store.showLevelResultModal).toBe(true);
+  });
+
   it('fails level 2 when all gold is found in 15 digs or more and reveals its clue', async () => {
     const store = await createStore();
 

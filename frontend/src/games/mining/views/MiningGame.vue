@@ -171,8 +171,9 @@
 
     <Modal
       :is-visible="store.showLevelResultModal"
+      :close-on-backdrop="false"
+      :close-on-escape="false"
       aria-label="Level result"
-      @close="store.closeLevelResultModal()"
     >
       <div class="space-y-4 text-white">
         <template v-if="store.levelResultPassed">

@@ -190,14 +190,6 @@ export const useMiningStore = defineStore('mining', {
       this.ui.levelResult.clueRevealed = true;
     },
 
-    closeLevelResultModal() {
-      if (this.isGameComplete) {
-        return;
-      }
-
-      this.ui.showLevelResultModal = false;
-    },
-
     openSettingsModal() {
       this.ui.showSettingsModal = true;
     },
