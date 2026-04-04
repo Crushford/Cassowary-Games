@@ -228,6 +228,7 @@ const isModalOpen = computed(() => {
 async function loadPuzzleFromRoute() {
   const puzzleId = route.params.puzzleId as string;
   const levelName = route.params.levelName as string;
+  const encodedLayout = route.params.encodedLayout as string;
 
   // Check if this is a tutorial puzzle
   if (levelName) {
@@ -244,6 +245,24 @@ async function loadPuzzleFromRoute() {
     } catch (err) {
       console.error('[QueensGame] Error loading tutorial puzzle:', err);
       // Redirect to levels page if puzzle not found
+      router.push('/queens');
+    }
+  } else if (encodedLayout) {
+    try {
+      if (queensStore.isTutorialMode) {
+        queensStore.exitTutorialMode();
+      }
+      await queensStore.loadPuzzleFromEncodedLayout(encodedLayout, {
+        persistProgress: false,
+      });
+      trackGameStart({
+        game_name: 'queens',
+        game_mode: 'standard',
+        grid_size: queensStore.gridSize,
+        puzzle_id: 'url-preview',
+      });
+    } catch (err) {
+      console.error('[QueensGame] Error loading URL puzzle:', err);
       router.push('/queens');
     }
   } else if (puzzleId) {
@@ -424,7 +443,7 @@ onMounted(async () => {
 
 // Watch for route changes (e.g., when navigating between puzzles)
 watch(
-  () => [route.params.puzzleId, route.params.levelName],
+  () => [route.params.puzzleId, route.params.levelName, route.params.encodedLayout],
   async () => {
     await loadPuzzleFromRoute();
   }

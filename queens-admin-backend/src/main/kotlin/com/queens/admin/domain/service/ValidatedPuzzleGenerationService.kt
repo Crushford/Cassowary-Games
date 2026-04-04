@@ -1,14 +1,15 @@
 package com.queens.admin.domain.service
 
+import com.queens.admin.application.GenerationProgressUpdate
 import com.queens.admin.domain.model.ActionType
 import com.queens.admin.domain.model.BoardState
-import com.queens.admin.domain.model.CellState
 import com.queens.admin.domain.model.ChangedCell
 import com.queens.admin.domain.model.GenerationPhase
 import com.queens.admin.domain.model.MarkType
 import com.queens.admin.domain.model.OperationResult
 import com.queens.admin.domain.model.Position
 import org.springframework.stereotype.Service
+import java.util.concurrent.CancellationException
 import kotlin.math.abs
 import kotlin.random.Random
 
@@ -19,41 +20,106 @@ class ValidatedPuzzleGenerationService(
 ) {
     private val colorPalette = listOf("red", "blue", "green", "yellow", "purple", "pink", "teal", "indigo", "amber")
 
-    fun generateValidBoard(size: Int, maxRetries: Int = 30_000): OperationResult {
+    fun generateValidBoard(
+        size: Int,
+        maxRetries: Int = 30_000,
+        progressListener: ((GenerationProgressUpdate) -> Unit)? = null,
+        isCancelled: (() -> Boolean)? = null,
+    ): OperationResult {
         require(size in 4..9) { "Generation currently supports puzzle sizes 4 through 9." }
 
-        repeat(maxRetries) {
+        repeat(maxRetries) { attemptIndex ->
+            ensureNotCancelled(isCancelled)
             val state = GeneratorState(
                 grid = boardFactoryService.createEmptyBoard(size),
                 autoTestMarks = createEmptyMarks(size),
             )
+            val attemptNumber = attemptIndex + 1
+
+            emitProgress(
+                state = state,
+                attempt = attemptNumber,
+                stage = "ATTEMPT_START",
+                message = "Starting generation attempt $attemptNumber.",
+                progressListener = progressListener,
+            )
 
             try {
-                placeAllQueens(state, size)
+                placeAllQueens(state, size, isCancelled)
                 validateQueenCount(state.grid, size)
+                emitProgress(state, attemptNumber, "QUEENS_PLACED", "Placed hidden queens.", progressListener)
 
                 assignInitialColorsToState(state)
                 validateUniqueQueenColors(state.grid, size)
+                emitProgress(
+                    state,
+                    attemptNumber,
+                    "INITIAL_COLORS_ASSIGNED",
+                    "Assigned unique seed colors to each queen.",
+                    progressListener,
+                )
                 if (!isSolvable(state)) {
                     error("Board is not fully solvable after initial colors")
                 }
 
-                if (!expandColorGridSafely(state) || !validateGroupSizes(state.grid, 2)) {
+                if (!expandColorGridSafely(
+                        state = state,
+                        attempt = attemptNumber,
+                        targetGroupSize = 2,
+                        stageName = "FIRST_EXPANSION",
+                        progressListener = progressListener,
+                        isCancelled = isCancelled,
+                    ) || !validateGroupSizes(state.grid, 2)
+                ) {
+                    emitProgress(
+                        state,
+                        attemptNumber,
+                        "RETRY_RESET",
+                        "First expansion failed validation. Resetting and retrying.",
+                        progressListener,
+                    )
                     return@repeat
                 }
                 if (!isSolvable(state)) {
                     error("Board is not fully solvable after first color expansion")
                 }
 
-                if (!expandColorGridSafely(state) || !validateGroupSizes(state.grid, 3)) {
+                if (!expandColorGridSafely(
+                        state = state,
+                        attempt = attemptNumber,
+                        targetGroupSize = 3,
+                        stageName = "SECOND_EXPANSION",
+                        progressListener = progressListener,
+                        isCancelled = isCancelled,
+                    ) || !validateGroupSizes(state.grid, 3)
+                ) {
+                    emitProgress(
+                        state,
+                        attemptNumber,
+                        "RETRY_RESET",
+                        "Second expansion failed validation. Resetting and retrying.",
+                        progressListener,
+                    )
                     return@repeat
                 }
                 if (!isSolvable(state)) {
                     error("Board is not fully solvable after second color expansion")
                 }
 
-                expandIntoBlockedSquares(state)
+                expandIntoBlockedSquares(
+                    state = state,
+                    attempt = attemptNumber,
+                    progressListener = progressListener,
+                    isCancelled = isCancelled,
+                )
                 validateSolvableAndFull(state)
+                emitProgress(
+                    state,
+                    attemptNumber,
+                    "COMPLETED",
+                    "Finished blocked-square expansion and validated a solvable full board.",
+                    progressListener,
+                )
 
                 val validation = boardValidationService.validate(state.grid)
                 return OperationResult(
@@ -75,8 +141,17 @@ class ValidatedPuzzleGenerationService(
                     errors = validation.errors,
                     validation = validation,
                 )
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (_: Throwable) {
                 // Retry with a fresh board, matching the TS generator's retry behavior.
+                emitProgress(
+                    state,
+                    attemptNumber,
+                    "RETRY_RESET",
+                    "Attempt $attemptNumber failed. Starting over from an empty board.",
+                    progressListener,
+                )
             }
         }
 
@@ -106,6 +181,31 @@ class ValidatedPuzzleGenerationService(
         var grid: BoardState,
         var autoTestMarks: MutableList<MutableList<MarkType>>,
     )
+
+    private fun ensureNotCancelled(isCancelled: (() -> Boolean)?) {
+        if (isCancelled?.invoke() == true) {
+            throw CancellationException("Generation cancelled")
+        }
+    }
+
+    private fun emitProgress(
+        state: GeneratorState,
+        attempt: Int,
+        stage: String,
+        message: String,
+        progressListener: ((GenerationProgressUpdate) -> Unit)?,
+    ) {
+        progressListener?.invoke(
+            GenerationProgressUpdate(
+                attempt = attempt,
+                stage = stage,
+                message = message,
+                coloredCellCount = state.grid.cells.flatten().count { cell -> cell.groupColor != null },
+                totalCellCount = state.grid.size * state.grid.size,
+                generationPhase = state.grid.generationPhase?.name,
+            ),
+        )
+    }
 
     private fun createEmptyMarks(size: Int): MutableList<MutableList<MarkType>> {
         return MutableList(size) { MutableList(size) { MarkType.NONE } }
@@ -168,7 +268,7 @@ class ValidatedPuzzleGenerationService(
         return true
     }
 
-    private fun placeAllQueens(state: GeneratorState, size: Int) {
+    private fun placeAllQueens(state: GeneratorState, size: Int, isCancelled: (() -> Boolean)?) {
         val tempQueenMarks = createEmptyMarks(size)
 
         var attempts = 0
@@ -177,8 +277,9 @@ class ValidatedPuzzleGenerationService(
         val maxConsecutiveFailures = 5
 
         while (countQueens(tempQueenMarks) < size && attempts < maxAttempts) {
+            ensureNotCancelled(isCancelled)
             attempts += 1
-            val success = placeRandomQueens(tempQueenMarks, state.grid, size)
+            val success = placeRandomQueens(tempQueenMarks, state.grid, size, isCancelled)
             if (!success) {
                 consecutiveFailures += 1
                 if (consecutiveFailures >= maxConsecutiveFailures) {
@@ -210,6 +311,7 @@ class ValidatedPuzzleGenerationService(
         tempQueenMarks: MutableList<MutableList<MarkType>>,
         boardState: BoardState,
         size: Int,
+        isCancelled: (() -> Boolean)?,
     ): Boolean {
         val random = Random.Default
         clearMarks(tempQueenMarks)
@@ -257,6 +359,7 @@ class ValidatedPuzzleGenerationService(
         }
 
         fun backtrack(queensPlaced: Int): Boolean {
+            ensureNotCancelled(isCancelled)
             if (queensPlaced == size) return true
             attempts += 1
             if (attempts > maxAttempts) return false
@@ -347,14 +450,36 @@ class ValidatedPuzzleGenerationService(
         return boardState.copy(cells = cells.map { it.toList() })
     }
 
-    private fun expandColorGridSafely(state: GeneratorState): Boolean {
+    private fun expandColorGridSafely(
+        state: GeneratorState,
+        attempt: Int,
+        targetGroupSize: Int,
+        stageName: String,
+        progressListener: ((GenerationProgressUpdate) -> Unit)?,
+        isCancelled: (() -> Boolean)?,
+    ): Boolean {
         val backup = cloneBoard(state.grid)
-        repeat(100) {
+        repeat(100) { expansionAttempt ->
+            ensureNotCancelled(isCancelled)
             state.grid = expandColorGroupsInPlace(state.grid)
+            emitProgress(
+                state,
+                attempt,
+                stageName,
+                "Expansion attempt ${expansionAttempt + 1} pushed groups toward size $targetGroupSize.",
+                progressListener,
+            )
             if (isSolvable(state)) {
                 return true
             }
             state.grid = cloneBoard(backup)
+            emitProgress(
+                state,
+                attempt,
+                "${stageName}_ROLLBACK",
+                "Expansion attempt ${expansionAttempt + 1} was unsolvable and rolled back.",
+                progressListener,
+            )
         }
         return false
     }
@@ -663,7 +788,12 @@ class ValidatedPuzzleGenerationService(
         return blockedSquares
     }
 
-    private fun expandIntoBlockedSquares(state: GeneratorState) {
+    private fun expandIntoBlockedSquares(
+        state: GeneratorState,
+        attempt: Int,
+        progressListener: ((GenerationProgressUpdate) -> Unit)?,
+        isCancelled: (() -> Boolean)?,
+    ) {
         clearAutoTestMarks(state)
         val failedAttempts = linkedSetOf<String>()
         val size = state.grid.size
@@ -672,6 +802,7 @@ class ValidatedPuzzleGenerationService(
         val maxExpansions = size * size
 
         while (keepExpanding && expansionCount < maxExpansions) {
+            ensureNotCancelled(isCancelled)
             keepExpanding = false
             expansionCount += 1
 
@@ -712,6 +843,13 @@ class ValidatedPuzzleGenerationService(
                             }
                         },
                     )
+                    emitProgress(
+                        state,
+                        attempt,
+                        "BLOCKED_SQUARES_EXPANSION",
+                        "Tried filling blocked square (${position.row}, ${position.col}) with $neighborColor.",
+                        progressListener,
+                    )
 
                     if (isSolvable(state)) {
                         keepExpanding = true
@@ -728,6 +866,13 @@ class ValidatedPuzzleGenerationService(
                                     }
                                 }
                             },
+                        )
+                        emitProgress(
+                            state,
+                            attempt,
+                            "BLOCKED_SQUARES_ROLLBACK",
+                            "Rolled back blocked square (${position.row}, ${position.col}) after it broke solvability.",
+                            progressListener,
                         )
                     }
                 }

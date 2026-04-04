@@ -20,6 +20,17 @@ class GenerationWorkflowService(
     fun generateValidBoard(size: Int): OperationResult =
         validatedPuzzleGenerationService.generateValidBoard(size)
 
+    fun generateValidBoard(
+        size: Int,
+        progressListener: ((GenerationProgressUpdate) -> Unit)?,
+        isCancelled: (() -> Boolean)?,
+    ): OperationResult =
+        validatedPuzzleGenerationService.generateValidBoard(
+            size = size,
+            progressListener = progressListener,
+            isCancelled = isCancelled,
+        )
+
     fun placeQueens(boardState: BoardState): OperationResult =
         queenPlacementService.placeQueens(boardState)
 

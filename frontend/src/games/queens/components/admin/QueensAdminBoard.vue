@@ -1,34 +1,52 @@
 <template>
   <div
     v-if="store.board"
-    class="grid gap-2 rounded-[28px] border border-semantic-neutral-700 bg-surface-overlayMid p-5 shadow-2xl"
-    :style="{
-      gridTemplateColumns: `repeat(${store.board.size}, minmax(0, 1fr))`,
-    }"
+    class="rounded-[28px] border border-semantic-neutral-700 bg-surface-overlayMid p-5 shadow-2xl"
   >
-    <button
-      v-for="cell in flatCells"
-      :key="`${cell.row}-${cell.col}`"
-      type="button"
-      class="relative aspect-square min-h-[76px] rounded-2xl border text-left transition duration-150"
-      :class="getCellClasses(cell)"
-      @click="store.applyManualToolToCell(cell.row, cell.col)"
+    <PlayGrid
+      class="w-full h-full aspect-square max-w-full"
+      :store="queensStore"
+      :enable-touch="false"
+      role="grid"
+      aria-label="Queens admin puzzle grid"
+      :aria-rowcount="queensStore.gridSize"
+      :aria-colcount="queensStore.gridSize"
+      data-game-board="queens-admin"
     >
-      <span class="absolute left-2 top-2 text-[11px] font-semibold text-white/70">
-        {{ cell.row }},{{ cell.col }}
-      </span>
-      <span class="absolute inset-0 flex items-center justify-center text-2xl">
-        <span v-if="cell.markType === 'QUEEN'">👑</span>
-        <span v-else-if="cell.markType === 'FLAG'">⚑</span>
-        <span v-else-if="cell.markType === 'INVALID'">×</span>
-      </span>
-      <span
-        v-if="isSelected(cell.row, cell.col)"
-        class="absolute bottom-2 right-2 rounded-full bg-semantic-info-500 px-2 py-0.5 text-[10px] font-semibold text-white"
-      >
-        inspect
-      </span>
-    </button>
+      <template #default="{ rowIndex, colIndex, store: playStore }">
+        <div
+          role="button"
+          tabindex="0"
+          class="relative h-full w-full cursor-pointer"
+          @click="store.applyManualToolToCell(rowIndex as number, colIndex as number)"
+          @keydown.enter.prevent="
+            store.applyManualToolToCell(rowIndex as number, colIndex as number)
+          "
+          @keydown.space.prevent="
+            store.applyManualToolToCell(rowIndex as number, colIndex as number)
+          "
+        >
+          <QueensSquare
+            :row-index="rowIndex as number"
+            :col-index="colIndex as number"
+            :store="playStore"
+            class="pointer-events-none h-full w-full"
+          />
+
+          <span
+            v-if="isSelected(rowIndex as number, colIndex as number)"
+            class="absolute bottom-2 right-2 z-30 rounded-full bg-semantic-info-500 px-2 py-0.5 text-[10px] font-semibold text-white"
+          >
+            selected
+          </span>
+
+          <span
+            v-if="isChanged(rowIndex as number, colIndex as number)"
+            class="pointer-events-none absolute inset-0 z-20 ring-2 ring-semantic-info-300 ring-offset-2 ring-offset-semantic-neutral-950"
+          />
+        </div>
+      </template>
+    </PlayGrid>
   </div>
 
   <div
@@ -43,38 +61,63 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { QueensAdminCell } from '../../admin/types';
+import { defineAsyncComponent, watch } from 'vue';
+import type { GridSquare, MarkType } from '../../types/types';
+import { useQueensStore } from '../../stores/queensStore';
 import { useQueensAdminStore } from '../../stores/queensAdminStore';
 
-const store = useQueensAdminStore();
+const PlayGrid = defineAsyncComponent(() => import('@/shared/components/PlayGrid.vue'));
+const QueensSquare = defineAsyncComponent(() => import('../queens/QueensSquare.vue'));
 
-const flatCells = computed(() => store.board?.cells.flat() ?? []);
+const store = useQueensAdminStore();
+const queensStore = useQueensStore();
+
+function toGridSquare(): GridSquare[][] {
+  if (!store.board) return [];
+
+  return store.board.cells.map((row) =>
+    row.map((cell) => ({
+      position: { row: cell.row, col: cell.col },
+      groupColor: cell.groupColor ?? undefined,
+      isSolutionQueen: cell.isSolutionQueen,
+    }))
+  );
+}
+
+function toPlayerMarks(): MarkType[][] {
+  if (!store.board) return [];
+
+  return store.board.cells.map((row) =>
+    row.map((cell) => {
+      if (cell.markType === 'QUEEN') return 'queen';
+      if (cell.markType === 'FLAG') return 'flag';
+      return null;
+    })
+  );
+}
+
+watch(
+  () => store.board,
+  () => {
+    if (!store.board) return;
+
+    queensStore.grid = toGridSquare();
+    queensStore.gridSize = store.board.size;
+    queensStore.playerMarks = toPlayerMarks();
+    queensStore.isTutorialMode = false;
+    queensStore.showErrorFeedback = false;
+    queensStore.errorFeedbackSquare = null;
+    queensStore.errorSquares = new Set();
+    queensStore.errorMessage = null;
+  },
+  { immediate: true, deep: true }
+);
 
 function isSelected(row: number, col: number): boolean {
   return store.selectedCell?.row === row && store.selectedCell?.col === col;
 }
 
-function getCellClasses(cell: QueensAdminCell): string[] {
-  const classes = ['border-semantic-neutral-700', 'bg-semantic-neutral-800', 'hover:scale-[1.01]'];
-
-  if (cell.groupColor) {
-    classes.push(`bg-group-${cell.groupColor}-base`);
-  }
-
-  if (store.highlightedChangedCells.includes(`${cell.row}:${cell.col}`)) {
-    classes.push(
-      'ring-2',
-      'ring-semantic-info-300',
-      'ring-offset-2',
-      'ring-offset-semantic-neutral-950'
-    );
-  }
-
-  if (isSelected(cell.row, cell.col)) {
-    classes.push('border-semantic-warning-400', 'ring-1', 'ring-semantic-warning-300');
-  }
-
-  return classes;
+function isChanged(row: number, col: number): boolean {
+  return store.highlightedChangedCells.includes(`${row}:${col}`);
 }
 </script>

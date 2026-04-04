@@ -3,6 +3,7 @@ import type { GridSquare, Pos, MarkType, ColorName } from '../types/types';
 import { COLOR_PALETTE, COLOR_SYMBOLS } from '../utils/colorPalette';
 import { createEmptyGrid, isValidPosition, clonePlayerMarks } from './gridUtils';
 import { removeQueenPlacement, replayHistoryFromEntries } from '../utils/queenRemoval';
+import { decodeQueensPuzzleLayout } from '../utils/urlPuzzleEncoding';
 import router from '@/router';
 import { useSpeedModeStore } from './speedModeStore';
 import {
@@ -57,6 +58,11 @@ interface PuzzleRecord {
   name?: string;
   layout: string;
   queens: string;
+}
+
+function isPerfectSquareLength(length: number): boolean {
+  const root = Math.sqrt(length);
+  return Number.isInteger(root);
 }
 
 type PuzzleDatabase = Record<string, PuzzleRecord[]>;
@@ -1450,6 +1456,51 @@ export const useQueensStore = defineStore('queens', {
         this.parsePuzzleData(puzzle, options);
       } catch (error) {
         console.error('[queensStore] Error loading puzzle by ID:', error);
+        throw error;
+      }
+    },
+
+    loadPuzzleFromEncodedLayout(encodedLayout: string, options?: { persistProgress?: boolean }) {
+      try {
+        if (!encodedLayout) {
+          throw new Error('Encoded layout is required');
+        }
+
+        const decodedLayout = decodeQueensPuzzleLayout(encodedLayout);
+
+        if (!isPerfectSquareLength(decodedLayout.length)) {
+          throw new Error('Encoded puzzle length must form a square board');
+        }
+
+        let layout = '';
+        let queens = '';
+
+        for (const rawSymbol of decodedLayout) {
+          if (rawSymbol === '.') {
+            layout += '.';
+            queens += '.';
+            continue;
+          }
+
+          const layoutSymbol = rawSymbol.toUpperCase();
+          if (!SYMBOL_TO_COLOR[layoutSymbol]) {
+            throw new Error(`Unsupported encoded puzzle symbol: ${rawSymbol}`);
+          }
+
+          layout += layoutSymbol;
+          queens += rawSymbol === layoutSymbol ? '.' : 'Q';
+        }
+
+        const puzzle: PuzzleRecord = {
+          id: 'url-preview',
+          name: 'URL Preview Puzzle',
+          layout,
+          queens,
+        };
+
+        this.parsePuzzleData(puzzle, options);
+      } catch (error) {
+        console.error('[queensStore] Error loading encoded layout from URL:', error);
         throw error;
       }
     },

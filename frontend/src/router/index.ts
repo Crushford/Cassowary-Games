@@ -64,6 +64,11 @@ const router = createRouter({
       component: QueensAdmin,
     },
     {
+      path: '/queens/puzzle/:encodedLayout',
+      name: 'queens-encoded-puzzle',
+      component: QueensGame,
+    },
+    {
       path: '/queens/:puzzleId',
       name: 'queens-puzzle',
       component: QueensGame,

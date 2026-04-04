@@ -64,3 +64,16 @@ export interface QueensAdminHistoryEntry {
   error: string | null;
   createdAt: string;
 }
+
+export interface QueensAdminGenerationProgress {
+  jobId: string;
+  state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  attempt: number;
+  stage: string;
+  message: string;
+  coloredCellCount: number;
+  totalCellCount: number;
+  generationPhase: string | null;
+  updatedAt: string;
+  result: QueensAdminOperationResult | null;
+}
