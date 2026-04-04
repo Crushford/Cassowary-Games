@@ -5,7 +5,6 @@ import type {
   QueensAdminOperationResult,
   QueensAdminValidationSummary,
 } from './types';
-import type { ColorName } from '../types/types';
 
 interface CellDto {
   row: number;
@@ -76,7 +75,7 @@ function toLocalBoardState(boardState: BoardStateDto | null): QueensAdminBoardSt
       row.map((cell) => ({
         row: cell.row,
         col: cell.col,
-        groupColor: cell.groupColor as ColorName | null,
+        groupColor: cell.groupColor,
         isSolutionQueen: cell.isSolutionQueen,
         markType: cell.markType,
       }))
@@ -168,11 +167,16 @@ export const queensAdminApi = {
     );
   },
 
-  generateValidBoard(size: number, signal?: AbortSignal): Promise<QueensAdminOperationResult> {
+  generateValidBoard(
+    size: number,
+    minimumGroupSize: number,
+    signal?: AbortSignal
+  ): Promise<QueensAdminOperationResult> {
     return postOperation(
       '/api/queens/admin/generation/generate-valid-board',
       {
         size,
+        minimumGroupSize,
       },
       signal
     );
@@ -180,7 +184,7 @@ export const queensAdminApi = {
 
   async startGenerateValidBoardJob(
     size: number,
-    options?: { includeProgressUpdates?: boolean }
+    options?: { includeProgressUpdates?: boolean; minimumGroupSize?: number }
   ): Promise<string> {
     const response = await fetch('/api/queens/admin/generation/generate-valid-board/jobs', {
       method: 'POST',
@@ -189,6 +193,7 @@ export const queensAdminApi = {
       },
       body: JSON.stringify({
         size,
+        minimumGroupSize: options?.minimumGroupSize ?? 3,
         includeProgressUpdates: options?.includeProgressUpdates ?? false,
       }),
     });

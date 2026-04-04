@@ -18,15 +18,18 @@ class ValidatedPuzzleGenerationService(
     private val boardFactoryService: BoardFactoryService,
     private val boardValidationService: BoardValidationService,
 ) {
-    private val colorPalette = listOf("red", "blue", "green", "yellow", "purple", "pink", "teal", "indigo", "amber")
-
     fun generateValidBoard(
         size: Int,
+        minimumGroupSize: Int = 3,
         maxRetries: Int = 30_000,
         progressListener: ((GenerationProgressUpdate) -> Unit)? = null,
         isCancelled: (() -> Boolean)? = null,
     ): OperationResult {
-        require(size in 4..9) { "Generation currently supports puzzle sizes 4 through 9." }
+        require(size in 4..20) { "Generation currently supports puzzle sizes 4 through 20." }
+        require(minimumGroupSize >= 1) { "Minimum group size must be at least 1." }
+        require(minimumGroupSize <= size) {
+            "Minimum group size cannot exceed the board size because there is one group per queen."
+        }
 
         repeat(maxRetries) { attemptIndex ->
             ensureNotCancelled(isCancelled)
@@ -62,48 +65,28 @@ class ValidatedPuzzleGenerationService(
                     error("Board is not fully solvable after initial colors")
                 }
 
-                if (!expandColorGridSafely(
-                        state = state,
-                        attempt = attemptNumber,
-                        targetGroupSize = 2,
-                        stageName = "FIRST_EXPANSION",
-                        progressListener = progressListener,
-                        isCancelled = isCancelled,
-                    ) || !validateGroupSizes(state.grid, 2)
-                ) {
-                    emitProgress(
-                        state,
-                        attemptNumber,
-                        "RETRY_RESET",
-                        "First expansion failed validation. Resetting and retrying.",
-                        progressListener,
-                    )
-                    return@repeat
-                }
-                if (!isSolvable(state)) {
-                    error("Board is not fully solvable after first color expansion")
-                }
-
-                if (!expandColorGridSafely(
-                        state = state,
-                        attempt = attemptNumber,
-                        targetGroupSize = 3,
-                        stageName = "SECOND_EXPANSION",
-                        progressListener = progressListener,
-                        isCancelled = isCancelled,
-                    ) || !validateGroupSizes(state.grid, 3)
-                ) {
-                    emitProgress(
-                        state,
-                        attemptNumber,
-                        "RETRY_RESET",
-                        "Second expansion failed validation. Resetting and retrying.",
-                        progressListener,
-                    )
-                    return@repeat
-                }
-                if (!isSolvable(state)) {
-                    error("Board is not fully solvable after second color expansion")
+                for (targetGroupSize in 2..minimumGroupSize) {
+                    if (!expandColorGridSafely(
+                            state = state,
+                            attempt = attemptNumber,
+                            targetGroupSize = targetGroupSize,
+                            stageName = "EXPANSION_TO_$targetGroupSize",
+                            progressListener = progressListener,
+                            isCancelled = isCancelled,
+                        ) || !validateGroupSizes(state.grid, targetGroupSize)
+                    ) {
+                        emitProgress(
+                            state,
+                            attemptNumber,
+                            "RETRY_RESET",
+                            "Expansion to size $targetGroupSize failed validation. Resetting and retrying.",
+                            progressListener,
+                        )
+                        return@repeat
+                    }
+                    if (!isSolvable(state)) {
+                        error("Board is not fully solvable after expansion to size $targetGroupSize")
+                    }
                 }
 
                 expandIntoBlockedSquares(
@@ -125,7 +108,7 @@ class ValidatedPuzzleGenerationService(
                 return OperationResult(
                     success = true,
                     actionType = ActionType.GENERATE_VALID_BOARD,
-                    explanation = "Generated a solvable board for size $size using the validated generation workflow.",
+                    explanation = "Generated a solvable board for size $size with minimum region size $minimumGroupSize using the validated generation workflow.",
                     boardState = state.grid.copy(generationPhase = GenerationPhase.BLOCKED_SQUARES_EXPANDED),
                     changedCells = state.grid.cells.flatMap { row ->
                         row.map { cell ->
@@ -181,6 +164,9 @@ class ValidatedPuzzleGenerationService(
         var grid: BoardState,
         var autoTestMarks: MutableList<MutableList<MarkType>>,
     )
+
+    private fun buildRegionIds(count: Int): List<String> =
+        (1..count).map { index -> "g${index.toString().padStart(2, '0')}" }
 
     private fun ensureNotCancelled(isCancelled: (() -> Boolean)?) {
         if (isCancelled?.invoke() == true) {
@@ -391,11 +377,11 @@ class ValidatedPuzzleGenerationService(
             }
         }
 
-        val palette = colorPalette.toMutableList()
+        val regionIds = buildRegionIds(queenPositions.size).toMutableList()
         val updatedCells = state.grid.cells.mapIndexed { rowIndex, row ->
             row.mapIndexed { colIndex, cell ->
                 if (cell.isSolutionQueen) {
-                    cell.copy(groupColor = palette.removeLast())
+                    cell.copy(groupColor = regionIds.removeFirst())
                 } else {
                     cell.copy(groupColor = null)
                 }

@@ -12,17 +12,15 @@ import org.springframework.stereotype.Service
 class InitialColorAssignmentService(
     private val boardValidationService: BoardValidationService,
 ) {
-    private val colorPalette = listOf("red", "blue", "green", "yellow", "purple", "pink", "teal", "indigo", "amber")
-
     fun assignInitialColors(boardState: BoardState): OperationResult {
         var queenIndex = 0
         val changedCells = mutableListOf<ChangedCell>()
         val updatedCells = boardState.cells.mapIndexed { rowIndex, row ->
             row.mapIndexed { colIndex, cell ->
                 if (cell.markType == MarkType.QUEEN) {
-                    val color = colorPalette[queenIndex % colorPalette.size]
+                    val color = "g${(queenIndex + 1).toString().padStart(2, '0')}"
                     queenIndex += 1
-                    changedCells += ChangedCell(rowIndex, colIndex, "COLOR_SET", "seed color $color")
+                    changedCells += ChangedCell(rowIndex, colIndex, "COLOR_SET", "seed region $color")
                     cell.copy(groupColor = color)
                 } else {
                     cell
@@ -38,7 +36,7 @@ class InitialColorAssignmentService(
         return OperationResult(
             success = true,
             actionType = ActionType.ASSIGN_INITIAL_COLORS,
-            explanation = "Assigned one seed color to each queen cell.",
+            explanation = "Assigned one seed region id to each queen cell.",
             boardState = updatedBoard,
             changedCells = changedCells,
             warnings = validation.warnings,

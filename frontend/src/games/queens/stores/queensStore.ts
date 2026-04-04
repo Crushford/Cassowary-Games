@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia';
-import type { GridSquare, Pos, MarkType, ColorName } from '../types/types';
-import { COLOR_PALETTE, COLOR_SYMBOLS } from '../utils/colorPalette';
+import type { GridSquare, Pos, MarkType } from '../types/types';
 import { createEmptyGrid, isValidPosition, clonePlayerMarks } from './gridUtils';
 import { removeQueenPlacement, replayHistoryFromEntries } from '../utils/queenRemoval';
 import { decodeQueensPuzzleLayout } from '../utils/urlPuzzleEncoding';
+import { assignRegionPaletteColors } from '../utils/regionDisplay';
 import router from '@/router';
 import { useSpeedModeStore } from './speedModeStore';
 import {
@@ -13,42 +13,6 @@ import {
   keepOnlyOriginalPuzzleVariants,
   type PuzzleForDiversity,
 } from '../utils/puzzleDiversitySelector';
-
-// Create reverse mapping from symbols to color names
-const SYMBOL_TO_COLOR: Record<string, ColorName> = Object.entries(COLOR_SYMBOLS).reduce(
-  (acc, [color, symbol]) => {
-    if (color !== 'undefined') {
-      acc[symbol] = color as ColorName;
-    }
-    return acc;
-  },
-  {} as Record<string, ColorName>
-);
-
-function buildLayoutSymbolToColorMap(layout: string): Record<string, ColorName> {
-  const symbolToColor: Record<string, ColorName> = {};
-  const availableColors = [...COLOR_PALETTE];
-  const fallbackColors = [...COLOR_PALETTE];
-  let overflowIndex = 0;
-
-  for (let i = availableColors.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [availableColors[i], availableColors[j]] = [availableColors[j], availableColors[i]];
-  }
-
-  for (let i = 0; i < layout.length; i++) {
-    const symbol = layout[i];
-    if (symbol === '.' || symbolToColor[symbol]) {
-      continue;
-    }
-
-    const nextColor =
-      availableColors.shift() ?? fallbackColors[overflowIndex++ % fallbackColors.length];
-    symbolToColor[symbol] = nextColor;
-  }
-
-  return symbolToColor;
-}
 
 export type GameMode = 'standard' | 'speed' | 'rotate';
 export type { MarkType };
@@ -1205,21 +1169,18 @@ export const useQueensStore = defineStore('queens', {
       // Set current puzzle ID for progress tracking
       this.currentPuzzleId = puzzleData.name || puzzleData.id;
 
-      // Parse layout (color groups). Any non-dot symbol is treated as a color group id.
-      // We remap symbols to the active palette so legacy/unknown symbols still get valid colors.
-      const remappedSymbolToColor = buildLayoutSymbolToColorMap(layout);
+      // Parse layout. Any non-dot symbol is treated as a stable region id.
       for (let i = 0; i < layout.length; i++) {
         const row = Math.floor(i / gridSize);
         const col = i % gridSize;
         const symbol = layout[i];
 
         if (symbol !== '.') {
-          const colorName = remappedSymbolToColor[symbol] || SYMBOL_TO_COLOR[symbol];
-          if (colorName) {
-            this.grid[row][col].groupColor = colorName;
-          }
+          this.grid[row][col].groupColor = symbol;
         }
       }
+
+      this.grid = assignRegionPaletteColors(this.grid);
 
       // Parse queens (solution)
       for (let i = 0; i < queens.length; i++) {
@@ -1483,7 +1444,7 @@ export const useQueensStore = defineStore('queens', {
           }
 
           const layoutSymbol = rawSymbol.toUpperCase();
-          if (!SYMBOL_TO_COLOR[layoutSymbol]) {
+          if (!/[A-Z]/.test(layoutSymbol)) {
             throw new Error(`Unsupported encoded puzzle symbol: ${rawSymbol}`);
           }
 

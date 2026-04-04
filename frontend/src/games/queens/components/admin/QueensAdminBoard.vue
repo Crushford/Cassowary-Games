@@ -65,6 +65,7 @@ import { defineAsyncComponent, watch } from 'vue';
 import type { GridSquare, MarkType } from '../../types/types';
 import { useQueensStore } from '../../stores/queensStore';
 import { useQueensAdminStore } from '../../stores/queensAdminStore';
+import { assignRegionPaletteColors } from '../../utils/regionDisplay';
 
 const PlayGrid = defineAsyncComponent(() => import('@/shared/components/PlayGrid.vue'));
 const QueensSquare = defineAsyncComponent(() => import('../queens/QueensSquare.vue'));
@@ -75,13 +76,15 @@ const queensStore = useQueensStore();
 function toGridSquare(): GridSquare[][] {
   if (!store.board) return [];
 
-  return store.board.cells.map((row) =>
+  const rawGrid = store.board.cells.map((row) =>
     row.map((cell) => ({
       position: { row: cell.row, col: cell.col },
       groupColor: cell.groupColor ?? undefined,
       isSolutionQueen: cell.isSolutionQueen,
     }))
   );
+
+  return assignRegionPaletteColors(rawGrid);
 }
 
 function toPlayerMarks(): MarkType[][] {

@@ -18,6 +18,7 @@ const MAX_HISTORY_ENTRIES = 30;
 export const useQueensAdminStore = defineStore('queensAdmin', () => {
   const board = ref<QueensAdminBoardState | null>(null);
   const boardSize = ref(DEFAULT_BOARD_SIZE);
+  const minimumGroupSize = ref(3);
   const selectedTool = ref<QueensAdminTool>('paint-color');
   const selectedColor = ref<ColorName>(COLOR_PALETTE[0]);
   const loading = ref(false);
@@ -209,6 +210,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
 
   async function generateBoard(size: number = boardSize.value): Promise<void> {
     boardSize.value = size;
+    minimumGroupSize.value = Math.max(1, Math.min(minimumGroupSize.value, size));
     loading.value = true;
     canCancelRequest.value = true;
     backendError.value = null;
@@ -217,6 +219,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     try {
       const jobId = await queensAdminApi.startGenerateValidBoardJob(size, {
         includeProgressUpdates: true,
+        minimumGroupSize: minimumGroupSize.value,
       });
       currentGenerationJobId = jobId;
 
@@ -399,6 +402,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
   return {
     board,
     boardSize,
+    minimumGroupSize,
     selectedTool,
     selectedColor,
     loading,

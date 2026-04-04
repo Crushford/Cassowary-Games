@@ -3,6 +3,7 @@
     type="button"
     role="gridcell"
     class="h-full w-full relative transition-colors"
+    :style="backgroundStyle"
     :class="[
       backgroundColorClass,
       hoverClass,
@@ -137,11 +138,19 @@ const showAutoFlagRipple = computed(() => {
 });
 
 const backgroundColorClass = computed(() => {
+  const tintedColor = gridCell.value?.groupTint as ColorName | undefined;
+  if (tintedColor && DARK_PASTEL_COLORS[tintedColor]) {
+    return DARK_PASTEL_COLORS[tintedColor].bg;
+  }
   const color = gridCell.value?.groupColor as ColorName | undefined;
   if (color && DARK_PASTEL_COLORS[color]) {
     return DARK_PASTEL_COLORS[color].bg;
   }
   return 'bg-semantic-neutral-700';
+});
+
+const backgroundStyle = computed(() => {
+  return undefined;
 });
 
 // Remove hover class - no hover effect

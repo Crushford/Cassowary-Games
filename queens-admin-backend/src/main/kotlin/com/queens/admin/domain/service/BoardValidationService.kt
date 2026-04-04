@@ -16,8 +16,8 @@ class BoardValidationService {
         var flagCount = 0
         var coloredCellCount = 0
 
-        if (boardState.size < 4 || boardState.size > 12) {
-            errors += "Board size must be between 4 and 12."
+        if (boardState.size < 4 || boardState.size > 20) {
+            errors += "Board size must be between 4 and 20."
         }
         if (boardState.cells.size != boardState.size) {
             errors += "Board must have ${boardState.size} rows."

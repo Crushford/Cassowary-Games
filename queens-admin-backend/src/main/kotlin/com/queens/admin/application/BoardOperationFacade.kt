@@ -15,13 +15,13 @@ class BoardOperationFacade(
     private val boardMutationService: BoardMutationService,
 ) {
     fun createBoard(size: Int): OperationResult {
-        if (size !in 4..12) {
+        if (size !in 4..20) {
             return OperationResult(
                 success = false,
                 actionType = ActionType.CREATE_BOARD,
-                explanation = "Board size must be between 4 and 12.",
+                explanation = "Board size must be between 4 and 20.",
                 boardState = null,
-                errors = listOf("Board size must be between 4 and 12."),
+                errors = listOf("Board size must be between 4 and 20."),
             )
         }
 

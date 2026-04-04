@@ -46,6 +46,7 @@ export type MarkType = null | 'flag' | 'queen' | 'invalid';
 export interface GridSquare {
   position: Pos;
   groupColor?: string;
+  groupTint?: string;
   isSolutionQueen?: boolean;
   playerMark?: MarkType;
   hasFruit?: boolean; // Whether this square has fruit (adjacent to honeypot)

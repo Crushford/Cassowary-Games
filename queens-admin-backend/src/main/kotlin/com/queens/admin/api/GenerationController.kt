@@ -33,6 +33,7 @@ class GenerationController(
         return generationJobMapper.toStartedDto(
             generationJobService.startGenerationJob(
                 size = request.size,
+                minimumGroupSize = request.minimumGroupSize,
                 includeProgressUpdates = request.includeProgressUpdates,
             ),
         )
@@ -55,7 +56,10 @@ class GenerationController(
     @PostMapping("/generate-valid-board")
     fun generateValidBoard(@RequestBody request: CreateBoardRequestDto): OperationResultDto {
         return operationResultMapper.toDto(
-            generationWorkflowService.generateValidBoard(request.size),
+            generationWorkflowService.generateValidBoard(
+                size = request.size,
+                minimumGroupSize = request.minimumGroupSize,
+            ),
         )
     }
 

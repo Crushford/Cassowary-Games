@@ -102,6 +102,24 @@
               </select>
             </div>
 
+            <div class="mt-4 space-y-3">
+              <label class="block text-sm text-semantic-neutral-300" for="minimum-group-size"
+                >Minimum region size</label
+              >
+              <input
+                id="minimum-group-size"
+                v-model.number="store.minimumGroupSize"
+                type="number"
+                min="1"
+                :max="selectedBoardSize"
+                class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+              />
+              <p class="text-xs leading-5 text-semantic-neutral-400">
+                The generator will try to grow every queen region to at least this many squares
+                before filling the remaining blocked spaces.
+              </p>
+            </div>
+
             <div class="mt-4 grid gap-2">
               <button
                 class="rounded-xl bg-semantic-info-600 px-4 py-2.5 font-semibold text-white hover:bg-semantic-info-500"
@@ -695,15 +713,18 @@
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import type { ColorName } from '../types/types';
-import { COLOR_PALETTE, COLOR_SYMBOLS } from '../utils/colorPalette';
-import { encodeQueensPuzzleLayout, QUEENS_PUZZLE_SHARE_BASE_URL } from '../utils/urlPuzzleEncoding';
+import { COLOR_PALETTE } from '../utils/colorPalette';
+import {
+  buildEncodedQueensPuzzleLayout,
+  QUEENS_PUZZLE_SHARE_BASE_URL,
+} from '../utils/urlPuzzleEncoding';
 import QueensAdminBoard from '../components/admin/QueensAdminBoard.vue';
 import { useQueensAdminStore } from '../stores/queensAdminStore';
 import type { QueensAdminTool } from '../admin/types';
 
 const router = useRouter();
 const store = useQueensAdminStore();
-const boardSizes = [4, 5, 6, 7, 8, 9];
+const boardSizes = Array.from({ length: 17 }, (_, index) => index + 4);
 const palette = COLOR_PALETTE;
 const selectedBoardSize = ref(store.boardSize);
 
@@ -962,15 +983,12 @@ const prettyBoardJson = computed(() => JSON.stringify(store.board, null, 2));
 const playInQueensRoute = computed(() => {
   if (!store.board) return null;
 
-  const rawLayout = store.board.cells
-    .flat()
-    .map((cell) => {
-      if (!cell.groupColor) return '.';
-      const symbol = COLOR_SYMBOLS[cell.groupColor];
-      return cell.isSolutionQueen ? symbol.toLowerCase() : symbol;
-    })
-    .join('');
-  const encodedLayout = encodeQueensPuzzleLayout(rawLayout);
+  const encodedLayout = buildEncodedQueensPuzzleLayout(
+    store.board.cells.flat().map((cell) => ({
+      groupColor: cell.groupColor,
+      isSolutionQueen: cell.isSolutionQueen,
+    }))
+  );
 
   return {
     name: 'queens-encoded-puzzle',

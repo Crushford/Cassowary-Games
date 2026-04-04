@@ -1,5 +1,3 @@
-import type { ColorName } from '../types/types';
-
 export type QueensAdminTool =
   | 'paint-color'
   | 'erase-color'
@@ -14,7 +12,7 @@ export type QueensAdminMarkType = 'NONE' | 'FLAG' | 'QUEEN' | 'INVALID';
 export interface QueensAdminCell {
   row: number;
   col: number;
-  groupColor: ColorName | null;
+  groupColor: string | null;
   isSolutionQueen: boolean;
   markType: QueensAdminMarkType;
 }

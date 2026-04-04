@@ -16,7 +16,11 @@ class GenerationJobService(
     private val executor = Executors.newCachedThreadPool()
     private val jobs = ConcurrentHashMap<String, GenerationJobRuntime>()
 
-    fun startGenerationJob(size: Int, includeProgressUpdates: Boolean = false): GenerationJobSnapshot {
+    fun startGenerationJob(
+        size: Int,
+        minimumGroupSize: Int = 3,
+        includeProgressUpdates: Boolean = false,
+    ): GenerationJobSnapshot {
         val jobId = UUID.randomUUID().toString()
         val initialSnapshot = GenerationJobSnapshot(
             jobId = jobId,
@@ -30,6 +34,7 @@ class GenerationJobService(
 
         val runtime = GenerationJobRuntime(
             size = size,
+            minimumGroupSize = minimumGroupSize,
             includeProgressUpdates = includeProgressUpdates,
             cancelled = AtomicBoolean(false),
             snapshot = AtomicReference(initialSnapshot),
@@ -80,6 +85,7 @@ class GenerationJobService(
         try {
             val result = generationWorkflowService.generateValidBoard(
                 size = runtime.size,
+                minimumGroupSize = runtime.minimumGroupSize,
                 progressListener = if (runtime.includeProgressUpdates) {
                     { update ->
                         updateSnapshot(
@@ -178,6 +184,7 @@ class GenerationJobService(
 
     private data class GenerationJobRuntime(
         val size: Int,
+        val minimumGroupSize: Int,
         val includeProgressUpdates: Boolean,
         val cancelled: AtomicBoolean,
         val snapshot: AtomicReference<GenerationJobSnapshot>,
