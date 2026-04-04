@@ -1,6 +1,7 @@
 package com.queens.admin.domain.service
 
 import com.queens.admin.application.GenerationProgressUpdate
+import com.queens.admin.application.GenerationMetricsSnapshot
 import com.queens.admin.domain.model.ActionType
 import com.queens.admin.domain.model.BoardState
 import com.queens.admin.domain.model.ChangedCell
@@ -18,9 +19,38 @@ class ValidatedPuzzleGenerationService(
     private val boardFactoryService: BoardFactoryService,
     private val boardValidationService: BoardValidationService,
 ) {
+    private enum class GenerationStrategy {
+        BASELINE,
+        MARKER_GUIDED,
+    }
+
+    private data class GenerationMetrics(
+        var solverChecks: Int = 0,
+        var rollbacks: Int = 0,
+        var markerSquares: Int = 0,
+        var markerBlocks: Int = 0,
+        var markerGuidedCandidates: Int = 0,
+        var markerGuidedPlacements: Int = 0,
+        var fallbackPlacements: Int = 0,
+        var successfulPlacements: Int = 0,
+    ) {
+        fun toSnapshot(): GenerationMetricsSnapshot =
+            GenerationMetricsSnapshot(
+                solverChecks = solverChecks,
+                rollbacks = rollbacks,
+                markerSquares = markerSquares,
+                markerBlocks = markerBlocks,
+                markerGuidedCandidates = markerGuidedCandidates,
+                markerGuidedPlacements = markerGuidedPlacements,
+                fallbackPlacements = fallbackPlacements,
+                successfulPlacements = successfulPlacements,
+            )
+    }
+
     fun generateValidBoard(
         size: Int,
         minimumGroupSize: Int = 3,
+        generationStrategy: String = "baseline",
         maxRetries: Int = 30_000,
         progressListener: ((GenerationProgressUpdate) -> Unit)? = null,
         isCancelled: (() -> Boolean)? = null,
@@ -30,12 +60,14 @@ class ValidatedPuzzleGenerationService(
         require(minimumGroupSize <= size) {
             "Minimum group size cannot exceed the board size because there is one group per queen."
         }
+        val strategy = parseGenerationStrategy(generationStrategy)
 
         repeat(maxRetries) { attemptIndex ->
             ensureNotCancelled(isCancelled)
             val state = GeneratorState(
                 grid = boardFactoryService.createEmptyBoard(size),
                 autoTestMarks = createEmptyMarks(size),
+                metrics = GenerationMetrics(),
             )
             val attemptNumber = attemptIndex + 1
 
@@ -44,13 +76,21 @@ class ValidatedPuzzleGenerationService(
                 attempt = attemptNumber,
                 stage = "ATTEMPT_START",
                 message = "Starting generation attempt $attemptNumber.",
+                strategy = strategy,
                 progressListener = progressListener,
             )
 
             try {
                 placeAllQueens(state, size, isCancelled)
                 validateQueenCount(state.grid, size)
-                emitProgress(state, attemptNumber, "QUEENS_PLACED", "Placed hidden queens.", progressListener)
+                emitProgress(
+                    state,
+                    attemptNumber,
+                    "QUEENS_PLACED",
+                    "Placed hidden queens.",
+                    strategy,
+                    progressListener,
+                )
 
                 assignInitialColorsToState(state)
                 validateUniqueQueenColors(state.grid, size)
@@ -59,6 +99,7 @@ class ValidatedPuzzleGenerationService(
                     attemptNumber,
                     "INITIAL_COLORS_ASSIGNED",
                     "Assigned unique seed colors to each queen.",
+                    strategy,
                     progressListener,
                 )
                 if (!isSolvable(state)) {
@@ -71,6 +112,7 @@ class ValidatedPuzzleGenerationService(
                             attempt = attemptNumber,
                             targetGroupSize = targetGroupSize,
                             stageName = "EXPANSION_TO_$targetGroupSize",
+                            strategy = strategy,
                             progressListener = progressListener,
                             isCancelled = isCancelled,
                         ) || !validateGroupSizes(state.grid, targetGroupSize)
@@ -80,6 +122,7 @@ class ValidatedPuzzleGenerationService(
                             attemptNumber,
                             "RETRY_RESET",
                             "Expansion to size $targetGroupSize failed validation. Resetting and retrying.",
+                            strategy,
                             progressListener,
                         )
                         return@repeat
@@ -92,6 +135,7 @@ class ValidatedPuzzleGenerationService(
                 expandIntoBlockedSquares(
                     state = state,
                     attempt = attemptNumber,
+                    strategy = strategy,
                     progressListener = progressListener,
                     isCancelled = isCancelled,
                 )
@@ -101,6 +145,7 @@ class ValidatedPuzzleGenerationService(
                     attemptNumber,
                     "COMPLETED",
                     "Finished blocked-square expansion and validated a solvable full board.",
+                    strategy,
                     progressListener,
                 )
 
@@ -133,6 +178,7 @@ class ValidatedPuzzleGenerationService(
                     attemptNumber,
                     "RETRY_RESET",
                     "Attempt $attemptNumber failed. Starting over from an empty board.",
+                    strategy,
                     progressListener,
                 )
             }
@@ -156,6 +202,7 @@ class ValidatedPuzzleGenerationService(
             GeneratorState(
                 grid = boardState,
                 autoTestMarks = createEmptyMarks(boardState.size),
+                metrics = GenerationMetrics(),
             ),
         )
     }
@@ -163,6 +210,7 @@ class ValidatedPuzzleGenerationService(
     private data class GeneratorState(
         var grid: BoardState,
         var autoTestMarks: MutableList<MutableList<MarkType>>,
+        val metrics: GenerationMetrics,
     )
 
     private fun buildRegionIds(count: Int): List<String> =
@@ -179,6 +227,7 @@ class ValidatedPuzzleGenerationService(
         attempt: Int,
         stage: String,
         message: String,
+        strategy: GenerationStrategy,
         progressListener: ((GenerationProgressUpdate) -> Unit)?,
     ) {
         progressListener?.invoke(
@@ -188,10 +237,18 @@ class ValidatedPuzzleGenerationService(
                 message = message,
                 coloredCellCount = state.grid.cells.flatten().count { cell -> cell.groupColor != null },
                 totalCellCount = state.grid.size * state.grid.size,
+                strategy = strategy.name.lowercase(),
+                metrics = state.metrics.toSnapshot(),
                 generationPhase = state.grid.generationPhase?.name,
             ),
         )
     }
+
+    private fun parseGenerationStrategy(generationStrategy: String): GenerationStrategy =
+        when (generationStrategy.trim().uppercase()) {
+            "MARKER_GUIDED" -> GenerationStrategy.MARKER_GUIDED
+            else -> GenerationStrategy.BASELINE
+        }
 
     private fun createEmptyMarks(size: Int): MutableList<MutableList<MarkType>> {
         return MutableList(size) { MutableList(size) { MarkType.NONE } }
@@ -441,6 +498,7 @@ class ValidatedPuzzleGenerationService(
         attempt: Int,
         targetGroupSize: Int,
         stageName: String,
+        strategy: GenerationStrategy,
         progressListener: ((GenerationProgressUpdate) -> Unit)?,
         isCancelled: (() -> Boolean)?,
     ): Boolean {
@@ -453,17 +511,20 @@ class ValidatedPuzzleGenerationService(
                 attempt,
                 stageName,
                 "Expansion attempt ${expansionAttempt + 1} pushed groups toward size $targetGroupSize.",
+                strategy,
                 progressListener,
             )
             if (isSolvable(state)) {
                 return true
             }
             state.grid = cloneBoard(backup)
+            state.metrics.rollbacks += 1
             emitProgress(
                 state,
                 attempt,
                 "${stageName}_ROLLBACK",
                 "Expansion attempt ${expansionAttempt + 1} was unsolvable and rolled back.",
+                strategy,
                 progressListener,
             )
         }
@@ -528,6 +589,7 @@ class ValidatedPuzzleGenerationService(
     }
 
     private fun isSolvable(state: GeneratorState): Boolean {
+        state.metrics.solverChecks += 1
         clearAutoTestMarks(state)
         runAllSolverSteps(state)
         return state.autoTestMarks.all { row ->
@@ -777,6 +839,7 @@ class ValidatedPuzzleGenerationService(
     private fun expandIntoBlockedSquares(
         state: GeneratorState,
         attempt: Int,
+        strategy: GenerationStrategy,
         progressListener: ((GenerationProgressUpdate) -> Unit)?,
         isCancelled: (() -> Boolean)?,
     ) {
@@ -798,6 +861,18 @@ class ValidatedPuzzleGenerationService(
             val coloredSquares = state.grid.cells.flatten().count { cell -> cell.groupColor != null }
             if (coloredSquares == size * size) break
 
+            val pressuredGroupMarkers = when (strategy) {
+                GenerationStrategy.BASELINE -> emptyMap()
+                GenerationStrategy.MARKER_GUIDED -> computePressuredGroupMarkers(state.grid)
+            }
+            if (strategy == GenerationStrategy.MARKER_GUIDED) {
+                state.metrics.markerSquares += pressuredGroupMarkers.size
+                state.metrics.markerBlocks += pressuredGroupMarkers.values.sumOf { it.size }
+            }
+
+            val guidedCandidates = mutableListOf<ExpansionCandidate>()
+            val fallbackCandidates = mutableListOf<ExpansionCandidate>()
+
             for ((position, responsibleColors) in blockedSquares) {
                 if (state.grid.cells[position.row][position.col].groupColor != null) continue
                 val directions = listOf(
@@ -805,7 +880,8 @@ class ValidatedPuzzleGenerationService(
                     -1 to 0,
                     0 to 1,
                     0 to -1,
-                )
+                ).shuffled(Random.Default)
+                val pressuredGroups = pressuredGroupMarkers[position].orEmpty()
                 for ((deltaRow, deltaCol) in directions) {
                     val neighborRow = position.row + deltaRow
                     val neighborCol = position.col + deltaCol
@@ -816,55 +892,119 @@ class ValidatedPuzzleGenerationService(
 
                     val attemptKey = "${position.row},${position.col},$neighborColor"
                     if (attemptKey in failedAttempts) continue
-
-                    val originalColor = state.grid.cells[position.row][position.col].groupColor
-                    state.grid = state.grid.copy(
-                        cells = state.grid.cells.mapIndexed { rowIndex, row ->
-                            row.mapIndexed { colIndex, cell ->
-                                if (rowIndex == position.row && colIndex == position.col) {
-                                    cell.copy(groupColor = neighborColor)
-                                } else {
-                                    cell
-                                }
-                            }
-                        },
-                    )
-                    emitProgress(
-                        state,
-                        attempt,
-                        "BLOCKED_SQUARES_EXPANSION",
-                        "Tried filling blocked square (${position.row}, ${position.col}) with $neighborColor.",
-                        progressListener,
-                    )
-
-                    if (isSolvable(state)) {
-                        keepExpanding = true
-                        break
+                    if (strategy == GenerationStrategy.MARKER_GUIDED && pressuredGroups.isNotEmpty()) {
+                        if (neighborColor !in pressuredGroups) {
+                            guidedCandidates += ExpansionCandidate(position, neighborColor, attemptKey, true)
+                            state.metrics.markerGuidedCandidates += 1
+                        } else {
+                            fallbackCandidates += ExpansionCandidate(position, neighborColor, attemptKey, false)
+                        }
                     } else {
-                        failedAttempts += attemptKey
-                        state.grid = state.grid.copy(
-                            cells = state.grid.cells.mapIndexed { rowIndex, row ->
-                                row.mapIndexed { colIndex, cell ->
-                                    if (rowIndex == position.row && colIndex == position.col) {
-                                        cell.copy(groupColor = originalColor)
-                                    } else {
-                                        cell
-                                    }
-                                }
-                            },
-                        )
-                        emitProgress(
-                            state,
-                            attempt,
-                            "BLOCKED_SQUARES_ROLLBACK",
-                            "Rolled back blocked square (${position.row}, ${position.col}) after it broke solvability.",
-                            progressListener,
-                        )
+                        fallbackCandidates += ExpansionCandidate(position, neighborColor, attemptKey, false)
                     }
                 }
+            }
+
+            val orderedCandidates = if (guidedCandidates.isNotEmpty()) {
+                guidedCandidates.shuffled(Random.Default) + fallbackCandidates.shuffled(Random.Default)
+            } else {
+                fallbackCandidates.shuffled(Random.Default)
+            }
+
+            for (candidate in orderedCandidates) {
+                val originalColor = state.grid.cells[candidate.position.row][candidate.position.col].groupColor
+                state.grid = paintCell(state.grid, candidate.position, candidate.neighborColor)
+                emitProgress(
+                    state,
+                    attempt,
+                    if (candidate.markerGuided) "BLOCKED_SQUARES_MARKER_GUIDED" else "BLOCKED_SQUARES_EXPANSION",
+                    if (candidate.markerGuided) {
+                        "Tried marker-guided fill at (${candidate.position.row}, ${candidate.position.col}) with ${candidate.neighborColor}."
+                    } else {
+                        "Tried fallback fill at (${candidate.position.row}, ${candidate.position.col}) with ${candidate.neighborColor}."
+                    },
+                    strategy,
+                    progressListener,
+                )
+
+                if (isSolvable(state)) {
+                    keepExpanding = true
+                    state.metrics.successfulPlacements += 1
+                    if (candidate.markerGuided) {
+                        state.metrics.markerGuidedPlacements += 1
+                    } else {
+                        state.metrics.fallbackPlacements += 1
+                    }
+                    break
+                }
+
+                failedAttempts += candidate.attemptKey
+                state.metrics.rollbacks += 1
+                state.grid = paintCell(state.grid, candidate.position, originalColor)
+                emitProgress(
+                    state,
+                    attempt,
+                    "BLOCKED_SQUARES_ROLLBACK",
+                    "Rolled back fill at (${candidate.position.row}, ${candidate.position.col}) after it broke solvability.",
+                    strategy,
+                    progressListener,
+                )
             }
         }
 
         runAllSolverSteps(state)
+    }
+
+    private data class ExpansionCandidate(
+        val position: Position,
+        val neighborColor: String,
+        val attemptKey: String,
+        val markerGuided: Boolean,
+    )
+
+    private fun paintCell(boardState: BoardState, position: Position, color: String?): BoardState =
+        boardState.copy(
+            cells = boardState.cells.mapIndexed { rowIndex, row ->
+                row.mapIndexed { colIndex, cell ->
+                    if (rowIndex == position.row && colIndex == position.col) {
+                        cell.copy(groupColor = color)
+                    } else {
+                        cell
+                    }
+                }
+            },
+        )
+
+    private fun computePressuredGroupMarkers(boardState: BoardState): Map<Position, Set<String>> {
+        val groups = linkedMapOf<String, MutableList<Position>>()
+        for (row in 0 until boardState.size) {
+            for (col in 0 until boardState.size) {
+                val color = boardState.cells[row][col].groupColor ?: continue
+                groups.getOrPut(color) { mutableListOf() }.add(Position(row, col))
+            }
+        }
+
+        val markers = linkedMapOf<Position, Set<String>>()
+        for (row in 0 until boardState.size) {
+            for (col in 0 until boardState.size) {
+                if (boardState.cells[row][col].groupColor != null) continue
+                val candidate = Position(row, col)
+                val pressuredGroups = groups.filterValues { positions ->
+                    positions.all { position -> isThreatenedByCandidateQueen(candidate, position) }
+                }.keys
+
+                if (pressuredGroups.isNotEmpty()) {
+                    markers[candidate] = pressuredGroups
+                }
+            }
+        }
+
+        return markers
+    }
+
+    private fun isThreatenedByCandidateQueen(candidate: Position, target: Position): Boolean {
+        if (candidate.row == target.row) return true
+        if (candidate.col == target.col) return true
+        return abs(candidate.row - target.row) == 1 && abs(candidate.col - target.col) == 1
     }
 }

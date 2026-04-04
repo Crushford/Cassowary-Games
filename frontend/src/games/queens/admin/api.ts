@@ -1,8 +1,12 @@
 import type {
+  QueensAdminBatchStatus,
   QueensAdminBoardState,
   QueensAdminChangedCell,
   QueensAdminGenerationProgress,
   QueensAdminOperationResult,
+  QueensAdminPuzzleCatalogStats,
+  QueensAdminGenerationStrategy,
+  QueensAdminSystemLoad,
   QueensAdminValidationSummary,
 } from './types';
 
@@ -53,6 +57,10 @@ interface GenerationJobStartedDto {
   jobId: string;
 }
 
+interface BatchGenerationStartedDto {
+  batchId: string;
+}
+
 interface GenerationJobStatusDto {
   jobId: string;
   state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
@@ -61,9 +69,76 @@ interface GenerationJobStatusDto {
   message: string;
   coloredCellCount: number;
   totalCellCount: number;
+  strategy: QueensAdminGenerationStrategy;
+  metrics: {
+    solverChecks: number;
+    rollbacks: number;
+    markerSquares: number;
+    markerBlocks: number;
+    markerGuidedCandidates: number;
+    markerGuidedPlacements: number;
+    fallbackPlacements: number;
+    successfulPlacements: number;
+  };
+  elapsedMs: number;
   generationPhase: string | null;
   result: OperationResultDto | null;
   updatedAt: string;
+}
+
+interface BatchGenerationRunDto {
+  runId: string;
+  size: number;
+  strategy: QueensAdminGenerationStrategy;
+  minimumGroupSize: number;
+  state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  durationMs: number | null;
+  success: boolean | null;
+  error: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  persistenceState: 'SAVED' | 'DUPLICATE' | 'SKIPPED' | 'ERROR' | null;
+  persistenceMessage: string | null;
+  savedPuzzleId: string | null;
+}
+
+interface BatchGenerationStatusDto {
+  batchId: string;
+  state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'CANCELLED';
+  totalJobs: number;
+  queuedJobs: number;
+  activeJobs: number;
+  completedJobs: number;
+  failedJobs: number;
+  cancelledJobs: number;
+  savedUniquePuzzles: number;
+  duplicatePuzzles: number;
+  persistenceErrors: number;
+  maxConcurrentJobs: number;
+  saveSuccessfulPuzzles: boolean;
+  note: string | null;
+  runs: BatchGenerationRunDto[];
+  updatedAt: string;
+}
+
+interface SystemLoadDto {
+  processCpuPercent: number | null;
+  systemCpuPercent: number | null;
+  systemLoadAverage: number | null;
+  availableProcessors: number;
+  heapUsedMb: number;
+  heapMaxMb: number;
+  singleJobsRunning: number;
+  singleJobsQueued: number;
+  batchRunsActive: number;
+  batchRunsQueued: number;
+  runningBatchCount: number;
+  sampledAt: string;
+}
+
+interface PuzzleCatalogStatsDto {
+  totalPuzzles: number;
+  countsBySize: Record<string, number>;
 }
 
 function toLocalBoardState(boardState: BoardStateDto | null): QueensAdminBoardState | null {
@@ -132,9 +207,64 @@ function toGenerationProgress(data: GenerationJobStatusDto): QueensAdminGenerati
     message: data.message,
     coloredCellCount: data.coloredCellCount,
     totalCellCount: data.totalCellCount,
+    strategy: data.strategy,
+    metrics: data.metrics,
+    elapsedMs: data.elapsedMs,
     generationPhase: data.generationPhase,
     updatedAt: data.updatedAt,
     result: data.result ? toOperationResult(data.result) : null,
+  };
+}
+
+function toBatchStatus(data: BatchGenerationStatusDto): QueensAdminBatchStatus {
+  return {
+    batchId: data.batchId,
+    state: data.state,
+    totalJobs: data.totalJobs,
+    queuedJobs: data.queuedJobs,
+    activeJobs: data.activeJobs,
+    completedJobs: data.completedJobs,
+    failedJobs: data.failedJobs,
+    cancelledJobs: data.cancelledJobs,
+    savedUniquePuzzles: data.savedUniquePuzzles,
+    duplicatePuzzles: data.duplicatePuzzles,
+    persistenceErrors: data.persistenceErrors,
+    maxConcurrentJobs: data.maxConcurrentJobs,
+    saveSuccessfulPuzzles: data.saveSuccessfulPuzzles,
+    note: data.note,
+    runs: data.runs.map((run) => ({
+      runId: run.runId,
+      size: run.size,
+      strategy: run.strategy,
+      minimumGroupSize: run.minimumGroupSize,
+      state: run.state,
+      durationMs: run.durationMs,
+      success: run.success,
+      error: run.error,
+      startedAt: run.startedAt,
+      finishedAt: run.finishedAt,
+      persistenceState: run.persistenceState,
+      persistenceMessage: run.persistenceMessage,
+      savedPuzzleId: run.savedPuzzleId,
+    })),
+    updatedAt: data.updatedAt,
+  };
+}
+
+function toSystemLoad(data: SystemLoadDto): QueensAdminSystemLoad {
+  return {
+    processCpuPercent: data.processCpuPercent,
+    systemCpuPercent: data.systemCpuPercent,
+    systemLoadAverage: data.systemLoadAverage,
+    availableProcessors: data.availableProcessors,
+    heapUsedMb: data.heapUsedMb,
+    heapMaxMb: data.heapMaxMb,
+    singleJobsRunning: data.singleJobsRunning,
+    singleJobsQueued: data.singleJobsQueued,
+    batchRunsActive: data.batchRunsActive,
+    batchRunsQueued: data.batchRunsQueued,
+    runningBatchCount: data.runningBatchCount,
+    sampledAt: data.sampledAt,
   };
 }
 
@@ -157,6 +287,50 @@ async function postOperation(
 }
 
 export const queensAdminApi = {
+  async getPuzzleCatalogStats(): Promise<QueensAdminPuzzleCatalogStats> {
+    const response = await fetch('/api/queens/admin/generation/catalog-stats');
+    return (await response.json()) as PuzzleCatalogStatsDto;
+  },
+
+  async getSystemLoad(): Promise<QueensAdminSystemLoad> {
+    const response = await fetch('/api/queens/admin/generation/system-load');
+    const data = (await response.json()) as SystemLoadDto;
+    return toSystemLoad(data);
+  },
+
+  async startBatchGeneration(request: {
+    sizes: number[];
+    strategies: QueensAdminGenerationStrategy[];
+    runsPerCombination: number;
+    minimumGroupSize: number;
+    maxConcurrentJobs: number;
+    saveSuccessfulPuzzles: boolean;
+  }): Promise<string> {
+    const response = await fetch('/api/queens/admin/generation/batches', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+    const data = (await response.json()) as BatchGenerationStartedDto;
+    return data.batchId;
+  },
+
+  async getBatchGenerationStatus(batchId: string): Promise<QueensAdminBatchStatus> {
+    const response = await fetch(`/api/queens/admin/generation/batches/${batchId}`);
+    const data = (await response.json()) as BatchGenerationStatusDto;
+    return toBatchStatus(data);
+  },
+
+  async cancelBatchGeneration(batchId: string): Promise<QueensAdminBatchStatus> {
+    const response = await fetch(`/api/queens/admin/generation/batches/${batchId}/cancel`, {
+      method: 'POST',
+    });
+    const data = (await response.json()) as BatchGenerationStatusDto;
+    return toBatchStatus(data);
+  },
+
   createEmptyBoard(size: number, signal?: AbortSignal): Promise<QueensAdminOperationResult> {
     return postOperation(
       '/api/queens/admin/board/create',
@@ -184,7 +358,11 @@ export const queensAdminApi = {
 
   async startGenerateValidBoardJob(
     size: number,
-    options?: { includeProgressUpdates?: boolean; minimumGroupSize?: number }
+    options?: {
+      includeProgressUpdates?: boolean;
+      minimumGroupSize?: number;
+      generationStrategy?: QueensAdminGenerationStrategy;
+    }
   ): Promise<string> {
     const response = await fetch('/api/queens/admin/generation/generate-valid-board/jobs', {
       method: 'POST',
@@ -195,6 +373,7 @@ export const queensAdminApi = {
         size,
         minimumGroupSize: options?.minimumGroupSize ?? 3,
         includeProgressUpdates: options?.includeProgressUpdates ?? false,
+        generationStrategy: options?.generationStrategy ?? 'baseline',
       }),
     });
     const data = (await response.json()) as GenerationJobStartedDto;

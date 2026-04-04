@@ -66,7 +66,37 @@
         </div>
       </header>
 
-      <div class="grid min-h-[820px] gap-6 xl:grid-cols-[390px_minmax(0,1fr)_390px]">
+      <nav class="flex flex-wrap gap-3">
+        <button
+          type="button"
+          class="rounded-full px-4 py-2 text-sm font-semibold transition"
+          :class="
+            activeTab === 'workshop'
+              ? 'bg-semantic-info-600 text-white'
+              : 'border border-semantic-neutral-700 bg-surface-overlayDim text-semantic-neutral-300 hover:bg-semantic-neutral-800'
+          "
+          @click="setActiveTab('workshop')"
+        >
+          Workshop
+        </button>
+        <button
+          type="button"
+          class="rounded-full px-4 py-2 text-sm font-semibold transition"
+          :class="
+            activeTab === 'batch'
+              ? 'bg-semantic-info-600 text-white'
+              : 'border border-semantic-neutral-700 bg-surface-overlayDim text-semantic-neutral-300 hover:bg-semantic-neutral-800'
+          "
+          @click="setActiveTab('batch')"
+        >
+          Batch Generate
+        </button>
+      </nav>
+
+      <div
+        v-if="activeTab === 'workshop'"
+        class="grid min-h-[820px] gap-6 xl:grid-cols-[390px_minmax(0,1fr)_390px]"
+      >
         <aside
           class="space-y-4 rounded-[30px] border border-semantic-neutral-800 bg-surface-darkFirm p-5"
         >
@@ -100,6 +130,24 @@
                   {{ size }} x {{ size }}
                 </option>
               </select>
+            </div>
+
+            <div class="mt-4 space-y-3">
+              <label class="block text-sm text-semantic-neutral-300" for="generation-strategy"
+                >Generation strategy</label
+              >
+              <select
+                id="generation-strategy"
+                v-model="store.generationStrategy"
+                class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+              >
+                <option value="baseline">Baseline random fallback</option>
+                <option value="marker-guided">Marker-guided experiment</option>
+              </select>
+              <p class="text-xs leading-5 text-semantic-neutral-400">
+                Marker-guided mode prioritizes squares that look safe for another adjacent region to
+                steal, then still runs the solver after every placement.
+              </p>
             </div>
 
             <div class="mt-4 space-y-3">
@@ -223,6 +271,68 @@
                   {{ store.generationProgress.totalCellCount }} colored</span
                 >
                 <span>Attempt {{ Math.max(store.generationProgress.attempt, 1) }}</span>
+              </div>
+
+              <div class="mt-3 grid gap-2 text-xs text-semantic-neutral-300 sm:grid-cols-2">
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">Strategy</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ generationStrategyLabel(store.generationProgress.strategy) }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">Elapsed</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ formatElapsed(store.generationProgress.elapsedMs) }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">
+                    Solver Checks
+                  </div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ store.generationProgress.metrics.solverChecks }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">Rollbacks</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ store.generationProgress.metrics.rollbacks }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">
+                    Marker Squares
+                  </div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ store.generationProgress.metrics.markerSquares }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">
+                    Marker Steals
+                  </div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ store.generationProgress.metrics.markerGuidedPlacements }} /
+                    {{ store.generationProgress.metrics.markerGuidedCandidates }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">
+                    Fallback Placements
+                  </div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ store.generationProgress.metrics.fallbackPlacements }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">
+                    Successful Placements
+                  </div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ store.generationProgress.metrics.successfulPlacements }}
+                  </div>
+                </div>
               </div>
 
               <div
@@ -705,13 +815,15 @@
           </details>
         </aside>
       </div>
+
+      <QueensAdminBatchPanel v-else />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import type { ColorName } from '../types/types';
 import { COLOR_PALETTE } from '../utils/colorPalette';
 import {
@@ -719,14 +831,25 @@ import {
   QUEENS_PUZZLE_SHARE_BASE_URL,
 } from '../utils/urlPuzzleEncoding';
 import QueensAdminBoard from '../components/admin/QueensAdminBoard.vue';
+import QueensAdminBatchPanel from '../components/admin/QueensAdminBatchPanel.vue';
 import { useQueensAdminStore } from '../stores/queensAdminStore';
-import type { QueensAdminTool } from '../admin/types';
+import type { QueensAdminGenerationStrategy, QueensAdminTool } from '../admin/types';
 
+const route = useRoute();
 const router = useRouter();
 const store = useQueensAdminStore();
 const boardSizes = Array.from({ length: 17 }, (_, index) => index + 4);
 const palette = COLOR_PALETTE;
 const selectedBoardSize = ref(store.boardSize);
+const activeTab = ref<'workshop' | 'batch'>('workshop');
+
+function normalizeAdminTab(value: unknown): 'workshop' | 'batch' {
+  return value === 'batch' ? 'batch' : 'workshop';
+}
+
+function setActiveTab(tab: 'workshop' | 'batch'): void {
+  activeTab.value = tab;
+}
 
 const tools: Array<{
   id: QueensAdminTool;
@@ -1008,6 +1131,28 @@ const shareableQueensPuzzleUrl = computed(() => {
   return `${QUEENS_PUZZLE_SHARE_BASE_URL}${playInQueensHref.value}`;
 });
 
+watch(
+  () => route.query.tab,
+  (tab) => {
+    const normalizedTab = normalizeAdminTab(tab);
+    if (activeTab.value !== normalizedTab) {
+      activeTab.value = normalizedTab;
+    }
+  },
+  { immediate: true }
+);
+
+watch(activeTab, async (tab) => {
+  if (normalizeAdminTab(route.query.tab) === tab) return;
+
+  await router.replace({
+    query: {
+      ...route.query,
+      tab,
+    },
+  });
+});
+
 function formatChangeReason(reason: string): string {
   if (reason === 'generated board snapshot') {
     return 'Full board replacement';
@@ -1022,6 +1167,17 @@ function formatProgressStage(stage: string): string {
     .split('_')
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(' ');
+}
+
+function generationStrategyLabel(strategy: QueensAdminGenerationStrategy): string {
+  return strategy === 'marker-guided' ? 'Marker-guided experiment' : 'Baseline';
+}
+
+function formatElapsed(elapsedMs: number): string {
+  const totalSeconds = Math.floor(elapsedMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
 const changeReasonGroups = computed(() => {

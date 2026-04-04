@@ -1,13 +1,22 @@
 package com.queens.admin.api
 
 import com.queens.admin.api.dto.BoardStateRequestDto
+import com.queens.admin.api.dto.BatchGenerationRequestDto
+import com.queens.admin.api.dto.BatchGenerationStartedDto
+import com.queens.admin.api.dto.BatchGenerationStatusDto
 import com.queens.admin.api.dto.CreateBoardRequestDto
 import com.queens.admin.api.dto.ExpandGroupRequestDto
 import com.queens.admin.api.dto.GenerationJobStartedDto
 import com.queens.admin.api.dto.GenerationJobStatusDto
 import com.queens.admin.api.dto.OperationResultDto
+import com.queens.admin.api.dto.PuzzleCatalogStatsDto
+import com.queens.admin.api.dto.SystemLoadDto
+import com.queens.admin.application.BackendLoadService
+import com.queens.admin.application.BatchGenerationService
 import com.queens.admin.application.GenerationJobService
 import com.queens.admin.application.GenerationWorkflowService
+import com.queens.admin.application.PuzzleCatalogService
+import com.queens.admin.infrastructure.mapper.BatchGenerationMapper
 import com.queens.admin.infrastructure.mapper.BoardStateMapper
 import com.queens.admin.infrastructure.mapper.GenerationJobMapper
 import com.queens.admin.infrastructure.mapper.OperationResultMapper
@@ -24,10 +33,72 @@ import org.springframework.web.bind.annotation.RestController
 class GenerationController(
     private val generationWorkflowService: GenerationWorkflowService,
     private val generationJobService: GenerationJobService,
+    private val backendLoadService: BackendLoadService,
+    private val batchGenerationService: BatchGenerationService,
+    private val puzzleCatalogService: PuzzleCatalogService,
     private val boardStateMapper: BoardStateMapper,
+    private val batchGenerationMapper: BatchGenerationMapper,
     private val generationJobMapper: GenerationJobMapper,
     private val operationResultMapper: OperationResultMapper,
 ) {
+    @GetMapping("/catalog-stats")
+    fun getCatalogStats(): PuzzleCatalogStatsDto {
+        val countsBySize = puzzleCatalogService.countBySize()
+        return PuzzleCatalogStatsDto(
+            totalPuzzles = countsBySize.values.sum(),
+            countsBySize = countsBySize
+                .toSortedMap()
+                .mapKeys { (size, _) -> "${size}x${size}" },
+        )
+    }
+
+    @GetMapping("/system-load")
+    fun getSystemLoad(): SystemLoadDto {
+        val snapshot = backendLoadService.snapshot()
+        return SystemLoadDto(
+            processCpuPercent = snapshot.processCpuPercent,
+            systemCpuPercent = snapshot.systemCpuPercent,
+            systemLoadAverage = snapshot.systemLoadAverage,
+            availableProcessors = snapshot.availableProcessors,
+            heapUsedMb = snapshot.heapUsedMb,
+            heapMaxMb = snapshot.heapMaxMb,
+            singleJobsRunning = snapshot.singleJobsRunning,
+            singleJobsQueued = snapshot.singleJobsQueued,
+            batchRunsActive = snapshot.batchRunsActive,
+            batchRunsQueued = snapshot.batchRunsQueued,
+            runningBatchCount = snapshot.runningBatchCount,
+            sampledAt = snapshot.sampledAt.toString(),
+        )
+    }
+
+    @PostMapping("/batches")
+    fun startBatchGeneration(@RequestBody request: BatchGenerationRequestDto): BatchGenerationStartedDto {
+        return batchGenerationMapper.toStartedDto(
+            batchGenerationService.startBatch(
+                sizes = request.sizes,
+                strategies = request.strategies,
+                runsPerCombination = request.runsPerCombination,
+                minimumGroupSize = request.minimumGroupSize,
+                maxConcurrentJobs = request.maxConcurrentJobs,
+                saveSuccessfulPuzzles = request.saveSuccessfulPuzzles,
+            ),
+        )
+    }
+
+    @GetMapping("/batches/{batchId}")
+    fun getBatchGeneration(@PathVariable batchId: String): ResponseEntity<BatchGenerationStatusDto> {
+        val snapshot = batchGenerationService.getBatchSnapshot(batchId)
+            ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(batchGenerationMapper.toStatusDto(snapshot))
+    }
+
+    @PostMapping("/batches/{batchId}/cancel")
+    fun cancelBatchGeneration(@PathVariable batchId: String): ResponseEntity<BatchGenerationStatusDto> {
+        val snapshot = batchGenerationService.cancelBatch(batchId)
+            ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(batchGenerationMapper.toStatusDto(snapshot))
+    }
+
     @PostMapping("/generate-valid-board/jobs")
     fun startGenerateValidBoardJob(@RequestBody request: CreateBoardRequestDto): GenerationJobStartedDto {
         return generationJobMapper.toStartedDto(
@@ -35,6 +106,7 @@ class GenerationController(
                 size = request.size,
                 minimumGroupSize = request.minimumGroupSize,
                 includeProgressUpdates = request.includeProgressUpdates,
+                generationStrategy = request.generationStrategy,
             ),
         )
     }
@@ -59,6 +131,7 @@ class GenerationController(
             generationWorkflowService.generateValidBoard(
                 size = request.size,
                 minimumGroupSize = request.minimumGroupSize,
+                generationStrategy = request.generationStrategy,
             ),
         )
     }

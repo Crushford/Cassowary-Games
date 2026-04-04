@@ -20,6 +20,7 @@ class GenerationJobService(
         size: Int,
         minimumGroupSize: Int = 3,
         includeProgressUpdates: Boolean = false,
+        generationStrategy: String = "baseline",
     ): GenerationJobSnapshot {
         val jobId = UUID.randomUUID().toString()
         val initialSnapshot = GenerationJobSnapshot(
@@ -30,12 +31,15 @@ class GenerationJobService(
             message = "Queued validated board generation.",
             coloredCellCount = 0,
             totalCellCount = size * size,
+            strategy = generationStrategy,
         )
 
         val runtime = GenerationJobRuntime(
             size = size,
             minimumGroupSize = minimumGroupSize,
             includeProgressUpdates = includeProgressUpdates,
+            generationStrategy = generationStrategy,
+            startedAt = Instant.now(),
             cancelled = AtomicBoolean(false),
             snapshot = AtomicReference(initialSnapshot),
         )
@@ -49,6 +53,10 @@ class GenerationJobService(
     }
 
     fun getJobSnapshot(jobId: String): GenerationJobSnapshot? = jobs[jobId]?.snapshot?.get()
+
+    fun getRunningJobCount(): Int = jobs.values.count { it.snapshot.get().state == GenerationJobState.RUNNING }
+
+    fun getQueuedJobCount(): Int = jobs.values.count { it.snapshot.get().state == GenerationJobState.QUEUED }
 
     fun cancelJob(jobId: String): GenerationJobSnapshot? {
         val runtime = jobs[jobId] ?: return null
@@ -79,6 +87,8 @@ class GenerationJobService(
             message = "Starting validated board generation.",
             coloredCellCount = 0,
             totalCellCount = runtime.size * runtime.size,
+            strategy = runtime.generationStrategy,
+            metrics = runtime.snapshot.get().metrics,
             generationPhase = null,
         )
 
@@ -86,6 +96,7 @@ class GenerationJobService(
             val result = generationWorkflowService.generateValidBoard(
                 size = runtime.size,
                 minimumGroupSize = runtime.minimumGroupSize,
+                generationStrategy = runtime.generationStrategy,
                 progressListener = if (runtime.includeProgressUpdates) {
                     { update ->
                         updateSnapshot(
@@ -96,6 +107,8 @@ class GenerationJobService(
                             message = update.message,
                             coloredCellCount = update.coloredCellCount,
                             totalCellCount = update.totalCellCount,
+                            strategy = update.strategy,
+                            metrics = update.metrics,
                             generationPhase = update.generationPhase,
                         )
                     }
@@ -127,6 +140,8 @@ class GenerationJobService(
                 },
                 coloredCellCount = coloredCellCount,
                 totalCellCount = runtime.size * runtime.size,
+                strategy = runtime.snapshot.get().strategy,
+                metrics = runtime.snapshot.get().metrics,
                 generationPhase = result.boardState?.generationPhase?.name,
                 result = result,
             )
@@ -139,6 +154,8 @@ class GenerationJobService(
                 message = "Generation was cancelled.",
                 coloredCellCount = runtime.snapshot.get().coloredCellCount,
                 totalCellCount = runtime.size * runtime.size,
+                strategy = runtime.snapshot.get().strategy,
+                metrics = runtime.snapshot.get().metrics,
                 generationPhase = runtime.snapshot.get().generationPhase,
             )
         } catch (error: Throwable) {
@@ -150,6 +167,8 @@ class GenerationJobService(
                 message = error.message ?: "Generation crashed unexpectedly.",
                 coloredCellCount = runtime.snapshot.get().coloredCellCount,
                 totalCellCount = runtime.size * runtime.size,
+                strategy = runtime.snapshot.get().strategy,
+                metrics = runtime.snapshot.get().metrics,
                 generationPhase = runtime.snapshot.get().generationPhase,
             )
         }
@@ -163,9 +182,12 @@ class GenerationJobService(
         message: String,
         coloredCellCount: Int,
         totalCellCount: Int,
+        strategy: String,
+        metrics: GenerationMetricsSnapshot,
         generationPhase: String?,
         result: com.queens.admin.domain.model.OperationResult? = null,
     ) {
+        val now = Instant.now()
         runtime.snapshot.set(
             GenerationJobSnapshot(
                 jobId = runtime.snapshot.get().jobId,
@@ -175,9 +197,12 @@ class GenerationJobService(
                 message = message,
                 coloredCellCount = coloredCellCount,
                 totalCellCount = totalCellCount,
+                strategy = strategy,
+                metrics = metrics,
+                elapsedMs = java.time.Duration.between(runtime.startedAt, now).toMillis(),
                 generationPhase = generationPhase,
                 result = result,
-                updatedAt = Instant.now(),
+                updatedAt = now,
             ),
         )
     }
@@ -186,6 +211,8 @@ class GenerationJobService(
         val size: Int,
         val minimumGroupSize: Int,
         val includeProgressUpdates: Boolean,
+        val generationStrategy: String,
+        val startedAt: Instant,
         val cancelled: AtomicBoolean,
         val snapshot: AtomicReference<GenerationJobSnapshot>,
     )
