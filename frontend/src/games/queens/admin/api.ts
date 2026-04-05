@@ -3,6 +3,7 @@ import type {
   QueensAdminBoardState,
   QueensAdminChangedCell,
   QueensAdminGenerationProgress,
+  QueensAdminQueenCountMode,
   QueensAdminOperationResult,
   QueensAdminPuzzleCatalogStats,
   QueensAdminGenerationStrategy,
@@ -89,6 +90,15 @@ interface GenerationJobStatusDto {
   generationPhase: string | null;
   boardState: BoardStateDto | null;
   result: OperationResultDto | null;
+  history: Array<{
+    attempt: number;
+    stage: string;
+    message: string;
+    coloredCellCount: number;
+    totalCellCount: number;
+    generationPhase: string | null;
+    createdAt: string;
+  }>;
   updatedAt: string;
 }
 
@@ -221,6 +231,7 @@ function toGenerationProgress(data: GenerationJobStatusDto): QueensAdminGenerati
     elapsedMs: data.elapsedMs,
     generationPhase: data.generationPhase,
     board: toLocalBoardState(data.boardState),
+    history: data.history ?? [],
     updatedAt: data.updatedAt,
     result: data.result ? toOperationResult(data.result) : null,
   };
@@ -344,11 +355,22 @@ export const queensAdminApi = {
     return toBatchStatus(data);
   },
 
-  createEmptyBoard(size: number, signal?: AbortSignal): Promise<QueensAdminOperationResult> {
+  createEmptyBoard(
+    size: number,
+    options?: {
+      queenCountMode?: QueensAdminQueenCountMode;
+      targetQueenCount?: number;
+      orthogonalMinDistance?: number;
+    },
+    signal?: AbortSignal
+  ): Promise<QueensAdminOperationResult> {
     return postOperation(
       '/api/queens/admin/board/create',
       {
         size,
+        queenCountMode: options?.queenCountMode ?? 'exact',
+        targetQueenCount: options?.targetQueenCount ?? size,
+        orthogonalMinDistance: options?.orthogonalMinDistance ?? size,
       },
       signal
     );
@@ -357,6 +379,11 @@ export const queensAdminApi = {
   generateValidBoard(
     size: number,
     minimumGroupSize: number,
+    options?: {
+      queenCountMode?: QueensAdminQueenCountMode;
+      targetQueenCount?: number;
+      orthogonalMinDistance?: number;
+    },
     signal?: AbortSignal
   ): Promise<QueensAdminOperationResult> {
     return postOperation(
@@ -364,6 +391,9 @@ export const queensAdminApi = {
       {
         size,
         minimumGroupSize,
+        queenCountMode: options?.queenCountMode ?? 'exact',
+        targetQueenCount: options?.targetQueenCount ?? size,
+        orthogonalMinDistance: options?.orthogonalMinDistance ?? size,
       },
       signal
     );
@@ -374,6 +404,9 @@ export const queensAdminApi = {
     options?: {
       includeProgressUpdates?: boolean;
       minimumGroupSize?: number;
+      queenCountMode?: QueensAdminQueenCountMode;
+      targetQueenCount?: number;
+      orthogonalMinDistance?: number;
       generationStrategy?: QueensAdminGenerationStrategy;
       seedTemplateOffsets?: TemplateOffsetDto[];
     }
@@ -386,6 +419,9 @@ export const queensAdminApi = {
       body: JSON.stringify({
         size,
         minimumGroupSize: options?.minimumGroupSize ?? 3,
+        queenCountMode: options?.queenCountMode ?? 'exact',
+        targetQueenCount: options?.targetQueenCount ?? size,
+        orthogonalMinDistance: options?.orthogonalMinDistance ?? size,
         includeProgressUpdates: options?.includeProgressUpdates ?? false,
         generationStrategy: options?.generationStrategy ?? 'baseline',
         seedTemplateOffsets: options?.seedTemplateOffsets ?? null,

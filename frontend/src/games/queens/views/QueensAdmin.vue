@@ -153,6 +153,54 @@
               </p>
             </div>
 
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+              <div class="space-y-3">
+                <label class="block text-sm text-semantic-neutral-300" for="queen-count-mode"
+                  >Queen count mode</label
+                >
+                <select
+                  id="queen-count-mode"
+                  v-model="store.queenCountMode"
+                  class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+                >
+                  <option value="exact">Exact target</option>
+                  <option value="max">Maximum that fits</option>
+                </select>
+              </div>
+              <div class="space-y-3">
+                <label class="block text-sm text-semantic-neutral-300" for="target-queen-count"
+                  >Target queens</label
+                >
+                <input
+                  id="target-queen-count"
+                  v-model.number="store.targetQueenCount"
+                  type="number"
+                  min="1"
+                  :max="selectedBoardSize * selectedBoardSize"
+                  :disabled="store.queenCountMode === 'max'"
+                  class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+                />
+              </div>
+              <div class="space-y-3">
+                <label class="block text-sm text-semantic-neutral-300" for="orthogonal-min-distance"
+                  >Orthogonal min distance</label
+                >
+                <input
+                  id="orthogonal-min-distance"
+                  v-model.number="store.orthogonalMinDistance"
+                  type="number"
+                  min="1"
+                  :max="selectedBoardSize * selectedBoardSize"
+                  class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+                />
+              </div>
+              <p class="sm:col-span-2 text-xs leading-5 text-semantic-neutral-400">
+                Classic Queens is the special case where the queen count resolves to board size and
+                the orthogonal distance also equals board size. Use Exact target for a fixed count,
+                or Maximum that fits to let the backend find the densest legal placement first.
+              </p>
+            </div>
+
             <div class="mt-4 space-y-3">
               <label class="block text-sm text-semantic-neutral-300" for="minimum-group-size"
                 >Minimum region size</label
@@ -197,7 +245,13 @@
             <div class="mt-4 grid gap-2">
               <button
                 class="rounded-xl bg-semantic-info-600 px-4 py-2.5 font-semibold text-white hover:bg-semantic-info-500"
-                @click="store.createBoard(selectedBoardSize)"
+                @click="
+                  store.createBoard(selectedBoardSize, {
+                    queenCountMode: store.queenCountMode,
+                    targetQueenCount: store.targetQueenCount,
+                    orthogonalMinDistance: store.orthogonalMinDistance,
+                  })
+                "
               >
                 Create Empty Board
               </button>
@@ -667,7 +721,36 @@
                 </div>
               </div>
             </div>
-            <QueensAdminBoard v-else />
+            <div v-else class="space-y-4">
+              <QueensAdminBoard :show-solution-queens="showSolutionQueens" />
+
+              <div
+                class="rounded-[24px] border border-semantic-neutral-800 bg-surface-darkStrong p-4"
+              >
+                <label
+                  for="show-solution-queens"
+                  class="flex items-center justify-between gap-4 text-sm text-semantic-neutral-200"
+                >
+                  <div>
+                    <div class="font-semibold text-white">Board Preview</div>
+                    <div class="mt-1 text-xs leading-5 text-semantic-neutral-400">
+                      Toggle whether the workshop board shows the hidden solution queens.
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="text-xs text-semantic-neutral-400">
+                      {{ showSolutionQueens ? 'Queens visible' : 'Queens hidden' }}
+                    </span>
+                    <input
+                      id="show-solution-queens"
+                      v-model="showSolutionQueens"
+                      type="checkbox"
+                      class="h-4 w-4 rounded border-semantic-neutral-600 bg-semantic-neutral-900 text-semantic-info-500"
+                    />
+                  </div>
+                </label>
+              </div>
+            </div>
           </section>
         </main>
 
@@ -925,6 +1008,23 @@
             >
               {{ store.lastActionResult.warnings.join(' ') }}
             </div>
+
+            <div class="mt-4 rounded-xl bg-surface-darkMuted p-3">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <div class="font-semibold text-semantic-info-200">Copyable Debug Log</div>
+                <button
+                  type="button"
+                  class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-semantic-neutral-700"
+                  @click="copyDebugText('result', backendResultDebugText)"
+                >
+                  {{ copyButtonLabels.result }}
+                </button>
+              </div>
+              <pre
+                class="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-semantic-neutral-950 p-3 text-xs leading-5 text-semantic-neutral-200"
+                >{{ backendResultDebugText }}</pre
+              >
+            </div>
           </section>
 
           <section
@@ -1125,6 +1225,7 @@ const persistedWorkshopInputs = loadQueensAdminWorkshopInputs();
 const boardSizes = Array.from({ length: 17 }, (_, index) => index + 4);
 const palette = COLOR_PALETTE;
 const selectedBoardSize = ref(persistedWorkshopInputs?.selectedBoardSize ?? store.boardSize);
+const showSolutionQueens = ref(persistedWorkshopInputs?.showSolutionQueens ?? true);
 const generationPreviewIntervalMs = ref(
   persistedWorkshopInputs?.generationPreviewIntervalMs ?? 1000
 );
@@ -1148,6 +1249,10 @@ const templateSeedCells = ref<TemplateSeedCell[]>(
 );
 
 store.minimumGroupSize = persistedWorkshopInputs?.minimumGroupSize ?? store.minimumGroupSize;
+store.queenCountMode = persistedWorkshopInputs?.queenCountMode ?? store.queenCountMode;
+store.targetQueenCount = persistedWorkshopInputs?.targetQueenCount ?? store.targetQueenCount;
+store.orthogonalMinDistance =
+  persistedWorkshopInputs?.orthogonalMinDistance ?? store.orthogonalMinDistance;
 store.generationStrategy = persistedWorkshopInputs?.generationStrategy ?? store.generationStrategy;
 store.selectedTool = persistedWorkshopInputs?.selectedTool ?? store.selectedTool;
 store.selectedColor = persistedWorkshopInputs?.selectedColor ?? store.selectedColor;
@@ -1196,6 +1301,9 @@ function templateSeedCellClasses(cell: { filled: boolean }): string {
 
 async function generateBoardFromWorkshop(): Promise<void> {
   await store.generateBoard(selectedBoardSize.value, {
+    queenCountMode: store.queenCountMode,
+    targetQueenCount: store.targetQueenCount,
+    orthogonalMinDistance: store.orthogonalMinDistance,
     seedTemplateOffsets:
       store.generationStrategy === 'template-seeded' ? templateSeedOffsets.value : undefined,
     previewIntervalMs: generationPreviewIntervalMs.value,
@@ -1652,25 +1760,94 @@ const changedCellPreview = computed(() =>
 );
 
 const backendResultDebugText = computed(() => {
-  if (!store.lastActionResult) return 'No backend action has been run yet.';
-
   const lines = [
-    `Action: ${store.lastActionResult.action}`,
-    `Success: ${store.lastActionResult.success ? 'yes' : 'no'}`,
-    `Explanation: ${store.lastActionResult.explanation}`,
-    `Phase: ${generationPhaseLabel.value}`,
-    `Changed cells: ${store.lastActionResult.changedCells.length}`,
+    'Workshop Request',
+    `- boardSize: ${selectedBoardSize.value}`,
+    `- queenCountMode: ${store.queenCountMode}`,
+    `- targetQueenCount: ${store.targetQueenCount}`,
+    `- orthogonalMinDistance: ${store.orthogonalMinDistance}`,
+    `- minimumGroupSize: ${store.minimumGroupSize}`,
+    `- generationStrategy: ${store.generationStrategy}`,
+    `- previewIntervalMs: ${generationPreviewIntervalMs.value}`,
   ];
 
-  if (changeReasonGroups.value.length > 0) {
+  if (store.board?.metadata) {
+    lines.push('');
+    lines.push('Board Metadata');
+    lines.push(`- targetQueenCount: ${store.board.metadata.targetQueenCount ?? 'missing'}`);
+    lines.push(
+      `- orthogonalMinDistance: ${store.board.metadata.orthogonalMinDistance ?? 'missing'}`
+    );
+    lines.push(`- generationPhase: ${store.board.generationPhase ?? 'none'}`);
+  }
+
+  if (store.generationProgress) {
+    lines.push('');
+    lines.push('Generation Progress');
+    lines.push(`- state: ${store.generationProgress.state}`);
+    lines.push(`- attempt: ${store.generationProgress.attempt}`);
+    lines.push(`- stage: ${store.generationProgress.stage}`);
+    lines.push(`- message: ${store.generationProgress.message}`);
+    lines.push(
+      `- colored: ${store.generationProgress.coloredCellCount}/${store.generationProgress.totalCellCount}`
+    );
+    lines.push(`- solverChecks: ${store.generationProgress.metrics.solverChecks}`);
+    lines.push(`- rollbacks: ${store.generationProgress.metrics.rollbacks}`);
+    lines.push(`- successfulPlacements: ${store.generationProgress.metrics.successfulPlacements}`);
+    if (store.generationProgress.history.length) {
+      lines.push('');
+      lines.push('Recent Generation Events');
+      for (const entry of store.generationProgress.history.slice(-12)) {
+        lines.push(
+          `- [attempt ${entry.attempt}] ${entry.stage} :: ${entry.message} (${entry.coloredCellCount}/${entry.totalCellCount} colored${entry.generationPhase ? `, phase ${entry.generationPhase}` : ''})`
+        );
+      }
+    }
+  }
+
+  if (store.lastActionResult) {
+    lines.push('');
+    lines.push('Last Backend Result');
+    lines.push(`- action: ${store.lastActionResult.action}`);
+    lines.push(`- success: ${store.lastActionResult.success ? 'yes' : 'no'}`);
+    lines.push(`- explanation: ${store.lastActionResult.explanation}`);
+    lines.push(`- phase: ${generationPhaseLabel.value}`);
+    lines.push(`- changedCells: ${store.lastActionResult.changedCells.length}`);
+  } else {
+    lines.push('');
+    lines.push('Last Backend Result');
+    lines.push('- none');
+  }
+
+  if (changeReasonGroups.value.length > 0 && store.lastActionResult) {
     lines.push('Change reasons:');
     for (const group of changeReasonGroups.value) {
       lines.push(`- ${group.count} cell(s): ${formatChangeReason(group.reason)}`);
     }
   }
 
-  if (store.lastActionResult.warnings.length > 0) {
+  if (store.lastActionResult?.warnings.length) {
     lines.push(`Warnings: ${store.lastActionResult.warnings.join(' | ')}`);
+  }
+
+  if (store.lastActionResult?.error) {
+    lines.push(`Error: ${store.lastActionResult.error}`);
+  }
+
+  if (store.validation) {
+    lines.push('');
+    lines.push('Validation');
+    lines.push(`- isValid: ${store.validation.isValid ? 'yes' : 'no'}`);
+    lines.push(`- queenCount: ${store.validation.queenCount}`);
+    lines.push(`- flaggedCount: ${store.validation.flaggedCount}`);
+    lines.push(`- coloredCellCount: ${store.validation.coloredCellCount}`);
+    lines.push(`- distinctColorCount: ${store.validation.distinctColorCount}`);
+    if (store.validation.errors.length) {
+      lines.push(`- errors: ${store.validation.errors.join(' | ')}`);
+    }
+    if (store.validation.warnings.length) {
+      lines.push(`- warnings: ${store.validation.warnings.join(' | ')}`);
+    }
   }
 
   return lines.join('\n');
@@ -1762,7 +1939,11 @@ watch(
 watch(
   [
     selectedBoardSize,
+    showSolutionQueens,
     generationPreviewIntervalMs,
+    () => store.queenCountMode,
+    () => store.targetQueenCount,
+    () => store.orthogonalMinDistance,
     () => store.minimumGroupSize,
     () => store.generationStrategy,
     () => store.selectedTool,
@@ -1772,7 +1953,11 @@ watch(
   () => {
     saveQueensAdminWorkshopInputs({
       selectedBoardSize: selectedBoardSize.value,
+      queenCountMode: store.queenCountMode,
+      targetQueenCount: store.targetQueenCount,
+      orthogonalMinDistance: store.orthogonalMinDistance,
       minimumGroupSize: store.minimumGroupSize,
+      showSolutionQueens: showSolutionQueens.value,
       generationPreviewIntervalMs: generationPreviewIntervalMs.value,
       generationStrategy: store.generationStrategy,
       selectedTool: store.selectedTool,

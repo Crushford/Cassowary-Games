@@ -8,6 +8,7 @@ import com.queens.admin.domain.service.ColorExpansionService
 import com.queens.admin.domain.service.InitialColorAssignmentService
 import com.queens.admin.domain.service.QueenPlacementService
 import com.queens.admin.domain.service.ValidatedPuzzleGenerationService
+import com.queens.admin.domain.model.QueensRuleset
 import org.springframework.stereotype.Service
 
 @Service
@@ -20,33 +21,67 @@ class GenerationWorkflowService(
 ) {
     fun generateValidBoard(
         size: Int,
+        queenCountMode: String = "exact",
+        targetQueenCount: Int = size,
+        orthogonalMinDistance: Int = size,
         minimumGroupSize: Int = 3,
         generationStrategy: String = "baseline",
         seedTemplateOffsets: List<Position>? = null,
-    ): OperationResult =
-        validatedPuzzleGenerationService.generateValidBoard(
+    ): OperationResult {
+        val resolvedTargetQueenCount = queenPlacementService.resolveTargetQueenCount(
             size = size,
+            requestedTargetQueenCount = targetQueenCount,
+            queenCountMode = queenCountMode,
+            ruleset = QueensRuleset(
+                orthogonalMinDistance = orthogonalMinDistance,
+                forbidDiagonalTouch = true,
+                requireRowCoverage = false,
+                requireColumnCoverage = false,
+            ),
+        )
+        return validatedPuzzleGenerationService.generateValidBoard(
+            size = size,
+            targetQueenCount = resolvedTargetQueenCount,
+            orthogonalMinDistance = orthogonalMinDistance,
             minimumGroupSize = minimumGroupSize,
             generationStrategy = generationStrategy,
             seedTemplateOffsets = seedTemplateOffsets,
         )
+    }
 
     fun generateValidBoard(
         size: Int,
+        queenCountMode: String,
+        targetQueenCount: Int,
+        orthogonalMinDistance: Int,
         minimumGroupSize: Int,
         generationStrategy: String,
         seedTemplateOffsets: List<Position>? = null,
         progressListener: ((GenerationProgressUpdate) -> Unit)?,
         isCancelled: (() -> Boolean)?,
-    ): OperationResult =
-        validatedPuzzleGenerationService.generateValidBoard(
+    ): OperationResult {
+        val resolvedTargetQueenCount = queenPlacementService.resolveTargetQueenCount(
             size = size,
+            requestedTargetQueenCount = targetQueenCount,
+            queenCountMode = queenCountMode,
+            ruleset = QueensRuleset(
+                orthogonalMinDistance = orthogonalMinDistance,
+                forbidDiagonalTouch = true,
+                requireRowCoverage = false,
+                requireColumnCoverage = false,
+            ),
+        )
+        return validatedPuzzleGenerationService.generateValidBoard(
+            size = size,
+            targetQueenCount = resolvedTargetQueenCount,
+            orthogonalMinDistance = orthogonalMinDistance,
             minimumGroupSize = minimumGroupSize,
             generationStrategy = generationStrategy,
             seedTemplateOffsets = seedTemplateOffsets,
             progressListener = progressListener,
             isCancelled = isCancelled,
         )
+    }
 
     fun placeQueens(boardState: BoardState): OperationResult =
         queenPlacementService.placeQueens(boardState)

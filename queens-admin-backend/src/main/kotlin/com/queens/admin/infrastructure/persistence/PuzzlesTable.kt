@@ -8,6 +8,8 @@ object PuzzlesTable : UUIDTable("puzzles") {
     val size = integer("size")
     val layout = text("layout")
     val queens = text("queens")
+    val targetQueenCount = integer("target_queen_count")
+    val orthogonalMinDistance = integer("orthogonal_min_distance")
     val canonicalSignature = text("canonical_signature").uniqueIndex()
     val minimumGroupSize = integer("minimum_group_size")
     val generationStrategy = text("generation_strategy")

@@ -93,6 +93,8 @@ class PuzzleDifficultyAssessmentServiceTest {
             size = kotlin.math.sqrt(layout.length.toDouble()).toInt(),
             layout = layout,
             queens = queens,
+            targetQueenCount = kotlin.math.sqrt(layout.length.toDouble()).toInt(),
+            orthogonalMinDistance = kotlin.math.sqrt(layout.length.toDouble()).toInt(),
             canonicalSignature = "test-signature",
             minimumGroupSize = 3,
             generationStrategy = "baseline",

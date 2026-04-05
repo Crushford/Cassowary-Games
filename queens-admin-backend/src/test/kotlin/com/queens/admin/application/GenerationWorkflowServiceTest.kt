@@ -2,6 +2,7 @@ package com.queens.admin.application
 
 import com.queens.admin.domain.model.MarkType
 import com.queens.admin.domain.model.Position
+import com.queens.admin.domain.model.QueensBoardMetadata
 import com.queens.admin.domain.service.BlockedSquareExpansionService
 import com.queens.admin.domain.service.BoardFactoryService
 import com.queens.admin.domain.service.BoardValidationService
@@ -25,7 +26,7 @@ class GenerationWorkflowServiceTest {
         queensConstraintService = queensConstraintService,
     )
     private val generationWorkflowService = GenerationWorkflowService(
-        queenPlacementService = QueenPlacementService(boardValidationService),
+        queenPlacementService = QueenPlacementService(boardValidationService, queensConstraintService),
         initialColorAssignmentService = InitialColorAssignmentService(boardValidationService),
         colorExpansionService = ColorExpansionService(boardValidationService),
         blockedSquareExpansionService = BlockedSquareExpansionService(boardValidationService),
@@ -55,6 +56,27 @@ class GenerationWorkflowServiceTest {
         assertTrue(boardState.cells.flatten().all { it.groupColor != null }, "expected board to be fully colored")
         assertEquals(6, boardState.cells.flatten().count { it.markType == MarkType.QUEEN }, "expected six queen marks")
         assertEquals(6, boardState.cells.flatten().count { it.isSolutionQueen }, "expected six solution queens")
+        assertTrue(boardValidationService.validate(boardState).isValid, "expected generated board to validate")
+    }
+
+    @Test
+    fun `generateValidBoard supports seven queens on 6x6 with orthogonal distance five`() {
+        val result = generationWorkflowService.generateValidBoard(
+            size = 6,
+            targetQueenCount = 7,
+            orthogonalMinDistance = 5,
+            minimumGroupSize = 3,
+            generationStrategy = "baseline",
+        )
+
+        assertTrue(result.success, "expected custom generation to succeed")
+        val boardState = requireNotNull(result.boardState)
+        assertEquals(6, boardState.size)
+        assertEquals("7", boardState.metadata[QueensBoardMetadata.TARGET_QUEEN_COUNT_KEY])
+        assertEquals("5", boardState.metadata[QueensBoardMetadata.ORTHOGONAL_MIN_DISTANCE_KEY])
+        assertTrue(boardState.cells.flatten().all { it.groupColor != null }, "expected board to be fully colored")
+        assertEquals(7, boardState.cells.flatten().count { it.markType == MarkType.QUEEN }, "expected seven queen marks")
+        assertEquals(7, boardState.cells.flatten().count { it.isSolutionQueen }, "expected seven solution queens")
         assertTrue(boardValidationService.validate(boardState).isValid, "expected generated board to validate")
     }
 
@@ -125,22 +147,44 @@ class GenerationWorkflowServiceTest {
     }
 
     @Test
-    fun `validated generator can run with a smaller orthogonal distance`() {
-        val result = validatedPuzzleGenerationService.generateValidBoard(
+    fun `placeQueens respects custom orthogonal distance metadata`() {
+        val customBoard = boardFactoryService.createEmptyBoard(
             size = 4,
-            orthogonalMinDistance = 2,
-            maxRetries = 2_000,
-        )
-
-        assertTrue(result.success, "expected generation to succeed with a smaller orthogonal distance")
-        val boardState = requireNotNull(result.boardState)
-        assertTrue(
-            boardValidationService.validate(
-                boardState = boardState,
+            metadata = QueensBoardMetadata.metadata(
+                boardSize = 4,
+                targetQueenCount = 4,
                 orthogonalMinDistance = 2,
-            ).isValid,
-            "expected generated board to validate under the requested distance",
+            ),
         )
+        val result = generationWorkflowService.placeQueens(customBoard)
+
+        assertTrue(result.success, "expected queen placement to succeed with a smaller orthogonal distance")
+        val boardState = requireNotNull(result.boardState)
+        assertEquals(4, boardState.cells.flatten().count { it.isSolutionQueen })
+        assertTrue(
+            boardValidationService.validate(boardState).isValid,
+            "expected placed queens to validate under the requested distance metadata",
+        )
+    }
+
+    @Test
+    fun `placeQueens can target seven queens on a 6x6 board`() {
+        val customBoard = boardFactoryService.createEmptyBoard(
+            size = 6,
+            metadata = QueensBoardMetadata.metadata(
+                boardSize = 6,
+                targetQueenCount = 7,
+                orthogonalMinDistance = 5,
+            ),
+        )
+        val result = generationWorkflowService.placeQueens(customBoard)
+
+        assertTrue(result.success, "expected 6x6 placement with 7 queens to succeed")
+        val boardState = requireNotNull(result.boardState)
+        assertEquals("7", boardState.metadata[QueensBoardMetadata.TARGET_QUEEN_COUNT_KEY])
+        assertEquals("5", boardState.metadata[QueensBoardMetadata.ORTHOGONAL_MIN_DISTANCE_KEY])
+        assertEquals(7, boardState.cells.flatten().count { it.isSolutionQueen })
+        assertTrue(boardValidationService.validate(boardState).isValid)
     }
 
     private fun queenPositions(boardState: com.queens.admin.domain.model.BoardState): List<Position> =

@@ -16,6 +16,10 @@
         <div class="text-semantic-neutral-400">
           {{ queensStore.gridSize }}x{{ queensStore.gridSize }}
         </div>
+        <div class="text-xs text-semantic-neutral-500">
+          {{ queensStore.targetQueenCount }} queens, row/column distance at least
+          {{ queensStore.orthogonalMinDistance }}
+        </div>
       </div>
     </div>
 
@@ -31,7 +35,7 @@
       <div class="flex items-center space-x-2">
         <span class="text-lg">👑</span>
         <span class="text-sm font-semibold">
-          {{ queensStore.queenPositions.length }}/{{ queensStore.gridSize }}
+          {{ queensStore.queenPositions.length }}/{{ queensStore.targetQueenCount }}
         </span>
       </div>
     </div>
@@ -71,7 +75,7 @@
     </template>
     <template #stats>
       <span class="text-semantic-success-200 text-sm">
-        Queens: {{ queensStore.queenPositions.length }}/{{ queensStore.gridSize }}
+        Queens: {{ queensStore.queenPositions.length }}/{{ queensStore.targetQueenCount }}
       </span>
     </template>
     <template #actions>

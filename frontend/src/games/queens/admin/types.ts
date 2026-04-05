@@ -9,6 +9,7 @@ export type QueensAdminTool =
 
 export type QueensAdminMarkType = 'NONE' | 'FLAG' | 'QUEEN' | 'INVALID';
 export type QueensAdminGenerationStrategy = 'baseline' | 'marker-guided' | 'template-seeded';
+export type QueensAdminQueenCountMode = 'exact' | 'max';
 
 export interface QueensAdminCell {
   row: number;
@@ -86,6 +87,15 @@ export interface QueensAdminGenerationProgress {
   elapsedMs: number;
   generationPhase: string | null;
   board: QueensAdminBoardState | null;
+  history: Array<{
+    attempt: number;
+    stage: string;
+    message: string;
+    coloredCellCount: number;
+    totalCellCount: number;
+    generationPhase: string | null;
+    createdAt: string;
+  }>;
   updatedAt: string;
   result: QueensAdminOperationResult | null;
 }

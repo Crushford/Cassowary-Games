@@ -1,6 +1,7 @@
 package com.queens.admin.infrastructure.mapper
 
 import com.queens.admin.api.dto.GenerationJobStartedDto
+import com.queens.admin.api.dto.GenerationHistoryEntryDto
 import com.queens.admin.api.dto.GenerationMetricsStatusDto
 import com.queens.admin.api.dto.GenerationJobStatusDto
 import com.queens.admin.application.GenerationJobSnapshot
@@ -38,6 +39,17 @@ class GenerationJobMapper(
             generationPhase = snapshot.generationPhase,
             boardState = snapshot.boardState?.let(boardStateMapper::toDto),
             result = snapshot.result?.let(operationResultMapper::toDto),
+            history = snapshot.history.map { entry ->
+                GenerationHistoryEntryDto(
+                    attempt = entry.attempt,
+                    stage = entry.stage,
+                    message = entry.message,
+                    coloredCellCount = entry.coloredCellCount,
+                    totalCellCount = entry.totalCellCount,
+                    generationPhase = entry.generationPhase,
+                    createdAt = entry.createdAt.toString(),
+                )
+            },
             updatedAt = snapshot.updatedAt.toString(),
         )
 }

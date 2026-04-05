@@ -14,7 +14,18 @@ data class GenerationJobStatusDto(
     val generationPhase: String? = null,
     val boardState: BoardStateDto? = null,
     val result: OperationResultDto? = null,
+    val history: List<GenerationHistoryEntryDto> = emptyList(),
     val updatedAt: String,
+)
+
+data class GenerationHistoryEntryDto(
+    val attempt: Int,
+    val stage: String,
+    val message: String,
+    val coloredCellCount: Int,
+    val totalCellCount: Int,
+    val generationPhase: String? = null,
+    val createdAt: String,
 )
 
 data class GenerationMetricsStatusDto(

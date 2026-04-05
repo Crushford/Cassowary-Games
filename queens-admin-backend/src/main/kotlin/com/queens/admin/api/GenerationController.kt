@@ -105,6 +105,9 @@ class GenerationController(
         return generationJobMapper.toStartedDto(
             generationJobService.startGenerationJob(
                 size = request.size,
+                queenCountMode = request.queenCountMode ?: "exact",
+                targetQueenCount = request.targetQueenCount ?: request.size,
+                orthogonalMinDistance = request.orthogonalMinDistance ?: request.size,
                 minimumGroupSize = request.minimumGroupSize,
                 includeProgressUpdates = request.includeProgressUpdates,
                 generationStrategy = request.generationStrategy,
@@ -132,6 +135,9 @@ class GenerationController(
         return operationResultMapper.toDto(
             generationWorkflowService.generateValidBoard(
                 size = request.size,
+                queenCountMode = request.queenCountMode ?: "exact",
+                targetQueenCount = request.targetQueenCount ?: request.size,
+                orthogonalMinDistance = request.orthogonalMinDistance ?: request.size,
                 minimumGroupSize = request.minimumGroupSize,
                 generationStrategy = request.generationStrategy,
                 seedTemplateOffsets = request.seedTemplateOffsets?.map { Position(it.row, it.col) },

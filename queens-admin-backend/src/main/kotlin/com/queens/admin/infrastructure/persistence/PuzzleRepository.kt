@@ -34,6 +34,8 @@ class PuzzleRepository {
                 it[size] = puzzle.size
                 it[layout] = puzzle.layout
                 it[queens] = puzzle.queens
+                it[targetQueenCount] = puzzle.targetQueenCount
+                it[orthogonalMinDistance] = puzzle.orthogonalMinDistance
                 it[canonicalSignature] = puzzle.canonicalSignature
                 it[minimumGroupSize] = puzzle.minimumGroupSize
                 it[generationStrategy] = puzzle.generationStrategy
@@ -88,6 +90,8 @@ class PuzzleRepository {
             size = this[PuzzlesTable.size],
             layout = this[PuzzlesTable.layout],
             queens = this[PuzzlesTable.queens],
+            targetQueenCount = this[PuzzlesTable.targetQueenCount],
+            orthogonalMinDistance = this[PuzzlesTable.orthogonalMinDistance],
             canonicalSignature = this[PuzzlesTable.canonicalSignature],
             minimumGroupSize = this[PuzzlesTable.minimumGroupSize],
             generationStrategy = this[PuzzlesTable.generationStrategy],

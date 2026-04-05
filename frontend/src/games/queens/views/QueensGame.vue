@@ -65,7 +65,7 @@
         </div>
         <div
           v-else-if="
-            queensStore.queenPositions.length === queensStore.gridSize &&
+            queensStore.queenPositions.length === queensStore.targetQueenCount &&
             !queensStore.isValidPuzzleState.isValid
           "
           class="text-sm text-semantic-danger-400 text-center mt-2"

@@ -205,6 +205,9 @@ class BatchGenerationService(
                     try {
                         val result = generationWorkflowService.generateValidBoard(
                             size = runSnapshot.size,
+                            queenCountMode = "exact",
+                            targetQueenCount = runSnapshot.size,
+                            orthogonalMinDistance = runSnapshot.size,
                             minimumGroupSize = runSnapshot.minimumGroupSize,
                             generationStrategy = runSnapshot.strategy,
                             progressListener = { update ->

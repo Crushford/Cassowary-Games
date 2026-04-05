@@ -18,7 +18,7 @@ class PuzzleJsonExportService(
 
     fun exportToJson(path: Path): ExportSummary {
         val puzzles = puzzleCatalogService.findAll()
-        val grouped = linkedMapOf<String, MutableList<Map<String, String>>>()
+        val grouped = linkedMapOf<String, MutableList<Map<String, Any>>>()
 
         puzzles.forEach { puzzle ->
             val sizeKey = "${puzzle.size}x${puzzle.size}"
@@ -27,6 +27,8 @@ class PuzzleJsonExportService(
                 "id" to puzzle.id.toString(),
                 "layout" to puzzle.layout,
                 "queens" to puzzle.queens,
+                "targetQueenCount" to puzzle.targetQueenCount,
+                "orthogonalMinDistance" to puzzle.orthogonalMinDistance,
             )
             puzzle.difficultyTier?.let { row["difficulty"] = it.name.lowercase() }
             bucket += row

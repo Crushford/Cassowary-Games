@@ -72,6 +72,14 @@ const QueensSquare = defineAsyncComponent(() => import('../queens/QueensSquare.v
 
 const store = useQueensAdminStore();
 const queensStore = useQueensStore();
+const props = withDefaults(
+  defineProps<{
+    showSolutionQueens?: boolean;
+  }>(),
+  {
+    showSolutionQueens: true,
+  }
+);
 
 function toGridSquare(): GridSquare[][] {
   if (!store.board) return [];
@@ -80,7 +88,7 @@ function toGridSquare(): GridSquare[][] {
     row.map((cell) => ({
       position: { row: cell.row, col: cell.col },
       groupColor: cell.groupColor ?? undefined,
-      isSolutionQueen: cell.isSolutionQueen,
+      isSolutionQueen: props.showSolutionQueens ? cell.isSolutionQueen : false,
     }))
   );
 
@@ -92,7 +100,7 @@ function toPlayerMarks(): MarkType[][] {
 
   return store.board.cells.map((row) =>
     row.map((cell) => {
-      if (cell.markType === 'QUEEN') return 'queen';
+      if (cell.markType === 'QUEEN') return props.showSolutionQueens ? 'queen' : null;
       if (cell.markType === 'FLAG') return 'flag';
       return null;
     })
@@ -100,7 +108,7 @@ function toPlayerMarks(): MarkType[][] {
 }
 
 watch(
-  () => store.board,
+  () => [store.board, props.showSolutionQueens],
   () => {
     if (!store.board) return;
 

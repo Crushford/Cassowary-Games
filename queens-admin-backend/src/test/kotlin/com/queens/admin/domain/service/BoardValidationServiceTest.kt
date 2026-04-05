@@ -5,6 +5,8 @@ import com.queens.admin.domain.model.CellState
 import com.queens.admin.domain.model.GenerationPhase
 import com.queens.admin.domain.model.MarkType
 import com.queens.admin.domain.model.Position
+import com.queens.admin.domain.model.QueensBoardMetadata
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -140,7 +142,34 @@ class BoardValidationServiceTest {
         val validation = boardValidationService.validate(boardState)
 
         assertFalse(validation.isValid)
-        assertTrue(validation.errors.any { it.contains("Board has 5 queens, which exceeds the board size 4.") })
+        assertTrue(validation.errors.any { it.contains("Board has 5 queens, which exceeds the target count 4.") })
+    }
+
+    @Test
+    fun `validate uses metadata target queen count by default`() {
+        val boardState = buildBoard(
+            size = 6,
+            layout = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij",
+            queenPositions = setOf(
+                Position(0, 0),
+                Position(0, 5),
+                Position(1, 2),
+                Position(2, 4),
+                Position(3, 1),
+                Position(4, 3),
+                Position(5, 5),
+            ),
+            metadata = QueensBoardMetadata.metadata(
+                boardSize = 6,
+                targetQueenCount = 7,
+                orthogonalMinDistance = 5,
+            ),
+        )
+
+        val validation = boardValidationService.validate(boardState)
+
+        assertTrue(validation.isValid)
+        assertEquals(7, validation.queenCount)
     }
 
     @Test
@@ -247,6 +276,7 @@ class BoardValidationServiceTest {
         size: Int,
         layout: String,
         queenPositions: Set<Position>,
+        metadata: Map<String, String> = emptyMap(),
     ): BoardState {
         require(layout.length == size * size)
         return BoardState(
@@ -265,6 +295,7 @@ class BoardValidationServiceTest {
                 }
             },
             generationPhase = GenerationPhase.ANALYZED,
+            metadata = metadata,
         )
     }
 }

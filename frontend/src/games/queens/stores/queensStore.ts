@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import type { GridSquare, Pos, MarkType } from '../types/types';
-import { createEmptyGrid, isValidPosition, clonePlayerMarks } from './gridUtils';
+import { createEmptyGrid, clonePlayerMarks } from './gridUtils';
 import { removeQueenPlacement, replayHistoryFromEntries } from '../utils/queenRemoval';
 import { decodeQueensPuzzleLayout } from '../utils/urlPuzzleEncoding';
 import { assignRegionPaletteColors } from '../utils/regionDisplay';
@@ -22,12 +22,60 @@ interface PuzzleRecord {
   name?: string;
   layout: string;
   queens: string;
+  targetQueenCount?: number;
+  orthogonalMinDistance?: number;
   difficulty?: 'easy' | 'medium' | 'hard';
 }
 
 function isPerfectSquareLength(length: number): boolean {
   const root = Math.sqrt(length);
   return Number.isInteger(root);
+}
+
+function isDiagonalTouch(left: Pos, right: Pos): boolean {
+  return Math.abs(left.row - right.row) === 1 && Math.abs(left.col - right.col) === 1;
+}
+
+function isOrthogonalConflict(left: Pos, right: Pos, orthogonalMinDistance: number): boolean {
+  if (left.row === right.row) {
+    return Math.abs(left.col - right.col) < orthogonalMinDistance;
+  }
+  if (left.col === right.col) {
+    return Math.abs(left.row - right.row) < orthogonalMinDistance;
+  }
+  return false;
+}
+
+function deriveOrthogonalMinDistanceFromQueens(queens: Pos[], boardSize: number): number {
+  let minimumSharedLineDistance = Number.POSITIVE_INFINITY;
+
+  for (let index = 0; index < queens.length; index++) {
+    const left = queens[index];
+    for (let nextIndex = index + 1; nextIndex < queens.length; nextIndex++) {
+      const right = queens[nextIndex];
+      if (left.row === right.row) {
+        minimumSharedLineDistance = Math.min(
+          minimumSharedLineDistance,
+          Math.abs(left.col - right.col)
+        );
+      } else if (left.col === right.col) {
+        minimumSharedLineDistance = Math.min(
+          minimumSharedLineDistance,
+          Math.abs(left.row - right.row)
+        );
+      }
+    }
+  }
+
+  return Number.isFinite(minimumSharedLineDistance) ? minimumSharedLineDistance : boardSize;
+}
+
+function requiresLineCoverage(
+  targetQueenCount: number,
+  orthogonalMinDistance: number,
+  boardSize: number
+): boolean {
+  return targetQueenCount === boardSize && orthogonalMinDistance >= boardSize;
 }
 
 type PuzzleDatabase = Record<string, PuzzleRecord[]>;
@@ -46,6 +94,8 @@ type PlacementSource = 'player' | 'automation';
 interface QueensState {
   grid: GridSquare[][];
   gridSize: number;
+  targetQueenCount: number;
+  orthogonalMinDistance: number;
   moveHistory: MarkType[][][];
   playerMarks: MarkType[][];
   puzzleDatabase: PuzzleDatabase | null;
@@ -347,6 +397,8 @@ export const useQueensStore = defineStore('queens', {
   state: (): QueensState => ({
     grid: createEmptyGrid(4),
     gridSize: 4,
+    targetQueenCount: 4,
+    orthogonalMinDistance: 4,
     moveHistory: [],
     playerMarks: Array.from({ length: 4 }, () => Array(4).fill(null as MarkType)),
     puzzleDatabase: null,
@@ -447,27 +499,17 @@ export const useQueensStore = defineStore('queens', {
     isValidMove: (state) => (row: number, col: number) => {
       const square = state.grid[row][col];
 
-      // Check if there's a queen in the same row or column
-      for (let i = 0; i < state.gridSize; i++) {
-        if (state.playerMarks[row][i] === 'queen' || state.playerMarks[i][col] === 'queen') {
-          return false;
-        }
-      }
-
-      // Check diagonally adjacent squares (one square away)
-      const diagonalPositions = [
-        { r: row - 1, c: col - 1 },
-        { r: row - 1, c: col + 1 },
-        { r: row + 1, c: col - 1 },
-        { r: row + 1, c: col + 1 },
-      ];
-
-      for (const pos of diagonalPositions) {
-        if (
-          isValidPosition(state.grid, pos.r, pos.c) &&
-          state.playerMarks[pos.r][pos.c] === 'queen'
-        ) {
-          return false;
+      for (let r = 0; r < state.gridSize; r++) {
+        for (let c = 0; c < state.gridSize; c++) {
+          if (state.playerMarks[r][c] !== 'queen') continue;
+          const queen = { row: r, col: c };
+          const candidate = { row, col };
+          if (isOrthogonalConflict(candidate, queen, state.orthogonalMinDistance)) {
+            return false;
+          }
+          if (isDiagonalTouch(candidate, queen)) {
+            return false;
+          }
         }
       }
 
@@ -566,7 +608,7 @@ export const useQueensStore = defineStore('queens', {
       }
 
       const queenCount = playerQueens.length;
-      const requiredQueens = state.gridSize;
+      const requiredQueens = state.targetQueenCount;
 
       // Check if we have the correct number of queens
       if (queenCount !== requiredQueens) {
@@ -897,24 +939,17 @@ export const useQueensStore = defineStore('queens', {
     isValidMoveWithMarks(row: number, col: number, playerMarks: MarkType[][]): boolean {
       const square = this.grid[row][col];
 
-      // Check if there's a queen in the same row or column
-      for (let i = 0; i < this.gridSize; i++) {
-        if (playerMarks[row][i] === 'queen' || playerMarks[i][col] === 'queen') {
-          return false;
-        }
-      }
-
-      // Check diagonally adjacent squares (one square away)
-      const diagonalPositions = [
-        { r: row - 1, c: col - 1 },
-        { r: row - 1, c: col + 1 },
-        { r: row + 1, c: col - 1 },
-        { r: row + 1, c: col + 1 },
-      ];
-
-      for (const pos of diagonalPositions) {
-        if (isValidPosition(this.grid, pos.r, pos.c) && playerMarks[pos.r][pos.c] === 'queen') {
-          return false;
+      for (let r = 0; r < this.gridSize; r++) {
+        for (let c = 0; c < this.gridSize; c++) {
+          if (playerMarks[r][c] !== 'queen') continue;
+          const queen = { row: r, col: c };
+          const candidate = { row, col };
+          if (isOrthogonalConflict(candidate, queen, this.orthogonalMinDistance)) {
+            return false;
+          }
+          if (isDiagonalTouch(candidate, queen)) {
+            return false;
+          }
         }
       }
 
@@ -1064,7 +1099,7 @@ export const useQueensStore = defineStore('queens', {
 
     checkBoardCompletion() {
       const queenCount = this.queenPositions.length;
-      const requiredQueens = this.gridSize;
+      const requiredQueens = this.targetQueenCount;
 
       // First check: must have the correct number of queens
       if (queenCount !== requiredQueens) {
@@ -1161,6 +1196,8 @@ export const useQueensStore = defineStore('queens', {
 
       const gridSize = Math.sqrt(puzzleData.layout.length);
       this.gridSize = gridSize;
+      this.targetQueenCount = puzzleData.targetQueenCount ?? gridSize;
+      this.orthogonalMinDistance = puzzleData.orthogonalMinDistance ?? gridSize;
       const layout = puzzleData.layout;
       const queens = puzzleData.queens;
 
@@ -1436,8 +1473,11 @@ export const useQueensStore = defineStore('queens', {
 
         let layout = '';
         let queens = '';
+        const solutionQueens: Pos[] = [];
+        const gridSize = Math.sqrt(decodedLayout.length);
 
-        for (const rawSymbol of decodedLayout) {
+        for (let index = 0; index < decodedLayout.length; index++) {
+          const rawSymbol = decodedLayout[index];
           if (rawSymbol === '.') {
             layout += '.';
             queens += '.';
@@ -1450,14 +1490,29 @@ export const useQueensStore = defineStore('queens', {
           }
 
           layout += layoutSymbol;
-          queens += rawSymbol === layoutSymbol ? '.' : 'Q';
+          const isSolutionQueen = rawSymbol !== layoutSymbol;
+          queens += isSolutionQueen ? 'Q' : '.';
+          if (isSolutionQueen) {
+            solutionQueens.push({
+              row: Math.floor(index / gridSize),
+              col: index % gridSize,
+            });
+          }
         }
+
+        const targetQueenCount = solutionQueens.length;
+        const orthogonalMinDistance = deriveOrthogonalMinDistanceFromQueens(
+          solutionQueens,
+          gridSize
+        );
 
         const puzzle: PuzzleRecord = {
           id: 'url-preview',
           name: 'URL Preview Puzzle',
           layout,
           queens,
+          targetQueenCount,
+          orthogonalMinDistance,
         };
 
         this.parsePuzzleData(puzzle, options);
@@ -2071,35 +2126,37 @@ export const useQueensStore = defineStore('queens', {
       const now = Date.now();
       const fullyFlaggedGroups = new Set<string>();
       const errorSquaresSet = new Set<string>();
+      const lineCoverageRequired = requiresLineCoverage(
+        this.targetQueenCount,
+        this.orthogonalMinDistance,
+        this.gridSize
+      );
 
       // Check rows for fully flagged
       for (let row = 0; row < this.gridSize; row++) {
-        const isFullyFlagged = this.playerMarks[row].every((mark) => mark === 'flag');
-        if (isFullyFlagged) {
-          const groupKey = `row-flag-${row}`;
-          fullyFlaggedGroups.add(groupKey);
+        if (lineCoverageRequired) {
+          const isFullyFlagged = this.playerMarks[row].every((mark) => mark === 'flag');
+          if (isFullyFlagged) {
+            const groupKey = `row-flag-${row}`;
+            fullyFlaggedGroups.add(groupKey);
 
-          // Check if this group was already flagged
-          const timestamp = this.flaggedGroupTimestamps.get(groupKey);
-          if (!timestamp) {
-            // First time we see this group fully flagged, record timestamp
-            this.flaggedGroupTimestamps.set(groupKey, now);
-          } else {
-            // Check if it's been flagged for more than 1 second
-            if (now - timestamp >= 1000) {
-              // Mark all squares in this row as errors
+            const timestamp = this.flaggedGroupTimestamps.get(groupKey);
+            if (!timestamp) {
+              this.flaggedGroupTimestamps.set(groupKey, now);
+            } else if (now - timestamp >= 1000) {
               for (let col = 0; col < this.gridSize; col++) {
                 errorSquaresSet.add(`${row},${col}`);
               }
             }
+          } else {
+            this.flaggedGroupTimestamps.delete(`row-flag-${row}`);
           }
         } else {
-          // Row is no longer fully flagged, remove timestamp
           this.flaggedGroupTimestamps.delete(`row-flag-${row}`);
         }
       }
 
-      // Check rows for multiple queens
+      // Check rows for queens that violate the orthogonal distance rule
       for (let row = 0; row < this.gridSize; row++) {
         const queenPositions: number[] = [];
         for (let col = 0; col < this.gridSize; col++) {
@@ -2107,19 +2164,27 @@ export const useQueensStore = defineStore('queens', {
             queenPositions.push(col);
           }
         }
-        if (queenPositions.length > 1) {
+        const conflictingCols = new Set<number>();
+        for (let leftIndex = 0; leftIndex < queenPositions.length; leftIndex++) {
+          for (let rightIndex = leftIndex + 1; rightIndex < queenPositions.length; rightIndex++) {
+            const leftCol = queenPositions[leftIndex];
+            const rightCol = queenPositions[rightIndex];
+            if (Math.abs(leftCol - rightCol) < this.orthogonalMinDistance) {
+              conflictingCols.add(leftCol);
+              conflictingCols.add(rightCol);
+            }
+          }
+        }
+        if (conflictingCols.size > 0) {
           const groupKey = `row-queen-${row}`;
           fullyFlaggedGroups.add(groupKey);
 
           const timestamp = this.flaggedGroupTimestamps.get(groupKey);
           if (!timestamp) {
             this.flaggedGroupTimestamps.set(groupKey, now);
-          } else {
-            if (now - timestamp >= 1000) {
-              // Mark all queens in this row as errors
-              for (const col of queenPositions) {
-                errorSquaresSet.add(`${row},${col}`);
-              }
+          } else if (now - timestamp >= 1000) {
+            for (const col of conflictingCols) {
+              errorSquaresSet.add(`${row},${col}`);
             }
           }
         } else {
@@ -2129,28 +2194,29 @@ export const useQueensStore = defineStore('queens', {
 
       // Check columns for fully flagged
       for (let col = 0; col < this.gridSize; col++) {
-        const isFullyFlagged = this.playerMarks.every((row) => row[col] === 'flag');
-        if (isFullyFlagged) {
-          const groupKey = `col-flag-${col}`;
-          fullyFlaggedGroups.add(groupKey);
+        if (lineCoverageRequired) {
+          const isFullyFlagged = this.playerMarks.every((row) => row[col] === 'flag');
+          if (isFullyFlagged) {
+            const groupKey = `col-flag-${col}`;
+            fullyFlaggedGroups.add(groupKey);
 
-          const timestamp = this.flaggedGroupTimestamps.get(groupKey);
-          if (!timestamp) {
-            this.flaggedGroupTimestamps.set(groupKey, now);
-          } else {
-            if (now - timestamp >= 1000) {
-              // Mark all squares in this column as errors
+            const timestamp = this.flaggedGroupTimestamps.get(groupKey);
+            if (!timestamp) {
+              this.flaggedGroupTimestamps.set(groupKey, now);
+            } else if (now - timestamp >= 1000) {
               for (let row = 0; row < this.gridSize; row++) {
                 errorSquaresSet.add(`${row},${col}`);
               }
             }
+          } else {
+            this.flaggedGroupTimestamps.delete(`col-flag-${col}`);
           }
         } else {
           this.flaggedGroupTimestamps.delete(`col-flag-${col}`);
         }
       }
 
-      // Check columns for multiple queens
+      // Check columns for queens that violate the orthogonal distance rule
       for (let col = 0; col < this.gridSize; col++) {
         const queenPositions: number[] = [];
         for (let row = 0; row < this.gridSize; row++) {
@@ -2158,19 +2224,27 @@ export const useQueensStore = defineStore('queens', {
             queenPositions.push(row);
           }
         }
-        if (queenPositions.length > 1) {
+        const conflictingRows = new Set<number>();
+        for (let topIndex = 0; topIndex < queenPositions.length; topIndex++) {
+          for (let bottomIndex = topIndex + 1; bottomIndex < queenPositions.length; bottomIndex++) {
+            const topRow = queenPositions[topIndex];
+            const bottomRow = queenPositions[bottomIndex];
+            if (Math.abs(topRow - bottomRow) < this.orthogonalMinDistance) {
+              conflictingRows.add(topRow);
+              conflictingRows.add(bottomRow);
+            }
+          }
+        }
+        if (conflictingRows.size > 0) {
           const groupKey = `col-queen-${col}`;
           fullyFlaggedGroups.add(groupKey);
 
           const timestamp = this.flaggedGroupTimestamps.get(groupKey);
           if (!timestamp) {
             this.flaggedGroupTimestamps.set(groupKey, now);
-          } else {
-            if (now - timestamp >= 1000) {
-              // Mark all queens in this column as errors
-              for (const row of queenPositions) {
-                errorSquaresSet.add(`${row},${col}`);
-              }
+          } else if (now - timestamp >= 1000) {
+            for (const row of conflictingRows) {
+              errorSquaresSet.add(`${row},${col}`);
             }
           }
         } else {
@@ -2309,21 +2383,63 @@ export const useQueensStore = defineStore('queens', {
       if (hasDiagonalConflicts) {
         message = 'Queens cannot touch diagonally';
       } else {
-        // Check for multiple queens in rows
+        const lineCoverageRequired = requiresLineCoverage(
+          this.targetQueenCount,
+          this.orthogonalMinDistance,
+          this.gridSize
+        );
+
+        // Check for same-row distance conflicts
         for (let row = 0; row < this.gridSize; row++) {
           const queensInRow = queenPositions.filter((q) => q.row === row);
-          if (queensInRow.length > 1) {
-            message = 'Only 1 queen per row';
-            break;
+          for (let index = 0; index < queensInRow.length; index++) {
+            for (let nextIndex = index + 1; nextIndex < queensInRow.length; nextIndex++) {
+              if (
+                Math.abs(queensInRow[index].col - queensInRow[nextIndex].col) <
+                this.orthogonalMinDistance
+              ) {
+                message = `Queens in the same row must be at least ${this.orthogonalMinDistance} apart`;
+                break;
+              }
+            }
+            if (message) break;
           }
+          if (message) break;
         }
 
-        // Check for multiple queens in columns
+        // Check for same-column distance conflicts
         if (!message) {
           for (let col = 0; col < this.gridSize; col++) {
             const queensInCol = queenPositions.filter((q) => q.col === col);
-            if (queensInCol.length > 1) {
-              message = 'Only 1 queen per column';
+            for (let index = 0; index < queensInCol.length; index++) {
+              for (let nextIndex = index + 1; nextIndex < queensInCol.length; nextIndex++) {
+                if (
+                  Math.abs(queensInCol[index].row - queensInCol[nextIndex].row) <
+                  this.orthogonalMinDistance
+                ) {
+                  message = `Queens in the same column must be at least ${this.orthogonalMinDistance} apart`;
+                  break;
+                }
+              }
+              if (message) break;
+            }
+            if (message) break;
+          }
+        }
+
+        if (!message && lineCoverageRequired) {
+          for (let row = 0; row < this.gridSize; row++) {
+            if (this.playerMarks[row].every((mark) => mark === 'flag')) {
+              message = 'Each row must still allow a queen';
+              break;
+            }
+          }
+        }
+
+        if (!message && lineCoverageRequired) {
+          for (let col = 0; col < this.gridSize; col++) {
+            if (this.playerMarks.every((row) => row[col] === 'flag')) {
+              message = 'Each column must still allow a queen';
               break;
             }
           }
