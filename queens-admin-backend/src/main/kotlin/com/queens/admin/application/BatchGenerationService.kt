@@ -29,6 +29,9 @@ data class BatchGenerationRunSnapshot(
     val runId: String,
     val size: Int,
     val strategy: String,
+    val queenCountMode: String,
+    val targetQueenCount: Int,
+    val orthogonalMinDistance: Int,
     val minimumGroupSize: Int,
     val state: BatchGenerationRunState,
     val coloredCellCount: Int,
@@ -77,6 +80,9 @@ class BatchGenerationService(
         sizes: List<Int>,
         strategies: List<String>,
         runsPerCombination: Int,
+        queenCountMode: String,
+        targetQueenCount: Int?,
+        orthogonalMinDistance: Int?,
         minimumGroupSize: Int,
         maxConcurrentJobs: Int,
         saveSuccessfulPuzzles: Boolean,
@@ -93,6 +99,8 @@ class BatchGenerationService(
 
         val runs = buildList {
             normalizedSizes.forEach { size ->
+                val resolvedOrthogonalMinDistance = (orthogonalMinDistance ?: size).coerceIn(1, size * size)
+                val resolvedTargetQueenCount = (targetQueenCount ?: size).coerceIn(1, size * size)
                 normalizedStrategies.forEach { strategy ->
                     repeat(runsPerCombination) {
                         add(
@@ -100,6 +108,9 @@ class BatchGenerationService(
                                 runId = UUID.randomUUID().toString(),
                                 size = size,
                                 strategy = strategy,
+                                queenCountMode = queenCountMode,
+                                targetQueenCount = resolvedTargetQueenCount,
+                                orthogonalMinDistance = resolvedOrthogonalMinDistance,
                                 minimumGroupSize = minimumGroupSize,
                                 state = BatchGenerationRunState.QUEUED,
                                 coloredCellCount = 0,
@@ -205,6 +216,9 @@ class BatchGenerationService(
                     try {
                         val result = generationWorkflowService.generateValidBoard(
                             size = runSnapshot.size,
+                            queenCountMode = runSnapshot.queenCountMode,
+                            targetQueenCount = runSnapshot.targetQueenCount,
+                            orthogonalMinDistance = runSnapshot.orthogonalMinDistance,
                             minimumGroupSize = runSnapshot.minimumGroupSize,
                             generationStrategy = runSnapshot.strategy,
                             progressListener = { update ->
@@ -240,6 +254,9 @@ class BatchGenerationService(
                             runId = runSnapshot.runId,
                             size = runSnapshot.size,
                             strategy = runSnapshot.strategy,
+                            queenCountMode = runSnapshot.queenCountMode,
+                            targetQueenCount = runSnapshot.targetQueenCount,
+                            orthogonalMinDistance = runSnapshot.orthogonalMinDistance,
                             minimumGroupSize = runSnapshot.minimumGroupSize,
                             state = if (runtime.cancelled.get()) BatchGenerationRunState.CANCELLED else if (result.success) BatchGenerationRunState.COMPLETED else BatchGenerationRunState.FAILED,
                             coloredCellCount = result.validation?.coloredCellCount ?: latestRunSnapshot.coloredCellCount,
@@ -265,6 +282,9 @@ class BatchGenerationService(
                             runId = runSnapshot.runId,
                             size = runSnapshot.size,
                             strategy = runSnapshot.strategy,
+                            queenCountMode = runSnapshot.queenCountMode,
+                            targetQueenCount = runSnapshot.targetQueenCount,
+                            orthogonalMinDistance = runSnapshot.orthogonalMinDistance,
                             minimumGroupSize = runSnapshot.minimumGroupSize,
                             state = if (runtime.cancelled.get()) BatchGenerationRunState.CANCELLED else BatchGenerationRunState.FAILED,
                             coloredCellCount = runtime.snapshot.get().runs.firstOrNull { it.runId == runSnapshot.runId }?.coloredCellCount ?: 0,
@@ -302,6 +322,9 @@ class BatchGenerationService(
                         runId = previous.runId,
                         size = previous.size,
                         strategy = previous.strategy,
+                        queenCountMode = previous.queenCountMode,
+                        targetQueenCount = previous.targetQueenCount,
+                        orthogonalMinDistance = previous.orthogonalMinDistance,
                         minimumGroupSize = previous.minimumGroupSize,
                         state = if (runtime.cancelled.get()) BatchGenerationRunState.CANCELLED else BatchGenerationRunState.FAILED,
                         coloredCellCount = previous.coloredCellCount,

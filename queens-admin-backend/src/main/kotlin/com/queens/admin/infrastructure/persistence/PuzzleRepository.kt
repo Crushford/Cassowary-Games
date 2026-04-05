@@ -34,6 +34,8 @@ class PuzzleRepository {
                 it[size] = puzzle.size
                 it[layout] = puzzle.layout
                 it[queens] = puzzle.queens
+                it[targetQueenCount] = puzzle.targetQueenCount
+                it[orthogonalMinDistance] = puzzle.orthogonalMinDistance
                 it[canonicalSignature] = puzzle.canonicalSignature
                 it[minimumGroupSize] = puzzle.minimumGroupSize
                 it[generationStrategy] = puzzle.generationStrategy
@@ -65,6 +67,17 @@ class PuzzleRepository {
                 }
         }
 
+    fun countBySizeAndDistance(): Map<Pair<Int, Int>, Int> =
+        transaction {
+            val countExpression = PuzzlesTable.id.count()
+            PuzzlesTable
+                .select(PuzzlesTable.size, PuzzlesTable.orthogonalMinDistance, countExpression)
+                .groupBy(PuzzlesTable.size, PuzzlesTable.orthogonalMinDistance)
+                .associate { row ->
+                    (row[PuzzlesTable.size] to row[PuzzlesTable.orthogonalMinDistance]) to row[countExpression].toInt()
+                }
+        }
+
     fun updateDifficulty(
         puzzleId: UUID,
         difficultyTier: PuzzleDifficultyTier,
@@ -88,6 +101,8 @@ class PuzzleRepository {
             size = this[PuzzlesTable.size],
             layout = this[PuzzlesTable.layout],
             queens = this[PuzzlesTable.queens],
+            targetQueenCount = this[PuzzlesTable.targetQueenCount],
+            orthogonalMinDistance = this[PuzzlesTable.orthogonalMinDistance],
             canonicalSignature = this[PuzzlesTable.canonicalSignature],
             minimumGroupSize = this[PuzzlesTable.minimumGroupSize],
             generationStrategy = this[PuzzlesTable.generationStrategy],

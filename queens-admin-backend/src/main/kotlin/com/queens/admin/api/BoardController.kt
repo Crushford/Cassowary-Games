@@ -22,7 +22,12 @@ class BoardController(
     @PostMapping("/create")
     fun createBoard(@RequestBody request: CreateBoardRequestDto): OperationResultDto {
         return operationResultMapper.toDto(
-            boardOperationFacade.createBoard(request.size),
+            boardOperationFacade.createBoard(
+                size = request.size,
+                queenCountMode = request.queenCountMode ?: "exact",
+                targetQueenCount = request.targetQueenCount ?: request.size,
+                orthogonalMinDistance = request.orthogonalMinDistance ?: request.size,
+            ),
         )
     }
 

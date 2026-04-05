@@ -2,30 +2,59 @@ package com.queens.admin.application
 
 import com.queens.admin.domain.model.MarkType
 import com.queens.admin.domain.model.Position
+import com.queens.admin.domain.model.QueensBoardMetadata
 import com.queens.admin.domain.service.BlockedSquareExpansionService
 import com.queens.admin.domain.service.BoardFactoryService
 import com.queens.admin.domain.service.BoardValidationService
 import com.queens.admin.domain.service.ColorExpansionService
+import com.queens.admin.domain.service.DeterministicSolverSupportService
 import com.queens.admin.domain.service.InitialColorAssignmentService
 import com.queens.admin.domain.service.QueensConstraintService
 import com.queens.admin.domain.service.QueenPlacementService
+import com.queens.admin.domain.service.SolverEngine
+import com.queens.admin.domain.service.SolverRuleRegistry
 import com.queens.admin.domain.service.ValidatedPuzzleGenerationService
+import com.queens.admin.domain.solver.rules.AxisIsolationForcedQueenRule
+import com.queens.admin.domain.solver.rules.ConstrainedWindowRule
+import com.queens.admin.domain.solver.rules.FlagAssumptionContradictionRule
+import com.queens.admin.domain.solver.rules.FlagSquaresWithoutColorGroupsRule
+import com.queens.admin.domain.solver.rules.ForcedCoverageQueenRule
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import kotlin.math.abs
+import com.queens.admin.domain.solver.rules.PlaceLastFreeQueensRule
+import com.queens.admin.domain.solver.rules.QueenAssumptionContradictionRule
 
 class GenerationWorkflowServiceTest {
     private val queensConstraintService = QueensConstraintService()
     private val boardValidationService = BoardValidationService(queensConstraintService)
     private val boardFactoryService = BoardFactoryService()
+    private val deterministicSolverSupportService = DeterministicSolverSupportService(queensConstraintService)
+    private val solverRuleRegistry = SolverRuleRegistry(
+        listOf(
+            FlagSquaresWithoutColorGroupsRule(deterministicSolverSupportService),
+            PlaceLastFreeQueensRule(deterministicSolverSupportService),
+            ForcedCoverageQueenRule(deterministicSolverSupportService),
+            AxisIsolationForcedQueenRule(deterministicSolverSupportService),
+            QueenAssumptionContradictionRule(deterministicSolverSupportService),
+            FlagAssumptionContradictionRule(deterministicSolverSupportService),
+            ConstrainedWindowRule(deterministicSolverSupportService),
+        ),
+    )
+    private val solverEngine = SolverEngine(solverRuleRegistry, deterministicSolverSupportService)
+    private val deterministicPuzzleAnalysisService = DeterministicPuzzleAnalysisService(
+        solverEngine = solverEngine,
+        solverSupportService = deterministicSolverSupportService,
+    )
     private val validatedPuzzleGenerationService = ValidatedPuzzleGenerationService(
         boardFactoryService = boardFactoryService,
         boardValidationService = boardValidationService,
         queensConstraintService = queensConstraintService,
+        deterministicPuzzleAnalysisService = deterministicPuzzleAnalysisService,
     )
     private val generationWorkflowService = GenerationWorkflowService(
-        queenPlacementService = QueenPlacementService(boardValidationService),
+        queenPlacementService = QueenPlacementService(boardValidationService, queensConstraintService),
         initialColorAssignmentService = InitialColorAssignmentService(boardValidationService),
         colorExpansionService = ColorExpansionService(boardValidationService),
         blockedSquareExpansionService = BlockedSquareExpansionService(boardValidationService),
@@ -55,6 +84,27 @@ class GenerationWorkflowServiceTest {
         assertTrue(boardState.cells.flatten().all { it.groupColor != null }, "expected board to be fully colored")
         assertEquals(6, boardState.cells.flatten().count { it.markType == MarkType.QUEEN }, "expected six queen marks")
         assertEquals(6, boardState.cells.flatten().count { it.isSolutionQueen }, "expected six solution queens")
+        assertTrue(boardValidationService.validate(boardState).isValid, "expected generated board to validate")
+    }
+
+    @Test
+    fun `generateValidBoard supports seven queens on 6x6 with orthogonal distance five`() {
+        val result = generationWorkflowService.generateValidBoard(
+            size = 6,
+            targetQueenCount = 7,
+            orthogonalMinDistance = 5,
+            minimumGroupSize = 3,
+            generationStrategy = "baseline",
+        )
+
+        assertTrue(result.success, "expected custom generation to succeed")
+        val boardState = requireNotNull(result.boardState)
+        assertEquals(6, boardState.size)
+        assertEquals("7", boardState.metadata[QueensBoardMetadata.TARGET_QUEEN_COUNT_KEY])
+        assertEquals("5", boardState.metadata[QueensBoardMetadata.ORTHOGONAL_MIN_DISTANCE_KEY])
+        assertTrue(boardState.cells.flatten().all { it.groupColor != null }, "expected board to be fully colored")
+        assertEquals(7, boardState.cells.flatten().count { it.markType == MarkType.QUEEN }, "expected seven queen marks")
+        assertEquals(7, boardState.cells.flatten().count { it.isSolutionQueen }, "expected seven solution queens")
         assertTrue(boardValidationService.validate(boardState).isValid, "expected generated board to validate")
     }
 
@@ -125,22 +175,109 @@ class GenerationWorkflowServiceTest {
     }
 
     @Test
-    fun `validated generator can run with a smaller orthogonal distance`() {
-        val result = validatedPuzzleGenerationService.generateValidBoard(
+    fun `placeQueens respects custom orthogonal distance metadata`() {
+        val customBoard = boardFactoryService.createEmptyBoard(
             size = 4,
-            orthogonalMinDistance = 2,
-            maxRetries = 2_000,
+            metadata = QueensBoardMetadata.metadata(
+                boardSize = 4,
+                targetQueenCount = 4,
+                orthogonalMinDistance = 2,
+            ),
+        )
+        val result = generationWorkflowService.placeQueens(customBoard)
+
+        assertTrue(result.success, "expected queen placement to succeed with a smaller orthogonal distance")
+        val boardState = requireNotNull(result.boardState)
+        assertEquals(4, boardState.cells.flatten().count { it.isSolutionQueen })
+        assertTrue(
+            boardValidationService.validate(boardState).isValid,
+            "expected placed queens to validate under the requested distance metadata",
+        )
+    }
+
+    @Test
+    fun `placeQueens can target seven queens on a 6x6 board`() {
+        val customBoard = boardFactoryService.createEmptyBoard(
+            size = 6,
+            metadata = QueensBoardMetadata.metadata(
+                boardSize = 6,
+                targetQueenCount = 7,
+                orthogonalMinDistance = 5,
+            ),
+        )
+        val result = generationWorkflowService.placeQueens(customBoard)
+
+        assertTrue(result.success, "expected 6x6 placement with 7 queens to succeed")
+        val boardState = requireNotNull(result.boardState)
+        assertEquals("7", boardState.metadata[QueensBoardMetadata.TARGET_QUEEN_COUNT_KEY])
+        assertEquals("5", boardState.metadata[QueensBoardMetadata.ORTHOGONAL_MIN_DISTANCE_KEY])
+        assertEquals(7, boardState.cells.flatten().count { it.isSolutionQueen })
+        assertTrue(boardValidationService.validate(boardState).isValid)
+    }
+
+    @Test
+    fun `deterministic analysis solves board immediately after initial colors for distance variant`() {
+        val queenPositions = setOf(
+            Position(0, 0),
+            Position(0, 5),
+            Position(2, 1),
+            Position(3, 4),
+            Position(4, 2),
+            Position(5, 0),
+            Position(5, 5),
+        )
+        val placedQueensBoard = boardFactoryService.createEmptyBoard(
+            size = 6,
+            metadata = QueensBoardMetadata.metadata(
+                boardSize = 6,
+                targetQueenCount = 7,
+                orthogonalMinDistance = 5,
+            ),
+        ).copy(
+            cells = List(6) { row ->
+                List(6) { col ->
+                    val isQueen = Position(row, col) in queenPositions
+                    com.queens.admin.domain.model.CellState(
+                        position = Position(row, col),
+                        groupColor = null,
+                        isSolutionQueen = isQueen,
+                        markType = if (isQueen) MarkType.QUEEN else MarkType.NONE,
+                    )
+                }
+            },
+        )
+        val initialColorsBoard = requireNotNull(generationWorkflowService.assignInitialColors(placedQueensBoard).boardState)
+
+        val analysis = deterministicPuzzleAnalysisService.solve(
+            deterministicPuzzleAnalysisService.withRuleset(
+                boardState = initialColorsBoard,
+                ruleset = QueensBoardMetadata.ruleset(initialColorsBoard),
+                targetQueenCount = QueensBoardMetadata.targetQueenCount(initialColorsBoard),
+            ),
         )
 
-        assertTrue(result.success, "expected generation to succeed with a smaller orthogonal distance")
-        val boardState = requireNotNull(result.boardState)
-        assertTrue(
-            boardValidationService.validate(
-                boardState = boardState,
-                orthogonalMinDistance = 2,
-            ).isValid,
-            "expected generated board to validate under the requested distance",
+        val steps = analysis.solverResult.steps.joinToString(" -> ") { step ->
+            "${step.ruleName}:${step.changedCells.size}"
+        }
+        println(
+            "DETERMINISTIC_ANALYSIS_SUMMARY " +
+                "solved=${analysis.solved} " +
+                "stepsTaken=${analysis.stepsTaken} " +
+                "hardestTier=${analysis.hardestTierUsed} " +
+                "queensPlaced=${analysis.finalQueensPlaced} " +
+                "unresolved=${analysis.unresolvedSquares} " +
+                "steps=$steps",
         )
+        if (!analysis.solved) {
+            throw AssertionError(
+                "Expected deterministic analysis to solve initial colors board. " +
+                    "stepsTaken=${analysis.stepsTaken}, hardestTier=${analysis.hardestTierUsed}, " +
+                    "queensPlaced=${analysis.finalQueensPlaced}, unresolved=${analysis.unresolvedSquares}, " +
+                    "steps=$steps",
+            )
+        }
+        assertEquals(7, analysis.finalQueensPlaced)
+        assertEquals(0, analysis.unresolvedSquares)
     }
 
     private fun queenPositions(boardState: com.queens.admin.domain.model.BoardState): List<Position> =

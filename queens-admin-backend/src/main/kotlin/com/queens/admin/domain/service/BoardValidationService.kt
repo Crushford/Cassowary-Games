@@ -3,6 +3,7 @@ package com.queens.admin.domain.service
 import com.queens.admin.domain.model.BoardState
 import com.queens.admin.domain.model.MarkType
 import com.queens.admin.domain.model.Position
+import com.queens.admin.domain.model.QueensBoardMetadata
 import com.queens.admin.domain.model.QueensRuleset
 import com.queens.admin.domain.model.ValidationSummary
 import org.springframework.stereotype.Service
@@ -12,7 +13,7 @@ class BoardValidationService(
     private val queensConstraintService: QueensConstraintService,
 ) {
     fun validate(boardState: BoardState): ValidationSummary =
-        validate(boardState, QueensRuleset.classic(boardState.size))
+        validate(boardState, QueensBoardMetadata.ruleset(boardState), QueensBoardMetadata.targetQueenCount(boardState))
 
     fun validate(
         boardState: BoardState,
@@ -20,6 +21,7 @@ class BoardValidationService(
         forbidDiagonalTouch: Boolean = true,
         requireRowCoverage: Boolean = true,
         requireColumnCoverage: Boolean = true,
+        targetQueenCount: Int = boardState.size,
     ): ValidationSummary =
         validate(
             boardState = boardState,
@@ -29,9 +31,17 @@ class BoardValidationService(
                 requireRowCoverage = requireRowCoverage,
                 requireColumnCoverage = requireColumnCoverage,
             ),
+            expectedQueenCount = targetQueenCount,
         )
 
-    fun validate(boardState: BoardState, ruleset: QueensRuleset): ValidationSummary {
+    fun validate(boardState: BoardState, ruleset: QueensRuleset): ValidationSummary =
+        validate(boardState, ruleset, QueensBoardMetadata.targetQueenCount(boardState))
+
+    fun validate(
+        boardState: BoardState,
+        ruleset: QueensRuleset,
+        expectedQueenCount: Int,
+    ): ValidationSummary {
         val errors = mutableListOf<String>()
         val warnings = mutableListOf<String>()
         val queens = mutableListOf<Triple<Int, Int, String?>>()
@@ -41,6 +51,9 @@ class BoardValidationService(
 
         if (boardState.size < 4 || boardState.size > 20) {
             errors += "Board size must be between 4 and 20."
+        }
+        if (expectedQueenCount !in 1..(boardState.size * boardState.size)) {
+            errors += "Target queen count must be between 1 and ${boardState.size * boardState.size}."
         }
         if (boardState.cells.size != boardState.size) {
             errors += "Board must have ${boardState.size} rows."
@@ -69,17 +82,17 @@ class BoardValidationService(
             }
         }
 
-        if (queens.size > boardState.size) {
-            errors += "Board has ${queens.size} queens, which exceeds the board size ${boardState.size}."
+        if (queens.size > expectedQueenCount) {
+            errors += "Board has ${queens.size} queens, which exceeds the target count ${expectedQueenCount}."
         }
-        if (queens.size < boardState.size) {
-            warnings += "Board currently has ${queens.size} queens; a full puzzle usually has ${boardState.size}."
+        if (queens.size < expectedQueenCount) {
+            warnings += "Board currently has ${queens.size} queens; a full puzzle usually has ${expectedQueenCount}."
         }
         if (coloredCellCount == 0) {
             warnings += "Board has no color groups yet."
         }
-        if (distinctColors.isNotEmpty() && distinctColors.size < boardState.size) {
-            warnings += "Board currently uses ${distinctColors.size} color groups; authoring usually needs at least ${boardState.size}."
+        if (distinctColors.isNotEmpty() && distinctColors.size < expectedQueenCount) {
+            warnings += "Board currently uses ${distinctColors.size} color groups; authoring usually needs at least ${expectedQueenCount}."
         }
 
         for (leftIndex in queens.indices) {
@@ -101,7 +114,7 @@ class BoardValidationService(
             }
         }
 
-        if (ruleset.requireRowCoverage && queens.size == boardState.size) {
+        if (ruleset.requireRowCoverage && queens.size == expectedQueenCount) {
             for (row in 0 until boardState.size) {
                 val queensInRow = queens.count { queen -> queen.first == row }
                 if (queensInRow != 1) {
@@ -110,7 +123,7 @@ class BoardValidationService(
             }
         }
 
-        if (ruleset.requireColumnCoverage && queens.size == boardState.size) {
+        if (ruleset.requireColumnCoverage && queens.size == expectedQueenCount) {
             for (col in 0 until boardState.size) {
                 val queensInColumn = queens.count { queen -> queen.second == col }
                 if (queensInColumn != 1) {

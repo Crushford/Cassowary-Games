@@ -1,6 +1,7 @@
 package com.queens.admin.infrastructure.mapper
 
 import com.queens.admin.api.dto.GenerationJobStartedDto
+import com.queens.admin.api.dto.GenerationHistoryEntryDto
 import com.queens.admin.api.dto.GenerationMetricsStatusDto
 import com.queens.admin.api.dto.GenerationJobStatusDto
 import com.queens.admin.application.GenerationJobSnapshot
@@ -33,11 +34,30 @@ class GenerationJobMapper(
                 markerGuidedPlacements = snapshot.metrics.markerGuidedPlacements,
                 fallbackPlacements = snapshot.metrics.fallbackPlacements,
                 successfulPlacements = snapshot.metrics.successfulPlacements,
+                constrainedWindowHits = snapshot.metrics.constrainedWindowHits,
+                constrainedWindowFlags = snapshot.metrics.constrainedWindowFlags,
+                deterministicSolved = snapshot.metrics.deterministicSolved,
+                deterministicStepsTaken = snapshot.metrics.deterministicStepsTaken,
+                deterministicQueensPlaced = snapshot.metrics.deterministicQueensPlaced,
+                deterministicUnresolvedSquares = snapshot.metrics.deterministicUnresolvedSquares,
+                deterministicHardestTier = snapshot.metrics.deterministicHardestTier,
+                deterministicLastRule = snapshot.metrics.deterministicLastRule,
             ),
             elapsedMs = snapshot.elapsedMs,
             generationPhase = snapshot.generationPhase,
             boardState = snapshot.boardState?.let(boardStateMapper::toDto),
             result = snapshot.result?.let(operationResultMapper::toDto),
+            history = snapshot.history.map { entry ->
+                GenerationHistoryEntryDto(
+                    attempt = entry.attempt,
+                    stage = entry.stage,
+                    message = entry.message,
+                    coloredCellCount = entry.coloredCellCount,
+                    totalCellCount = entry.totalCellCount,
+                    generationPhase = entry.generationPhase,
+                    createdAt = entry.createdAt.toString(),
+                )
+            },
             updatedAt = snapshot.updatedAt.toString(),
         )
 }

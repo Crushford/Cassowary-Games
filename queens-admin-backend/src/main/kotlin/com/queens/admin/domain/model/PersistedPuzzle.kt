@@ -8,6 +8,8 @@ data class PersistedPuzzle(
     val size: Int,
     val layout: String,
     val queens: String,
+    val targetQueenCount: Int,
+    val orthogonalMinDistance: Int,
     val canonicalSignature: String,
     val minimumGroupSize: Int,
     val generationStrategy: String,

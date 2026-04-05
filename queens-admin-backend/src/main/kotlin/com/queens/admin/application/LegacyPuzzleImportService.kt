@@ -69,6 +69,8 @@ class LegacyPuzzleImportService(
                         size = size,
                         layout = layout,
                         queens = queens,
+                        targetQueenCount = puzzleNode.path("targetQueenCount").asInt(size),
+                        orthogonalMinDistance = puzzleNode.path("orthogonalMinDistance").asInt(size),
                         canonicalSignature = canonicalSignature,
                         minimumGroupSize = minimumGroupSize,
                         generationStrategy = generationStrategy,

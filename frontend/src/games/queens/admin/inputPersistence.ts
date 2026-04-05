@@ -1,9 +1,13 @@
 import type { ColorName } from '../types/types';
 import { COLOR_PALETTE } from '../utils/colorPalette';
-import type { QueensAdminGenerationStrategy, QueensAdminTool } from './types';
+import type {
+  QueensAdminGenerationStrategy,
+  QueensAdminQueenCountMode,
+  QueensAdminTool,
+} from './types';
 
 const WORKSHOP_INPUTS_KEY = 'queens-admin-workshop-inputs-v2';
-const BATCH_INPUTS_KEY = 'queens-admin-batch-inputs-v1';
+const BATCH_INPUTS_KEY = 'queens-admin-batch-inputs-v2';
 const VALID_STRATEGIES: QueensAdminGenerationStrategy[] = [
   'baseline',
   'marker-guided',
@@ -18,6 +22,7 @@ const VALID_TOOLS: QueensAdminTool[] = [
   'remove-queen',
   'inspect-cell',
 ];
+const VALID_QUEEN_COUNT_MODES: QueensAdminQueenCountMode[] = ['exact', 'max'];
 type PersistedTemplateSeedCell = {
   row: number;
   col: number;
@@ -26,7 +31,11 @@ type PersistedTemplateSeedCell = {
 
 export type QueensAdminWorkshopInputs = {
   selectedBoardSize: number;
+  queenCountMode: QueensAdminQueenCountMode;
+  targetQueenCount: number;
+  orthogonalMinDistance: number;
   minimumGroupSize: number;
+  showSolutionQueens: boolean;
   generationPreviewIntervalMs: number;
   generationStrategy: QueensAdminGenerationStrategy;
   selectedTool: QueensAdminTool;
@@ -38,6 +47,9 @@ export type QueensAdminBatchInputs = {
   sizesInput: string;
   runsPerCombination: number;
   maxConcurrentJobs: number;
+  queenCountMode: QueensAdminQueenCountMode;
+  targetQueenCount: number;
+  orthogonalMinDistance: number;
   minimumGroupSize: number;
   saveSuccessfulPuzzles: boolean;
   selectedStrategies: QueensAdminGenerationStrategy[];
@@ -73,6 +85,13 @@ function isValidTool(value: unknown): value is QueensAdminTool {
   return typeof value === 'string' && VALID_TOOLS.includes(value as QueensAdminTool);
 }
 
+function isValidQueenCountMode(value: unknown): value is QueensAdminQueenCountMode {
+  return (
+    typeof value === 'string' &&
+    VALID_QUEEN_COUNT_MODES.includes(value as QueensAdminQueenCountMode)
+  );
+}
+
 function isValidColor(value: unknown): value is ColorName {
   return typeof value === 'string' && COLOR_PALETTE.includes(value as ColorName);
 }
@@ -103,11 +122,30 @@ export function loadQueensAdminWorkshopInputs(): Partial<QueensAdminWorkshopInpu
     4,
     20
   );
+  const queenCountMode = isValidQueenCountMode(
+    (parsed as { queenCountMode?: unknown }).queenCountMode
+  )
+    ? (parsed as { queenCountMode: QueensAdminQueenCountMode }).queenCountMode
+    : null;
+  const targetQueenCount = clampInteger(
+    (parsed as { targetQueenCount?: unknown }).targetQueenCount,
+    1,
+    400
+  );
+  const orthogonalMinDistance = clampInteger(
+    (parsed as { orthogonalMinDistance?: unknown }).orthogonalMinDistance,
+    1,
+    400
+  );
   const minimumGroupSize = clampInteger(
     (parsed as { minimumGroupSize?: unknown }).minimumGroupSize,
     1,
     20
   );
+  const showSolutionQueens =
+    typeof (parsed as { showSolutionQueens?: unknown }).showSolutionQueens === 'boolean'
+      ? (parsed as { showSolutionQueens: boolean }).showSolutionQueens
+      : null;
   const generationPreviewIntervalMs = clampInteger(
     (parsed as { generationPreviewIntervalMs?: unknown }).generationPreviewIntervalMs,
     50,
@@ -130,7 +168,11 @@ export function loadQueensAdminWorkshopInputs(): Partial<QueensAdminWorkshopInpu
 
   return {
     ...(selectedBoardSize != null ? { selectedBoardSize } : {}),
+    ...(queenCountMode ? { queenCountMode } : {}),
+    ...(targetQueenCount != null ? { targetQueenCount } : {}),
+    ...(orthogonalMinDistance != null ? { orthogonalMinDistance } : {}),
     ...(minimumGroupSize != null ? { minimumGroupSize } : {}),
+    ...(showSolutionQueens != null ? { showSolutionQueens } : {}),
     ...(generationPreviewIntervalMs != null ? { generationPreviewIntervalMs } : {}),
     ...(generationStrategy ? { generationStrategy } : {}),
     ...(selectedTool ? { selectedTool } : {}),
@@ -161,6 +203,21 @@ export function loadQueensAdminBatchInputs(): Partial<QueensAdminBatchInputs> | 
     1,
     12
   );
+  const queenCountMode = isValidQueenCountMode(
+    (parsed as { queenCountMode?: unknown }).queenCountMode
+  )
+    ? (parsed as { queenCountMode: QueensAdminQueenCountMode }).queenCountMode
+    : null;
+  const targetQueenCount = clampInteger(
+    (parsed as { targetQueenCount?: unknown }).targetQueenCount,
+    1,
+    400
+  );
+  const orthogonalMinDistance = clampInteger(
+    (parsed as { orthogonalMinDistance?: unknown }).orthogonalMinDistance,
+    1,
+    400
+  );
   const minimumGroupSize = clampInteger(
     (parsed as { minimumGroupSize?: unknown }).minimumGroupSize,
     1,
@@ -184,6 +241,9 @@ export function loadQueensAdminBatchInputs(): Partial<QueensAdminBatchInputs> | 
     ...(sizesInput != null ? { sizesInput } : {}),
     ...(runsPerCombination != null ? { runsPerCombination } : {}),
     ...(maxConcurrentJobs != null ? { maxConcurrentJobs } : {}),
+    ...(queenCountMode ? { queenCountMode } : {}),
+    ...(targetQueenCount != null ? { targetQueenCount } : {}),
+    ...(orthogonalMinDistance != null ? { orthogonalMinDistance } : {}),
     ...(minimumGroupSize != null ? { minimumGroupSize } : {}),
     ...(saveSuccessfulPuzzles != null ? { saveSuccessfulPuzzles } : {}),
     ...(selectedStrategies && selectedStrategies.length ? { selectedStrategies } : {}),

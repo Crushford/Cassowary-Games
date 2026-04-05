@@ -77,12 +77,12 @@
     <!-- Modals -->
     <SinglePuzzleModeModal
       :is-visible="queensStore.showSinglePuzzleModeModal"
-      @close="queensStore.closeSinglePuzzleModeModal()"
+      @close="closeSinglePuzzleSelector()"
     />
     <SinglePuzzleModeModal
       mode="rotate"
       :is-visible="showRotateModeModal"
-      @close="showRotateModeModal = false"
+      @close="closeRotateModeSelector()"
     />
     <SpeedModeModal
       :is-visible="speedModeStore.showSpeedModeModal"
@@ -96,8 +96,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, defineAsyncComponent, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { onMounted, defineAsyncComponent, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useQueensStore } from '../stores/queensStore';
 import { useSpeedModeStore } from '../stores/speedModeStore';
 
@@ -113,6 +113,7 @@ const queensStore = useQueensStore();
 const speedModeStore = useSpeedModeStore();
 const showRotateModeModal = ref(false);
 const router = useRouter();
+const route = useRoute();
 
 function goToIncrementalMode() {
   router.push('/queens/incremental');
@@ -123,6 +124,29 @@ onMounted(async () => {
     await queensStore.loadPuzzleDatabase();
   }
 });
+
+watch(
+  () => route.query.mode,
+  (mode) => {
+    queensStore.showSinglePuzzleModeModal = mode === 'single';
+    showRotateModeModal.value = mode === 'rotate';
+  },
+  { immediate: true }
+);
+
+function closeSinglePuzzleSelector() {
+  queensStore.closeSinglePuzzleModeModal();
+  if (route.query.mode === 'single') {
+    router.replace('/queens');
+  }
+}
+
+function closeRotateModeSelector() {
+  showRotateModeModal.value = false;
+  if (route.query.mode === 'rotate') {
+    router.replace('/queens');
+  }
+}
 
 defineOptions({
   name: 'QueensLevels',

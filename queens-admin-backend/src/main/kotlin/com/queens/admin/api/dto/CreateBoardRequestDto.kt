@@ -2,6 +2,9 @@ package com.queens.admin.api.dto
 
 data class CreateBoardRequestDto(
     val size: Int,
+    val queenCountMode: String? = null,
+    val targetQueenCount: Int? = null,
+    val orthogonalMinDistance: Int? = null,
     val minimumGroupSize: Int = 3,
     val includeProgressUpdates: Boolean = false,
     val generationStrategy: String = "baseline",

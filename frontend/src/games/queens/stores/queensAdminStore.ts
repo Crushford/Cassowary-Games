@@ -7,6 +7,7 @@ import type {
   QueensAdminBatchStatus,
   QueensAdminBoardState,
   QueensAdminGenerationProgress,
+  QueensAdminQueenCountMode,
   QueensAdminGenerationStrategy,
   QueensAdminHistoryEntry,
   QueensAdminOperationResult,
@@ -22,6 +23,9 @@ const MAX_TRACKED_BATCHES = 8;
 export const useQueensAdminStore = defineStore('queensAdmin', () => {
   const board = ref<QueensAdminBoardState | null>(null);
   const boardSize = ref(DEFAULT_BOARD_SIZE);
+  const queenCountMode = ref<QueensAdminQueenCountMode>('exact');
+  const targetQueenCount = ref(DEFAULT_BOARD_SIZE);
+  const orthogonalMinDistance = ref(DEFAULT_BOARD_SIZE);
   const minimumGroupSize = ref(3);
   const generationStrategy = ref<QueensAdminGenerationStrategy>('baseline');
   const selectedTool = ref<QueensAdminTool>('paint-color');
@@ -165,6 +169,10 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     if (!nextBoard) return;
     board.value = nextBoard;
     boardSize.value = nextBoard.size;
+    targetQueenCount.value = Number(nextBoard.metadata?.targetQueenCount ?? nextBoard.size);
+    orthogonalMinDistance.value = Number(
+      nextBoard.metadata?.orthogonalMinDistance ?? nextBoard.size
+    );
     selectedCellKey.value = null;
   }
 
@@ -176,6 +184,10 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     if (result.board) {
       board.value = result.board;
       boardSize.value = result.board.size;
+      targetQueenCount.value = Number(result.board.metadata?.targetQueenCount ?? result.board.size);
+      orthogonalMinDistance.value = Number(
+        result.board.metadata?.orthogonalMinDistance ?? result.board.size
+      );
     }
 
     validation.value = result.validation;
@@ -315,10 +327,36 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     currentRequestController.abort();
   }
 
-  async function createBoard(size: number = boardSize.value): Promise<void> {
+  async function createBoard(
+    size: number = boardSize.value,
+    options?: {
+      queenCountMode?: QueensAdminQueenCountMode;
+      targetQueenCount?: number;
+      orthogonalMinDistance?: number;
+    }
+  ): Promise<void> {
     boardSize.value = size;
+    queenCountMode.value = options?.queenCountMode ?? queenCountMode.value;
+    targetQueenCount.value =
+      queenCountMode.value === 'max'
+        ? targetQueenCount.value
+        : Math.max(1, Math.min(size * size, options?.targetQueenCount ?? targetQueenCount.value));
+    orthogonalMinDistance.value = Math.max(
+      1,
+      options?.orthogonalMinDistance ?? orthogonalMinDistance.value
+    );
     generationProgress.value = null;
-    await callBackendOperation((signal) => queensAdminApi.createEmptyBoard(size, signal));
+    await callBackendOperation((signal) =>
+      queensAdminApi.createEmptyBoard(
+        size,
+        {
+          queenCountMode: queenCountMode.value,
+          targetQueenCount: targetQueenCount.value,
+          orthogonalMinDistance: orthogonalMinDistance.value,
+        },
+        signal
+      )
+    );
   }
 
   async function generateBoard(
@@ -326,9 +364,21 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     options?: {
       seedTemplateOffsets?: Array<{ row: number; col: number }>;
       previewIntervalMs?: number;
+      queenCountMode?: QueensAdminQueenCountMode;
+      targetQueenCount?: number;
+      orthogonalMinDistance?: number;
     }
   ): Promise<void> {
     boardSize.value = size;
+    queenCountMode.value = options?.queenCountMode ?? queenCountMode.value;
+    targetQueenCount.value =
+      queenCountMode.value === 'max'
+        ? targetQueenCount.value
+        : Math.max(1, Math.min(size * size, options?.targetQueenCount ?? targetQueenCount.value));
+    orthogonalMinDistance.value = Math.max(
+      1,
+      options?.orthogonalMinDistance ?? orthogonalMinDistance.value
+    );
     minimumGroupSize.value = Math.max(1, Math.min(minimumGroupSize.value, size));
     loading.value = true;
     canCancelRequest.value = true;
@@ -340,6 +390,9 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
       const jobId = await queensAdminApi.startGenerateValidBoardJob(size, {
         includeProgressUpdates: true,
         minimumGroupSize: minimumGroupSize.value,
+        queenCountMode: queenCountMode.value,
+        targetQueenCount: targetQueenCount.value,
+        orthogonalMinDistance: orthogonalMinDistance.value,
         generationStrategy: generationStrategy.value,
         seedTemplateOffsets: options?.seedTemplateOffsets,
       });
@@ -425,6 +478,9 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     sizes: number[];
     strategies: QueensAdminGenerationStrategy[];
     runsPerCombination: number;
+    queenCountMode: 'exact' | 'max';
+    targetQueenCount?: number | null;
+    orthogonalMinDistance: number;
     minimumGroupSize: number;
     maxConcurrentJobs: number;
     saveSuccessfulPuzzles: boolean;
@@ -539,7 +595,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
 
   async function validateCurrentBoard(): Promise<void> {
     if (!board.value) return;
-    await callBackendOperation((signal) => queensAdminApi.validateBoard(board.value, signal));
+    await callBackendOperation((signal) => queensAdminApi.runAllSolverSteps(board.value, signal));
   }
 
   async function applyManualToolToCell(row: number, col: number): Promise<void> {
@@ -595,6 +651,9 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
   return {
     board,
     boardSize,
+    queenCountMode,
+    targetQueenCount,
+    orthogonalMinDistance,
     minimumGroupSize,
     generationStrategy,
     selectedTool,

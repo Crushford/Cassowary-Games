@@ -2,6 +2,7 @@ package com.queens.admin.application
 
 import com.queens.admin.domain.model.BoardState
 import com.queens.admin.domain.model.PersistedPuzzle
+import com.queens.admin.domain.model.QueensBoardMetadata
 import com.queens.admin.domain.service.CanonicalPuzzleSignatureService
 import com.queens.admin.infrastructure.persistence.PuzzleRepository
 import java.time.Instant
@@ -26,6 +27,9 @@ class PuzzleCatalogService(
 
     fun countBySize(): Map<Int, Int> =
         puzzleRepository.countBySize()
+
+    fun countBySizeAndDistance(): Map<Pair<Int, Int>, Int> =
+        puzzleRepository.countBySizeAndDistance()
 
     fun save(persistedPuzzle: PersistedPuzzle): PersistedPuzzle =
         puzzleRepository.insert(persistedPuzzle)
@@ -55,6 +59,8 @@ class PuzzleCatalogService(
                 size = boardState.size,
                 layout = encodedPuzzle.layout,
                 queens = encodedPuzzle.queens,
+                targetQueenCount = QueensBoardMetadata.targetQueenCount(boardState),
+                orthogonalMinDistance = QueensBoardMetadata.orthogonalMinDistance(boardState),
                 canonicalSignature = canonicalSignature,
                 minimumGroupSize = minimumGroupSize,
                 generationStrategy = generationStrategy,

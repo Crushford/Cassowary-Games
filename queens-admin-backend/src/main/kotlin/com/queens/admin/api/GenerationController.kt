@@ -45,11 +45,19 @@ class GenerationController(
     @GetMapping("/catalog-stats")
     fun getCatalogStats(): PuzzleCatalogStatsDto {
         val countsBySize = puzzleCatalogService.countBySize()
+        val countsBySizeAndDistance =
+            puzzleCatalogService.countBySizeAndDistance()
+                .toSortedMap(compareBy<Pair<Int, Int>>({ it.first }, { it.second }))
+                .mapKeys { (sizeAndDistance, _) ->
+                    val (size, distance) = sizeAndDistance
+                    "${size}x${size}|d=$distance"
+                }
         return PuzzleCatalogStatsDto(
             totalPuzzles = countsBySize.values.sum(),
             countsBySize = countsBySize
                 .toSortedMap()
                 .mapKeys { (size, _) -> "${size}x${size}" },
+            countsBySizeAndDistance = countsBySizeAndDistance,
         )
     }
 
@@ -79,6 +87,9 @@ class GenerationController(
                 sizes = request.sizes,
                 strategies = request.strategies,
                 runsPerCombination = request.runsPerCombination,
+                queenCountMode = request.queenCountMode,
+                targetQueenCount = request.targetQueenCount,
+                orthogonalMinDistance = request.orthogonalMinDistance,
                 minimumGroupSize = request.minimumGroupSize,
                 maxConcurrentJobs = request.maxConcurrentJobs,
                 saveSuccessfulPuzzles = request.saveSuccessfulPuzzles,
@@ -105,6 +116,9 @@ class GenerationController(
         return generationJobMapper.toStartedDto(
             generationJobService.startGenerationJob(
                 size = request.size,
+                queenCountMode = request.queenCountMode ?: "exact",
+                targetQueenCount = request.targetQueenCount ?: request.size,
+                orthogonalMinDistance = request.orthogonalMinDistance ?: request.size,
                 minimumGroupSize = request.minimumGroupSize,
                 includeProgressUpdates = request.includeProgressUpdates,
                 generationStrategy = request.generationStrategy,
@@ -132,6 +146,9 @@ class GenerationController(
         return operationResultMapper.toDto(
             generationWorkflowService.generateValidBoard(
                 size = request.size,
+                queenCountMode = request.queenCountMode ?: "exact",
+                targetQueenCount = request.targetQueenCount ?: request.size,
+                orthogonalMinDistance = request.orthogonalMinDistance ?: request.size,
                 minimumGroupSize = request.minimumGroupSize,
                 generationStrategy = request.generationStrategy,
                 seedTemplateOffsets = request.seedTemplateOffsets?.map { Position(it.row, it.col) },

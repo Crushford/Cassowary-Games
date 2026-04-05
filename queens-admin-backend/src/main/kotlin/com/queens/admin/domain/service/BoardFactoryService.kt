@@ -9,7 +9,10 @@ import org.springframework.stereotype.Service
 
 @Service
 class BoardFactoryService {
-    fun createEmptyBoard(size: Int): BoardState {
+    fun createEmptyBoard(
+        size: Int,
+        metadata: Map<String, String> = emptyMap(),
+    ): BoardState {
         return BoardState(
             size = size,
             cells = List(size) { row ->
@@ -23,10 +26,11 @@ class BoardFactoryService {
                 }
             },
             generationPhase = GenerationPhase.EMPTY,
+            metadata = metadata,
         )
     }
 
     fun clearBoard(boardState: BoardState): BoardState {
-        return createEmptyBoard(boardState.size)
+        return createEmptyBoard(boardState.size, boardState.metadata)
     }
 }

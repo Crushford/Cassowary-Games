@@ -19,7 +19,7 @@ class SolverWorkflowService(
         return OperationResult(
             success = true,
             actionType = ActionType.CLEAR_SOLVER_MARKS,
-            explanation = "Cleared transient solver invalid marks.",
+            explanation = "Cleared all visible solver marks while keeping the hidden puzzle definition intact.",
             boardState = clearedBoard,
             warnings = validation.warnings,
             errors = validation.errors,
@@ -60,16 +60,19 @@ class SolverWorkflowService(
     }
 
     fun runAllSolverSteps(boardState: BoardState): OperationResult {
-        val solverResult = solverEngine.runAllStepsUntilStuck(boardState)
+        val clearedBoard = solverEngine.clearSolverMarks(boardState)
+        val solverResult = solverEngine.runAllStepsUntilStuck(clearedBoard)
         val validation = boardValidationService.validate(solverResult.boardState)
 
         return OperationResult(
-            success = solverResult.progressMade,
+            success = solverResult.solved,
             actionType = ActionType.RUN_ALL_SOLVER_STEPS,
-            explanation = if (solverResult.progressMade) {
-                "Ran solver rules until no more progress was available."
+            explanation = if (solverResult.solved) {
+                "Deterministic solver finished the puzzle without guessing."
+            } else if (solverResult.progressMade) {
+                "Deterministic solver made progress but got stuck before fully solving the puzzle."
             } else {
-                "Solver could not make progress on the current board."
+                "Deterministic solver could not make progress from a clean board."
             },
             boardState = solverResult.boardState,
             changedCells = solverResult.steps.flatMap { it.changedCells },

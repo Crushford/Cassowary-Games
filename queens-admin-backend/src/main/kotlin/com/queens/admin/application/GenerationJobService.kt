@@ -13,11 +13,18 @@ import org.springframework.stereotype.Service
 class GenerationJobService(
     private val generationWorkflowService: GenerationWorkflowService,
 ) {
+    companion object {
+        private const val MAX_HISTORY_ENTRIES = 40
+    }
+
     private val executor = Executors.newCachedThreadPool()
     private val jobs = ConcurrentHashMap<String, GenerationJobRuntime>()
 
     fun startGenerationJob(
         size: Int,
+        queenCountMode: String = "exact",
+        targetQueenCount: Int = size,
+        orthogonalMinDistance: Int = size,
         minimumGroupSize: Int = 3,
         includeProgressUpdates: Boolean = false,
         generationStrategy: String = "baseline",
@@ -37,6 +44,9 @@ class GenerationJobService(
 
         val runtime = GenerationJobRuntime(
             size = size,
+            queenCountMode = queenCountMode,
+            targetQueenCount = targetQueenCount,
+            orthogonalMinDistance = orthogonalMinDistance,
             minimumGroupSize = minimumGroupSize,
             includeProgressUpdates = includeProgressUpdates,
             generationStrategy = generationStrategy,
@@ -97,6 +107,9 @@ class GenerationJobService(
         try {
             val result = generationWorkflowService.generateValidBoard(
                 size = runtime.size,
+                queenCountMode = runtime.queenCountMode,
+                targetQueenCount = runtime.targetQueenCount,
+                orthogonalMinDistance = runtime.orthogonalMinDistance,
                 minimumGroupSize = runtime.minimumGroupSize,
                 generationStrategy = runtime.generationStrategy,
                 seedTemplateOffsets = runtime.seedTemplateOffsets,
@@ -196,9 +209,19 @@ class GenerationJobService(
         result: com.queens.admin.domain.model.OperationResult? = null,
     ) {
         val now = Instant.now()
+        val previous = runtime.snapshot.get()
+        val nextHistoryEntry = GenerationHistoryEntry(
+            attempt = attempt,
+            stage = stage,
+            message = message,
+            coloredCellCount = coloredCellCount,
+            totalCellCount = totalCellCount,
+            generationPhase = generationPhase,
+            createdAt = now,
+        )
         runtime.snapshot.set(
             GenerationJobSnapshot(
-                jobId = runtime.snapshot.get().jobId,
+                jobId = previous.jobId,
                 state = state,
                 attempt = attempt,
                 stage = stage,
@@ -211,6 +234,7 @@ class GenerationJobService(
                 generationPhase = generationPhase,
                 boardState = boardState,
                 result = result,
+                history = (previous.history + nextHistoryEntry).takeLast(MAX_HISTORY_ENTRIES),
                 updatedAt = now,
             ),
         )
@@ -218,6 +242,9 @@ class GenerationJobService(
 
     private data class GenerationJobRuntime(
         val size: Int,
+        val queenCountMode: String,
+        val targetQueenCount: Int,
+        val orthogonalMinDistance: Int,
         val minimumGroupSize: Int,
         val includeProgressUpdates: Boolean,
         val generationStrategy: String,

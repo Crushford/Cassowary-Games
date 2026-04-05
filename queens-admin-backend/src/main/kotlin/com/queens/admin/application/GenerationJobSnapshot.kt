@@ -24,6 +24,16 @@ data class GenerationProgressUpdate(
     val boardState: BoardState? = null,
 )
 
+data class GenerationHistoryEntry(
+    val attempt: Int,
+    val stage: String,
+    val message: String,
+    val coloredCellCount: Int,
+    val totalCellCount: Int,
+    val generationPhase: String? = null,
+    val createdAt: Instant = Instant.now(),
+)
+
 data class GenerationMetricsSnapshot(
     val solverChecks: Int = 0,
     val rollbacks: Int = 0,
@@ -33,6 +43,14 @@ data class GenerationMetricsSnapshot(
     val markerGuidedPlacements: Int = 0,
     val fallbackPlacements: Int = 0,
     val successfulPlacements: Int = 0,
+    val constrainedWindowHits: Int = 0,
+    val constrainedWindowFlags: Int = 0,
+    val deterministicSolved: Boolean? = null,
+    val deterministicStepsTaken: Int = 0,
+    val deterministicQueensPlaced: Int = 0,
+    val deterministicUnresolvedSquares: Int = 0,
+    val deterministicHardestTier: String? = null,
+    val deterministicLastRule: String? = null,
 )
 
 data class GenerationJobSnapshot(
@@ -49,5 +67,6 @@ data class GenerationJobSnapshot(
     val generationPhase: String? = null,
     val boardState: BoardState? = null,
     val result: OperationResult? = null,
+    val history: List<GenerationHistoryEntry> = emptyList(),
     val updatedAt: Instant = Instant.now(),
 )

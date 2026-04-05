@@ -9,6 +9,7 @@ export type QueensAdminTool =
 
 export type QueensAdminMarkType = 'NONE' | 'FLAG' | 'QUEEN' | 'INVALID';
 export type QueensAdminGenerationStrategy = 'baseline' | 'marker-guided' | 'template-seeded';
+export type QueensAdminQueenCountMode = 'exact' | 'max';
 
 export interface QueensAdminCell {
   row: number;
@@ -82,10 +83,27 @@ export interface QueensAdminGenerationProgress {
     markerGuidedPlacements: number;
     fallbackPlacements: number;
     successfulPlacements: number;
+    constrainedWindowHits: number;
+    constrainedWindowFlags: number;
+    deterministicSolved: boolean | null;
+    deterministicStepsTaken: number;
+    deterministicQueensPlaced: number;
+    deterministicUnresolvedSquares: number;
+    deterministicHardestTier: string | null;
+    deterministicLastRule: string | null;
   };
   elapsedMs: number;
   generationPhase: string | null;
   board: QueensAdminBoardState | null;
+  history: Array<{
+    attempt: number;
+    stage: string;
+    message: string;
+    coloredCellCount: number;
+    totalCellCount: number;
+    generationPhase: string | null;
+    createdAt: string;
+  }>;
   updatedAt: string;
   result: QueensAdminOperationResult | null;
 }
@@ -94,6 +112,9 @@ export interface QueensAdminBatchRun {
   runId: string;
   size: number;
   strategy: QueensAdminGenerationStrategy;
+  queenCountMode: QueensAdminQueenCountMode;
+  targetQueenCount: number;
+  orthogonalMinDistance: number;
   minimumGroupSize: number;
   state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
   coloredCellCount: number;
@@ -146,4 +167,5 @@ export interface QueensAdminSystemLoad {
 export interface QueensAdminPuzzleCatalogStats {
   totalPuzzles: number;
   countsBySize: Record<string, number>;
+  countsBySizeAndDistance: Record<string, number>;
 }

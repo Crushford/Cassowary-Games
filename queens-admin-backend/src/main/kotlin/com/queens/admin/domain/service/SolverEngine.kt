@@ -1,7 +1,7 @@
 package com.queens.admin.domain.service
 
 import com.queens.admin.domain.model.BoardState
-import com.queens.admin.domain.model.MarkType
+import com.queens.admin.domain.solver.SolverDifficultyTier
 import com.queens.admin.domain.solver.SolverResult
 import com.queens.admin.domain.solver.SolverStep
 import org.springframework.stereotype.Service
@@ -9,42 +9,48 @@ import org.springframework.stereotype.Service
 @Service
 class SolverEngine(
     private val solverRuleRegistry: SolverRuleRegistry,
+    private val solverSupportService: DeterministicSolverSupportService,
 ) {
     fun clearSolverMarks(boardState: BoardState): BoardState {
-        return boardState.copy(
-            cells = boardState.cells.map { row ->
-                row.map { cell ->
-                    if (cell.markType == MarkType.INVALID) cell.copy(markType = MarkType.NONE) else cell
-                }
-            },
-        )
+        return solverSupportService.clearAllMarks(boardState)
     }
 
-    fun runNextStep(boardState: BoardState): SolverResult {
-        val nextStep = solverRuleRegistry.orderedRules()
-            .firstNotNullOfOrNull { rule -> rule.apply(boardState) }
+    fun runNextStep(
+        boardState: BoardState,
+        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.HARD,
+    ): SolverResult {
+        val nextStep = solverRuleRegistry.orderedRules(maxDifficultyTier)
+            .firstNotNullOfOrNull { rule ->
+                rule.apply(boardState)?.takeIf { step -> step.changedCells.isNotEmpty() }
+            }
 
         return if (nextStep == null) {
             SolverResult(
                 boardState = boardState,
                 steps = emptyList(),
                 progressMade = false,
-                solved = false,
+                solved = solverSupportService.isSolved(boardState),
                 stuck = true,
+                maxDifficultyTier = maxDifficultyTier,
             )
         } else {
             SolverResult(
                 boardState = nextStep.boardState,
                 steps = listOf(nextStep),
                 progressMade = true,
-                solved = false,
+                solved = solverSupportService.isSolved(nextStep.boardState),
                 stuck = false,
+                maxDifficultyTier = maxDifficultyTier,
             )
         }
     }
 
-    fun runSpecificRule(boardState: BoardState, ruleName: String): SolverResult {
-        val rule = solverRuleRegistry.findByName(ruleName)
+    fun runSpecificRule(
+        boardState: BoardState,
+        ruleName: String,
+        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.HARD,
+    ): SolverResult {
+        val rule = solverRuleRegistry.findByName(ruleName, maxDifficultyTier)
         val step = rule?.apply(boardState)
 
         return if (step == null) {
@@ -52,46 +58,64 @@ class SolverEngine(
                 boardState = boardState,
                 steps = emptyList(),
                 progressMade = false,
-                solved = false,
+                solved = solverSupportService.isSolved(boardState),
                 stuck = true,
+                maxDifficultyTier = maxDifficultyTier,
             )
         } else {
             SolverResult(
                 boardState = step.boardState,
                 steps = listOf(step),
                 progressMade = true,
-                solved = false,
+                solved = solverSupportService.isSolved(step.boardState),
                 stuck = false,
+                maxDifficultyTier = maxDifficultyTier,
             )
         }
     }
 
-    fun runAllStepsUntilStuck(boardState: BoardState, maxSteps: Int = 64): SolverResult {
+    fun runAllStepsUntilStuck(
+        boardState: BoardState,
+        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.HARD,
+        maxSteps: Int = 256,
+    ): SolverResult {
         var currentBoard = boardState
         val steps = mutableListOf<SolverStep>()
 
         repeat(maxSteps) {
-            val nextResult = runNextStep(currentBoard)
+            val nextResult = runNextStep(currentBoard, maxDifficultyTier)
             if (!nextResult.progressMade) {
                 return SolverResult(
                     boardState = currentBoard,
                     steps = steps.toList(),
                     progressMade = steps.isNotEmpty(),
-                    solved = false,
+                    solved = solverSupportService.isSolved(currentBoard),
                     stuck = true,
+                    maxDifficultyTier = maxDifficultyTier,
                 )
             }
 
             steps += nextResult.steps
             currentBoard = nextResult.boardState
+            if (solverSupportService.isSolved(currentBoard)) {
+                return SolverResult(
+                    boardState = currentBoard,
+                    steps = steps.toList(),
+                    progressMade = true,
+                    solved = true,
+                    stuck = false,
+                    maxDifficultyTier = maxDifficultyTier,
+                )
+            }
         }
 
         return SolverResult(
             boardState = currentBoard,
             steps = steps.toList(),
             progressMade = steps.isNotEmpty(),
-            solved = false,
+            solved = solverSupportService.isSolved(currentBoard),
             stuck = true,
+            maxDifficultyTier = maxDifficultyTier,
         )
     }
 }

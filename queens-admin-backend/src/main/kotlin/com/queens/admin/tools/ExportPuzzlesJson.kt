@@ -16,12 +16,15 @@ fun main(args: Array<String>) {
 
     try {
         val exporter = context.getBean(PuzzleJsonExportService::class.java)
-        val summary = exporter.exportToJson(options.path)
+        val summary = exporter.exportCatalogs(options.directory)
 
         println("Puzzle JSON export completed.")
-        println("  File: ${summary.outputPath}")
-        println("  Size buckets: ${summary.sizeBucketCount}")
-        println("  Puzzles exported: ${summary.puzzleCount}")
+        println("  Classic file: ${summary.classicOutputPath}")
+        println("  Classic size buckets: ${summary.classicSizeBucketCount}")
+        println("  Classic puzzles exported: ${summary.classicPuzzleCount}")
+        println("  Extended file: ${summary.extendedOutputPath}")
+        println("  Extended size buckets: ${summary.extendedSizeBucketCount}")
+        println("  Extended puzzles exported: ${summary.extendedPuzzleCount}")
         exitProcess(0)
     } catch (error: Throwable) {
         System.err.println("Puzzle JSON export failed: ${error.message}")
@@ -33,32 +36,32 @@ fun main(args: Array<String>) {
 }
 
 private data class ExportOptions(
-    val path: Path = defaultExportPuzzlePath(),
+    val directory: Path = defaultExportPuzzleDirectory(),
 )
 
 private fun parseExportArgs(args: List<String>): ExportOptions {
-    var path = defaultExportPuzzlePath()
+    var directory = defaultExportPuzzleDirectory()
 
     var index = 0
     while (index < args.size) {
         when (args[index]) {
-            "--file" -> {
-                path = Path.of(args.getOrNull(index + 1) ?: error("Missing value for --file"))
+            "--dir" -> {
+                directory = Path.of(args.getOrNull(index + 1) ?: error("Missing value for --dir"))
                 index += 1
             }
         }
         index += 1
     }
 
-    return ExportOptions(path = path)
+    return ExportOptions(directory = directory)
 }
 
-private fun defaultExportPuzzlePath(): Path {
+private fun defaultExportPuzzleDirectory(): Path {
     val candidates =
         listOf(
-            Path.of("frontend/public/queens/puzzles.json"),
-            Path.of("../frontend/public/queens/puzzles.json"),
+            Path.of("frontend/public/queens"),
+            Path.of("../frontend/public/queens"),
         )
 
-    return candidates.firstOrNull { it.parent?.toFile()?.exists() == true } ?: candidates.first()
+    return candidates.firstOrNull { it.toFile().exists() } ?: candidates.first()
 }
