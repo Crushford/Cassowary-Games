@@ -16,6 +16,7 @@ import com.queens.admin.application.BatchGenerationService
 import com.queens.admin.application.GenerationJobService
 import com.queens.admin.application.GenerationWorkflowService
 import com.queens.admin.application.PuzzleCatalogService
+import com.queens.admin.domain.model.Position
 import com.queens.admin.infrastructure.mapper.BatchGenerationMapper
 import com.queens.admin.infrastructure.mapper.BoardStateMapper
 import com.queens.admin.infrastructure.mapper.GenerationJobMapper
@@ -107,6 +108,7 @@ class GenerationController(
                 minimumGroupSize = request.minimumGroupSize,
                 includeProgressUpdates = request.includeProgressUpdates,
                 generationStrategy = request.generationStrategy,
+                seedTemplateOffsets = request.seedTemplateOffsets?.map { Position(it.row, it.col) },
             ),
         )
     }
@@ -132,6 +134,7 @@ class GenerationController(
                 size = request.size,
                 minimumGroupSize = request.minimumGroupSize,
                 generationStrategy = request.generationStrategy,
+                seedTemplateOffsets = request.seedTemplateOffsets?.map { Position(it.row, it.col) },
             ),
         )
     }

@@ -140,6 +140,7 @@ describe('batch history migration', () => {
         persistenceState: 'SAVED',
         persistenceMessage: null,
         savedPuzzleId: 'p-1',
+        encodedPuzzleLayout: null,
       },
     ]);
 

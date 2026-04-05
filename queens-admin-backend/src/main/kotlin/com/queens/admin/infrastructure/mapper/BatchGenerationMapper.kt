@@ -49,5 +49,6 @@ class BatchGenerationMapper {
             persistenceState = run.persistenceState,
             persistenceMessage = run.persistenceMessage,
             savedPuzzleId = run.savedPuzzleId,
+            encodedPuzzleLayout = run.encodedPuzzleLayout,
         )
 }

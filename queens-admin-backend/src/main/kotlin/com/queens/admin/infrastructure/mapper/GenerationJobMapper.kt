@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component
 @Component
 class GenerationJobMapper(
     private val operationResultMapper: OperationResultMapper,
+    private val boardStateMapper: BoardStateMapper,
 ) {
     fun toStartedDto(snapshot: GenerationJobSnapshot): GenerationJobStartedDto =
         GenerationJobStartedDto(jobId = snapshot.jobId)
@@ -35,6 +36,7 @@ class GenerationJobMapper(
             ),
             elapsedMs = snapshot.elapsedMs,
             generationPhase = snapshot.generationPhase,
+            boardState = snapshot.boardState?.let(boardStateMapper::toDto),
             result = snapshot.result?.let(operationResultMapper::toDto),
             updatedAt = snapshot.updatedAt.toString(),
         )

@@ -32,6 +32,11 @@ interface ChangedCellDto {
   explanation?: string | null;
 }
 
+interface TemplateOffsetDto {
+  row: number;
+  col: number;
+}
+
 interface ValidationSummaryDto {
   isValid: boolean;
   warnings: string[];
@@ -82,6 +87,7 @@ interface GenerationJobStatusDto {
   };
   elapsedMs: number;
   generationPhase: string | null;
+  boardState: BoardStateDto | null;
   result: OperationResultDto | null;
   updatedAt: string;
 }
@@ -102,6 +108,7 @@ interface BatchGenerationRunDto {
   persistenceState: 'SAVED' | 'DUPLICATE' | 'SKIPPED' | 'ERROR' | null;
   persistenceMessage: string | null;
   savedPuzzleId: string | null;
+  encodedPuzzleLayout: string | null;
 }
 
 interface BatchGenerationStatusDto {
@@ -213,6 +220,7 @@ function toGenerationProgress(data: GenerationJobStatusDto): QueensAdminGenerati
     metrics: data.metrics,
     elapsedMs: data.elapsedMs,
     generationPhase: data.generationPhase,
+    board: toLocalBoardState(data.boardState),
     updatedAt: data.updatedAt,
     result: data.result ? toOperationResult(data.result) : null,
   };
@@ -250,6 +258,7 @@ function toBatchStatus(data: BatchGenerationStatusDto): QueensAdminBatchStatus {
       persistenceState: run.persistenceState,
       persistenceMessage: run.persistenceMessage,
       savedPuzzleId: run.savedPuzzleId,
+      encodedPuzzleLayout: run.encodedPuzzleLayout,
     })),
     updatedAt: data.updatedAt,
   };
@@ -366,6 +375,7 @@ export const queensAdminApi = {
       includeProgressUpdates?: boolean;
       minimumGroupSize?: number;
       generationStrategy?: QueensAdminGenerationStrategy;
+      seedTemplateOffsets?: TemplateOffsetDto[];
     }
   ): Promise<string> {
     const response = await fetch('/api/queens/admin/generation/generate-valid-board/jobs', {
@@ -378,6 +388,7 @@ export const queensAdminApi = {
         minimumGroupSize: options?.minimumGroupSize ?? 3,
         includeProgressUpdates: options?.includeProgressUpdates ?? false,
         generationStrategy: options?.generationStrategy ?? 'baseline',
+        seedTemplateOffsets: options?.seedTemplateOffsets ?? null,
       }),
     });
     const data = (await response.json()) as GenerationJobStartedDto;

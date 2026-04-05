@@ -8,6 +8,7 @@ import com.queens.admin.domain.model.PersistedPuzzle
 import com.queens.admin.domain.model.Position
 import kotlin.math.sqrt
 import org.springframework.stereotype.Service
+import java.util.Base64
 
 @Service
 class PersistedPuzzleBoardCodecService {
@@ -37,5 +38,37 @@ class PersistedPuzzleBoardCodecService {
             cells = cells,
             generationPhase = GenerationPhase.ANALYZED,
         )
+    }
+
+    fun encodeUrlLayout(boardState: BoardState): String {
+        val regionSymbolMap = linkedMapOf<String, Char>()
+        val regionSymbols = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        var nextIndex = 0
+
+        val rawLayout = buildString {
+            for (cell in boardState.cells.flatten()) {
+                val regionId = cell.groupColor
+                if (regionId == null) {
+                    append('.')
+                    continue
+                }
+
+                val symbol = regionSymbolMap.getOrPut(regionId) {
+                    val nextSymbol =
+                        regionSymbols.getOrNull(nextIndex)
+                            ?: error("Queens URL encoding supports at most 26 distinct region ids.")
+                    nextIndex += 1
+                    nextSymbol
+                }
+
+                append(if (cell.isSolutionQueen) symbol.lowercaseChar() else symbol)
+            }
+        }
+
+        return Base64.getEncoder()
+            .encodeToString(rawLayout.toByteArray(Charsets.UTF_8))
+            .replace("+", "-")
+            .replace("/", "_")
+            .trimEnd('=')
     }
 }
