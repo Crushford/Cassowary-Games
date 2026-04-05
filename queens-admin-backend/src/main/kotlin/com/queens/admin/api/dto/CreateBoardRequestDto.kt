@@ -5,4 +5,5 @@ data class CreateBoardRequestDto(
     val minimumGroupSize: Int = 3,
     val includeProgressUpdates: Boolean = false,
     val generationStrategy: String = "baseline",
+    val seedTemplateOffsets: List<TemplateOffsetDto>? = null,
 )

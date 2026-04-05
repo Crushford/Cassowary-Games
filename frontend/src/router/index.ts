@@ -60,6 +60,19 @@ const router = createRouter({
     {
       path: '/queens/admin',
       name: 'queens-admin',
+      redirect: (to) => {
+        const tab = to.query.tab === 'batch' ? 'batch' : 'workshop';
+        return { name: `queens-admin-${tab}` };
+      },
+    },
+    {
+      path: '/queens/admin/workshop',
+      name: 'queens-admin-workshop',
+      component: QueensAdmin,
+    },
+    {
+      path: '/queens/admin/batch',
+      name: 'queens-admin-batch',
       component: QueensAdmin,
     },
     {

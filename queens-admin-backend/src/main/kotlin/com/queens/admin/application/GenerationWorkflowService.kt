@@ -2,6 +2,7 @@ package com.queens.admin.application
 
 import com.queens.admin.domain.model.BoardState
 import com.queens.admin.domain.model.OperationResult
+import com.queens.admin.domain.model.Position
 import com.queens.admin.domain.service.BlockedSquareExpansionService
 import com.queens.admin.domain.service.ColorExpansionService
 import com.queens.admin.domain.service.InitialColorAssignmentService
@@ -21,17 +22,20 @@ class GenerationWorkflowService(
         size: Int,
         minimumGroupSize: Int = 3,
         generationStrategy: String = "baseline",
+        seedTemplateOffsets: List<Position>? = null,
     ): OperationResult =
         validatedPuzzleGenerationService.generateValidBoard(
             size = size,
             minimumGroupSize = minimumGroupSize,
             generationStrategy = generationStrategy,
+            seedTemplateOffsets = seedTemplateOffsets,
         )
 
     fun generateValidBoard(
         size: Int,
         minimumGroupSize: Int,
         generationStrategy: String,
+        seedTemplateOffsets: List<Position>? = null,
         progressListener: ((GenerationProgressUpdate) -> Unit)?,
         isCancelled: (() -> Boolean)?,
     ): OperationResult =
@@ -39,6 +43,7 @@ class GenerationWorkflowService(
             size = size,
             minimumGroupSize = minimumGroupSize,
             generationStrategy = generationStrategy,
+            seedTemplateOffsets = seedTemplateOffsets,
             progressListener = progressListener,
             isCancelled = isCancelled,
         )

@@ -143,10 +143,13 @@
               >
                 <option value="baseline">Baseline random fallback</option>
                 <option value="marker-guided">Marker-guided experiment</option>
+                <option value="template-seeded">Template-seeded experiment</option>
               </select>
               <p class="text-xs leading-5 text-semantic-neutral-400">
                 Marker-guided mode prioritizes squares that look safe for another adjacent region to
-                steal, then still runs the solver after every placement.
+                steal, while template-seeded mode tries to start as many queen regions as possible
+                from your custom shape and requires that at least half of them fit before normal
+                expansion continues.
               </p>
             </div>
 
@@ -168,6 +171,29 @@
               </p>
             </div>
 
+            <div class="mt-4 space-y-3">
+              <label class="block text-sm text-semantic-neutral-300" for="preview-interval"
+                >Live preview update interval</label
+              >
+              <select
+                id="preview-interval"
+                v-model.number="generationPreviewIntervalMs"
+                class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+              >
+                <option :value="50">0.05 seconds</option>
+                <option :value="100">0.1 seconds</option>
+                <option :value="250">0.25 seconds</option>
+                <option :value="500">0.5 seconds</option>
+                <option :value="1000">1 second</option>
+                <option :value="2000">2 seconds</option>
+                <option :value="5000">5 seconds</option>
+              </select>
+              <p class="text-xs leading-5 text-semantic-neutral-400">
+                While the backend is generating, the workshop will only swap to the latest board
+                snapshot once this much time has passed.
+              </p>
+            </div>
+
             <div class="mt-4 grid gap-2">
               <button
                 class="rounded-xl bg-semantic-info-600 px-4 py-2.5 font-semibold text-white hover:bg-semantic-info-500"
@@ -177,8 +203,8 @@
               </button>
               <button
                 class="rounded-xl bg-semantic-success-600 px-4 py-2.5 font-semibold text-white hover:bg-semantic-success-500 disabled:cursor-not-allowed disabled:opacity-50"
-                :disabled="store.loading"
-                @click="store.generateBoard(selectedBoardSize)"
+                :disabled="store.loading || !templateSeedIsValid"
+                @click="generateBoardFromWorkshop"
               >
                 Generate Full Board
               </button>
@@ -528,7 +554,120 @@
           <section
             class="rounded-[28px] border border-semantic-neutral-800 bg-surface-overlaySoft p-4"
           >
-            <QueensAdminBoard />
+            <div v-if="store.generationStrategy === 'template-seeded' && !store.board">
+              <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <h3 class="text-2xl font-semibold text-white">Seed Template Editor</h3>
+                  <p class="mt-1 max-w-2xl text-sm leading-6 text-semantic-neutral-300">
+                    Draw the starting region shape here. Click cells to add or remove them. The
+                    backend can place this shape anywhere it fits around a queen region, with no
+                    special queen anchor cell inside the template.
+                  </p>
+                </div>
+                <div
+                  class="rounded-full border border-semantic-info-700 bg-feedback-infoFaint px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-semantic-info-100"
+                >
+                  Template Workspace
+                </div>
+              </div>
+
+              <div class="mt-5 grid gap-5 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
+                <div
+                  class="rounded-[28px] border border-semantic-neutral-800 bg-surface-darkStrong p-4"
+                >
+                  <div class="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-900 px-3.5 py-2 text-sm font-semibold text-semantic-neutral-100 transition hover:bg-semantic-neutral-800"
+                      @click="resetTemplateSeedEditor"
+                    >
+                      Reset Default
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-xl border border-semantic-danger-700 bg-feedback-dangerSubtle px-3.5 py-2 text-sm font-semibold text-semantic-danger-100 transition hover:bg-feedback-dangerSoft"
+                      @click="clearTemplateSeedEditor"
+                    >
+                      Clear
+                    </button>
+                  </div>
+
+                  <div class="mt-4 grid grid-cols-7 gap-2 rounded-2xl bg-semantic-neutral-950 p-3">
+                    <button
+                      v-for="cell in templateSeedEditorCells"
+                      :key="cell.key"
+                      type="button"
+                      class="flex aspect-square items-center justify-center rounded-2xl border text-xl transition"
+                      :class="templateSeedCellClasses(cell)"
+                      @click="handleTemplateSeedCellClick(cell.row, cell.col)"
+                    >
+                      <span v-if="cell.filled" class="text-lg">•</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="space-y-4">
+                  <div
+                    class="rounded-[24px] border border-semantic-neutral-800 bg-surface-darkStrong p-4"
+                  >
+                    <h4 class="text-lg font-semibold text-white">Template Summary</h4>
+                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                      <div class="rounded-xl bg-surface-darkMuted p-3">
+                        <div class="text-sm text-semantic-neutral-400">Filled Cells</div>
+                        <div class="mt-1 text-2xl font-semibold text-white">
+                          {{ templateSeedStats.filledCellCount }}
+                        </div>
+                      </div>
+                      <div class="rounded-xl bg-surface-darkMuted p-3">
+                        <div class="text-sm text-semantic-neutral-400">Variants</div>
+                        <div class="mt-1 text-2xl font-semibold text-white">
+                          {{ templateSeedStats.variantCount }}
+                        </div>
+                      </div>
+                      <div class="rounded-xl bg-surface-darkMuted p-3">
+                        <div class="text-sm text-semantic-neutral-400">Connected</div>
+                        <div class="mt-1 text-2xl font-semibold text-white">
+                          {{ templateSeedStats.connected ? 'Yes' : 'No' }}
+                        </div>
+                      </div>
+                      <div class="rounded-xl bg-surface-darkMuted p-3">
+                        <div class="text-sm text-semantic-neutral-400">Status</div>
+                        <div class="mt-1 text-lg font-semibold text-white">
+                          {{ templateSeedIsValid ? 'Ready To Generate' : 'Needs Fixing' }}
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      class="mt-4 rounded-xl bg-surface-darkMuted p-3 text-sm text-semantic-neutral-300"
+                    >
+                      <p>
+                        Normalized offsets:
+                        <span class="font-mono text-semantic-neutral-100">{{
+                          templateSeedOffsetsDebug
+                        }}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    class="rounded-[24px] border border-semantic-neutral-800 bg-surface-darkStrong p-4"
+                  >
+                    <h4 class="text-lg font-semibold text-white">Validation</h4>
+                    <ul class="mt-4 space-y-2 text-sm leading-6 text-semantic-neutral-300">
+                      <li>Shape must contain at least 2 filled cells.</li>
+                      <li>Shape must be edge-connected.</li>
+                    </ul>
+                    <div
+                      v-if="!templateSeedIsValid"
+                      class="mt-4 rounded-xl border border-edge-warningMuted bg-feedback-warningSubtle p-3 text-sm text-semantic-warning-200"
+                    >
+                      {{ templateSeedValidationMessage }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <QueensAdminBoard v-else />
           </section>
         </main>
 
@@ -955,10 +1094,20 @@ import {
   QUEENS_PUZZLE_SHARE_BASE_URL,
 } from '../utils/urlPuzzleEncoding';
 import { analyzeQueensDifficulty, type QueensDifficultyAnalysis } from '../admin/difficultyProbe';
+import {
+  loadQueensAdminWorkshopInputs,
+  saveQueensAdminWorkshopInputs,
+} from '../admin/inputPersistence';
 import QueensAdminBoard from '../components/admin/QueensAdminBoard.vue';
 import QueensAdminBatchPanel from '../components/admin/QueensAdminBatchPanel.vue';
 import { useQueensAdminStore } from '../stores/queensAdminStore';
 import type { QueensAdminGenerationStrategy, QueensAdminTool } from '../admin/types';
+
+type TemplateSeedCell = {
+  row: number;
+  col: number;
+  filled: boolean;
+};
 
 type CopyButtonKey =
   | 'result'
@@ -972,17 +1121,85 @@ type CopyButtonKey =
 const route = useRoute();
 const router = useRouter();
 const store = useQueensAdminStore();
+const persistedWorkshopInputs = loadQueensAdminWorkshopInputs();
 const boardSizes = Array.from({ length: 17 }, (_, index) => index + 4);
 const palette = COLOR_PALETTE;
-const selectedBoardSize = ref(store.boardSize);
-const activeTab = ref<'workshop' | 'batch'>('workshop');
+const selectedBoardSize = ref(persistedWorkshopInputs?.selectedBoardSize ?? store.boardSize);
+const generationPreviewIntervalMs = ref(
+  persistedWorkshopInputs?.generationPreviewIntervalMs ?? 1000
+);
+const TEMPLATE_EDITOR_SIZE = 7;
+const DEFAULT_TEMPLATE_SEED_CELLS: TemplateSeedCell[] = [
+  { row: 3, col: 3, filled: true },
+  { row: 3, col: 4, filled: true },
+  { row: 4, col: 3, filled: true },
+];
+const templateSeedCells = ref<TemplateSeedCell[]>(
+  persistedWorkshopInputs?.templateSeedCells ??
+    Array.from({ length: TEMPLATE_EDITOR_SIZE * TEMPLATE_EDITOR_SIZE }, (_, index) => ({
+      row: Math.floor(index / TEMPLATE_EDITOR_SIZE),
+      col: index % TEMPLATE_EDITOR_SIZE,
+      filled: DEFAULT_TEMPLATE_SEED_CELLS.some(
+        (cell) =>
+          cell.row === Math.floor(index / TEMPLATE_EDITOR_SIZE) &&
+          cell.col === index % TEMPLATE_EDITOR_SIZE
+      ),
+    }))
+);
 
-function normalizeAdminTab(value: unknown): 'workshop' | 'batch' {
-  return value === 'batch' ? 'batch' : 'workshop';
-}
+store.minimumGroupSize = persistedWorkshopInputs?.minimumGroupSize ?? store.minimumGroupSize;
+store.generationStrategy = persistedWorkshopInputs?.generationStrategy ?? store.generationStrategy;
+store.selectedTool = persistedWorkshopInputs?.selectedTool ?? store.selectedTool;
+store.selectedColor = persistedWorkshopInputs?.selectedColor ?? store.selectedColor;
+
+const activeTab = computed<'workshop' | 'batch'>(() =>
+  route.name === 'queens-admin-batch' ? 'batch' : 'workshop'
+);
 
 function setActiveTab(tab: 'workshop' | 'batch'): void {
-  activeTab.value = tab;
+  const targetRouteName = tab === 'batch' ? 'queens-admin-batch' : 'queens-admin-workshop';
+  if (route.name === targetRouteName) return;
+  void router.push({ name: targetRouteName });
+}
+
+function resetTemplateSeedEditor(): void {
+  templateSeedCells.value = Array.from(
+    { length: TEMPLATE_EDITOR_SIZE * TEMPLATE_EDITOR_SIZE },
+    (_, index) => ({
+      row: Math.floor(index / TEMPLATE_EDITOR_SIZE),
+      col: index % TEMPLATE_EDITOR_SIZE,
+      filled: DEFAULT_TEMPLATE_SEED_CELLS.some(
+        (cell) =>
+          cell.row === Math.floor(index / TEMPLATE_EDITOR_SIZE) &&
+          cell.col === index % TEMPLATE_EDITOR_SIZE
+      ),
+    })
+  );
+}
+
+function clearTemplateSeedEditor(): void {
+  templateSeedCells.value = templateSeedCells.value.map((cell) => ({ ...cell, filled: false }));
+}
+
+function handleTemplateSeedCellClick(row: number, col: number): void {
+  templateSeedCells.value = templateSeedCells.value.map((cell) =>
+    cell.row === row && cell.col === col ? { ...cell, filled: !cell.filled } : cell
+  );
+}
+
+function templateSeedCellClasses(cell: { filled: boolean }): string {
+  if (cell.filled) {
+    return 'border-semantic-info-500 bg-feedback-infoSoft text-white hover:bg-feedback-infoSoft';
+  }
+  return 'border-semantic-neutral-800 bg-surface-darkSoft text-transparent hover:border-semantic-neutral-700 hover:bg-semantic-neutral-900';
+}
+
+async function generateBoardFromWorkshop(): Promise<void> {
+  await store.generateBoard(selectedBoardSize.value, {
+    seedTemplateOffsets:
+      store.generationStrategy === 'template-seeded' ? templateSeedOffsets.value : undefined,
+    previewIntervalMs: generationPreviewIntervalMs.value,
+  });
 }
 
 const tools: Array<{
@@ -1067,6 +1284,87 @@ const generationProgressBadgeClass = computed(() => {
       return 'bg-feedback-infoSoft text-semantic-info-200';
   }
 });
+
+const templateSeedEditorCells = computed(() =>
+  templateSeedCells.value.map((cell) => ({
+    ...cell,
+    key: `${cell.row}-${cell.col}`,
+  }))
+);
+
+const templateSeedFilledCells = computed(() =>
+  templateSeedCells.value.filter((cell) => cell.filled)
+);
+
+const templateSeedConnected = computed(() => {
+  const filled = templateSeedFilledCells.value;
+  if (filled.length <= 1) return filled.length === 1;
+
+  const filledKeys = new Set(filled.map((cell) => `${cell.row}:${cell.col}`));
+  const visited = new Set<string>();
+  const queue = [filled[0]];
+
+  while (queue.length) {
+    const current = queue.shift();
+    if (!current) continue;
+    const key = `${current.row}:${current.col}`;
+    if (visited.has(key)) continue;
+    visited.add(key);
+
+    const neighbors = [
+      [current.row - 1, current.col],
+      [current.row + 1, current.col],
+      [current.row, current.col - 1],
+      [current.row, current.col + 1],
+    ];
+
+    for (const [row, col] of neighbors) {
+      const neighborKey = `${row}:${col}`;
+      if (!visited.has(neighborKey) && filledKeys.has(neighborKey)) {
+        const match = filled.find((cell) => cell.row === row && cell.col === col);
+        if (match) queue.push(match);
+      }
+    }
+  }
+
+  return visited.size === filled.length;
+});
+
+const templateSeedOffsets = computed(() => {
+  if (templateSeedFilledCells.value.length === 0) return [];
+  const minRow = Math.min(...templateSeedFilledCells.value.map((cell) => cell.row));
+  const minCol = Math.min(...templateSeedFilledCells.value.map((cell) => cell.col));
+  return templateSeedFilledCells.value
+    .map((cell) => ({
+      row: cell.row - minRow,
+      col: cell.col - minCol,
+    }))
+    .sort((left, right) => left.row - right.row || left.col - right.col);
+});
+
+const templateSeedIsValid = computed(() => {
+  return (
+    store.generationStrategy !== 'template-seeded' ||
+    (templateSeedFilledCells.value.length >= 2 && templateSeedConnected.value)
+  );
+});
+
+const templateSeedValidationMessage = computed(() => {
+  if (templateSeedFilledCells.value.length < 2)
+    return 'Add at least 2 filled cells to make a meaningful seed shape.';
+  if (!templateSeedConnected.value) return 'The shape must be edge-connected.';
+  return 'Template is valid.';
+});
+
+const templateSeedStats = computed(() => ({
+  filledCellCount: templateSeedFilledCells.value.length,
+  connected: templateSeedConnected.value,
+  variantCount: countTemplateVariants(templateSeedOffsets.value),
+}));
+
+const templateSeedOffsetsDebug = computed(() =>
+  templateSeedOffsets.value.map((offset) => `(${offset.row}, ${offset.col})`).join(', ')
+);
 
 const copyButtonLabels = ref<Record<CopyButtonKey, string>>({
   result: 'Copy',
@@ -1262,28 +1560,6 @@ const shareableQueensPuzzleUrl = computed(() => {
   return `${QUEENS_PUZZLE_SHARE_BASE_URL}${playInQueensHref.value}`;
 });
 
-watch(
-  () => route.query.tab,
-  (tab) => {
-    const normalizedTab = normalizeAdminTab(tab);
-    if (activeTab.value !== normalizedTab) {
-      activeTab.value = normalizedTab;
-    }
-  },
-  { immediate: true }
-);
-
-watch(activeTab, async (tab) => {
-  if (normalizeAdminTab(route.query.tab) === tab) return;
-
-  await router.replace({
-    query: {
-      ...route.query,
-      tab,
-    },
-  });
-});
-
 function formatChangeReason(reason: string): string {
   if (reason === 'generated board snapshot') {
     return 'Full board replacement';
@@ -1301,7 +1577,9 @@ function formatProgressStage(stage: string): string {
 }
 
 function generationStrategyLabel(strategy: QueensAdminGenerationStrategy): string {
-  return strategy === 'marker-guided' ? 'Marker-guided experiment' : 'Baseline';
+  if (strategy === 'marker-guided') return 'Marker-guided experiment';
+  if (strategy === 'template-seeded') return 'Template-seeded experiment';
+  return 'Baseline';
 }
 
 function formatDifficultyPhase(phase: 'easy' | 'medium' | 'hard'): string {
@@ -1324,6 +1602,27 @@ function formatElapsed(elapsedMs: number): string {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function countTemplateVariants(offsets: Array<{ row: number; col: number }>): number {
+  if (offsets.length === 0) return 0;
+  const variants = new Set<string>();
+  let current = offsets;
+
+  for (let index = 0; index < 4; index += 1) {
+    const minRow = Math.min(...current.map((offset) => offset.row));
+    const minCol = Math.min(...current.map((offset) => offset.col));
+    const normalized = current
+      .map((offset) => ({
+        row: offset.row - minRow,
+        col: offset.col - minCol,
+      }))
+      .sort((left, right) => left.row - right.row || left.col - right.col);
+    variants.add(normalized.map((offset) => `${offset.row},${offset.col}`).join('|'));
+    current = current.map((offset) => ({ row: offset.col, col: -offset.row }));
+  }
+
+  return variants.size;
 }
 
 const changeReasonGroups = computed(() => {
@@ -1456,6 +1755,30 @@ watch(
   () => store.board,
   () => {
     difficultyProbe.value = null;
+  },
+  { deep: true }
+);
+
+watch(
+  [
+    selectedBoardSize,
+    generationPreviewIntervalMs,
+    () => store.minimumGroupSize,
+    () => store.generationStrategy,
+    () => store.selectedTool,
+    () => store.selectedColor,
+    templateSeedCells,
+  ],
+  () => {
+    saveQueensAdminWorkshopInputs({
+      selectedBoardSize: selectedBoardSize.value,
+      minimumGroupSize: store.minimumGroupSize,
+      generationPreviewIntervalMs: generationPreviewIntervalMs.value,
+      generationStrategy: store.generationStrategy,
+      selectedTool: store.selectedTool,
+      selectedColor: store.selectedColor,
+      templateSeedCells: templateSeedCells.value,
+    });
   },
   { deep: true }
 );

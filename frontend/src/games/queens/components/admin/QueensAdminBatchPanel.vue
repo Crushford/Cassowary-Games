@@ -148,6 +148,76 @@
         <section class="rounded-[30px] border border-semantic-neutral-800 bg-surface-darkFirm p-5">
           <div class="flex items-center justify-between gap-4">
             <div>
+              <h2 class="text-xl font-semibold text-white">Tracked Batches</h2>
+              <p class="mt-2 text-sm leading-6 text-semantic-neutral-300">
+                Active and recently completed batches are restored when this page loads, so you can
+                leave and come back without losing the current queue.
+              </p>
+            </div>
+            <button
+              type="button"
+              class="rounded-xl border border-semantic-neutral-700 bg-surface-darkSoft px-3 py-2 text-sm font-semibold text-semantic-neutral-200 transition hover:border-semantic-neutral-500 hover:text-white"
+              @click="store.refreshTrackedBatches()"
+            >
+              Refresh
+            </button>
+          </div>
+
+          <div v-if="store.trackedBatches.length" class="mt-5 space-y-3">
+            <div
+              v-for="trackedBatch in store.trackedBatches"
+              :key="trackedBatch.batchId"
+              class="rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4"
+            >
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <div class="text-sm font-semibold text-white">
+                      {{ trackedBatch.totalJobs }} runs
+                    </div>
+                    <span
+                      class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                      :class="trackedBatchStateBadgeClass(trackedBatch.state)"
+                    >
+                      {{ trackedBatch.state }}
+                    </span>
+                  </div>
+                  <div class="mt-2 text-xs leading-5 text-semantic-neutral-400">
+                    Updated {{ formatTimestamp(trackedBatch.updatedAt) }} · Completed
+                    {{ trackedBatch.completedJobs }} · Saved {{ trackedBatch.savedUniquePuzzles }}
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    class="rounded-xl border border-semantic-info-700 bg-feedback-infoFaint px-3 py-2 text-sm font-semibold text-semantic-info-100 transition hover:bg-feedback-infoSoft"
+                    @click="selectTrackedBatch(trackedBatch.batchId)"
+                  >
+                    View
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-xl border border-semantic-neutral-700 bg-surface-darkFirm px-3 py-2 text-sm font-semibold text-semantic-neutral-200 transition hover:border-semantic-neutral-500 hover:text-white"
+                    @click="store.removeTrackedBatch(trackedBatch.batchId)"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-else
+            class="mt-5 rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4 text-sm text-semantic-neutral-400"
+          >
+            No tracked batches yet. Start a batch and it will stay listed here until you remove it.
+          </div>
+        </section>
+
+        <section class="rounded-[30px] border border-semantic-neutral-800 bg-surface-darkFirm p-5">
+          <div class="flex items-center justify-between gap-4">
+            <div>
               <h2 class="text-xl font-semibold text-white">Scheduler Status</h2>
               <p class="mt-2 text-sm leading-6 text-semantic-neutral-300">
                 The backend queue runs up to the selected concurrency limit and times each puzzle on
@@ -461,6 +531,7 @@
                   <th class="px-3 py-2">Size</th>
                   <th class="px-3 py-2">Strategy</th>
                   <th class="px-3 py-2">State</th>
+                  <th class="px-3 py-2">Puzzle</th>
                   <th class="px-3 py-2">Fill</th>
                   <th class="px-3 py-2">Duration</th>
                   <th class="px-3 py-2">Persistence</th>
@@ -477,6 +548,30 @@
                   <td class="px-3 py-2 text-white">{{ run.size }} x {{ run.size }}</td>
                   <td class="px-3 py-2">{{ strategyLabel(run.strategy) }}</td>
                   <td class="px-3 py-2">{{ run.state }}</td>
+                  <td class="px-3 py-2">
+                    <div class="flex flex-wrap gap-2">
+                      <a
+                        v-if="batchRunPlayHref(run)"
+                        :href="batchRunPlayHref(run) || undefined"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="rounded-lg border border-semantic-info-700 bg-feedback-infoFaint px-2.5 py-1 text-xs font-semibold text-semantic-info-100 transition hover:bg-feedback-infoSoft"
+                      >
+                        Play
+                      </a>
+                      <button
+                        v-if="batchRunShareUrl(run)"
+                        type="button"
+                        class="rounded-lg border border-semantic-neutral-700 bg-surface-darkSoft px-2.5 py-1 text-xs font-semibold text-semantic-neutral-100 transition hover:border-semantic-neutral-500 hover:text-white"
+                        @click="copyBatchRunUrl(run)"
+                      >
+                        {{ copiedRunId === run.runId ? 'Copied' : 'Copy URL' }}
+                      </button>
+                      <span v-if="!batchRunPlayHref(run)" class="text-xs text-semantic-neutral-500">
+                        —
+                      </span>
+                    </div>
+                  </td>
                   <td class="min-w-[180px] px-3 py-2">
                     <div v-if="showRunFillProgress(run)">
                       <div class="text-xs font-semibold text-semantic-neutral-100">
@@ -523,8 +618,14 @@ import {
   getBatchHistorySnapshot,
   recordBatchRuns,
 } from '../../admin/batchHistory';
+import {
+  loadQueensAdminBatchInputs,
+  saveQueensAdminBatchInputs,
+} from '../../admin/inputPersistence';
 import { useQueensAdminStore } from '../../stores/queensAdminStore';
+import { QUEENS_PUZZLE_SHARE_BASE_URL } from '../../utils/urlPuzzleEncoding';
 import type {
+  QueensAdminBatchStatus,
   QueensAdminBatchRun,
   QueensAdminGenerationStrategy,
   QueensAdminPuzzleCatalogStats,
@@ -532,16 +633,21 @@ import type {
 } from '../../admin/types';
 
 const store = useQueensAdminStore();
-const sizesInput = ref('6, 8');
-const runsPerCombination = ref(5);
-const maxConcurrentJobs = ref(2);
-const minimumGroupSize = ref(store.minimumGroupSize);
-const saveSuccessfulPuzzles = ref(true);
-const selectedStrategies = ref<QueensAdminGenerationStrategy[]>(['baseline', 'marker-guided']);
+const persistedBatchInputs = loadQueensAdminBatchInputs();
+const sizesInput = ref(persistedBatchInputs?.sizesInput ?? '6, 8');
+const runsPerCombination = ref(persistedBatchInputs?.runsPerCombination ?? 5);
+const maxConcurrentJobs = ref(persistedBatchInputs?.maxConcurrentJobs ?? 2);
+const minimumGroupSize = ref(persistedBatchInputs?.minimumGroupSize ?? store.minimumGroupSize);
+const saveSuccessfulPuzzles = ref(persistedBatchInputs?.saveSuccessfulPuzzles ?? true);
+const selectedStrategies = ref<QueensAdminGenerationStrategy[]>(
+  persistedBatchInputs?.selectedStrategies ?? ['baseline', 'marker-guided', 'template-seeded']
+);
 const systemLoad = ref<QueensAdminSystemLoad | null>(null);
 const puzzleCatalogStats = ref<QueensAdminPuzzleCatalogStats | null>(null);
 const historySnapshot = ref(getBatchHistorySnapshot());
 let systemLoadPoller: ReturnType<typeof setInterval> | null = null;
+let copyResetTimer: ReturnType<typeof setTimeout> | null = null;
+const copiedRunId = ref<string | null>(null);
 
 const strategyOptions: Array<{
   value: QueensAdminGenerationStrategy;
@@ -557,6 +663,12 @@ const strategyOptions: Array<{
     value: 'marker-guided',
     label: 'Marker-guided',
     description: 'Prioritize squares that look stealable by another adjacent region.',
+  },
+  {
+    value: 'template-seeded',
+    label: 'Template-seeded',
+    description:
+      'Seed as many queen regions as possible from the template shape and require at least half to fit before continuing the validated workflow.',
   },
 ];
 
@@ -585,6 +697,21 @@ const batchStateBadgeClass = computed(() => {
       return 'bg-semantic-neutral-800 text-semantic-neutral-300';
   }
 });
+
+function trackedBatchStateBadgeClass(state: QueensAdminBatchStatus['state']): string {
+  switch (state) {
+    case 'COMPLETED':
+      return 'bg-feedback-successSoft text-semantic-success-200';
+    case 'CANCELLED':
+      return 'bg-feedback-warningSubtle text-semantic-warning-200';
+    case 'RUNNING':
+      return 'bg-feedback-infoSoft text-semantic-info-200';
+    case 'QUEUED':
+      return 'bg-semantic-neutral-800 text-semantic-neutral-300';
+    default:
+      return 'bg-semantic-neutral-800 text-semantic-neutral-300';
+  }
+}
 
 const schedulerMetrics = computed(() => [
   { label: 'Total', value: store.batchStatus?.totalJobs ?? 0 },
@@ -655,6 +782,14 @@ async function startBatch(): Promise<void> {
   });
 }
 
+async function selectTrackedBatch(batchId: string): Promise<void> {
+  await store.refreshTrackedBatches();
+  const selectedBatch = store.trackedBatches.find((batch) => batch.batchId === batchId);
+  if (selectedBatch) {
+    store.batchStatus = selectedBatch;
+  }
+}
+
 async function refreshSystemLoad(): Promise<void> {
   try {
     systemLoad.value = await queensAdminApi.getSystemLoad();
@@ -679,7 +814,9 @@ function resetHistory(): void {
 }
 
 function strategyLabel(strategy: QueensAdminGenerationStrategy): string {
-  return strategy === 'marker-guided' ? 'Marker-guided' : 'Baseline';
+  if (strategy === 'marker-guided') return 'Marker-guided';
+  if (strategy === 'template-seeded') return 'Template-seeded';
+  return 'Baseline';
 }
 
 function formatPersistence(run: QueensAdminBatchRun): string {
@@ -694,6 +831,32 @@ function formatPersistence(run: QueensAdminBatchRun): string {
       return 'Not Saved';
     default:
       return '—';
+  }
+}
+
+function batchRunPlayHref(run: QueensAdminBatchRun): string | null {
+  return run.encodedPuzzleLayout ? `/queens/puzzle/${run.encodedPuzzleLayout}` : null;
+}
+
+function batchRunShareUrl(run: QueensAdminBatchRun): string | null {
+  const href = batchRunPlayHref(run);
+  return href ? `${QUEENS_PUZZLE_SHARE_BASE_URL}${href}` : null;
+}
+
+async function copyBatchRunUrl(run: QueensAdminBatchRun): Promise<void> {
+  const shareUrl = batchRunShareUrl(run);
+  if (!shareUrl) return;
+
+  try {
+    await navigator.clipboard.writeText(shareUrl);
+    copiedRunId.value = run.runId;
+    if (copyResetTimer) clearTimeout(copyResetTimer);
+    copyResetTimer = setTimeout(() => {
+      copiedRunId.value = null;
+      copyResetTimer = null;
+    }, 1500);
+  } catch {
+    copiedRunId.value = null;
   }
 }
 
@@ -738,6 +901,7 @@ function formatPercent(value: number | null | undefined): string {
 
 onMounted(() => {
   historySnapshot.value = getBatchHistorySnapshot();
+  void store.refreshTrackedBatches();
   void refreshSystemLoad();
   void refreshPuzzleCatalogStats();
   systemLoadPoller = setInterval(() => {
@@ -750,6 +914,10 @@ onUnmounted(() => {
     clearInterval(systemLoadPoller);
     systemLoadPoller = null;
   }
+  if (copyResetTimer) {
+    clearTimeout(copyResetTimer);
+    copyResetTimer = null;
+  }
 });
 
 watch(
@@ -758,6 +926,28 @@ watch(
     if (!runs?.length) return;
     historySnapshot.value = recordBatchRuns(runs);
     void refreshPuzzleCatalogStats();
+  },
+  { deep: true }
+);
+
+watch(
+  [
+    sizesInput,
+    runsPerCombination,
+    maxConcurrentJobs,
+    minimumGroupSize,
+    saveSuccessfulPuzzles,
+    selectedStrategies,
+  ],
+  () => {
+    saveQueensAdminBatchInputs({
+      sizesInput: sizesInput.value,
+      runsPerCombination: runsPerCombination.value,
+      maxConcurrentJobs: maxConcurrentJobs.value,
+      minimumGroupSize: minimumGroupSize.value,
+      saveSuccessfulPuzzles: saveSuccessfulPuzzles.value,
+      selectedStrategies: selectedStrategies.value,
+    });
   },
   { deep: true }
 );

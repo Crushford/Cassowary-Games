@@ -12,6 +12,7 @@ data class GenerationJobStatusDto(
     val metrics: GenerationMetricsStatusDto,
     val elapsedMs: Long,
     val generationPhase: String? = null,
+    val boardState: BoardStateDto? = null,
     val result: OperationResultDto? = null,
     val updatedAt: String,
 )

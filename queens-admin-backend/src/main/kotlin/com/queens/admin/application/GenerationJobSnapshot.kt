@@ -1,6 +1,7 @@
 package com.queens.admin.application
 
 import com.queens.admin.domain.model.OperationResult
+import com.queens.admin.domain.model.BoardState
 import java.time.Instant
 
 enum class GenerationJobState {
@@ -20,6 +21,7 @@ data class GenerationProgressUpdate(
     val strategy: String,
     val metrics: GenerationMetricsSnapshot,
     val generationPhase: String? = null,
+    val boardState: BoardState? = null,
 )
 
 data class GenerationMetricsSnapshot(
@@ -45,6 +47,7 @@ data class GenerationJobSnapshot(
     val metrics: GenerationMetricsSnapshot = GenerationMetricsSnapshot(),
     val elapsedMs: Long = 0,
     val generationPhase: String? = null,
+    val boardState: BoardState? = null,
     val result: OperationResult? = null,
     val updatedAt: Instant = Instant.now(),
 )

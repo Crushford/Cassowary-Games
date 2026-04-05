@@ -4,6 +4,7 @@ import com.queens.admin.application.GenerationProgressUpdate
 import com.queens.admin.application.GenerationMetricsSnapshot
 import com.queens.admin.domain.model.ActionType
 import com.queens.admin.domain.model.BoardState
+import com.queens.admin.domain.model.CellState
 import com.queens.admin.domain.model.ChangedCell
 import com.queens.admin.domain.model.GenerationPhase
 import com.queens.admin.domain.model.MarkType
@@ -22,7 +23,15 @@ class ValidatedPuzzleGenerationService(
     private enum class GenerationStrategy {
         BASELINE,
         MARKER_GUIDED,
+        TEMPLATE_SEEDED,
     }
+
+    private fun GenerationStrategy.toApiValue(): String =
+        when (this) {
+            GenerationStrategy.BASELINE -> "baseline"
+            GenerationStrategy.MARKER_GUIDED -> "marker-guided"
+            GenerationStrategy.TEMPLATE_SEEDED -> "template-seeded"
+        }
 
     private data class GenerationMetrics(
         var solverChecks: Int = 0,
@@ -51,6 +60,7 @@ class ValidatedPuzzleGenerationService(
         size: Int,
         minimumGroupSize: Int = 3,
         generationStrategy: String = "baseline",
+        seedTemplateOffsets: List<Position>? = null,
         maxRetries: Int = 30_000,
         progressListener: ((GenerationProgressUpdate) -> Unit)? = null,
         isCancelled: (() -> Boolean)? = null,
@@ -106,6 +116,32 @@ class ValidatedPuzzleGenerationService(
                     error("Board is not fully solvable after initial colors")
                 }
 
+                if (strategy == GenerationStrategy.TEMPLATE_SEEDED) {
+                    val seededGroups = applyTemplateSeeds(state, seedTemplateOffsets, isCancelled)
+                    if (seededGroups <= 0) {
+                        emitProgress(
+                            state,
+                            attemptNumber,
+                            "RETRY_RESET",
+                            "Template seeding could not place the requested seed shape on enough queen regions. Resetting and retrying.",
+                            strategy,
+                            progressListener,
+                        )
+                        return@repeat
+                    }
+                    emitProgress(
+                        state,
+                        attemptNumber,
+                        "TEMPLATE_SEEDS_APPLIED",
+                        "Seeded $seededGroups queen regions with the requested template before normal expansion.",
+                        strategy,
+                        progressListener,
+                    )
+                    if (!isSolvable(state)) {
+                        error("Board is not fully solvable after template seeding")
+                    }
+                }
+
                 for (targetGroupSize in 2..minimumGroupSize) {
                     if (!expandColorGridSafely(
                             state = state,
@@ -115,7 +151,7 @@ class ValidatedPuzzleGenerationService(
                             strategy = strategy,
                             progressListener = progressListener,
                             isCancelled = isCancelled,
-                        ) || !validateGroupSizes(state.grid, targetGroupSize)
+                        ) || !validateMinimumGroupSizes(state.grid, targetGroupSize)
                     ) {
                         emitProgress(
                             state,
@@ -237,16 +273,18 @@ class ValidatedPuzzleGenerationService(
                 message = message,
                 coloredCellCount = state.grid.cells.flatten().count { cell -> cell.groupColor != null },
                 totalCellCount = state.grid.size * state.grid.size,
-                strategy = strategy.name.lowercase(),
+                strategy = strategy.toApiValue(),
                 metrics = state.metrics.toSnapshot(),
                 generationPhase = state.grid.generationPhase?.name,
+                boardState = state.grid,
             ),
         )
     }
 
     private fun parseGenerationStrategy(generationStrategy: String): GenerationStrategy =
-        when (generationStrategy.trim().uppercase()) {
+        when (generationStrategy.trim().uppercase().replace('-', '_')) {
             "MARKER_GUIDED" -> GenerationStrategy.MARKER_GUIDED
+            "TEMPLATE_SEEDED" -> GenerationStrategy.TEMPLATE_SEEDED
             else -> GenerationStrategy.BASELINE
         }
 
@@ -451,7 +489,167 @@ class ValidatedPuzzleGenerationService(
         )
     }
 
-    private fun expandColorGroupsInPlace(boardState: BoardState): BoardState {
+    private data class SeedableQueenRegion(
+        val position: Position,
+        val regionId: String,
+    )
+
+    private fun applyTemplateSeeds(
+        state: GeneratorState,
+        seedTemplateOffsets: List<Position>?,
+        isCancelled: (() -> Boolean)?,
+    ): Int {
+        val minimumSeedCount = ((state.grid.size + 1) / 2).coerceAtLeast(1)
+        val seedableQueens = state.grid.cells.flatten()
+            .filter { cell -> cell.isSolutionQueen && cell.groupColor != null }
+            .map { cell -> SeedableQueenRegion(cell.position, cell.groupColor!!) }
+            .shuffled(Random.Default)
+        val cells = state.grid.cells.map { row -> row.toMutableList() }.toMutableList()
+        var seededCount = 0
+
+        val templateVariants = buildSeedTemplateVariants(seedTemplateOffsets)
+
+        for (queenRegion in seedableQueens) {
+            ensureNotCancelled(isCancelled)
+
+            val matchingVariant = templateVariants
+                .shuffled(Random.Default)
+                .firstOrNull { offsets ->
+                    findSeedTemplateOrigin(
+                        cells = cells,
+                        queenPosition = queenRegion.position,
+                        regionId = queenRegion.regionId,
+                        offsets = offsets,
+                    ) != null
+                } ?: continue
+
+            val origin = findSeedTemplateOrigin(
+                cells = cells,
+                queenPosition = queenRegion.position,
+                regionId = queenRegion.regionId,
+                offsets = matchingVariant,
+            ) ?: continue
+
+            applySeedTemplate(
+                cells = cells,
+                origin = origin,
+                queenPosition = queenRegion.position,
+                regionId = queenRegion.regionId,
+                offsets = matchingVariant,
+            )
+            seededCount += 1
+        }
+
+        if (seededCount < minimumSeedCount) {
+            return 0
+        }
+
+        state.grid = state.grid.copy(
+            cells = cells.map { row -> row.toList() },
+            generationPhase = GenerationPhase.TEMPLATE_SEEDS_APPLIED,
+        )
+        return seededCount
+    }
+
+    private fun buildCornerTriominoVariants(): List<List<Position>> =
+        rotateTemplateVariants(listOf(Position(0, 0), Position(1, 0), Position(0, 1)))
+
+    private fun buildSeedTemplateVariants(seedTemplateOffsets: List<Position>?): List<List<Position>> {
+        val sanitizedTemplate = sanitizeSeedTemplate(seedTemplateOffsets) ?: return buildCornerTriominoVariants()
+        return rotateTemplateVariants(sanitizedTemplate)
+    }
+
+    private fun sanitizeSeedTemplate(seedTemplateOffsets: List<Position>?): List<Position>? {
+        if (seedTemplateOffsets.isNullOrEmpty()) return null
+        val uniqueOffsets = seedTemplateOffsets
+            .distinctBy { "${it.row}:${it.col}" }
+        val minRow = uniqueOffsets.minOf { it.row }
+        val minCol = uniqueOffsets.minOf { it.col }
+        return uniqueOffsets
+            .map { offset -> Position(offset.row - minRow, offset.col - minCol) }
+            .sortedWith(compareBy<Position> { it.row }.thenBy { it.col })
+    }
+
+    private fun rotateTemplateVariants(offsets: List<Position>): List<List<Position>> {
+        val variants = linkedMapOf<String, List<Position>>()
+        var current = offsets
+
+        repeat(4) {
+            val minRow = current.minOf { it.row }
+            val minCol = current.minOf { it.col }
+            val normalized = current
+                .distinctBy { "${it.row}:${it.col}" }
+                .map { offset -> Position(offset.row - minRow, offset.col - minCol) }
+                .sortedWith(compareBy<Position> { it.row }.thenBy { it.col })
+            val key = normalized.joinToString("|") { "${it.row},${it.col}" }
+            variants[key] = normalized
+            current = current.map { offset -> Position(offset.col, -offset.row) }
+        }
+
+        return variants.values.toList()
+    }
+
+    private fun findSeedTemplateOrigin(
+        cells: List<List<CellState>>,
+        queenPosition: Position,
+        regionId: String,
+        offsets: List<Position>,
+    ): Position? {
+        for (queenOffset in offsets) {
+            val origin = Position(
+                queenPosition.row - queenOffset.row,
+                queenPosition.col - queenOffset.col,
+            )
+            var valid = true
+
+            for (offset in offsets) {
+                val row = origin.row + offset.row
+                val col = origin.col + offset.col
+                if (row !in cells.indices || col !in cells[row].indices) {
+                    valid = false
+                    break
+                }
+
+                val cell = cells[row][col]
+                val isQueenCell = row == queenPosition.row && col == queenPosition.col
+                if (isQueenCell) {
+                    if (!cell.isSolutionQueen || cell.groupColor != regionId) {
+                        valid = false
+                        break
+                    }
+                    continue
+                }
+
+                if (cell.isSolutionQueen || cell.groupColor != null) {
+                    valid = false
+                    break
+                }
+            }
+
+            if (valid) {
+                return origin
+            }
+        }
+
+        return null
+    }
+
+    private fun applySeedTemplate(
+        cells: MutableList<MutableList<CellState>>,
+        origin: Position,
+        queenPosition: Position,
+        regionId: String,
+        offsets: List<Position>,
+    ) {
+        for (offset in offsets) {
+            val row = origin.row + offset.row
+            val col = origin.col + offset.col
+            if (row == queenPosition.row && col == queenPosition.col) continue
+            cells[row][col] = cells[row][col].copy(groupColor = regionId)
+        }
+    }
+
+    private fun expandColorGroupsInPlace(boardState: BoardState, targetGroupSize: Int): BoardState {
         val random = Random.Default
         val cells = boardState.cells.map { row -> row.toMutableList() }.toMutableList()
         val byColor = linkedMapOf<String, MutableList<Position>>()
@@ -464,6 +662,7 @@ class ValidatedPuzzleGenerationService(
         }
 
         for ((color, positions) in byColor) {
+            if (positions.size >= targetGroupSize) continue
             val shuffledSources = positions.shuffled(random)
             var expanded = false
 
@@ -505,7 +704,7 @@ class ValidatedPuzzleGenerationService(
         val backup = cloneBoard(state.grid)
         repeat(100) { expansionAttempt ->
             ensureNotCancelled(isCancelled)
-            state.grid = expandColorGroupsInPlace(state.grid)
+            state.grid = expandColorGroupsInPlace(state.grid, targetGroupSize)
             emitProgress(
                 state,
                 attempt,
@@ -579,13 +778,13 @@ class ValidatedPuzzleGenerationService(
         }
     }
 
-    private fun validateGroupSizes(boardState: BoardState, expectedSize: Int): Boolean {
+    private fun validateMinimumGroupSizes(boardState: BoardState, expectedSize: Int): Boolean {
         val counts = linkedMapOf<String, Int>()
         for (cell in boardState.cells.flatten()) {
             val color = cell.groupColor ?: continue
             counts[color] = (counts[color] ?: 0) + 1
         }
-        return counts.values.all { count -> count == expectedSize }
+        return counts.values.all { count -> count >= expectedSize }
     }
 
     private fun isSolvable(state: GeneratorState): Boolean {
@@ -864,6 +1063,7 @@ class ValidatedPuzzleGenerationService(
             val pressuredGroupMarkers = when (strategy) {
                 GenerationStrategy.BASELINE -> emptyMap()
                 GenerationStrategy.MARKER_GUIDED -> computePressuredGroupMarkers(state.grid)
+                GenerationStrategy.TEMPLATE_SEEDED -> emptyMap()
             }
             if (strategy == GenerationStrategy.MARKER_GUIDED) {
                 state.metrics.markerSquares += pressuredGroupMarkers.size

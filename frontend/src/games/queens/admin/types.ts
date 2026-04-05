@@ -8,7 +8,7 @@ export type QueensAdminTool =
   | 'inspect-cell';
 
 export type QueensAdminMarkType = 'NONE' | 'FLAG' | 'QUEEN' | 'INVALID';
-export type QueensAdminGenerationStrategy = 'baseline' | 'marker-guided';
+export type QueensAdminGenerationStrategy = 'baseline' | 'marker-guided' | 'template-seeded';
 
 export interface QueensAdminCell {
   row: number;
@@ -85,6 +85,7 @@ export interface QueensAdminGenerationProgress {
   };
   elapsedMs: number;
   generationPhase: string | null;
+  board: QueensAdminBoardState | null;
   updatedAt: string;
   result: QueensAdminOperationResult | null;
 }
@@ -105,6 +106,7 @@ export interface QueensAdminBatchRun {
   persistenceState: 'SAVED' | 'DUPLICATE' | 'SKIPPED' | 'ERROR' | null;
   persistenceMessage: string | null;
   savedPuzzleId: string | null;
+  encodedPuzzleLayout: string | null;
 }
 
 export interface QueensAdminBatchStatus {

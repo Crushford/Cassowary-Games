@@ -21,6 +21,7 @@ class GenerationJobService(
         minimumGroupSize: Int = 3,
         includeProgressUpdates: Boolean = false,
         generationStrategy: String = "baseline",
+        seedTemplateOffsets: List<com.queens.admin.domain.model.Position>? = null,
     ): GenerationJobSnapshot {
         val jobId = UUID.randomUUID().toString()
         val initialSnapshot = GenerationJobSnapshot(
@@ -39,6 +40,7 @@ class GenerationJobService(
             minimumGroupSize = minimumGroupSize,
             includeProgressUpdates = includeProgressUpdates,
             generationStrategy = generationStrategy,
+            seedTemplateOffsets = seedTemplateOffsets,
             startedAt = Instant.now(),
             cancelled = AtomicBoolean(false),
             snapshot = AtomicReference(initialSnapshot),
@@ -97,6 +99,7 @@ class GenerationJobService(
                 size = runtime.size,
                 minimumGroupSize = runtime.minimumGroupSize,
                 generationStrategy = runtime.generationStrategy,
+                seedTemplateOffsets = runtime.seedTemplateOffsets,
                 progressListener = if (runtime.includeProgressUpdates) {
                     { update ->
                         updateSnapshot(
@@ -110,6 +113,7 @@ class GenerationJobService(
                             strategy = update.strategy,
                             metrics = update.metrics,
                             generationPhase = update.generationPhase,
+                            boardState = update.boardState,
                         )
                     }
                 } else {
@@ -143,6 +147,7 @@ class GenerationJobService(
                 strategy = runtime.snapshot.get().strategy,
                 metrics = runtime.snapshot.get().metrics,
                 generationPhase = result.boardState?.generationPhase?.name,
+                boardState = result.boardState,
                 result = result,
             )
         } catch (_: CancellationException) {
@@ -157,6 +162,7 @@ class GenerationJobService(
                 strategy = runtime.snapshot.get().strategy,
                 metrics = runtime.snapshot.get().metrics,
                 generationPhase = runtime.snapshot.get().generationPhase,
+                boardState = runtime.snapshot.get().boardState,
             )
         } catch (error: Throwable) {
             updateSnapshot(
@@ -170,6 +176,7 @@ class GenerationJobService(
                 strategy = runtime.snapshot.get().strategy,
                 metrics = runtime.snapshot.get().metrics,
                 generationPhase = runtime.snapshot.get().generationPhase,
+                boardState = runtime.snapshot.get().boardState,
             )
         }
     }
@@ -185,6 +192,7 @@ class GenerationJobService(
         strategy: String,
         metrics: GenerationMetricsSnapshot,
         generationPhase: String?,
+        boardState: com.queens.admin.domain.model.BoardState? = null,
         result: com.queens.admin.domain.model.OperationResult? = null,
     ) {
         val now = Instant.now()
@@ -201,6 +209,7 @@ class GenerationJobService(
                 metrics = metrics,
                 elapsedMs = java.time.Duration.between(runtime.startedAt, now).toMillis(),
                 generationPhase = generationPhase,
+                boardState = boardState,
                 result = result,
                 updatedAt = now,
             ),
@@ -212,6 +221,7 @@ class GenerationJobService(
         val minimumGroupSize: Int,
         val includeProgressUpdates: Boolean,
         val generationStrategy: String,
+        val seedTemplateOffsets: List<com.queens.admin.domain.model.Position>?,
         val startedAt: Instant,
         val cancelled: AtomicBoolean,
         val snapshot: AtomicReference<GenerationJobSnapshot>,

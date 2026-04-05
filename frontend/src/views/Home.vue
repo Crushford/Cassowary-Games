@@ -108,7 +108,7 @@
           </router-link>
 
           <router-link
-            to="/queens/admin"
+            to="/queens/admin/workshop"
             class="block p-4 bg-semantic-info-800 hover:bg-semantic-info-700 rounded-lg transition-colors"
             @click="showWorksInProgressModal = false"
           >

@@ -16,6 +16,8 @@ import type {
 
 const DEFAULT_BOARD_SIZE = 6;
 const MAX_HISTORY_ENTRIES = 30;
+const TRACKED_BATCH_STORAGE_KEY = 'queens-admin-tracked-batches-v1';
+const MAX_TRACKED_BATCHES = 8;
 
 export const useQueensAdminStore = defineStore('queensAdmin', () => {
   const board = ref<QueensAdminBoardState | null>(null);
@@ -34,11 +36,66 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
   const canCancelRequest = ref(false);
   const generationProgress = ref<QueensAdminGenerationProgress | null>(null);
   const batchStatus = ref<QueensAdminBatchStatus | null>(null);
+  const trackedBatches = ref<QueensAdminBatchStatus[]>([]);
   const batchLoading = ref(false);
   let highlightTimer: ReturnType<typeof setTimeout> | null = null;
   let currentRequestController: AbortController | null = null;
   let currentGenerationJobId: string | null = null;
   let currentBatchId: string | null = null;
+
+  function readTrackedBatchIds(): string[] {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = window.localStorage.getItem(TRACKED_BATCH_STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .filter((value): value is string => typeof value === 'string')
+        .slice(0, MAX_TRACKED_BATCHES);
+    } catch {
+      return [];
+    }
+  }
+
+  function writeTrackedBatchIds(batchIds: string[]): void {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(
+      TRACKED_BATCH_STORAGE_KEY,
+      JSON.stringify(batchIds.slice(0, MAX_TRACKED_BATCHES))
+    );
+  }
+
+  function trackBatchId(batchId: string): void {
+    const nextIds = [
+      batchId,
+      ...readTrackedBatchIds().filter((existingId) => existingId !== batchId),
+    ];
+    writeTrackedBatchIds(nextIds);
+  }
+
+  function untrackBatchId(batchId: string): void {
+    writeTrackedBatchIds(readTrackedBatchIds().filter((existingId) => existingId !== batchId));
+  }
+
+  function upsertTrackedBatch(status: QueensAdminBatchStatus): void {
+    trackedBatches.value = [
+      status,
+      ...trackedBatches.value.filter((batch) => batch.batchId !== status.batchId),
+    ]
+      .sort(
+        (left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
+      )
+      .slice(0, MAX_TRACKED_BATCHES);
+  }
+
+  function removeTrackedBatch(batchId: string): void {
+    trackedBatches.value = trackedBatches.value.filter((batch) => batch.batchId !== batchId);
+    untrackBatchId(batchId);
+    if (batchStatus.value?.batchId === batchId) {
+      batchStatus.value = null;
+    }
+  }
 
   const boardSummary = computed(() => {
     if (!board.value) {
@@ -102,6 +159,13 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
       clearTimeout(highlightTimer);
       highlightTimer = null;
     }
+  }
+
+  function applyBoardSnapshot(nextBoard: QueensAdminBoardState | null): void {
+    if (!nextBoard) return;
+    board.value = nextBoard;
+    boardSize.value = nextBoard.size;
+    selectedCellKey.value = null;
   }
 
   function applyResult(result: QueensAdminOperationResult): QueensAdminOperationResult {
@@ -193,10 +257,43 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     await new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  async function pollBatch(batchId: string): Promise<void> {
+    currentBatchId = batchId;
+    batchLoading.value = true;
+    canCancelRequest.value = true;
+
+    try {
+      while (currentBatchId === batchId) {
+        const nextStatus = await queensAdminApi.getBatchGenerationStatus(batchId);
+        batchStatus.value = nextStatus;
+        upsertTrackedBatch(nextStatus);
+
+        if (nextStatus.state === 'COMPLETED' || nextStatus.state === 'CANCELLED') {
+          currentBatchId = null;
+          return;
+        }
+
+        await wait(300);
+      }
+    } catch (error) {
+      backendError.value =
+        error instanceof Error ? error.message : 'Batch generation request failed';
+      currentBatchId = null;
+    } finally {
+      batchLoading.value = false;
+      if (!currentBatchId && !currentGenerationJobId) {
+        canCancelRequest.value = false;
+      }
+    }
+  }
+
   async function cancelCurrentOperation(): Promise<void> {
     if (currentBatchId) {
       try {
         batchStatus.value = await queensAdminApi.cancelBatchGeneration(currentBatchId);
+        if (batchStatus.value) {
+          upsertTrackedBatch(batchStatus.value);
+        }
       } catch (error) {
         backendError.value =
           error instanceof Error ? error.message : 'Failed to cancel batch generation';
@@ -224,7 +321,13 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     await callBackendOperation((signal) => queensAdminApi.createEmptyBoard(size, signal));
   }
 
-  async function generateBoard(size: number = boardSize.value): Promise<void> {
+  async function generateBoard(
+    size: number = boardSize.value,
+    options?: {
+      seedTemplateOffsets?: Array<{ row: number; col: number }>;
+      previewIntervalMs?: number;
+    }
+  ): Promise<void> {
     boardSize.value = size;
     minimumGroupSize.value = Math.max(1, Math.min(minimumGroupSize.value, size));
     loading.value = true;
@@ -233,16 +336,28 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     generationProgress.value = null;
 
     try {
+      let lastPreviewAppliedAt = 0;
       const jobId = await queensAdminApi.startGenerateValidBoardJob(size, {
         includeProgressUpdates: true,
         minimumGroupSize: minimumGroupSize.value,
         generationStrategy: generationStrategy.value,
+        seedTemplateOffsets: options?.seedTemplateOffsets,
       });
       currentGenerationJobId = jobId;
 
       while (currentGenerationJobId === jobId) {
         const progress = await queensAdminApi.getGenerationJobStatus(jobId);
         generationProgress.value = progress;
+
+        const previewIntervalMs = Math.max(50, options?.previewIntervalMs ?? 1000);
+        const canApplyPreview =
+          progress.board &&
+          (lastPreviewAppliedAt === 0 || Date.now() - lastPreviewAppliedAt >= previewIntervalMs);
+
+        if (progress.state === 'RUNNING' && progress.board && canApplyPreview) {
+          applyBoardSnapshot(progress.board);
+          lastPreviewAppliedAt = Date.now();
+        }
 
         if (progress.state === 'COMPLETED' && progress.result) {
           applyResult(progress.result);
@@ -321,27 +436,49 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
 
     try {
       const batchId = await queensAdminApi.startBatchGeneration(options);
-      currentBatchId = batchId;
-
-      while (currentBatchId === batchId) {
-        const nextStatus = await queensAdminApi.getBatchGenerationStatus(batchId);
-        batchStatus.value = nextStatus;
-
-        if (nextStatus.state === 'COMPLETED' || nextStatus.state === 'CANCELLED') {
-          currentBatchId = null;
-          return;
-        }
-
-        await wait(300);
-      }
+      trackBatchId(batchId);
+      await pollBatch(batchId);
     } catch (error) {
       backendError.value =
         error instanceof Error ? error.message : 'Batch generation request failed';
-    } finally {
-      batchLoading.value = false;
-      if (!currentBatchId && !currentGenerationJobId) {
-        canCancelRequest.value = false;
+    }
+  }
+
+  async function refreshTrackedBatches(): Promise<void> {
+    const batchIds = readTrackedBatchIds();
+    if (batchIds.length === 0) {
+      trackedBatches.value = [];
+      return;
+    }
+
+    const snapshots = await Promise.all(
+      batchIds.map(async (batchId) => {
+        try {
+          return await queensAdminApi.getBatchGenerationStatus(batchId);
+        } catch {
+          return null;
+        }
+      })
+    );
+
+    const validSnapshots = snapshots.filter((snapshot): snapshot is QueensAdminBatchStatus =>
+      Boolean(snapshot)
+    );
+    trackedBatches.value = validSnapshots.sort(
+      (left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
+    );
+    writeTrackedBatchIds(validSnapshots.map((snapshot) => snapshot.batchId));
+
+    const activeBatch = validSnapshots.find(
+      (snapshot) => snapshot.state === 'RUNNING' || snapshot.state === 'QUEUED'
+    );
+    if (activeBatch) {
+      batchStatus.value = activeBatch;
+      if (currentBatchId !== activeBatch.batchId) {
+        void pollBatch(activeBatch.batchId);
       }
+    } else if (!currentBatchId && !batchStatus.value && validSnapshots[0]) {
+      batchStatus.value = validSnapshots[0];
     }
   }
 
@@ -470,6 +607,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     canCancelRequest,
     generationProgress,
     batchStatus,
+    trackedBatches,
     batchLoading,
     highlightedChangedCells,
     selectedCell,
@@ -480,6 +618,8 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     createBoard,
     generateBoard,
     startBatchGeneration,
+    refreshTrackedBatches,
+    removeTrackedBatch,
     placeQueens,
     assignInitialColors,
     expandAllGroupsOnce,

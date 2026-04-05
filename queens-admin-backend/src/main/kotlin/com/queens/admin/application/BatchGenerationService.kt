@@ -41,6 +41,7 @@ data class BatchGenerationRunSnapshot(
     val persistenceState: String? = null,
     val persistenceMessage: String? = null,
     val savedPuzzleId: String? = null,
+    val encodedPuzzleLayout: String? = null,
 )
 
 data class BatchGenerationBatchSnapshot(
@@ -66,6 +67,7 @@ data class BatchGenerationBatchSnapshot(
 class BatchGenerationService(
     private val generationWorkflowService: GenerationWorkflowService,
     private val puzzleCatalogService: PuzzleCatalogService,
+    private val persistedPuzzleBoardCodecService: com.queens.admin.domain.service.PersistedPuzzleBoardCodecService,
 ) {
     private val coordinatorExecutor = Executors.newCachedThreadPool()
     private val workerExecutor = Executors.newCachedThreadPool()
@@ -255,6 +257,7 @@ class BatchGenerationService(
                                     else -> if (runtime.snapshot.get().saveSuccessfulPuzzles) null else "Save disabled for this batch."
                                 },
                             savedPuzzleId = persistenceResult?.puzzle?.id?.toString(),
+                            encodedPuzzleLayout = result.boardState?.let(persistedPuzzleBoardCodecService::encodeUrlLayout),
                         )
                     } catch (error: Throwable) {
                         finishedAt = Instant.now()
@@ -278,6 +281,7 @@ class BatchGenerationService(
                                 } else {
                                     "Save disabled for this batch."
                                 },
+                            encodedPuzzleLayout = null,
                         )
                     }
                 }
@@ -307,6 +311,7 @@ class BatchGenerationService(
                         error = error.message ?: "Generation crashed unexpectedly.",
                         startedAt = previous.startedAt,
                         finishedAt = Instant.now(),
+                        encodedPuzzleLayout = previous.encodedPuzzleLayout,
                     )
                 }
 
