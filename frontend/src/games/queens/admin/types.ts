@@ -112,6 +112,9 @@ export interface QueensAdminBatchRun {
   runId: string;
   size: number;
   strategy: QueensAdminGenerationStrategy;
+  queenCountMode: QueensAdminQueenCountMode;
+  targetQueenCount: number;
+  orthogonalMinDistance: number;
   minimumGroupSize: number;
   state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
   coloredCellCount: number;

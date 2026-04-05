@@ -61,6 +61,46 @@
             />
           </div>
           <div class="space-y-2">
+            <label class="block text-sm text-semantic-neutral-300" for="batch-queen-count-mode">
+              Queen count mode
+            </label>
+            <select
+              id="batch-queen-count-mode"
+              v-model="queenCountMode"
+              class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+            >
+              <option value="exact">Exact target</option>
+              <option value="max">Maximum that fits</option>
+            </select>
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm text-semantic-neutral-300" for="batch-target-queens">
+              Target queens
+            </label>
+            <input
+              id="batch-target-queens"
+              v-model.number="targetQueenCount"
+              type="number"
+              min="1"
+              max="400"
+              :disabled="queenCountMode === 'max'"
+              class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm text-semantic-neutral-300" for="batch-orthogonal-distance">
+              Orthogonal min distance
+            </label>
+            <input
+              id="batch-orthogonal-distance"
+              v-model.number="orthogonalMinDistance"
+              type="number"
+              min="1"
+              max="400"
+              class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+            />
+          </div>
+          <div class="space-y-2">
             <label class="block text-sm text-semantic-neutral-300" for="batch-min-group">
               Minimum region size
             </label>
@@ -74,6 +114,10 @@
             />
           </div>
         </div>
+        <p class="mt-3 text-xs leading-5 text-semantic-neutral-400">
+          These values are applied to every size in the batch. If an exported puzzle does not carry
+          an orthogonal distance, the frontend should assume it matches the board size.
+        </p>
 
         <div class="mt-4 space-y-2">
           <div class="text-sm text-semantic-neutral-300">Strategies</div>
@@ -637,6 +681,11 @@ const persistedBatchInputs = loadQueensAdminBatchInputs();
 const sizesInput = ref(persistedBatchInputs?.sizesInput ?? '6, 8');
 const runsPerCombination = ref(persistedBatchInputs?.runsPerCombination ?? 5);
 const maxConcurrentJobs = ref(persistedBatchInputs?.maxConcurrentJobs ?? 2);
+const queenCountMode = ref(persistedBatchInputs?.queenCountMode ?? store.queenCountMode);
+const targetQueenCount = ref(persistedBatchInputs?.targetQueenCount ?? store.targetQueenCount);
+const orthogonalMinDistance = ref(
+  persistedBatchInputs?.orthogonalMinDistance ?? store.orthogonalMinDistance
+);
 const minimumGroupSize = ref(persistedBatchInputs?.minimumGroupSize ?? store.minimumGroupSize);
 const saveSuccessfulPuzzles = ref(persistedBatchInputs?.saveSuccessfulPuzzles ?? true);
 const selectedStrategies = ref<QueensAdminGenerationStrategy[]>(
@@ -776,6 +825,9 @@ async function startBatch(): Promise<void> {
     sizes: parsedSizes.value,
     strategies: selectedStrategies.value,
     runsPerCombination: Math.max(1, runsPerCombination.value),
+    queenCountMode: queenCountMode.value,
+    targetQueenCount: queenCountMode.value === 'max' ? null : Math.max(1, targetQueenCount.value),
+    orthogonalMinDistance: Math.max(1, orthogonalMinDistance.value),
     minimumGroupSize: Math.max(1, minimumGroupSize.value),
     maxConcurrentJobs: Math.max(1, maxConcurrentJobs.value),
     saveSuccessfulPuzzles: saveSuccessfulPuzzles.value,
@@ -935,6 +987,9 @@ watch(
     sizesInput,
     runsPerCombination,
     maxConcurrentJobs,
+    queenCountMode,
+    targetQueenCount,
+    orthogonalMinDistance,
     minimumGroupSize,
     saveSuccessfulPuzzles,
     selectedStrategies,
@@ -944,6 +999,9 @@ watch(
       sizesInput: sizesInput.value,
       runsPerCombination: runsPerCombination.value,
       maxConcurrentJobs: maxConcurrentJobs.value,
+      queenCountMode: queenCountMode.value,
+      targetQueenCount: targetQueenCount.value,
+      orthogonalMinDistance: orthogonalMinDistance.value,
       minimumGroupSize: minimumGroupSize.value,
       saveSuccessfulPuzzles: saveSuccessfulPuzzles.value,
       selectedStrategies: selectedStrategies.value,

@@ -478,6 +478,9 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     sizes: number[];
     strategies: QueensAdminGenerationStrategy[];
     runsPerCombination: number;
+    queenCountMode: 'exact' | 'max';
+    targetQueenCount?: number | null;
+    orthogonalMinDistance: number;
     minimumGroupSize: number;
     maxConcurrentJobs: number;
     saveSuccessfulPuzzles: boolean;
@@ -592,7 +595,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
 
   async function validateCurrentBoard(): Promise<void> {
     if (!board.value) return;
-    await callBackendOperation((signal) => queensAdminApi.validateBoard(board.value, signal));
+    await callBackendOperation((signal) => queensAdminApi.runAllSolverSteps(board.value, signal));
   }
 
   async function applyManualToolToCell(row: number, col: number): Promise<void> {

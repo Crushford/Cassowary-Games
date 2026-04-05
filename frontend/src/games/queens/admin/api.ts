@@ -114,6 +114,9 @@ interface BatchGenerationRunDto {
   runId: string;
   size: number;
   strategy: QueensAdminGenerationStrategy;
+  queenCountMode: QueensAdminQueenCountMode;
+  targetQueenCount: number;
+  orthogonalMinDistance: number;
   minimumGroupSize: number;
   state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
   coloredCellCount: number;
@@ -265,6 +268,9 @@ function toBatchStatus(data: BatchGenerationStatusDto): QueensAdminBatchStatus {
       runId: run.runId,
       size: run.size,
       strategy: run.strategy,
+      queenCountMode: run.queenCountMode,
+      targetQueenCount: run.targetQueenCount,
+      orthogonalMinDistance: run.orthogonalMinDistance,
       minimumGroupSize: run.minimumGroupSize,
       state: run.state,
       coloredCellCount: run.coloredCellCount,
@@ -334,6 +340,9 @@ export const queensAdminApi = {
     sizes: number[];
     strategies: QueensAdminGenerationStrategy[];
     runsPerCombination: number;
+    queenCountMode: QueensAdminQueenCountMode;
+    targetQueenCount?: number | null;
+    orthogonalMinDistance: number;
     minimumGroupSize: number;
     maxConcurrentJobs: number;
     saveSuccessfulPuzzles: boolean;

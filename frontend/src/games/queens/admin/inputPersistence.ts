@@ -7,7 +7,7 @@ import type {
 } from './types';
 
 const WORKSHOP_INPUTS_KEY = 'queens-admin-workshop-inputs-v2';
-const BATCH_INPUTS_KEY = 'queens-admin-batch-inputs-v1';
+const BATCH_INPUTS_KEY = 'queens-admin-batch-inputs-v2';
 const VALID_STRATEGIES: QueensAdminGenerationStrategy[] = [
   'baseline',
   'marker-guided',
@@ -47,6 +47,9 @@ export type QueensAdminBatchInputs = {
   sizesInput: string;
   runsPerCombination: number;
   maxConcurrentJobs: number;
+  queenCountMode: QueensAdminQueenCountMode;
+  targetQueenCount: number;
+  orthogonalMinDistance: number;
   minimumGroupSize: number;
   saveSuccessfulPuzzles: boolean;
   selectedStrategies: QueensAdminGenerationStrategy[];
@@ -200,6 +203,21 @@ export function loadQueensAdminBatchInputs(): Partial<QueensAdminBatchInputs> | 
     1,
     12
   );
+  const queenCountMode = isValidQueenCountMode(
+    (parsed as { queenCountMode?: unknown }).queenCountMode
+  )
+    ? (parsed as { queenCountMode: QueensAdminQueenCountMode }).queenCountMode
+    : null;
+  const targetQueenCount = clampInteger(
+    (parsed as { targetQueenCount?: unknown }).targetQueenCount,
+    1,
+    400
+  );
+  const orthogonalMinDistance = clampInteger(
+    (parsed as { orthogonalMinDistance?: unknown }).orthogonalMinDistance,
+    1,
+    400
+  );
   const minimumGroupSize = clampInteger(
     (parsed as { minimumGroupSize?: unknown }).minimumGroupSize,
     1,
@@ -223,6 +241,9 @@ export function loadQueensAdminBatchInputs(): Partial<QueensAdminBatchInputs> | 
     ...(sizesInput != null ? { sizesInput } : {}),
     ...(runsPerCombination != null ? { runsPerCombination } : {}),
     ...(maxConcurrentJobs != null ? { maxConcurrentJobs } : {}),
+    ...(queenCountMode ? { queenCountMode } : {}),
+    ...(targetQueenCount != null ? { targetQueenCount } : {}),
+    ...(orthogonalMinDistance != null ? { orthogonalMinDistance } : {}),
     ...(minimumGroupSize != null ? { minimumGroupSize } : {}),
     ...(saveSuccessfulPuzzles != null ? { saveSuccessfulPuzzles } : {}),
     ...(selectedStrategies && selectedStrategies.length ? { selectedStrategies } : {}),
