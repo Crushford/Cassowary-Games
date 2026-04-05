@@ -104,8 +104,9 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useQueensStore } from '../../stores/queensStore';
+import { buildQueensSelectionRoute } from '../../utils/puzzleSelectionRoute';
 import Modal from '@/shared/components/Modal.vue';
 
 const props = defineProps<{
@@ -118,6 +119,7 @@ const emit = defineEmits<{
 }>();
 
 const queensStore = useQueensStore();
+const route = useRoute();
 const router = useRouter();
 
 const currentMode = computed<'standard' | 'rotate'>(() => props.mode ?? 'standard');
@@ -160,6 +162,23 @@ const canPlayRandom = computed(
       : selectionPuzzles.value.length > 0)
 );
 
+function getQuerySize(): string | null {
+  const value = route.query.size;
+  return typeof value === 'string' ? value : null;
+}
+
+function getQueryDistance(): number | null {
+  const value = route.query.distance;
+  if (typeof value !== 'string') return null;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getQueryDifficulty(): 'easy' | 'medium' | 'hard' | null {
+  const value = route.query.difficulty;
+  return value === 'easy' || value === 'medium' || value === 'hard' ? value : null;
+}
+
 function initializeSelectionState() {
   const sizes = availableSizes.value;
   if (sizes.length === 0) {
@@ -169,7 +188,9 @@ function initializeSelectionState() {
     return;
   }
 
-  const preferredSize = sizes.includes('7x7') ? '7x7' : sizes[0];
+  const querySize = getQuerySize();
+  const preferredSize =
+    querySize && sizes.includes(querySize) ? querySize : sizes.includes('7x7') ? '7x7' : sizes[0];
   selectedSize.value = preferredSize;
 }
 
@@ -215,11 +236,57 @@ async function handlePlayRandomPuzzle() {
   }
 
   emit('close');
-  router.push(`/queens/${puzzle.id}`);
+  router.push(
+    buildQueensSelectionRoute({
+      sizeKey: selectedSize.value,
+      orthogonalMinDistance: selectedDistance.value,
+      difficulty: showDifficultySection.value ? selectedDifficulty.value : undefined,
+      puzzleId: puzzle.id,
+    })
+  );
 }
 
 function handlePrimaryClose() {
   emit('close');
+}
+
+function updateSelectionQuery() {
+  if (!props.isVisible || isRotate.value) return;
+
+  const nextQuery: Record<string, string> = {
+    mode: 'single',
+  };
+
+  if (selectedSize.value) {
+    nextQuery.size = selectedSize.value;
+  }
+  if (selectedDistance.value != null) {
+    nextQuery.distance = String(selectedDistance.value);
+  }
+  if (showDifficultySection.value && selectedDifficulty.value != null) {
+    nextQuery.difficulty = selectedDifficulty.value;
+  }
+
+  const currentSize = typeof route.query.size === 'string' ? route.query.size : undefined;
+  const currentDistance =
+    typeof route.query.distance === 'string' ? route.query.distance : undefined;
+  const currentDifficulty =
+    typeof route.query.difficulty === 'string' ? route.query.difficulty : undefined;
+  const currentMode = typeof route.query.mode === 'string' ? route.query.mode : undefined;
+
+  if (
+    currentMode === nextQuery.mode &&
+    currentSize === nextQuery.size &&
+    currentDistance === nextQuery.distance &&
+    currentDifficulty === nextQuery.difficulty
+  ) {
+    return;
+  }
+
+  router.replace({
+    path: '/queens',
+    query: nextQuery,
+  });
 }
 
 watch(
@@ -253,9 +320,14 @@ watch(
       return;
     }
 
-    const preferredDistance = distances.includes(parseInt(selectedSize.value, 10))
-      ? parseInt(selectedSize.value, 10)
-      : distances[0];
+    const queryDistance = getQueryDistance();
+    const boardDistance = Number.parseInt(selectedSize.value, 10);
+    const preferredDistance =
+      queryDistance != null && distances.includes(queryDistance)
+        ? queryDistance
+        : distances.includes(boardDistance)
+          ? boardDistance
+          : distances[0];
 
     if (selectedDistance.value == null || !distances.includes(selectedDistance.value)) {
       selectedDistance.value = preferredDistance;
@@ -280,11 +352,31 @@ watch(
       return;
     }
 
-    const preferredDifficulty = difficulties.includes('easy') ? 'easy' : difficulties[0];
+    const queryDifficulty = getQueryDifficulty();
+    const preferredDifficulty =
+      queryDifficulty && difficulties.includes(queryDifficulty)
+        ? queryDifficulty
+        : difficulties.includes('easy')
+          ? 'easy'
+          : difficulties[0];
 
     if (selectedDifficulty.value == null || !difficulties.includes(selectedDifficulty.value)) {
       selectedDifficulty.value = preferredDifficulty;
     }
+  },
+  { immediate: true }
+);
+
+watch(
+  [
+    selectedSize,
+    selectedDistance,
+    selectedDifficulty,
+    showDifficultySection,
+    () => props.isVisible,
+  ],
+  () => {
+    updateSelectionQuery();
   },
   { immediate: true }
 );

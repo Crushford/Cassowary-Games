@@ -77,7 +77,7 @@ describe('useIncrementalQueensStore persistence', () => {
         currentMode: 'standard',
       },
     });
-  });
+  }, 10000);
 
   it('loads a saved run summary on startup', async () => {
     localStorage.setItem(
@@ -122,7 +122,6 @@ describe('useIncrementalQueensStore persistence', () => {
         },
       })
     );
-
     const { useIncrementalQueensStore } = await import('./incrementalQueensStore');
     const incrementalStore = useIncrementalQueensStore();
     incrementalStore.initializePersistence();

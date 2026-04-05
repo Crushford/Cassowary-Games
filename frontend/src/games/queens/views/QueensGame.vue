@@ -172,6 +172,10 @@ import {
   buildEncodedQueensPuzzleLayout,
   QUEENS_PUZZLE_SHARE_BASE_URL,
 } from '../utils/urlPuzzleEncoding';
+import {
+  buildQueensSelectionRoute,
+  isQueensSelectionDifficulty,
+} from '../utils/puzzleSelectionRoute';
 
 const PlayGrid = defineAsyncComponent(() => import('@/shared/components/PlayGrid.vue'));
 const QueensSquare = defineAsyncComponent(() => import('../components/queens/QueensSquare.vue'));
@@ -274,6 +278,10 @@ async function loadPuzzleFromRoute() {
   const puzzleId = route.params.puzzleId as string;
   const levelName = route.params.levelName as string;
   const encodedLayout = route.params.encodedLayout as string;
+  const sizeKey = route.params.sizeKey as string | undefined;
+  const routeOrthogonalMinDistance = route.params.orthogonalMinDistance as string | undefined;
+  const routeDifficultyParam = route.params.difficulty as string | undefined;
+  const selectedPuzzleId = route.params.selectedPuzzleId as string | undefined;
 
   try {
     // Check if this is a tutorial puzzle
@@ -301,6 +309,79 @@ async function loadPuzzleFromRoute() {
         game_mode: 'standard',
         grid_size: queensStore.gridSize,
         puzzle_id: 'url-preview',
+      });
+      return;
+    }
+
+    if (sizeKey && routeOrthogonalMinDistance) {
+      if (queensStore.isTutorialMode) {
+        queensStore.exitTutorialMode();
+      }
+
+      const orthogonalMinDistance = Number.parseInt(routeOrthogonalMinDistance, 10);
+      if (!Number.isFinite(orthogonalMinDistance)) {
+        router.push('/queens');
+        return;
+      }
+
+      if (!queensStore.puzzleDatabase) {
+        const success = await queensStore.loadPuzzleDatabase();
+        if (!success) {
+          router.push('/queens');
+          return;
+        }
+      }
+
+      const difficulty = isQueensSelectionDifficulty(routeDifficultyParam)
+        ? routeDifficultyParam
+        : undefined;
+
+      let selectedPuzzle =
+        selectedPuzzleId != null
+          ? (queensStore
+              .getPuzzlesForSelection(sizeKey, orthogonalMinDistance, difficulty)
+              .find((puzzle) => String(puzzle.id) === selectedPuzzleId) ?? null)
+          : null;
+
+      if (!selectedPuzzle) {
+        selectedPuzzle = queensStore.getRandomPuzzleForSelection(
+          sizeKey,
+          orthogonalMinDistance,
+          difficulty
+        );
+      }
+
+      if (!selectedPuzzle) {
+        router.push({
+          path: '/queens',
+          query: {
+            mode: 'single',
+            size: sizeKey,
+            distance: String(orthogonalMinDistance),
+            ...(difficulty ? { difficulty } : {}),
+          },
+        });
+        return;
+      }
+
+      if (selectedPuzzleId == null || String(selectedPuzzle.id) !== selectedPuzzleId) {
+        router.replace(
+          buildQueensSelectionRoute({
+            sizeKey,
+            orthogonalMinDistance,
+            difficulty,
+            puzzleId: selectedPuzzle.id,
+          })
+        );
+      }
+
+      await queensStore.loadPuzzleById(selectedPuzzle.id);
+      trackGameStart({
+        game_name: 'queens',
+        game_mode: queensStore.isSpeedMode ? 'speed' : 'standard',
+        grid_size: queensStore.gridSize,
+        puzzle_id:
+          queensStore.currentPuzzleId === null ? undefined : String(queensStore.currentPuzzleId),
       });
       return;
     }
@@ -372,7 +453,19 @@ async function handleMainMenu() {
 }
 
 function handleSelectPuzzle() {
-  router.push({ path: '/queens', query: { mode: 'single' } });
+  const sizeKey = `${queensStore.gridSize}x${queensStore.gridSize}`;
+  const distance = queensStore.currentPuzzle?.orthogonalMinDistance ?? queensStore.gridSize;
+  const difficulty = queensStore.currentPuzzle?.difficulty;
+
+  router.push({
+    path: '/queens',
+    query: {
+      mode: 'single',
+      size: sizeKey,
+      distance: String(distance),
+      ...(difficulty ? { difficulty } : {}),
+    },
+  });
 }
 
 async function handleNextPuzzle() {
@@ -536,7 +629,15 @@ onMounted(async () => {
 
 // Watch for route changes (e.g., when navigating between puzzles)
 watch(
-  () => [route.params.puzzleId, route.params.levelName, route.params.encodedLayout],
+  () => [
+    route.params.puzzleId,
+    route.params.levelName,
+    route.params.encodedLayout,
+    route.params.sizeKey,
+    route.params.orthogonalMinDistance,
+    route.params.difficulty,
+    route.params.selectedPuzzleId,
+  ],
   async () => {
     await loadPuzzleFromRoute();
   }

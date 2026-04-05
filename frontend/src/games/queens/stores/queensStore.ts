@@ -13,6 +13,7 @@ import {
   keepOnlyOriginalPuzzleVariants,
   type PuzzleForDiversity,
 } from '../utils/puzzleDiversitySelector';
+import { buildQueensSelectionRoute } from '../utils/puzzleSelectionRoute';
 
 export type GameMode = 'standard' | 'speed' | 'rotate';
 export type { MarkType };
@@ -1924,7 +1925,14 @@ export const useQueensStore = defineStore('queens', {
         return;
       }
 
-      router.push(`/queens/${selectedPuzzle.id}`);
+      router.push(
+        buildQueensSelectionRoute({
+          sizeKey,
+          orthogonalMinDistance,
+          difficulty: this.currentPuzzle?.difficulty,
+          puzzleId: selectedPuzzle.id,
+        })
+      );
     },
 
     setMode(mode: GameMode) {

@@ -1,0 +1,240 @@
+{
+  "7x7" : [ {
+    "id" : "14693d5b-a8c8-4ef1-96bc-ec71d29cc62b",
+    "layout" : "0001122111113244113356477855677988566695556699555",
+    "queens" : ".Q....Q...Q...Q....Q...Q........Q...Q....Q...Q...",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "16abb04b-8dbb-4a5c-89f5-54474a6596b0",
+    "layout" : "0011222001133340453334445566744555677855997788559",
+    "queens" : "Q....Q...Q........Q...Q....Q...Q...Q....Q...Q....",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "647f4cbe-394d-4cf9-8d54-2f7297aef500",
+    "layout" : "0001112000012200034225563442576338857669887779988",
+    "queens" : "....Q...Q....Q...Q...Q....Q...Q........Q...Q....Q",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "b7bff105-60db-4aca-9142-0ea7cfc44978",
+    "layout" : "0000112011112233415563441756333776638887663999766",
+    "queens" : ".Q....Q...Q...Q....Q...Q........Q...Q....Q...Q...",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "26d9fa9c-2659-433a-a777-2b1a5e12a80e",
+    "layout" : "0001122000112200334225553442556677785666978888699",
+    "queens" : "...Q...Q....Q...Q........Q...Q....Q...Q...Q....Q.",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "216f205f-9a9f-41b2-93dc-b9fc01210f4c",
+    "layout" : "0111222011132400553346655534765554476859947788944",
+    "queens" : "Q....Q...Q........Q...Q....Q...Q...Q....Q...Q....",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "9e8ee57c-14a0-467c-852c-e4cdee1fe1a9",
+    "layout" : "0000122300415233341526634455674488967788896788899",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "ef4fae9f-2bf0-4e88-8f8e-0d54e7a79bae",
+    "layout" : "0111112001312200334225064444556674488877448887999",
+    "queens" : "....Q...Q....Q...Q...Q....Q...Q........Q...Q....Q",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "0f006bea-9861-48fd-8c73-873573496ece",
+    "layout" : "0001233000123340412554441655774866579488659995555",
+    "queens" : "...Q....Q....Q....Q....Q....Q....Q....Q....Q....Q",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "b26d1695-5db9-490b-8f51-2eb191b90986",
+    "layout" : "0011122011112344415534441533666778366978836699983",
+    "queens" : "Q....Q...Q........Q...Q....Q...Q...Q....Q...Q....",
+    "orthogonalMinDistance" : 5
+  } ],
+  "8x8" : [ {
+    "id" : "948fa826-a6c5-41b0-a11f-8cf9428faf19",
+    "layout" : "0001112234445662377556623738666633388996333AB9993AAAB99C33AABBCC",
+    "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "91ba9d47-32fe-4b22-9d15-1d32567f7f5d",
+    "layout" : "00011223444111235444467355584677999866779998A77B99CCAAABCCCCCCBB",
+    "queens" : ".Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....Q",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "a4d30176-e25e-48d3-9859-e31cb7f06676",
+    "layout" : "0112333301223456007444560077855600998855A99BB555A9CCBB55AAACCBBB",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "ce4fcc5b-7764-4216-baa5-b5f357e105bd",
+    "layout" : "0112233301123334001233340055566478889666777A966B77AA966B777CCCBB",
+    "queens" : "....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q..",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "edb6de7f-4a7b-4d05-98e1-76bff59becb2",
+    "layout" : "0000000011200334512663445227666455778899A5B788C9ABBB88CCABBB888C",
+    "queens" : "...Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "a9f12323-d477-43ec-8f08-b0690ae31230",
+    "layout" : "01112223011222330000044350066743550667885596A7A8B999AAA8BBBBBCCC",
+    "queens" : "..Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q.",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "c913540d-46d2-4f9f-a219-f983c237268f",
+    "layout" : "011112330011122340561273455611774486999A4488AAAA444BBBAB44CCCBBB",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "d69f82c9-7022-44f5-ad2c-fb2a1139b871",
+    "layout" : "00111222001111334441133345553366445778669A5B78869A5BBCCC9ACCCCCC",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "c5f47163-1c5a-4916-a8d9-a000753ba4bf",
+    "layout" : "000111223111142531677445336674558867779988AA7999888ABB99CCCABB99",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "0fb809c2-1419-42b7-8bf8-0a096390a7f8",
+    "layout" : "00001222000112320441153244115533677558896775A899667AA8BBCCCAAABB",
+    "queens" : "Q....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "cd012af5-f136-41eb-8eb6-02fcf18bc15b",
+    "layout" : "011122220001222200333244052222245566274485967744859AAA44859AAAAA",
+    "queens" : "..Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q.....Q.",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "d54229df-85fa-45d3-8bb9-79a03ad4ce9f",
+    "layout" : "00111111000121334444225346466755466667778896AA7788999A7788877777",
+    "queens" : "...Q.....Q.....Q....Q...Q.....Q...Q..........Q.....Q.....Q.....Q",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "cfbb3a4d-28d7-4f73-b828-d562994e361a",
+    "layout" : "00112222001111120344455503333565333335663377755683777999887AAA99",
+    "queens" : "Q.....Q.....Q.....Q..........Q...Q.....Q...Q....Q.....Q.....Q...",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "3d9a954e-d3ce-4ed0-9450-9a589fdb5ba7",
+    "layout" : "00112222001222330111133345166333455677884597788A4499AAAA499AAAAA",
+    "queens" : "Q.....Q...Q..........Q.....Q.....Q.....Q....Q...Q.....Q...Q.....",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "74501f67-c043-4166-9b41-3915cfaa6880",
+    "layout" : "0001112200000222000332245553224455677744886699998666999A866669AA",
+    "queens" : "....Q...Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q.",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "5350934d-6a44-4464-9961-84a152d01e72",
+    "layout" : "0001223300012232001112224444125544441665478666957788AA957778AA95",
+    "queens" : "....Q...Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q.",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "a0c91f34-7562-409d-b2ce-ba15b59fc583",
+    "layout" : "001112220011333240033352433333554466555544678885966779AA9999999A",
+    "queens" : "...Q.....Q.....Q....Q...Q.....Q...Q..........Q.....Q.....Q.....Q",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "d73cbf17-39aa-457f-a525-32cb8ee493f7",
+    "layout" : "000001120030111244335552466657884996678A499967AA466667AA6666677A",
+    "queens" : ".Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q.....Q..",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "74b3e0b4-2995-4fb8-9ebf-d0ed164dc090",
+    "layout" : "011233340112114400121555001111550006655500776688097AAA8809999888",
+    "queens" : ".....Q...Q.....Q...Q....Q.....Q.....Q.....Q..........Q...Q.....Q",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "6691c164-16ba-4782-966f-647819f84a19",
+    "layout" : "0111233301112444005224440555664705588647099887770988A7770000AA77",
+    "queens" : ".Q.....Q....Q...Q.....Q...Q..........Q.....Q.....Q.....Q....Q...",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "cc18e71f-7d94-4e7c-8593-470050baafd4",
+    "layout" : "000000120000111233405112334051623340576673888799777777A97777AAA9",
+    "queens" : ".Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q.....Q..",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "244e05cc-8449-4410-84cd-cb54bb046724",
+    "layout" : "0000011120344411223444112335446673354468777548887777888977AAA899",
+    "queens" : ".Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q...",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "ba461e40-c9b9-404d-b0aa-ce011003e5af",
+    "layout" : "00011222000112220034222203344222555546778554469785AA969988A99999",
+    "queens" : "...Q....Q.....Q...Q.........Q....Q.....Q.....Q.....Q....Q.....Q.",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "b9c05d54-7444-44c7-99c8-893c2bde24f5",
+    "layout" : "000111220111332200113322045556224444466244476688944766A899476AAA",
+    "queens" : "...Q....Q.....Q.....Q.....Q..........Q...Q.....Q...Q....Q.....Q.",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "0cca4eef-ac6a-4774-b66d-93c3f0baee37",
+    "layout" : "0111111200113212001332224443355544666755444897559988975599999AAA",
+    "queens" : "...Q.....Q.....Q....Q...Q.....Q...Q..........Q.....Q.....Q.....Q",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "1da23ebd-92e6-4d3c-b6ca-30cbd62ecb07",
+    "layout" : "01223333012333330113333344155533644788996677A8896667AA896666AAAA",
+    "queens" : "...Q....Q.....Q...Q.........Q....Q.....Q.....Q.....Q....Q.....Q.",
+    "orthogonalMinDistance" : 6
+  }, {
+    "id" : "c59c5b11-f022-43f4-b751-99cc39da108c",
+    "layout" : "001112220011122300145523666457839A6447889AAAA7889AAA888898888888",
+    "queens" : "..Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q.....Q.",
+    "orthogonalMinDistance" : 6
+  } ],
+  "9x9" : [ {
+    "id" : "4ef11a52-ee8b-474a-bdd9-d39bb9966c0b",
+    "layout" : "011222333001422333504422677555822679AAB886699AABBC9999ABBBCCCDEAAFFFDDDEGGGFFDDDE",
+    "queens" : "..Q....Q.Q....Q......Q....Q.Q....Q......Q......Q....Q.Q....Q......Q....Q.Q....Q..",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "e0e32efb-8c0d-4f8a-90c6-b7a8c1f2577e",
+    "layout" : "011112234002222334055522244067522888667599888AA799BCCDAAEEBBCFDGGEEEEFFDGGGEEEFFF",
+    "queens" : "..Q....Q.Q....Q......Q....Q.Q....Q......Q......Q....Q.Q....Q......Q....Q.Q....Q..",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "feff2f18-971e-420e-b02d-d2827fe5e306",
+    "layout" : "001112233004122333444567783455567889A55569999AAA566999BBBCC999DBBECFFGGDBBEEFFGGD",
+    "queens" : ".Q....Q.....Q....QQ....Q.....Q....Q.....Q.....Q....Q.....Q....QQ....Q.....Q....Q.",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "ff2d4918-0120-4846-9b14-0bb94e95fa84",
+    "layout" : "001222333041222222441552677444522677489AAA66B8899CADDB8999CCCDBE9FFFFGBBEEFFFFGGB",
+    "queens" : "..Q....Q.Q....Q......Q....Q.Q....Q......Q......Q....Q.Q....Q......Q....Q.Q....Q..",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "96a9b54c-1c33-4af2-a9c8-94224cbc6ee2",
+    "layout" : "001122333011442353004445556777745566777785599ABBB88999AABCCD9EEFFBCCDDDEFFCCDDGGG",
+    "queens" : "..Q....Q.Q....Q......Q....Q.Q....Q......Q......Q....Q.Q....Q......Q....Q.Q....Q..",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "a8d0092c-228b-4719-a4a8-ed3a047dd0a7",
+    "layout" : "011223333001422355664422255664422777668899777668889ABBCC8D8AABECCDDDDFFEGGGDDDFFE",
+    "queens" : "..Q....Q.Q....Q......Q....Q.Q....Q......Q......Q....Q.Q....Q......Q....Q.Q....Q..",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "c2169fab-c249-48fb-8fa4-1bd454e81e6d",
+    "layout" : "0011223330014222556774489556766A8998666AA8888B66CCC888B66CCCD88BEFFCCD8GEEFFCCDGG",
+    "queens" : "..Q....Q.Q....Q......Q....Q.Q....Q......Q......Q....Q.Q....Q......Q....Q.Q....Q..",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "46323de3-8872-4fa4-b9c8-b3c8c9ef17b4",
+    "layout" : "011122222013332245000366645077334445887799AAAB877C9ADDB8CCCEAADBBBFEEGDDBBFFEGGGG",
+    "queens" : ".Q....Q.....Q....QQ....Q.....Q....Q.....Q.....Q....Q.....Q....QQ....Q.....Q....Q.",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "eed0f672-e5e7-4a2a-b144-1101e22367e3",
+    "layout" : "001122333001222244001555664777555866779998866ABBB9C66DABBBCC66DAEEFFCCDDAEEFGGGDD",
+    "queens" : "..Q....Q.Q....Q......Q....Q.Q....Q......Q......Q....Q.Q....Q......Q....Q.Q....Q..",
+    "orthogonalMinDistance" : 5
+  }, {
+    "id" : "1192d857-6ffb-4297-b362-67de3fe5d8b1",
+    "layout" : "011223334012223334000566674555556877995ABB87799AAAB888C9DAAB8EECCDAFFFEEDDDFFFGGG",
+    "queens" : ".Q....Q.....Q....QQ....Q.....Q....Q.....Q.....Q....Q.....Q....QQ....Q.....Q....Q.",
+    "orthogonalMinDistance" : 5
+  } ]
+}
