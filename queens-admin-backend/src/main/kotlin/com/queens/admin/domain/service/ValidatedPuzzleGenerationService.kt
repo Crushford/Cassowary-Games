@@ -2,6 +2,7 @@ package com.queens.admin.domain.service
 
 import com.queens.admin.application.GenerationProgressUpdate
 import com.queens.admin.application.GenerationMetricsSnapshot
+import com.queens.admin.application.DeterministicPuzzleAnalysisService
 import com.queens.admin.domain.model.ActionType
 import com.queens.admin.domain.model.BoardState
 import com.queens.admin.domain.model.CellState
@@ -22,6 +23,7 @@ class ValidatedPuzzleGenerationService(
     private val boardFactoryService: BoardFactoryService,
     private val boardValidationService: BoardValidationService,
     private val queensConstraintService: QueensConstraintService,
+    private val deterministicPuzzleAnalysisService: DeterministicPuzzleAnalysisService,
 ) {
     private enum class GenerationStrategy {
         BASELINE,
@@ -45,6 +47,14 @@ class ValidatedPuzzleGenerationService(
         var markerGuidedPlacements: Int = 0,
         var fallbackPlacements: Int = 0,
         var successfulPlacements: Int = 0,
+        var constrainedWindowHits: Int = 0,
+        var constrainedWindowFlags: Int = 0,
+        var deterministicSolved: Boolean? = null,
+        var deterministicStepsTaken: Int = 0,
+        var deterministicQueensPlaced: Int = 0,
+        var deterministicUnresolvedSquares: Int = 0,
+        var deterministicHardestTier: String? = null,
+        var deterministicLastRule: String? = null,
     ) {
         fun toSnapshot(): GenerationMetricsSnapshot =
             GenerationMetricsSnapshot(
@@ -56,8 +66,29 @@ class ValidatedPuzzleGenerationService(
                 markerGuidedPlacements = markerGuidedPlacements,
                 fallbackPlacements = fallbackPlacements,
                 successfulPlacements = successfulPlacements,
+                constrainedWindowHits = constrainedWindowHits,
+                constrainedWindowFlags = constrainedWindowFlags,
+                deterministicSolved = deterministicSolved,
+                deterministicStepsTaken = deterministicStepsTaken,
+                deterministicQueensPlaced = deterministicQueensPlaced,
+                deterministicUnresolvedSquares = deterministicUnresolvedSquares,
+                deterministicHardestTier = deterministicHardestTier,
+                deterministicLastRule = deterministicLastRule,
             )
     }
+
+    private data class WindowConfinement(
+        val rowRange: IntRange,
+        val colRange: IntRange,
+        val confinedColors: List<String>,
+    )
+
+    private data class ConstrainedWindowExpansionResult(
+        val blockedSquares: List<Pair<Position, List<String>>>,
+        val windowHits: Int,
+        val blockedSquareCount: Int,
+        val sampleWindowSummary: String? = null,
+    )
 
     fun generateValidBoard(
         size: Int,
@@ -136,7 +167,10 @@ class ValidatedPuzzleGenerationService(
                     progressListener,
                 )
                 if (!isSolvable(state)) {
-                    error("Board is not fully solvable after initial colors")
+                    error(
+                        "Board is not fully solvable after initial colors " +
+                            "(${lastDeterministicAnalysisSummary(state).toLogString()})",
+                    )
                 }
 
                 if (strategy == GenerationStrategy.TEMPLATE_SEEDED) {
@@ -161,7 +195,10 @@ class ValidatedPuzzleGenerationService(
                         progressListener,
                     )
                     if (!isSolvable(state)) {
-                        error("Board is not fully solvable after template seeding")
+                        error(
+                            "Board is not fully solvable after template seeding " +
+                                "(${lastDeterministicAnalysisSummary(state).toLogString()})",
+                        )
                     }
                 }
 
@@ -187,7 +224,10 @@ class ValidatedPuzzleGenerationService(
                         return@repeat
                     }
                     if (!isSolvable(state)) {
-                        error("Board is not fully solvable after expansion to size $targetGroupSize")
+                        error(
+                            "Board is not fully solvable after expansion to size $targetGroupSize " +
+                                "(${lastDeterministicAnalysisSummary(state).toLogString()})",
+                        )
                     }
                 }
 
@@ -292,6 +332,23 @@ class ValidatedPuzzleGenerationService(
         val ruleset: QueensRuleset,
         val targetQueenCount: Int,
     )
+
+    private data class DeterministicAnalysisSummary(
+        val solved: Boolean,
+        val stepsTaken: Int,
+        val queensPlaced: Int,
+        val unresolvedSquares: Int,
+        val hardestTier: String?,
+        val lastRule: String?,
+    ) {
+        fun toLogString(): String =
+            "deterministicSolved=$solved, " +
+                "stepsTaken=$stepsTaken, " +
+                "queensPlaced=$queensPlaced, " +
+                "unresolvedSquares=$unresolvedSquares, " +
+                "hardestTier=${hardestTier ?: "none"}, " +
+                "lastRule=${lastRule ?: "none"}"
+    }
 
     private fun buildRegionIds(count: Int): List<String> =
         (1..count).map { index -> "g${index.toString().padStart(2, '0')}" }
@@ -695,49 +752,6 @@ class ValidatedPuzzleGenerationService(
         }
     }
 
-    private fun expandColorGroupsInPlace(boardState: BoardState, targetGroupSize: Int): BoardState {
-        val random = Random.Default
-        val cells = boardState.cells.map { row -> row.toMutableList() }.toMutableList()
-        val byColor = linkedMapOf<String, MutableList<Position>>()
-
-        for (row in cells.indices) {
-            for (col in cells[row].indices) {
-                val color = cells[row][col].groupColor ?: continue
-                byColor.getOrPut(color) { mutableListOf() }.add(Position(row, col))
-            }
-        }
-
-        for ((color, positions) in byColor) {
-            if (positions.size >= targetGroupSize) continue
-            val shuffledSources = positions.shuffled(random)
-            var expanded = false
-
-            for (source in shuffledSources) {
-                val directions = listOf(
-                    0 to -1,
-                    0 to 1,
-                    -1 to 0,
-                    1 to 0,
-                ).shuffled(random)
-
-                for ((deltaRow, deltaCol) in directions) {
-                    val targetRow = source.row + deltaRow
-                    val targetCol = source.col + deltaCol
-                    if (targetRow !in cells.indices || targetCol !in cells[targetRow].indices) continue
-                    if (cells[targetRow][targetCol].groupColor != null) continue
-
-                    cells[targetRow][targetCol] = cells[targetRow][targetCol].copy(groupColor = color)
-                    expanded = true
-                    break
-                }
-
-                if (expanded) break
-            }
-        }
-
-        return boardState.copy(cells = cells.map { it.toList() })
-    }
-
     private fun expandColorGridSafely(
         state: GeneratorState,
         attempt: Int,
@@ -747,33 +761,88 @@ class ValidatedPuzzleGenerationService(
         progressListener: ((GenerationProgressUpdate) -> Unit)?,
         isCancelled: (() -> Boolean)?,
     ): Boolean {
-        val backup = cloneBoard(state.grid)
-        repeat(100) { expansionAttempt ->
+        val failedAttempts = mutableSetOf<String>()
+        var acceptedPlacements = 0
+
+        while (true) {
             ensureNotCancelled(isCancelled)
-            state.grid = expandColorGroupsInPlace(state.grid, targetGroupSize)
-            emitProgress(
-                state,
-                attempt,
-                stageName,
-                "Expansion attempt ${expansionAttempt + 1} pushed groups toward size $targetGroupSize.",
-                strategy,
-                progressListener,
-            )
-            if (isSolvable(state)) {
+            val countsByColor = countCellsByColor(state.grid)
+            val incompleteColors = countsByColor
+                .filterValues { count -> count < targetGroupSize }
+                .keys
+            if (incompleteColors.isEmpty()) {
+                emitProgress(
+                    state,
+                    attempt,
+                    "${stageName}_SUMMARY",
+                    "Reached target group size $targetGroupSize with $acceptedPlacements accepted expansions.",
+                    strategy,
+                    progressListener,
+                )
                 return true
             }
-            state.grid = cloneBoard(backup)
-            state.metrics.rollbacks += 1
-            emitProgress(
-                state,
-                attempt,
-                "${stageName}_ROLLBACK",
-                "Expansion attempt ${expansionAttempt + 1} was unsolvable and rolled back.",
-                strategy,
-                progressListener,
+
+            val candidates = collectTargetGroupExpansionCandidates(
+                boardState = state.grid,
+                incompleteColors = incompleteColors,
+                failedAttempts = failedAttempts,
             )
+            if (candidates.isEmpty()) {
+                emitProgress(
+                    state,
+                    attempt,
+                    "${stageName}_STALLED",
+                    "No legal group-expansion candidates remained for target size $targetGroupSize.",
+                    strategy,
+                    progressListener,
+                )
+                return false
+            }
+
+            var accepted = false
+            for ((index, candidate) in candidates.shuffled(Random.Default).withIndex()) {
+                val originalColor = state.grid.cells[candidate.position.row][candidate.position.col].groupColor
+                state.grid = paintCell(state.grid, candidate.position, candidate.neighborColor)
+                emitProgress(
+                    state,
+                    attempt,
+                    stageName,
+                    "Tried expansion candidate ${index + 1}/${candidates.size} at (${candidate.position.row}, ${candidate.position.col}) with ${candidate.neighborColor} toward size $targetGroupSize.",
+                    strategy,
+                    progressListener,
+                )
+                if (isSolvable(state)) {
+                    acceptedPlacements += 1
+                    state.metrics.successfulPlacements += 1
+                    emitProgress(
+                        state,
+                        attempt,
+                        "${stageName}_ACCEPTED",
+                        "Accepted expansion at (${candidate.position.row}, ${candidate.position.col}) with ${candidate.neighborColor} because ${lastDeterministicAnalysisSummary(state).toLogString()}.",
+                        strategy,
+                        progressListener,
+                    )
+                    accepted = true
+                    break
+                }
+
+                failedAttempts += candidate.attemptKey
+                state.metrics.rollbacks += 1
+                state.grid = paintCell(state.grid, candidate.position, originalColor)
+                emitProgress(
+                    state,
+                    attempt,
+                    "${stageName}_ROLLBACK",
+                    "Rolled back expansion at (${candidate.position.row}, ${candidate.position.col}) with ${candidate.neighborColor} because ${lastDeterministicAnalysisSummary(state).toLogString()}.",
+                    strategy,
+                    progressListener,
+                )
+            }
+
+            if (!accepted) {
+                return false
+            }
         }
-        return false
     }
 
     private fun clearAutoTestMarks(state: GeneratorState) {
@@ -835,44 +904,81 @@ class ValidatedPuzzleGenerationService(
 
     private fun isSolvable(state: GeneratorState): Boolean {
         state.metrics.solverChecks += 1
-        return hasAtLeastOneSolution(state.grid, state.ruleset, state.targetQueenCount)
+        val analysis = deterministicPuzzleAnalysisService.solve(
+            boardState = deterministicPuzzleAnalysisService.withRuleset(
+                boardState = state.grid,
+                ruleset = state.ruleset,
+                targetQueenCount = state.targetQueenCount,
+            ),
+        )
+        updateDeterministicMetrics(state, analysis)
+        return analysis.solved
     }
 
-    private fun hasAtLeastOneSolution(
+    private fun updateDeterministicMetrics(
+        state: GeneratorState,
+        analysis: DeterministicPuzzleAnalysisService.AnalysisResult,
+    ) {
+        state.metrics.deterministicSolved = analysis.solved
+        state.metrics.deterministicStepsTaken = analysis.stepsTaken
+        state.metrics.deterministicQueensPlaced = analysis.finalQueensPlaced
+        state.metrics.deterministicUnresolvedSquares = analysis.unresolvedSquares
+        state.metrics.deterministicHardestTier = analysis.hardestTierUsed?.name
+        state.metrics.deterministicLastRule = analysis.solverResult.steps.lastOrNull()?.ruleName
+    }
+
+    private fun lastDeterministicAnalysisSummary(state: GeneratorState): DeterministicAnalysisSummary =
+        DeterministicAnalysisSummary(
+            solved = state.metrics.deterministicSolved == true,
+            stepsTaken = state.metrics.deterministicStepsTaken,
+            queensPlaced = state.metrics.deterministicQueensPlaced,
+            unresolvedSquares = state.metrics.deterministicUnresolvedSquares,
+            hardestTier = state.metrics.deterministicHardestTier,
+            lastRule = state.metrics.deterministicLastRule,
+        )
+
+    private fun countCellsByColor(boardState: BoardState): Map<String, Int> {
+        val counts = linkedMapOf<String, Int>()
+        for (cell in boardState.cells.flatten()) {
+            val color = cell.groupColor ?: continue
+            counts[color] = (counts[color] ?: 0) + 1
+        }
+        return counts
+    }
+
+    private fun collectTargetGroupExpansionCandidates(
         boardState: BoardState,
-        ruleset: QueensRuleset,
-        targetQueenCount: Int,
-    ): Boolean {
-        val groups = boardState.cells.flatten()
-            .filter { cell -> cell.groupColor != null }
-            .groupBy({ cell -> cell.groupColor!! }, { cell -> cell.position })
-            .values
-            .sortedBy { positions -> positions.size }
+        incompleteColors: Set<String>,
+        failedAttempts: Set<String>,
+    ): List<ExpansionCandidate> {
+        val candidates = mutableListOf<ExpansionCandidate>()
+        val seen = linkedSetOf<String>()
 
-        if (groups.size != targetQueenCount) {
-            return false
-        }
+        for (row in 0 until boardState.size) {
+            for (col in 0 until boardState.size) {
+                val color = boardState.cells[row][col].groupColor
+                if (color == null || color !in incompleteColors) continue
 
-        val placedQueens = mutableListOf<Position>()
+                val directions = listOf(0 to -1, 0 to 1, -1 to 0, 1 to 0)
+                for ((deltaRow, deltaCol) in directions) {
+                    val targetRow = row + deltaRow
+                    val targetCol = col + deltaCol
+                    if (targetRow !in 0 until boardState.size || targetCol !in 0 until boardState.size) continue
+                    if (boardState.cells[targetRow][targetCol].groupColor != null) continue
 
-        fun backtrack(groupIndex: Int): Boolean {
-            if (groupIndex == groups.size) {
-                return placedQueens.size == targetQueenCount
-            }
-
-            val candidates = groups[groupIndex]
-            for (candidate in candidates) {
-                if (!queensConstraintService.isValidPlacement(candidate, placedQueens, ruleset)) continue
-                placedQueens += candidate
-                if (backtrack(groupIndex + 1)) {
-                    return true
+                    val attemptKey = "$targetRow,$targetCol,$color"
+                    if (attemptKey in failedAttempts || !seen.add(attemptKey)) continue
+                    candidates += ExpansionCandidate(
+                        position = Position(targetRow, targetCol),
+                        neighborColor = color,
+                        attemptKey = attemptKey,
+                        markerGuided = false,
+                    )
                 }
-                placedQueens.removeLast()
             }
-            return false
         }
 
-        return backtrack(0)
+        return candidates
     }
 
     private fun validateSolvableAndFull(state: GeneratorState) {
@@ -882,7 +988,8 @@ class ValidatedPuzzleGenerationService(
                 "Board is not fully solvable " +
                     "(colored=${state.grid.cells.flatten().count { it.groupColor != null }}/${state.grid.size * state.grid.size}, " +
                     "targetQueens=${state.targetQueenCount}, " +
-                    "orthogonalMinDistance=${state.ruleset.orthogonalMinDistance})",
+                    "orthogonalMinDistance=${state.ruleset.orthogonalMinDistance}, " +
+                    "${lastDeterministicAnalysisSummary(state).toLogString()})",
             )
         }
 
@@ -1058,16 +1165,20 @@ class ValidatedPuzzleGenerationService(
     }
 
     private fun eliminateConstrainedRows(state: GeneratorState) {
-        if (!state.ruleset.requireRowCoverage) return
-        eliminateConstrainedLines(state, isColumn = false)
+        if (state.ruleset.requireRowCoverage && state.ruleset.orthogonalMinDistance >= state.grid.size) {
+            eliminateClassicConstrainedLines(state, isColumn = false)
+        } else {
+            eliminateConstrainedWindows(state)
+        }
     }
 
     private fun eliminateConstrainedColumns(state: GeneratorState) {
-        if (!state.ruleset.requireColumnCoverage) return
-        eliminateConstrainedLines(state, isColumn = true)
+        if (state.ruleset.requireColumnCoverage && state.ruleset.orthogonalMinDistance >= state.grid.size) {
+            eliminateClassicConstrainedLines(state, isColumn = true)
+        }
     }
 
-    private fun eliminateConstrainedLines(state: GeneratorState, isColumn: Boolean) {
+    private fun eliminateClassicConstrainedLines(state: GeneratorState, isColumn: Boolean) {
         val size = state.grid.size
         val colorToAxisMap = linkedMapOf<String, MutableSet<Int>>()
 
@@ -1108,14 +1219,68 @@ class ValidatedPuzzleGenerationService(
         }
     }
 
+    private fun eliminateConstrainedWindows(state: GeneratorState) {
+        val size = state.grid.size
+        val windowSize = state.ruleset.orthogonalMinDistance.coerceAtMost(size)
+        if (windowSize <= 0) return
+
+        val colorCandidates = linkedMapOf<String, MutableList<Position>>()
+
+        for (row in 0 until size) {
+            for (col in 0 until size) {
+                if (state.autoTestMarks[row][col] != MarkType.NONE) continue
+                val color = state.grid.cells[row][col].groupColor ?: continue
+                colorCandidates.getOrPut(color) { mutableListOf() }.add(Position(row, col))
+            }
+        }
+
+        for (rowStart in 0 until size) {
+            val rowRange = rowStart until (rowStart + windowSize).coerceAtMost(size)
+            for (colStart in 0 until size) {
+                val colRange = colStart until (colStart + windowSize).coerceAtMost(size)
+                val confinement = constrainedWindow(colorCandidates, rowRange, colRange) ?: continue
+                var flaggedInWindow = 0
+
+                for (row in rowRange) {
+                    for (col in colRange) {
+                        val squareColor = state.grid.cells[row][col].groupColor
+                        val isUnmarked = state.autoTestMarks[row][col] == MarkType.NONE
+                        val isOutsideAllowedColors =
+                            squareColor == null || squareColor !in confinement.confinedColors
+                        if (isUnmarked && isOutsideAllowedColors) {
+                            placeFlag(state, row, col, "outside allowed colors in constrained window")
+                            flaggedInWindow += 1
+                        }
+                    }
+                }
+
+                if (flaggedInWindow > 0) {
+                    state.metrics.constrainedWindowHits += 1
+                    state.metrics.constrainedWindowFlags += flaggedInWindow
+                }
+            }
+        }
+    }
+
     private fun eliminateConstrainedLinesForExpansion(
         boardState: BoardState,
         ruleset: QueensRuleset,
         isColumn: Boolean,
     ): List<Pair<Position, List<String>>> {
-        if ((isColumn && !ruleset.requireColumnCoverage) || (!isColumn && !ruleset.requireRowCoverage)) {
-            return emptyList()
+        return if ((isColumn && ruleset.requireColumnCoverage || !isColumn && ruleset.requireRowCoverage) &&
+            ruleset.orthogonalMinDistance >= boardState.size
+        ) {
+            eliminateClassicConstrainedLinesForExpansion(boardState, ruleset, isColumn)
+        } else {
+            if (isColumn) emptyList() else eliminateConstrainedWindowsForExpansion(boardState, ruleset).blockedSquares
         }
+    }
+
+    private fun eliminateClassicConstrainedLinesForExpansion(
+        boardState: BoardState,
+        ruleset: QueensRuleset,
+        isColumn: Boolean,
+    ): List<Pair<Position, List<String>>> {
         val size = boardState.size
         val colorToAxisMap = linkedMapOf<String, MutableSet<Int>>()
 
@@ -1154,6 +1319,97 @@ class ValidatedPuzzleGenerationService(
         return blockedSquares
     }
 
+    private fun eliminateConstrainedWindowsForExpansion(
+        boardState: BoardState,
+        ruleset: QueensRuleset,
+    ): ConstrainedWindowExpansionResult {
+        val size = boardState.size
+        val windowSize = ruleset.orthogonalMinDistance.coerceAtMost(size)
+        if (windowSize <= 0) {
+            return ConstrainedWindowExpansionResult(emptyList(), 0, 0, null)
+        }
+
+        val colorCandidates = linkedMapOf<String, MutableList<Position>>()
+
+        for (row in 0 until size) {
+            for (col in 0 until size) {
+                val color = boardState.cells[row][col].groupColor ?: continue
+                colorCandidates.getOrPut(color) { mutableListOf() }.add(Position(row, col))
+            }
+        }
+
+        val blockedSquares = mutableListOf<Pair<Position, List<String>>>()
+        var windowHits = 0
+        var sampleWindowSummary: String? = null
+
+        for (rowStart in 0 until size) {
+            val rowRange = rowStart until (rowStart + windowSize).coerceAtMost(size)
+            for (colStart in 0 until size) {
+                val colRange = colStart until (colStart + windowSize).coerceAtMost(size)
+                val confinement = constrainedWindow(colorCandidates, rowRange, colRange) ?: continue
+                var blockedInWindow = 0
+
+                for (row in rowRange) {
+                    for (col in colRange) {
+                        val squareColor = boardState.cells[row][col].groupColor
+                        val isUnmarked = squareColor == null
+                        val isOutsideAllowedColors =
+                            squareColor == null || squareColor !in confinement.confinedColors
+                        if (isUnmarked && isOutsideAllowedColors) {
+                            blockedSquares += Position(row, col) to confinement.confinedColors
+                            blockedInWindow += 1
+                        }
+                    }
+                }
+
+                if (blockedInWindow > 0) {
+                    windowHits += 1
+                    if (sampleWindowSummary == null) {
+                        sampleWindowSummary =
+                            "rows ${confinement.rowRange.first}-${confinement.rowRange.last}, " +
+                                "cols ${confinement.colRange.first}-${confinement.colRange.last}, " +
+                                "colors=${confinement.confinedColors.joinToString(",")}, blocked=$blockedInWindow"
+                    }
+                }
+            }
+        }
+
+        return ConstrainedWindowExpansionResult(
+            blockedSquares = blockedSquares,
+            windowHits = windowHits,
+            blockedSquareCount = blockedSquares.size,
+            sampleWindowSummary = sampleWindowSummary,
+        )
+    }
+
+    private fun constrainedWindow(
+        colorCandidates: Map<String, List<Position>>,
+        rowRange: IntRange,
+        colRange: IntRange,
+    ): WindowConfinement? {
+        val windowCapacity = minOf(rowRange.count(), colRange.count())
+        if (windowCapacity <= 0) return null
+
+        val colorsTouchingWindow = linkedSetOf<String>()
+        for ((color, positions) in colorCandidates) {
+            if (positions.any { position -> position.row in rowRange && position.col in colRange }) {
+                colorsTouchingWindow += color
+            }
+        }
+
+        val confinedColors = colorsTouchingWindow.filter { color ->
+            colorCandidates[color].orEmpty().all { position ->
+                position.row in rowRange && position.col in colRange
+            }
+        }
+
+        return if (confinedColors.size == windowCapacity) {
+            WindowConfinement(rowRange, colRange, confinedColors)
+        } else {
+            null
+        }
+    }
+
     private fun expandIntoBlockedSquares(
         state: GeneratorState,
         attempt: Int,
@@ -1173,8 +1429,37 @@ class ValidatedPuzzleGenerationService(
             keepExpanding = false
             expansionCount += 1
 
-            val blockedSquares = eliminateConstrainedLinesForExpansion(state.grid, state.ruleset, false) +
-                eliminateConstrainedLinesForExpansion(state.grid, state.ruleset, true)
+            val useClassicLineExpansion =
+                state.ruleset.requireRowCoverage &&
+                    state.ruleset.requireColumnCoverage &&
+                    state.ruleset.orthogonalMinDistance >= size
+            val constrainedWindowExpansion =
+                if (!useClassicLineExpansion) {
+                    eliminateConstrainedWindowsForExpansion(state.grid, state.ruleset)
+                } else {
+                    ConstrainedWindowExpansionResult(emptyList(), 0, 0, null)
+                }
+            val blockedSquares =
+                if (useClassicLineExpansion) {
+                    eliminateClassicConstrainedLinesForExpansion(state.grid, state.ruleset, false) +
+                        eliminateClassicConstrainedLinesForExpansion(state.grid, state.ruleset, true)
+                } else {
+                    constrainedWindowExpansion.blockedSquares
+                }
+            if (constrainedWindowExpansion.windowHits > 0) {
+                state.metrics.constrainedWindowHits += constrainedWindowExpansion.windowHits
+                state.metrics.constrainedWindowFlags += constrainedWindowExpansion.blockedSquareCount
+                emitProgress(
+                    state,
+                    attempt,
+                    "CONSTRAINED_WINDOW_SUMMARY",
+                    "Constrained windows found ${constrainedWindowExpansion.windowHits} saturated windows and " +
+                        "${constrainedWindowExpansion.blockedSquareCount} blocked squares" +
+                        (constrainedWindowExpansion.sampleWindowSummary?.let { " ($it)." } ?: "."),
+                    strategy,
+                    progressListener,
+                )
+            }
 
             val coloredSquares = state.grid.cells.flatten().count { cell -> cell.groupColor != null }
             if (coloredSquares == size * size) break
@@ -1291,7 +1576,8 @@ class ValidatedPuzzleGenerationService(
                     state,
                     attempt,
                     "BLOCKED_SQUARES_ROLLBACK",
-                    "Rolled back fill at (${candidate.position.row}, ${candidate.position.col}) after it broke solvability.",
+                    "Rolled back fill at (${candidate.position.row}, ${candidate.position.col}) after it broke solvability " +
+                        "(${lastDeterministicAnalysisSummary(state).toLogString()}).",
                     strategy,
                     progressListener,
                 )

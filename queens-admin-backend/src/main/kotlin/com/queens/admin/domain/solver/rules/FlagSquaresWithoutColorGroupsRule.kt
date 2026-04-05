@@ -1,44 +1,42 @@
 package com.queens.admin.domain.solver.rules
 
 import com.queens.admin.domain.model.BoardState
-import com.queens.admin.domain.model.ChangedCell
 import com.queens.admin.domain.model.MarkType
+import com.queens.admin.domain.solver.SolverDifficultyTier
 import com.queens.admin.domain.solver.SolverRule
 import com.queens.admin.domain.solver.SolverStep
+import com.queens.admin.domain.service.DeterministicSolverSupportService
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 
 @Component
-class FlagSquaresWithoutColorGroupsRule : SolverRule {
+@Order(0)
+class FlagSquaresWithoutColorGroupsRule(
+    private val solverSupportService: DeterministicSolverSupportService,
+) : SolverRule {
     override val ruleName: String = "flag-squares-without-color-groups"
+    override val difficultyTier: SolverDifficultyTier = SolverDifficultyTier.PRECHECK
 
     override fun apply(boardState: BoardState): SolverStep? {
-        boardState.cells.forEachIndexed { rowIndex, row ->
-            row.forEachIndexed { colIndex, cell ->
-                if (cell.groupColor == null && cell.markType == MarkType.NONE) {
-                    val updatedRows = boardState.cells.mapIndexed { candidateRowIndex, candidateRow ->
-                        candidateRow.mapIndexed { candidateColIndex, candidateCell ->
-                            if (candidateRowIndex == rowIndex && candidateColIndex == colIndex) {
-                                candidateCell.copy(markType = MarkType.INVALID)
-                            } else {
-                                candidateCell
-                            }
-                        }
-                    }
+        for (row in 0 until boardState.size) {
+            for (col in 0 until boardState.size) {
+                val cell = boardState.cells[row][col]
+                if (cell.groupColor != null || cell.markType != MarkType.NONE) continue
 
-                    return SolverStep(
-                        ruleName = ruleName,
-                        explanation = "Flagged one ungrouped square as invalid for the current puzzle state.",
-                        boardState = boardState.copy(cells = updatedRows),
-                        changedCells = listOf(
-                            ChangedCell(
-                                row = rowIndex,
-                                col = colIndex,
-                                changeType = "SOLVER_INVALIDATED",
-                                explanation = "no color group on this square",
-                            ),
-                        ),
-                    )
-                }
+                val (updatedBoard, changedCells) = solverSupportService.placeFlag(
+                    boardState = boardState,
+                    row = row,
+                    col = col,
+                    explanation = "square is not part of any color group",
+                    changeType = "SOLVER_INVALIDATED",
+                )
+                return SolverStep(
+                    ruleName = ruleName,
+                    difficultyTier = difficultyTier,
+                    explanation = "Flagged one uncolored square before deterministic solving.",
+                    boardState = updatedBoard,
+                    changedCells = changedCells,
+                )
             }
         }
 

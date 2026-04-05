@@ -1794,6 +1794,30 @@ const backendResultDebugText = computed(() => {
     lines.push(`- solverChecks: ${store.generationProgress.metrics.solverChecks}`);
     lines.push(`- rollbacks: ${store.generationProgress.metrics.rollbacks}`);
     lines.push(`- successfulPlacements: ${store.generationProgress.metrics.successfulPlacements}`);
+    lines.push(
+      `- constrainedWindowHits: ${store.generationProgress.metrics.constrainedWindowHits}`
+    );
+    lines.push(
+      `- constrainedWindowFlags: ${store.generationProgress.metrics.constrainedWindowFlags}`
+    );
+    lines.push(
+      `- deterministicSolved: ${store.generationProgress.metrics.deterministicSolved === null ? 'unknown' : String(store.generationProgress.metrics.deterministicSolved)}`
+    );
+    lines.push(
+      `- deterministicStepsTaken: ${store.generationProgress.metrics.deterministicStepsTaken}`
+    );
+    lines.push(
+      `- deterministicQueensPlaced: ${store.generationProgress.metrics.deterministicQueensPlaced}`
+    );
+    lines.push(
+      `- deterministicUnresolvedSquares: ${store.generationProgress.metrics.deterministicUnresolvedSquares}`
+    );
+    lines.push(
+      `- deterministicHardestTier: ${store.generationProgress.metrics.deterministicHardestTier ?? 'none'}`
+    );
+    lines.push(
+      `- deterministicLastRule: ${store.generationProgress.metrics.deterministicLastRule ?? 'none'}`
+    );
     if (store.generationProgress.history.length) {
       lines.push('');
       lines.push('Recent Generation Events');

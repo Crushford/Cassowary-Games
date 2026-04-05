@@ -85,6 +85,14 @@ interface GenerationJobStatusDto {
     markerGuidedPlacements: number;
     fallbackPlacements: number;
     successfulPlacements: number;
+    constrainedWindowHits: number;
+    constrainedWindowFlags: number;
+    deterministicSolved: boolean | null;
+    deterministicStepsTaken: number;
+    deterministicQueensPlaced: number;
+    deterministicUnresolvedSquares: number;
+    deterministicHardestTier: string | null;
+    deterministicLastRule: string | null;
   };
   elapsedMs: number;
   generationPhase: string | null;
@@ -512,6 +520,13 @@ export const queensAdminApi = {
     signal?: AbortSignal
   ): Promise<QueensAdminOperationResult> {
     return postOperation('/api/queens/admin/board/validate', { boardState }, signal);
+  },
+
+  runAllSolverSteps(
+    boardState: QueensAdminBoardState | null,
+    signal?: AbortSignal
+  ): Promise<QueensAdminOperationResult> {
+    return postOperation('/api/queens/admin/solver/run-all', { boardState }, signal);
   },
 
   setCellColor(

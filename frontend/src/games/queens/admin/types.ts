@@ -83,6 +83,14 @@ export interface QueensAdminGenerationProgress {
     markerGuidedPlacements: number;
     fallbackPlacements: number;
     successfulPlacements: number;
+    constrainedWindowHits: number;
+    constrainedWindowFlags: number;
+    deterministicSolved: boolean | null;
+    deterministicStepsTaken: number;
+    deterministicQueensPlaced: number;
+    deterministicUnresolvedSquares: number;
+    deterministicHardestTier: string | null;
+    deterministicLastRule: string | null;
   };
   elapsedMs: number;
   generationPhase: string | null;

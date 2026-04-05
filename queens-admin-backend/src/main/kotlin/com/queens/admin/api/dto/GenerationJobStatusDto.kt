@@ -37,4 +37,12 @@ data class GenerationMetricsStatusDto(
     val markerGuidedPlacements: Int,
     val fallbackPlacements: Int,
     val successfulPlacements: Int,
+    val constrainedWindowHits: Int,
+    val constrainedWindowFlags: Int,
+    val deterministicSolved: Boolean?,
+    val deterministicStepsTaken: Int,
+    val deterministicQueensPlaced: Int,
+    val deterministicUnresolvedSquares: Int,
+    val deterministicHardestTier: String?,
+    val deterministicLastRule: String?,
 )

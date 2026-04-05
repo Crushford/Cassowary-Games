@@ -43,6 +43,14 @@ data class GenerationMetricsSnapshot(
     val markerGuidedPlacements: Int = 0,
     val fallbackPlacements: Int = 0,
     val successfulPlacements: Int = 0,
+    val constrainedWindowHits: Int = 0,
+    val constrainedWindowFlags: Int = 0,
+    val deterministicSolved: Boolean? = null,
+    val deterministicStepsTaken: Int = 0,
+    val deterministicQueensPlaced: Int = 0,
+    val deterministicUnresolvedSquares: Int = 0,
+    val deterministicHardestTier: String? = null,
+    val deterministicLastRule: String? = null,
 )
 
 data class GenerationJobSnapshot(
