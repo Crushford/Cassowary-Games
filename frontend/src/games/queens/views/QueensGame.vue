@@ -1,7 +1,7 @@
 <template>
   <!-- QueensGame -->
   <div
-    class="w-full max-w-[480px] mx-auto bg-semantic-neutral-950 text-semantic-neutral-100 bg-[radial-gradient(120%_120%_at_50%_-15%,var(--tw-gradient-from)_0%,var(--tw-gradient-to)_55%)] from-queens-gradientStart to-queens-gradientEnd flex flex-col overflow-hidden h-dvh"
+    class="relative w-full max-w-[480px] mx-auto bg-semantic-neutral-950 text-semantic-neutral-100 bg-[radial-gradient(120%_120%_at_50%_-15%,var(--tw-gradient-from)_0%,var(--tw-gradient-to)_55%)] from-queens-gradientStart to-queens-gradientEnd flex flex-col overflow-hidden h-dvh"
   >
     <!-- Puzzle Completion Modal -->
     <QueensCompletionModal v-if="!queensStore.isSpeedMode" :is-visible="queensStore.isComplete" />
@@ -37,6 +37,21 @@
       :is-visible="queensStore.isTutorialMode && queensStore.highlightToolSelector"
       :highlight-tool-selector="queensStore.highlightToolSelector"
     />
+
+    <div
+      v-if="isRouteLoading"
+      class="absolute inset-0 z-20 flex items-center justify-center bg-surface-overlay backdrop-blur-sm"
+    >
+      <div
+        class="flex flex-col items-center gap-3 rounded-2xl border border-semantic-neutral-700 bg-surface-darkSoft px-6 py-5 text-center shadow-xl"
+      >
+        <div
+          class="h-10 w-10 animate-spin rounded-full border-4 border-semantic-neutral-700 border-t-semantic-info-400"
+          aria-hidden="true"
+        ></div>
+        <div class="text-sm font-semibold text-semantic-neutral-100">Loading puzzle...</div>
+      </div>
+    </div>
 
     <!-- Game Info Display -->
     <div class="flex-none p-2">
@@ -157,6 +172,7 @@ const queensStore = useQueensStore();
 const speedModeStore = useSpeedModeStore();
 
 const shouldShakeErrorToast = ref(false);
+const isRouteLoading = ref(false);
 
 // Board rotation animation
 const boardRotationDeg = ref(0);
@@ -226,14 +242,15 @@ const isModalOpen = computed(() => {
 });
 
 async function loadPuzzleFromRoute() {
+  isRouteLoading.value = true;
   const puzzleId = route.params.puzzleId as string;
   const levelName = route.params.levelName as string;
+  const encodedLayout = route.params.encodedLayout as string;
 
-  // Check if this is a tutorial puzzle
-  if (levelName) {
-    try {
+  try {
+    // Check if this is a tutorial puzzle
+    if (levelName) {
       await queensStore.loadTutorialPuzzle(levelName);
-      // Initialize tutorial steps
       initializeTutorialSteps(levelName);
       trackGameStart({
         game_name: 'queens',
@@ -241,14 +258,26 @@ async function loadPuzzleFromRoute() {
         grid_size: queensStore.gridSize,
         puzzle_id: levelName,
       });
-    } catch (err) {
-      console.error('[QueensGame] Error loading tutorial puzzle:', err);
-      // Redirect to levels page if puzzle not found
-      router.push('/queens');
+      return;
     }
-  } else if (puzzleId) {
-    try {
-      // Exit tutorial mode if switching to regular puzzle
+
+    if (encodedLayout) {
+      if (queensStore.isTutorialMode) {
+        queensStore.exitTutorialMode();
+      }
+      await queensStore.loadPuzzleFromEncodedLayout(encodedLayout, {
+        persistProgress: false,
+      });
+      trackGameStart({
+        game_name: 'queens',
+        game_mode: 'standard',
+        grid_size: queensStore.gridSize,
+        puzzle_id: 'url-preview',
+      });
+      return;
+    }
+
+    if (puzzleId) {
       if (queensStore.isTutorialMode) {
         queensStore.exitTutorialMode();
       }
@@ -260,14 +289,15 @@ async function loadPuzzleFromRoute() {
         puzzle_id:
           queensStore.currentPuzzleId === null ? undefined : String(queensStore.currentPuzzleId),
       });
-    } catch (err) {
-      console.error('[QueensGame] Error loading puzzle:', err);
-      // Redirect to levels page if puzzle not found
-      router.push('/queens');
+      return;
     }
-  } else {
-    // If no puzzleId, redirect to levels page
+
     router.push('/queens');
+  } catch (err) {
+    console.error('[QueensGame] Error loading puzzle route:', err);
+    router.push('/queens');
+  } finally {
+    isRouteLoading.value = false;
   }
 }
 
@@ -424,7 +454,7 @@ onMounted(async () => {
 
 // Watch for route changes (e.g., when navigating between puzzles)
 watch(
-  () => [route.params.puzzleId, route.params.levelName],
+  () => [route.params.puzzleId, route.params.levelName, route.params.encodedLayout],
   async () => {
     await loadPuzzleFromRoute();
   }

@@ -6,7 +6,6 @@ import Levels from '@/games/queens/views/Levels.vue';
 import KenoGameWrapper from '@/games/keno/views/KenoGameWrapper.vue';
 import QueensGame from '@/games/queens/views/QueensGame.vue';
 import QueensAdmin from '@/games/queens/views/QueensAdmin.vue';
-import QueensDiversityLab from '@/games/queens/views/QueensDiversityLab.vue';
 import IncrementalQueensEntry from '@/games/queens/views/IncrementalQueensEntry.vue';
 
 const router = createRouter({
@@ -62,6 +61,11 @@ const router = createRouter({
       path: '/queens/admin',
       name: 'queens-admin',
       component: QueensAdmin,
+    },
+    {
+      path: '/queens/puzzle/:encodedLayout',
+      name: 'queens-encoded-puzzle',
+      component: QueensGame,
     },
     {
       path: '/queens/:puzzleId',
@@ -121,11 +125,6 @@ const router = createRouter({
     {
       path: '/storybook',
       redirect: '/storybook-static/index.html',
-    },
-    {
-      path: '/internal/queens-diversity',
-      name: 'internal-queens-diversity',
-      component: QueensDiversityLab,
     },
     {
       path: '/internal/pattern-card-designer',

@@ -17,8 +17,31 @@ class GenerationWorkflowService(
     private val blockedSquareExpansionService: BlockedSquareExpansionService,
     private val validatedPuzzleGenerationService: ValidatedPuzzleGenerationService,
 ) {
-    fun generateValidBoard(size: Int): OperationResult =
-        validatedPuzzleGenerationService.generateValidBoard(size)
+    fun generateValidBoard(
+        size: Int,
+        minimumGroupSize: Int = 3,
+        generationStrategy: String = "baseline",
+    ): OperationResult =
+        validatedPuzzleGenerationService.generateValidBoard(
+            size = size,
+            minimumGroupSize = minimumGroupSize,
+            generationStrategy = generationStrategy,
+        )
+
+    fun generateValidBoard(
+        size: Int,
+        minimumGroupSize: Int,
+        generationStrategy: String,
+        progressListener: ((GenerationProgressUpdate) -> Unit)?,
+        isCancelled: (() -> Boolean)?,
+    ): OperationResult =
+        validatedPuzzleGenerationService.generateValidBoard(
+            size = size,
+            minimumGroupSize = minimumGroupSize,
+            generationStrategy = generationStrategy,
+            progressListener = progressListener,
+            isCancelled = isCancelled,
+        )
 
     fun placeQueens(boardState: BoardState): OperationResult =
         queenPlacementService.placeQueens(boardState)

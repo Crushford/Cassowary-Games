@@ -1,10 +1,14 @@
 import type {
+  QueensAdminBatchStatus,
   QueensAdminBoardState,
   QueensAdminChangedCell,
+  QueensAdminGenerationProgress,
   QueensAdminOperationResult,
+  QueensAdminPuzzleCatalogStats,
+  QueensAdminGenerationStrategy,
+  QueensAdminSystemLoad,
   QueensAdminValidationSummary,
 } from './types';
-import type { ColorName } from '../types/types';
 
 interface CellDto {
   row: number;
@@ -49,6 +53,96 @@ interface OperationResultDto {
   validation: ValidationSummaryDto | null;
 }
 
+interface GenerationJobStartedDto {
+  jobId: string;
+}
+
+interface BatchGenerationStartedDto {
+  batchId: string;
+}
+
+interface GenerationJobStatusDto {
+  jobId: string;
+  state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  attempt: number;
+  stage: string;
+  message: string;
+  coloredCellCount: number;
+  totalCellCount: number;
+  strategy: QueensAdminGenerationStrategy;
+  metrics: {
+    solverChecks: number;
+    rollbacks: number;
+    markerSquares: number;
+    markerBlocks: number;
+    markerGuidedCandidates: number;
+    markerGuidedPlacements: number;
+    fallbackPlacements: number;
+    successfulPlacements: number;
+  };
+  elapsedMs: number;
+  generationPhase: string | null;
+  result: OperationResultDto | null;
+  updatedAt: string;
+}
+
+interface BatchGenerationRunDto {
+  runId: string;
+  size: number;
+  strategy: QueensAdminGenerationStrategy;
+  minimumGroupSize: number;
+  state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  coloredCellCount: number;
+  totalCellCount: number;
+  durationMs: number | null;
+  success: boolean | null;
+  error: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  persistenceState: 'SAVED' | 'DUPLICATE' | 'SKIPPED' | 'ERROR' | null;
+  persistenceMessage: string | null;
+  savedPuzzleId: string | null;
+}
+
+interface BatchGenerationStatusDto {
+  batchId: string;
+  state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'CANCELLED';
+  totalJobs: number;
+  queuedJobs: number;
+  activeJobs: number;
+  completedJobs: number;
+  failedJobs: number;
+  cancelledJobs: number;
+  savedUniquePuzzles: number;
+  duplicatePuzzles: number;
+  persistenceErrors: number;
+  maxConcurrentJobs: number;
+  saveSuccessfulPuzzles: boolean;
+  note: string | null;
+  runs: BatchGenerationRunDto[];
+  updatedAt: string;
+}
+
+interface SystemLoadDto {
+  processCpuPercent: number | null;
+  systemCpuPercent: number | null;
+  systemLoadAverage: number | null;
+  availableProcessors: number;
+  heapUsedMb: number;
+  heapMaxMb: number;
+  singleJobsRunning: number;
+  singleJobsQueued: number;
+  batchRunsActive: number;
+  batchRunsQueued: number;
+  runningBatchCount: number;
+  sampledAt: string;
+}
+
+interface PuzzleCatalogStatsDto {
+  totalPuzzles: number;
+  countsBySize: Record<string, number>;
+}
+
 function toLocalBoardState(boardState: BoardStateDto | null): QueensAdminBoardState | null {
   if (!boardState) return null;
 
@@ -58,7 +152,7 @@ function toLocalBoardState(boardState: BoardStateDto | null): QueensAdminBoardSt
       row.map((cell) => ({
         row: cell.row,
         col: cell.col,
-        groupColor: cell.groupColor as ColorName | null,
+        groupColor: cell.groupColor,
         isSolutionQueen: cell.isSolutionQueen,
         markType: cell.markType,
       }))
@@ -106,9 +200,82 @@ function toOperationResult(data: OperationResultDto): QueensAdminOperationResult
   };
 }
 
+function toGenerationProgress(data: GenerationJobStatusDto): QueensAdminGenerationProgress {
+  return {
+    jobId: data.jobId,
+    state: data.state,
+    attempt: data.attempt,
+    stage: data.stage,
+    message: data.message,
+    coloredCellCount: data.coloredCellCount,
+    totalCellCount: data.totalCellCount,
+    strategy: data.strategy,
+    metrics: data.metrics,
+    elapsedMs: data.elapsedMs,
+    generationPhase: data.generationPhase,
+    updatedAt: data.updatedAt,
+    result: data.result ? toOperationResult(data.result) : null,
+  };
+}
+
+function toBatchStatus(data: BatchGenerationStatusDto): QueensAdminBatchStatus {
+  return {
+    batchId: data.batchId,
+    state: data.state,
+    totalJobs: data.totalJobs,
+    queuedJobs: data.queuedJobs,
+    activeJobs: data.activeJobs,
+    completedJobs: data.completedJobs,
+    failedJobs: data.failedJobs,
+    cancelledJobs: data.cancelledJobs,
+    savedUniquePuzzles: data.savedUniquePuzzles,
+    duplicatePuzzles: data.duplicatePuzzles,
+    persistenceErrors: data.persistenceErrors,
+    maxConcurrentJobs: data.maxConcurrentJobs,
+    saveSuccessfulPuzzles: data.saveSuccessfulPuzzles,
+    note: data.note,
+    runs: data.runs.map((run) => ({
+      runId: run.runId,
+      size: run.size,
+      strategy: run.strategy,
+      minimumGroupSize: run.minimumGroupSize,
+      state: run.state,
+      coloredCellCount: run.coloredCellCount,
+      totalCellCount: run.totalCellCount,
+      durationMs: run.durationMs,
+      success: run.success,
+      error: run.error,
+      startedAt: run.startedAt,
+      finishedAt: run.finishedAt,
+      persistenceState: run.persistenceState,
+      persistenceMessage: run.persistenceMessage,
+      savedPuzzleId: run.savedPuzzleId,
+    })),
+    updatedAt: data.updatedAt,
+  };
+}
+
+function toSystemLoad(data: SystemLoadDto): QueensAdminSystemLoad {
+  return {
+    processCpuPercent: data.processCpuPercent,
+    systemCpuPercent: data.systemCpuPercent,
+    systemLoadAverage: data.systemLoadAverage,
+    availableProcessors: data.availableProcessors,
+    heapUsedMb: data.heapUsedMb,
+    heapMaxMb: data.heapMaxMb,
+    singleJobsRunning: data.singleJobsRunning,
+    singleJobsQueued: data.singleJobsQueued,
+    batchRunsActive: data.batchRunsActive,
+    batchRunsQueued: data.batchRunsQueued,
+    runningBatchCount: data.runningBatchCount,
+    sampledAt: data.sampledAt,
+  };
+}
+
 async function postOperation(
   path: string,
-  body: Record<string, unknown>
+  body: Record<string, unknown>,
+  signal?: AbortSignal
 ): Promise<QueensAdminOperationResult> {
   const response = await fetch(path, {
     method: 'POST',
@@ -116,6 +283,7 @@ async function postOperation(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
+    signal,
   });
 
   const data = (await response.json()) as OperationResultDto;
@@ -123,129 +291,283 @@ async function postOperation(
 }
 
 export const queensAdminApi = {
-  createEmptyBoard(size: number): Promise<QueensAdminOperationResult> {
-    return postOperation('/api/queens/admin/board/create', {
-      size,
-    });
+  async getPuzzleCatalogStats(): Promise<QueensAdminPuzzleCatalogStats> {
+    const response = await fetch('/api/queens/admin/generation/catalog-stats');
+    return (await response.json()) as PuzzleCatalogStatsDto;
   },
 
-  generateValidBoard(size: number): Promise<QueensAdminOperationResult> {
-    return postOperation('/api/queens/admin/generation/generate-valid-board', {
-      size,
-    });
+  async getSystemLoad(): Promise<QueensAdminSystemLoad> {
+    const response = await fetch('/api/queens/admin/generation/system-load');
+    const data = (await response.json()) as SystemLoadDto;
+    return toSystemLoad(data);
   },
 
-  placeQueens(boardState: QueensAdminBoardState | null): Promise<QueensAdminOperationResult> {
-    return postOperation('/api/queens/admin/generation/place-queens', { boardState });
+  async startBatchGeneration(request: {
+    sizes: number[];
+    strategies: QueensAdminGenerationStrategy[];
+    runsPerCombination: number;
+    minimumGroupSize: number;
+    maxConcurrentJobs: number;
+    saveSuccessfulPuzzles: boolean;
+  }): Promise<string> {
+    const response = await fetch('/api/queens/admin/generation/batches', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+    const data = (await response.json()) as BatchGenerationStartedDto;
+    return data.batchId;
+  },
+
+  async getBatchGenerationStatus(batchId: string): Promise<QueensAdminBatchStatus> {
+    const response = await fetch(`/api/queens/admin/generation/batches/${batchId}`);
+    const data = (await response.json()) as BatchGenerationStatusDto;
+    return toBatchStatus(data);
+  },
+
+  async cancelBatchGeneration(batchId: string): Promise<QueensAdminBatchStatus> {
+    const response = await fetch(`/api/queens/admin/generation/batches/${batchId}/cancel`, {
+      method: 'POST',
+    });
+    const data = (await response.json()) as BatchGenerationStatusDto;
+    return toBatchStatus(data);
+  },
+
+  createEmptyBoard(size: number, signal?: AbortSignal): Promise<QueensAdminOperationResult> {
+    return postOperation(
+      '/api/queens/admin/board/create',
+      {
+        size,
+      },
+      signal
+    );
+  },
+
+  generateValidBoard(
+    size: number,
+    minimumGroupSize: number,
+    signal?: AbortSignal
+  ): Promise<QueensAdminOperationResult> {
+    return postOperation(
+      '/api/queens/admin/generation/generate-valid-board',
+      {
+        size,
+        minimumGroupSize,
+      },
+      signal
+    );
+  },
+
+  async startGenerateValidBoardJob(
+    size: number,
+    options?: {
+      includeProgressUpdates?: boolean;
+      minimumGroupSize?: number;
+      generationStrategy?: QueensAdminGenerationStrategy;
+    }
+  ): Promise<string> {
+    const response = await fetch('/api/queens/admin/generation/generate-valid-board/jobs', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        size,
+        minimumGroupSize: options?.minimumGroupSize ?? 3,
+        includeProgressUpdates: options?.includeProgressUpdates ?? false,
+        generationStrategy: options?.generationStrategy ?? 'baseline',
+      }),
+    });
+    const data = (await response.json()) as GenerationJobStartedDto;
+    return data.jobId;
+  },
+
+  async getGenerationJobStatus(jobId: string): Promise<QueensAdminGenerationProgress> {
+    const response = await fetch(`/api/queens/admin/generation/jobs/${jobId}`);
+    const data = (await response.json()) as GenerationJobStatusDto;
+    return toGenerationProgress(data);
+  },
+
+  async cancelGenerationJob(jobId: string): Promise<QueensAdminGenerationProgress> {
+    const response = await fetch(`/api/queens/admin/generation/jobs/${jobId}/cancel`, {
+      method: 'POST',
+    });
+    const data = (await response.json()) as GenerationJobStatusDto;
+    return toGenerationProgress(data);
+  },
+
+  placeQueens(
+    boardState: QueensAdminBoardState | null,
+    signal?: AbortSignal
+  ): Promise<QueensAdminOperationResult> {
+    return postOperation('/api/queens/admin/generation/place-queens', { boardState }, signal);
   },
 
   assignInitialColors(
-    boardState: QueensAdminBoardState | null
+    boardState: QueensAdminBoardState | null,
+    signal?: AbortSignal
   ): Promise<QueensAdminOperationResult> {
-    return postOperation('/api/queens/admin/generation/assign-initial-colors', { boardState });
+    return postOperation(
+      '/api/queens/admin/generation/assign-initial-colors',
+      { boardState },
+      signal
+    );
   },
 
   expandAllGroupsOnce(
-    boardState: QueensAdminBoardState | null
+    boardState: QueensAdminBoardState | null,
+    signal?: AbortSignal
   ): Promise<QueensAdminOperationResult> {
-    return postOperation('/api/queens/admin/generation/expand-all-groups-once', { boardState });
+    return postOperation(
+      '/api/queens/admin/generation/expand-all-groups-once',
+      { boardState },
+      signal
+    );
   },
 
   expandSelectedGroup(
     boardState: QueensAdminBoardState | null,
-    targetColor: string
+    targetColor: string,
+    signal?: AbortSignal
   ): Promise<QueensAdminOperationResult> {
-    return postOperation('/api/queens/admin/generation/expand-selected-group', {
-      boardState,
-      targetColor,
-    });
+    return postOperation(
+      '/api/queens/admin/generation/expand-selected-group',
+      {
+        boardState,
+        targetColor,
+      },
+      signal
+    );
   },
 
   expandBlockedSquares(
-    boardState: QueensAdminBoardState | null
+    boardState: QueensAdminBoardState | null,
+    signal?: AbortSignal
   ): Promise<QueensAdminOperationResult> {
-    return postOperation('/api/queens/admin/generation/expand-blocked-squares', { boardState });
+    return postOperation(
+      '/api/queens/admin/generation/expand-blocked-squares',
+      { boardState },
+      signal
+    );
   },
 
-  clearBoard(boardState: QueensAdminBoardState | null): Promise<QueensAdminOperationResult> {
-    return postOperation('/api/queens/admin/board/clear', { boardState });
+  clearBoard(
+    boardState: QueensAdminBoardState | null,
+    signal?: AbortSignal
+  ): Promise<QueensAdminOperationResult> {
+    return postOperation('/api/queens/admin/board/clear', { boardState }, signal);
   },
 
-  validateBoard(boardState: QueensAdminBoardState | null): Promise<QueensAdminOperationResult> {
-    return postOperation('/api/queens/admin/board/validate', { boardState });
+  validateBoard(
+    boardState: QueensAdminBoardState | null,
+    signal?: AbortSignal
+  ): Promise<QueensAdminOperationResult> {
+    return postOperation('/api/queens/admin/board/validate', { boardState }, signal);
   },
 
   setCellColor(
     boardState: QueensAdminBoardState | null,
     row: number,
     col: number,
-    color: string
+    color: string,
+    signal?: AbortSignal
   ): Promise<QueensAdminOperationResult> {
-    return postOperation('/api/queens/admin/board/set-color', {
-      boardState,
-      row,
-      col,
-      color,
-    });
+    return postOperation(
+      '/api/queens/admin/board/set-color',
+      {
+        boardState,
+        row,
+        col,
+        color,
+      },
+      signal
+    );
   },
 
   clearCellColor(
     boardState: QueensAdminBoardState | null,
     row: number,
-    col: number
+    col: number,
+    signal?: AbortSignal
   ): Promise<QueensAdminOperationResult> {
-    return postOperation('/api/queens/admin/board/clear-color', {
-      boardState,
-      row,
-      col,
-    });
+    return postOperation(
+      '/api/queens/admin/board/clear-color',
+      {
+        boardState,
+        row,
+        col,
+      },
+      signal
+    );
   },
 
   placeFlag(
     boardState: QueensAdminBoardState | null,
     row: number,
-    col: number
+    col: number,
+    signal?: AbortSignal
   ): Promise<QueensAdminOperationResult> {
-    return postOperation('/api/queens/admin/board/place-flag', {
-      boardState,
-      row,
-      col,
-    });
+    return postOperation(
+      '/api/queens/admin/board/place-flag',
+      {
+        boardState,
+        row,
+        col,
+      },
+      signal
+    );
   },
 
   removeFlag(
     boardState: QueensAdminBoardState | null,
     row: number,
-    col: number
+    col: number,
+    signal?: AbortSignal
   ): Promise<QueensAdminOperationResult> {
-    return postOperation('/api/queens/admin/board/remove-flag', {
-      boardState,
-      row,
-      col,
-    });
+    return postOperation(
+      '/api/queens/admin/board/remove-flag',
+      {
+        boardState,
+        row,
+        col,
+      },
+      signal
+    );
   },
 
   placeQueen(
     boardState: QueensAdminBoardState | null,
     row: number,
-    col: number
+    col: number,
+    signal?: AbortSignal
   ): Promise<QueensAdminOperationResult> {
-    return postOperation('/api/queens/admin/board/place-queen', {
-      boardState,
-      row,
-      col,
-    });
+    return postOperation(
+      '/api/queens/admin/board/place-queen',
+      {
+        boardState,
+        row,
+        col,
+      },
+      signal
+    );
   },
 
   removeQueen(
     boardState: QueensAdminBoardState | null,
     row: number,
-    col: number
+    col: number,
+    signal?: AbortSignal
   ): Promise<QueensAdminOperationResult> {
-    return postOperation('/api/queens/admin/board/remove-queen', {
-      boardState,
-      row,
-      col,
-    });
+    return postOperation(
+      '/api/queens/admin/board/remove-queen',
+      {
+        boardState,
+        row,
+        col,
+      },
+      signal
+    );
   },
 };

@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia';
-import type { GridSquare, Pos, MarkType, ColorName } from '../types/types';
-import { COLOR_PALETTE, COLOR_SYMBOLS } from '../utils/colorPalette';
+import type { GridSquare, Pos, MarkType } from '../types/types';
 import { createEmptyGrid, isValidPosition, clonePlayerMarks } from './gridUtils';
 import { removeQueenPlacement, replayHistoryFromEntries } from '../utils/queenRemoval';
+import { decodeQueensPuzzleLayout } from '../utils/urlPuzzleEncoding';
+import { assignRegionPaletteColors } from '../utils/regionDisplay';
 import router from '@/router';
 import { useSpeedModeStore } from './speedModeStore';
 import {
@@ -13,42 +14,6 @@ import {
   type PuzzleForDiversity,
 } from '../utils/puzzleDiversitySelector';
 
-// Create reverse mapping from symbols to color names
-const SYMBOL_TO_COLOR: Record<string, ColorName> = Object.entries(COLOR_SYMBOLS).reduce(
-  (acc, [color, symbol]) => {
-    if (color !== 'undefined') {
-      acc[symbol] = color as ColorName;
-    }
-    return acc;
-  },
-  {} as Record<string, ColorName>
-);
-
-function buildLayoutSymbolToColorMap(layout: string): Record<string, ColorName> {
-  const symbolToColor: Record<string, ColorName> = {};
-  const availableColors = [...COLOR_PALETTE];
-  const fallbackColors = [...COLOR_PALETTE];
-  let overflowIndex = 0;
-
-  for (let i = availableColors.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [availableColors[i], availableColors[j]] = [availableColors[j], availableColors[i]];
-  }
-
-  for (let i = 0; i < layout.length; i++) {
-    const symbol = layout[i];
-    if (symbol === '.' || symbolToColor[symbol]) {
-      continue;
-    }
-
-    const nextColor =
-      availableColors.shift() ?? fallbackColors[overflowIndex++ % fallbackColors.length];
-    symbolToColor[symbol] = nextColor;
-  }
-
-  return symbolToColor;
-}
-
 export type GameMode = 'standard' | 'speed' | 'rotate';
 export type { MarkType };
 
@@ -57,6 +22,12 @@ interface PuzzleRecord {
   name?: string;
   layout: string;
   queens: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
+}
+
+function isPerfectSquareLength(length: number): boolean {
+  const root = Math.sqrt(length);
+  return Number.isInteger(root);
 }
 
 type PuzzleDatabase = Record<string, PuzzleRecord[]>;
@@ -1154,7 +1125,7 @@ export const useQueensStore = defineStore('queens', {
       this.loadingMessage = 'Loading puzzle database...';
 
       try {
-        const response = await fetch('/queens/puzzles.json', { cache: 'force-cache' });
+        const response = await fetch('/queens/puzzles.json', { cache: 'no-store' });
         if (!response.ok) {
           throw new Error(`Failed to load puzzles.json: ${response.status}`);
         }
@@ -1199,21 +1170,18 @@ export const useQueensStore = defineStore('queens', {
       // Set current puzzle ID for progress tracking
       this.currentPuzzleId = puzzleData.name || puzzleData.id;
 
-      // Parse layout (color groups). Any non-dot symbol is treated as a color group id.
-      // We remap symbols to the active palette so legacy/unknown symbols still get valid colors.
-      const remappedSymbolToColor = buildLayoutSymbolToColorMap(layout);
+      // Parse layout. Any non-dot symbol is treated as a stable region id.
       for (let i = 0; i < layout.length; i++) {
         const row = Math.floor(i / gridSize);
         const col = i % gridSize;
         const symbol = layout[i];
 
         if (symbol !== '.') {
-          const colorName = remappedSymbolToColor[symbol] || SYMBOL_TO_COLOR[symbol];
-          if (colorName) {
-            this.grid[row][col].groupColor = colorName;
-          }
+          this.grid[row][col].groupColor = symbol;
         }
       }
+
+      this.grid = assignRegionPaletteColors(this.grid);
 
       // Parse queens (solution)
       for (let i = 0; i < queens.length; i++) {
@@ -1450,6 +1418,51 @@ export const useQueensStore = defineStore('queens', {
         this.parsePuzzleData(puzzle, options);
       } catch (error) {
         console.error('[queensStore] Error loading puzzle by ID:', error);
+        throw error;
+      }
+    },
+
+    loadPuzzleFromEncodedLayout(encodedLayout: string, options?: { persistProgress?: boolean }) {
+      try {
+        if (!encodedLayout) {
+          throw new Error('Encoded layout is required');
+        }
+
+        const decodedLayout = decodeQueensPuzzleLayout(encodedLayout);
+
+        if (!isPerfectSquareLength(decodedLayout.length)) {
+          throw new Error('Encoded puzzle length must form a square board');
+        }
+
+        let layout = '';
+        let queens = '';
+
+        for (const rawSymbol of decodedLayout) {
+          if (rawSymbol === '.') {
+            layout += '.';
+            queens += '.';
+            continue;
+          }
+
+          const layoutSymbol = rawSymbol.toUpperCase();
+          if (!/[A-Z]/.test(layoutSymbol)) {
+            throw new Error(`Unsupported encoded puzzle symbol: ${rawSymbol}`);
+          }
+
+          layout += layoutSymbol;
+          queens += rawSymbol === layoutSymbol ? '.' : 'Q';
+        }
+
+        const puzzle: PuzzleRecord = {
+          id: 'url-preview',
+          name: 'URL Preview Puzzle',
+          layout,
+          queens,
+        };
+
+        this.parsePuzzleData(puzzle, options);
+      } catch (error) {
+        console.error('[queensStore] Error loading encoded layout from URL:', error);
         throw error;
       }
     },
@@ -1815,6 +1828,39 @@ export const useQueensStore = defineStore('queens', {
       });
     },
 
+    getAvailableDifficultiesForSize(sizeKey: string): Array<'easy' | 'medium' | 'hard'> {
+      if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
+        return [];
+      }
+
+      const difficultyOrder: Array<'easy' | 'medium' | 'hard'> = ['easy', 'medium', 'hard'];
+      const difficulties = new Set<'easy' | 'medium' | 'hard'>();
+      for (const puzzle of this.puzzleDatabase[sizeKey]) {
+        if (puzzle.difficulty && difficultyOrder.includes(puzzle.difficulty)) {
+          difficulties.add(puzzle.difficulty);
+        }
+      }
+
+      if (difficulties.size === 0) {
+        return ['easy'];
+      }
+
+      return difficultyOrder.filter((difficulty) => difficulties.has(difficulty));
+    },
+
+    countPuzzlesForSizeAndDifficulty(
+      sizeKey: string,
+      difficulty: 'easy' | 'medium' | 'hard'
+    ): number {
+      if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
+        return 0;
+      }
+
+      return this.puzzleDatabase[sizeKey].filter(
+        (puzzle) => (puzzle.difficulty ?? 'easy') === difficulty
+      ).length;
+    },
+
     // Modal state management
     openSinglePuzzleModeModal() {
       this.showSinglePuzzleModeModal = true;
@@ -1975,6 +2021,44 @@ export const useQueensStore = defineStore('queens', {
 
       // All puzzles completed for this size
       return null;
+    },
+
+    getNextUncompletedPuzzleForSizeAndDifficulty(
+      sizeKey: string,
+      difficulty: 'easy' | 'medium' | 'hard'
+    ): PuzzleRecord | null {
+      if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
+        return null;
+      }
+
+      const completedPuzzles = getCompletedPuzzles();
+      const puzzlesForBucket = this.puzzleDatabase[sizeKey].filter(
+        (puzzle) => (puzzle.difficulty ?? 'easy') === difficulty
+      );
+
+      for (const puzzle of puzzlesForBucket) {
+        const puzzleId = String(puzzle.id);
+        if (!completedPuzzles.has(puzzleId)) {
+          return puzzle;
+        }
+      }
+
+      return null;
+    },
+
+    getFirstPuzzleForSizeAndDifficulty(
+      sizeKey: string,
+      difficulty: 'easy' | 'medium' | 'hard'
+    ): PuzzleRecord | null {
+      if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
+        return null;
+      }
+
+      return (
+        this.puzzleDatabase[sizeKey].find(
+          (puzzle) => (puzzle.difficulty ?? 'easy') === difficulty
+        ) ?? null
+      );
     },
 
     getPuzzleProgress(puzzleId: string | number | null): MarkType[][] | null {

@@ -4,7 +4,11 @@
   "packageManager": "yarn@4.10.3",
   "scripts": {
     "prepare": "husky",
-    "dev": "sh -c 'trap \"kill 0\" EXIT; yarn dev:frontend & yarn dev:kotlin-backend & wait'",
+    "dev": "sh -c 'yarn dev:db && trap \"kill 0\" EXIT; yarn dev:frontend & yarn dev:kotlin-backend & wait'",
+    "dev:db": "docker compose up -d queens-admin-postgres",
+    "dev:db:stop": "docker compose stop queens-admin-postgres",
+    "db:import-legacy-puzzles": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle importLegacyPuzzles'",
+    "db:export-puzzles-json": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle exportPuzzlesJson'",
     "dev:frontend": "yarn --cwd frontend dev",
     "dev:kotlin-backend": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle bootRun'",
     "lint": "sh -c 'yarn lint:frontend; f=$?; yarn lint:backend; b=$?; test $f -eq 0 -a $b -eq 0'",

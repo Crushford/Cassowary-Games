@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.16),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.14),_transparent_26%),linear-gradient(180deg,_#111827_0%,_#0f172a_100%)] px-6 py-8 text-white"
+    class="queens-admin-page min-h-screen select-text bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.16),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.14),_transparent_26%),linear-gradient(180deg,_#111827_0%,_#0f172a_100%)] px-6 py-8 text-white"
   >
     <div class="mx-auto flex max-w-[1760px] flex-col gap-6">
       <header class="flex flex-wrap items-end justify-between gap-6">
@@ -48,11 +48,55 @@
             >
               {{ store.loading ? 'Working' : 'Ready' }}
             </div>
+            <div
+              v-if="store.generationProgress"
+              class="mt-2 text-xs uppercase tracking-[0.18em] text-semantic-neutral-400"
+            >
+              {{ generationProgressPercent }}% colored
+            </div>
+            <button
+              v-if="store.canCancelRequest"
+              type="button"
+              class="mt-3 rounded-xl border border-semantic-danger-700 bg-feedback-dangerSubtle px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-semantic-danger-100 transition hover:bg-feedback-dangerSoft"
+              @click="store.cancelCurrentOperation()"
+            >
+              Interrupt Request
+            </button>
           </div>
         </div>
       </header>
 
-      <div class="grid min-h-[820px] gap-6 xl:grid-cols-[390px_minmax(0,1fr)_390px]">
+      <nav class="flex flex-wrap gap-3">
+        <button
+          type="button"
+          class="rounded-full px-4 py-2 text-sm font-semibold transition"
+          :class="
+            activeTab === 'workshop'
+              ? 'bg-semantic-info-600 text-white'
+              : 'border border-semantic-neutral-700 bg-surface-overlayDim text-semantic-neutral-300 hover:bg-semantic-neutral-800'
+          "
+          @click="setActiveTab('workshop')"
+        >
+          Workshop
+        </button>
+        <button
+          type="button"
+          class="rounded-full px-4 py-2 text-sm font-semibold transition"
+          :class="
+            activeTab === 'batch'
+              ? 'bg-semantic-info-600 text-white'
+              : 'border border-semantic-neutral-700 bg-surface-overlayDim text-semantic-neutral-300 hover:bg-semantic-neutral-800'
+          "
+          @click="setActiveTab('batch')"
+        >
+          Batch Generate
+        </button>
+      </nav>
+
+      <div
+        v-if="activeTab === 'workshop'"
+        class="grid min-h-[820px] gap-6 xl:grid-cols-[390px_minmax(0,1fr)_390px]"
+      >
         <aside
           class="space-y-4 rounded-[30px] border border-semantic-neutral-800 bg-surface-darkFirm p-5"
         >
@@ -88,6 +132,42 @@
               </select>
             </div>
 
+            <div class="mt-4 space-y-3">
+              <label class="block text-sm text-semantic-neutral-300" for="generation-strategy"
+                >Generation strategy</label
+              >
+              <select
+                id="generation-strategy"
+                v-model="store.generationStrategy"
+                class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+              >
+                <option value="baseline">Baseline random fallback</option>
+                <option value="marker-guided">Marker-guided experiment</option>
+              </select>
+              <p class="text-xs leading-5 text-semantic-neutral-400">
+                Marker-guided mode prioritizes squares that look safe for another adjacent region to
+                steal, then still runs the solver after every placement.
+              </p>
+            </div>
+
+            <div class="mt-4 space-y-3">
+              <label class="block text-sm text-semantic-neutral-300" for="minimum-group-size"
+                >Minimum region size</label
+              >
+              <input
+                id="minimum-group-size"
+                v-model.number="store.minimumGroupSize"
+                type="number"
+                min="1"
+                :max="selectedBoardSize"
+                class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+              />
+              <p class="text-xs leading-5 text-semantic-neutral-400">
+                The generator will try to grow every queen region to at least this many squares
+                before filling the remaining blocked spaces.
+              </p>
+            </div>
+
             <div class="mt-4 grid gap-2">
               <button
                 class="rounded-xl bg-semantic-info-600 px-4 py-2.5 font-semibold text-white hover:bg-semantic-info-500"
@@ -103,6 +183,14 @@
                 Generate Full Board
               </button>
               <button
+                v-if="store.canCancelRequest"
+                type="button"
+                class="rounded-xl border border-semantic-danger-700 bg-feedback-dangerSubtle px-4 py-2.5 font-semibold text-semantic-danger-100 hover:bg-feedback-dangerSoft"
+                @click="store.cancelCurrentOperation()"
+              >
+                Interrupt Backend Request
+              </button>
+              <button
                 class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-4 py-2.5 font-semibold text-white hover:bg-semantic-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
                 :disabled="!store.board || store.loading"
                 @click="store.clearBoard()"
@@ -116,6 +204,145 @@
               >
                 Delete Board From Store
               </button>
+              <a
+                v-if="playInQueensHref"
+                :href="playInQueensHref"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="rounded-xl border border-semantic-info-700 bg-feedback-infoFaint px-4 py-2.5 text-center font-semibold text-semantic-info-100 transition hover:bg-feedback-infoSoft"
+              >
+                Play In Queens
+              </a>
+              <button
+                v-if="shareableQueensPuzzleUrl"
+                type="button"
+                class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-4 py-2.5 text-center font-semibold text-white transition hover:bg-semantic-neutral-700"
+                @click="copyPuzzleUrl"
+              >
+                {{ copyButtonLabels.url }}
+              </button>
+              <button
+                v-else-if="!playInQueensHref"
+                type="button"
+                disabled
+                class="rounded-xl border border-semantic-info-700 bg-feedback-infoFaint px-4 py-2.5 text-center font-semibold text-semantic-info-100 opacity-50"
+              >
+                Play In Queens
+              </button>
+              <button
+                v-if="!shareableQueensPuzzleUrl"
+                type="button"
+                disabled
+                class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-4 py-2.5 text-center font-semibold text-white opacity-50"
+              >
+                Copy URL
+              </button>
+            </div>
+
+            <div
+              v-if="store.generationProgress"
+              class="mt-4 rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <h3 class="text-sm font-semibold text-white">Generation Progress</h3>
+                  <p class="mt-1 text-xs text-semantic-neutral-400">
+                    The colored-cell count can rise and fall when a retry rolls back work.
+                  </p>
+                </div>
+                <div
+                  class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                  :class="generationProgressBadgeClass"
+                >
+                  {{ store.generationProgress.state }}
+                </div>
+              </div>
+
+              <div class="mt-4 h-3 overflow-hidden rounded-full bg-semantic-neutral-900">
+                <div
+                  class="h-full rounded-full bg-[linear-gradient(90deg,#38bdf8_0%,#22c55e_100%)] transition-[width] duration-300"
+                  :style="{ width: `${generationProgressPercent}%` }"
+                />
+              </div>
+
+              <div class="mt-3 flex items-center justify-between text-sm text-semantic-neutral-200">
+                <span
+                  >{{ store.generationProgress.coloredCellCount }} /
+                  {{ store.generationProgress.totalCellCount }} colored</span
+                >
+                <span>Attempt {{ Math.max(store.generationProgress.attempt, 1) }}</span>
+              </div>
+
+              <div class="mt-3 grid gap-2 text-xs text-semantic-neutral-300 sm:grid-cols-2">
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">Strategy</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ generationStrategyLabel(store.generationProgress.strategy) }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">Elapsed</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ formatElapsed(store.generationProgress.elapsedMs) }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">
+                    Solver Checks
+                  </div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ store.generationProgress.metrics.solverChecks }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">Rollbacks</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ store.generationProgress.metrics.rollbacks }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">
+                    Marker Squares
+                  </div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ store.generationProgress.metrics.markerSquares }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">
+                    Marker Steals
+                  </div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ store.generationProgress.metrics.markerGuidedPlacements }} /
+                    {{ store.generationProgress.metrics.markerGuidedCandidates }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">
+                    Fallback Placements
+                  </div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ store.generationProgress.metrics.fallbackPlacements }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="uppercase tracking-[0.16em] text-semantic-neutral-400">
+                    Successful Placements
+                  </div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ store.generationProgress.metrics.successfulPlacements }}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="mt-3 rounded-xl bg-surface-darkMuted p-3 text-sm text-semantic-neutral-200"
+              >
+                <div class="font-semibold text-white">
+                  {{ formatProgressStage(store.generationProgress.stage) }}
+                </div>
+                <div class="mt-1">{{ store.generationProgress.message }}</div>
+              </div>
             </div>
           </section>
 
@@ -270,7 +497,7 @@
               <div
                 class="rounded-full border border-semantic-neutral-700 bg-semantic-neutral-950 px-4 py-2 text-xs uppercase tracking-[0.22em] text-semantic-neutral-300"
               >
-                {{ store.loading ? 'Backend Running' : 'Board Ready' }}
+                {{ store.loading ? 'Backend Request Running' : 'Board Ready' }}
               </div>
             </div>
 
@@ -328,24 +555,228 @@
           <section
             class="rounded-[26px] border border-semantic-neutral-800 bg-surface-overlayDim p-4"
           >
-            <h2 class="text-lg font-semibold">Last Backend Result</h2>
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <h2 class="text-lg font-semibold">Difficulty Probe</h2>
+                <p class="mt-1 text-sm text-semantic-neutral-400">
+                  Starts from blank marks, runs the workshop difficulty solver, and shows exactly
+                  which rule tier was needed to finish the current puzzle.
+                </p>
+              </div>
+              <button
+                type="button"
+                class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-semantic-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="!store.board"
+                @click="runDifficultyProbe"
+              >
+                Analyze Puzzle
+              </button>
+            </div>
+
+            <div
+              v-if="difficultyProbe"
+              class="mt-4 rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <div class="text-xs uppercase tracking-[0.18em] text-semantic-neutral-400">
+                    Difficulty
+                  </div>
+                  <div class="mt-1 text-2xl font-semibold text-white">
+                    {{ difficultyProbe.tier }}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-semantic-neutral-700"
+                  @click="copyDebugText('difficulty', difficultyProbeDebugText)"
+                >
+                  {{ copyButtonLabels.difficulty }}
+                </button>
+              </div>
+
+              <div class="mt-4 grid gap-3 text-sm md:grid-cols-2">
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="text-semantic-neutral-400">Solved</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ difficultyProbe.solved ? 'Yes' : 'No' }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="text-semantic-neutral-400">Hardest Step Reached</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ formatDifficultyPhase(difficultyProbe.hardestStepReached) }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="text-semantic-neutral-400">Flags Placed</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ difficultyProbe.totalFlagsPlaced }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="text-semantic-neutral-400">Queens Placed</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ difficultyProbe.totalQueensPlaced }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="text-semantic-neutral-400">Loops</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ difficultyProbe.loops }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="text-semantic-neutral-400">Queen Guesses Tried</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ difficultyProbe.guessesTried }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3 md:col-span-2">
+                  <div class="text-semantic-neutral-400">Unresolved Squares After Probe</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ difficultyProbe.unresolvedSquares }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4">
+                <div class="mb-2 text-sm font-semibold text-semantic-info-200">Working Out</div>
+                <div class="space-y-2">
+                  <article
+                    v-for="(entry, index) in difficultyProbe.trace"
+                    :key="`${entry.phase}-${index}`"
+                    class="rounded-xl border border-semantic-neutral-800 bg-surface-darkMuted p-3 text-sm"
+                  >
+                    <div class="flex items-center justify-between gap-3">
+                      <div class="font-semibold text-white">
+                        {{ entry.label }}
+                      </div>
+                      <span
+                        class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                        :class="difficultyPhaseBadgeClass(entry.phase)"
+                      >
+                        {{ formatDifficultyPhase(entry.phase) }}
+                      </span>
+                    </div>
+                    <p class="mt-2 leading-6 text-semantic-neutral-300">
+                      {{ entry.message }}
+                    </p>
+                    <div class="mt-2 text-xs uppercase tracking-[0.16em] text-semantic-neutral-400">
+                      {{ entry.flagsPlaced }} flags · {{ entry.queensPlaced }} queens
+                    </div>
+                  </article>
+                </div>
+              </div>
+            </div>
+
+            <p v-else class="mt-4 text-sm text-semantic-neutral-400">
+              Run the difficulty probe on a fully built puzzle to classify it as easy, medium, or
+              hard and inspect the step-by-step reasoning trace.
+            </p>
+          </section>
+
+          <section
+            class="rounded-[26px] border border-semantic-neutral-800 bg-surface-overlayDim p-4"
+          >
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="text-lg font-semibold">Last Backend Result</h2>
+              <button
+                type="button"
+                class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-semantic-neutral-700"
+                @click="copyDebugText('result', backendResultDebugText)"
+              >
+                {{ copyButtonLabels.result }}
+              </button>
+            </div>
             <p class="mt-3 text-sm text-semantic-neutral-200">
               {{ store.lastActionResult?.explanation || 'No backend action has been run yet.' }}
             </p>
+
+            <div v-if="store.lastActionResult" class="mt-3 grid gap-3 text-sm md:grid-cols-2">
+              <div class="rounded-xl bg-surface-darkMuted p-3">
+                <div class="text-semantic-neutral-400">Action</div>
+                <div class="mt-1 font-semibold text-white">{{ store.lastActionResult.action }}</div>
+              </div>
+              <div class="rounded-xl bg-surface-darkMuted p-3">
+                <div class="text-semantic-neutral-400">Phase After Action</div>
+                <div class="mt-1 font-semibold text-white">{{ generationPhaseLabel }}</div>
+              </div>
+              <div class="rounded-xl bg-surface-darkMuted p-3">
+                <div class="text-semantic-neutral-400">Changed Cells</div>
+                <div class="mt-1 font-semibold text-white">
+                  {{ store.lastActionResult.changedCells.length }}
+                </div>
+              </div>
+              <div class="rounded-xl bg-surface-darkMuted p-3">
+                <div class="text-semantic-neutral-400">Snapshot Marker</div>
+                <div class="mt-1 font-semibold text-white">
+                  {{
+                    boardSnapshotReasonCount > 0
+                      ? `${boardSnapshotReasonCount} cells marked as full snapshot`
+                      : 'No full-board snapshot marker'
+                  }}
+                </div>
+              </div>
+            </div>
+
+            <div
+              v-if="store.lastActionResult && changeReasonGroups.length"
+              class="mt-3 rounded-xl bg-surface-darkMuted p-3 text-sm"
+            >
+              <div class="mb-2 font-semibold text-semantic-info-200">What Changed</div>
+              <div class="space-y-2">
+                <div
+                  v-for="group in changeReasonGroups"
+                  :key="group.reason"
+                  class="rounded-lg border border-semantic-info-700 bg-feedback-infoFaint px-3 py-2"
+                >
+                  <div class="font-semibold text-semantic-info-100">
+                    {{ group.count }} cell{{ group.count === 1 ? '' : 's' }}
+                  </div>
+                  <div class="mt-1 text-semantic-neutral-200">{{ group.label }}</div>
+                  <div
+                    v-if="group.reason === 'generated board snapshot'"
+                    class="mt-1 text-xs text-semantic-neutral-400"
+                  >
+                    This does not mean a screenshot. It means the backend replaced the whole board
+                    in one response and reported every cell as changed.
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <div
               v-if="store.lastActionResult?.changedCells.length"
               class="mt-3 rounded-xl bg-surface-darkMuted p-3 text-sm"
             >
-              <div class="mb-2 font-semibold text-semantic-info-200">Changed Cells</div>
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <div class="font-semibold text-semantic-info-200">Changed Cell Preview</div>
+                <div class="text-xs uppercase tracking-[0.18em] text-semantic-neutral-400">
+                  {{ changedCellPreview.length }} shown
+                </div>
+              </div>
               <div class="flex flex-wrap gap-2">
                 <span
-                  v-for="cell in store.lastActionResult.changedCells"
+                  v-for="cell in changedCellPreview"
                   :key="`${cell.row}-${cell.col}-${cell.reason || 'change'}`"
                   class="rounded-full border border-semantic-info-700 bg-feedback-infoFaint px-2 py-1 text-xs text-semantic-info-100"
                 >
-                  ({{ cell.row }}, {{ cell.col }}){{ cell.reason ? ` ${cell.reason}` : '' }}
+                  ({{ cell.row }}, {{ cell.col }}){{
+                    cell.reason === 'generated board snapshot'
+                      ? ' full-board replacement'
+                      : cell.reason
+                        ? ` ${cell.reason}`
+                        : ''
+                  }}
                 </span>
+              </div>
+              <div
+                v-if="store.lastActionResult.changedCells.length > changedCellPreview.length"
+                class="mt-3 text-xs text-semantic-neutral-400"
+              >
+                {{ store.lastActionResult.changedCells.length - changedCellPreview.length }}
+                additional changed cells are omitted from this preview.
               </div>
             </div>
 
@@ -360,7 +791,16 @@
           <section
             class="rounded-[26px] border border-semantic-neutral-800 bg-surface-overlayDim p-4"
           >
-            <h2 class="text-lg font-semibold">Validation</h2>
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="text-lg font-semibold">Validation</h2>
+              <button
+                type="button"
+                class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-semantic-neutral-700"
+                @click="copyDebugText('validation', validationDebugText)"
+              >
+                {{ copyButtonLabels.validation }}
+              </button>
+            </div>
             <div v-if="store.validation" class="mt-3 space-y-3 text-sm">
               <div
                 class="rounded-xl px-3 py-2 font-semibold"
@@ -405,7 +845,16 @@
           <section
             class="rounded-[26px] border border-semantic-neutral-800 bg-surface-overlayDim p-4"
           >
-            <h2 class="text-lg font-semibold">Selected Cell</h2>
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="text-lg font-semibold">Selected Cell</h2>
+              <button
+                type="button"
+                class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-semantic-neutral-700"
+                @click="copyDebugText('selectedCell', selectedCellDebugText)"
+              >
+                {{ copyButtonLabels.selectedCell }}
+              </button>
+            </div>
             <div v-if="store.selectedCell" class="mt-3 space-y-2 text-sm text-semantic-neutral-200">
               <div>Position: {{ store.selectedCell.row }}, {{ store.selectedCell.col }}</div>
               <div>Color: {{ store.selectedCell.groupColor || 'none' }}</div>
@@ -422,12 +871,21 @@
           >
             <div class="flex items-center justify-between">
               <h2 class="text-lg font-semibold">Action History</h2>
-              <button
-                class="text-xs uppercase tracking-[0.2em] text-semantic-neutral-400 hover:text-white"
-                @click="store.resetHistory()"
-              >
-                Clear
-              </button>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-semantic-neutral-700"
+                  @click="copyDebugText('history', actionHistoryDebugText)"
+                >
+                  {{ copyButtonLabels.history }}
+                </button>
+                <button
+                  class="text-xs uppercase tracking-[0.2em] text-semantic-neutral-400 hover:text-white"
+                  @click="store.resetHistory()"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
             <div class="mt-3 max-h-[220px] space-y-2 overflow-auto pr-1 text-sm">
               <article
@@ -459,7 +917,21 @@
           <details
             class="rounded-[26px] border border-semantic-neutral-800 bg-surface-overlayDim p-4"
           >
-            <summary class="cursor-pointer text-lg font-semibold">Raw Board JSON</summary>
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-3">
+              <span class="text-lg font-semibold">Raw Board JSON</span>
+              <button
+                type="button"
+                class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-semantic-neutral-700"
+                @click.prevent.stop="copyBoardJson"
+              >
+                {{ copyButtonLabels.json }}
+              </button>
+            </summary>
+            <div class="mt-3 flex items-center justify-between gap-3">
+              <p class="text-sm text-semantic-neutral-300">
+                Copy the current board snapshot for debugging or sharing.
+              </p>
+            </div>
             <pre
               class="mt-3 overflow-auto rounded-xl bg-surface-darkStrong p-3 text-xs leading-6 text-semantic-neutral-200"
               >{{ prettyBoardJson }}</pre
@@ -467,22 +939,51 @@
           </details>
         </aside>
       </div>
+
+      <QueensAdminBatchPanel v-else />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import type { ColorName } from '../types/types';
 import { COLOR_PALETTE } from '../utils/colorPalette';
+import {
+  buildEncodedQueensPuzzleLayout,
+  QUEENS_PUZZLE_SHARE_BASE_URL,
+} from '../utils/urlPuzzleEncoding';
+import { analyzeQueensDifficulty, type QueensDifficultyAnalysis } from '../admin/difficultyProbe';
 import QueensAdminBoard from '../components/admin/QueensAdminBoard.vue';
+import QueensAdminBatchPanel from '../components/admin/QueensAdminBatchPanel.vue';
 import { useQueensAdminStore } from '../stores/queensAdminStore';
-import type { QueensAdminTool } from '../admin/types';
+import type { QueensAdminGenerationStrategy, QueensAdminTool } from '../admin/types';
 
+type CopyButtonKey =
+  | 'result'
+  | 'validation'
+  | 'selectedCell'
+  | 'history'
+  | 'json'
+  | 'url'
+  | 'difficulty';
+
+const route = useRoute();
+const router = useRouter();
 const store = useQueensAdminStore();
-const boardSizes = [4, 5, 6, 7, 8, 9];
+const boardSizes = Array.from({ length: 17 }, (_, index) => index + 4);
 const palette = COLOR_PALETTE;
 const selectedBoardSize = ref(store.boardSize);
+const activeTab = ref<'workshop' | 'batch'>('workshop');
+
+function normalizeAdminTab(value: unknown): 'workshop' | 'batch' {
+  return value === 'batch' ? 'batch' : 'workshop';
+}
+
+function setActiveTab(tab: 'workshop' | 'batch'): void {
+  activeTab.value = tab;
+}
 
 const tools: Array<{
   id: QueensAdminTool;
@@ -546,6 +1047,38 @@ const generationPhaseLabel = computed(() => {
 
   return labels[store.board.generationPhase] || store.board.generationPhase;
 });
+
+const generationProgressPercent = computed(() => {
+  if (!store.generationProgress || store.generationProgress.totalCellCount === 0) return 0;
+  return Math.round(
+    (store.generationProgress.coloredCellCount / store.generationProgress.totalCellCount) * 100
+  );
+});
+
+const generationProgressBadgeClass = computed(() => {
+  switch (store.generationProgress?.state) {
+    case 'COMPLETED':
+      return 'bg-feedback-successSoft text-semantic-success-200';
+    case 'FAILED':
+      return 'bg-feedback-dangerSoft text-semantic-danger-200';
+    case 'CANCELLED':
+      return 'bg-feedback-warningSubtle text-semantic-warning-200';
+    default:
+      return 'bg-feedback-infoSoft text-semantic-info-200';
+  }
+});
+
+const copyButtonLabels = ref<Record<CopyButtonKey, string>>({
+  result: 'Copy',
+  validation: 'Copy',
+  selectedCell: 'Copy',
+  history: 'Copy',
+  json: 'Copy JSON',
+  url: 'Copy URL',
+  difficulty: 'Copy',
+});
+const copyTimers: Partial<Record<CopyButtonKey, ReturnType<typeof setTimeout>>> = {};
+const difficultyProbe = ref<QueensDifficultyAnalysis | null>(null);
 
 function hasPhase(phase: string): boolean {
   return store.board?.generationPhase === phase;
@@ -700,6 +1233,255 @@ const generationSteps = computed(() => {
 });
 
 const prettyBoardJson = computed(() => JSON.stringify(store.board, null, 2));
+
+const playInQueensRoute = computed(() => {
+  if (!store.board) return null;
+
+  const encodedLayout = buildEncodedQueensPuzzleLayout(
+    store.board.cells.flat().map((cell) => ({
+      groupColor: cell.groupColor,
+      isSolutionQueen: cell.isSolutionQueen,
+    }))
+  );
+
+  return {
+    name: 'queens-encoded-puzzle',
+    params: {
+      encodedLayout,
+    },
+  };
+});
+
+const playInQueensHref = computed(() => {
+  if (!playInQueensRoute.value) return null;
+  return router.resolve(playInQueensRoute.value).href;
+});
+
+const shareableQueensPuzzleUrl = computed(() => {
+  if (!playInQueensHref.value) return null;
+  return `${QUEENS_PUZZLE_SHARE_BASE_URL}${playInQueensHref.value}`;
+});
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    const normalizedTab = normalizeAdminTab(tab);
+    if (activeTab.value !== normalizedTab) {
+      activeTab.value = normalizedTab;
+    }
+  },
+  { immediate: true }
+);
+
+watch(activeTab, async (tab) => {
+  if (normalizeAdminTab(route.query.tab) === tab) return;
+
+  await router.replace({
+    query: {
+      ...route.query,
+      tab,
+    },
+  });
+});
+
+function formatChangeReason(reason: string): string {
+  if (reason === 'generated board snapshot') {
+    return 'Full board replacement';
+  }
+
+  return reason.charAt(0).toUpperCase() + reason.slice(1);
+}
+
+function formatProgressStage(stage: string): string {
+  return stage
+    .toLowerCase()
+    .split('_')
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
+}
+
+function generationStrategyLabel(strategy: QueensAdminGenerationStrategy): string {
+  return strategy === 'marker-guided' ? 'Marker-guided experiment' : 'Baseline';
+}
+
+function formatDifficultyPhase(phase: 'easy' | 'medium' | 'hard'): string {
+  return phase.charAt(0).toUpperCase() + phase.slice(1);
+}
+
+function difficultyPhaseBadgeClass(phase: 'easy' | 'medium' | 'hard'): string {
+  switch (phase) {
+    case 'easy':
+      return 'bg-feedback-successSoft text-semantic-success-200';
+    case 'medium':
+      return 'bg-feedback-warningSubtle text-semantic-warning-200';
+    case 'hard':
+      return 'bg-feedback-dangerSoft text-semantic-danger-200';
+  }
+}
+
+function formatElapsed(elapsedMs: number): string {
+  const totalSeconds = Math.floor(elapsedMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+const changeReasonGroups = computed(() => {
+  const groups = new Map<string, number>();
+  for (const cell of store.lastActionResult?.changedCells ?? []) {
+    const reason = cell.reason || 'changed cell';
+    groups.set(reason, (groups.get(reason) || 0) + 1);
+  }
+
+  return Array.from(groups.entries())
+    .map(([reason, count]) => ({
+      reason,
+      count,
+      label: formatChangeReason(reason),
+    }))
+    .sort((left, right) => right.count - left.count);
+});
+
+const boardSnapshotReasonCount = computed(
+  () =>
+    changeReasonGroups.value.find((group) => group.reason === 'generated board snapshot')?.count ||
+    0
+);
+
+const changedCellPreview = computed(() =>
+  (store.lastActionResult?.changedCells ?? []).slice(0, 18)
+);
+
+const backendResultDebugText = computed(() => {
+  if (!store.lastActionResult) return 'No backend action has been run yet.';
+
+  const lines = [
+    `Action: ${store.lastActionResult.action}`,
+    `Success: ${store.lastActionResult.success ? 'yes' : 'no'}`,
+    `Explanation: ${store.lastActionResult.explanation}`,
+    `Phase: ${generationPhaseLabel.value}`,
+    `Changed cells: ${store.lastActionResult.changedCells.length}`,
+  ];
+
+  if (changeReasonGroups.value.length > 0) {
+    lines.push('Change reasons:');
+    for (const group of changeReasonGroups.value) {
+      lines.push(`- ${group.count} cell(s): ${formatChangeReason(group.reason)}`);
+    }
+  }
+
+  if (store.lastActionResult.warnings.length > 0) {
+    lines.push(`Warnings: ${store.lastActionResult.warnings.join(' | ')}`);
+  }
+
+  return lines.join('\n');
+});
+
+const validationDebugText = computed(() => {
+  if (!store.validation) return 'No validation result available.';
+
+  const lines = [
+    `Valid: ${store.validation.isValid ? 'yes' : 'no'}`,
+    `Queens: ${store.validation.queenCount}`,
+    `Flags: ${store.validation.flaggedCount}`,
+    `Colored cells: ${store.validation.coloredCellCount}`,
+    `Color groups: ${store.validation.distinctColorCount}`,
+  ];
+
+  if (store.validation.errors.length > 0) {
+    lines.push(`Errors: ${store.validation.errors.join(' | ')}`);
+  }
+
+  if (store.validation.warnings.length > 0) {
+    lines.push(`Warnings: ${store.validation.warnings.join(' | ')}`);
+  }
+
+  return lines.join('\n');
+});
+
+const selectedCellDebugText = computed(() => {
+  if (!store.selectedCell) return 'No cell selected.';
+
+  return [
+    `Position: ${store.selectedCell.row}, ${store.selectedCell.col}`,
+    `Color: ${store.selectedCell.groupColor || 'none'}`,
+    `Mark: ${store.selectedCell.markType}`,
+    `Solution queen: ${store.selectedCell.isSolutionQueen ? 'yes' : 'no'}`,
+  ].join('\n');
+});
+
+const actionHistoryDebugText = computed(() => {
+  if (store.actionHistory.length === 0) return 'No action history recorded.';
+
+  return store.actionHistory
+    .map(
+      (entry) =>
+        `[${entry.success ? 'ok' : 'fail'}] ${entry.action}\n${entry.explanation}${
+          entry.warnings.length > 0 ? `\nWarnings: ${entry.warnings.join(' | ')}` : ''
+        }${entry.error ? `\nError: ${entry.error}` : ''}`
+    )
+    .join('\n\n');
+});
+
+const difficultyProbeDebugText = computed(() => {
+  if (!difficultyProbe.value) return 'No difficulty probe has been run yet.';
+
+  return [
+    `Tier: ${difficultyProbe.value.tier}`,
+    `Solved: ${difficultyProbe.value.solved ? 'yes' : 'no'}`,
+    `Hardest step: ${formatDifficultyPhase(difficultyProbe.value.hardestStepReached)}`,
+    `Flags placed: ${difficultyProbe.value.totalFlagsPlaced}`,
+    `Queens placed: ${difficultyProbe.value.totalQueensPlaced}`,
+    `Loops: ${difficultyProbe.value.loops}`,
+    `Queen guesses tried: ${difficultyProbe.value.guessesTried}`,
+    `Unresolved squares: ${difficultyProbe.value.unresolvedSquares}`,
+    '',
+    ...difficultyProbe.value.trace.map(
+      (entry) =>
+        `[${formatDifficultyPhase(entry.phase)}] ${entry.label}\n${entry.message}\n${entry.flagsPlaced} flags, ${entry.queensPlaced} queens`
+    ),
+  ].join('\n');
+});
+
+function runDifficultyProbe(): void {
+  if (!store.board) return;
+  difficultyProbe.value = analyzeQueensDifficulty(store.board);
+}
+
+async function copyBoardJson(): Promise<void> {
+  await copyDebugText('json', prettyBoardJson.value, 'Copy JSON');
+}
+
+watch(
+  () => store.board,
+  () => {
+    difficultyProbe.value = null;
+  },
+  { deep: true }
+);
+
+async function copyPuzzleUrl(): Promise<void> {
+  if (!shareableQueensPuzzleUrl.value) return;
+  await copyDebugText('url', shareableQueensPuzzleUrl.value, 'Copy URL');
+}
+
+async function copyDebugText(key: CopyButtonKey, text: string, resetLabel = 'Copy'): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(text);
+    copyButtonLabels.value[key] = 'Copied';
+  } catch {
+    copyButtonLabels.value[key] = 'Copy Failed';
+  }
+
+  if (copyTimers[key]) {
+    clearTimeout(copyTimers[key]);
+  }
+
+  copyTimers[key] = setTimeout(() => {
+    copyButtonLabels.value[key] = resetLabel;
+    delete copyTimers[key];
+  }, 1600);
+}
 
 function getColorButtonClasses(color: ColorName): string {
   const isSelected = store.selectedColor === color;

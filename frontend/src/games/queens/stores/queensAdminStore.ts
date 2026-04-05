@@ -4,7 +4,10 @@ import type { ColorName } from '../types/types';
 import { COLOR_PALETTE } from '../utils/colorPalette';
 import { queensAdminApi } from '../admin/api';
 import type {
+  QueensAdminBatchStatus,
   QueensAdminBoardState,
+  QueensAdminGenerationProgress,
+  QueensAdminGenerationStrategy,
   QueensAdminHistoryEntry,
   QueensAdminOperationResult,
   QueensAdminTool,
@@ -17,6 +20,8 @@ const MAX_HISTORY_ENTRIES = 30;
 export const useQueensAdminStore = defineStore('queensAdmin', () => {
   const board = ref<QueensAdminBoardState | null>(null);
   const boardSize = ref(DEFAULT_BOARD_SIZE);
+  const minimumGroupSize = ref(3);
+  const generationStrategy = ref<QueensAdminGenerationStrategy>('baseline');
   const selectedTool = ref<QueensAdminTool>('paint-color');
   const selectedColor = ref<ColorName>(COLOR_PALETTE[0]);
   const loading = ref(false);
@@ -26,7 +31,14 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
   const backendError = ref<string | null>(null);
   const highlightedChangedCells = ref<string[]>([]);
   const selectedCellKey = ref<string | null>(null);
+  const canCancelRequest = ref(false);
+  const generationProgress = ref<QueensAdminGenerationProgress | null>(null);
+  const batchStatus = ref<QueensAdminBatchStatus | null>(null);
+  const batchLoading = ref(false);
   let highlightTimer: ReturnType<typeof setTimeout> | null = null;
+  let currentRequestController: AbortController | null = null;
+  let currentGenerationJobId: string | null = null;
+  let currentBatchId: string | null = null;
 
   const boardSummary = computed(() => {
     if (!board.value) {
@@ -132,70 +144,239 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
   }
 
   async function callBackendOperation(
-    action: () => Promise<QueensAdminOperationResult>
+    action: (signal: AbortSignal) => Promise<QueensAdminOperationResult>
   ): Promise<QueensAdminOperationResult> {
+    if (currentRequestController) {
+      currentRequestController.abort();
+    }
+
+    currentRequestController = new AbortController();
     loading.value = true;
+    canCancelRequest.value = true;
     backendError.value = null;
 
     try {
-      const result = await action();
+      const result = await action(currentRequestController.signal);
       return applyResult(result);
     } catch (error) {
+      const isAborted =
+        error instanceof DOMException
+          ? error.name === 'AbortError'
+          : error instanceof Error
+            ? error.name === 'AbortError'
+            : false;
       const fallbackResult: QueensAdminOperationResult = {
-        success: false,
-        action: 'request-failed',
-        explanation: 'The admin backend request failed.',
+        success: isAborted ? true : false,
+        action: isAborted ? 'request-cancelled' : 'request-failed',
+        explanation: isAborted
+          ? 'The current admin backend request was cancelled from the workshop.'
+          : 'The admin backend request failed.',
         board: board.value,
         changedCells: [],
         warnings: [],
         validation: validation.value,
         metadata: null,
-        error: error instanceof Error ? error.message : 'Unknown request failure',
+        error: isAborted
+          ? null
+          : error instanceof Error
+            ? error.message
+            : 'Unknown request failure',
       };
       return applyResult(fallbackResult);
+    } finally {
+      currentRequestController = null;
+      canCancelRequest.value = false;
     }
+  }
+
+  async function wait(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function cancelCurrentOperation(): Promise<void> {
+    if (currentBatchId) {
+      try {
+        batchStatus.value = await queensAdminApi.cancelBatchGeneration(currentBatchId);
+      } catch (error) {
+        backendError.value =
+          error instanceof Error ? error.message : 'Failed to cancel batch generation';
+      }
+      return;
+    }
+
+    if (currentGenerationJobId) {
+      try {
+        generationProgress.value = await queensAdminApi.cancelGenerationJob(currentGenerationJobId);
+      } catch (error) {
+        backendError.value =
+          error instanceof Error ? error.message : 'Failed to cancel generation job';
+      }
+      return;
+    }
+
+    if (!currentRequestController) return;
+    currentRequestController.abort();
   }
 
   async function createBoard(size: number = boardSize.value): Promise<void> {
     boardSize.value = size;
-    await callBackendOperation(() => queensAdminApi.createEmptyBoard(size));
+    generationProgress.value = null;
+    await callBackendOperation((signal) => queensAdminApi.createEmptyBoard(size, signal));
   }
 
   async function generateBoard(size: number = boardSize.value): Promise<void> {
     boardSize.value = size;
-    await callBackendOperation(() => queensAdminApi.generateValidBoard(size));
+    minimumGroupSize.value = Math.max(1, Math.min(minimumGroupSize.value, size));
+    loading.value = true;
+    canCancelRequest.value = true;
+    backendError.value = null;
+    generationProgress.value = null;
+
+    try {
+      const jobId = await queensAdminApi.startGenerateValidBoardJob(size, {
+        includeProgressUpdates: true,
+        minimumGroupSize: minimumGroupSize.value,
+        generationStrategy: generationStrategy.value,
+      });
+      currentGenerationJobId = jobId;
+
+      while (currentGenerationJobId === jobId) {
+        const progress = await queensAdminApi.getGenerationJobStatus(jobId);
+        generationProgress.value = progress;
+
+        if (progress.state === 'COMPLETED' && progress.result) {
+          applyResult(progress.result);
+          currentGenerationJobId = null;
+          return;
+        }
+
+        if (progress.state === 'FAILED') {
+          const fallbackResult: QueensAdminOperationResult = progress.result ?? {
+            success: false,
+            action: 'generate-valid-board',
+            explanation: progress.message,
+            board: board.value,
+            changedCells: [],
+            warnings: [],
+            validation: validation.value,
+            metadata: null,
+            error: progress.message,
+          };
+          applyResult(fallbackResult);
+          currentGenerationJobId = null;
+          return;
+        }
+
+        if (progress.state === 'CANCELLED') {
+          const cancelledResult: QueensAdminOperationResult = progress.result ?? {
+            success: true,
+            action: 'request-cancelled',
+            explanation: 'The current generation job was cancelled from the workshop.',
+            board: board.value,
+            changedCells: [],
+            warnings: [],
+            validation: validation.value,
+            metadata: null,
+            error: null,
+          };
+          applyResult(cancelledResult);
+          currentGenerationJobId = null;
+          return;
+        }
+
+        await wait(300);
+      }
+    } catch (error) {
+      const fallbackResult: QueensAdminOperationResult = {
+        success: false,
+        action: 'generate-valid-board',
+        explanation: 'Failed to start or track the generation job.',
+        board: board.value,
+        changedCells: [],
+        warnings: [],
+        validation: validation.value,
+        metadata: null,
+        error: error instanceof Error ? error.message : 'Unknown generation failure',
+      };
+      applyResult(fallbackResult);
+    } finally {
+      currentGenerationJobId = null;
+      loading.value = false;
+      canCancelRequest.value = false;
+    }
+  }
+
+  async function startBatchGeneration(options: {
+    sizes: number[];
+    strategies: QueensAdminGenerationStrategy[];
+    runsPerCombination: number;
+    minimumGroupSize: number;
+    maxConcurrentJobs: number;
+    saveSuccessfulPuzzles: boolean;
+  }): Promise<void> {
+    batchLoading.value = true;
+    canCancelRequest.value = true;
+    backendError.value = null;
+    batchStatus.value = null;
+
+    try {
+      const batchId = await queensAdminApi.startBatchGeneration(options);
+      currentBatchId = batchId;
+
+      while (currentBatchId === batchId) {
+        const nextStatus = await queensAdminApi.getBatchGenerationStatus(batchId);
+        batchStatus.value = nextStatus;
+
+        if (nextStatus.state === 'COMPLETED' || nextStatus.state === 'CANCELLED') {
+          currentBatchId = null;
+          return;
+        }
+
+        await wait(300);
+      }
+    } catch (error) {
+      backendError.value =
+        error instanceof Error ? error.message : 'Batch generation request failed';
+    } finally {
+      batchLoading.value = false;
+      if (!currentBatchId && !currentGenerationJobId) {
+        canCancelRequest.value = false;
+      }
+    }
   }
 
   async function placeQueens(): Promise<void> {
     if (!board.value) return;
-    await callBackendOperation(() => queensAdminApi.placeQueens(board.value));
+    await callBackendOperation((signal) => queensAdminApi.placeQueens(board.value, signal));
   }
 
   async function assignInitialColors(): Promise<void> {
     if (!board.value) return;
-    await callBackendOperation(() => queensAdminApi.assignInitialColors(board.value));
+    await callBackendOperation((signal) => queensAdminApi.assignInitialColors(board.value, signal));
   }
 
   async function expandAllGroupsOnce(): Promise<void> {
     if (!board.value) return;
-    await callBackendOperation(() => queensAdminApi.expandAllGroupsOnce(board.value));
+    await callBackendOperation((signal) => queensAdminApi.expandAllGroupsOnce(board.value, signal));
   }
 
   async function expandSelectedGroup(): Promise<void> {
     if (!board.value) return;
-    await callBackendOperation(() =>
-      queensAdminApi.expandSelectedGroup(board.value, selectedColor.value)
+    await callBackendOperation((signal) =>
+      queensAdminApi.expandSelectedGroup(board.value, selectedColor.value, signal)
     );
   }
 
   async function expandBlockedSquares(): Promise<void> {
     if (!board.value) return;
-    await callBackendOperation(() => queensAdminApi.expandBlockedSquares(board.value));
+    await callBackendOperation((signal) =>
+      queensAdminApi.expandBlockedSquares(board.value, signal)
+    );
   }
 
   async function clearBoard(): Promise<void> {
     if (!board.value) return;
-    await callBackendOperation(() => queensAdminApi.clearBoard(board.value));
+    await callBackendOperation((signal) => queensAdminApi.clearBoard(board.value, signal));
   }
 
   function deleteBoard(): void {
@@ -203,6 +384,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     validation.value = null;
     backendError.value = null;
     lastActionResult.value = null;
+    generationProgress.value = null;
     selectedCellKey.value = null;
     clearHighlights();
     actionHistory.value.unshift({
@@ -220,7 +402,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
 
   async function validateCurrentBoard(): Promise<void> {
     if (!board.value) return;
-    await callBackendOperation(() => queensAdminApi.validateBoard(board.value));
+    await callBackendOperation((signal) => queensAdminApi.validateBoard(board.value, signal));
   }
 
   async function applyManualToolToCell(row: number, col: number): Promise<void> {
@@ -237,24 +419,34 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
 
     switch (selectedTool.value) {
       case 'paint-color':
-        await callBackendOperation(() =>
-          queensAdminApi.setCellColor(board.value, row, col, selectedColor.value)
+        await callBackendOperation((signal) =>
+          queensAdminApi.setCellColor(board.value, row, col, selectedColor.value, signal)
         );
         break;
       case 'erase-color':
-        await callBackendOperation(() => queensAdminApi.clearCellColor(board.value, row, col));
+        await callBackendOperation((signal) =>
+          queensAdminApi.clearCellColor(board.value, row, col, signal)
+        );
         break;
       case 'place-flag':
-        await callBackendOperation(() => queensAdminApi.placeFlag(board.value, row, col));
+        await callBackendOperation((signal) =>
+          queensAdminApi.placeFlag(board.value, row, col, signal)
+        );
         break;
       case 'remove-flag':
-        await callBackendOperation(() => queensAdminApi.removeFlag(board.value, row, col));
+        await callBackendOperation((signal) =>
+          queensAdminApi.removeFlag(board.value, row, col, signal)
+        );
         break;
       case 'place-queen':
-        await callBackendOperation(() => queensAdminApi.placeQueen(board.value, row, col));
+        await callBackendOperation((signal) =>
+          queensAdminApi.placeQueen(board.value, row, col, signal)
+        );
         break;
       case 'remove-queen':
-        await callBackendOperation(() => queensAdminApi.removeQueen(board.value, row, col));
+        await callBackendOperation((signal) =>
+          queensAdminApi.removeQueen(board.value, row, col, signal)
+        );
         break;
     }
   }
@@ -266,6 +458,8 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
   return {
     board,
     boardSize,
+    minimumGroupSize,
+    generationStrategy,
     selectedTool,
     selectedColor,
     loading,
@@ -273,6 +467,10 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     actionHistory,
     validation,
     backendError,
+    canCancelRequest,
+    generationProgress,
+    batchStatus,
+    batchLoading,
     highlightedChangedCells,
     selectedCell,
     boardSummary,
@@ -281,6 +479,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     setSelectedCell,
     createBoard,
     generateBoard,
+    startBatchGeneration,
     placeQueens,
     assignInitialColors,
     expandAllGroupsOnce,
@@ -290,6 +489,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     deleteBoard,
     validateCurrentBoard,
     callBackendOperation,
+    cancelCurrentOperation,
     applyManualToolToCell,
     resetHistory,
   };
