@@ -138,7 +138,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, h, onMounted, ref } from 'vue';
+import { computed, defineComponent, h, onMounted, ref, watch } from 'vue';
+import { useQueensStore } from '../stores/queensStore';
 
 interface PuzzleString {
   id: string;
@@ -177,12 +178,29 @@ interface DiversityPairResponse {
 const API_BASE = import.meta.env.VITE_PUZZLE_API_BASE || '';
 const LOCAL_API_PORT_CANDIDATES = Array.from({ length: 25 }, (_, i) => 3001 + i);
 
-const sizes = [4, 5, 6, 7, 8, 9];
+const queensStore = useQueensStore();
+const sizes = computed(() =>
+  queensStore
+    .getAvailableSizes()
+    .map((sizeKey) => parseInt(sizeKey, 10))
+    .filter((size) => Number.isFinite(size))
+);
 const selectedSize = ref(6);
 const originalsOnly = ref(true);
 const loading = ref(false);
 const errorMessage = ref('');
 const pair = ref<DiversityPairResponse | null>(null);
+
+watch(
+  sizes,
+  (nextSizes) => {
+    if (nextSizes.length === 0) return;
+    if (!nextSizes.includes(selectedSize.value)) {
+      selectedSize.value = nextSizes.includes(6) ? 6 : nextSizes[0];
+    }
+  },
+  { immediate: true }
+);
 
 const sortedFeatureRows = computed(() => {
   if (!pair.value) return [];
@@ -318,7 +336,16 @@ const PuzzleBoard = defineComponent({
   },
 });
 
-onMounted(() => {
+onMounted(async () => {
+  if (!queensStore.puzzleDatabase) {
+    await queensStore.loadPuzzleDatabase();
+  }
+
+  if (sizes.value.length === 0) {
+    errorMessage.value = 'No Queens puzzle sizes are currently available.';
+    return;
+  }
+
   loadPair();
 });
 </script>

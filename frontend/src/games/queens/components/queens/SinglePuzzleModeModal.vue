@@ -1,59 +1,68 @@
 <template>
-  <Modal :is-visible="isVisible" @close="$emit('close')">
-    <div>
-      <h2 class="text-2xl font-bold mb-4" :class="titleColorClass">{{ title }}</h2>
-      <p class="text-white mb-2">{{ description }}</p>
-      <p v-if="mode === 'rotate'" class="text-semantic-neutral-400 text-sm mb-4">
-        Place queens and flags as normal — the whole board spins clockwise after each move. Swipe to
-        place multiple flags, and the rotation waits until you lift your finger.
-      </p>
-
-      <!-- Size Selection -->
-      <div class="space-y-3" :class="mode === 'standard' ? '' : 'mt-2'">
-        <div v-for="size in availableSizes" :key="size" class="space-y-2">
+  <Modal :is-visible="isVisible" @close="handlePrimaryClose">
+    <div :key="modalViewKey">
+      <template v-if="showDifficultyStep">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-semantic-info-400">Choose Difficulty</h2>
+            <p class="mt-2 text-white">
+              Pick a {{ selectedSizeForDifficultyStep }} puzzle difficulty to play.
+            </p>
+          </div>
           <button
-            class="w-full px-6 py-4 text-left font-semibold transition-colors rounded-lg border-2"
-            :class="sizeButtonClass(size)"
-            @click="handleSizeClick(size)"
+            type="button"
+            class="rounded-lg border border-semantic-neutral-600 px-3 py-2 text-xs font-semibold text-semantic-neutral-200 transition-colors hover:border-semantic-neutral-500 hover:bg-semantic-neutral-800"
+            @click="goBackToSizes"
           >
-            <div class="flex items-center justify-between">
-              <div>
-                <div class="text-lg font-bold">{{ size }}</div>
-                <div class="text-sm opacity-90">{{ sizeSubtext(size) }}</div>
-              </div>
-              <div v-if="mode === 'standard' && hasProgress(size)" class="text-2xl">▶</div>
+            Back
+          </button>
+        </div>
+
+        <div class="mt-5 grid gap-3">
+          <button
+            v-for="difficulty in difficultiesForSize(selectedSizeForDifficultyStep)"
+            :key="`${selectedSizeForDifficultyStep}-${difficulty}`"
+            type="button"
+            class="rounded-xl border px-4 py-4 text-left transition-colors"
+            :class="difficultyButtonClass(selectedSizeForDifficultyStep, difficulty)"
+            @click="handleDifficultyClick(selectedSizeForDifficultyStep, difficulty)"
+          >
+            <div class="text-base font-semibold text-white">
+              {{ difficultyLabel(difficulty) }}
+            </div>
+            <div class="mt-1 text-sm text-semantic-neutral-300">
+              {{ difficultySubtext(selectedSizeForDifficultyStep, difficulty) }}
             </div>
           </button>
+        </div>
+      </template>
 
-          <div
-            v-if="mode === 'standard' && selectedSize === size"
-            class="rounded-xl border border-semantic-neutral-700 bg-surface-darkSoft p-3"
-          >
-            <div
-              class="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-semantic-neutral-400"
+      <template v-else>
+        <h2 class="text-2xl font-bold mb-4" :class="titleColorClass">{{ title }}</h2>
+        <p class="text-white mb-2">{{ description }}</p>
+        <p v-if="mode === 'rotate'" class="text-semantic-neutral-400 text-sm mb-4">
+          Place queens and flags as normal — the whole board spins clockwise after each move. Swipe
+          to place multiple flags, and the rotation waits until you lift your finger.
+        </p>
+
+        <div class="space-y-3 mt-2">
+          <div v-for="size in availableSizes" :key="size" class="space-y-2">
+            <button
+              class="w-full px-6 py-4 text-left font-semibold transition-colors rounded-lg border-2"
+              :class="sizeButtonClass(size)"
+              @click="handleSizeClick(size)"
             >
-              Choose difficulty
-            </div>
-            <div class="grid gap-2 md:grid-cols-3">
-              <button
-                v-for="difficulty in difficultiesForSize(size)"
-                :key="`${size}-${difficulty}`"
-                type="button"
-                class="rounded-lg border px-3 py-3 text-left transition-colors"
-                :class="difficultyButtonClass(size, difficulty)"
-                @click="handleDifficultyClick(size, difficulty)"
-              >
-                <div class="text-sm font-semibold text-white">
-                  {{ difficultyLabel(difficulty) }}
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-lg font-bold">{{ size }}</div>
+                  <div class="text-sm opacity-90">{{ sizeSubtext(size) }}</div>
                 </div>
-                <div class="mt-1 text-xs text-semantic-neutral-300">
-                  {{ difficultySubtext(size, difficulty) }}
-                </div>
-              </button>
-            </div>
+                <div v-if="mode === 'standard' && hasProgress(size)" class="text-2xl">▶</div>
+              </div>
+            </button>
           </div>
         </div>
-      </div>
+      </template>
     </div>
   </Modal>
 </template>
@@ -76,8 +85,10 @@ const emit = defineEmits<{
 const queensStore = useQueensStore();
 const router = useRouter();
 
-const isRotate = computed(() => props.mode === 'rotate');
+const currentMode = computed<'standard' | 'rotate'>(() => props.mode ?? 'standard');
+const isRotate = computed(() => currentMode.value === 'rotate');
 const selectedSize = ref<string | null>(null);
+const modalStep = ref<'size' | 'difficulty'>('size');
 
 const title = computed(() => (isRotate.value ? 'Rotate Mode 🔄' : 'Single Puzzle Mode'));
 const titleColorClass = computed(() =>
@@ -86,6 +97,11 @@ const titleColorClass = computed(() =>
 const description = computed(() =>
   isRotate.value ? 'The board rotates 90° after every placement!' : 'Choose a puzzle size to play'
 );
+const showDifficultyStep = computed(
+  () => currentMode.value === 'standard' && modalStep.value === 'difficulty' && !!selectedSize.value
+);
+const selectedSizeForDifficultyStep = computed(() => selectedSize.value ?? '');
+const modalViewKey = computed(() => `${modalStep.value}:${selectedSize.value ?? 'none'}`);
 
 const availableSizes = computed(() => queensStore.getAvailableSizes());
 
@@ -120,7 +136,7 @@ function sizeButtonClass(size: string): string {
 function sizeSubtext(size: string): string {
   if (isRotate.value) return 'Start rotating puzzle';
   const difficulties = difficultiesForSize(size);
-  return `${difficulties.length} difficulty${difficulties.length === 1 ? 'y' : 'ies'} available`;
+  return `${difficulties.length} difficulty level${difficulties.length === 1 ? '' : 's'} available`;
 }
 
 async function handleSizeClick(sizeKey: string) {
@@ -130,7 +146,14 @@ async function handleSizeClick(sizeKey: string) {
     return;
   }
 
-  selectedSize.value = selectedSize.value === sizeKey ? null : sizeKey;
+  const difficulties = difficultiesForSize(sizeKey);
+  if (difficulties.length === 1) {
+    await handleDifficultyClick(sizeKey, difficulties[0]);
+    return;
+  }
+
+  selectedSize.value = sizeKey;
+  modalStep.value = 'difficulty';
 }
 
 function difficultiesForSize(sizeKey: string): Array<'easy' | 'medium' | 'hard'> {
@@ -175,6 +198,7 @@ function difficultyButtonClass(sizeKey: string, difficulty: 'easy' | 'medium' | 
 async function handleDifficultyClick(sizeKey: string, difficulty: 'easy' | 'medium' | 'hard') {
   const puzzleInProgress = getPuzzleInProgressForDifficulty(sizeKey, difficulty);
   if (puzzleInProgress) {
+    resetModalState();
     router.push(`/queens/${puzzleInProgress.id || puzzleInProgress.name}`);
     emit('close');
     return;
@@ -182,6 +206,7 @@ async function handleDifficultyClick(sizeKey: string, difficulty: 'easy' | 'medi
 
   const puzzle = queensStore.getNextUncompletedPuzzleForSizeAndDifficulty(sizeKey, difficulty);
   if (puzzle) {
+    resetModalState();
     router.push(`/queens/${puzzle.id}`);
     emit('close');
     return;
@@ -189,6 +214,7 @@ async function handleDifficultyClick(sizeKey: string, difficulty: 'easy' | 'medi
 
   const fallback = queensStore.getFirstPuzzleForSizeAndDifficulty(sizeKey, difficulty);
   if (fallback) {
+    resetModalState();
     router.push(`/queens/${fallback.id}`);
     emit('close');
     return;
@@ -197,11 +223,26 @@ async function handleDifficultyClick(sizeKey: string, difficulty: 'easy' | 'medi
   alert(`No ${difficulty} ${sizeKey} puzzles are currently available.`);
 }
 
+function handlePrimaryClose() {
+  resetModalState();
+  emit('close');
+}
+
+function goBackToSizes() {
+  modalStep.value = 'size';
+  selectedSize.value = null;
+}
+
+function resetModalState() {
+  modalStep.value = 'size';
+  selectedSize.value = null;
+}
+
 watch(
   () => props.isVisible,
   (isVisible) => {
     if (!isVisible) {
-      selectedSize.value = null;
+      resetModalState();
     }
   }
 );

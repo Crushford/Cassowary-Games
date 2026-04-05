@@ -1125,7 +1125,7 @@ export const useQueensStore = defineStore('queens', {
       this.loadingMessage = 'Loading puzzle database...';
 
       try {
-        const response = await fetch('/queens/puzzles.json', { cache: 'force-cache' });
+        const response = await fetch('/queens/puzzles.json', { cache: 'no-store' });
         if (!response.ok) {
           throw new Error(`Failed to load puzzles.json: ${response.status}`);
         }
