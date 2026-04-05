@@ -2,13 +2,36 @@ package com.queens.admin.domain.service
 
 import com.queens.admin.domain.model.BoardState
 import com.queens.admin.domain.model.MarkType
+import com.queens.admin.domain.model.Position
+import com.queens.admin.domain.model.QueensRuleset
 import com.queens.admin.domain.model.ValidationSummary
 import org.springframework.stereotype.Service
-import kotlin.math.abs
 
 @Service
-class BoardValidationService {
-    fun validate(boardState: BoardState): ValidationSummary {
+class BoardValidationService(
+    private val queensConstraintService: QueensConstraintService,
+) {
+    fun validate(boardState: BoardState): ValidationSummary =
+        validate(boardState, QueensRuleset.classic(boardState.size))
+
+    fun validate(
+        boardState: BoardState,
+        orthogonalMinDistance: Int = boardState.size,
+        forbidDiagonalTouch: Boolean = true,
+        requireRowCoverage: Boolean = true,
+        requireColumnCoverage: Boolean = true,
+    ): ValidationSummary =
+        validate(
+            boardState = boardState,
+            ruleset = QueensRuleset(
+                orthogonalMinDistance = orthogonalMinDistance,
+                forbidDiagonalTouch = forbidDiagonalTouch,
+                requireRowCoverage = requireRowCoverage,
+                requireColumnCoverage = requireColumnCoverage,
+            ),
+        )
+
+    fun validate(boardState: BoardState, ruleset: QueensRuleset): ValidationSummary {
         val errors = mutableListOf<String>()
         val warnings = mutableListOf<String>()
         val queens = mutableListOf<Triple<Int, Int, String?>>()
@@ -63,17 +86,35 @@ class BoardValidationService {
             for (rightIndex in leftIndex + 1 until queens.size) {
                 val left = queens[leftIndex]
                 val right = queens[rightIndex]
-                if (left.first == right.first) {
-                    errors += "Queens conflict in row ${left.first}."
-                }
-                if (left.second == right.second) {
-                    errors += "Queens conflict in column ${left.second}."
-                }
-                if (abs(left.first - right.first) == 1 && abs(left.second - right.second) == 1) {
-                    errors += "Queens conflict diagonally between (${left.first}, ${left.second}) and (${right.first}, ${right.second})."
+                if (
+                    queensConstraintService.isConflict(
+                        Position(left.first, left.second),
+                        Position(right.first, right.second),
+                        ruleset,
+                    )
+                ) {
+                    errors += conflictMessage(left, right, ruleset)
                 }
                 if (left.third != null && left.third == right.third) {
                     errors += "Color group ${left.third} contains multiple queens."
+                }
+            }
+        }
+
+        if (ruleset.requireRowCoverage && queens.size == boardState.size) {
+            for (row in 0 until boardState.size) {
+                val queensInRow = queens.count { queen -> queen.first == row }
+                if (queensInRow != 1) {
+                    errors += "Row $row must contain exactly one queen."
+                }
+            }
+        }
+
+        if (ruleset.requireColumnCoverage && queens.size == boardState.size) {
+            for (col in 0 until boardState.size) {
+                val queensInColumn = queens.count { queen -> queen.second == col }
+                if (queensInColumn != 1) {
+                    errors += "Column $col must contain exactly one queen."
                 }
             }
         }
@@ -88,4 +129,24 @@ class BoardValidationService {
             distinctColorCount = distinctColors.size,
         )
     }
+
+    private fun conflictMessage(
+        left: Triple<Int, Int, String?>,
+        right: Triple<Int, Int, String?>,
+        ruleset: QueensRuleset,
+    ): String =
+        when {
+            left.first == right.first &&
+                kotlin.math.abs(left.second - right.second) < ruleset.orthogonalMinDistance ->
+                "Queens conflict in row ${left.first}."
+            left.second == right.second &&
+                kotlin.math.abs(left.first - right.first) < ruleset.orthogonalMinDistance ->
+                "Queens conflict in column ${left.second}."
+            ruleset.forbidDiagonalTouch &&
+                kotlin.math.abs(left.first - right.first) == 1 &&
+                kotlin.math.abs(left.second - right.second) == 1 ->
+                "Queens conflict diagonally between (${left.first}, ${left.second}) and (${right.first}, ${right.second})."
+            else ->
+                "Queens conflict between (${left.first}, ${left.second}) and (${right.first}, ${right.second})."
+        }
 }

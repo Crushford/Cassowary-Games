@@ -1,12 +1,35 @@
-image: 'node:20'
-
 stages:
+  - test
   - build
   - deploy
 
+frontend:test:
+  image: 'node:20'
+  stage: test
+  script:
+    - corepack enable
+    - cd frontend
+    - yarn install --immutable
+    - yarn test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+kotlin:test:
+  image: 'gradle:8.11.1-jdk17'
+  stage: test
+  script:
+    - cd queens-admin-backend
+    - GRADLE_USER_HOME="$PWD/.gradle-local" gradle test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
 build:
+  image: 'node:20'
   stage: build
   script:
+    - corepack enable
     - cd frontend
     - yarn install --immutable
     - yarn build

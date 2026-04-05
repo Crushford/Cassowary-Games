@@ -5,13 +5,15 @@ import com.queens.admin.domain.model.MarkType
 import com.queens.admin.domain.model.PersistedPuzzle
 import com.queens.admin.domain.model.Position
 import com.queens.admin.domain.model.PuzzleDifficultyTier
+import com.queens.admin.domain.model.QueensRuleset
 import com.queens.admin.domain.service.PersistedPuzzleBoardCodecService
-import kotlin.math.abs
+import com.queens.admin.domain.service.QueensConstraintService
 import org.springframework.stereotype.Service
 
 @Service
 class PuzzleDifficultyAssessmentService(
     private val persistedPuzzleBoardCodecService: PersistedPuzzleBoardCodecService,
+    private val queensConstraintService: QueensConstraintService,
 ) {
     companion object {
         const val SOLVER_VERSION = "difficulty-v1"
@@ -27,9 +29,12 @@ class PuzzleDifficultyAssessmentService(
         val unresolvedSquares: Int,
     )
 
-    fun assess(puzzle: PersistedPuzzle): AssessmentResult {
+    fun assess(
+        puzzle: PersistedPuzzle,
+        ruleset: QueensRuleset = QueensRuleset.classic(puzzle.size),
+    ): AssessmentResult {
         val boardState = persistedPuzzleBoardCodecService.decode(puzzle)
-        val state = SolverState(boardState)
+        val state = SolverState(boardState, ruleset = ruleset)
         val solved = solveRecursively(state)
         require(solved) {
             "Difficulty assessor could not solve puzzle ${puzzle.id} (size ${puzzle.size})."
@@ -58,6 +63,7 @@ class PuzzleDifficultyAssessmentService(
 
     private data class SolverState(
         val board: BoardState,
+        val ruleset: QueensRuleset,
         val marks: MutableList<MutableList<MarkType>> = MutableList(board.size) {
             MutableList(board.size) { MarkType.NONE }
         },
@@ -163,17 +169,21 @@ class PuzzleDifficultyAssessmentService(
                 }
             }
 
-            for (row in 0 until state.board.size) {
-                val candidates = (0 until state.board.size).filter { col -> isCandidateCell(state, row, col) }
-                if (candidates.size == 1) {
-                    changed = placeQueen(state, row, candidates.single()) || changed
+            if (state.ruleset.requireRowCoverage) {
+                for (row in 0 until state.board.size) {
+                    val candidates = (0 until state.board.size).filter { col -> isCandidateCell(state, row, col) }
+                    if (candidates.size == 1) {
+                        changed = placeQueen(state, row, candidates.single()) || changed
+                    }
                 }
             }
 
-            for (col in 0 until state.board.size) {
-                val candidates = (0 until state.board.size).filter { row -> isCandidateCell(state, row, col) }
-                if (candidates.size == 1) {
-                    changed = placeQueen(state, candidates.single(), col) || changed
+            if (state.ruleset.requireColumnCoverage) {
+                for (col in 0 until state.board.size) {
+                    val candidates = (0 until state.board.size).filter { row -> isCandidateCell(state, row, col) }
+                    if (candidates.size == 1) {
+                        changed = placeQueen(state, candidates.single(), col) || changed
+                    }
                 }
             }
 
@@ -187,10 +197,12 @@ class PuzzleDifficultyAssessmentService(
     }
 
     private fun eliminateConstrainedRows(state: SolverState) {
+        if (!state.ruleset.requireRowCoverage) return
         eliminateConstrainedLines(state, isColumn = false)
     }
 
     private fun eliminateConstrainedColumns(state: SolverState) {
+        if (!state.ruleset.requireColumnCoverage) return
         eliminateConstrainedLines(state, isColumn = true)
     }
 
@@ -236,17 +248,12 @@ class PuzzleDifficultyAssessmentService(
     private fun placeQueen(state: SolverState, row: Int, col: Int): Boolean {
         if (state.marks[row][col] == MarkType.QUEEN) return false
         state.marks[row][col] = MarkType.QUEEN
-        var changed = true
-        for (candidateRow in 0 until state.board.size) {
-            for (candidateCol in 0 until state.board.size) {
-                if (state.marks[candidateRow][candidateCol] == MarkType.NONE &&
-                    !isValidMoveWithMarks(candidateRow, candidateCol, state.marks, state.board)
-                ) {
-                    placeFlag(state, candidateRow, candidateCol)
-                }
+        excludedSquaresForQueenPlacement(state, Position(row, col)).forEach { position ->
+            if (state.marks[position.row][position.col] == MarkType.NONE) {
+                placeFlag(state, position.row, position.col)
             }
         }
-        return changed
+        return true
     }
 
     private fun placeFlag(state: SolverState, row: Int, col: Int): Boolean {
@@ -266,8 +273,18 @@ class PuzzleDifficultyAssessmentService(
         }
 
         return candidateCells.minByOrNull { position ->
-            val rowCandidates = (0 until state.board.size).count { col -> isCandidateCell(state, position.row, col) }
-            val colCandidates = (0 until state.board.size).count { row -> isCandidateCell(state, row, position.col) }
+            val rowCandidates =
+                if (state.ruleset.requireRowCoverage) {
+                    (0 until state.board.size).count { col -> isCandidateCell(state, position.row, col) }
+                } else {
+                    0
+                }
+            val colCandidates =
+                if (state.ruleset.requireColumnCoverage) {
+                    (0 until state.board.size).count { row -> isCandidateCell(state, row, position.col) }
+                } else {
+                    0
+                }
             val groupCandidates =
                 groupedPositions(state)[state.board.cells[position.row][position.col].groupColor]
                     .orEmpty()
@@ -280,16 +297,32 @@ class PuzzleDifficultyAssessmentService(
         val size = state.board.size
         if (countQueens(state.marks) > size) return true
 
+        val placedQueens = mutableListOf<Position>()
         for (row in 0 until size) {
-            val rowQueens = (0 until size).count { col -> state.marks[row][col] == MarkType.QUEEN }
-            if (rowQueens > 1) return true
-            if ((0 until size).none { col -> isCandidateCell(state, row, col) }) return true
+            for (col in 0 until size) {
+                if (state.marks[row][col] == MarkType.QUEEN) {
+                    val current = Position(row, col)
+                    if (placedQueens.any { other ->
+                            queensConstraintService.isConflict(other, current, state.ruleset)
+                        }
+                    ) {
+                        return true
+                    }
+                    placedQueens += current
+                }
+            }
         }
 
-        for (col in 0 until size) {
-            val colQueens = (0 until size).count { row -> state.marks[row][col] == MarkType.QUEEN }
-            if (colQueens > 1) return true
-            if ((0 until size).none { row -> isCandidateCell(state, row, col) }) return true
+        if (state.ruleset.requireRowCoverage) {
+            for (row in 0 until size) {
+                if ((0 until size).none { col -> isCandidateCell(state, row, col) }) return true
+            }
+        }
+
+        if (state.ruleset.requireColumnCoverage) {
+            for (col in 0 until size) {
+                if ((0 until size).none { row -> isCandidateCell(state, row, col) }) return true
+            }
         }
 
         groupedPositions(state).values.forEach { positions ->
@@ -305,11 +338,16 @@ class PuzzleDifficultyAssessmentService(
         if (hasContradiction(state)) return false
         if (countQueens(state.marks) != state.board.size) return false
 
-        for (row in 0 until state.board.size) {
-            if ((0 until state.board.size).count { col -> state.marks[row][col] == MarkType.QUEEN } != 1) return false
+        if (state.ruleset.requireRowCoverage) {
+            for (row in 0 until state.board.size) {
+                if ((0 until state.board.size).count { col -> state.marks[row][col] == MarkType.QUEEN } != 1) return false
+            }
         }
-        for (col in 0 until state.board.size) {
-            if ((0 until state.board.size).count { row -> state.marks[row][col] == MarkType.QUEEN } != 1) return false
+
+        if (state.ruleset.requireColumnCoverage) {
+            for (col in 0 until state.board.size) {
+                if ((0 until state.board.size).count { row -> state.marks[row][col] == MarkType.QUEEN } != 1) return false
+            }
         }
 
         return groupedPositions(state).values.all { positions ->
@@ -335,7 +373,7 @@ class PuzzleDifficultyAssessmentService(
         return when (state.marks[row][col]) {
             MarkType.FLAG, MarkType.INVALID -> false
             MarkType.QUEEN -> true
-            MarkType.NONE -> isValidMoveWithMarks(row, col, state.marks, state.board)
+            MarkType.NONE -> isValidMoveWithMarks(row, col, state.marks, state.board, state.ruleset)
         }
     }
 
@@ -344,35 +382,29 @@ class PuzzleDifficultyAssessmentService(
         col: Int,
         marks: List<List<MarkType>>,
         boardState: BoardState,
+        ruleset: QueensRuleset,
     ): Boolean {
         val currentMark = marks[row][col]
         if (currentMark == MarkType.FLAG || currentMark == MarkType.INVALID) return false
 
-        val size = boardState.size
-        for (index in 0 until size) {
-            if (index != col && marks[row][index] == MarkType.QUEEN) return false
-            if (index != row && marks[index][col] == MarkType.QUEEN) return false
-        }
-
-        val diagonalPositions = listOf(
-            row - 1 to col - 1,
-            row - 1 to col + 1,
-            row + 1 to col - 1,
-            row + 1 to col + 1,
-        )
-
-        for ((candidateRow, candidateCol) in diagonalPositions) {
-            if (candidateRow in 0 until size &&
-                candidateCol in 0 until size &&
-                marks[candidateRow][candidateCol] == MarkType.QUEEN
-            ) {
-                return false
+        val placedQueens = mutableListOf<Position>()
+        for (candidateRow in marks.indices) {
+            for (candidateCol in marks[candidateRow].indices) {
+                if (marks[candidateRow][candidateCol] == MarkType.QUEEN &&
+                    (candidateRow != row || candidateCol != col)
+                ) {
+                    placedQueens += Position(candidateRow, candidateCol)
+                }
             }
         }
 
+        if (!queensConstraintService.isValidPlacement(Position(row, col), placedQueens, ruleset)) {
+            return false
+        }
+
         val squareColor = boardState.cells[row][col].groupColor ?: return false
-        for (candidateRow in 0 until size) {
-            for (candidateCol in 0 until size) {
+        for (candidateRow in 0 until boardState.size) {
+            for (candidateCol in 0 until boardState.size) {
                 if ((candidateRow != row || candidateCol != col) &&
                     marks[candidateRow][candidateCol] == MarkType.QUEEN &&
                     boardState.cells[candidateRow][candidateCol].groupColor == squareColor
@@ -385,9 +417,30 @@ class PuzzleDifficultyAssessmentService(
         return true
     }
 
+    private fun excludedSquaresForQueenPlacement(
+        state: SolverState,
+        queenPosition: Position,
+    ): Set<Position> {
+        val excluded = queensConstraintService.getExcludedSquares(
+            boardSize = state.board.size,
+            queenPosition = queenPosition,
+            ruleset = state.ruleset,
+        ).toMutableSet()
+        val queenColor = state.board.cells[queenPosition.row][queenPosition.col].groupColor
+        if (queenColor != null) {
+            state.board.cells.flatten()
+                .filter { cell ->
+                    cell.groupColor == queenColor && cell.position != queenPosition
+                }
+                .mapTo(excluded) { cell -> cell.position }
+        }
+        return excluded
+    }
+
     private fun SolverState.deepCopy(): SolverState =
         SolverState(
             board = board,
+            ruleset = ruleset,
             marks = marks.map { row -> row.toMutableList() }.toMutableList(),
             loopCount = loopCount,
             mediumUsed = mediumUsed,

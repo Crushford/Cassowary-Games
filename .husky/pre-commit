@@ -5,15 +5,7 @@ set -e
 yarn lint:fix
 yarn --cwd frontend build
 
-if git diff --cached --name-only --diff-filter=ACMR | grep -q '^frontend/src/games/mining/'; then
-  echo "Staged mining changes detected. Running mining headless tests..."
-  yarn --cwd frontend vitest run src/games/mining/stores/mining.headless.spec.ts
-fi
-
-if git diff --cached --name-only --diff-filter=ACMR | grep -q '^queens-admin-backend/'; then
-  echo "Staged Kotlin backend changes detected. Running Gradle build..."
-  (
-    cd queens-admin-backend
-    GRADLE_USER_HOME="$PWD/.gradle-local" gradle build
-  )
+if git diff --cached --name-only --diff-filter=ACMR | grep -Eq '^(frontend/|queens-admin-backend/|package\.json|frontend/package\.json|\.gitlab-ci\.yml|\.husky/pre-commit)'; then
+  echo "Staged app or backend changes detected. Running yarn test..."
+  yarn test
 fi

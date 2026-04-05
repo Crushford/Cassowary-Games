@@ -10,6 +10,7 @@ import com.queens.admin.domain.model.GenerationPhase
 import com.queens.admin.domain.model.MarkType
 import com.queens.admin.domain.model.OperationResult
 import com.queens.admin.domain.model.Position
+import com.queens.admin.domain.model.QueensRuleset
 import org.springframework.stereotype.Service
 import java.util.concurrent.CancellationException
 import kotlin.math.abs
@@ -19,6 +20,7 @@ import kotlin.random.Random
 class ValidatedPuzzleGenerationService(
     private val boardFactoryService: BoardFactoryService,
     private val boardValidationService: BoardValidationService,
+    private val queensConstraintService: QueensConstraintService,
 ) {
     private enum class GenerationStrategy {
         BASELINE,
@@ -61,6 +63,10 @@ class ValidatedPuzzleGenerationService(
         minimumGroupSize: Int = 3,
         generationStrategy: String = "baseline",
         seedTemplateOffsets: List<Position>? = null,
+        orthogonalMinDistance: Int = size,
+        ruleset: QueensRuleset = QueensRuleset.classic(size).copy(
+            orthogonalMinDistance = orthogonalMinDistance,
+        ),
         maxRetries: Int = 30_000,
         progressListener: ((GenerationProgressUpdate) -> Unit)? = null,
         isCancelled: (() -> Boolean)? = null,
@@ -78,6 +84,7 @@ class ValidatedPuzzleGenerationService(
                 grid = boardFactoryService.createEmptyBoard(size),
                 autoTestMarks = createEmptyMarks(size),
                 metrics = GenerationMetrics(),
+                ruleset = ruleset,
             )
             val attemptNumber = attemptIndex + 1
 
@@ -185,7 +192,7 @@ class ValidatedPuzzleGenerationService(
                     progressListener,
                 )
 
-                val validation = boardValidationService.validate(state.grid)
+                val validation = boardValidationService.validate(state.grid, state.ruleset)
                 return OperationResult(
                     success = true,
                     actionType = ActionType.GENERATE_VALID_BOARD,
@@ -221,7 +228,7 @@ class ValidatedPuzzleGenerationService(
         }
 
         val emptyBoard = boardFactoryService.createEmptyBoard(size)
-        val validation = boardValidationService.validate(emptyBoard)
+        val validation = boardValidationService.validate(emptyBoard, ruleset)
         return OperationResult(
             success = false,
             actionType = ActionType.GENERATE_VALID_BOARD,
@@ -233,12 +240,16 @@ class ValidatedPuzzleGenerationService(
         )
     }
 
-    fun isBoardSolvable(boardState: BoardState): Boolean {
+    fun isBoardSolvable(
+        boardState: BoardState,
+        ruleset: QueensRuleset = QueensRuleset.classic(boardState.size),
+    ): Boolean {
         return isSolvable(
             GeneratorState(
                 grid = boardState,
                 autoTestMarks = createEmptyMarks(boardState.size),
                 metrics = GenerationMetrics(),
+                ruleset = ruleset,
             ),
         )
     }
@@ -247,6 +258,7 @@ class ValidatedPuzzleGenerationService(
         var grid: BoardState,
         var autoTestMarks: MutableList<MutableList<MarkType>>,
         val metrics: GenerationMetrics,
+        val ruleset: QueensRuleset,
     )
 
     private fun buildRegionIds(count: Int): List<String> =
@@ -309,35 +321,27 @@ class ValidatedPuzzleGenerationService(
         col: Int,
         marks: List<List<MarkType>>,
         boardState: BoardState,
+        ruleset: QueensRuleset,
     ): Boolean {
-        val size = boardState.size
-
-        for (index in 0 until size) {
-            if (marks[row][index] == MarkType.QUEEN || marks[index][col] == MarkType.QUEEN) {
-                return false
+        val placedQueens = mutableListOf<Position>()
+        for (candidateRow in marks.indices) {
+            for (candidateCol in marks[candidateRow].indices) {
+                if (marks[candidateRow][candidateCol] == MarkType.QUEEN &&
+                    (candidateRow != row || candidateCol != col)
+                ) {
+                    placedQueens += Position(candidateRow, candidateCol)
+                }
             }
         }
 
-        val diagonalPositions = listOf(
-            row - 1 to col - 1,
-            row - 1 to col + 1,
-            row + 1 to col - 1,
-            row + 1 to col + 1,
-        )
-
-        for ((candidateRow, candidateCol) in diagonalPositions) {
-            if (candidateRow in 0 until size &&
-                candidateCol in 0 until size &&
-                marks[candidateRow][candidateCol] == MarkType.QUEEN
-            ) {
-                return false
-            }
+        if (!queensConstraintService.isValidPlacement(Position(row, col), placedQueens, ruleset)) {
+            return false
         }
 
         val square = boardState.cells[row][col]
         val squareColor = square.groupColor ?: return true
-        for (candidateRow in 0 until size) {
-            for (candidateCol in 0 until size) {
+        for (candidateRow in 0 until boardState.size) {
+            for (candidateCol in 0 until boardState.size) {
                 if (marks[candidateRow][candidateCol] == MarkType.QUEEN &&
                     boardState.cells[candidateRow][candidateCol].groupColor == squareColor
                 ) {
@@ -360,7 +364,7 @@ class ValidatedPuzzleGenerationService(
         while (countQueens(tempQueenMarks) < size && attempts < maxAttempts) {
             ensureNotCancelled(isCancelled)
             attempts += 1
-            val success = placeRandomQueens(tempQueenMarks, state.grid, size, isCancelled)
+            val success = placeRandomQueens(tempQueenMarks, state.grid, size, state.ruleset, isCancelled)
             if (!success) {
                 consecutiveFailures += 1
                 if (consecutiveFailures >= maxConsecutiveFailures) {
@@ -392,6 +396,7 @@ class ValidatedPuzzleGenerationService(
         tempQueenMarks: MutableList<MutableList<MarkType>>,
         boardState: BoardState,
         size: Int,
+        ruleset: QueensRuleset,
         isCancelled: (() -> Boolean)?,
     ): Boolean {
         val random = Random.Default
@@ -415,7 +420,7 @@ class ValidatedPuzzleGenerationService(
             for (row in 0 until size) {
                 for (col in 0 until size) {
                     if (tempQueenMarks[row][col] == MarkType.NONE &&
-                        isValidMoveWithMarks(row, col, tempQueenMarks, boardState)
+                        isValidMoveWithMarks(row, col, tempQueenMarks, boardState, ruleset)
                     ) {
                         val position = Position(row, col)
                         moves += position
@@ -801,11 +806,32 @@ class ValidatedPuzzleGenerationService(
             error("Board is not fully solvable")
         }
 
-        val validation = boardValidationService.validate(state.grid)
+        val validation = boardValidationService.validate(state.grid, state.ruleset)
         val allColored = state.grid.cells.all { row -> row.all { cell -> cell.groupColor != null } }
         if (!validation.isValid || !allColored) {
             error("Board is not fully solvable and colored")
         }
+    }
+
+    private fun excludedSquaresForQueenPlacement(
+        boardState: BoardState,
+        queenPosition: Position,
+        ruleset: QueensRuleset,
+    ): Set<Position> {
+        val excluded = queensConstraintService.getExcludedSquares(
+            boardSize = boardState.size,
+            queenPosition = queenPosition,
+            ruleset = ruleset,
+        ).toMutableSet()
+        val queenColor = boardState.cells[queenPosition.row][queenPosition.col].groupColor
+        if (queenColor != null) {
+            boardState.cells.flatten()
+                .filter { cell ->
+                    cell.groupColor == queenColor && cell.position != queenPosition
+                }
+                .mapTo(excluded) { cell -> cell.position }
+        }
+        return excluded
     }
 
     private fun placeQueen(state: GeneratorState, row: Int, col: Int) {
@@ -815,13 +841,9 @@ class ValidatedPuzzleGenerationService(
         }
 
         state.autoTestMarks[row][col] = MarkType.QUEEN
-        for (candidateRow in 0 until state.grid.size) {
-            for (candidateCol in 0 until state.grid.size) {
-                if (state.autoTestMarks[candidateRow][candidateCol] == MarkType.NONE &&
-                    !isValidMoveWithMarks(candidateRow, candidateCol, state.autoTestMarks, state.grid)
-                ) {
-                    placeFlag(state, candidateRow, candidateCol, "blocked by queen at ($row, $col)")
-                }
+        excludedSquaresForQueenPlacement(state.grid, Position(row, col), state.ruleset).forEach { position ->
+            if (state.autoTestMarks[position.row][position.col] == MarkType.NONE) {
+                placeFlag(state, position.row, position.col, "blocked by queen at ($row, $col)")
             }
         }
     }
@@ -885,17 +907,21 @@ class ValidatedPuzzleGenerationService(
             }
         }
 
-        for (row in 0 until size) {
-            val unflagged = (0 until size).filter { col -> state.autoTestMarks[row][col] != MarkType.FLAG }
-            if (unflagged.size == 1) {
-                placeQueen(state, row, unflagged.single())
+        if (state.ruleset.requireRowCoverage) {
+            for (row in 0 until size) {
+                val unflagged = (0 until size).filter { col -> state.autoTestMarks[row][col] != MarkType.FLAG }
+                if (unflagged.size == 1) {
+                    placeQueen(state, row, unflagged.single())
+                }
             }
         }
 
-        for (col in 0 until size) {
-            val unflagged = (0 until size).filter { row -> state.autoTestMarks[row][col] != MarkType.FLAG }
-            if (unflagged.size == 1) {
-                placeQueen(state, unflagged.single(), col)
+        if (state.ruleset.requireColumnCoverage) {
+            for (col in 0 until size) {
+                val unflagged = (0 until size).filter { row -> state.autoTestMarks[row][col] != MarkType.FLAG }
+                if (unflagged.size == 1) {
+                    placeQueen(state, unflagged.single(), col)
+                }
             }
         }
     }
@@ -908,20 +934,16 @@ class ValidatedPuzzleGenerationService(
                 val simulatedMarks = state.autoTestMarks.map { markRow -> markRow.toMutableList() }.toMutableList()
                 simulatedMarks[row][col] = MarkType.QUEEN
 
-                for (candidateRow in 0 until size) {
-                    for (candidateCol in 0 until size) {
-                        if (simulatedMarks[candidateRow][candidateCol] == MarkType.NONE &&
-                            !isValidMoveWithMarks(candidateRow, candidateCol, simulatedMarks, state.grid)
-                        ) {
-                            simulatedMarks[candidateRow][candidateCol] = MarkType.FLAG
-                        }
+                excludedSquaresForQueenPlacement(state.grid, Position(row, col), state.ruleset).forEach { position ->
+                    if (simulatedMarks[position.row][position.col] == MarkType.NONE) {
+                        simulatedMarks[position.row][position.col] = MarkType.FLAG
                     }
                 }
 
-                val rowFullyBlocked = (0 until size).any { candidateRow ->
+                val rowFullyBlocked = state.ruleset.requireRowCoverage && (0 until size).any { candidateRow ->
                     simulatedMarks[candidateRow].all { mark -> mark == MarkType.FLAG }
                 }
-                val colFullyBlocked = (0 until size).any { candidateCol ->
+                val colFullyBlocked = state.ruleset.requireColumnCoverage && (0 until size).any { candidateCol ->
                     simulatedMarks.all { markRow -> markRow[candidateCol] == MarkType.FLAG }
                 }
 
@@ -945,10 +967,12 @@ class ValidatedPuzzleGenerationService(
     }
 
     private fun eliminateConstrainedRows(state: GeneratorState) {
+        if (!state.ruleset.requireRowCoverage) return
         eliminateConstrainedLines(state, isColumn = false)
     }
 
     private fun eliminateConstrainedColumns(state: GeneratorState) {
+        if (!state.ruleset.requireColumnCoverage) return
         eliminateConstrainedLines(state, isColumn = true)
     }
 
@@ -995,8 +1019,12 @@ class ValidatedPuzzleGenerationService(
 
     private fun eliminateConstrainedLinesForExpansion(
         boardState: BoardState,
+        ruleset: QueensRuleset,
         isColumn: Boolean,
     ): List<Pair<Position, List<String>>> {
+        if ((isColumn && !ruleset.requireColumnCoverage) || (!isColumn && !ruleset.requireRowCoverage)) {
+            return emptyList()
+        }
         val size = boardState.size
         val colorToAxisMap = linkedMapOf<String, MutableSet<Int>>()
 
@@ -1054,15 +1082,15 @@ class ValidatedPuzzleGenerationService(
             keepExpanding = false
             expansionCount += 1
 
-            val blockedSquares = eliminateConstrainedLinesForExpansion(state.grid, false) +
-                eliminateConstrainedLinesForExpansion(state.grid, true)
+            val blockedSquares = eliminateConstrainedLinesForExpansion(state.grid, state.ruleset, false) +
+                eliminateConstrainedLinesForExpansion(state.grid, state.ruleset, true)
 
             val coloredSquares = state.grid.cells.flatten().count { cell -> cell.groupColor != null }
             if (coloredSquares == size * size) break
 
             val pressuredGroupMarkers = when (strategy) {
                 GenerationStrategy.BASELINE -> emptyMap()
-                GenerationStrategy.MARKER_GUIDED -> computePressuredGroupMarkers(state.grid)
+                GenerationStrategy.MARKER_GUIDED -> computePressuredGroupMarkers(state.grid, state.ruleset)
                 GenerationStrategy.TEMPLATE_SEEDED -> emptyMap()
             }
             if (strategy == GenerationStrategy.MARKER_GUIDED) {
@@ -1175,7 +1203,10 @@ class ValidatedPuzzleGenerationService(
             },
         )
 
-    private fun computePressuredGroupMarkers(boardState: BoardState): Map<Position, Set<String>> {
+    private fun computePressuredGroupMarkers(
+        boardState: BoardState,
+        ruleset: QueensRuleset,
+    ): Map<Position, Set<String>> {
         val groups = linkedMapOf<String, MutableList<Position>>()
         for (row in 0 until boardState.size) {
             for (col in 0 until boardState.size) {
@@ -1190,7 +1221,7 @@ class ValidatedPuzzleGenerationService(
                 if (boardState.cells[row][col].groupColor != null) continue
                 val candidate = Position(row, col)
                 val pressuredGroups = groups.filterValues { positions ->
-                    positions.all { position -> isThreatenedByCandidateQueen(candidate, position) }
+                    positions.all { position -> isThreatenedByCandidateQueen(candidate, position, ruleset) }
                 }.keys
 
                 if (pressuredGroups.isNotEmpty()) {
@@ -1202,9 +1233,9 @@ class ValidatedPuzzleGenerationService(
         return markers
     }
 
-    private fun isThreatenedByCandidateQueen(candidate: Position, target: Position): Boolean {
-        if (candidate.row == target.row) return true
-        if (candidate.col == target.col) return true
-        return abs(candidate.row - target.row) == 1 && abs(candidate.col - target.col) == 1
-    }
+    private fun isThreatenedByCandidateQueen(
+        candidate: Position,
+        target: Position,
+        ruleset: QueensRuleset,
+    ): Boolean = queensConstraintService.isConflict(candidate, target, ruleset)
 }
