@@ -12,4 +12,8 @@ object PuzzlesTable : UUIDTable("puzzles") {
     val minimumGroupSize = integer("minimum_group_size")
     val generationStrategy = text("generation_strategy")
     val createdAt = timestamp("created_at")
+    val difficultyTier = text("difficulty_tier").nullable()
+    val difficultyScore = integer("difficulty_score").nullable()
+    val difficultySolverVersion = text("difficulty_solver_version").nullable()
+    val difficultyAssessedAt = timestamp("difficulty_assessed_at").nullable()
 }

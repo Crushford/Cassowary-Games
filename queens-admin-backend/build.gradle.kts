@@ -61,3 +61,10 @@ tasks.register<JavaExec>("exportPuzzlesJson") {
     classpath = sourceSets["main"].runtimeClasspath
     mainClass.set("com.queens.admin.tools.ExportPuzzlesJsonKt")
 }
+
+tasks.register<JavaExec>("assessPuzzleDifficulties") {
+    group = "application"
+    description = "Assess and persist difficulty labels for all puzzles in PostgreSQL."
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.queens.admin.tools.AssessPuzzleDifficultiesKt")
+}

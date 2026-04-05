@@ -12,4 +12,8 @@ data class PersistedPuzzle(
     val minimumGroupSize: Int,
     val generationStrategy: String,
     val createdAt: Instant,
+    val difficultyTier: PuzzleDifficultyTier? = null,
+    val difficultyScore: Int? = null,
+    val difficultySolverVersion: String? = null,
+    val difficultyAssessedAt: Instant? = null,
 )

@@ -95,6 +95,8 @@ export interface QueensAdminBatchRun {
   strategy: QueensAdminGenerationStrategy;
   minimumGroupSize: number;
   state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  coloredCellCount: number;
+  totalCellCount: number;
   durationMs: number | null;
   success: boolean | null;
   error: string | null;

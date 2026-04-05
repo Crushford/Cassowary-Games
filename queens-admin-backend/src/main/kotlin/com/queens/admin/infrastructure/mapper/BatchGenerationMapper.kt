@@ -39,6 +39,8 @@ class BatchGenerationMapper {
             strategy = run.strategy,
             minimumGroupSize = run.minimumGroupSize,
             state = run.state.name,
+            coloredCellCount = run.coloredCellCount,
+            totalCellCount = run.totalCellCount,
             durationMs = run.durationMs,
             success = run.success,
             error = run.error,

@@ -1,0 +1,41 @@
+package com.queens.admin.domain.service
+
+import com.queens.admin.domain.model.BoardState
+import com.queens.admin.domain.model.CellState
+import com.queens.admin.domain.model.GenerationPhase
+import com.queens.admin.domain.model.MarkType
+import com.queens.admin.domain.model.PersistedPuzzle
+import com.queens.admin.domain.model.Position
+import kotlin.math.sqrt
+import org.springframework.stereotype.Service
+
+@Service
+class PersistedPuzzleBoardCodecService {
+    fun decode(puzzle: PersistedPuzzle): BoardState = decode(puzzle.layout, puzzle.queens)
+
+    fun decode(layout: String, queens: String): BoardState {
+        require(layout.length == queens.length) { "Layout and queens must be the same length." }
+        val size = sqrt(layout.length.toDouble()).toInt()
+        require(size * size == layout.length) { "Puzzle encoding must describe a square board." }
+
+        val cells =
+            (0 until size).map { row ->
+                (0 until size).map { col ->
+                    val index = row * size + col
+                    val regionId = layout[index].toString()
+                    CellState(
+                        position = Position(row, col),
+                        groupColor = if (regionId == ".") null else regionId,
+                        isSolutionQueen = queens[index] == 'Q',
+                        markType = if (queens[index] == 'Q') MarkType.QUEEN else MarkType.NONE,
+                    )
+                }
+            }
+
+        return BoardState(
+            size = size,
+            cells = cells,
+            generationPhase = GenerationPhase.ANALYZED,
+        )
+    }
+}

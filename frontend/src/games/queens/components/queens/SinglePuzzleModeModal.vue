@@ -10,28 +10,56 @@
 
       <!-- Size Selection -->
       <div class="space-y-3" :class="mode === 'standard' ? '' : 'mt-2'">
-        <button
-          v-for="size in availableSizes"
-          :key="size"
-          class="w-full py-4 px-6 rounded-lg transition-colors font-semibold text-left border-2"
-          :class="sizeButtonClass(size)"
-          @click="handleSizeClick(size)"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="text-lg font-bold">{{ size }}</div>
-              <div class="text-sm opacity-90">{{ sizeSubtext(size) }}</div>
+        <div v-for="size in availableSizes" :key="size" class="space-y-2">
+          <button
+            class="w-full px-6 py-4 text-left font-semibold transition-colors rounded-lg border-2"
+            :class="sizeButtonClass(size)"
+            @click="handleSizeClick(size)"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-lg font-bold">{{ size }}</div>
+                <div class="text-sm opacity-90">{{ sizeSubtext(size) }}</div>
+              </div>
+              <div v-if="mode === 'standard' && hasProgress(size)" class="text-2xl">▶</div>
             </div>
-            <div v-if="mode === 'standard' && hasProgress(size)" class="text-2xl">▶</div>
+          </button>
+
+          <div
+            v-if="mode === 'standard' && selectedSize === size"
+            class="rounded-xl border border-semantic-neutral-700 bg-surface-darkSoft p-3"
+          >
+            <div
+              class="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-semantic-neutral-400"
+            >
+              Choose difficulty
+            </div>
+            <div class="grid gap-2 md:grid-cols-3">
+              <button
+                v-for="difficulty in difficultiesForSize(size)"
+                :key="`${size}-${difficulty}`"
+                type="button"
+                class="rounded-lg border px-3 py-3 text-left transition-colors"
+                :class="difficultyButtonClass(size, difficulty)"
+                @click="handleDifficultyClick(size, difficulty)"
+              >
+                <div class="text-sm font-semibold text-white">
+                  {{ difficultyLabel(difficulty) }}
+                </div>
+                <div class="mt-1 text-xs text-semantic-neutral-300">
+                  {{ difficultySubtext(size, difficulty) }}
+                </div>
+              </button>
+            </div>
           </div>
-        </button>
+        </div>
       </div>
     </div>
   </Modal>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQueensStore } from '../../stores/queensStore';
 import Modal from '@/shared/components/Modal.vue';
@@ -49,6 +77,7 @@ const queensStore = useQueensStore();
 const router = useRouter();
 
 const isRotate = computed(() => props.mode === 'rotate');
+const selectedSize = ref<string | null>(null);
 
 const title = computed(() => (isRotate.value ? 'Rotate Mode 🔄' : 'Single Puzzle Mode'));
 const titleColorClass = computed(() =>
@@ -90,27 +119,92 @@ function sizeButtonClass(size: string): string {
 
 function sizeSubtext(size: string): string {
   if (isRotate.value) return 'Start rotating puzzle';
-  return hasProgress(size) ? 'Continue with current puzzle' : 'Next puzzle';
+  const difficulties = difficultiesForSize(size);
+  return `${difficulties.length} difficulty${difficulties.length === 1 ? 'y' : 'ies'} available`;
 }
 
 async function handleSizeClick(sizeKey: string) {
   if (isRotate.value) {
     await queensStore.startRotateModePuzzle(sizeKey);
-  } else {
-    const puzzleInProgress = getPuzzleInProgress(sizeKey);
-    if (puzzleInProgress) {
-      router.push(`/queens/${puzzleInProgress.id || puzzleInProgress.name}`);
-    } else {
-      const puzzle = queensStore.getNextUncompletedPuzzleForSize(sizeKey);
-      if (puzzle) {
-        router.push(`/queens/${puzzle.id}`);
-      } else {
-        alert(`All ${sizeKey} puzzles are completed!`);
-      }
+    emit('close');
+    return;
+  }
+
+  selectedSize.value = selectedSize.value === sizeKey ? null : sizeKey;
+}
+
+function difficultiesForSize(sizeKey: string): Array<'easy' | 'medium' | 'hard'> {
+  return queensStore.getAvailableDifficultiesForSize(sizeKey);
+}
+
+function difficultyLabel(difficulty: 'easy' | 'medium' | 'hard'): string {
+  return `${difficulty.charAt(0).toUpperCase()}${difficulty.slice(1)}`;
+}
+
+function getPuzzleInProgressForDifficulty(
+  sizeKey: string,
+  difficulty: 'easy' | 'medium' | 'hard'
+): PuzzleInProgress | null {
+  if (!queensStore.puzzleDatabase || !queensStore.puzzleDatabase[sizeKey]) return null;
+  for (const puzzle of queensStore.puzzleDatabase[sizeKey]) {
+    if ((puzzle.difficulty ?? 'easy') !== difficulty) continue;
+    const puzzleId = puzzle.id || puzzle.name;
+    if (!puzzleId || queensStore.isPuzzleCompleted(puzzleId)) continue;
+    const progress = queensStore.getPuzzleProgress(puzzleId);
+    if (progress?.some((row) => row?.some((mark) => mark !== null))) return puzzle;
+  }
+  return null;
+}
+
+function difficultySubtext(sizeKey: string, difficulty: 'easy' | 'medium' | 'hard'): string {
+  const count = queensStore.countPuzzlesForSizeAndDifficulty(sizeKey, difficulty);
+  const inProgress = getPuzzleInProgressForDifficulty(sizeKey, difficulty);
+  if (inProgress) {
+    return `Continue in-progress puzzle • ${count} total`;
+  }
+  return `${count} puzzle${count === 1 ? '' : 's'}`;
+}
+
+function difficultyButtonClass(sizeKey: string, difficulty: 'easy' | 'medium' | 'hard'): string {
+  if (getPuzzleInProgressForDifficulty(sizeKey, difficulty)) {
+    return 'border-semantic-success-400 bg-feedback-successSoft hover:bg-feedback-successSubtle';
+  }
+  return 'border-semantic-neutral-700 bg-surface-darkSoft hover:border-semantic-neutral-500 hover:bg-semantic-neutral-800';
+}
+
+async function handleDifficultyClick(sizeKey: string, difficulty: 'easy' | 'medium' | 'hard') {
+  const puzzleInProgress = getPuzzleInProgressForDifficulty(sizeKey, difficulty);
+  if (puzzleInProgress) {
+    router.push(`/queens/${puzzleInProgress.id || puzzleInProgress.name}`);
+    emit('close');
+    return;
+  }
+
+  const puzzle = queensStore.getNextUncompletedPuzzleForSizeAndDifficulty(sizeKey, difficulty);
+  if (puzzle) {
+    router.push(`/queens/${puzzle.id}`);
+    emit('close');
+    return;
+  }
+
+  const fallback = queensStore.getFirstPuzzleForSizeAndDifficulty(sizeKey, difficulty);
+  if (fallback) {
+    router.push(`/queens/${fallback.id}`);
+    emit('close');
+    return;
+  }
+
+  alert(`No ${difficulty} ${sizeKey} puzzles are currently available.`);
+}
+
+watch(
+  () => props.isVisible,
+  (isVisible) => {
+    if (!isVisible) {
+      selectedSize.value = null;
     }
   }
-  emit('close');
-}
+);
 </script>
 
 <script lang="ts">

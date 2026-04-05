@@ -23,11 +23,13 @@ class PuzzleJsonExportService(
         puzzles.forEach { puzzle ->
             val sizeKey = "${puzzle.size}x${puzzle.size}"
             val bucket = grouped.getOrPut(sizeKey) { mutableListOf() }
-            bucket += mapOf(
+            val row = linkedMapOf(
                 "id" to puzzle.id.toString(),
                 "layout" to puzzle.layout,
                 "queens" to puzzle.queens,
             )
+            puzzle.difficultyTier?.let { row["difficulty"] = it.name.lowercase() }
+            bucket += row
         }
 
         path.parent?.let { Files.createDirectories(it) }

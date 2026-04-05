@@ -556,6 +556,130 @@
             class="rounded-[26px] border border-semantic-neutral-800 bg-surface-overlayDim p-4"
           >
             <div class="flex items-center justify-between gap-3">
+              <div>
+                <h2 class="text-lg font-semibold">Difficulty Probe</h2>
+                <p class="mt-1 text-sm text-semantic-neutral-400">
+                  Starts from blank marks, runs the workshop difficulty solver, and shows exactly
+                  which rule tier was needed to finish the current puzzle.
+                </p>
+              </div>
+              <button
+                type="button"
+                class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-semantic-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="!store.board"
+                @click="runDifficultyProbe"
+              >
+                Analyze Puzzle
+              </button>
+            </div>
+
+            <div
+              v-if="difficultyProbe"
+              class="mt-4 rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <div class="text-xs uppercase tracking-[0.18em] text-semantic-neutral-400">
+                    Difficulty
+                  </div>
+                  <div class="mt-1 text-2xl font-semibold text-white">
+                    {{ difficultyProbe.tier }}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-semantic-neutral-700"
+                  @click="copyDebugText('difficulty', difficultyProbeDebugText)"
+                >
+                  {{ copyButtonLabels.difficulty }}
+                </button>
+              </div>
+
+              <div class="mt-4 grid gap-3 text-sm md:grid-cols-2">
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="text-semantic-neutral-400">Solved</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ difficultyProbe.solved ? 'Yes' : 'No' }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="text-semantic-neutral-400">Hardest Step Reached</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ formatDifficultyPhase(difficultyProbe.hardestStepReached) }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="text-semantic-neutral-400">Flags Placed</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ difficultyProbe.totalFlagsPlaced }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="text-semantic-neutral-400">Queens Placed</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ difficultyProbe.totalQueensPlaced }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="text-semantic-neutral-400">Loops</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ difficultyProbe.loops }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3">
+                  <div class="text-semantic-neutral-400">Queen Guesses Tried</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ difficultyProbe.guessesTried }}
+                  </div>
+                </div>
+                <div class="rounded-xl bg-surface-darkMuted p-3 md:col-span-2">
+                  <div class="text-semantic-neutral-400">Unresolved Squares After Probe</div>
+                  <div class="mt-1 font-semibold text-white">
+                    {{ difficultyProbe.unresolvedSquares }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4">
+                <div class="mb-2 text-sm font-semibold text-semantic-info-200">Working Out</div>
+                <div class="space-y-2">
+                  <article
+                    v-for="(entry, index) in difficultyProbe.trace"
+                    :key="`${entry.phase}-${index}`"
+                    class="rounded-xl border border-semantic-neutral-800 bg-surface-darkMuted p-3 text-sm"
+                  >
+                    <div class="flex items-center justify-between gap-3">
+                      <div class="font-semibold text-white">
+                        {{ entry.label }}
+                      </div>
+                      <span
+                        class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                        :class="difficultyPhaseBadgeClass(entry.phase)"
+                      >
+                        {{ formatDifficultyPhase(entry.phase) }}
+                      </span>
+                    </div>
+                    <p class="mt-2 leading-6 text-semantic-neutral-300">
+                      {{ entry.message }}
+                    </p>
+                    <div class="mt-2 text-xs uppercase tracking-[0.16em] text-semantic-neutral-400">
+                      {{ entry.flagsPlaced }} flags · {{ entry.queensPlaced }} queens
+                    </div>
+                  </article>
+                </div>
+              </div>
+            </div>
+
+            <p v-else class="mt-4 text-sm text-semantic-neutral-400">
+              Run the difficulty probe on a fully built puzzle to classify it as easy, medium, or
+              hard and inspect the step-by-step reasoning trace.
+            </p>
+          </section>
+
+          <section
+            class="rounded-[26px] border border-semantic-neutral-800 bg-surface-overlayDim p-4"
+          >
+            <div class="flex items-center justify-between gap-3">
               <h2 class="text-lg font-semibold">Last Backend Result</h2>
               <button
                 type="button"
@@ -830,10 +954,20 @@ import {
   buildEncodedQueensPuzzleLayout,
   QUEENS_PUZZLE_SHARE_BASE_URL,
 } from '../utils/urlPuzzleEncoding';
+import { analyzeQueensDifficulty, type QueensDifficultyAnalysis } from '../admin/difficultyProbe';
 import QueensAdminBoard from '../components/admin/QueensAdminBoard.vue';
 import QueensAdminBatchPanel from '../components/admin/QueensAdminBatchPanel.vue';
 import { useQueensAdminStore } from '../stores/queensAdminStore';
 import type { QueensAdminGenerationStrategy, QueensAdminTool } from '../admin/types';
+
+type CopyButtonKey =
+  | 'result'
+  | 'validation'
+  | 'selectedCell'
+  | 'history'
+  | 'json'
+  | 'url'
+  | 'difficulty';
 
 const route = useRoute();
 const router = useRouter();
@@ -934,20 +1068,17 @@ const generationProgressBadgeClass = computed(() => {
   }
 });
 
-const copyButtonLabels = ref({
+const copyButtonLabels = ref<Record<CopyButtonKey, string>>({
   result: 'Copy',
   validation: 'Copy',
   selectedCell: 'Copy',
   history: 'Copy',
   json: 'Copy JSON',
   url: 'Copy URL',
+  difficulty: 'Copy',
 });
-const copyTimers: Partial<
-  Record<
-    'result' | 'validation' | 'selectedCell' | 'history' | 'json' | 'url',
-    ReturnType<typeof setTimeout>
-  >
-> = {};
+const copyTimers: Partial<Record<CopyButtonKey, ReturnType<typeof setTimeout>>> = {};
+const difficultyProbe = ref<QueensDifficultyAnalysis | null>(null);
 
 function hasPhase(phase: string): boolean {
   return store.board?.generationPhase === phase;
@@ -1173,6 +1304,21 @@ function generationStrategyLabel(strategy: QueensAdminGenerationStrategy): strin
   return strategy === 'marker-guided' ? 'Marker-guided experiment' : 'Baseline';
 }
 
+function formatDifficultyPhase(phase: 'easy' | 'medium' | 'hard'): string {
+  return phase.charAt(0).toUpperCase() + phase.slice(1);
+}
+
+function difficultyPhaseBadgeClass(phase: 'easy' | 'medium' | 'hard'): string {
+  switch (phase) {
+    case 'easy':
+      return 'bg-feedback-successSoft text-semantic-success-200';
+    case 'medium':
+      return 'bg-feedback-warningSubtle text-semantic-warning-200';
+    case 'hard':
+      return 'bg-feedback-dangerSoft text-semantic-danger-200';
+  }
+}
+
 function formatElapsed(elapsedMs: number): string {
   const totalSeconds = Math.floor(elapsedMs / 1000);
   const minutes = Math.floor(totalSeconds / 60);
@@ -1277,20 +1423,49 @@ const actionHistoryDebugText = computed(() => {
     .join('\n\n');
 });
 
+const difficultyProbeDebugText = computed(() => {
+  if (!difficultyProbe.value) return 'No difficulty probe has been run yet.';
+
+  return [
+    `Tier: ${difficultyProbe.value.tier}`,
+    `Solved: ${difficultyProbe.value.solved ? 'yes' : 'no'}`,
+    `Hardest step: ${formatDifficultyPhase(difficultyProbe.value.hardestStepReached)}`,
+    `Flags placed: ${difficultyProbe.value.totalFlagsPlaced}`,
+    `Queens placed: ${difficultyProbe.value.totalQueensPlaced}`,
+    `Loops: ${difficultyProbe.value.loops}`,
+    `Queen guesses tried: ${difficultyProbe.value.guessesTried}`,
+    `Unresolved squares: ${difficultyProbe.value.unresolvedSquares}`,
+    '',
+    ...difficultyProbe.value.trace.map(
+      (entry) =>
+        `[${formatDifficultyPhase(entry.phase)}] ${entry.label}\n${entry.message}\n${entry.flagsPlaced} flags, ${entry.queensPlaced} queens`
+    ),
+  ].join('\n');
+});
+
+function runDifficultyProbe(): void {
+  if (!store.board) return;
+  difficultyProbe.value = analyzeQueensDifficulty(store.board);
+}
+
 async function copyBoardJson(): Promise<void> {
   await copyDebugText('json', prettyBoardJson.value, 'Copy JSON');
 }
+
+watch(
+  () => store.board,
+  () => {
+    difficultyProbe.value = null;
+  },
+  { deep: true }
+);
 
 async function copyPuzzleUrl(): Promise<void> {
   if (!shareableQueensPuzzleUrl.value) return;
   await copyDebugText('url', shareableQueensPuzzleUrl.value, 'Copy URL');
 }
 
-async function copyDebugText(
-  key: 'result' | 'validation' | 'selectedCell' | 'history' | 'json' | 'url',
-  text: string,
-  resetLabel = 'Copy'
-): Promise<void> {
+async function copyDebugText(key: CopyButtonKey, text: string, resetLabel = 'Copy'): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
     copyButtonLabels.value[key] = 'Copied';

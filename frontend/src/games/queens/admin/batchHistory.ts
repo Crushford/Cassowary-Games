@@ -1,11 +1,13 @@
 import type { QueensAdminBatchRun, QueensAdminGenerationStrategy } from './types';
 
-const STORAGE_KEY = 'queens-admin-batch-history-v1';
+const STORAGE_KEY = 'queens-admin-batch-history-v2';
+const LEGACY_DEFAULT_MINIMUM_GROUP_SIZE = 3;
 
 type TerminalRunState = 'COMPLETED' | 'FAILED' | 'CANCELLED';
 type PersistenceState = QueensAdminBatchRun['persistenceState'];
+type MinimumGroupSizeSource = 'explicit' | 'legacy-assumed';
 
-interface PersistedBatchRunEvent {
+interface PersistedBatchRunEventV1 {
   runId: string;
   size: number;
   strategy: QueensAdminGenerationStrategy;
@@ -17,9 +19,28 @@ interface PersistedBatchRunEvent {
   durationMs: number | null;
 }
 
-interface PersistedBatchHistory {
+interface PersistedBatchRunEventV2 {
+  runId: string;
+  size: number;
+  strategy: QueensAdminGenerationStrategy;
+  minimumGroupSize: number;
+  minimumGroupSizeSource: MinimumGroupSizeSource;
+  state: TerminalRunState;
+  success: boolean;
+  persistenceState: PersistenceState;
+  finishedAt: string;
+  durationMs: number | null;
+}
+
+interface PersistedBatchHistoryV1 {
   version: 1;
-  events: PersistedBatchRunEvent[];
+  events: PersistedBatchRunEventV1[];
+  processedRunIds: string[];
+}
+
+interface PersistedBatchHistoryV2 {
+  version: 2;
+  events: PersistedBatchRunEventV2[];
   processedRunIds: string[];
 }
 
@@ -44,7 +65,8 @@ export interface BatchHistorySizeRatioRow {
 export interface BatchHistoryStrategySummaryRow {
   size: number;
   strategy: QueensAdminGenerationStrategy;
-  minimumGroupSize: number | null;
+  minimumGroupSize: number;
+  minimumGroupSizeSource: MinimumGroupSizeSource;
   runCount: number;
   successCount: number;
   savedCount: number;
@@ -61,32 +83,76 @@ export interface BatchHistorySnapshot {
   totals: BatchHistoryTotals;
   ratiosBySize: BatchHistorySizeRatioRow[];
   summaryRows: BatchHistoryStrategySummaryRow[];
+  hasLegacyAssumedRows: boolean;
 }
 
 function todayKey(date: Date): string {
   return `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, '0')}-${`${date.getDate()}`.padStart(2, '0')}`;
 }
 
-function readHistory(): PersistedBatchHistory {
+function isNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function migrateHistory(raw: string | null): PersistedBatchHistoryV2 {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      return { version: 1, events: [], processedRunIds: [] };
+      return { version: 2, events: [], processedRunIds: [] };
     }
-    const parsed = JSON.parse(raw) as Partial<PersistedBatchHistory>;
+
+    const parsed = JSON.parse(raw) as {
+      version?: number;
+      events?: unknown;
+      processedRunIds?: unknown;
+    };
+    const processedRunIds = Array.isArray(parsed.processedRunIds)
+      ? (parsed.processedRunIds as string[])
+      : [];
+
+    if (parsed.version === 2) {
+      return {
+        version: 2,
+        events: Array.isArray(parsed.events)
+          ? (parsed.events as PersistedBatchRunEventV2[]).map((event) => ({
+              ...event,
+              minimumGroupSize: isNumber(event.minimumGroupSize)
+                ? event.minimumGroupSize
+                : LEGACY_DEFAULT_MINIMUM_GROUP_SIZE,
+              minimumGroupSizeSource:
+                event.minimumGroupSizeSource === 'legacy-assumed' ? 'legacy-assumed' : 'explicit',
+            }))
+          : [],
+        processedRunIds,
+      };
+    }
+
     return {
-      version: 1,
-      events: Array.isArray(parsed.events) ? (parsed.events as PersistedBatchRunEvent[]) : [],
-      processedRunIds: Array.isArray(parsed.processedRunIds)
-        ? (parsed.processedRunIds as string[])
+      version: 2,
+      events: Array.isArray(parsed.events)
+        ? (parsed.events as PersistedBatchRunEventV1[]).map((event) => ({
+            ...event,
+            minimumGroupSize: isNumber(event.minimumGroupSize)
+              ? event.minimumGroupSize
+              : LEGACY_DEFAULT_MINIMUM_GROUP_SIZE,
+            minimumGroupSizeSource: isNumber(event.minimumGroupSize)
+              ? 'explicit'
+              : 'legacy-assumed',
+          }))
         : [],
+      processedRunIds,
     };
   } catch {
-    return { version: 1, events: [], processedRunIds: [] };
+    return { version: 2, events: [], processedRunIds: [] };
   }
 }
 
-function writeHistory(history: PersistedBatchHistory): void {
+function readHistory(): PersistedBatchHistoryV2 {
+  const history = migrateHistory(localStorage.getItem(STORAGE_KEY));
+  writeHistory(history);
+  return history;
+}
+
+function writeHistory(history: PersistedBatchHistoryV2): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
 }
 
@@ -110,6 +176,7 @@ export function recordBatchRuns(runs: QueensAdminBatchRun[]): BatchHistorySnapsh
       size: run.size,
       strategy: run.strategy,
       minimumGroupSize: run.minimumGroupSize,
+      minimumGroupSizeSource: 'explicit',
       state: run.state,
       success: run.success,
       persistenceState: run.persistenceState,
@@ -128,8 +195,21 @@ export function getBatchHistorySnapshot(): BatchHistorySnapshot {
   return summarizeHistory(readHistory());
 }
 
-function summarizeHistory(history: PersistedBatchHistory): BatchHistorySnapshot {
+export function clearBatchHistory(): BatchHistorySnapshot {
+  const emptyHistory: PersistedBatchHistoryV2 = {
+    version: 2,
+    events: [],
+    processedRunIds: [],
+  };
+  writeHistory(emptyHistory);
+  return summarizeHistory(emptyHistory);
+}
+
+function summarizeHistory(history: PersistedBatchHistoryV2): BatchHistorySnapshot {
   const today = todayKey(new Date());
+  const hasLegacyAssumedRows = history.events.some(
+    (event) => event.minimumGroupSizeSource === 'legacy-assumed'
+  );
 
   const successfulEvents = history.events.filter((event) => event.success);
   const todaySuccessfulEvents = successfulEvents.filter(
@@ -193,7 +273,8 @@ function summarizeHistory(history: PersistedBatchHistory): BatchHistorySnapshot 
     {
       size: number;
       strategy: QueensAdminGenerationStrategy;
-      minimumGroupSize: number | null;
+      minimumGroupSize: number;
+      minimumGroupSizeSource: MinimumGroupSizeSource;
       runCount: number;
       successCount: number;
       savedCount: number;
@@ -203,11 +284,12 @@ function summarizeHistory(history: PersistedBatchHistory): BatchHistorySnapshot 
   >();
 
   for (const event of history.events) {
-    const key = `${event.size}-${event.strategy}-${event.minimumGroupSize ?? 'unknown'}`;
+    const key = `${event.size}-${event.strategy}-${event.minimumGroupSize}-${event.minimumGroupSizeSource}`;
     const group = groupedSummaries.get(key) ?? {
       size: event.size,
       strategy: event.strategy,
-      minimumGroupSize: event.minimumGroupSize ?? null,
+      minimumGroupSize: event.minimumGroupSize,
+      minimumGroupSizeSource: event.minimumGroupSizeSource,
       runCount: 0,
       successCount: 0,
       savedCount: 0,
@@ -248,6 +330,7 @@ function summarizeHistory(history: PersistedBatchHistory): BatchHistorySnapshot 
       size: group.size,
       strategy: group.strategy,
       minimumGroupSize: group.minimumGroupSize,
+      minimumGroupSizeSource: group.minimumGroupSizeSource,
       runCount: group.runCount,
       successCount: group.successCount,
       savedCount: group.savedCount,
@@ -287,10 +370,10 @@ function summarizeHistory(history: PersistedBatchHistory): BatchHistorySnapshot 
     .sort((left, right) => {
       if (left.size !== right.size) return left.size - right.size;
       if (left.strategy !== right.strategy) return left.strategy.localeCompare(right.strategy);
-      return (
-        (left.minimumGroupSize ?? Number.MAX_SAFE_INTEGER) -
-        (right.minimumGroupSize ?? Number.MAX_SAFE_INTEGER)
-      );
+      if (left.minimumGroupSize !== right.minimumGroupSize) {
+        return left.minimumGroupSize - right.minimumGroupSize;
+      }
+      return left.minimumGroupSizeSource.localeCompare(right.minimumGroupSizeSource);
     });
 
   return {
@@ -304,5 +387,6 @@ function summarizeHistory(history: PersistedBatchHistory): BatchHistorySnapshot 
     },
     ratiosBySize,
     summaryRows,
+    hasLegacyAssumedRows,
   };
 }

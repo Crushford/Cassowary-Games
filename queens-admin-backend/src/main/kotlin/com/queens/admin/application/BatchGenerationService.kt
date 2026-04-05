@@ -31,6 +31,8 @@ data class BatchGenerationRunSnapshot(
     val strategy: String,
     val minimumGroupSize: Int,
     val state: BatchGenerationRunState,
+    val coloredCellCount: Int,
+    val totalCellCount: Int,
     val durationMs: Long? = null,
     val success: Boolean? = null,
     val error: String? = null,
@@ -98,6 +100,8 @@ class BatchGenerationService(
                                 strategy = strategy,
                                 minimumGroupSize = minimumGroupSize,
                                 state = BatchGenerationRunState.QUEUED,
+                                coloredCellCount = 0,
+                                totalCellCount = size * size,
                             ),
                         )
                     }
@@ -187,6 +191,8 @@ class BatchGenerationService(
                 updateRun(runtime, runId) {
                     it.copy(
                         state = BatchGenerationRunState.RUNNING,
+                        coloredCellCount = 0,
+                        totalCellCount = runSnapshot.size * runSnapshot.size,
                         startedAt = startedAt,
                         error = null,
                     )
@@ -199,10 +205,25 @@ class BatchGenerationService(
                             size = runSnapshot.size,
                             minimumGroupSize = runSnapshot.minimumGroupSize,
                             generationStrategy = runSnapshot.strategy,
-                            progressListener = null,
+                            progressListener = { update ->
+                                updateRun(runtime, runSnapshot.runId) { current ->
+                                    current.copy(
+                                        state =
+                                            if (runtime.cancelled.get()) {
+                                                BatchGenerationRunState.CANCELLED
+                                            } else {
+                                                BatchGenerationRunState.RUNNING
+                                            },
+                                        coloredCellCount = update.coloredCellCount,
+                                        totalCellCount = update.totalCellCount,
+                                    )
+                                }
+                            },
                             isCancelled = { runtime.cancelled.get() },
                         )
                         finishedAt = Instant.now()
+                        val latestRunSnapshot =
+                            runtime.snapshot.get().runs.firstOrNull { it.runId == runSnapshot.runId } ?: runSnapshot
                         val persistenceResult =
                             if (result.success && runtime.snapshot.get().saveSuccessfulPuzzles && result.boardState != null) {
                                 puzzleCatalogService.saveGeneratedPuzzleIfUnique(
@@ -219,6 +240,8 @@ class BatchGenerationService(
                             strategy = runSnapshot.strategy,
                             minimumGroupSize = runSnapshot.minimumGroupSize,
                             state = if (runtime.cancelled.get()) BatchGenerationRunState.CANCELLED else if (result.success) BatchGenerationRunState.COMPLETED else BatchGenerationRunState.FAILED,
+                            coloredCellCount = result.validation?.coloredCellCount ?: latestRunSnapshot.coloredCellCount,
+                            totalCellCount = runSnapshot.size * runSnapshot.size,
                             durationMs = Duration.between(startedAt, finishedAt).toMillis(),
                             success = result.success,
                             error = result.errorSummary(),
@@ -241,6 +264,8 @@ class BatchGenerationService(
                             strategy = runSnapshot.strategy,
                             minimumGroupSize = runSnapshot.minimumGroupSize,
                             state = if (runtime.cancelled.get()) BatchGenerationRunState.CANCELLED else BatchGenerationRunState.FAILED,
+                            coloredCellCount = runtime.snapshot.get().runs.firstOrNull { it.runId == runSnapshot.runId }?.coloredCellCount ?: 0,
+                            totalCellCount = runSnapshot.size * runSnapshot.size,
                             durationMs = Duration.between(startedAt, finishedAt).toMillis(),
                             success = false,
                             error = error.message ?: "Generation crashed unexpectedly.",
@@ -275,6 +300,8 @@ class BatchGenerationService(
                         strategy = previous.strategy,
                         minimumGroupSize = previous.minimumGroupSize,
                         state = if (runtime.cancelled.get()) BatchGenerationRunState.CANCELLED else BatchGenerationRunState.FAILED,
+                        coloredCellCount = previous.coloredCellCount,
+                        totalCellCount = previous.totalCellCount,
                         durationMs = previous.startedAt?.let { Duration.between(it, Instant.now()).toMillis() },
                         success = false,
                         error = error.message ?: "Generation crashed unexpectedly.",

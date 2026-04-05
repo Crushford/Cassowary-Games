@@ -22,6 +22,7 @@ interface PuzzleRecord {
   name?: string;
   layout: string;
   queens: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
 }
 
 function isPerfectSquareLength(length: number): boolean {
@@ -1827,6 +1828,39 @@ export const useQueensStore = defineStore('queens', {
       });
     },
 
+    getAvailableDifficultiesForSize(sizeKey: string): Array<'easy' | 'medium' | 'hard'> {
+      if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
+        return [];
+      }
+
+      const difficultyOrder: Array<'easy' | 'medium' | 'hard'> = ['easy', 'medium', 'hard'];
+      const difficulties = new Set<'easy' | 'medium' | 'hard'>();
+      for (const puzzle of this.puzzleDatabase[sizeKey]) {
+        if (puzzle.difficulty && difficultyOrder.includes(puzzle.difficulty)) {
+          difficulties.add(puzzle.difficulty);
+        }
+      }
+
+      if (difficulties.size === 0) {
+        return ['easy'];
+      }
+
+      return difficultyOrder.filter((difficulty) => difficulties.has(difficulty));
+    },
+
+    countPuzzlesForSizeAndDifficulty(
+      sizeKey: string,
+      difficulty: 'easy' | 'medium' | 'hard'
+    ): number {
+      if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
+        return 0;
+      }
+
+      return this.puzzleDatabase[sizeKey].filter(
+        (puzzle) => (puzzle.difficulty ?? 'easy') === difficulty
+      ).length;
+    },
+
     // Modal state management
     openSinglePuzzleModeModal() {
       this.showSinglePuzzleModeModal = true;
@@ -1987,6 +2021,44 @@ export const useQueensStore = defineStore('queens', {
 
       // All puzzles completed for this size
       return null;
+    },
+
+    getNextUncompletedPuzzleForSizeAndDifficulty(
+      sizeKey: string,
+      difficulty: 'easy' | 'medium' | 'hard'
+    ): PuzzleRecord | null {
+      if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
+        return null;
+      }
+
+      const completedPuzzles = getCompletedPuzzles();
+      const puzzlesForBucket = this.puzzleDatabase[sizeKey].filter(
+        (puzzle) => (puzzle.difficulty ?? 'easy') === difficulty
+      );
+
+      for (const puzzle of puzzlesForBucket) {
+        const puzzleId = String(puzzle.id);
+        if (!completedPuzzles.has(puzzleId)) {
+          return puzzle;
+        }
+      }
+
+      return null;
+    },
+
+    getFirstPuzzleForSizeAndDifficulty(
+      sizeKey: string,
+      difficulty: 'easy' | 'medium' | 'hard'
+    ): PuzzleRecord | null {
+      if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
+        return null;
+      }
+
+      return (
+        this.puzzleDatabase[sizeKey].find(
+          (puzzle) => (puzzle.difficulty ?? 'easy') === difficulty
+        ) ?? null
+      );
     },
 
     getPuzzleProgress(puzzleId: string | number | null): MarkType[][] | null {

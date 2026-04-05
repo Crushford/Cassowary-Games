@@ -25,6 +25,8 @@ data class BatchGenerationRunDto(
     val strategy: String,
     val minimumGroupSize: Int,
     val state: String,
+    val coloredCellCount: Int,
+    val totalCellCount: Int,
     val durationMs: Long? = null,
     val success: Boolean? = null,
     val error: String? = null,

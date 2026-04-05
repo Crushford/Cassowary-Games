@@ -92,6 +92,8 @@ interface BatchGenerationRunDto {
   strategy: QueensAdminGenerationStrategy;
   minimumGroupSize: number;
   state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  coloredCellCount: number;
+  totalCellCount: number;
   durationMs: number | null;
   success: boolean | null;
   error: string | null;
@@ -238,6 +240,8 @@ function toBatchStatus(data: BatchGenerationStatusDto): QueensAdminBatchStatus {
       strategy: run.strategy,
       minimumGroupSize: run.minimumGroupSize,
       state: run.state,
+      coloredCellCount: run.coloredCellCount,
+      totalCellCount: run.totalCellCount,
       durationMs: run.durationMs,
       success: run.success,
       error: run.error,

@@ -1,12 +1,16 @@
 package com.queens.admin.infrastructure.persistence
 
 import com.queens.admin.domain.model.PersistedPuzzle
+import com.queens.admin.domain.model.PuzzleDifficultyTier
+import java.time.Instant
+import java.util.UUID
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.count
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.springframework.stereotype.Repository
@@ -34,6 +38,10 @@ class PuzzleRepository {
                 it[minimumGroupSize] = puzzle.minimumGroupSize
                 it[generationStrategy] = puzzle.generationStrategy
                 it[createdAt] = puzzle.createdAt
+                it[difficultyTier] = puzzle.difficultyTier?.name
+                it[difficultyScore] = puzzle.difficultyScore
+                it[difficultySolverVersion] = puzzle.difficultySolverVersion
+                it[difficultyAssessedAt] = puzzle.difficultyAssessedAt
             }
             puzzle
         }
@@ -57,6 +65,23 @@ class PuzzleRepository {
                 }
         }
 
+    fun updateDifficulty(
+        puzzleId: UUID,
+        difficultyTier: PuzzleDifficultyTier,
+        difficultyScore: Int,
+        difficultySolverVersion: String,
+        difficultyAssessedAt: Instant,
+    ) {
+        transaction {
+            PuzzlesTable.update({ PuzzlesTable.id eq puzzleId }) {
+                it[PuzzlesTable.difficultyTier] = difficultyTier.name
+                it[PuzzlesTable.difficultyScore] = difficultyScore
+                it[PuzzlesTable.difficultySolverVersion] = difficultySolverVersion
+                it[PuzzlesTable.difficultyAssessedAt] = difficultyAssessedAt
+            }
+        }
+    }
+
     private fun ResultRow.toPersistedPuzzle(): PersistedPuzzle =
         PersistedPuzzle(
             id = this[PuzzlesTable.id].value,
@@ -67,5 +92,9 @@ class PuzzleRepository {
             minimumGroupSize = this[PuzzlesTable.minimumGroupSize],
             generationStrategy = this[PuzzlesTable.generationStrategy],
             createdAt = this[PuzzlesTable.createdAt],
+            difficultyTier = this[PuzzlesTable.difficultyTier]?.let(PuzzleDifficultyTier::valueOf),
+            difficultyScore = this[PuzzlesTable.difficultyScore],
+            difficultySolverVersion = this[PuzzlesTable.difficultySolverVersion],
+            difficultyAssessedAt = this[PuzzlesTable.difficultyAssessedAt],
         )
 }

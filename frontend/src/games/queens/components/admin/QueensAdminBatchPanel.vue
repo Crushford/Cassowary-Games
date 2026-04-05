@@ -253,6 +253,13 @@
                 many were unique, and how many were duplicates across sessions in this browser.
               </p>
             </div>
+            <button
+              type="button"
+              class="rounded-xl border border-semantic-neutral-700 bg-surface-darkSoft px-3 py-2 text-sm font-semibold text-semantic-neutral-200 transition hover:border-semantic-neutral-500 hover:text-white"
+              @click="resetHistory"
+            >
+              Reset History
+            </button>
           </div>
 
           <div class="mt-5 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
@@ -387,7 +394,7 @@
               <tbody>
                 <tr
                   v-for="row in historySnapshot.summaryRows"
-                  :key="`${row.size}-${row.strategy}`"
+                  :key="`${row.size}-${row.strategy}-${row.minimumGroupSize}-${row.minimumGroupSizeSource}`"
                   class="border-t border-semantic-neutral-800"
                 >
                   <td class="px-3 py-2 text-white">{{ row.size }} x {{ row.size }}</td>
@@ -409,7 +416,15 @@
                     </div>
                   </td>
                   <td class="px-3 py-2">
-                    {{ row.minimumGroupSize ?? 'Unknown' }}
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span>{{ row.minimumGroupSize }}</span>
+                      <span
+                        v-if="row.minimumGroupSizeSource === 'legacy-assumed'"
+                        class="rounded-full border border-semantic-neutral-700 bg-surface-darkSoft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-semantic-neutral-400"
+                      >
+                        Legacy default
+                      </span>
+                    </div>
                   </td>
                   <td class="px-3 py-2">{{ row.runCount }}</td>
                   <td class="px-3 py-2">{{ row.successCount }}</td>
@@ -446,6 +461,7 @@
                   <th class="px-3 py-2">Size</th>
                   <th class="px-3 py-2">Strategy</th>
                   <th class="px-3 py-2">State</th>
+                  <th class="px-3 py-2">Fill</th>
                   <th class="px-3 py-2">Duration</th>
                   <th class="px-3 py-2">Persistence</th>
                   <th class="px-3 py-2">Started</th>
@@ -461,6 +477,23 @@
                   <td class="px-3 py-2 text-white">{{ run.size }} x {{ run.size }}</td>
                   <td class="px-3 py-2">{{ strategyLabel(run.strategy) }}</td>
                   <td class="px-3 py-2">{{ run.state }}</td>
+                  <td class="min-w-[180px] px-3 py-2">
+                    <div v-if="showRunFillProgress(run)">
+                      <div class="text-xs font-semibold text-semantic-neutral-100">
+                        {{ batchRunFillPercent(run) }}% colored
+                      </div>
+                      <div class="mt-2 h-2 overflow-hidden rounded-full bg-semantic-neutral-900">
+                        <div
+                          class="h-full rounded-full bg-[linear-gradient(90deg,#38bdf8_0%,#22c55e_100%)] transition-[width] duration-300"
+                          :style="{ width: `${batchRunFillPercent(run)}%` }"
+                        />
+                      </div>
+                      <div class="mt-1 text-xs text-semantic-neutral-400">
+                        {{ run.coloredCellCount }} / {{ run.totalCellCount }}
+                      </div>
+                    </div>
+                    <span v-else>—</span>
+                  </td>
                   <td class="px-3 py-2">
                     {{ run.durationMs ? formatDuration(run.durationMs) : '—' }}
                   </td>
@@ -485,7 +518,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { queensAdminApi } from '../../admin/api';
-import { getBatchHistorySnapshot, recordBatchRuns } from '../../admin/batchHistory';
+import {
+  clearBatchHistory,
+  getBatchHistorySnapshot,
+  recordBatchRuns,
+} from '../../admin/batchHistory';
 import { useQueensAdminStore } from '../../stores/queensAdminStore';
 import type {
   QueensAdminBatchRun,
@@ -634,6 +671,13 @@ async function refreshPuzzleCatalogStats(): Promise<void> {
   }
 }
 
+function resetHistory(): void {
+  if (!window.confirm('Clear all local batch benchmark history for this browser?')) {
+    return;
+  }
+  historySnapshot.value = clearBatchHistory();
+}
+
 function strategyLabel(strategy: QueensAdminGenerationStrategy): string {
   return strategy === 'marker-guided' ? 'Marker-guided' : 'Baseline';
 }
@@ -651,6 +695,16 @@ function formatPersistence(run: QueensAdminBatchRun): string {
     default:
       return '—';
   }
+}
+
+function batchRunFillPercent(run: QueensAdminBatchRun): number {
+  if (run.totalCellCount <= 0) return 0;
+  return Math.round((run.coloredCellCount / run.totalCellCount) * 100);
+}
+
+function showRunFillProgress(run: QueensAdminBatchRun): boolean {
+  if (run.state === 'QUEUED') return false;
+  return run.totalCellCount > 0;
 }
 
 function persistenceBadgeClass(state: QueensAdminBatchRun['persistenceState']): string {
