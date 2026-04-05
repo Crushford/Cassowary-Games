@@ -28,6 +28,9 @@ class PuzzleCatalogService(
     fun countBySize(): Map<Int, Int> =
         puzzleRepository.countBySize()
 
+    fun countBySizeAndDistance(): Map<Pair<Int, Int>, Int> =
+        puzzleRepository.countBySizeAndDistance()
+
     fun save(persistedPuzzle: PersistedPuzzle): PersistedPuzzle =
         puzzleRepository.insert(persistedPuzzle)
 

@@ -1,6 +1,7 @@
 import type { QueensAdminBatchRun, QueensAdminGenerationStrategy } from './types';
 
-const STORAGE_KEY = 'queens-admin-batch-history-v2';
+const STORAGE_KEY = 'queens-admin-batch-history-v3';
+const LEGACY_STORAGE_KEY = 'queens-admin-batch-history-v2';
 const LEGACY_DEFAULT_MINIMUM_GROUP_SIZE = 3;
 
 type TerminalRunState = 'COMPLETED' | 'FAILED' | 'CANCELLED';
@@ -23,6 +24,7 @@ interface PersistedBatchRunEventV2 {
   runId: string;
   size: number;
   strategy: QueensAdminGenerationStrategy;
+  orthogonalMinDistance?: number;
   minimumGroupSize: number;
   minimumGroupSizeSource: MinimumGroupSizeSource;
   state: TerminalRunState;
@@ -32,15 +34,29 @@ interface PersistedBatchRunEventV2 {
   durationMs: number | null;
 }
 
-interface PersistedBatchHistoryV1 {
-  version: 1;
-  events: PersistedBatchRunEventV1[];
-  processedRunIds: string[];
+interface PersistedBatchRunEventV3 {
+  runId: string;
+  size: number;
+  strategy: QueensAdminGenerationStrategy;
+  orthogonalMinDistance: number;
+  minimumGroupSize: number;
+  minimumGroupSizeSource: MinimumGroupSizeSource;
+  state: TerminalRunState;
+  success: boolean;
+  persistenceState: PersistenceState;
+  finishedAt: string;
+  durationMs: number | null;
 }
 
 interface PersistedBatchHistoryV2 {
-  version: 2;
+  version: 1 | 2;
   events: PersistedBatchRunEventV2[];
+  processedRunIds: string[];
+}
+
+interface PersistedBatchHistoryV3 {
+  version: 3;
+  events: PersistedBatchRunEventV3[];
   processedRunIds: string[];
 }
 
@@ -55,6 +71,7 @@ export interface BatchHistoryTotals {
 
 export interface BatchHistorySizeRatioRow {
   size: number;
+  orthogonalMinDistance: number;
   sampleCount: number;
   newCount: number;
   duplicateCount: number;
@@ -65,6 +82,7 @@ export interface BatchHistorySizeRatioRow {
 export interface BatchHistoryStrategySummaryRow {
   size: number;
   strategy: QueensAdminGenerationStrategy;
+  orthogonalMinDistance: number;
   minimumGroupSize: number;
   minimumGroupSizeSource: MinimumGroupSizeSource;
   runCount: number;
@@ -94,10 +112,10 @@ function isNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-function migrateHistory(raw: string | null): PersistedBatchHistoryV2 {
+function migrateHistory(raw: string | null): PersistedBatchHistoryV3 {
   try {
     if (!raw) {
-      return { version: 2, events: [], processedRunIds: [] };
+      return { version: 3, events: [], processedRunIds: [] };
     }
 
     const parsed = JSON.parse(raw) as {
@@ -109,12 +127,35 @@ function migrateHistory(raw: string | null): PersistedBatchHistoryV2 {
       ? (parsed.processedRunIds as string[])
       : [];
 
+    if (parsed.version === 3) {
+      return {
+        version: 3,
+        events: Array.isArray(parsed.events)
+          ? (parsed.events as PersistedBatchRunEventV3[]).map((event) => ({
+              ...event,
+              orthogonalMinDistance: isNumber(event.orthogonalMinDistance)
+                ? event.orthogonalMinDistance
+                : event.size,
+              minimumGroupSize: isNumber(event.minimumGroupSize)
+                ? event.minimumGroupSize
+                : LEGACY_DEFAULT_MINIMUM_GROUP_SIZE,
+              minimumGroupSizeSource:
+                event.minimumGroupSizeSource === 'legacy-assumed' ? 'legacy-assumed' : 'explicit',
+            }))
+          : [],
+        processedRunIds,
+      };
+    }
+
     if (parsed.version === 2) {
       return {
-        version: 2,
+        version: 3,
         events: Array.isArray(parsed.events)
           ? (parsed.events as PersistedBatchRunEventV2[]).map((event) => ({
               ...event,
+              orthogonalMinDistance: isNumber(event.orthogonalMinDistance)
+                ? event.orthogonalMinDistance
+                : event.size,
               minimumGroupSize: isNumber(event.minimumGroupSize)
                 ? event.minimumGroupSize
                 : LEGACY_DEFAULT_MINIMUM_GROUP_SIZE,
@@ -127,10 +168,11 @@ function migrateHistory(raw: string | null): PersistedBatchHistoryV2 {
     }
 
     return {
-      version: 2,
+      version: 3,
       events: Array.isArray(parsed.events)
         ? (parsed.events as PersistedBatchRunEventV1[]).map((event) => ({
             ...event,
+            orthogonalMinDistance: event.size,
             minimumGroupSize: isNumber(event.minimumGroupSize)
               ? event.minimumGroupSize
               : LEGACY_DEFAULT_MINIMUM_GROUP_SIZE,
@@ -142,18 +184,21 @@ function migrateHistory(raw: string | null): PersistedBatchHistoryV2 {
       processedRunIds,
     };
   } catch {
-    return { version: 2, events: [], processedRunIds: [] };
+    return { version: 3, events: [], processedRunIds: [] };
   }
 }
 
-function readHistory(): PersistedBatchHistoryV2 {
-  const history = migrateHistory(localStorage.getItem(STORAGE_KEY));
+function readHistory(): PersistedBatchHistoryV3 {
+  const history = migrateHistory(
+    localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
+  );
   writeHistory(history);
   return history;
 }
 
-function writeHistory(history: PersistedBatchHistoryV2): void {
+function writeHistory(history: PersistedBatchHistoryV3): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
 }
 
 function isTerminalRun(
@@ -175,6 +220,7 @@ export function recordBatchRuns(runs: QueensAdminBatchRun[]): BatchHistorySnapsh
       runId: run.runId,
       size: run.size,
       strategy: run.strategy,
+      orthogonalMinDistance: run.orthogonalMinDistance,
       minimumGroupSize: run.minimumGroupSize,
       minimumGroupSizeSource: 'explicit',
       state: run.state,
@@ -196,8 +242,8 @@ export function getBatchHistorySnapshot(): BatchHistorySnapshot {
 }
 
 export function clearBatchHistory(): BatchHistorySnapshot {
-  const emptyHistory: PersistedBatchHistoryV2 = {
-    version: 2,
+  const emptyHistory: PersistedBatchHistoryV3 = {
+    version: 3,
     events: [],
     processedRunIds: [],
   };
@@ -205,7 +251,7 @@ export function clearBatchHistory(): BatchHistorySnapshot {
   return summarizeHistory(emptyHistory);
 }
 
-function summarizeHistory(history: PersistedBatchHistoryV2): BatchHistorySnapshot {
+function summarizeHistory(history: PersistedBatchHistoryV3): BatchHistorySnapshot {
   const today = todayKey(new Date());
   const hasLegacyAssumedRows = history.events.some(
     (event) => event.minimumGroupSizeSource === 'legacy-assumed'
@@ -234,16 +280,27 @@ function summarizeHistory(history: PersistedBatchHistoryV2): BatchHistorySnapsho
       .filter(
         (event) => event.persistenceState === 'SAVED' || event.persistenceState === 'DUPLICATE'
       )
-      .map((event) => event.size)
+      .map((event) => `${event.size}|${event.orthogonalMinDistance}`)
   );
 
   const ratiosBySize = Array.from(sizeSet)
-    .sort((left, right) => left - right)
-    .map((size) => {
+    .sort((left, right) => {
+      const [leftSizeText, leftDistanceText] = left.split('|');
+      const [rightSizeText, rightDistanceText] = right.split('|');
+      const leftSize = Number.parseInt(leftSizeText, 10);
+      const rightSize = Number.parseInt(rightSizeText, 10);
+      if (leftSize !== rightSize) return leftSize - rightSize;
+      return Number.parseInt(leftDistanceText, 10) - Number.parseInt(rightDistanceText, 10);
+    })
+    .map((key) => {
+      const [sizeText, distanceText] = key.split('|');
+      const size = Number.parseInt(sizeText, 10);
+      const orthogonalMinDistance = Number.parseInt(distanceText, 10);
       const sample = successfulEvents
         .filter(
           (event) =>
             event.size === size &&
+            event.orthogonalMinDistance === orthogonalMinDistance &&
             (event.persistenceState === 'SAVED' || event.persistenceState === 'DUPLICATE')
         )
         .sort(
@@ -260,6 +317,7 @@ function summarizeHistory(history: PersistedBatchHistoryV2): BatchHistorySnapsho
 
       return {
         size,
+        orthogonalMinDistance,
         sampleCount,
         newCount,
         duplicateCount,
@@ -273,6 +331,7 @@ function summarizeHistory(history: PersistedBatchHistoryV2): BatchHistorySnapsho
     {
       size: number;
       strategy: QueensAdminGenerationStrategy;
+      orthogonalMinDistance: number;
       minimumGroupSize: number;
       minimumGroupSizeSource: MinimumGroupSizeSource;
       runCount: number;
@@ -284,10 +343,11 @@ function summarizeHistory(history: PersistedBatchHistoryV2): BatchHistorySnapsho
   >();
 
   for (const event of history.events) {
-    const key = `${event.size}-${event.strategy}-${event.minimumGroupSize}-${event.minimumGroupSizeSource}`;
+    const key = `${event.size}-${event.orthogonalMinDistance}-${event.strategy}-${event.minimumGroupSize}-${event.minimumGroupSizeSource}`;
     const group = groupedSummaries.get(key) ?? {
       size: event.size,
       strategy: event.strategy,
+      orthogonalMinDistance: event.orthogonalMinDistance,
       minimumGroupSize: event.minimumGroupSize,
       minimumGroupSizeSource: event.minimumGroupSizeSource,
       runCount: 0,
@@ -329,6 +389,7 @@ function summarizeHistory(history: PersistedBatchHistoryV2): BatchHistorySnapsho
     return {
       size: group.size,
       strategy: group.strategy,
+      orthogonalMinDistance: group.orthogonalMinDistance,
       minimumGroupSize: group.minimumGroupSize,
       minimumGroupSizeSource: group.minimumGroupSizeSource,
       runCount: group.runCount,
@@ -344,31 +405,39 @@ function summarizeHistory(history: PersistedBatchHistoryV2): BatchHistorySnapsho
     };
   });
 
-  const fastestBySize = new Map<number, number>();
-  const mostUniqueBySize = new Map<number, number>();
+  const fastestByBucket = new Map<string, number>();
+  const mostUniqueByBucket = new Map<string, number>();
 
   for (const row of preliminarySummaryRows) {
+    const bucketKey = `${row.size}-${row.orthogonalMinDistance}`;
     if (row.averageMs != null) {
-      const currentBest = fastestBySize.get(row.size);
+      const currentBest = fastestByBucket.get(bucketKey);
       if (currentBest == null || row.averageMs < currentBest) {
-        fastestBySize.set(row.size, row.averageMs);
+        fastestByBucket.set(bucketKey, row.averageMs);
       }
     }
 
-    const currentMostUnique = mostUniqueBySize.get(row.size);
+    const currentMostUnique = mostUniqueByBucket.get(bucketKey);
     if (currentMostUnique == null || row.savedCount > currentMostUnique) {
-      mostUniqueBySize.set(row.size, row.savedCount);
+      mostUniqueByBucket.set(bucketKey, row.savedCount);
     }
   }
 
   const summaryRows = preliminarySummaryRows
     .map((row) => ({
       ...row,
-      isFastestForSize: row.averageMs != null && fastestBySize.get(row.size) === row.averageMs,
-      isMostUniqueForSize: mostUniqueBySize.get(row.size) === row.savedCount && row.savedCount > 0,
+      isFastestForSize:
+        row.averageMs != null &&
+        fastestByBucket.get(`${row.size}-${row.orthogonalMinDistance}`) === row.averageMs,
+      isMostUniqueForSize:
+        mostUniqueByBucket.get(`${row.size}-${row.orthogonalMinDistance}`) === row.savedCount &&
+        row.savedCount > 0,
     }))
     .sort((left, right) => {
       if (left.size !== right.size) return left.size - right.size;
+      if (left.orthogonalMinDistance !== right.orthogonalMinDistance) {
+        return left.orthogonalMinDistance - right.orthogonalMinDistance;
+      }
       if (left.strategy !== right.strategy) return left.strategy.localeCompare(right.strategy);
       if (left.minimumGroupSize !== right.minimumGroupSize) {
         return left.minimumGroupSize - right.minimumGroupSize;

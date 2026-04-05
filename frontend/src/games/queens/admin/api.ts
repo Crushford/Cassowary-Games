@@ -169,6 +169,7 @@ interface SystemLoadDto {
 interface PuzzleCatalogStatsDto {
   totalPuzzles: number;
   countsBySize: Record<string, number>;
+  countsBySizeAndDistance: Record<string, number>;
 }
 
 function toLocalBoardState(boardState: BoardStateDto | null): QueensAdminBoardState | null {
@@ -306,6 +307,14 @@ function toSystemLoad(data: SystemLoadDto): QueensAdminSystemLoad {
   };
 }
 
+function toPuzzleCatalogStats(data: PuzzleCatalogStatsDto): QueensAdminPuzzleCatalogStats {
+  return {
+    totalPuzzles: data.totalPuzzles,
+    countsBySize: data.countsBySize,
+    countsBySizeAndDistance: data.countsBySizeAndDistance ?? {},
+  };
+}
+
 async function postOperation(
   path: string,
   body: Record<string, unknown>,
@@ -327,7 +336,7 @@ async function postOperation(
 export const queensAdminApi = {
   async getPuzzleCatalogStats(): Promise<QueensAdminPuzzleCatalogStats> {
     const response = await fetch('/api/queens/admin/generation/catalog-stats');
-    return (await response.json()) as PuzzleCatalogStatsDto;
+    return toPuzzleCatalogStats((await response.json()) as PuzzleCatalogStatsDto);
   },
 
   async getSystemLoad(): Promise<QueensAdminSystemLoad> {

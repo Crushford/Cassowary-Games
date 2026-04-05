@@ -70,6 +70,14 @@ function deriveOrthogonalMinDistanceFromQueens(queens: Pos[], boardSize: number)
   return Number.isFinite(minimumSharedLineDistance) ? minimumSharedLineDistance : boardSize;
 }
 
+function deriveTargetQueenCountFromQueensString(queens: string): number {
+  let count = 0;
+  for (const symbol of queens) {
+    if (symbol === 'Q') count += 1;
+  }
+  return count;
+}
+
 function requiresLineCoverage(
   targetQueenCount: number,
   orthogonalMinDistance: number,
@@ -79,6 +87,36 @@ function requiresLineCoverage(
 }
 
 type PuzzleDatabase = Record<string, PuzzleRecord[]>;
+
+function normalizePuzzleDatabase(data: unknown): PuzzleDatabase {
+  if (!data || typeof data !== 'object') return {};
+  const normalized: PuzzleDatabase = {};
+
+  for (const [sizeKey, value] of Object.entries(data as Record<string, unknown>)) {
+    if (!Array.isArray(value)) continue;
+    normalized[sizeKey] = value.filter(
+      (puzzle): puzzle is PuzzleRecord =>
+        !!puzzle && typeof puzzle === 'object' && 'layout' in puzzle && 'queens' in puzzle
+    );
+  }
+
+  return normalized;
+}
+
+function mergePuzzleDatabases(...databases: PuzzleDatabase[]): PuzzleDatabase {
+  const merged: PuzzleDatabase = {};
+
+  for (const database of databases) {
+    for (const [sizeKey, puzzles] of Object.entries(database)) {
+      if (!merged[sizeKey]) {
+        merged[sizeKey] = [];
+      }
+      merged[sizeKey].push(...puzzles);
+    }
+  }
+
+  return merged;
+}
 
 export interface TutorialStep {
   id: string;
@@ -1160,14 +1198,32 @@ export const useQueensStore = defineStore('queens', {
       this.loadingMessage = 'Loading puzzle database...';
 
       try {
-        const response = await fetch('/queens/puzzles.json', { cache: 'no-store' });
-        if (!response.ok) {
-          throw new Error(`Failed to load puzzles.json: ${response.status}`);
-        }
-        const data = await response.json();
+        const [classicResponse, extendedResponse] = await Promise.allSettled([
+          fetch('/queens/puzzles.json', { cache: 'no-store' }),
+          fetch('/queens/extendedPuzzles.json', { cache: 'no-store' }),
+        ]);
 
-        // Just store the raw data. No filtering, no reordering, no maps.
-        this.puzzleDatabase = data;
+        if (classicResponse.status !== 'fulfilled') {
+          throw classicResponse.reason;
+        }
+        if (!classicResponse.value.ok) {
+          throw new Error(`Failed to load puzzles.json: ${classicResponse.value.status}`);
+        }
+
+        const classicData = normalizePuzzleDatabase(await classicResponse.value.json());
+        let extendedData: PuzzleDatabase = {};
+
+        if (extendedResponse.status === 'fulfilled') {
+          if (extendedResponse.value.ok) {
+            extendedData = normalizePuzzleDatabase(await extendedResponse.value.json());
+          } else if (extendedResponse.value.status !== 404) {
+            throw new Error(
+              `Failed to load extendedPuzzles.json: ${extendedResponse.value.status}`
+            );
+          }
+        }
+
+        this.puzzleDatabase = mergePuzzleDatabases(classicData, extendedData);
         this.puzzleIdMap = new Map<string, PuzzleRecord>(); // optional cache; stays empty for now
         this.allPuzzles = []; // not needed anymore, but keep type happy
         this.diversityAverageBySize = {}; // recompute averages lazily after a new database load
@@ -1196,7 +1252,8 @@ export const useQueensStore = defineStore('queens', {
 
       const gridSize = Math.sqrt(puzzleData.layout.length);
       this.gridSize = gridSize;
-      this.targetQueenCount = puzzleData.targetQueenCount ?? gridSize;
+      this.targetQueenCount =
+        puzzleData.targetQueenCount ?? deriveTargetQueenCountFromQueensString(puzzleData.queens);
       this.orthogonalMinDistance = puzzleData.orthogonalMinDistance ?? gridSize;
       const layout = puzzleData.layout;
       const queens = puzzleData.queens;
@@ -1363,17 +1420,35 @@ export const useQueensStore = defineStore('queens', {
       currentPuzzle: PuzzleForDiversity | null
     ): PuzzleForDiversity | null {
       const originals = this.getOriginalPuzzlesForSize(sizeKey);
-      if (originals.length === 0) {
+      return this.chooseNextDiversePuzzleFromCandidates(sizeKey, originals, currentPuzzle);
+    },
+
+    chooseNextDiversePuzzleFromCandidates(
+      sizeKey: string,
+      candidates: PuzzleRecord[],
+      currentPuzzle: PuzzleRecord | null
+    ): PuzzleForDiversity | null {
+      const normalizedCandidates = candidates.map((puzzle) => ({
+        ...puzzle,
+        id: String(puzzle.id),
+      }));
+      const normalizedCurrentPuzzle = currentPuzzle
+        ? { ...currentPuzzle, id: String(currentPuzzle.id) }
+        : null;
+      const originals = keepOnlyOriginalPuzzleVariants(normalizedCandidates);
+      const candidatePool = originals.length > 0 ? originals : normalizedCandidates;
+      if (candidatePool.length === 0) {
         return null;
       }
 
+      const diversitySizeKey = originals.length > 0 ? sizeKey : `${sizeKey}|all`;
       const averageDifference = this.getAverageDifferenceThresholdForSize(sizeKey);
       const requiredDifference = convertAverageIntoRequiredDifference(averageDifference);
       const choice = chooseRandomPuzzleThatIsMeaningfullyDifferent({
-        currentPuzzle,
-        candidatePuzzles: originals,
+        currentPuzzle: normalizedCurrentPuzzle,
+        candidatePuzzles: candidatePool,
         minimumDifference: requiredDifference,
-        recentPuzzleIds: this.getRecentPuzzleIdsForSize(sizeKey),
+        recentPuzzleIds: this.getRecentPuzzleIdsForSize(diversitySizeKey),
       });
 
       if (!choice.selectedPuzzle) {
@@ -1381,7 +1456,7 @@ export const useQueensStore = defineStore('queens', {
       }
 
       this.lastDiversitySelectionSummary = {
-        sizeKey,
+        sizeKey: diversitySizeKey,
         averageDifference,
         requiredDifference,
         selectedDifference: choice.selectedDifference,
@@ -1390,6 +1465,20 @@ export const useQueensStore = defineStore('queens', {
       };
 
       return choice.selectedPuzzle;
+    },
+
+    getRandomPuzzleForSelection(
+      sizeKey: string,
+      orthogonalMinDistance: number,
+      difficulty?: 'easy' | 'medium' | 'hard',
+      currentPuzzle?: PuzzleRecord | null
+    ): PuzzleRecord | null {
+      const candidates = this.getPuzzlesForSelection(sizeKey, orthogonalMinDistance, difficulty);
+      return this.chooseNextDiversePuzzleFromCandidates(
+        `${sizeKey}|d${orthogonalMinDistance}|${difficulty}`,
+        candidates,
+        (currentPuzzle ?? null) as PuzzleForDiversity | null
+      );
     },
 
     getNextPuzzle() {
@@ -1819,17 +1908,22 @@ export const useQueensStore = defineStore('queens', {
         return;
       }
 
-      // Derive the size key and puzzles list
       const sizeKey = `${this.gridSize}x${this.gridSize}`;
-      const current = (this.currentPuzzle || null) as PuzzleForDiversity | null;
-      const selectedPuzzle = this.chooseNextDiversePuzzleForSize(sizeKey, current);
+      const orthogonalMinDistance =
+        this.currentPuzzle?.orthogonalMinDistance ?? this.orthogonalMinDistance;
+      const difficulty = this.currentPuzzle?.difficulty ?? 'easy';
+      const selectedPuzzle = this.getRandomPuzzleForSelection(
+        sizeKey,
+        orthogonalMinDistance,
+        difficulty,
+        this.currentPuzzle
+      );
 
       if (!selectedPuzzle) {
-        router.push('/queens');
+        router.push({ path: '/queens', query: { mode: 'single' } });
         return;
       }
 
-      // Navigate using the string ID
       router.push(`/queens/${selectedPuzzle.id}`);
     },
 
@@ -1883,37 +1977,89 @@ export const useQueensStore = defineStore('queens', {
       });
     },
 
-    getAvailableDifficultiesForSize(sizeKey: string): Array<'easy' | 'medium' | 'hard'> {
+    getAvailableOrthogonalDistancesForSize(sizeKey: string): number[] {
       if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
+        return [];
+      }
+
+      const distances = new Set<number>();
+      const boardSize = parseInt(sizeKey.split('x')[0], 10);
+      for (const puzzle of this.puzzleDatabase[sizeKey]) {
+        distances.add(puzzle.orthogonalMinDistance ?? boardSize);
+      }
+
+      return Array.from(distances).sort((left, right) => left - right);
+    },
+
+    getPuzzlesForSelection(
+      sizeKey: string,
+      orthogonalMinDistance?: number,
+      difficulty?: 'easy' | 'medium' | 'hard'
+    ): PuzzleRecord[] {
+      if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
+        return [];
+      }
+
+      const boardSize = parseInt(sizeKey.split('x')[0], 10);
+      return this.puzzleDatabase[sizeKey].filter((puzzle) => {
+        const puzzleDistance = puzzle.orthogonalMinDistance ?? boardSize;
+        if (orthogonalMinDistance != null && puzzleDistance !== orthogonalMinDistance) {
+          return false;
+        }
+
+        if (difficulty && (puzzle.difficulty ?? 'easy') !== difficulty) {
+          return false;
+        }
+
+        return true;
+      });
+    },
+
+    getAvailableDifficultiesForSelection(
+      sizeKey: string,
+      orthogonalMinDistance: number
+    ): Array<'easy' | 'medium' | 'hard'> {
+      const puzzles = this.getPuzzlesForSelection(sizeKey, orthogonalMinDistance);
+      if (puzzles.length === 0) {
         return [];
       }
 
       const difficultyOrder: Array<'easy' | 'medium' | 'hard'> = ['easy', 'medium', 'hard'];
       const difficulties = new Set<'easy' | 'medium' | 'hard'>();
-      for (const puzzle of this.puzzleDatabase[sizeKey]) {
-        if (puzzle.difficulty && difficultyOrder.includes(puzzle.difficulty)) {
-          difficulties.add(puzzle.difficulty);
-        }
-      }
-
-      if (difficulties.size === 0) {
-        return ['easy'];
+      for (const puzzle of puzzles) {
+        difficulties.add(puzzle.difficulty ?? 'easy');
       }
 
       return difficultyOrder.filter((difficulty) => difficulties.has(difficulty));
+    },
+
+    getAvailableDifficultiesForSize(sizeKey: string): Array<'easy' | 'medium' | 'hard'> {
+      const distances = this.getAvailableOrthogonalDistancesForSize(sizeKey);
+      const difficultyOrder: Array<'easy' | 'medium' | 'hard'> = ['easy', 'medium', 'hard'];
+      const difficulties = new Set<'easy' | 'medium' | 'hard'>();
+
+      for (const distance of distances) {
+        for (const difficulty of this.getAvailableDifficultiesForSelection(sizeKey, distance)) {
+          difficulties.add(difficulty);
+        }
+      }
+
+      return difficultyOrder.filter((difficulty) => difficulties.has(difficulty));
+    },
+
+    countPuzzlesForSelection(
+      sizeKey: string,
+      orthogonalMinDistance: number,
+      difficulty: 'easy' | 'medium' | 'hard'
+    ): number {
+      return this.getPuzzlesForSelection(sizeKey, orthogonalMinDistance, difficulty).length;
     },
 
     countPuzzlesForSizeAndDifficulty(
       sizeKey: string,
       difficulty: 'easy' | 'medium' | 'hard'
     ): number {
-      if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
-        return 0;
-      }
-
-      return this.puzzleDatabase[sizeKey].filter(
-        (puzzle) => (puzzle.difficulty ?? 'easy') === difficulty
-      ).length;
+      return this.getPuzzlesForSelection(sizeKey, undefined, difficulty).length;
     },
 
     // Modal state management
@@ -2082,13 +2228,30 @@ export const useQueensStore = defineStore('queens', {
       sizeKey: string,
       difficulty: 'easy' | 'medium' | 'hard'
     ): PuzzleRecord | null {
+      const distances = this.getAvailableOrthogonalDistancesForSize(sizeKey);
+      for (const distance of distances) {
+        const puzzle = this.getNextUncompletedPuzzleForSelection(sizeKey, distance, difficulty);
+        if (puzzle) {
+          return puzzle;
+        }
+      }
+      return null;
+    },
+
+    getNextUncompletedPuzzleForSelection(
+      sizeKey: string,
+      orthogonalMinDistance: number,
+      difficulty: 'easy' | 'medium' | 'hard'
+    ): PuzzleRecord | null {
       if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
         return null;
       }
 
       const completedPuzzles = getCompletedPuzzles();
-      const puzzlesForBucket = this.puzzleDatabase[sizeKey].filter(
-        (puzzle) => (puzzle.difficulty ?? 'easy') === difficulty
+      const puzzlesForBucket = this.getPuzzlesForSelection(
+        sizeKey,
+        orthogonalMinDistance,
+        difficulty
       );
 
       for (const puzzle of puzzlesForBucket) {
@@ -2105,14 +2268,28 @@ export const useQueensStore = defineStore('queens', {
       sizeKey: string,
       difficulty: 'easy' | 'medium' | 'hard'
     ): PuzzleRecord | null {
+      const distances = this.getAvailableOrthogonalDistancesForSize(sizeKey);
+      for (const distance of distances) {
+        const puzzle = this.getFirstPuzzleForSelection(sizeKey, distance, difficulty);
+        if (puzzle) {
+          return puzzle;
+        }
+      }
+      return null;
+    },
+
+    getFirstPuzzleForSelection(
+      sizeKey: string,
+      orthogonalMinDistance: number,
+      difficulty: 'easy' | 'medium' | 'hard'
+    ): PuzzleRecord | null {
       if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
         return null;
       }
 
       return (
-        this.puzzleDatabase[sizeKey].find(
-          (puzzle) => (puzzle.difficulty ?? 'easy') === difficulty
-        ) ?? null
+        this.getPuzzlesForSelection(sizeKey, orthogonalMinDistance, difficulty).find(() => true) ??
+        null
       );
     },
 

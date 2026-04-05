@@ -167,4 +167,5 @@ export interface QueensAdminSystemLoad {
 export interface QueensAdminPuzzleCatalogStats {
   totalPuzzles: number;
   countsBySize: Record<string, number>;
+  countsBySizeAndDistance: Record<string, number>;
 }

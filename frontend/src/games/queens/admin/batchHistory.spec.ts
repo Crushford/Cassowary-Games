@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const STORAGE_KEY = 'queens-admin-batch-history-v2';
+const STORAGE_KEY = 'queens-admin-batch-history-v3';
 
 function createStorage() {
   const values = new Map<string, string>();
@@ -49,6 +49,7 @@ describe('batch history migration', () => {
     expect(snapshot.summaryRows[0]).toMatchObject({
       size: 4,
       strategy: 'baseline',
+      orthogonalMinDistance: 4,
       minimumGroupSize: 3,
       minimumGroupSizeSource: 'legacy-assumed',
       duplicateCount: 1,
@@ -56,11 +57,12 @@ describe('batch history migration', () => {
 
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
     expect(saved).toMatchObject({
-      version: 2,
+      version: 3,
       processedRunIds: ['legacy-1'],
       events: [
         {
           runId: 'legacy-1',
+          orthogonalMinDistance: 4,
           minimumGroupSize: 3,
           minimumGroupSizeSource: 'legacy-assumed',
         },
@@ -95,6 +97,7 @@ describe('batch history migration', () => {
 
     expect(snapshot.summaryRows[0]).toMatchObject({
       minimumGroupSize: 4,
+      orthogonalMinDistance: 5,
       minimumGroupSizeSource: 'explicit',
       savedCount: 1,
     });
@@ -157,6 +160,7 @@ describe('batch history migration', () => {
       'explicit',
       'legacy-assumed',
     ]);
+    expect(rows.every((row) => row.orthogonalMinDistance === 6)).toBe(true);
   });
 
   it('does not change already migrated history when read multiple times', async () => {
@@ -188,5 +192,67 @@ describe('batch history migration', () => {
     const twice = localStorage.getItem(STORAGE_KEY);
 
     expect(twice).toBe(once);
+  });
+
+  it('keeps different orthogonal distances separate in summary and ratio rows', async () => {
+    const { getBatchHistorySnapshot, recordBatchRuns } = await import('./batchHistory');
+
+    recordBatchRuns([
+      {
+        runId: 'distance-1',
+        size: 7,
+        strategy: 'baseline',
+        queenCountMode: 'max',
+        targetQueenCount: 10,
+        orthogonalMinDistance: 5,
+        minimumGroupSize: 3,
+        state: 'COMPLETED',
+        coloredCellCount: 49,
+        totalCellCount: 49,
+        durationMs: 100,
+        success: true,
+        error: null,
+        startedAt: '2026-04-05T10:00:00.000Z',
+        finishedAt: '2026-04-05T10:00:10.000Z',
+        persistenceState: 'SAVED',
+        persistenceMessage: null,
+        savedPuzzleId: 'p-5',
+        encodedPuzzleLayout: null,
+      },
+      {
+        runId: 'distance-2',
+        size: 7,
+        strategy: 'baseline',
+        queenCountMode: 'max',
+        targetQueenCount: 7,
+        orthogonalMinDistance: 7,
+        minimumGroupSize: 3,
+        state: 'COMPLETED',
+        coloredCellCount: 49,
+        totalCellCount: 49,
+        durationMs: 120,
+        success: true,
+        error: null,
+        startedAt: '2026-04-05T10:10:00.000Z',
+        finishedAt: '2026-04-05T10:10:10.000Z',
+        persistenceState: 'DUPLICATE',
+        persistenceMessage: null,
+        savedPuzzleId: null,
+        encodedPuzzleLayout: null,
+      },
+    ]);
+
+    const snapshot = getBatchHistorySnapshot();
+    const summaryDistances = snapshot.summaryRows
+      .filter((row) => row.size === 7 && row.strategy === 'baseline')
+      .map((row) => row.orthogonalMinDistance)
+      .sort();
+    const ratioDistances = snapshot.ratiosBySize
+      .filter((row) => row.size === 7)
+      .map((row) => row.orthogonalMinDistance)
+      .sort();
+
+    expect(summaryDistances).toEqual([5, 7]);
+    expect(ratioDistances).toEqual([5, 7]);
   });
 });

@@ -45,11 +45,19 @@ class GenerationController(
     @GetMapping("/catalog-stats")
     fun getCatalogStats(): PuzzleCatalogStatsDto {
         val countsBySize = puzzleCatalogService.countBySize()
+        val countsBySizeAndDistance =
+            puzzleCatalogService.countBySizeAndDistance()
+                .toSortedMap(compareBy<Pair<Int, Int>>({ it.first }, { it.second }))
+                .mapKeys { (sizeAndDistance, _) ->
+                    val (size, distance) = sizeAndDistance
+                    "${size}x${size}|d=$distance"
+                }
         return PuzzleCatalogStatsDto(
             totalPuzzles = countsBySize.values.sum(),
             countsBySize = countsBySize
                 .toSortedMap()
                 .mapKeys { (size, _) -> "${size}x${size}" },
+            countsBySizeAndDistance = countsBySizeAndDistance,
         )
     }
 

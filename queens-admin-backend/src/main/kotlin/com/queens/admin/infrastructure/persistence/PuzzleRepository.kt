@@ -67,6 +67,17 @@ class PuzzleRepository {
                 }
         }
 
+    fun countBySizeAndDistance(): Map<Pair<Int, Int>, Int> =
+        transaction {
+            val countExpression = PuzzlesTable.id.count()
+            PuzzlesTable
+                .select(PuzzlesTable.size, PuzzlesTable.orthogonalMinDistance, countExpression)
+                .groupBy(PuzzlesTable.size, PuzzlesTable.orthogonalMinDistance)
+                .associate { row ->
+                    (row[PuzzlesTable.size] to row[PuzzlesTable.orthogonalMinDistance]) to row[countExpression].toInt()
+                }
+        }
+
     fun updateDifficulty(
         puzzleId: UUID,
         difficultyTier: PuzzleDifficultyTier,

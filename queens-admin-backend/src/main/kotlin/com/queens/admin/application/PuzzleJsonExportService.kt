@@ -56,7 +56,6 @@ class PuzzleJsonExportService(
                 "id" to puzzle.id.toString(),
                 "layout" to puzzle.layout,
                 "queens" to puzzle.queens,
-                "targetQueenCount" to puzzle.targetQueenCount,
                 "orthogonalMinDistance" to puzzle.orthogonalMinDistance,
             )
             puzzle.difficultyTier?.let { row["difficulty"] = it.name.lowercase() }
