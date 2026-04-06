@@ -91,11 +91,8 @@
       </PlayGrid>
     </div>
 
-    <!-- Controls at the bottom -->
-    <div class="flex-none p-4 space-y-3">
-      <!-- Action Buttons -->
-      <div class="flex flex-wrap items-center justify-center gap-2">
-        <!-- Undo Button -->
+    <div class="flex-none px-4 pt-2">
+      <div class="flex items-center justify-center gap-2">
         <Button
           label="Undo"
           unstyled
@@ -104,8 +101,6 @@
           aria-label="Undo last move"
           @click="handleUndo"
         />
-
-        <!-- Clear Button -->
         <Button
           label="Clear"
           unstyled
@@ -113,22 +108,12 @@
           aria-label="Clear all marks from the board"
           @click="handleClear"
         />
-
-        <div class="ml-1 flex items-center gap-2 rounded-xl px-3 py-1.5">
-          <span class="text-[11px] font-semibold leading-tight text-semantic-neutral-300"
-            >additional options</span
-          >
-          <ToggleSwitch
-            id="queens-additional-options-toggle"
-            v-model="showAdditionalOptions"
-            class="[--p-toggleswitch-width:2.4rem] [--p-toggleswitch-height:1.35rem]"
-            :disabled="isModalOpen"
-            aria-label="Toggle additional options"
-          />
-        </div>
       </div>
+    </div>
 
-      <QueensToolSelector v-if="isAdditionalOptionsVisible" :is-disabled="isModalOpen" />
+    <!-- Controls at the bottom -->
+    <div class="flex-none p-4 space-y-3">
+      <QueensToolSelector embedded :is-disabled="isModalOpen" />
 
       <QueensActionMenu compact />
     </div>
@@ -146,7 +131,6 @@ import {
   nextTick,
 } from 'vue';
 import Button from 'primevue/button';
-import ToggleSwitch from 'primevue/toggleswitch';
 import { useRoute, useRouter } from 'vue-router';
 import { useQueensStore, type TutorialStep } from '../stores/queensStore';
 import { useSpeedModeStore } from '../stores/speedModeStore';
@@ -186,7 +170,6 @@ const speedModeStore = useSpeedModeStore();
 
 const shouldShakeErrorToast = ref(false);
 const isRouteLoading = ref(false);
-const showAdditionalOptions = ref(false);
 
 // Board rotation animation
 const boardRotationDeg = ref(0);
@@ -253,10 +236,6 @@ const showSpeedModeCompletionModal = computed(() => {
 
 const isModalOpen = computed(() => {
   return showSpeedModeCompletionModal.value || (!queensStore.isSpeedMode && queensStore.isComplete);
-});
-
-const isAdditionalOptionsVisible = computed(() => {
-  return showAdditionalOptions.value || queensStore.highlightToolSelector;
 });
 
 async function loadPuzzleFromRoute() {
