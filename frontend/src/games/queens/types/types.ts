@@ -151,6 +151,4 @@ export interface ColorClasses {
   bg: string; // Background
   text: string; // Text color
   border: string; // Border color
-  hoverBg: string; // Hover background
-  hoverText: string; // Hover text
 }

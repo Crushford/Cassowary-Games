@@ -2,7 +2,11 @@ import { defineStore } from 'pinia';
 import type { GridSquare, Pos, MarkType } from '../types/types';
 import { createEmptyGrid, clonePlayerMarks } from './gridUtils';
 import { removeQueenPlacement, replayHistoryFromEntries } from '../utils/queenRemoval';
-import { decodeQueensPuzzleLayout } from '../utils/urlPuzzleEncoding';
+import {
+  buildEncodedQueensPuzzleLayout,
+  decodeQueensPuzzleLayout,
+  QUEENS_PUZZLE_SHARE_BASE_URL,
+} from '../utils/urlPuzzleEncoding';
 import { assignRegionPaletteColors } from '../utils/regionDisplay';
 import router from '@/router';
 import { useSpeedModeStore } from './speedModeStore';
@@ -1894,6 +1898,71 @@ export const useQueensStore = defineStore('queens', {
       }
       // When disabling, don't remove existing flags - just prevent future auto-flagging
     },
+
+    async navigateToMainMenu() {
+      if (this.isSpeedMode) {
+        const speedModeStore = useSpeedModeStore();
+        speedModeStore.reset();
+      }
+
+      if (this.isTutorialMode) {
+        this.exitTutorialMode();
+      }
+
+      if (this.isRotateMode) {
+        this.resetRotateMode();
+      }
+
+      await router.push('/queens');
+    },
+
+    async navigateToPuzzleVariationSelection() {
+      const sizeKey = `${this.gridSize}x${this.gridSize}`;
+      const distance = this.currentPuzzle?.orthogonalMinDistance ?? this.gridSize;
+      const difficulty = this.currentPuzzle?.difficulty;
+
+      await router.push({
+        path: '/queens',
+        query: {
+          mode: 'single',
+          size: sizeKey,
+          distance: String(distance),
+          ...(difficulty ? { difficulty } : {}),
+        },
+      });
+    },
+
+    buildShareablePuzzleUrl(): string | null {
+      if (!this.gridSize || this.grid.length === 0) return null;
+
+      const encodedLayout = buildEncodedQueensPuzzleLayout(
+        this.grid.flat().map((cell) => ({
+          groupColor: cell.groupColor ?? null,
+          isSolutionQueen: !!cell.isSolutionQueen,
+        }))
+      );
+
+      const href = router.resolve({
+        name: 'queens-encoded-puzzle',
+        params: { encodedLayout },
+      }).href;
+
+      return `${QUEENS_PUZZLE_SHARE_BASE_URL}${href}`;
+    },
+
+    async copyCurrentPuzzleLink() {
+      const url = this.buildShareablePuzzleUrl();
+      if (!url) return false;
+
+      try {
+        await navigator.clipboard.writeText(url);
+        return true;
+      } catch (error) {
+        console.error('Error copying puzzle link:', error);
+        return false;
+      }
+    },
+
     async startNextPuzzle() {
       // Load database if not already loaded
       if (!this.puzzleDatabase) {

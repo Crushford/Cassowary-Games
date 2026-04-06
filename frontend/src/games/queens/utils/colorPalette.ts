@@ -34,78 +34,47 @@ export const COLOR_CLASSES: Record<ColorName, ColorClasses> = {
     bg: 'bg-group-red-base',
     text: 'text-group-red-base',
     border: 'border-group-red-base',
-    hoverBg: 'hover:bg-group-red-hover',
-    hoverText: 'hover:text-group-red-hover',
   },
   blue: {
     bg: 'bg-group-blue-base',
     text: 'text-group-blue-base',
     border: 'border-group-blue-base',
-    hoverBg: 'hover:bg-group-blue-hover',
-    hoverText: 'hover:text-group-blue-hover',
   },
   green: {
     bg: 'bg-group-green-base',
     text: 'text-group-green-base',
     border: 'border-group-green-base',
-    hoverBg: 'hover:bg-group-green-hover',
-    hoverText: 'hover:text-group-green-hover',
   },
   yellow: {
     bg: 'bg-group-yellow-base',
     text: 'text-group-yellow-base',
     border: 'border-group-yellow-base',
-    hoverBg: 'hover:bg-group-yellow-hover',
-    hoverText: 'hover:text-group-yellow-hover',
   },
   purple: {
     bg: 'bg-group-purple-base',
     text: 'text-group-purple-base',
     border: 'border-group-purple-base',
-    hoverBg: 'hover:bg-group-purple-hover',
-    hoverText: 'hover:text-group-purple-hover',
   },
   pink: {
     bg: 'bg-group-pink-base',
     text: 'text-group-pink-base',
     border: 'border-group-pink-base',
-    hoverBg: 'hover:bg-group-pink-hover',
-    hoverText: 'hover:text-group-pink-hover',
   },
   teal: {
     bg: 'bg-group-teal-base',
     text: 'text-group-teal-base',
     border: 'border-group-teal-base',
-    hoverBg: 'hover:bg-group-teal-hover',
-    hoverText: 'hover:text-group-teal-hover',
   },
   indigo: {
     bg: 'bg-group-indigo-base',
     text: 'text-group-indigo-base',
     border: 'border-group-indigo-base',
-    hoverBg: 'hover:bg-group-indigo-hover',
-    hoverText: 'hover:text-group-indigo-hover',
   },
   amber: {
     bg: 'bg-group-amber-base',
     text: 'text-group-amber-base',
     border: 'border-group-amber-base',
-    hoverBg: 'hover:bg-group-amber-hover',
-    hoverText: 'hover:text-group-amber-hover',
   },
-};
-
-// Mapping for background + hover classes for Tailwind grid coloring with individual color textures
-export const COLOR_BG_HOVER_CLASSES: Record<ColorName, string> = {
-  red: 'hover:brightness-110',
-  blue: 'hover:brightness-110',
-  green: 'hover:brightness-110',
-  yellow: 'hover:brightness-110',
-  purple: 'hover:brightness-110',
-  pink: 'hover:brightness-110', // Note: using purple.png as fallback since pink.png not found
-  teal: 'hover:brightness-110',
-  indigo: 'hover:brightness-110',
-  amber: 'hover:brightness-110',
 };
 
 // Image URLs for each color (for img src attributes)

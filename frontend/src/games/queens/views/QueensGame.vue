@@ -91,16 +91,8 @@
       </PlayGrid>
     </div>
 
-    <!-- Controls at the bottom -->
-    <div class="flex-none p-4 space-y-3">
-      <!-- Tool Selector -->
-      <QueensToolSelector :is-disabled="isModalOpen" />
-
-      <!-- Action Buttons -->
-      <div
-        class="rounded-2xl border border-semantic-neutral-700 bg-surface-overlay bg-[linear-gradient(180deg,rgba(21,28,40,0.95)_0%,rgba(14,20,32,0.95)_100%)] p-2 flex gap-2 justify-center"
-      >
-        <!-- Undo Button -->
+    <div class="flex-none px-4 pt-2">
+      <div class="flex items-center justify-center gap-2">
         <Button
           label="Undo"
           unstyled
@@ -109,8 +101,6 @@
           aria-label="Undo last move"
           @click="handleUndo"
         />
-
-        <!-- Clear Button -->
         <Button
           label="Clear"
           unstyled
@@ -119,35 +109,13 @@
           @click="handleClear"
         />
       </div>
+    </div>
 
-      <div
-        class="rounded-2xl border border-semantic-neutral-700 bg-surface-overlay bg-[linear-gradient(180deg,rgba(21,28,40,0.95)_0%,rgba(14,20,32,0.95)_100%)] p-2 grid grid-cols-4 gap-2"
-      >
-        <Button
-          label="Select Puzzle"
-          class="rounded-xl border px-2 py-2 text-[11px] font-semibold leading-tight shadow-none transition-colors duration-150 active:translate-y-px border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-200 enabled:hover:bg-semantic-neutral-700 enabled:hover:border-semantic-neutral-600"
-          @click="handleSelectPuzzle"
-        />
-        <Button
-          label="Share"
-          class="rounded-xl border px-2 py-2 text-[11px] font-semibold leading-tight shadow-none transition-colors duration-150 active:translate-y-px border-semantic-info-700 bg-semantic-info-900 text-semantic-info-100 enabled:hover:bg-semantic-info-800 enabled:hover:border-semantic-info-600"
-          @click="handleSharePuzzle"
-        />
-        <Button
-          label="Next Puzzle"
-          class="rounded-xl border px-2 py-2 text-[11px] font-semibold leading-tight shadow-none transition-colors duration-150 active:translate-y-px border-semantic-success-700 bg-semantic-success-900 text-semantic-success-100 enabled:hover:bg-semantic-success-800 enabled:hover:border-semantic-success-600"
-          @click="handleNextPuzzle"
-        />
-        <Button
-          label="Main Menu"
-          class="rounded-xl border px-2 py-2 text-[11px] font-semibold leading-tight shadow-none transition-colors duration-150 active:translate-y-px border-semantic-neutral-700 bg-semantic-neutral-800 text-semantic-neutral-200 enabled:hover:bg-semantic-neutral-700 enabled:hover:border-semantic-neutral-600"
-          @click="handleMainMenu"
-        />
-      </div>
+    <!-- Controls at the bottom -->
+    <div class="flex-none p-4 space-y-3">
+      <QueensToolSelector embedded :is-disabled="isModalOpen" />
 
-      <div v-if="shareStatusMessage" class="text-center text-xs text-semantic-neutral-300">
-        {{ shareStatusMessage }}
-      </div>
+      <QueensActionMenu compact />
     </div>
   </div>
 </template>
@@ -169,10 +137,6 @@ import { useSpeedModeStore } from '../stores/speedModeStore';
 import type { Pos } from '../types/types';
 import { trackGameStart } from '@/shared/utils/analyticsEvents';
 import {
-  buildEncodedQueensPuzzleLayout,
-  QUEENS_PUZZLE_SHARE_BASE_URL,
-} from '../utils/urlPuzzleEncoding';
-import {
   buildQueensSelectionRoute,
   isQueensSelectionDifficulty,
 } from '../utils/puzzleSelectionRoute';
@@ -192,6 +156,9 @@ const Toast = defineAsyncComponent(() => import('@/shared/components/Toast.vue')
 const QueensToolSelector = defineAsyncComponent(
   () => import('../components/queens/QueensToolSelector.vue')
 );
+const QueensActionMenu = defineAsyncComponent(
+  () => import('../components/queens/QueensActionMenu.vue')
+);
 const TutorialOverlay = defineAsyncComponent(
   () => import('../components/queens/TutorialOverlay.vue')
 );
@@ -203,8 +170,6 @@ const speedModeStore = useSpeedModeStore();
 
 const shouldShakeErrorToast = ref(false);
 const isRouteLoading = ref(false);
-const shareStatusMessage = ref('');
-let shareStatusTimeout: number | null = null;
 
 // Board rotation animation
 const boardRotationDeg = ref(0);
@@ -410,89 +375,6 @@ async function loadPuzzleFromRoute() {
   }
 }
 
-const shareablePuzzleUrl = computed(() => {
-  if (!queensStore.gridSize || queensStore.grid.length === 0) return null;
-  const encodedLayout = buildEncodedQueensPuzzleLayout(
-    queensStore.grid.flat().map((cell) => ({
-      groupColor: cell.groupColor ?? null,
-      isSolutionQueen: !!cell.isSolutionQueen,
-    }))
-  );
-  const href = router.resolve({
-    name: 'queens-encoded-puzzle',
-    params: { encodedLayout },
-  }).href;
-  return `${QUEENS_PUZZLE_SHARE_BASE_URL}${href}`;
-});
-
-function setShareStatus(message: string) {
-  shareStatusMessage.value = message;
-  if (shareStatusTimeout !== null) {
-    clearTimeout(shareStatusTimeout);
-  }
-  shareStatusTimeout = window.setTimeout(() => {
-    shareStatusMessage.value = '';
-    shareStatusTimeout = null;
-  }, 2000);
-}
-
-async function handleMainMenu() {
-  // Reset speed mode if active
-  if (queensStore.isSpeedMode) {
-    speedModeStore.reset();
-  }
-  // Exit tutorial mode if active
-  if (queensStore.isTutorialMode) {
-    queensStore.exitTutorialMode();
-  }
-  // Reset rotate mode if active
-  if (queensStore.isRotateMode) {
-    queensStore.resetRotateMode();
-  }
-  router.push('/queens');
-}
-
-function handleSelectPuzzle() {
-  const sizeKey = `${queensStore.gridSize}x${queensStore.gridSize}`;
-  const distance = queensStore.currentPuzzle?.orthogonalMinDistance ?? queensStore.gridSize;
-  const difficulty = queensStore.currentPuzzle?.difficulty;
-
-  router.push({
-    path: '/queens',
-    query: {
-      mode: 'single',
-      size: sizeKey,
-      distance: String(distance),
-      ...(difficulty ? { difficulty } : {}),
-    },
-  });
-}
-
-async function handleNextPuzzle() {
-  await queensStore.startNextPuzzle();
-}
-
-async function handleSharePuzzle() {
-  if (!shareablePuzzleUrl.value) return;
-
-  try {
-    if (navigator.share) {
-      await navigator.share({
-        title: 'Queens Puzzle',
-        url: shareablePuzzleUrl.value,
-      });
-      setShareStatus('Puzzle link shared');
-      return;
-    }
-
-    await navigator.clipboard.writeText(shareablePuzzleUrl.value);
-    setShareStatus('Puzzle link copied');
-  } catch (error) {
-    console.error('[QueensGame] Failed to share puzzle:', error);
-    setShareStatus('Could not share puzzle');
-  }
-}
-
 function handleUndo() {
   queensStore.handleUndo();
 }
@@ -653,9 +535,6 @@ onBeforeUnmount(() => {
   }
   queensStore.stopErrorChecking();
   queensStore.stopProgressSaving();
-  if (shareStatusTimeout !== null) {
-    clearTimeout(shareStatusTimeout);
-  }
 });
 
 defineOptions({
