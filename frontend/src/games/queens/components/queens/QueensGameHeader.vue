@@ -2,42 +2,41 @@
   <!-- Standard mode: minimal top bar with optional timer -->
   <div
     v-if="queensStore.currentMode === 'standard'"
-    class="rounded-xl border border-semantic-neutral-700 bg-surface-overlay px-3 py-2 flex items-center justify-between w-full"
+    class="rounded-xl border border-semantic-neutral-700 bg-surface-overlay px-3 py-2 w-full"
   >
-    <!-- Left: puzzle title + size -->
-    <div class="flex items-center space-x-4">
-      <div class="text-sm">
-        <div v-if="isSinglePuzzleMode" class="font-semibold text-lg">
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex items-baseline gap-3 text-sm min-w-0">
+        <div v-if="isSinglePuzzleMode" class="font-semibold text-lg shrink-0">
           <router-link to="/" class="text-white hover:text-semantic-neutral-300 cursor-pointer"
             >Queens</router-link
           >
         </div>
-        <div v-else class="font-semibold text-lg">Queens</div>
-        <div class="text-semantic-neutral-400">
+        <div v-else class="font-semibold text-lg shrink-0">Queens</div>
+        <div class="text-semantic-neutral-400 shrink-0">
           {{ queensStore.gridSize }}x{{ queensStore.gridSize }}
         </div>
-        <div class="text-xs text-semantic-neutral-500">
-          {{ queensStore.targetQueenCount }} queens, minimum distance of
-          {{ queensStore.orthogonalMinDistance }} between queens in each row or column
+      </div>
+
+      <div class="flex items-center gap-4 shrink-0">
+        <div
+          v-if="isSinglePuzzleMode && elapsedTime !== null"
+          class="flex items-center justify-between min-w-[80px]"
+        >
+          <span class="text-lg">⏱️</span>
+          <span class="text-sm font-semibold">{{ formattedTime }}</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="text-lg">👑</span>
+          <span class="text-sm font-semibold">
+            {{ queensStore.queenPositions.length }}/{{ queensStore.targetQueenCount }}
+          </span>
         </div>
       </div>
     </div>
 
-    <!-- Right: timer + queens count -->
-    <div class="flex items-center space-x-4">
-      <div
-        v-if="isSinglePuzzleMode && elapsedTime !== null"
-        class="flex items-center justify-between min-w-[80px]"
-      >
-        <span class="text-lg">⏱️</span>
-        <span class="text-sm font-semibold">{{ formattedTime }}</span>
-      </div>
-      <div class="flex items-center space-x-2">
-        <span class="text-lg">👑</span>
-        <span class="text-sm font-semibold">
-          {{ queensStore.queenPositions.length }}/{{ queensStore.targetQueenCount }}
-        </span>
-      </div>
+    <div class="mt-1 text-xs text-semantic-neutral-500">
+      {{ queensStore.targetQueenCount }} queens, minimum distance of
+      {{ queensStore.orthogonalMinDistance }} between queens in each row or column
     </div>
   </div>
 
