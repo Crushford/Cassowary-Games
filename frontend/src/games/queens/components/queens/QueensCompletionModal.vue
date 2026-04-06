@@ -2,7 +2,13 @@
   <Dialog :visible="isVisible" modal :closable="false" class="w-[min(92vw,28rem)]">
     <div>
       <h2 class="text-2xl font-bold text-semantic-success-400 mb-4">Puzzle Complete! 🎉</h2>
-      <p class="text-white mb-4">Queens found: {{ queensStore.queenPositions.length }}</p>
+      <p class="text-semantic-neutral-400 mb-1">
+        {{ queensStore.gridSize }}x{{ queensStore.gridSize }}
+      </p>
+      <p class="mb-4 text-sm leading-6 text-semantic-neutral-200">
+        {{ queensStore.targetQueenCount }} queens, minimum distance of
+        {{ queensStore.orthogonalMinDistance }} between queens in each row or column
+      </p>
 
       <!-- Completion Time -->
       <div v-if="queensStore.puzzleCompletionTime !== null" class="mb-4">
@@ -28,21 +34,17 @@
         </div>
       </div>
 
-      <Button
-        label="New Puzzle"
-        class="rounded-xl border px-3 py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-semantic-success-700 bg-semantic-success-700 text-semantic-info-50 enabled:hover:bg-semantic-success-600 enabled:hover:border-semantic-success-600 w-full"
-        @click="handleNextPuzzle"
-      />
+      <QueensActionMenu />
     </div>
   </Dialog>
 </template>
 
 <script setup lang="ts">
 import { watch } from 'vue';
-import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import { useQueensStore } from '../../stores/queensStore';
 import { trackGameComplete } from '@/shared/utils/analyticsEvents';
+import QueensActionMenu from './QueensActionMenu.vue';
 
 const queensStore = useQueensStore();
 
@@ -73,14 +75,6 @@ watch(
     });
   }
 );
-
-const handleNextPuzzle = async () => {
-  try {
-    await queensStore.startNextPuzzle();
-  } catch (error) {
-    console.error('Error loading next puzzle:', error);
-  }
-};
 </script>
 
 <script lang="ts">

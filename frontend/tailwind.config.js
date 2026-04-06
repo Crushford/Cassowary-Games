@@ -75,39 +75,30 @@ export default {
           // Queens/shared puzzle palette tokens
           red: {
             base: '#991B1B',
-            hover: '#B91C1C',
           },
           blue: {
             base: '#2563EB',
-            hover: '#3B82F6',
           },
           green: {
             base: '#166534',
-            hover: '#15803D',
           },
           yellow: {
-            base: '#FDE047',
-            hover: '#FACC15',
+            base: '#B8860B',
           },
           purple: {
             base: '#7E22CE',
-            hover: '#9333EA',
           },
           pink: {
-            base: '#EC4899',
-            hover: '#F472B6',
+            base: '#BE185D',
           },
           teal: {
-            base: '#0891B2',
-            hover: '#06B6D4',
+            base: '#0B6E69',
           },
           indigo: {
             base: '#312E81',
-            hover: '#4338CA',
           },
           amber: {
             base: '#92400E',
-            hover: '#B45309',
           },
         },
         queens: {

@@ -6,7 +6,6 @@
     :style="backgroundStyle"
     :class="[
       backgroundColorClass,
-      hoverClass,
       {
         'ring-4 ring-semantic-warning-500 ring-offset-2 ring-offset-semantic-neutral-900 animate-pulse':
           isTutorialTarget,
@@ -50,7 +49,7 @@
     </div>
 
     <!-- Border overlay -->
-    <div class="absolute inset-0 pointer-events-none z-20 border border-edge-neutralSoft" />
+    <div class="absolute inset-0 pointer-events-none z-20 border border-queens-gridLine" />
   </button>
 </template>
 
@@ -112,16 +111,16 @@ const ariaLabel = computed(() => {
 });
 
 // High-separation color-only palette for queens game.
-const DARK_PASTEL_COLORS: Record<ColorName, { bg: string; hover: string }> = {
-  red: { bg: 'bg-group-red-base', hover: 'hover:bg-group-red-hover' },
-  blue: { bg: 'bg-group-blue-base', hover: 'hover:bg-group-blue-hover' },
-  green: { bg: 'bg-group-green-base', hover: 'hover:bg-group-green-hover' },
-  yellow: { bg: 'bg-group-yellow-base', hover: 'hover:bg-group-yellow-hover' },
-  purple: { bg: 'bg-group-purple-base', hover: 'hover:bg-group-purple-hover' },
-  pink: { bg: 'bg-group-pink-base', hover: 'hover:bg-group-pink-hover' },
-  teal: { bg: 'bg-group-teal-base', hover: 'hover:bg-group-teal-hover' },
-  indigo: { bg: 'bg-group-indigo-base', hover: 'hover:bg-group-indigo-hover' },
-  amber: { bg: 'bg-group-amber-base', hover: 'hover:bg-group-amber-hover' },
+const DARK_PASTEL_COLORS: Record<ColorName, { bg: string }> = {
+  red: { bg: 'bg-group-red-base' },
+  blue: { bg: 'bg-group-blue-base' },
+  green: { bg: 'bg-group-green-base' },
+  yellow: { bg: 'bg-group-yellow-base' },
+  purple: { bg: 'bg-group-purple-base' },
+  pink: { bg: 'bg-group-pink-base' },
+  teal: { bg: 'bg-group-teal-base' },
+  indigo: { bg: 'bg-group-indigo-base' },
+  amber: { bg: 'bg-group-amber-base' },
 };
 
 const isInError = computed(() => {
@@ -151,11 +150,6 @@ const backgroundColorClass = computed(() => {
 
 const backgroundStyle = computed(() => {
   return undefined;
-});
-
-// Remove hover class - no hover effect
-const hoverClass = computed(() => {
-  return '';
 });
 
 function handleClick() {

@@ -17,8 +17,8 @@
           {{ queensStore.gridSize }}x{{ queensStore.gridSize }}
         </div>
         <div class="text-xs text-semantic-neutral-500">
-          {{ queensStore.targetQueenCount }} queens, row/column distance at least
-          {{ queensStore.orthogonalMinDistance }}
+          {{ queensStore.targetQueenCount }} queens, minimum distance of
+          {{ queensStore.orthogonalMinDistance }} between queens in each row or column
         </div>
       </div>
     </div>
