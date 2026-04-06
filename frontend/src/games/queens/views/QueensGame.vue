@@ -75,8 +75,8 @@
       </div>
     </div>
 
-    <!-- PlayGrid - Flex to fill available space with max-width constraint -->
-    <div class="flex-1 flex items-center justify-center">
+    <!-- Board stack -->
+    <div class="flex-1 flex flex-col justify-center px-4 pb-2">
       <PlayGrid
         class="w-full max-w-full aspect-square"
         :style="boardAnimationStyle"
@@ -89,10 +89,8 @@
           <QueensSquare :row-index="rowIndex" :col-index="colIndex" :store="store" />
         </template>
       </PlayGrid>
-    </div>
 
-    <div class="flex-none px-4 pt-2">
-      <div class="flex items-center justify-center gap-2">
+      <div class="mt-3 flex items-center justify-center gap-2">
         <Button
           label="Undo"
           unstyled
@@ -113,8 +111,6 @@
 
     <!-- Controls at the bottom -->
     <div class="flex-none p-4 space-y-3">
-      <QueensToolSelector embedded :is-disabled="isModalOpen" />
-
       <QueensActionMenu compact />
     </div>
   </div>
@@ -153,9 +149,6 @@ const SpeedModeCompletionModal = defineAsyncComponent(
   () => import('../components/queens/SpeedModeCompletionModal.vue')
 );
 const Toast = defineAsyncComponent(() => import('@/shared/components/Toast.vue'));
-const QueensToolSelector = defineAsyncComponent(
-  () => import('../components/queens/QueensToolSelector.vue')
-);
 const QueensActionMenu = defineAsyncComponent(
   () => import('../components/queens/QueensActionMenu.vue')
 );
