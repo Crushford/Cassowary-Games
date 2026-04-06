@@ -21,8 +21,14 @@
     :data-col-index="colIndex"
     @click="handleClick"
   >
+    <div
+      v-if="patternClass"
+      class="absolute inset-0 pointer-events-none z-10 opacity-80"
+      :class="patternClass"
+    />
+
     <!-- Content overlay -->
-    <div class="relative z-10 flex items-center justify-center w-full h-full">
+    <div class="relative z-30 flex items-center justify-center w-full h-full">
       <!-- Error feedback (red X) -->
       <span
         v-if="showErrorFeedback"
@@ -56,7 +62,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useQueensStore } from '../../stores/queensStore';
-import type { ColorName, GridSquare } from '../../types/types';
+import type { GridSquare, QueensPatternVariant } from '../../types/types';
+import { getRegionAppearanceBackgroundClass } from '../../utils/colorPalette';
 
 interface Props {
   rowIndex: number;
@@ -110,19 +117,6 @@ const ariaLabel = computed(() => {
   return label;
 });
 
-// High-separation color-only palette for queens game.
-const DARK_PASTEL_COLORS: Record<ColorName, { bg: string }> = {
-  red: { bg: 'bg-group-red-base' },
-  blue: { bg: 'bg-group-blue-base' },
-  green: { bg: 'bg-group-green-base' },
-  yellow: { bg: 'bg-group-yellow-base' },
-  purple: { bg: 'bg-group-purple-base' },
-  pink: { bg: 'bg-group-pink-base' },
-  teal: { bg: 'bg-group-teal-base' },
-  indigo: { bg: 'bg-group-indigo-base' },
-  amber: { bg: 'bg-group-amber-base' },
-};
-
 const isInError = computed(() => {
   return queensStore.isSquareInError(props.rowIndex, props.colIndex);
 });
@@ -137,15 +131,23 @@ const showAutoFlagRipple = computed(() => {
 });
 
 const backgroundColorClass = computed(() => {
-  const tintedColor = gridCell.value?.groupTint as ColorName | undefined;
-  if (tintedColor && DARK_PASTEL_COLORS[tintedColor]) {
-    return DARK_PASTEL_COLORS[tintedColor].bg;
-  }
-  const color = gridCell.value?.groupColor as ColorName | undefined;
-  if (color && DARK_PASTEL_COLORS[color]) {
-    return DARK_PASTEL_COLORS[color].bg;
+  const appearance = gridCell.value?.groupAppearance;
+  if (appearance) {
+    return getRegionAppearanceBackgroundClass(appearance);
   }
   return 'bg-semantic-neutral-700';
+});
+
+const PATTERN_CLASS_MAP: Record<Exclude<QueensPatternVariant, 'solid'>, string> = {
+  diagonal: 'region-pattern-diagonal',
+  dots: 'region-pattern-dots',
+  crosshatch: 'region-pattern-crosshatch',
+};
+
+const patternClass = computed(() => {
+  const pattern = gridCell.value?.groupAppearance?.pattern;
+  if (!pattern || pattern === 'solid') return '';
+  return PATTERN_CLASS_MAP[pattern];
 });
 
 const backgroundStyle = computed(() => {
@@ -197,6 +199,39 @@ export default {
 </script>
 
 <style scoped>
+.region-pattern-diagonal {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(248, 250, 252, 0.14) 0,
+    rgba(248, 250, 252, 0.14) 2px,
+    transparent 2px,
+    transparent 8px
+  );
+}
+
+.region-pattern-dots {
+  background-image: radial-gradient(rgba(248, 250, 252, 0.16) 18%, transparent 20%);
+  background-size: 8px 8px;
+}
+
+.region-pattern-crosshatch {
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(248, 250, 252, 0.12) 0,
+      rgba(248, 250, 252, 0.12) 1px,
+      transparent 1px,
+      transparent 7px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(248, 250, 252, 0.12) 0,
+      rgba(248, 250, 252, 0.12) 1px,
+      transparent 1px,
+      transparent 7px
+    );
+}
+
 .auto-flag-pop {
   animation: auto-flag-pop 220ms ease-out;
 }

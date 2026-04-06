@@ -1,5 +1,7 @@
-import type { ColorName, GridSquare } from '../types/types';
-import { COLOR_PALETTE } from './colorPalette';
+import type { GridSquare, QueensRegionColorMode, RegionAppearance } from '../types/types';
+import { getRegionAppearanceTokens } from './colorPalette';
+
+type RegionToken = Pick<RegionAppearance, 'color' | 'shade' | 'pattern'>;
 
 function getRegionIds(grid: GridSquare[][]): string[] {
   const ids = new Set<string>();
@@ -43,7 +45,57 @@ function buildRegionAdjacency(grid: GridSquare[][]): Map<string, Set<string>> {
   return adjacency;
 }
 
-export function assignRegionPaletteColors(grid: GridSquare[][]): GridSquare[][] {
+function createAppearanceKey(token: RegionToken): string {
+  return `${token.color}:${token.shade}:${token.pattern}`;
+}
+
+function chooseAppearanceForRegion(
+  regionId: string,
+  orderedTokens: RegionToken[],
+  adjacency: Map<string, Set<string>>,
+  assignedAppearances: Map<string, RegionAppearance>,
+  tokenUsageCounts: Map<string, number>,
+  colorUsageCounts: Map<string, number>
+): RegionToken {
+  const neighborTokens = Array.from(adjacency.get(regionId) ?? [])
+    .map((neighborId) => assignedAppearances.get(neighborId))
+    .filter((token): token is RegionAppearance => token !== undefined);
+
+  const neighborAppearanceKeys = new Set(neighborTokens.map(createAppearanceKey));
+  const neighborColors = new Set(neighborTokens.map((token) => token.color));
+
+  const scoreToken = (token: RegionToken): number => {
+    const appearanceKey = createAppearanceKey(token);
+    const appearanceUsage = tokenUsageCounts.get(appearanceKey) ?? 0;
+    const colorUsage = colorUsageCounts.get(token.color) ?? 0;
+    const touchesSameColor = neighborColors.has(token.color) ? 1 : 0;
+    return appearanceUsage * 100 + colorUsage * 10 + touchesSameColor;
+  };
+
+  const availableWithoutConflict = orderedTokens.filter(
+    (token) => !neighborAppearanceKeys.has(createAppearanceKey(token))
+  );
+  const candidatePool =
+    availableWithoutConflict.length > 0 ? availableWithoutConflict : orderedTokens;
+
+  let bestToken = candidatePool[0];
+  let bestScore = scoreToken(bestToken);
+
+  for (const token of candidatePool.slice(1)) {
+    const score = scoreToken(token);
+    if (score < bestScore) {
+      bestToken = token;
+      bestScore = score;
+    }
+  }
+
+  return bestToken;
+}
+
+export function assignRegionPaletteColors(
+  grid: GridSquare[][],
+  mode: QueensRegionColorMode = 'repeat-base-colors'
+): GridSquare[][] {
   const adjacency = buildRegionAdjacency(grid);
   const orderedRegionIds = getRegionIds(grid).sort((left, right) => {
     const leftDegree = adjacency.get(left)?.size ?? 0;
@@ -52,30 +104,36 @@ export function assignRegionPaletteColors(grid: GridSquare[][]): GridSquare[][] 
     return left.localeCompare(right);
   });
 
-  const regionToPaletteColor = new Map<string, ColorName>();
-  const usedPaletteColors = new Set<ColorName>();
+  const orderedTokens = getRegionAppearanceTokens(mode);
+  const regionToAppearance = new Map<string, RegionAppearance>();
+  const tokenUsageCounts = new Map<string, number>();
+  const colorUsageCounts = new Map<string, number>();
 
   for (const regionId of orderedRegionIds) {
-    const touchingColors = new Set(
-      Array.from(adjacency.get(regionId) ?? [])
-        .map((neighborId) => regionToPaletteColor.get(neighborId))
-        .filter((color): color is ColorName => Boolean(color))
+    const token = chooseAppearanceForRegion(
+      regionId,
+      orderedTokens,
+      adjacency,
+      regionToAppearance,
+      tokenUsageCounts,
+      colorUsageCounts
     );
+    const appearance: RegionAppearance = {
+      ...token,
+      mode,
+    };
 
-    const unusedAvailableColor = COLOR_PALETTE.find(
-      (color) => !usedPaletteColors.has(color) && !touchingColors.has(color)
-    );
-    const reusableAvailableColor = COLOR_PALETTE.find((color) => !touchingColors.has(color));
-    const nextColor = unusedAvailableColor ?? reusableAvailableColor ?? COLOR_PALETTE[0];
+    regionToAppearance.set(regionId, appearance);
 
-    regionToPaletteColor.set(regionId, nextColor);
-    usedPaletteColors.add(nextColor);
+    const appearanceKey = createAppearanceKey(token);
+    tokenUsageCounts.set(appearanceKey, (tokenUsageCounts.get(appearanceKey) ?? 0) + 1);
+    colorUsageCounts.set(token.color, (colorUsageCounts.get(token.color) ?? 0) + 1);
   }
 
   return grid.map((row) =>
     row.map((cell) => ({
       ...cell,
-      groupTint: cell.groupColor ? regionToPaletteColor.get(cell.groupColor) : undefined,
+      groupAppearance: cell.groupColor ? regionToAppearance.get(cell.groupColor) : undefined,
     }))
   );
 }

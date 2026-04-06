@@ -92,7 +92,7 @@ function toGridSquare(): GridSquare[][] {
     }))
   );
 
-  return assignRegionPaletteColors(rawGrid);
+  return assignRegionPaletteColors(rawGrid, queensStore.regionColorMode);
 }
 
 function toPlayerMarks(): MarkType[][] {
@@ -108,7 +108,7 @@ function toPlayerMarks(): MarkType[][] {
 }
 
 watch(
-  () => [store.board, props.showSolutionQueens],
+  () => [store.board, props.showSolutionQueens, queensStore.regionColorMode],
   () => {
     if (!store.board) return;
 

@@ -7,7 +7,7 @@ export default {
   safelist: [
     // Preserve dynamically-built puzzle group classes (e.g. bg-group-${color}-base).
     {
-      pattern: /^bg-group-(red|blue|green|yellow|purple|pink|teal|indigo|amber)-base$/,
+      pattern: /^bg-group-(red|blue|green|yellow|purple|pink|teal|indigo)-(soft|base|strong)$/,
     },
   ],
   theme: {
@@ -74,31 +74,44 @@ export default {
         group: {
           // Queens/shared puzzle palette tokens
           red: {
+            soft: '#7F1D1D',
             base: '#991B1B',
+            strong: '#B91C1C',
           },
           blue: {
+            soft: '#1D4ED8',
             base: '#2563EB',
+            strong: '#3B82F6',
           },
           green: {
+            soft: '#14532D',
             base: '#166534',
+            strong: '#15803D',
           },
           yellow: {
+            soft: '#8A6508',
             base: '#B8860B',
+            strong: '#D19A0F',
           },
           purple: {
+            soft: '#6B21A8',
             base: '#7E22CE',
+            strong: '#9333EA',
           },
           pink: {
+            soft: '#9D174D',
             base: '#BE185D',
+            strong: '#DB2777',
           },
           teal: {
+            soft: '#115E59',
             base: '#0B6E69',
+            strong: '#0F766E',
           },
           indigo: {
-            base: '#312E81',
-          },
-          amber: {
-            base: '#92400E',
+            soft: '#312E81',
+            base: '#3730A3',
+            strong: '#4338CA',
           },
         },
         queens: {
