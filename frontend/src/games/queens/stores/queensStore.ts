@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import type { GridSquare, Pos, MarkType } from '../types/types';
+import type { GridSquare, MarkType, Pos, QueensRegionColorMode } from '../types/types';
 import { createEmptyGrid, clonePlayerMarks } from './gridUtils';
 import { removeQueenPlacement, replayHistoryFromEntries } from '../utils/queenRemoval';
 import {
@@ -139,6 +139,7 @@ interface QueensState {
   gridSize: number;
   targetQueenCount: number;
   orthogonalMinDistance: number;
+  regionColorMode: QueensRegionColorMode;
   moveHistory: MarkType[][][];
   playerMarks: MarkType[][];
   puzzleDatabase: PuzzleDatabase | null;
@@ -228,7 +229,32 @@ const BEST_TIMES_PER_SIZE_KEY = 'queens-best-times-per-size';
 const PUZZLE_PROGRESS_KEY_PREFIX = 'queens-puzzle-progress-';
 // LocalStorage key prefix for puzzle move history
 const PUZZLE_HISTORY_KEY_PREFIX = 'queens-puzzle-history-';
+const REGION_COLOR_MODE_KEY = 'queens-region-color-mode';
 const ROTATE_DELAY_MS = 500;
+
+function isQueensRegionColorMode(value: unknown): value is QueensRegionColorMode {
+  return (
+    value === 'repeat-base-colors' || value === 'shade-variants' || value === 'pattern-variants'
+  );
+}
+
+function getStoredRegionColorMode(): QueensRegionColorMode {
+  try {
+    const stored = localStorage.getItem(REGION_COLOR_MODE_KEY);
+    return isQueensRegionColorMode(stored) ? stored : 'pattern-variants';
+  } catch (e) {
+    console.error('Error reading region color mode from localStorage:', e);
+    return 'pattern-variants';
+  }
+}
+
+function saveRegionColorMode(mode: QueensRegionColorMode) {
+  try {
+    localStorage.setItem(REGION_COLOR_MODE_KEY, mode);
+  } catch (e) {
+    console.error('Error saving region color mode to localStorage:', e);
+  }
+}
 
 // Helper functions for localStorage
 function getCompletedPuzzles(): Set<string> {
@@ -442,6 +468,7 @@ export const useQueensStore = defineStore('queens', {
     gridSize: 4,
     targetQueenCount: 4,
     orthogonalMinDistance: 4,
+    regionColorMode: getStoredRegionColorMode(),
     moveHistory: [],
     playerMarks: Array.from({ length: 4 }, () => Array(4).fill(null as MarkType)),
     puzzleDatabase: null,
@@ -805,6 +832,10 @@ export const useQueensStore = defineStore('queens', {
 
       // Start error checking
       this.startErrorChecking();
+    },
+
+    refreshRegionAppearances() {
+      this.grid = assignRegionPaletteColors(this.grid, this.regionColorMode);
     },
 
     saveToHistory() {
@@ -1280,7 +1311,7 @@ export const useQueensStore = defineStore('queens', {
         }
       }
 
-      this.grid = assignRegionPaletteColors(this.grid);
+      this.refreshRegionAppearances();
 
       // Parse queens (solution)
       for (let i = 0; i < queens.length; i++) {
@@ -1897,6 +1928,16 @@ export const useQueensStore = defineStore('queens', {
         this.updateBlockedMoves();
       }
       // When disabling, don't remove existing flags - just prevent future auto-flagging
+    },
+
+    setRegionColorMode(mode: QueensRegionColorMode) {
+      if (this.regionColorMode === mode) {
+        return;
+      }
+
+      this.regionColorMode = mode;
+      saveRegionColorMode(mode);
+      this.refreshRegionAppearances();
     },
 
     async navigateToMainMenu() {

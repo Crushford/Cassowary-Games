@@ -1,7 +1,14 @@
-// src/utils/colorPalette.ts
-import type { ColorName, ColorClasses } from '../types/types';
+import type {
+  ColorName,
+  ColorClasses,
+  QueensBaseColorName,
+  QueensPatternVariant,
+  QueensRegionColorMode,
+  QueensShadeVariant,
+  RegionAppearance,
+} from '../types/types';
 
-// Define the main palette (9 colors)
+// Define the main palette (8 colors)
 export const COLOR_PALETTE: ColorName[] = [
   'red',
   'blue',
@@ -11,8 +18,9 @@ export const COLOR_PALETTE: ColorName[] = [
   'pink',
   'teal',
   'indigo',
-  'amber',
 ];
+
+export const QUEENS_BASE_PALETTE: QueensBaseColorName[] = [...COLOR_PALETTE];
 
 // Single letter symbols for each color (useful for text output)
 export const COLOR_SYMBOLS: Record<ColorName | 'undefined', string> = {
@@ -24,7 +32,6 @@ export const COLOR_SYMBOLS: Record<ColorName | 'undefined', string> = {
   pink: 'K',
   teal: 'T',
   indigo: 'I',
-  amber: 'B',
   undefined: '.',
 };
 
@@ -70,12 +77,49 @@ export const COLOR_CLASSES: Record<ColorName, ColorClasses> = {
     text: 'text-group-indigo-base',
     border: 'border-group-indigo-base',
   },
-  amber: {
-    bg: 'bg-group-amber-base',
-    text: 'text-group-amber-base',
-    border: 'border-group-amber-base',
-  },
 };
+
+export const QUEENS_SHADE_ORDER: QueensShadeVariant[] = ['base', 'soft', 'strong'];
+export const QUEENS_PATTERN_ORDER: QueensPatternVariant[] = [
+  'solid',
+  'diagonal',
+  'dots',
+  'crosshatch',
+];
+
+export function getRegionAppearanceBackgroundClass(appearance: RegionAppearance): string {
+  return `bg-group-${appearance.color}-${appearance.shade}`;
+}
+
+export function getRegionAppearanceTokens(
+  mode: QueensRegionColorMode
+): Array<Pick<RegionAppearance, 'color' | 'shade' | 'pattern'>> {
+  if (mode === 'repeat-base-colors') {
+    return QUEENS_BASE_PALETTE.map((color) => ({
+      color,
+      shade: 'base',
+      pattern: 'solid',
+    }));
+  }
+
+  if (mode === 'shade-variants') {
+    return QUEENS_BASE_PALETTE.flatMap((color) =>
+      QUEENS_SHADE_ORDER.map((shade) => ({
+        color,
+        shade,
+        pattern: 'solid' as const,
+      }))
+    );
+  }
+
+  return QUEENS_BASE_PALETTE.flatMap((color) =>
+    QUEENS_PATTERN_ORDER.map((pattern) => ({
+      color,
+      shade: 'base' as const,
+      pattern,
+    }))
+  );
+}
 
 // Image URLs for each color (for img src attributes)
 export const COLOR_IMAGE_URLS: Record<ColorName, string> = {
@@ -87,7 +131,6 @@ export const COLOR_IMAGE_URLS: Record<ColorName, string> = {
   pink: '/assets/ant-nest-colors/pink.png',
   teal: '/assets/ant-nest-colors/teal.png',
   indigo: '/assets/ant-nest-colors/indigo.png',
-  amber: '/assets/ant-nest-colors/amber.png',
 };
 
 // Background image styles for each color (derived from COLOR_IMAGE_URLS)
@@ -99,7 +142,7 @@ export const COLOR_BG_IMAGES: Record<ColorName, string> = Object.fromEntries(
 ) as Record<ColorName, string>;
 
 // Get a subset of the main palette with a specific size
-export function getColorPalette(size = 9): ColorName[] {
+export function getColorPalette(size = 8): ColorName[] {
   if (size > COLOR_PALETTE.length) {
     console.warn(
       `Requested palette size ${size} exceeds available colors (${COLOR_PALETTE.length})`

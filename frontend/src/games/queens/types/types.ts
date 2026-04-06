@@ -46,7 +46,7 @@ export type MarkType = null | 'flag' | 'queen' | 'invalid';
 export interface GridSquare {
   position: Pos;
   groupColor?: string;
-  groupTint?: string;
+  groupAppearance?: RegionAppearance;
   isSolutionQueen?: boolean;
   playerMark?: MarkType;
   hasFruit?: boolean; // Whether this square has fruit (adjacent to honeypot)
@@ -133,7 +133,7 @@ export interface SquareProps {
 /**
  * Available color names in the game.
  */
-export type ColorName =
+export type QueensBaseColorName =
   | 'red'
   | 'blue'
   | 'green'
@@ -141,8 +141,22 @@ export type ColorName =
   | 'purple'
   | 'pink'
   | 'teal'
-  | 'indigo'
-  | 'amber';
+  | 'indigo';
+
+export type ColorName = QueensBaseColorName;
+
+export type QueensRegionColorMode = 'repeat-base-colors' | 'shade-variants' | 'pattern-variants';
+
+export type QueensShadeVariant = 'soft' | 'base' | 'strong';
+
+export type QueensPatternVariant = 'solid' | 'diagonal' | 'dots' | 'crosshatch';
+
+export interface RegionAppearance {
+  color: QueensBaseColorName;
+  shade: QueensShadeVariant;
+  pattern: QueensPatternVariant;
+  mode: QueensRegionColorMode;
+}
 
 /**
  * Tailwind CSS classes for each color.

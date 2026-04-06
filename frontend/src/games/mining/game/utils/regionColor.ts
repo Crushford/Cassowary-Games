@@ -9,7 +9,6 @@ const DARK_PASTEL_COLORS: Record<ColorName, string> = {
   pink: 'bg-group-pink-base',
   teal: 'bg-group-teal-base',
   indigo: 'bg-group-indigo-base',
-  amber: 'bg-group-amber-base',
 };
 
 const REGION_COLOR_ORDER: ColorName[] = [
@@ -21,7 +20,6 @@ const REGION_COLOR_ORDER: ColorName[] = [
   'pink',
   'teal',
   'indigo',
-  'amber',
 ];
 
 export function buildRegionColorClassMap(regionIds: string[][]): Record<string, string> {

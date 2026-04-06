@@ -2,7 +2,7 @@
   <!-- Standard mode: minimal top bar with optional timer -->
   <div
     v-if="queensStore.currentMode === 'standard'"
-    class="rounded-xl border border-semantic-neutral-700 bg-surface-overlay px-3 py-2 w-full"
+    class="relative rounded-xl border border-semantic-neutral-700 bg-surface-overlay px-3 py-2 w-full"
   >
     <div class="flex items-center justify-between gap-3">
       <div class="flex items-baseline gap-3 text-sm min-w-0">
@@ -30,6 +30,57 @@
           <span class="text-sm font-semibold">
             {{ queensStore.queenPositions.length }}/{{ queensStore.targetQueenCount }}
           </span>
+        </div>
+        <div ref="settingsMenuRef" class="relative">
+          <button
+            type="button"
+            class="flex h-9 w-9 items-center justify-center rounded-lg border border-semantic-neutral-700 bg-surface-overlayDim text-semantic-neutral-200 transition-colors hover:border-semantic-neutral-600 hover:bg-semantic-neutral-800"
+            aria-label="Open color settings"
+            :aria-expanded="showSettingsMenu"
+            @click="toggleSettingsMenu"
+          >
+            <span class="text-lg leading-none">☰</span>
+          </button>
+
+          <div
+            v-if="showSettingsMenu"
+            class="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-semantic-neutral-700 bg-surface-overlayStrong p-2 shadow-2xl"
+          >
+            <div
+              class="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-semantic-neutral-400"
+            >
+              Region Colors
+            </div>
+            <button
+              v-for="option in colorModeOptions"
+              :key="option.value"
+              type="button"
+              class="flex w-full items-start gap-3 rounded-lg px-2 py-2 text-left transition-colors"
+              :class="
+                queensStore.regionColorMode === option.value
+                  ? 'bg-semantic-neutral-800 text-white'
+                  : 'text-semantic-neutral-300 hover:bg-semantic-neutral-900'
+              "
+              @click="selectRegionColorMode(option.value)"
+            >
+              <span
+                class="mt-0.5 flex h-4 w-4 items-center justify-center rounded-full border text-[10px]"
+                :class="
+                  queensStore.regionColorMode === option.value
+                    ? 'border-semantic-info-400 text-semantic-info-300'
+                    : 'border-semantic-neutral-600 text-transparent'
+                "
+              >
+                ●
+              </span>
+              <span>
+                <span class="block text-sm font-semibold">{{ option.label }}</span>
+                <span class="mt-0.5 block text-xs leading-5 text-semantic-neutral-400">{{
+                  option.description
+                }}</span>
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -93,11 +144,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import { useRoute, useRouter } from 'vue-router';
 import { useQueensStore } from '../../stores/queensStore';
 import { useSpeedModeStore } from '../../stores/speedModeStore';
+import type { QueensRegionColorMode } from '../../types/types';
 import GameModeHeader from './GameModeHeader.vue';
 
 const queensStore = useQueensStore();
@@ -134,6 +186,30 @@ const formattedTime = computed(() => {
 });
 
 let timerInterval: number | null = null;
+const showSettingsMenu = ref(false);
+const settingsMenuRef = ref<HTMLElement | null>(null);
+const colorModeOptions: Array<{
+  value: QueensRegionColorMode;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'repeat-base-colors',
+    label: 'Repeat Base Colors',
+    description: 'Reuse the 8 core hues while avoiding nearby duplicates when possible.',
+  },
+  {
+    value: 'shade-variants',
+    label: 'Shade Variants',
+    description: 'Expand each hue into dark shade families for more distinct region treatments.',
+  },
+  {
+    value: 'pattern-variants',
+    label: 'Pattern Variants',
+    description:
+      'Combine the core hues with subtle geometric overlays for the most unique regions.',
+  },
+];
 
 watch(
   isSinglePuzzleMode,
@@ -153,7 +229,28 @@ watch(
 
 onBeforeUnmount(() => {
   if (timerInterval !== null) clearInterval(timerInterval);
+  document.removeEventListener('click', handleDocumentClick);
 });
+
+onMounted(() => {
+  document.addEventListener('click', handleDocumentClick);
+});
+
+function toggleSettingsMenu() {
+  showSettingsMenu.value = !showSettingsMenu.value;
+}
+
+function selectRegionColorMode(mode: QueensRegionColorMode) {
+  queensStore.setRegionColorMode(mode);
+  showSettingsMenu.value = false;
+}
+
+function handleDocumentClick(event: MouseEvent) {
+  const menu = settingsMenuRef.value;
+  if (!menu) return;
+  if (event.target instanceof Node && menu.contains(event.target)) return;
+  showSettingsMenu.value = false;
+}
 
 // ── Speed mode ────────────────────────────────────────────────────────────────
 
