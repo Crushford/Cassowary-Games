@@ -2,6 +2,7 @@ package com.queens.admin.api
 
 import com.queens.admin.api.dto.BoardStateRequestDto
 import com.queens.admin.api.dto.OperationResultDto
+import com.queens.admin.api.dto.RunSolverPatternRequestDto
 import com.queens.admin.api.dto.RunSolverRuleRequestDto
 import com.queens.admin.application.SolverWorkflowService
 import com.queens.admin.infrastructure.mapper.BoardStateMapper
@@ -32,12 +33,50 @@ class SolverController(
         )
     }
 
+    @PostMapping("/single-color-group")
+    fun runSingleColorGroupStep(@RequestBody request: BoardStateRequestDto): OperationResultDto {
+        return operationResultMapper.toDto(
+            solverWorkflowService.runSingleColorGroupSolverRule(
+                boardStateMapper.toDomain(request.boardState),
+            ),
+        )
+    }
+
     @PostMapping("/run-rule")
     fun runSpecificRule(@RequestBody request: RunSolverRuleRequestDto): OperationResultDto {
         return operationResultMapper.toDto(
             solverWorkflowService.runSpecificSolverRule(
                 boardState = boardStateMapper.toDomain(request.boardState),
                 ruleName = request.ruleName,
+            ),
+        )
+    }
+
+    @PostMapping("/pattern")
+    fun runPattern(@RequestBody request: RunSolverPatternRequestDto): OperationResultDto {
+        return operationResultMapper.toDto(
+            solverWorkflowService.runSolverPattern(
+                boardState = boardStateMapper.toDomain(request.boardState),
+                pattern =
+                    com.queens.admin.domain.service.SolverPatternService.SolverPatternDefinition(
+                        id = request.pattern.id,
+                        size = request.pattern.size,
+                        cells =
+                            request.pattern.cells.map { cell ->
+                                com.queens.admin.domain.service.SolverPatternService.SolverPatternCell(
+                                    row = cell.row,
+                                    col = cell.col,
+                                    activeSquare = cell.activeSquare == true,
+                                )
+                            },
+                        outputFlags =
+                            request.pattern.outputFlags.map { offset ->
+                                com.queens.admin.domain.service.SolverPatternService.SolverPatternOffset(
+                                    row = offset.row,
+                                    col = offset.col,
+                                )
+                            },
+                    ),
             ),
         )
     }

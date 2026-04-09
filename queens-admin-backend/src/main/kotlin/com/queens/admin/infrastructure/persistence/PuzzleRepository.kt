@@ -66,6 +66,30 @@ class PuzzleRepository {
                 .map { row -> row.toPersistedPuzzle() }
         }
 
+    fun findAllFiltered(
+        size: Int? = null,
+        orthogonalMinDistance: Int? = null,
+        targetQueenCount: Int? = null,
+        minimumGroupSize: Int? = null,
+    ): List<PersistedPuzzle> =
+        transaction {
+            PuzzlesTable
+                .selectAll()
+                .where {
+                    val predicates =
+                        listOfNotNull(
+                            size?.let { PuzzlesTable.size eq it },
+                            orthogonalMinDistance?.let { PuzzlesTable.orthogonalMinDistance eq it },
+                            targetQueenCount?.let { PuzzlesTable.targetQueenCount eq it },
+                            minimumGroupSize?.let { PuzzlesTable.minimumGroupSize eq it },
+                        )
+
+                    predicates.reduceOrNull { accumulator, predicate -> accumulator and predicate }
+                        ?: org.jetbrains.exposed.sql.Op.TRUE
+                }
+                .map { row -> row.toPersistedPuzzle() }
+        }
+
     fun countBySize(): Map<Int, Int> =
         transaction {
             val countExpression = PuzzlesTable.id.count()

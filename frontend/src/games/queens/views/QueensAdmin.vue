@@ -3,107 +3,78 @@
     class="queens-admin-page min-h-screen select-text bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.16),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.14),_transparent_26%),linear-gradient(180deg,_#111827_0%,_#0f172a_100%)] px-6 py-8 text-white"
   >
     <div class="mx-auto flex max-w-[1760px] flex-col gap-6">
-      <header class="flex flex-wrap items-end justify-between gap-6">
-        <div class="max-w-4xl">
-          <p class="text-sm font-semibold uppercase tracking-[0.28em] text-semantic-warning-200">
-            Queens Admin
-          </p>
-          <h1 class="mt-2 text-4xl font-bold tracking-tight">Generation Workshop</h1>
-          <p class="mt-3 max-w-3xl text-sm leading-6 text-semantic-neutral-300">
-            Build a puzzle the same way the generator does: create a board, place queens, seed
-            unique colors, expand groups in order, then fill blocked squares. Each stage is listed
-            explicitly so you can run the pipeline step by step or generate the full board in one
-            call.
-          </p>
-        </div>
+      <header class="space-y-5">
+        <Toolbar
+          class="rounded-[30px] border border-semantic-neutral-800 bg-surface-darkFirm px-5 py-5"
+        >
+          <template #start>
+            <div class="max-w-4xl">
+              <p
+                class="text-sm font-semibold uppercase tracking-[0.28em] text-semantic-warning-200"
+              >
+                Queens Admin
+              </p>
+              <h1 class="mt-2 text-4xl font-bold tracking-tight">Generation Workshop</h1>
+              <p class="mt-3 max-w-3xl text-sm leading-6 text-semantic-neutral-300">
+                Build a puzzle the same way the generator does: create a board, place queens, seed
+                unique colors, expand groups in order, then fill blocked squares.
+              </p>
+            </div>
+          </template>
+          <template #end>
+            <div class="flex flex-wrap items-center justify-end gap-3">
+              <Tag
+                :severity="store.loading ? 'info' : 'contrast'"
+                :value="store.loading ? 'Backend Working' : 'Backend Ready'"
+                rounded
+              />
+              <Button
+                v-if="store.canCancelRequest"
+                type="button"
+                label="Interrupt Request"
+                severity="danger"
+                outlined
+                @click="store.cancelCurrentOperation()"
+              />
+            </div>
+          </template>
+        </Toolbar>
 
-        <div class="grid min-w-[280px] gap-3 sm:grid-cols-2">
-          <div
-            class="rounded-2xl border border-semantic-neutral-700 bg-surface-overlayMid px-4 py-3 text-sm"
-          >
-            <div class="text-semantic-neutral-400">Board</div>
-            <div class="mt-1 text-xl font-semibold">
-              {{ store.boardSummary.size }} x {{ store.boardSummary.size }}
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <AdminStat
+            label="Board"
+            :value="`${store.boardSummary.size} x ${store.boardSummary.size}`"
+          />
+          <AdminStat label="Phase" :value="generationPhaseLabel" />
+          <AdminStat label="Tool" :value="toolLabels[store.selectedTool]" />
+          <div class="rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4">
+            <div class="text-sm text-semantic-neutral-400">Generation Progress</div>
+            <div class="mt-1 text-2xl font-semibold text-white">
+              {{ store.generationProgress ? `${generationProgressPercent}%` : 'Idle' }}
             </div>
-          </div>
-          <div
-            class="rounded-2xl border border-semantic-neutral-700 bg-surface-overlayMid px-4 py-3 text-sm"
-          >
-            <div class="text-semantic-neutral-400">Phase</div>
-            <div class="mt-1 text-xl font-semibold">{{ generationPhaseLabel }}</div>
-          </div>
-          <div
-            class="rounded-2xl border border-semantic-neutral-700 bg-surface-overlayMid px-4 py-3 text-sm"
-          >
-            <div class="text-semantic-neutral-400">Tool</div>
-            <div class="mt-1 text-lg font-semibold">{{ toolLabels[store.selectedTool] }}</div>
-          </div>
-          <div
-            class="rounded-2xl border border-semantic-neutral-700 bg-surface-overlayMid px-4 py-3 text-sm"
-          >
-            <div class="text-semantic-neutral-400">Backend</div>
-            <div
-              class="mt-1 text-lg font-semibold"
-              :class="store.loading ? 'text-semantic-info-300' : ''"
-            >
-              {{ store.loading ? 'Working' : 'Ready' }}
-            </div>
-            <div
-              v-if="store.generationProgress"
-              class="mt-2 text-xs uppercase tracking-[0.18em] text-semantic-neutral-400"
-            >
-              {{ generationProgressPercent }}% colored
-            </div>
-            <button
-              v-if="store.canCancelRequest"
-              type="button"
-              class="mt-3 rounded-xl border border-semantic-danger-700 bg-feedback-dangerSubtle px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-semantic-danger-100 transition hover:bg-feedback-dangerSoft"
-              @click="store.cancelCurrentOperation()"
-            >
-              Interrupt Request
-            </button>
+            <ProgressBar
+              :value="store.generationProgress ? generationProgressPercent : 0"
+              :show-value="false"
+              class="mt-3 h-2 overflow-hidden rounded-full"
+            />
           </div>
         </div>
       </header>
 
-      <nav class="flex flex-wrap gap-3">
-        <button
-          type="button"
-          class="rounded-full px-4 py-2 text-sm font-semibold transition"
-          :class="
-            activeTab === 'workshop'
-              ? 'bg-semantic-info-600 text-white'
-              : 'border border-semantic-neutral-700 bg-surface-overlayDim text-semantic-neutral-300 hover:bg-semantic-neutral-800'
-          "
-          @click="setActiveTab('workshop')"
-        >
-          Workshop
-        </button>
-        <button
-          type="button"
-          class="rounded-full px-4 py-2 text-sm font-semibold transition"
-          :class="
-            activeTab === 'batch'
-              ? 'bg-semantic-info-600 text-white'
-              : 'border border-semantic-neutral-700 bg-surface-overlayDim text-semantic-neutral-300 hover:bg-semantic-neutral-800'
-          "
-          @click="setActiveTab('batch')"
-        >
-          Batch Generate
-        </button>
-        <button
-          type="button"
-          class="rounded-full px-4 py-2 text-sm font-semibold transition"
-          :class="
-            activeTab === 'catalog'
-              ? 'bg-semantic-info-600 text-white'
-              : 'border border-semantic-neutral-700 bg-surface-overlayDim text-semantic-neutral-300 hover:bg-semantic-neutral-800'
-          "
-          @click="setActiveTab('catalog')"
-        >
-          Catalog
-        </button>
-      </nav>
+      <Tabs
+        :value="activeTab"
+        class="rounded-[26px] border border-semantic-neutral-800 bg-surface-darkFirm px-3 py-3"
+        @update:value="handleActiveTabChange"
+      >
+        <TabList class="gap-2">
+          <Tab value="workshop" class="rounded-full px-4 py-2 text-sm font-semibold">Workshop</Tab>
+          <Tab value="batch" class="rounded-full px-4 py-2 text-sm font-semibold">
+            Batch Generate
+          </Tab>
+          <Tab value="catalog" class="rounded-full px-4 py-2 text-sm font-semibold">Catalog</Tab>
+          <Tab value="solver" class="rounded-full px-4 py-2 text-sm font-semibold">Solver</Tab>
+        </TabList>
+      </Tabs>
 
       <div
         v-if="activeTab === 'workshop'"
@@ -614,6 +585,31 @@
                   {{ store.boardSummary.distinctColorCount }}
                 </div>
               </div>
+              <div
+                class="rounded-2xl border border-semantic-neutral-800 bg-surface-darkStrong p-3 md:col-span-2"
+              >
+                <div class="text-sm text-semantic-neutral-400">Min Distance Between Flags</div>
+                <div class="mt-1 text-2xl font-semibold">
+                  {{ workshopMinimumFlagDistanceLabel }}
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap gap-3">
+              <button
+                class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-4 py-2.5 font-semibold text-white hover:bg-semantic-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="queensStore.moveHistory.length === 0"
+                @click="undoWorkshopBoard"
+              >
+                Undo
+              </button>
+              <button
+                class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-4 py-2.5 font-semibold text-white hover:bg-semantic-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="!store.board"
+                @click="clearWorkshopMarks"
+              >
+                Clear Marks
+              </button>
             </div>
           </section>
 
@@ -734,7 +730,38 @@
               </div>
             </div>
             <div v-else class="space-y-4">
-              <QueensAdminBoard :show-solution-queens="showSolutionQueens" />
+              <div
+                v-if="store.board"
+                class="rounded-[28px] border border-semantic-neutral-700 bg-surface-overlayMid p-5 shadow-2xl"
+              >
+                <QueensPuzzleBoard
+                  class="h-full w-full max-w-full"
+                  :store="queensStore"
+                  :enable-touch="false"
+                  interactive
+                  :show-selected-cell="true"
+                  :selected-cell="store.selectedCell"
+                  :changed-cells="store.highlightedChangedCells"
+                  :on-cell-activate="store.applyManualToolToCell"
+                  role="grid"
+                  aria-label="Queens admin puzzle grid"
+                  data-game-board="queens-admin"
+                />
+              </div>
+
+              <div
+                v-else
+                class="flex min-h-[520px] items-center justify-center rounded-[28px] border border-dashed border-semantic-neutral-700 bg-surface-overlaySoft p-12 text-center text-semantic-neutral-300"
+              >
+                <div class="max-w-sm space-y-3">
+                  <p class="text-lg font-semibold text-white">
+                    No board in the current admin session
+                  </p>
+                  <p>
+                    Create a board from the left panel to start painting colors, flags, and queens.
+                  </p>
+                </div>
+              </div>
 
               <div
                 class="rounded-[24px] border border-semantic-neutral-800 bg-surface-darkStrong p-4"
@@ -1192,13 +1219,21 @@
       </div>
 
       <QueensAdminBatchPanel v-else-if="activeTab === 'batch'" />
-      <QueensAdminCatalogPanel v-else />
+      <QueensAdminCatalogPanel v-else-if="activeTab === 'catalog'" />
+      <QueensAdminSolverPanel v-else />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, ref, watch } from 'vue';
+import Button from 'primevue/button';
+import ProgressBar from 'primevue/progressbar';
+import Tab from 'primevue/tab';
+import TabList from 'primevue/tablist';
+import Tabs from 'primevue/tabs';
+import Tag from 'primevue/tag';
+import Toolbar from 'primevue/toolbar';
 import { useRoute, useRouter } from 'vue-router';
 import type { ColorName } from '../types/types';
 import { COLOR_PALETTE } from '../utils/colorPalette';
@@ -1211,11 +1246,17 @@ import {
   loadQueensAdminWorkshopInputs,
   saveQueensAdminWorkshopInputs,
 } from '../admin/inputPersistence';
-import QueensAdminBoard from '../components/admin/QueensAdminBoard.vue';
+import AdminStat from '../components/admin/AdminStat.vue';
 import QueensAdminBatchPanel from '../components/admin/QueensAdminBatchPanel.vue';
 import QueensAdminCatalogPanel from '../components/admin/QueensAdminCatalogPanel.vue';
+import QueensAdminSolverPanel from '../components/admin/QueensAdminSolverPanel.vue';
 import { useQueensAdminStore } from '../stores/queensAdminStore';
+import { useQueensStore } from '../stores/queensStore';
 import type { QueensAdminGenerationStrategy, QueensAdminTool } from '../admin/types';
+
+const QueensPuzzleBoard = defineAsyncComponent(
+  () => import('../components/queens/QueensPuzzleBoard.vue')
+);
 
 type TemplateSeedCell = {
   row: number;
@@ -1235,6 +1276,7 @@ type CopyButtonKey =
 const route = useRoute();
 const router = useRouter();
 const store = useQueensAdminStore();
+const queensStore = useQueensStore();
 const persistedWorkshopInputs = loadQueensAdminWorkshopInputs();
 const boardSizes = Array.from({ length: 17 }, (_, index) => index + 4);
 const palette = COLOR_PALETTE;
@@ -1271,23 +1313,33 @@ store.generationStrategy = persistedWorkshopInputs?.generationStrategy ?? store.
 store.selectedTool = persistedWorkshopInputs?.selectedTool ?? store.selectedTool;
 store.selectedColor = persistedWorkshopInputs?.selectedColor ?? store.selectedColor;
 
-const activeTab = computed<'workshop' | 'batch' | 'catalog'>(() =>
+const activeTab = computed<'workshop' | 'batch' | 'catalog' | 'solver'>(() =>
   route.name === 'queens-admin-batch'
     ? 'batch'
     : route.name === 'queens-admin-catalog'
       ? 'catalog'
-      : 'workshop'
+      : route.name === 'queens-admin-solver'
+        ? 'solver'
+        : 'workshop'
 );
 
-function setActiveTab(tab: 'workshop' | 'batch' | 'catalog'): void {
+function setActiveTab(tab: 'workshop' | 'batch' | 'catalog' | 'solver'): void {
   const targetRouteName =
     tab === 'batch'
       ? 'queens-admin-batch'
       : tab === 'catalog'
         ? 'queens-admin-catalog'
-        : 'queens-admin-workshop';
+        : tab === 'solver'
+          ? 'queens-admin-solver'
+          : 'queens-admin-workshop';
   if (route.name === targetRouteName) return;
   void router.push({ name: targetRouteName });
+}
+
+function handleActiveTabChange(value: string | number | undefined): void {
+  if (value === 'workshop' || value === 'batch' || value === 'catalog' || value === 'solver') {
+    setActiveTab(value);
+  }
 }
 
 function resetTemplateSeedEditor(): void {
@@ -1395,6 +1447,39 @@ const generationPhaseLabel = computed(() => {
 
   return labels[store.board.generationPhase] || store.board.generationPhase;
 });
+
+const workshopMinimumFlagDistanceLabel = computed(() =>
+  queensStore.minimumFlagOrthogonalDistance == null
+    ? 'N/A'
+    : String(queensStore.minimumFlagOrthogonalDistance)
+);
+
+watch(
+  () => [store.board, showSolutionQueens.value, queensStore.regionColorMode],
+  () => {
+    if (!store.board || activeTab.value !== 'workshop') return;
+    queensStore.hydrateFromAdminBoard(store.board, {
+      showSolutionQueens: showSolutionQueens.value,
+      resetHistory: false,
+    });
+  },
+  { immediate: true, deep: true }
+);
+
+function syncWorkshopBoardFromQueensStore(): void {
+  if (!store.board) return;
+  store.board = queensStore.exportAdminBoardState();
+}
+
+function undoWorkshopBoard(): void {
+  queensStore.handleUndo();
+  syncWorkshopBoardFromQueensStore();
+}
+
+function clearWorkshopMarks(): void {
+  queensStore.clearAdminMarks();
+  syncWorkshopBoardFromQueensStore();
+}
 
 const generationProgressPercent = computed(() => {
   if (!store.generationProgress || store.generationProgress.totalCellCount === 0) return 0;

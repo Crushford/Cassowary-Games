@@ -1,32 +1,19 @@
 <template>
   <section class="space-y-6">
     <div class="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
-      <section class="rounded-[30px] border border-semantic-neutral-800 bg-surface-darkFirm p-5">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 class="text-xl font-semibold text-white">Batch Run Setup</h2>
-            <p class="mt-2 text-sm leading-6 text-semantic-neutral-300">
-              Submit many puzzles at once, compare strategies, and time how long each run takes.
-            </p>
-          </div>
-          <div
-            class="rounded-full border border-edge-warningMuted bg-feedback-warningSubtle px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-semantic-warning-200"
-          >
-            Experimental
-          </div>
-        </div>
+      <AdminPanel
+        title="Batch Run Setup"
+        description="Submit many puzzles at once, compare strategies, and time how long each run takes."
+      >
+        <template #badge>
+          <Tag severity="warn" value="Experimental" rounded />
+        </template>
 
-        <div class="mt-5 space-y-4">
+        <div class="space-y-4">
           <label class="block text-sm text-semantic-neutral-300" for="batch-sizes">
             Puzzle sizes
           </label>
-          <input
-            id="batch-sizes"
-            v-model="sizesInput"
-            type="text"
-            class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
-            placeholder="4, 6, 8"
-          />
+          <InputText id="batch-sizes" v-model="sizesInput" class="w-full" placeholder="4, 6, 8" />
           <p class="text-xs leading-5 text-semantic-neutral-400">
             Enter one or more sizes separated by commas. Each size will be run against every
             selected strategy.
@@ -38,79 +25,79 @@
             <label class="block text-sm text-semantic-neutral-300" for="batch-runs">
               Runs per combination
             </label>
-            <input
+            <InputNumber
               id="batch-runs"
-              v-model.number="runsPerCombination"
-              type="number"
-              min="1"
-              max="100"
-              class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+              v-model="runsPerCombination"
+              :min="1"
+              :max="100"
+              input-class="w-full"
+              fluid
             />
           </div>
           <div class="space-y-2">
             <label class="block text-sm text-semantic-neutral-300" for="batch-concurrency">
               Max concurrent jobs
             </label>
-            <input
+            <InputNumber
               id="batch-concurrency"
-              v-model.number="maxConcurrentJobs"
-              type="number"
-              min="1"
-              max="12"
-              class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+              v-model="maxConcurrentJobs"
+              :min="1"
+              :max="12"
+              input-class="w-full"
+              fluid
             />
           </div>
           <div class="space-y-2">
             <label class="block text-sm text-semantic-neutral-300" for="batch-queen-count-mode">
               Queen count mode
             </label>
-            <select
+            <Select
               id="batch-queen-count-mode"
               v-model="queenCountMode"
-              class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
-            >
-              <option value="exact">Exact target</option>
-              <option value="max">Maximum that fits</option>
-            </select>
+              :options="queenCountModeOptions"
+              option-label="label"
+              option-value="value"
+              class="w-full"
+            />
           </div>
           <div class="space-y-2">
             <label class="block text-sm text-semantic-neutral-300" for="batch-target-queens">
               Target queens
             </label>
-            <input
+            <InputNumber
               id="batch-target-queens"
-              v-model.number="targetQueenCount"
-              type="number"
-              min="1"
-              max="400"
+              v-model="targetQueenCount"
+              :min="1"
+              :max="400"
               :disabled="queenCountMode === 'max'"
-              class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+              input-class="w-full"
+              fluid
             />
           </div>
           <div class="space-y-2">
             <label class="block text-sm text-semantic-neutral-300" for="batch-orthogonal-distance">
               Orthogonal min distance
             </label>
-            <input
+            <InputNumber
               id="batch-orthogonal-distance"
-              v-model.number="orthogonalMinDistance"
-              type="number"
-              min="1"
-              max="400"
-              class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+              v-model="orthogonalMinDistance"
+              :min="1"
+              :max="400"
+              input-class="w-full"
+              fluid
             />
           </div>
           <div class="space-y-2">
             <label class="block text-sm text-semantic-neutral-300" for="batch-min-group">
               Minimum region size
             </label>
-            <input
+            <InputNumber
               id="batch-min-group"
-              v-model.number="minimumGroupSize"
-              type="number"
-              min="1"
-              max="20"
-              class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+              v-model="minimumGroupSize"
+              :min="1"
+              :max="20"
+              input-class="w-full"
+              fluid
             />
           </div>
         </div>
@@ -121,25 +108,24 @@
 
         <div class="mt-4 space-y-2">
           <div class="text-sm text-semantic-neutral-300">Strategies</div>
-          <div class="grid gap-2 md:grid-cols-2">
-            <label
+          <MultiSelect
+            v-model="selectedStrategies"
+            :options="strategyOptions"
+            option-label="label"
+            option-value="value"
+            display="chip"
+            class="w-full"
+            placeholder="Select one or more strategies"
+          />
+          <div class="grid gap-2 md:grid-cols-3">
+            <div
               v-for="strategy in strategyOptions"
               :key="strategy.value"
-              class="flex items-start gap-3 rounded-2xl border border-semantic-neutral-700 bg-semantic-neutral-900 px-3 py-3 text-sm text-semantic-neutral-200"
+              class="rounded-2xl border border-semantic-neutral-700 bg-semantic-neutral-900 px-3 py-3 text-sm text-semantic-neutral-200"
             >
-              <input
-                v-model="selectedStrategies"
-                type="checkbox"
-                :value="strategy.value"
-                class="mt-1"
-              />
-              <span>
-                <span class="block font-semibold text-white">{{ strategy.label }}</span>
-                <span class="mt-1 block text-xs text-semantic-neutral-400">
-                  {{ strategy.description }}
-                </span>
-              </span>
-            </label>
+              <div class="font-semibold text-white">{{ strategy.label }}</div>
+              <div class="mt-1 text-xs text-semantic-neutral-400">{{ strategy.description }}</div>
+            </div>
           </div>
         </div>
 
@@ -152,41 +138,40 @@
                 do not create extra rows.
               </div>
             </div>
-            <input v-model="saveSuccessfulPuzzles" type="checkbox" />
+            <ToggleSwitch
+              :model-value="saveSuccessfulPuzzles"
+              @update:model-value="saveSuccessfulPuzzles = Boolean($event)"
+            />
           </div>
         </div>
 
         <div class="mt-5 flex flex-wrap gap-3">
-          <button
-            class="rounded-xl bg-semantic-success-600 px-4 py-2.5 font-semibold text-white transition hover:bg-semantic-success-500 disabled:cursor-not-allowed disabled:opacity-50"
+          <Button
+            label="Start Batch"
+            severity="success"
             :disabled="
               store.batchLoading || parsedSizes.length === 0 || selectedStrategies.length === 0
             "
             @click="startBatch"
-          >
-            Start Batch
-          </button>
-          <button
+          />
+          <Button
             v-if="
               store.batchLoading ||
               store.batchStatus?.state === 'RUNNING' ||
               store.batchStatus?.state === 'QUEUED'
             "
             type="button"
-            class="rounded-xl border border-semantic-danger-700 bg-feedback-dangerSubtle px-4 py-2.5 font-semibold text-semantic-danger-100 transition hover:bg-feedback-dangerSoft"
+            label="Cancel Batch"
+            severity="danger"
+            outlined
             @click="store.cancelCurrentOperation()"
-          >
-            Cancel Batch
-          </button>
+          />
         </div>
 
-        <div
-          v-if="parsedSizes.length === 0"
-          class="mt-4 rounded-xl border border-edge-warningMuted bg-feedback-warningSubtle p-3 text-sm text-semantic-warning-200"
-        >
+        <AdminMessage v-if="parsedSizes.length === 0" severity="warn" class="mt-4">
           Enter at least one valid size between 4 and 20.
-        </div>
-      </section>
+        </AdminMessage>
+      </AdminPanel>
 
       <section class="space-y-6">
         <section class="rounded-[30px] border border-semantic-neutral-800 bg-surface-darkFirm p-5">
@@ -664,6 +649,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import Button from 'primevue/button';
+import InputNumber from 'primevue/inputnumber';
+import InputText from 'primevue/inputtext';
+import MultiSelect from 'primevue/multiselect';
+import Select from 'primevue/select';
+import Tag from 'primevue/tag';
+import ToggleSwitch from 'primevue/toggleswitch';
 import { queensAdminApi } from '../../admin/api';
 import {
   clearBatchHistory,
@@ -674,6 +666,8 @@ import {
   loadQueensAdminBatchInputs,
   saveQueensAdminBatchInputs,
 } from '../../admin/inputPersistence';
+import AdminMessage from './AdminMessage.vue';
+import AdminPanel from './AdminPanel.vue';
 import { useQueensAdminStore } from '../../stores/queensAdminStore';
 import { QUEENS_PUZZLE_SHARE_BASE_URL } from '../../utils/urlPuzzleEncoding';
 import type {
@@ -705,6 +699,11 @@ const historySnapshot = ref(getBatchHistorySnapshot());
 let systemLoadPoller: ReturnType<typeof setInterval> | null = null;
 let copyResetTimer: ReturnType<typeof setTimeout> | null = null;
 const copiedRunId = ref<string | null>(null);
+
+const queenCountModeOptions: Array<{ label: string; value: 'exact' | 'max' }> = [
+  { label: 'Exact target', value: 'exact' },
+  { label: 'Maximum that fits', value: 'max' },
+];
 
 const strategyOptions: Array<{
   value: QueensAdminGenerationStrategy;

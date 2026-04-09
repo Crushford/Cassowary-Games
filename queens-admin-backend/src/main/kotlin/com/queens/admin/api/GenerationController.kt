@@ -4,6 +4,7 @@ import com.queens.admin.api.dto.BoardStateRequestDto
 import com.queens.admin.api.dto.BatchGenerationRequestDto
 import com.queens.admin.api.dto.BatchGenerationStartedDto
 import com.queens.admin.api.dto.BatchGenerationStatusDto
+import com.queens.admin.api.dto.CatalogPuzzleSelectionDto
 import com.queens.admin.api.dto.CreateBoardRequestDto
 import com.queens.admin.api.dto.DeletePuzzleCatalogGroupRequestDto
 import com.queens.admin.api.dto.DeletePuzzleCatalogGroupResultDto
@@ -20,6 +21,7 @@ import com.queens.admin.application.GenerationJobService
 import com.queens.admin.application.GenerationWorkflowService
 import com.queens.admin.application.PuzzleCatalogService
 import com.queens.admin.domain.model.Position
+import com.queens.admin.domain.service.PersistedPuzzleBoardCodecService
 import com.queens.admin.infrastructure.persistence.PuzzleRepository
 import com.queens.admin.infrastructure.mapper.BatchGenerationMapper
 import com.queens.admin.infrastructure.mapper.BoardStateMapper
@@ -29,6 +31,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -41,6 +44,7 @@ class GenerationController(
     private val backendLoadService: BackendLoadService,
     private val batchGenerationService: BatchGenerationService,
     private val puzzleCatalogService: PuzzleCatalogService,
+    private val persistedPuzzleBoardCodecService: PersistedPuzzleBoardCodecService,
     private val boardStateMapper: BoardStateMapper,
     private val batchGenerationMapper: BatchGenerationMapper,
     private val generationJobMapper: GenerationJobMapper,
@@ -80,6 +84,36 @@ class GenerationController(
                 .mapKeys { (size, _) -> "${size}x${size}" },
             countsBySizeAndDistance = countsBySizeAndDistance,
             groups = groups,
+        )
+    }
+
+    @GetMapping("/catalog-random-puzzle")
+    fun getRandomCatalogPuzzle(
+        @RequestParam(required = false) size: Int?,
+        @RequestParam(required = false) orthogonalMinDistance: Int?,
+        @RequestParam(required = false) targetQueenCount: Int?,
+        @RequestParam(required = false) minimumGroupSize: Int?,
+    ): ResponseEntity<CatalogPuzzleSelectionDto> {
+        val puzzle =
+            puzzleCatalogService.findRandomFiltered(
+                size = size,
+                orthogonalMinDistance = orthogonalMinDistance,
+                targetQueenCount = targetQueenCount,
+                minimumGroupSize = minimumGroupSize,
+            ) ?: return ResponseEntity.notFound().build()
+
+        return ResponseEntity.ok(
+            CatalogPuzzleSelectionDto(
+                puzzleId = puzzle.id.toString(),
+                size = puzzle.size,
+                orthogonalMinDistance = puzzle.orthogonalMinDistance,
+                targetQueenCount = puzzle.targetQueenCount,
+                minimumGroupSize = puzzle.minimumGroupSize,
+                boardState =
+                    boardStateMapper.toDto(
+                        persistedPuzzleBoardCodecService.decode(puzzle),
+                    ),
+            ),
         )
     }
 

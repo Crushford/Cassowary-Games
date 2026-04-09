@@ -1,5 +1,14 @@
 package com.queens.admin.api.dto
 
+data class CatalogPuzzleSelectionDto(
+    val puzzleId: String,
+    val size: Int,
+    val orthogonalMinDistance: Int,
+    val targetQueenCount: Int,
+    val minimumGroupSize: Int,
+    val boardState: BoardStateDto,
+)
+
 data class PuzzleCatalogStatsDto(
     val totalPuzzles: Int,
     val countsBySize: Map<String, Int>,

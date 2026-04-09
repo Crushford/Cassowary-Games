@@ -30,7 +30,7 @@
         <!-- Single Puzzle Mode Button -->
         <button
           class="w-full py-4 px-6 bg-semantic-info-600 hover:bg-semantic-info-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
-          @click="queensStore.openSinglePuzzleModeModal()"
+          @click="openMenuMode('single')"
         >
           <div class="text-xl font-bold mb-1">Single Puzzle Mode</div>
           <div class="text-sm opacity-90">Play puzzles one at a time</div>
@@ -39,7 +39,7 @@
         <!-- Speed Mode Button -->
         <button
           class="w-full py-4 px-6 bg-semantic-warning-600 hover:bg-semantic-warning-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
-          @click="speedModeStore.openModal()"
+          @click="openMenuMode('speed')"
         >
           <div class="text-xl font-bold mb-1">Speed Mode ⚡</div>
           <div class="text-sm opacity-90">Race against the clock</div>
@@ -48,7 +48,7 @@
         <!-- Rotate Mode Button -->
         <button
           class="w-full py-4 px-6 bg-semantic-success-600 hover:bg-semantic-success-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
-          @click="showRotateModeModal = true"
+          @click="openMenuMode('rotate')"
         >
           <div class="text-xl font-bold mb-1">Rotate Mode 🔄</div>
           <div class="text-sm opacity-90">Board rotates 90° after every move</div>
@@ -66,7 +66,7 @@
         <!-- Records Button -->
         <button
           class="w-full py-4 px-6 bg-semantic-info-600 hover:bg-semantic-info-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
-          @click="queensStore.openRecordsModal()"
+          @click="openMenuMode('records')"
         >
           <div class="text-xl font-bold mb-1">Records 🏆</div>
           <div class="text-sm opacity-90">View your best times and records</div>
@@ -86,12 +86,9 @@
     />
     <SpeedModeModal
       :is-visible="speedModeStore.showSpeedModeModal"
-      @close="speedModeStore.closeModal()"
+      @close="closeMenuMode('speed')"
     />
-    <RecordsModal
-      :is-visible="queensStore.showRecordsModal"
-      @close="queensStore.closeRecordsModal()"
-    />
+    <RecordsModal :is-visible="queensStore.showRecordsModal" @close="closeMenuMode('records')" />
   </div>
 </template>
 
@@ -115,8 +112,19 @@ const showRotateModeModal = ref(false);
 const router = useRouter();
 const route = useRoute();
 
+type QueensMenuMode = 'single' | 'speed' | 'rotate' | 'records';
+
 function goToIncrementalMode() {
   router.push('/queens/incremental');
+}
+
+function openMenuMode(mode: QueensMenuMode) {
+  router.push({
+    path: '/queens',
+    query: {
+      mode,
+    },
+  });
 }
 
 onMounted(async () => {
@@ -129,23 +137,35 @@ watch(
   () => route.query.mode,
   (mode) => {
     queensStore.showSinglePuzzleModeModal = mode === 'single';
+    speedModeStore.showSpeedModeModal = mode === 'speed';
     showRotateModeModal.value = mode === 'rotate';
+    queensStore.showRecordsModal = mode === 'records';
   },
   { immediate: true }
 );
 
 function closeSinglePuzzleSelector() {
   queensStore.closeSinglePuzzleModeModal();
-  if (route.query.mode === 'single') {
-    router.replace('/queens');
-  }
+  closeMenuMode('single');
 }
 
 function closeRotateModeSelector() {
   showRotateModeModal.value = false;
-  if (route.query.mode === 'rotate') {
-    router.replace('/queens');
+  closeMenuMode('rotate');
+}
+
+function closeMenuMode(expectedMode: QueensMenuMode) {
+  if (route.query.mode !== expectedMode) {
+    return;
   }
+
+  const back = typeof window.history.state?.back === 'string' ? window.history.state.back : null;
+  if (back) {
+    router.back();
+    return;
+  }
+
+  router.replace('/queens');
 }
 
 defineOptions({

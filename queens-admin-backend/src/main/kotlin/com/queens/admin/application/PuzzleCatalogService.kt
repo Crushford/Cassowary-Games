@@ -4,6 +4,7 @@ import com.queens.admin.domain.model.BoardState
 import com.queens.admin.domain.model.PersistedPuzzle
 import com.queens.admin.domain.model.QueensBoardMetadata
 import com.queens.admin.domain.service.CanonicalPuzzleSignatureService
+import kotlin.random.Random
 import com.queens.admin.infrastructure.persistence.PuzzleRepository
 import java.time.Instant
 import java.util.UUID
@@ -24,6 +25,23 @@ class PuzzleCatalogService(
 
     fun findAll(): List<PersistedPuzzle> =
         puzzleRepository.findAll()
+
+    fun findRandomFiltered(
+        size: Int? = null,
+        orthogonalMinDistance: Int? = null,
+        targetQueenCount: Int? = null,
+        minimumGroupSize: Int? = null,
+    ): PersistedPuzzle? {
+        val puzzles =
+            puzzleRepository.findAllFiltered(
+                size = size,
+                orthogonalMinDistance = orthogonalMinDistance,
+                targetQueenCount = targetQueenCount,
+                minimumGroupSize = minimumGroupSize,
+            )
+        if (puzzles.isEmpty()) return null
+        return puzzles[Random.nextInt(puzzles.size)]
+    }
 
     fun countBySize(): Map<Int, Int> =
         puzzleRepository.countBySize()

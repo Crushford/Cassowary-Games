@@ -79,16 +79,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
+import { useRoute, useRouter } from 'vue-router';
 import { useQueensStore } from '../../stores/queensStore';
 import { useSpeedModeStore } from '../../stores/speedModeStore';
 
 const queensStore = useQueensStore();
 const speedModeStore = useSpeedModeStore();
+const route = useRoute();
+const router = useRouter();
 
-defineProps<{
+const props = defineProps<{
   isVisible: boolean;
 }>();
 
@@ -107,11 +110,85 @@ const sequentialText = computed(() => {
   return availableSizes.value.join(' → ');
 });
 
+function getQueryTimer(): number | null {
+  const value = route.query.timer;
+  if (typeof value !== 'string') return null;
+  const parsed = Number.parseInt(value, 10);
+  return parsed === 120 || parsed === 300 ? parsed : null;
+}
+
+function getQuerySize(): string | null {
+  const value = route.query.size;
+  return typeof value === 'string' ? value : null;
+}
+
+function initializeSelectionState() {
+  selectedTimer.value = getQueryTimer() ?? 120;
+
+  const querySize = getQuerySize();
+  selectedSize.value = querySize && availableSizes.value.includes(querySize) ? querySize : null;
+}
+
+function updateSpeedQuery() {
+  if (!props.isVisible) return;
+
+  const nextQuery: Record<string, string> = {
+    mode: 'speed',
+    timer: String(selectedTimer.value),
+  };
+
+  if (selectedSize.value) {
+    nextQuery.size = selectedSize.value;
+  }
+
+  const currentMode = typeof route.query.mode === 'string' ? route.query.mode : undefined;
+  const currentTimer = typeof route.query.timer === 'string' ? route.query.timer : undefined;
+  const currentSize = typeof route.query.size === 'string' ? route.query.size : undefined;
+
+  if (
+    currentMode === nextQuery.mode &&
+    currentTimer === nextQuery.timer &&
+    currentSize === nextQuery.size
+  ) {
+    return;
+  }
+
+  router.replace({
+    path: '/queens',
+    query: nextQuery,
+  });
+}
+
 async function handleStart() {
   speedModeStore.start(selectedTimer.value, selectedSize.value);
   await speedModeStore.startNextPuzzle();
   emit('close');
 }
+
+watch(
+  () => props.isVisible,
+  (isVisible) => {
+    if (isVisible) {
+      initializeSelectionState();
+    }
+  },
+  { immediate: true }
+);
+
+watch(
+  availableSizes,
+  (sizes) => {
+    if (!props.isVisible) return;
+    if (selectedSize.value && !sizes.includes(selectedSize.value)) {
+      selectedSize.value = null;
+    }
+  },
+  { immediate: true }
+);
+
+watch([selectedTimer, selectedSize], () => {
+  updateSpeedQuery();
+});
 </script>
 
 <script lang="ts">

@@ -1,26 +1,20 @@
 <template>
   <section class="space-y-6">
-    <section class="rounded-[30px] border border-semantic-neutral-800 bg-surface-darkFirm p-5">
-      <div class="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 class="text-xl font-semibold text-white">Puzzle Catalog Cleanup</h2>
-          <p class="mt-2 max-w-3xl text-sm leading-6 text-semantic-neutral-300">
-            Review puzzle groups by board size, orthogonal distance, queen count, and minimum region
-            size. Filter the groups, sort by any column, and remove an exact ruleset bucket in one
-            action.
-          </p>
-        </div>
-        <button
+    <AdminPanel
+      title="Puzzle Catalog Cleanup"
+      description="Review puzzle groups by board size, orthogonal distance, queen count, and minimum region size. Filter the groups, sort by any column, and remove an exact ruleset bucket in one action."
+    >
+      <template #actions>
+        <Button
           type="button"
-          class="rounded-xl border border-semantic-neutral-700 bg-surface-darkSoft px-3 py-2 text-sm font-semibold text-semantic-neutral-200 transition hover:border-semantic-neutral-500 hover:text-white"
+          :label="loading ? 'Refreshing…' : 'Refresh'"
+          outlined
           :disabled="loading"
           @click="refreshCatalog"
-        >
-          {{ loading ? 'Refreshing…' : 'Refresh' }}
-        </button>
-      </div>
+        />
+      </template>
 
-      <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <label class="space-y-2 text-sm text-semantic-neutral-300">
           <span class="block">Search</span>
           <InputText v-model="searchText" class="w-full" placeholder="Search values" />
@@ -84,33 +78,18 @@
       </div>
 
       <div class="mt-5 grid gap-3 md:grid-cols-3">
-        <div class="rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4">
-          <div class="text-sm text-semantic-neutral-400">Total Puzzles</div>
-          <div class="mt-1 text-2xl font-semibold text-white">{{ stats?.totalPuzzles ?? 0 }}</div>
-        </div>
-        <div class="rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4">
-          <div class="text-sm text-semantic-neutral-400">Ruleset Groups</div>
-          <div class="mt-1 text-2xl font-semibold text-white">{{ groups.length }}</div>
-        </div>
-        <div class="rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4">
-          <div class="text-sm text-semantic-neutral-400">Filtered Groups</div>
-          <div class="mt-1 text-2xl font-semibold text-white">{{ filteredGroups.length }}</div>
-        </div>
+        <AdminStat label="Total Puzzles" :value="stats?.totalPuzzles ?? 0" />
+        <AdminStat label="Ruleset Groups" :value="groups.length" />
+        <AdminStat label="Filtered Groups" :value="filteredGroups.length" />
       </div>
 
-      <div
-        v-if="errorMessage"
-        class="mt-5 rounded-2xl border border-edge-dangerSoft bg-feedback-dangerSubtle p-4 text-sm text-semantic-danger-200"
-      >
+      <AdminMessage v-if="errorMessage" severity="error" class="mt-5">
         {{ errorMessage }}
-      </div>
+      </AdminMessage>
 
-      <div
-        v-if="successMessage"
-        class="mt-5 rounded-2xl border border-incremental-successBorderFaint bg-feedback-successSubtle p-4 text-sm text-semantic-success-200"
-      >
+      <AdminMessage v-if="successMessage" severity="success" class="mt-5">
         {{ successMessage }}
-      </div>
+      </AdminMessage>
 
       <div class="mt-5 overflow-hidden rounded-[24px] border border-semantic-neutral-800">
         <DataTable
@@ -145,7 +124,14 @@
           <Column header="Actions" :exportable="false">
             <template #body="{ data }">
               <div class="flex flex-wrap gap-2">
-                <Button size="small" @click="playRandomPuzzleFromGroup(data)"> Play Random </Button>
+                <button
+                  type="button"
+                  :disabled="openingGroupKey === data.groupKey"
+                  class="inline-flex items-center justify-center rounded-md border border-semantic-info-700 bg-feedback-infoFaint px-3 py-2 text-sm font-medium text-semantic-info-100 transition hover:bg-feedback-infoSoft"
+                  @click="openRandomCatalogPuzzle(data)"
+                >
+                  {{ openingGroupKey === data.groupKey ? 'Opening…' : 'Play Random' }}
+                </button>
                 <Button
                   size="small"
                   severity="danger"
@@ -160,7 +146,7 @@
           </Column>
         </DataTable>
       </div>
-    </section>
+    </AdminPanel>
 
     <Dialog
       v-model:visible="deleteDialogVisible"
@@ -206,12 +192,15 @@ import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
+import AdminMessage from './AdminMessage.vue';
+import AdminPanel from './AdminPanel.vue';
+import AdminStat from './AdminStat.vue';
 import { queensAdminApi } from '../../admin/api';
 import type {
   QueensAdminPuzzleCatalogGroup,
   QueensAdminPuzzleCatalogStats,
 } from '../../admin/types';
-import { buildQueensSelectionRoute } from '../../utils/puzzleSelectionRoute';
+import { buildEncodedQueensPuzzleLayout } from '../../utils/urlPuzzleEncoding';
 
 type PuzzleCatalogRow = QueensAdminPuzzleCatalogGroup & {
   groupKey: string;
@@ -230,6 +219,7 @@ const selectedMinimumGroupSize = ref('');
 const deleteDialogVisible = ref(false);
 const groupPendingDelete = ref<PuzzleCatalogRow | null>(null);
 const deletingGroupKey = ref<string | null>(null);
+const openingGroupKey = ref<string | null>(null);
 const router = useRouter();
 
 const groups = computed<PuzzleCatalogRow[]>(() =>
@@ -309,15 +299,55 @@ function promptDelete(group: PuzzleCatalogRow): void {
   deleteDialogVisible.value = true;
 }
 
-function playRandomPuzzleFromGroup(group: PuzzleCatalogRow): void {
-  void router.push(
-    buildQueensSelectionRoute({
-      sizeKey: `${group.size}x${group.size}`,
+async function openRandomCatalogPuzzle(group: PuzzleCatalogRow): Promise<void> {
+  openingGroupKey.value = group.groupKey;
+  errorMessage.value = null;
+
+  const popup = window.open('', '_blank', 'noopener,noreferrer');
+
+  try {
+    const selection = await queensAdminApi.getRandomCatalogPuzzle({
+      size: group.size,
       orthogonalMinDistance: group.orthogonalMinDistance,
       targetQueenCount: group.targetQueenCount,
       minimumGroupSize: group.minimumGroupSize,
-    })
-  );
+    });
+
+    if (!selection) {
+      if (popup) {
+        popup.close();
+      }
+      errorMessage.value = 'No puzzle matched that catalog category.';
+      return;
+    }
+
+    const encodedLayout = buildEncodedQueensPuzzleLayout(
+      selection.board.cells.flat().map((cell) => ({
+        groupColor: cell.groupColor,
+        isSolutionQueen: cell.isSolutionQueen,
+      }))
+    );
+
+    const href = router.resolve({
+      name: 'queens-encoded-puzzle',
+      params: { encodedLayout },
+    }).href;
+
+    if (popup) {
+      popup.location.href = href;
+      return;
+    }
+
+    window.open(href, '_blank', 'noopener,noreferrer');
+  } catch (error) {
+    if (popup) {
+      popup.close();
+    }
+    errorMessage.value =
+      error instanceof Error ? error.message : 'Failed to open a random catalog puzzle';
+  } finally {
+    openingGroupKey.value = null;
+  }
 }
 
 async function confirmDelete(): Promise<void> {

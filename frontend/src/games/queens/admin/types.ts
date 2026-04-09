@@ -178,3 +178,19 @@ export interface QueensAdminPuzzleCatalogGroup {
   minimumGroupSize: number;
   count: number;
 }
+
+export interface QueensAdminCatalogPuzzleSelection {
+  puzzleId: string;
+  size: number;
+  orthogonalMinDistance: number;
+  targetQueenCount: number;
+  minimumGroupSize: number;
+  board: QueensAdminBoardState;
+}
+
+export interface QueensAdminSolverPattern {
+  id: string;
+  size: number;
+  cells: Array<{ row: number; col: number; activeSquare?: boolean }>;
+  outputFlags: Array<{ row: number; col: number }>;
+}

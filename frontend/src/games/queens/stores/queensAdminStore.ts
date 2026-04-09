@@ -3,6 +3,7 @@ import { defineStore } from 'pinia';
 import type { ColorName } from '../types/types';
 import { COLOR_PALETTE } from '../utils/colorPalette';
 import { queensAdminApi } from '../admin/api';
+import { useQueensStore } from './queensStore';
 import type {
   QueensAdminBatchStatus,
   QueensAdminBoardState,
@@ -21,6 +22,7 @@ const TRACKED_BATCH_STORAGE_KEY = 'queens-admin-tracked-batches-v1';
 const MAX_TRACKED_BATCHES = 8;
 
 export const useQueensAdminStore = defineStore('queensAdmin', () => {
+  const queensStore = useQueensStore();
   const board = ref<QueensAdminBoardState | null>(null);
   const boardSize = ref(DEFAULT_BOARD_SIZE);
   const queenCountMode = ref<QueensAdminQueenCountMode>('exact');
@@ -174,6 +176,10 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
       nextBoard.metadata?.orthogonalMinDistance ?? nextBoard.size
     );
     selectedCellKey.value = null;
+    queensStore.hydrateFromAdminBoard(nextBoard, {
+      showSolutionQueens: true,
+      resetHistory: false,
+    });
   }
 
   function applyResult(result: QueensAdminOperationResult): QueensAdminOperationResult {
@@ -181,6 +187,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     lastActionResult.value = result;
     backendError.value = result.success ? null : result.error || 'Operation failed';
 
+    const previousBoard = board.value;
     if (result.board) {
       board.value = result.board;
       boardSize.value = result.board.size;
@@ -188,6 +195,25 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
       orthogonalMinDistance.value = Number(
         result.board.metadata?.orthogonalMinDistance ?? result.board.size
       );
+
+      const shouldResetHistory =
+        !previousBoard ||
+        previousBoard.size !== result.board.size ||
+        result.action === 'create-board' ||
+        result.action === 'clear-board' ||
+        result.action === 'generate-valid-board';
+
+      if (shouldResetHistory) {
+        queensStore.hydrateFromAdminBoard(result.board, {
+          showSolutionQueens: true,
+          resetHistory: true,
+        });
+      } else {
+        queensStore.applyAdminBoardResult(result.board, {
+          showSolutionQueens: true,
+          saveHistory: true,
+        });
+      }
     }
 
     validation.value = result.validation;
@@ -580,6 +606,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     generationProgress.value = null;
     selectedCellKey.value = null;
     clearHighlights();
+    queensStore.initializeGrid();
     actionHistory.value.unshift({
       id: `${Date.now()}-delete-board`,
       action: 'delete-board',

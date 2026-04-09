@@ -1,6 +1,7 @@
 import type {
   QueensAdminBatchStatus,
   QueensAdminBoardState,
+  QueensAdminCatalogPuzzleSelection,
   QueensAdminChangedCell,
   QueensAdminGenerationProgress,
   QueensAdminPuzzleCatalogGroup,
@@ -8,6 +9,7 @@ import type {
   QueensAdminOperationResult,
   QueensAdminPuzzleCatalogStats,
   QueensAdminGenerationStrategy,
+  QueensAdminSolverPattern,
   QueensAdminSystemLoad,
   QueensAdminValidationSummary,
 } from './types';
@@ -186,6 +188,22 @@ interface DeletePuzzleCatalogGroupResultDto {
   deletedCount: number;
 }
 
+interface CatalogPuzzleSelectionDto {
+  puzzleId: string;
+  size: number;
+  orthogonalMinDistance: number;
+  targetQueenCount: number;
+  minimumGroupSize: number;
+  boardState: BoardStateDto;
+}
+
+interface SolverPatternDto {
+  id?: string;
+  size: number;
+  cells: Array<{ row: number; col: number; activeSquare?: boolean }>;
+  outputFlags: Array<{ row: number; col: number }>;
+}
+
 function toLocalBoardState(boardState: BoardStateDto | null): QueensAdminBoardState | null {
   if (!boardState) return null;
 
@@ -340,6 +358,19 @@ function toPuzzleCatalogGroup(data: PuzzleCatalogGroupDto): QueensAdminPuzzleCat
   };
 }
 
+function toCatalogPuzzleSelection(
+  data: CatalogPuzzleSelectionDto
+): QueensAdminCatalogPuzzleSelection {
+  return {
+    puzzleId: data.puzzleId,
+    size: data.size,
+    orthogonalMinDistance: data.orthogonalMinDistance,
+    targetQueenCount: data.targetQueenCount,
+    minimumGroupSize: data.minimumGroupSize,
+    board: toLocalBoardState(data.boardState)!,
+  };
+}
+
 async function postOperation(
   path: string,
   body: Record<string, unknown>,
@@ -364,6 +395,34 @@ export const queensAdminApi = {
     return toPuzzleCatalogStats((await response.json()) as PuzzleCatalogStatsDto);
   },
 
+  async getRandomCatalogPuzzle(filters?: {
+    size?: number;
+    orthogonalMinDistance?: number;
+    targetQueenCount?: number;
+    minimumGroupSize?: number;
+  }): Promise<QueensAdminCatalogPuzzleSelection | null> {
+    const query = new URLSearchParams();
+    if (filters?.size != null) query.set('size', String(filters.size));
+    if (filters?.orthogonalMinDistance != null) {
+      query.set('orthogonalMinDistance', String(filters.orthogonalMinDistance));
+    }
+    if (filters?.targetQueenCount != null) {
+      query.set('targetQueenCount', String(filters.targetQueenCount));
+    }
+    if (filters?.minimumGroupSize != null) {
+      query.set('minimumGroupSize', String(filters.minimumGroupSize));
+    }
+
+    const response = await fetch(
+      `/api/queens/admin/generation/catalog-random-puzzle${query.size > 0 ? `?${query.toString()}` : ''}`
+    );
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      throw new Error('Failed to load a random catalog puzzle');
+    }
+    return toCatalogPuzzleSelection((await response.json()) as CatalogPuzzleSelectionDto);
+  },
+
   async deletePuzzleCatalogGroup(group: {
     size: number;
     orthogonalMinDistance: number;
@@ -384,6 +443,41 @@ export const queensAdminApi = {
 
     const data = (await response.json()) as DeletePuzzleCatalogGroupResultDto;
     return data.deletedCount;
+  },
+
+  runSingleColorGroupSolverRule(
+    boardState: QueensAdminBoardState,
+    signal?: AbortSignal
+  ): Promise<QueensAdminOperationResult> {
+    return postOperation('/api/queens/admin/solver/single-color-group', { boardState }, signal);
+  },
+
+  runSpecificSolverRule(
+    boardState: QueensAdminBoardState,
+    ruleName: string,
+    signal?: AbortSignal
+  ): Promise<QueensAdminOperationResult> {
+    return postOperation('/api/queens/admin/solver/run-rule', { boardState, ruleName }, signal);
+  },
+
+  runSolverPattern(
+    boardState: QueensAdminBoardState,
+    pattern: QueensAdminSolverPattern,
+    signal?: AbortSignal
+  ): Promise<QueensAdminOperationResult> {
+    return postOperation(
+      '/api/queens/admin/solver/pattern',
+      {
+        boardState,
+        pattern: {
+          id: pattern.id,
+          size: pattern.size,
+          cells: pattern.cells,
+          outputFlags: pattern.outputFlags,
+        } satisfies SolverPatternDto,
+      },
+      signal
+    );
   },
 
   async getSystemLoad(): Promise<QueensAdminSystemLoad> {
