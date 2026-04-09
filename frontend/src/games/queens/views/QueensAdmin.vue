@@ -91,6 +91,18 @@
         >
           Batch Generate
         </button>
+        <button
+          type="button"
+          class="rounded-full px-4 py-2 text-sm font-semibold transition"
+          :class="
+            activeTab === 'catalog'
+              ? 'bg-semantic-info-600 text-white'
+              : 'border border-semantic-neutral-700 bg-surface-overlayDim text-semantic-neutral-300 hover:bg-semantic-neutral-800'
+          "
+          @click="setActiveTab('catalog')"
+        >
+          Catalog
+        </button>
       </nav>
 
       <div
@@ -1179,7 +1191,8 @@
         </aside>
       </div>
 
-      <QueensAdminBatchPanel v-else />
+      <QueensAdminBatchPanel v-else-if="activeTab === 'batch'" />
+      <QueensAdminCatalogPanel v-else />
     </div>
   </div>
 </template>
@@ -1200,6 +1213,7 @@ import {
 } from '../admin/inputPersistence';
 import QueensAdminBoard from '../components/admin/QueensAdminBoard.vue';
 import QueensAdminBatchPanel from '../components/admin/QueensAdminBatchPanel.vue';
+import QueensAdminCatalogPanel from '../components/admin/QueensAdminCatalogPanel.vue';
 import { useQueensAdminStore } from '../stores/queensAdminStore';
 import type { QueensAdminGenerationStrategy, QueensAdminTool } from '../admin/types';
 
@@ -1257,12 +1271,21 @@ store.generationStrategy = persistedWorkshopInputs?.generationStrategy ?? store.
 store.selectedTool = persistedWorkshopInputs?.selectedTool ?? store.selectedTool;
 store.selectedColor = persistedWorkshopInputs?.selectedColor ?? store.selectedColor;
 
-const activeTab = computed<'workshop' | 'batch'>(() =>
-  route.name === 'queens-admin-batch' ? 'batch' : 'workshop'
+const activeTab = computed<'workshop' | 'batch' | 'catalog'>(() =>
+  route.name === 'queens-admin-batch'
+    ? 'batch'
+    : route.name === 'queens-admin-catalog'
+      ? 'catalog'
+      : 'workshop'
 );
 
-function setActiveTab(tab: 'workshop' | 'batch'): void {
-  const targetRouteName = tab === 'batch' ? 'queens-admin-batch' : 'queens-admin-workshop';
+function setActiveTab(tab: 'workshop' | 'batch' | 'catalog'): void {
+  const targetRouteName =
+    tab === 'batch'
+      ? 'queens-admin-batch'
+      : tab === 'catalog'
+        ? 'queens-admin-catalog'
+        : 'queens-admin-workshop';
   if (route.name === targetRouteName) return;
   void router.push({ name: targetRouteName });
 }

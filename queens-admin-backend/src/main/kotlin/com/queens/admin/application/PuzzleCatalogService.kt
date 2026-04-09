@@ -31,6 +31,22 @@ class PuzzleCatalogService(
     fun countBySizeAndDistance(): Map<Pair<Int, Int>, Int> =
         puzzleRepository.countBySizeAndDistance()
 
+    fun countByRulesetGroup(): List<PuzzleRepository.PuzzleCatalogGroupCount> =
+        puzzleRepository.countByRulesetGroup()
+
+    fun deleteByRulesetGroup(
+        size: Int,
+        orthogonalMinDistance: Int,
+        targetQueenCount: Int,
+        minimumGroupSize: Int,
+    ): Int =
+        puzzleRepository.deleteByRulesetGroup(
+            size = size,
+            orthogonalMinDistance = orthogonalMinDistance,
+            targetQueenCount = targetQueenCount,
+            minimumGroupSize = minimumGroupSize,
+        )
+
     fun save(persistedPuzzle: PersistedPuzzle): PersistedPuzzle =
         puzzleRepository.insert(persistedPuzzle)
 

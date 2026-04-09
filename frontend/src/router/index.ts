@@ -61,7 +61,8 @@ const router = createRouter({
       path: '/queens/admin',
       name: 'queens-admin',
       redirect: (to) => {
-        const tab = to.query.tab === 'batch' ? 'batch' : 'workshop';
+        const tab =
+          to.query.tab === 'batch' || to.query.tab === 'catalog' ? to.query.tab : 'workshop';
         return { name: `queens-admin-${tab}` };
       },
     },
@@ -73,6 +74,11 @@ const router = createRouter({
     {
       path: '/queens/admin/batch',
       name: 'queens-admin-batch',
+      component: QueensAdmin,
+    },
+    {
+      path: '/queens/admin/catalog',
+      name: 'queens-admin-catalog',
       component: QueensAdmin,
     },
     {

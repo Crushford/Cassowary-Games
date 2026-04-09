@@ -3,6 +3,7 @@ import type {
   QueensAdminBoardState,
   QueensAdminChangedCell,
   QueensAdminGenerationProgress,
+  QueensAdminPuzzleCatalogGroup,
   QueensAdminQueenCountMode,
   QueensAdminOperationResult,
   QueensAdminPuzzleCatalogStats,
@@ -170,6 +171,19 @@ interface PuzzleCatalogStatsDto {
   totalPuzzles: number;
   countsBySize: Record<string, number>;
   countsBySizeAndDistance: Record<string, number>;
+  groups: PuzzleCatalogGroupDto[];
+}
+
+interface PuzzleCatalogGroupDto {
+  size: number;
+  orthogonalMinDistance: number;
+  targetQueenCount: number;
+  minimumGroupSize: number;
+  count: number;
+}
+
+interface DeletePuzzleCatalogGroupResultDto {
+  deletedCount: number;
 }
 
 function toLocalBoardState(boardState: BoardStateDto | null): QueensAdminBoardState | null {
@@ -312,6 +326,17 @@ function toPuzzleCatalogStats(data: PuzzleCatalogStatsDto): QueensAdminPuzzleCat
     totalPuzzles: data.totalPuzzles,
     countsBySize: data.countsBySize,
     countsBySizeAndDistance: data.countsBySizeAndDistance ?? {},
+    groups: (data.groups ?? []).map(toPuzzleCatalogGroup),
+  };
+}
+
+function toPuzzleCatalogGroup(data: PuzzleCatalogGroupDto): QueensAdminPuzzleCatalogGroup {
+  return {
+    size: data.size,
+    orthogonalMinDistance: data.orthogonalMinDistance,
+    targetQueenCount: data.targetQueenCount,
+    minimumGroupSize: data.minimumGroupSize,
+    count: data.count,
   };
 }
 
@@ -337,6 +362,28 @@ export const queensAdminApi = {
   async getPuzzleCatalogStats(): Promise<QueensAdminPuzzleCatalogStats> {
     const response = await fetch('/api/queens/admin/generation/catalog-stats');
     return toPuzzleCatalogStats((await response.json()) as PuzzleCatalogStatsDto);
+  },
+
+  async deletePuzzleCatalogGroup(group: {
+    size: number;
+    orthogonalMinDistance: number;
+    targetQueenCount: number;
+    minimumGroupSize: number;
+  }): Promise<number> {
+    const response = await fetch('/api/queens/admin/generation/catalog-groups/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(group),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete puzzle catalog group');
+    }
+
+    const data = (await response.json()) as DeletePuzzleCatalogGroupResultDto;
+    return data.deletedCount;
   },
 
   async getSystemLoad(): Promise<QueensAdminSystemLoad> {

@@ -29,6 +29,7 @@ interface PuzzleRecord {
   queens: string;
   targetQueenCount?: number;
   orthogonalMinDistance?: number;
+  minimumGroupSize?: number;
   difficulty?: 'easy' | 'medium' | 'hard';
 }
 
@@ -1507,11 +1508,19 @@ export const useQueensStore = defineStore('queens', {
       sizeKey: string,
       orthogonalMinDistance: number,
       difficulty?: 'easy' | 'medium' | 'hard',
+      targetQueenCount?: number,
+      minimumGroupSize?: number,
       currentPuzzle?: PuzzleRecord | null
     ): PuzzleRecord | null {
-      const candidates = this.getPuzzlesForSelection(sizeKey, orthogonalMinDistance, difficulty);
+      const candidates = this.getPuzzlesForSelection(
+        sizeKey,
+        orthogonalMinDistance,
+        difficulty,
+        targetQueenCount,
+        minimumGroupSize
+      );
       return this.chooseNextDiversePuzzleFromCandidates(
-        `${sizeKey}|d${orthogonalMinDistance}|${difficulty}`,
+        `${sizeKey}|d${orthogonalMinDistance}|${difficulty}|q${targetQueenCount ?? 'any'}|g${minimumGroupSize ?? 'any'}`,
         candidates,
         (currentPuzzle ?? null) as PuzzleForDiversity | null
       );
@@ -2027,6 +2036,8 @@ export const useQueensStore = defineStore('queens', {
         sizeKey,
         orthogonalMinDistance,
         difficulty,
+        undefined,
+        undefined,
         this.currentPuzzle
       );
 
@@ -2112,7 +2123,9 @@ export const useQueensStore = defineStore('queens', {
     getPuzzlesForSelection(
       sizeKey: string,
       orthogonalMinDistance?: number,
-      difficulty?: 'easy' | 'medium' | 'hard'
+      difficulty?: 'easy' | 'medium' | 'hard',
+      targetQueenCount?: number,
+      minimumGroupSize?: number
     ): PuzzleRecord[] {
       if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
         return [];
@@ -2121,11 +2134,22 @@ export const useQueensStore = defineStore('queens', {
       const boardSize = parseInt(sizeKey.split('x')[0], 10);
       return this.puzzleDatabase[sizeKey].filter((puzzle) => {
         const puzzleDistance = puzzle.orthogonalMinDistance ?? boardSize;
+        const puzzleTargetQueenCount =
+          puzzle.targetQueenCount ?? deriveTargetQueenCountFromQueensString(puzzle.queens);
+        const puzzleMinimumGroupSize = puzzle.minimumGroupSize ?? 3;
         if (orthogonalMinDistance != null && puzzleDistance !== orthogonalMinDistance) {
           return false;
         }
 
         if (difficulty && (puzzle.difficulty ?? 'easy') !== difficulty) {
+          return false;
+        }
+
+        if (targetQueenCount != null && puzzleTargetQueenCount !== targetQueenCount) {
+          return false;
+        }
+
+        if (minimumGroupSize != null && puzzleMinimumGroupSize !== minimumGroupSize) {
           return false;
         }
 
@@ -2399,15 +2423,22 @@ export const useQueensStore = defineStore('queens', {
     getFirstPuzzleForSelection(
       sizeKey: string,
       orthogonalMinDistance: number,
-      difficulty: 'easy' | 'medium' | 'hard'
+      difficulty: 'easy' | 'medium' | 'hard',
+      targetQueenCount?: number,
+      minimumGroupSize?: number
     ): PuzzleRecord | null {
       if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
         return null;
       }
 
       return (
-        this.getPuzzlesForSelection(sizeKey, orthogonalMinDistance, difficulty).find(() => true) ??
-        null
+        this.getPuzzlesForSelection(
+          sizeKey,
+          orthogonalMinDistance,
+          difficulty,
+          targetQueenCount,
+          minimumGroupSize
+        ).find(() => true) ?? null
       );
     },
 

@@ -168,4 +168,13 @@ export interface QueensAdminPuzzleCatalogStats {
   totalPuzzles: number;
   countsBySize: Record<string, number>;
   countsBySizeAndDistance: Record<string, number>;
+  groups: QueensAdminPuzzleCatalogGroup[];
+}
+
+export interface QueensAdminPuzzleCatalogGroup {
+  size: number;
+  orthogonalMinDistance: number;
+  targetQueenCount: number;
+  minimumGroupSize: number;
+  count: number;
 }

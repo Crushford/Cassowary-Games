@@ -5,6 +5,8 @@ interface QueensSelectionRouteInput {
   orthogonalMinDistance: number;
   difficulty?: QueensSelectionDifficulty | null;
   puzzleId?: string | number | null;
+  targetQueenCount?: number | null;
+  minimumGroupSize?: number | null;
 }
 
 export function isQueensSelectionDifficulty(
@@ -31,8 +33,13 @@ export function buildQueensSelectionRoute({
   orthogonalMinDistance,
   difficulty,
   puzzleId,
+  targetQueenCount,
+  minimumGroupSize,
 }: QueensSelectionRouteInput): { path: string } {
-  return {
+  const route: {
+    path: string;
+    query?: Record<string, string>;
+  } = {
     path: buildQueensSelectionPath({
       sizeKey,
       orthogonalMinDistance,
@@ -40,4 +47,18 @@ export function buildQueensSelectionRoute({
       puzzleId,
     }),
   };
+
+  const query: Record<string, string> = {};
+  if (targetQueenCount != null) {
+    query.targetQueenCount = String(targetQueenCount);
+  }
+  if (minimumGroupSize != null) {
+    query.minimumGroupSize = String(minimumGroupSize);
+  }
+
+  if (Object.keys(query).length > 0) {
+    route.query = query;
+  }
+
+  return route;
 }

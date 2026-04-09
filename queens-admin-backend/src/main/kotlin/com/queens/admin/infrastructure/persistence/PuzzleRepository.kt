@@ -7,16 +7,26 @@ import java.util.UUID
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.count
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.springframework.stereotype.Repository
 
 @Repository
 class PuzzleRepository {
+    data class PuzzleCatalogGroupCount(
+        val size: Int,
+        val orthogonalMinDistance: Int,
+        val targetQueenCount: Int,
+        val minimumGroupSize: Int,
+        val count: Int,
+    )
+
     fun findByCanonicalSignature(canonicalSignature: String): PersistedPuzzle? =
         transaction {
             PuzzlesTable
@@ -76,6 +86,49 @@ class PuzzleRepository {
                 .associate { row ->
                     (row[PuzzlesTable.size] to row[PuzzlesTable.orthogonalMinDistance]) to row[countExpression].toInt()
                 }
+        }
+
+    fun countByRulesetGroup(): List<PuzzleCatalogGroupCount> =
+        transaction {
+            val countExpression = PuzzlesTable.id.count()
+            PuzzlesTable
+                .select(
+                    PuzzlesTable.size,
+                    PuzzlesTable.orthogonalMinDistance,
+                    PuzzlesTable.targetQueenCount,
+                    PuzzlesTable.minimumGroupSize,
+                    countExpression,
+                )
+                .groupBy(
+                    PuzzlesTable.size,
+                    PuzzlesTable.orthogonalMinDistance,
+                    PuzzlesTable.targetQueenCount,
+                    PuzzlesTable.minimumGroupSize,
+                )
+                .map { row ->
+                    PuzzleCatalogGroupCount(
+                        size = row[PuzzlesTable.size],
+                        orthogonalMinDistance = row[PuzzlesTable.orthogonalMinDistance],
+                        targetQueenCount = row[PuzzlesTable.targetQueenCount],
+                        minimumGroupSize = row[PuzzlesTable.minimumGroupSize],
+                        count = row[countExpression].toInt(),
+                    )
+                }
+        }
+
+    fun deleteByRulesetGroup(
+        size: Int,
+        orthogonalMinDistance: Int,
+        targetQueenCount: Int,
+        minimumGroupSize: Int,
+    ): Int =
+        transaction {
+            PuzzlesTable.deleteWhere {
+                (PuzzlesTable.size eq size) and
+                    (PuzzlesTable.orthogonalMinDistance eq orthogonalMinDistance) and
+                    (PuzzlesTable.targetQueenCount eq targetQueenCount) and
+                    (PuzzlesTable.minimumGroupSize eq minimumGroupSize)
+            }
         }
 
     fun updateDifficulty(

@@ -240,6 +240,10 @@ async function loadPuzzleFromRoute() {
   const routeOrthogonalMinDistance = route.params.orthogonalMinDistance as string | undefined;
   const routeDifficultyParam = route.params.difficulty as string | undefined;
   const selectedPuzzleId = route.params.selectedPuzzleId as string | undefined;
+  const routeTargetQueenCount =
+    typeof route.query.targetQueenCount === 'string' ? route.query.targetQueenCount : undefined;
+  const routeMinimumGroupSize =
+    typeof route.query.minimumGroupSize === 'string' ? route.query.minimumGroupSize : undefined;
 
   try {
     // Check if this is a tutorial puzzle
@@ -293,11 +297,31 @@ async function loadPuzzleFromRoute() {
       const difficulty = isQueensSelectionDifficulty(routeDifficultyParam)
         ? routeDifficultyParam
         : undefined;
+      const targetQueenCount =
+        routeTargetQueenCount != null ? Number.parseInt(routeTargetQueenCount, 10) : undefined;
+      const minimumGroupSize =
+        routeMinimumGroupSize != null ? Number.parseInt(routeMinimumGroupSize, 10) : undefined;
+
+      if (targetQueenCount != null && !Number.isFinite(targetQueenCount)) {
+        router.push('/queens');
+        return;
+      }
+
+      if (minimumGroupSize != null && !Number.isFinite(minimumGroupSize)) {
+        router.push('/queens');
+        return;
+      }
 
       let selectedPuzzle =
         selectedPuzzleId != null
           ? (queensStore
-              .getPuzzlesForSelection(sizeKey, orthogonalMinDistance, difficulty)
+              .getPuzzlesForSelection(
+                sizeKey,
+                orthogonalMinDistance,
+                difficulty,
+                targetQueenCount,
+                minimumGroupSize
+              )
               .find((puzzle) => String(puzzle.id) === selectedPuzzleId) ?? null)
           : null;
 
@@ -305,7 +329,9 @@ async function loadPuzzleFromRoute() {
         selectedPuzzle = queensStore.getRandomPuzzleForSelection(
           sizeKey,
           orthogonalMinDistance,
-          difficulty
+          difficulty,
+          targetQueenCount,
+          minimumGroupSize
         );
       }
 
@@ -316,6 +342,8 @@ async function loadPuzzleFromRoute() {
             mode: 'single',
             size: sizeKey,
             distance: String(orthogonalMinDistance),
+            ...(targetQueenCount != null ? { targetQueenCount: String(targetQueenCount) } : {}),
+            ...(minimumGroupSize != null ? { minimumGroupSize: String(minimumGroupSize) } : {}),
             ...(difficulty ? { difficulty } : {}),
           },
         });
@@ -329,6 +357,8 @@ async function loadPuzzleFromRoute() {
             orthogonalMinDistance,
             difficulty,
             puzzleId: selectedPuzzle.id,
+            targetQueenCount,
+            minimumGroupSize,
           })
         );
       }

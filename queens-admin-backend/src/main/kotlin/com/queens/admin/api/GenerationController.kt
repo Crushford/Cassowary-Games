@@ -5,10 +5,13 @@ import com.queens.admin.api.dto.BatchGenerationRequestDto
 import com.queens.admin.api.dto.BatchGenerationStartedDto
 import com.queens.admin.api.dto.BatchGenerationStatusDto
 import com.queens.admin.api.dto.CreateBoardRequestDto
+import com.queens.admin.api.dto.DeletePuzzleCatalogGroupRequestDto
+import com.queens.admin.api.dto.DeletePuzzleCatalogGroupResultDto
 import com.queens.admin.api.dto.ExpandGroupRequestDto
 import com.queens.admin.api.dto.GenerationJobStartedDto
 import com.queens.admin.api.dto.GenerationJobStatusDto
 import com.queens.admin.api.dto.OperationResultDto
+import com.queens.admin.api.dto.PuzzleCatalogGroupDto
 import com.queens.admin.api.dto.PuzzleCatalogStatsDto
 import com.queens.admin.api.dto.SystemLoadDto
 import com.queens.admin.application.BackendLoadService
@@ -17,6 +20,7 @@ import com.queens.admin.application.GenerationJobService
 import com.queens.admin.application.GenerationWorkflowService
 import com.queens.admin.application.PuzzleCatalogService
 import com.queens.admin.domain.model.Position
+import com.queens.admin.infrastructure.persistence.PuzzleRepository
 import com.queens.admin.infrastructure.mapper.BatchGenerationMapper
 import com.queens.admin.infrastructure.mapper.BoardStateMapper
 import com.queens.admin.infrastructure.mapper.GenerationJobMapper
@@ -52,14 +56,46 @@ class GenerationController(
                     val (size, distance) = sizeAndDistance
                     "${size}x${size}|d=$distance"
                 }
+        val groups =
+            puzzleCatalogService.countByRulesetGroup()
+                .sortedWith(
+                    compareBy<PuzzleRepository.PuzzleCatalogGroupCount> { it.size }
+                        .thenBy { it.orthogonalMinDistance }
+                        .thenBy { it.targetQueenCount }
+                        .thenBy { it.minimumGroupSize },
+                )
+                .map { group ->
+                    PuzzleCatalogGroupDto(
+                        size = group.size,
+                        orthogonalMinDistance = group.orthogonalMinDistance,
+                        targetQueenCount = group.targetQueenCount,
+                        minimumGroupSize = group.minimumGroupSize,
+                        count = group.count,
+                    )
+                }
         return PuzzleCatalogStatsDto(
             totalPuzzles = countsBySize.values.sum(),
             countsBySize = countsBySize
                 .toSortedMap()
                 .mapKeys { (size, _) -> "${size}x${size}" },
             countsBySizeAndDistance = countsBySizeAndDistance,
+            groups = groups,
         )
     }
+
+    @PostMapping("/catalog-groups/delete")
+    fun deleteCatalogGroup(
+        @RequestBody request: DeletePuzzleCatalogGroupRequestDto,
+    ): DeletePuzzleCatalogGroupResultDto =
+        DeletePuzzleCatalogGroupResultDto(
+            deletedCount =
+                puzzleCatalogService.deleteByRulesetGroup(
+                    size = request.size,
+                    orthogonalMinDistance = request.orthogonalMinDistance,
+                    targetQueenCount = request.targetQueenCount,
+                    minimumGroupSize = request.minimumGroupSize,
+                ),
+        )
 
     @GetMapping("/system-load")
     fun getSystemLoad(): SystemLoadDto {
