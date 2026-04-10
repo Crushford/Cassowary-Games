@@ -598,15 +598,15 @@
             <div class="mt-4 flex flex-wrap gap-3">
               <button
                 class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-4 py-2.5 font-semibold text-white hover:bg-semantic-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
-                :disabled="queensStore.moveHistory.length === 0"
-                @click="undoWorkshopBoard"
+                :disabled="!store.canUndoWorkshopBoard"
+                @click="store.undoWorkshopBoardChange()"
               >
                 Undo
               </button>
               <button
                 class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-800 px-4 py-2.5 font-semibold text-white hover:bg-semantic-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
                 :disabled="!store.board"
-                @click="clearWorkshopMarks"
+                @click="store.clearWorkshopBoardMarks()"
               >
                 Clear Marks
               </button>
@@ -1465,21 +1465,6 @@ watch(
   },
   { immediate: true, deep: true }
 );
-
-function syncWorkshopBoardFromQueensStore(): void {
-  if (!store.board) return;
-  store.board = queensStore.exportAdminBoardState();
-}
-
-function undoWorkshopBoard(): void {
-  queensStore.handleUndo();
-  syncWorkshopBoardFromQueensStore();
-}
-
-function clearWorkshopMarks(): void {
-  queensStore.clearAdminMarks();
-  syncWorkshopBoardFromQueensStore();
-}
 
 const generationProgressPercent = computed(() => {
   if (!store.generationProgress || store.generationProgress.totalCellCount === 0) return 0;

@@ -185,6 +185,7 @@ export interface QueensAdminCatalogPuzzleSelection {
   orthogonalMinDistance: number;
   targetQueenCount: number;
   minimumGroupSize: number;
+  difficulty?: 'easy' | 'medium' | 'hard';
   board: QueensAdminBoardState;
 }
 

@@ -109,6 +109,7 @@ class GenerationController(
                 orthogonalMinDistance = puzzle.orthogonalMinDistance,
                 targetQueenCount = puzzle.targetQueenCount,
                 minimumGroupSize = puzzle.minimumGroupSize,
+                difficulty = puzzle.difficultyTier?.name?.lowercase(),
                 boardState =
                     boardStateMapper.toDto(
                         persistedPuzzleBoardCodecService.decode(puzzle),

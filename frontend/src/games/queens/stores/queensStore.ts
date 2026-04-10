@@ -218,6 +218,7 @@ interface QueensState {
   } | null;
   adminBoardMetadata: Record<string, string> | undefined;
   adminGenerationPhase: string | null;
+  adminShowSolutionPreview: boolean;
 }
 
 // LocalStorage key for completed puzzles
@@ -549,6 +550,7 @@ export const useQueensStore = defineStore('queens', {
     lastDiversitySelectionSummary: null,
     adminBoardMetadata: undefined,
     adminGenerationPhase: null,
+    adminShowSolutionPreview: false,
   }),
 
   getters: {
@@ -902,7 +904,7 @@ export const useQueensStore = defineStore('queens', {
           if (cell.markType === 'FLAG') return 'flag';
           if (cell.markType === 'INVALID') return 'invalid';
           if (cell.markType === 'QUEEN') {
-            return showSolutionQueens ? 'queen' : null;
+            return 'queen';
           }
           return null;
         })
@@ -918,6 +920,8 @@ export const useQueensStore = defineStore('queens', {
       );
       this.adminBoardMetadata = boardState.metadata;
       this.adminGenerationPhase = boardState.generationPhase;
+      this.adminShowSolutionPreview = showSolutionQueens;
+      this.showSolution = showSolutionQueens;
       this.persistProgressEnabled = false;
       this.currentPuzzle = null;
       this.currentPuzzleId = null;
@@ -979,6 +983,7 @@ export const useQueensStore = defineStore('queens', {
       }
       this.isComplete = false;
       this.showSolution = false;
+      this.adminShowSolutionPreview = false;
       this.showErrorFeedback = false;
       this.errorFeedbackSquare = null;
       this.errorSquares = new Set();

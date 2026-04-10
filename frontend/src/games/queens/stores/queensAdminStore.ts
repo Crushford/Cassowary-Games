@@ -18,6 +18,7 @@ import type {
 
 const DEFAULT_BOARD_SIZE = 6;
 const MAX_HISTORY_ENTRIES = 30;
+const MAX_BOARD_HISTORY_ENTRIES = 30;
 const TRACKED_BATCH_STORAGE_KEY = 'queens-admin-tracked-batches-v1';
 const MAX_TRACKED_BATCHES = 8;
 
@@ -44,6 +45,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
   const batchStatus = ref<QueensAdminBatchStatus | null>(null);
   const trackedBatches = ref<QueensAdminBatchStatus[]>([]);
   const batchLoading = ref(false);
+  const workshopBoardHistory = ref<QueensAdminBoardState[]>([]);
   let highlightTimer: ReturnType<typeof setTimeout> | null = null;
   let currentRequestController: AbortController | null = null;
   let currentGenerationJobId: string | null = null;
@@ -147,6 +149,25 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     return board.value.cells[row]?.[col] ?? null;
   });
 
+  const canUndoWorkshopBoard = computed(() => workshopBoardHistory.value.length > 0);
+
+  function cloneAdminBoardState(boardState: QueensAdminBoardState): QueensAdminBoardState {
+    return {
+      size: boardState.size,
+      cells: boardState.cells.map((row) => row.map((cell) => ({ ...cell }))),
+      generationPhase: boardState.generationPhase,
+      metadata: boardState.metadata ? { ...boardState.metadata } : undefined,
+    };
+  }
+
+  function pushWorkshopBoardHistory(snapshot: QueensAdminBoardState | null): void {
+    if (!snapshot) return;
+    workshopBoardHistory.value = [
+      cloneAdminBoardState(snapshot),
+      ...workshopBoardHistory.value,
+    ].slice(0, MAX_BOARD_HISTORY_ENTRIES);
+  }
+
   function setSelectedTool(tool: QueensAdminTool): void {
     selectedTool.value = tool;
   }
@@ -189,6 +210,9 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
 
     const previousBoard = board.value;
     if (result.board) {
+      if (previousBoard && previousBoard !== result.board) {
+        pushWorkshopBoardHistory(previousBoard);
+      }
       board.value = result.board;
       boardSize.value = result.board.size;
       targetQueenCount.value = Number(result.board.metadata?.targetQueenCount ?? result.board.size);
@@ -199,9 +223,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
       const shouldResetHistory =
         !previousBoard ||
         previousBoard.size !== result.board.size ||
-        result.action === 'create-board' ||
-        result.action === 'clear-board' ||
-        result.action === 'generate-valid-board';
+        result.action === 'create-board';
 
       if (shouldResetHistory) {
         queensStore.hydrateFromAdminBoard(result.board, {
@@ -599,6 +621,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
   }
 
   function deleteBoard(): void {
+    workshopBoardHistory.value = [];
     board.value = null;
     validation.value = null;
     backendError.value = null;
@@ -618,6 +641,29 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
       createdAt: new Date().toISOString(),
     });
     actionHistory.value = actionHistory.value.slice(0, MAX_HISTORY_ENTRIES);
+  }
+
+  function undoWorkshopBoardChange(): void {
+    const previousBoard = workshopBoardHistory.value.shift();
+    if (!previousBoard) return;
+
+    clearHighlights();
+    applyBoardSnapshot(previousBoard);
+    validation.value = null;
+    backendError.value = null;
+    lastActionResult.value = null;
+  }
+
+  function clearWorkshopBoardMarks(): void {
+    if (!board.value) return;
+
+    pushWorkshopBoardHistory(board.value);
+    queensStore.clearAdminMarks();
+    board.value = queensStore.exportAdminBoardState();
+    validation.value = null;
+    backendError.value = null;
+    lastActionResult.value = null;
+    clearHighlights();
   }
 
   async function validateCurrentBoard(): Promise<void> {
@@ -695,6 +741,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     batchStatus,
     trackedBatches,
     batchLoading,
+    canUndoWorkshopBoard,
     highlightedChangedCells,
     selectedCell,
     boardSummary,
@@ -712,7 +759,9 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     expandSelectedGroup,
     expandBlockedSquares,
     clearBoard,
+    clearWorkshopBoardMarks,
     deleteBoard,
+    undoWorkshopBoardChange,
     validateCurrentBoard,
     callBackendOperation,
     cancelCurrentOperation,

@@ -200,7 +200,7 @@ import type {
   QueensAdminPuzzleCatalogGroup,
   QueensAdminPuzzleCatalogStats,
 } from '../../admin/types';
-import { buildEncodedQueensPuzzleLayout } from '../../utils/urlPuzzleEncoding';
+import { buildQueensSelectionRoute } from '../../utils/puzzleSelectionRoute';
 
 type PuzzleCatalogRow = QueensAdminPuzzleCatalogGroup & {
   groupKey: string;
@@ -321,16 +321,20 @@ async function openRandomCatalogPuzzle(group: PuzzleCatalogRow): Promise<void> {
       return;
     }
 
-    const encodedLayout = buildEncodedQueensPuzzleLayout(
-      selection.board.cells.flat().map((cell) => ({
-        groupColor: cell.groupColor,
-        isSolutionQueen: cell.isSolutionQueen,
-      }))
-    );
-
     const href = router.resolve({
-      name: 'queens-encoded-puzzle',
-      params: { encodedLayout },
+      ...(selection.difficulty
+        ? buildQueensSelectionRoute({
+            sizeKey: `${selection.size}x${selection.size}`,
+            orthogonalMinDistance: selection.orthogonalMinDistance,
+            difficulty: selection.difficulty,
+            puzzleId: selection.puzzleId,
+            targetQueenCount: selection.targetQueenCount,
+            minimumGroupSize: selection.minimumGroupSize,
+          })
+        : {
+            name: 'queens-puzzle' as const,
+            params: { puzzleId: selection.puzzleId },
+          }),
     }).href;
 
     if (popup) {

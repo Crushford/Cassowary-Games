@@ -194,6 +194,7 @@ interface CatalogPuzzleSelectionDto {
   orthogonalMinDistance: number;
   targetQueenCount: number;
   minimumGroupSize: number;
+  difficulty?: 'easy' | 'medium' | 'hard';
   boardState: BoardStateDto;
 }
 
@@ -367,6 +368,7 @@ function toCatalogPuzzleSelection(
     orthogonalMinDistance: data.orthogonalMinDistance,
     targetQueenCount: data.targetQueenCount,
     minimumGroupSize: data.minimumGroupSize,
+    difficulty: data.difficulty,
     board: toLocalBoardState(data.boardState)!,
   };
 }

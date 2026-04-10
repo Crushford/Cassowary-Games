@@ -6,6 +6,7 @@ data class CatalogPuzzleSelectionDto(
     val orthogonalMinDistance: Int,
     val targetQueenCount: Int,
     val minimumGroupSize: Int,
+    val difficulty: String?,
     val boardState: BoardStateDto,
 )
 
