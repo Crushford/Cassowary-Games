@@ -61,6 +61,21 @@
 
       <section class="rounded-[26px] border border-semantic-neutral-800 bg-surface-overlayDim p-4">
         <h2 class="text-lg font-semibold text-white">Difficulty</h2>
+        <div class="mt-4 rounded-2xl border border-semantic-info-900 bg-feedback-infoFaint p-4">
+          <div class="text-xs font-semibold uppercase tracking-[0.18em] text-semantic-info-100">
+            Queen Distance Rule
+          </div>
+          <div class="mt-2 text-base font-semibold text-white">
+            Queens in the same row or column must be at least
+            {{ requiredQueenDistanceLabel }} squares apart.
+          </div>
+          <div class="mt-1 text-sm text-semantic-neutral-200">
+            This puzzle is using a minimum distance of
+            <span class="font-semibold text-white">{{ requiredQueenDistanceLabel }}</span
+            >. That is the main spacing rule the solver is checking against.
+          </div>
+        </div>
+
         <div class="mt-4 grid gap-3 sm:grid-cols-2">
           <div class="rounded-xl bg-surface-darkMuted p-3">
             <div class="text-sm text-semantic-neutral-400">Hardest Rule Used</div>
@@ -82,6 +97,9 @@
             <div class="text-sm text-semantic-neutral-400">Min Distance Between Flags</div>
             <div class="mt-1 text-xl font-semibold text-white">
               {{ minimumFlagDistanceLabel }}
+            </div>
+            <div class="mt-1 text-xs text-semantic-neutral-400">
+              Compared against queen minimum distance {{ requiredQueenDistanceLabel }}.
             </div>
           </div>
         </div>
@@ -137,9 +155,31 @@
               @click="copyAllLogs"
             />
             <div
-              class="rounded-full border border-semantic-neutral-700 bg-semantic-neutral-950 px-4 py-2 text-xs uppercase tracking-[0.22em] text-semantic-neutral-300"
+              class="min-w-[320px] rounded-2xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-4 py-3"
             >
-              {{ solverPuzzleMetaLabel }}
+              <div
+                class="text-[11px] font-semibold uppercase tracking-[0.18em] text-semantic-neutral-400"
+              >
+                Puzzle Details
+              </div>
+              <div
+                v-if="solverPuzzleMetaItems.length > 0"
+                class="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-4"
+              >
+                <div
+                  v-for="item in solverPuzzleMetaItems"
+                  :key="item.label"
+                  class="rounded-xl bg-surface-darkMuted px-3 py-2"
+                >
+                  <div
+                    class="text-[10px] font-semibold uppercase tracking-[0.16em] text-semantic-neutral-500"
+                  >
+                    {{ item.label }}
+                  </div>
+                  <div class="mt-1 text-sm font-semibold text-white">{{ item.value }}</div>
+                </div>
+              </div>
+              <div v-else class="mt-2 text-sm text-semantic-neutral-300">No puzzle loaded</div>
             </div>
           </div>
         </div>
@@ -371,6 +411,13 @@
 
         <div class="flex flex-wrap gap-3">
           <Button label="New Pattern" :disabled="actionLoading" @click="startNewPattern" />
+          <Button
+            label="Run All Until No Flags"
+            outlined
+            :disabled="!currentSolverBoard || actionLoading || savedPatterns.length === 0"
+            :loading="actionLoading && activeAction === 'patterns-loop-all'"
+            @click="runAllPatternsUntilNoFlags"
+          />
         </div>
 
         <div
@@ -626,6 +673,10 @@ const minimumFlagDistanceLabel = computed(() =>
     : String(queensStore.minimumFlagOrthogonalDistance)
 );
 
+const requiredQueenDistanceLabel = computed(() =>
+  solverSelection.value ? String(solverSelection.value.orthogonalMinDistance) : 'N/A'
+);
+
 const totalStepUses = computed(() =>
   Object.values(solverUsageCounts.value).reduce((total, count) => total + count, 0)
 );
@@ -649,9 +700,27 @@ const currentSolverBoard = computed<QueensAdminBoardState | null>(() =>
   solverSelection.value ? queensStore.exportAdminBoardState() : null
 );
 
-const solverPuzzleMetaLabel = computed(() => {
-  if (!solverSelection.value) return 'No Puzzle Loaded';
-  return `${solverSelection.value.size}x${solverSelection.value.size} · d${solverSelection.value.orthogonalMinDistance} · q${solverSelection.value.targetQueenCount} · g${solverSelection.value.minimumGroupSize}`;
+const solverPuzzleMetaItems = computed(() => {
+  if (!solverSelection.value) return [];
+
+  return [
+    {
+      label: 'Board Size',
+      value: `${solverSelection.value.size} x ${solverSelection.value.size}`,
+    },
+    {
+      label: 'Min Queen Distance',
+      value: String(solverSelection.value.orthogonalMinDistance),
+    },
+    {
+      label: 'Target Queens',
+      value: String(solverSelection.value.targetQueenCount),
+    },
+    {
+      label: 'Min Group Size',
+      value: String(solverSelection.value.minimumGroupSize),
+    },
+  ];
 });
 
 watch(selectedSize, () => {
@@ -776,36 +845,68 @@ async function runPatternUntilNoFlags(pattern: QueensAdminSolverPattern): Promis
   errorMessage.value = null;
 
   try {
-    let currentBoard = currentSolverBoard.value;
-    let progressMade = false;
-    let shouldContinue = true;
     appendLog('Pattern', `Started run-until-no-flags for pattern ${pattern.id}.`);
-
-    while (shouldContinue) {
-      const result = await queensAdminApi.runSolverPattern(currentBoard, pattern);
-      if (!result.success || !result.board || result.changedCells.length === 0) {
-        if (!progressMade) {
-          statusMessage.value = 'The selected pattern did not place any flags.';
-        }
-        appendLog(
-          'Pattern',
-          progressMade
-            ? `Pattern ${pattern.id} stopped after no further flags were placed.`
-            : `Pattern ${pattern.id} placed no flags.`
-        );
-        shouldContinue = false;
-        continue;
-      }
-
-      progressMade = true;
-      applyOperationResult(result);
-      incrementStepUsage('pattern');
-      currentBoard = result.board;
-      await pauseForCadence();
-    }
+    const progressMade = await runPatternLoop(pattern, true);
+    appendLog(
+      'Pattern',
+      progressMade
+        ? `Pattern ${pattern.id} stopped after no further flags were placed.`
+        : `Pattern ${pattern.id} placed no flags.`
+    );
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Pattern loop failed.';
     appendLog('Pattern', `Pattern loop failed for ${pattern.id}.`, errorMessage.value);
+  } finally {
+    actionLoading.value = false;
+    activeAction.value = null;
+  }
+}
+
+async function runAllPatternsUntilNoFlags(): Promise<void> {
+  if (!currentSolverBoard.value || savedPatterns.value.length === 0) return;
+
+  actionLoading.value = true;
+  activeAction.value = 'patterns-loop-all';
+  errorMessage.value = null;
+
+  try {
+    let loopCount = 0;
+    let anyProgress = false;
+    let shouldContinue = true;
+    appendLog(
+      'Pattern',
+      `Started run-all-patterns-until-no-flags across ${savedPatterns.value.length} patterns.`
+    );
+
+    while (shouldContinue) {
+      loopCount += 1;
+      let loopPlacedFlags = false;
+
+      for (const pattern of savedPatterns.value) {
+        const patternProgress = await runPatternLoop(pattern, false);
+        if (patternProgress) {
+          anyProgress = true;
+          loopPlacedFlags = true;
+        }
+      }
+
+      if (!loopPlacedFlags) {
+        shouldContinue = false;
+      }
+    }
+
+    statusMessage.value = anyProgress
+      ? `Ran all patterns for ${loopCount} pass${loopCount === 1 ? '' : 'es'} until no new flags were placed.`
+      : 'All patterns completed one full pass without placing any flags.';
+    appendLog(
+      'Pattern',
+      anyProgress
+        ? `Finished all-pattern loop after ${loopCount} pass${loopCount === 1 ? '' : 'es'}.`
+        : 'All patterns made no progress on the first full pass.'
+    );
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'All-pattern solver loop failed.';
+    appendLog('Pattern', 'All-pattern solver loop failed.', errorMessage.value);
   } finally {
     actionLoading.value = false;
     activeAction.value = null;
@@ -895,6 +996,38 @@ async function runBackendAction(
     actionLoading.value = false;
     activeAction.value = null;
   }
+}
+
+async function runPatternLoop(
+  pattern: QueensAdminSolverPattern,
+  pauseBetweenIterations: boolean
+): Promise<boolean> {
+  let currentBoard = currentSolverBoard.value;
+  if (!currentBoard) return false;
+
+  let progressMade = false;
+  let shouldContinue = true;
+
+  while (shouldContinue) {
+    const result = await queensAdminApi.runSolverPattern(currentBoard, pattern);
+    if (!result.success || !result.board || result.changedCells.length === 0) {
+      if (!progressMade) {
+        statusMessage.value = 'The selected pattern did not place any flags.';
+      }
+      shouldContinue = false;
+      continue;
+    }
+
+    progressMade = true;
+    applyOperationResult(result);
+    incrementStepUsage('pattern');
+    currentBoard = result.board;
+    if (pauseBetweenIterations) {
+      await pauseForCadence();
+    }
+  }
+
+  return progressMade;
 }
 
 function applyOperationResult(result: QueensAdminOperationResult): void {
