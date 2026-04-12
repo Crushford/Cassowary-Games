@@ -81,7 +81,7 @@
               :class="selectionButtonClass(selectedDifficulty === difficulty)"
               @click="selectedDifficulty = difficulty"
             >
-              <div>{{ difficulty }}</div>
+              <div>{{ formatDifficultyLabel(difficulty) }}</div>
               <div class="mt-1 text-[11px] font-normal text-semantic-neutral-300">
                 {{ difficultyCountLabel(difficulty) }}
               </div>
@@ -106,7 +106,11 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQueensStore } from '../../stores/queensStore';
-import { buildQueensSelectionRoute } from '../../utils/puzzleSelectionRoute';
+import {
+  buildQueensSelectionRoute,
+  isQueensSelectionDifficulty,
+  type QueensSelectionDifficulty,
+} from '../../utils/puzzleSelectionRoute';
 import Modal from '@/shared/components/Modal.vue';
 
 const props = defineProps<{
@@ -128,7 +132,7 @@ const isRotate = computed(() => currentMode.value === 'rotate');
 const availableSizes = computed(() => queensStore.getAvailableSizes());
 const selectedSize = ref<string>('');
 const selectedDistance = ref<number | null>(null);
-const selectedDifficulty = ref<'easy' | 'medium' | 'hard' | 'extra-hard' | null>(null);
+const selectedDifficulty = ref<QueensSelectionDifficulty | null>(null);
 
 const availableDistances = computed(() => {
   if (!selectedSize.value) return [];
@@ -192,11 +196,9 @@ function getQueryDistance(): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function getQueryDifficulty(): 'easy' | 'medium' | 'hard' | 'extra-hard' | null {
+function getQueryDifficulty(): QueensSelectionDifficulty | null {
   const value = route.query.difficulty;
-  return value === 'easy' || value === 'medium' || value === 'hard' || value === 'extra-hard'
-    ? value
-    : null;
+  return typeof value === 'string' && isQueensSelectionDifficulty(value) ? value : null;
 }
 
 function initializeSelectionState() {
@@ -224,7 +226,7 @@ function rotateSizeButtonClass(_size: string): string {
   return 'border-semantic-success-500 bg-semantic-success-700 text-white hover:bg-semantic-success-600';
 }
 
-function difficultyCountLabel(difficulty: 'easy' | 'medium' | 'hard' | 'extra-hard'): string {
+function difficultyCountLabel(difficulty: QueensSelectionDifficulty): string {
   if (!selectedSize.value || selectedDistance.value == null) return '';
   const count = queensStore.countPuzzlesForSelection(
     selectedSize.value,
@@ -232,6 +234,13 @@ function difficultyCountLabel(difficulty: 'easy' | 'medium' | 'hard' | 'extra-ha
     difficulty
   );
   return `${count} puzzle${count === 1 ? '' : 's'}`;
+}
+
+function formatDifficultyLabel(difficulty: QueensSelectionDifficulty): string {
+  return difficulty
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 async function handleRotateSizeClick(sizeKey: string) {

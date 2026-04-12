@@ -17,7 +17,11 @@ import {
   keepOnlyOriginalPuzzleVariants,
   type PuzzleForDiversity,
 } from '../utils/puzzleDiversitySelector';
-import { buildQueensSelectionRoute } from '../utils/puzzleSelectionRoute';
+import {
+  buildQueensSelectionRoute,
+  type QueensSelectionDifficulty,
+  QUEENS_SELECTION_DIFFICULTY_ORDER,
+} from '../utils/puzzleSelectionRoute';
 import type { QueensAdminBoardState, QueensAdminMarkType } from '../admin/types';
 
 export type GameMode = 'standard' | 'speed' | 'rotate';
@@ -31,7 +35,7 @@ interface PuzzleRecord {
   targetQueenCount?: number;
   orthogonalMinDistance?: number;
   minimumGroupSize?: number;
-  difficulty?: 'easy' | 'medium' | 'hard' | 'extra-hard';
+  difficulty?: QueensSelectionDifficulty;
 }
 
 function isPerfectSquareLength(length: number): boolean {
@@ -1658,7 +1662,7 @@ export const useQueensStore = defineStore('queens', {
     getRandomPuzzleForSelection(
       sizeKey: string,
       orthogonalMinDistance: number,
-      difficulty?: 'easy' | 'medium' | 'hard' | 'extra-hard',
+      difficulty?: QueensSelectionDifficulty,
       targetQueenCount?: number,
       minimumGroupSize?: number,
       currentPuzzle?: PuzzleRecord | null
@@ -2274,7 +2278,7 @@ export const useQueensStore = defineStore('queens', {
     getPuzzlesForSelection(
       sizeKey: string,
       orthogonalMinDistance?: number,
-      difficulty?: 'easy' | 'medium' | 'hard' | 'extra-hard',
+      difficulty?: QueensSelectionDifficulty,
       targetQueenCount?: number,
       minimumGroupSize?: number
     ): PuzzleRecord[] {
@@ -2311,19 +2315,14 @@ export const useQueensStore = defineStore('queens', {
     getAvailableDifficultiesForSelection(
       sizeKey: string,
       orthogonalMinDistance: number
-    ): Array<'easy' | 'medium' | 'hard' | 'extra-hard'> {
+    ): QueensSelectionDifficulty[] {
       const puzzles = this.getPuzzlesForSelection(sizeKey, orthogonalMinDistance);
       if (puzzles.length === 0) {
         return [];
       }
 
-      const difficultyOrder: Array<'easy' | 'medium' | 'hard' | 'extra-hard'> = [
-        'easy',
-        'medium',
-        'hard',
-        'extra-hard',
-      ];
-      const difficulties = new Set<'easy' | 'medium' | 'hard' | 'extra-hard'>();
+      const difficultyOrder = QUEENS_SELECTION_DIFFICULTY_ORDER;
+      const difficulties = new Set<QueensSelectionDifficulty>();
       for (const puzzle of puzzles) {
         difficulties.add(puzzle.difficulty ?? 'easy');
       }
@@ -2331,17 +2330,10 @@ export const useQueensStore = defineStore('queens', {
       return difficultyOrder.filter((difficulty) => difficulties.has(difficulty));
     },
 
-    getAvailableDifficultiesForSize(
-      sizeKey: string
-    ): Array<'easy' | 'medium' | 'hard' | 'extra-hard'> {
+    getAvailableDifficultiesForSize(sizeKey: string): QueensSelectionDifficulty[] {
       const distances = this.getAvailableOrthogonalDistancesForSize(sizeKey);
-      const difficultyOrder: Array<'easy' | 'medium' | 'hard' | 'extra-hard'> = [
-        'easy',
-        'medium',
-        'hard',
-        'extra-hard',
-      ];
-      const difficulties = new Set<'easy' | 'medium' | 'hard' | 'extra-hard'>();
+      const difficultyOrder = QUEENS_SELECTION_DIFFICULTY_ORDER;
+      const difficulties = new Set<QueensSelectionDifficulty>();
 
       for (const distance of distances) {
         for (const difficulty of this.getAvailableDifficultiesForSelection(sizeKey, distance)) {
@@ -2355,14 +2347,14 @@ export const useQueensStore = defineStore('queens', {
     countPuzzlesForSelection(
       sizeKey: string,
       orthogonalMinDistance: number,
-      difficulty: 'easy' | 'medium' | 'hard' | 'extra-hard'
+      difficulty: QueensSelectionDifficulty
     ): number {
       return this.getPuzzlesForSelection(sizeKey, orthogonalMinDistance, difficulty).length;
     },
 
     countPuzzlesForSizeAndDifficulty(
       sizeKey: string,
-      difficulty: 'easy' | 'medium' | 'hard' | 'extra-hard'
+      difficulty: QueensSelectionDifficulty
     ): number {
       return this.getPuzzlesForSelection(sizeKey, undefined, difficulty).length;
     },
@@ -2531,7 +2523,7 @@ export const useQueensStore = defineStore('queens', {
 
     getNextUncompletedPuzzleForSizeAndDifficulty(
       sizeKey: string,
-      difficulty: 'easy' | 'medium' | 'hard' | 'extra-hard'
+      difficulty: QueensSelectionDifficulty
     ): PuzzleRecord | null {
       const distances = this.getAvailableOrthogonalDistancesForSize(sizeKey);
       for (const distance of distances) {
@@ -2546,7 +2538,7 @@ export const useQueensStore = defineStore('queens', {
     getNextUncompletedPuzzleForSelection(
       sizeKey: string,
       orthogonalMinDistance: number,
-      difficulty: 'easy' | 'medium' | 'hard' | 'extra-hard'
+      difficulty: QueensSelectionDifficulty
     ): PuzzleRecord | null {
       if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
         return null;
@@ -2571,7 +2563,7 @@ export const useQueensStore = defineStore('queens', {
 
     getFirstPuzzleForSizeAndDifficulty(
       sizeKey: string,
-      difficulty: 'easy' | 'medium' | 'hard' | 'extra-hard'
+      difficulty: QueensSelectionDifficulty
     ): PuzzleRecord | null {
       const distances = this.getAvailableOrthogonalDistancesForSize(sizeKey);
       for (const distance of distances) {
@@ -2586,7 +2578,7 @@ export const useQueensStore = defineStore('queens', {
     getFirstPuzzleForSelection(
       sizeKey: string,
       orthogonalMinDistance: number,
-      difficulty: 'easy' | 'medium' | 'hard' | 'extra-hard',
+      difficulty: QueensSelectionDifficulty,
       targetQueenCount?: number,
       minimumGroupSize?: number
     ): PuzzleRecord | null {

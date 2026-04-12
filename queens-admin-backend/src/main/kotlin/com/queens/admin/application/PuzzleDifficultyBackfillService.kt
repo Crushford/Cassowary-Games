@@ -18,6 +18,7 @@ class PuzzleDifficultyBackfillService(
         val processedCount: Int,
         val totalToProcess: Int,
         val remainingCount: Int,
+        val extraEasyCount: Int,
         val easyCount: Int,
         val mediumCount: Int,
         val hardCount: Int,
@@ -35,6 +36,7 @@ class PuzzleDifficultyBackfillService(
         val totalToProcess: Int,
         val assessedCount: Int,
         val skippedExistingCount: Int,
+        val extraEasyCount: Int,
         val easyCount: Int,
         val mediumCount: Int,
         val hardCount: Int,
@@ -53,6 +55,7 @@ class PuzzleDifficultyBackfillService(
         val totalPuzzlesInDatabase = allPuzzles.size
         val totalToProcess = puzzles.size
         var assessedCount = 0
+        var extraEasyCount = 0
         var easyCount = 0
         var mediumCount = 0
         var hardCount = 0
@@ -78,6 +81,7 @@ class PuzzleDifficultyBackfillService(
                 unchangedCount += 1
             }
             when (assessment.difficultyTier) {
+                com.queens.admin.domain.model.PuzzleDifficultyTier.EXTRA_EASY -> extraEasyCount += 1
                 com.queens.admin.domain.model.PuzzleDifficultyTier.EASY -> easyCount += 1
                 com.queens.admin.domain.model.PuzzleDifficultyTier.MEDIUM -> mediumCount += 1
                 com.queens.admin.domain.model.PuzzleDifficultyTier.HARD -> hardCount += 1
@@ -90,6 +94,7 @@ class PuzzleDifficultyBackfillService(
                     processedCount = assessedCount,
                     totalToProcess = totalToProcess,
                     remainingCount = totalToProcess - assessedCount,
+                    extraEasyCount = extraEasyCount,
                     easyCount = easyCount,
                     mediumCount = mediumCount,
                     hardCount = hardCount,
@@ -109,6 +114,7 @@ class PuzzleDifficultyBackfillService(
             totalToProcess = totalToProcess,
             assessedCount = assessedCount,
             skippedExistingCount = totalPuzzlesInDatabase - totalToProcess,
+            extraEasyCount = extraEasyCount,
             easyCount = easyCount,
             mediumCount = mediumCount,
             hardCount = hardCount,

@@ -23,7 +23,7 @@ class SolverPatternCatalogService(
         val sortOrder: Int,
     )
 
-    fun findAll(): List<PersistedSolverPattern> = solverPatternRepository.findAll()
+    fun findAll(): List<PersistedSolverPattern> = solverPatternRepository.findAll().map(::applyConfiguredDefaults)
 
     fun create(request: UpsertSolverPatternRequest): PersistedSolverPattern {
         val normalized = normalizeForPersistence(request)
@@ -64,6 +64,21 @@ class SolverPatternCatalogService(
     }
 
     companion object {
+        private val canonicalDifficultyOverrides: Map<String, PuzzleDifficultyTier> = mapOf(
+            "pc-1" to PuzzleDifficultyTier.EXTRA_EASY,
+            "pc-2" to PuzzleDifficultyTier.EASY,
+            "solver-pattern-3" to PuzzleDifficultyTier.EXTRA_EASY,
+            "solver-pattern-4" to PuzzleDifficultyTier.MEDIUM,
+            "solver-pattern-5" to PuzzleDifficultyTier.MEDIUM,
+            "solver-pattern-6" to PuzzleDifficultyTier.MEDIUM,
+            "solver-pattern-7" to PuzzleDifficultyTier.MEDIUM,
+        )
+
+        private fun applyConfiguredDefaults(pattern: PersistedSolverPattern): PersistedSolverPattern {
+            val canonicalDifficulty = canonicalDifficultyOverrides[pattern.id] ?: return pattern
+            return pattern.copy(difficultyTier = canonicalDifficulty)
+        }
+
         fun normalizeForPersistence(request: UpsertSolverPatternRequest): UpsertSolverPatternRequest {
             val activeCells = request.cells.filter { it.activeSquare }
             val relevantPoints = buildList {

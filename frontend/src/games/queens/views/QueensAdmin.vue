@@ -943,8 +943,8 @@
             </div>
 
             <p v-else class="mt-4 text-sm text-semantic-neutral-400">
-              Run the difficulty probe on a fully built puzzle to classify it as easy, medium, or
-              hard and inspect the step-by-step reasoning trace.
+              Run the difficulty probe on a fully built puzzle to classify it as extra easy, easy,
+              medium, or hard and inspect the step-by-step reasoning trace.
             </p>
           </section>
 
@@ -1253,7 +1253,11 @@ import {
   buildEncodedQueensPuzzleLayout,
   QUEENS_PUZZLE_SHARE_BASE_URL,
 } from '../utils/urlPuzzleEncoding';
-import { analyzeQueensDifficulty, type QueensDifficultyAnalysis } from '../admin/difficultyProbe';
+import {
+  analyzeQueensDifficulty,
+  type QueensDifficultyAnalysis,
+  type QueensDifficultyPhase,
+} from '../admin/difficultyProbe';
 import {
   loadQueensAdminWorkshopInputs,
   saveQueensAdminWorkshopInputs,
@@ -1820,12 +1824,17 @@ function generationStrategyLabel(strategy: QueensAdminGenerationStrategy): strin
   return 'Baseline';
 }
 
-function formatDifficultyPhase(phase: 'easy' | 'medium' | 'hard'): string {
-  return phase.charAt(0).toUpperCase() + phase.slice(1);
+function formatDifficultyPhase(phase: QueensDifficultyPhase): string {
+  return phase
+    .split('-')
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
 }
 
-function difficultyPhaseBadgeClass(phase: 'easy' | 'medium' | 'hard'): string {
+function difficultyPhaseBadgeClass(phase: QueensDifficultyPhase): string {
   switch (phase) {
+    case 'extra-easy':
+      return 'bg-feedback-infoSubtle text-semantic-info-200';
     case 'easy':
       return 'bg-feedback-successSoft text-semantic-success-200';
     case 'medium':

@@ -39,7 +39,7 @@
           >
             <option value="">All distances</option>
             <option v-for="distance in distanceOptions" :key="distance" :value="String(distance)">
-              {{ distance }}
+              {{ formatDistanceOption(distance) }}
             </option>
           </select>
         </label>
@@ -140,7 +140,11 @@
           <Column field="size" header="Board" sortable>
             <template #body="{ data }"> {{ data.size }} x {{ data.size }} </template>
           </Column>
-          <Column field="orthogonalMinDistance" header="Min Distance" sortable />
+          <Column field="orthogonalMinDistance" header="Min Distance" sortable>
+            <template #body="{ data }">
+              {{ formatDistanceValue(data.size, data.orthogonalMinDistance) }}
+            </template>
+          </Column>
           <Column field="targetQueenCount" header="Queens" sortable />
           <Column field="minimumGroupSize" header="Min Group Size" sortable />
           <Column field="difficultySortKey" header="Difficulty" sortable>
@@ -194,7 +198,12 @@
         <p>This will permanently delete every puzzle with this exact ruleset:</p>
         <div class="rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4">
           <div>Board: {{ groupPendingDelete.size }} x {{ groupPendingDelete.size }}</div>
-          <div>Min distance: {{ groupPendingDelete.orthogonalMinDistance }}</div>
+          <div>
+            Min distance:
+            {{
+              formatDistanceValue(groupPendingDelete.size, groupPendingDelete.orthogonalMinDistance)
+            }}
+          </div>
           <div>Queens: {{ groupPendingDelete.targetQueenCount }}</div>
           <div>Min group size: {{ groupPendingDelete.minimumGroupSize }}</div>
           <div>Difficulty: {{ formatDifficulty(groupPendingDelete.difficulty) }}</div>
@@ -340,22 +349,45 @@ const filteredGroups = computed(() => {
 
 function difficultySortKey(difficulty?: QueensAdminPuzzleDifficulty): number {
   switch (difficulty) {
-    case 'easy':
+    case 'extra-easy':
       return 0;
-    case 'medium':
+    case 'easy':
       return 1;
-    case 'hard':
+    case 'medium':
       return 2;
-    case 'unsolvable':
+    case 'hard':
       return 3;
-    default:
+    case 'extra-hard':
       return 4;
+    case 'unsolvable':
+      return 5;
+    default:
+      return 6;
   }
 }
 
 function formatDifficulty(difficulty?: QueensAdminPuzzleDifficulty): string {
   if (!difficulty) return 'Unknown';
-  return difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+  return difficulty
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function formatDistanceValue(size: number, orthogonalMinDistance: number): string {
+  return orthogonalMinDistance === size
+    ? `${orthogonalMinDistance} (Max)`
+    : String(orthogonalMinDistance);
+}
+
+function formatDistanceOption(orthogonalMinDistance: number): string {
+  const hasMaxSizedGroup = groups.value.some(
+    (group) =>
+      group.orthogonalMinDistance === orthogonalMinDistance && group.size === orthogonalMinDistance
+  );
+  return hasMaxSizedGroup
+    ? `${orthogonalMinDistance} (Max for some sizes)`
+    : String(orthogonalMinDistance);
 }
 
 function uniqueNumbers(values: number[]): number[] {

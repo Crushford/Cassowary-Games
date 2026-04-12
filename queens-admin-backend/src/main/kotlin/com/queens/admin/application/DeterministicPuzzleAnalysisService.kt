@@ -80,7 +80,7 @@ class DeterministicPuzzleAnalysisService(
         val clearedBoard = solverEngine.clearSolverMarks(normalizedBoard)
         val configuredSteps = configuredAssessmentSteps()
         var currentBoard = clearedBoard
-        var unlockedTier = SolverDifficultyTier.EASY
+        var unlockedTier = SolverDifficultyTier.EXTRA_EASY
         val steps = mutableListOf<SolverStep>()
 
         while (unlockedTier != SolverDifficultyTier.UNSOLVABLE) {
@@ -151,6 +151,7 @@ class DeterministicPuzzleAnalysisService(
             when {
                 !solved -> PuzzleDifficultyTier.UNSOLVABLE
                 steps.any { step -> step.ruleName in ASSUMPTION_STEP_IDS } -> PuzzleDifficultyTier.UNSOLVABLE
+                unlockedTier == SolverDifficultyTier.EXTRA_EASY -> PuzzleDifficultyTier.EXTRA_EASY
                 unlockedTier == SolverDifficultyTier.EXTRA_HARD -> PuzzleDifficultyTier.EXTRA_HARD
                 unlockedTier == SolverDifficultyTier.HARD -> PuzzleDifficultyTier.HARD
                 unlockedTier == SolverDifficultyTier.MEDIUM -> PuzzleDifficultyTier.MEDIUM
@@ -326,7 +327,7 @@ class DeterministicPuzzleAnalysisService(
             )
             return SolverStep(
                 ruleName = "single-color",
-                difficultyTier = SolverDifficultyTier.EASY,
+                difficultyTier = SolverDifficultyTier.EXTRA_EASY,
                 explanation = "Placed a queen in color group $color because it had one candidate left.",
                 boardState = updatedBoard,
                 changedCells = changedCells,
@@ -345,6 +346,7 @@ class DeterministicPuzzleAnalysisService(
 
     private fun nextAssessmentTier(currentTier: SolverDifficultyTier): SolverDifficultyTier? =
         when (currentTier) {
+            SolverDifficultyTier.EXTRA_EASY -> SolverDifficultyTier.EASY
             SolverDifficultyTier.EASY -> SolverDifficultyTier.MEDIUM
             SolverDifficultyTier.MEDIUM -> SolverDifficultyTier.HARD
             SolverDifficultyTier.HARD -> SolverDifficultyTier.EXTRA_HARD
@@ -377,6 +379,7 @@ class DeterministicPuzzleAnalysisService(
 
     private fun PuzzleDifficultyTier.toSolverDifficultyTier(): SolverDifficultyTier =
         when (this) {
+            PuzzleDifficultyTier.EXTRA_EASY -> SolverDifficultyTier.EXTRA_EASY
             PuzzleDifficultyTier.EASY -> SolverDifficultyTier.EASY
             PuzzleDifficultyTier.MEDIUM -> SolverDifficultyTier.MEDIUM
             PuzzleDifficultyTier.HARD -> SolverDifficultyTier.HARD

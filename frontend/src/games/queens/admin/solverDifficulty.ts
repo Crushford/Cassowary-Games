@@ -1,6 +1,7 @@
 import type { QueensAdminDifficulty } from './types';
 
 export const SOLVER_DIFFICULTY_ORDER: QueensAdminDifficulty[] = [
+  'extra-easy',
   'easy',
   'medium',
   'hard',
@@ -12,6 +13,7 @@ export const SOLVER_DIFFICULTY_OPTIONS: Array<{
   label: string;
   value: QueensAdminDifficulty;
 }> = [
+  { label: 'Extra Easy', value: 'extra-easy' },
   { label: 'Easy', value: 'easy' },
   { label: 'Medium', value: 'medium' },
   { label: 'Hard', value: 'hard' },

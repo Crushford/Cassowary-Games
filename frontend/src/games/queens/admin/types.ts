@@ -12,7 +12,13 @@ export type QueensAdminGenerationStrategy = 'baseline' | 'marker-guided' | 'temp
 export type QueensAdminQueenCountMode = 'exact' | 'max';
 export type QueensAdminBatchRunMode = 'cartesian' | 'lowest-count';
 export type QueensAdminSizeOption = number;
-export type QueensAdminDifficulty = 'easy' | 'medium' | 'hard' | 'extra-hard' | 'unsolvable';
+export type QueensAdminDifficulty =
+  | 'extra-easy'
+  | 'easy'
+  | 'medium'
+  | 'hard'
+  | 'extra-hard'
+  | 'unsolvable';
 export type QueensAdminPuzzleDifficulty = QueensAdminDifficulty;
 
 export interface QueensAdminCell {

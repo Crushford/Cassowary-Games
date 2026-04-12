@@ -1,9 +1,10 @@
 package com.queens.admin.domain.model
 
 enum class PuzzleDifficultyTier(val score: Int) {
-    EASY(1),
-    MEDIUM(2),
-    HARD(3),
-    EXTRA_HARD(4),
-    UNSOLVABLE(5),
+    EXTRA_EASY(1),
+    EASY(2),
+    MEDIUM(3),
+    HARD(4),
+    EXTRA_HARD(5),
+    UNSOLVABLE(6),
 }
