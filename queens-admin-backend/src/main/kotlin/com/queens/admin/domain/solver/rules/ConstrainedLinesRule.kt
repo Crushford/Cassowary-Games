@@ -7,7 +7,6 @@ import com.queens.admin.domain.solver.SolverDifficultyTier
 import com.queens.admin.domain.solver.SolverRule
 import com.queens.admin.domain.solver.SolverStep
 import com.queens.admin.domain.service.DeterministicSolverSupportService
-import org.slf4j.LoggerFactory
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 
@@ -19,112 +18,98 @@ class ConstrainedLinesRule(
     override val ruleName: String = "constrained-lines"
     override val difficultyTier: SolverDifficultyTier = SolverDifficultyTier.MEDIUM
 
-    private val logger = LoggerFactory.getLogger(javaClass)
-
     override fun apply(boardState: BoardState): SolverStep? {
-        eliminateConstrainedLines(boardState, isColumn = false)?.let { return it }
-        eliminateConstrainedLines(boardState, isColumn = true)?.let { return it }
+        findConstrainedBand(boardState, isColumn = false)?.let { return it }
+        findConstrainedBand(boardState, isColumn = true)?.let { return it }
         return null
     }
 
-    private fun eliminateConstrainedLines(boardState: BoardState, isColumn: Boolean): SolverStep? {
-        val axis = if (isColumn) "column" else "row"
+    private fun findConstrainedBand(boardState: BoardState, isColumn: Boolean): SolverStep? {
         val size = boardState.size
+        val distance = solverSupportService.ruleset(boardState).orthogonalMinDistance.coerceAtMost(size)
+        val groupedPositions = solverSupportService.groupedPositions(boardState)
+        val axisLabel = if (isColumn) "column" else "row"
+        val windowLabel = if (isColumn) "rows" else "cols"
 
-        val colorToAxisMap = mutableMapOf<String, MutableSet<Int>>()
-        for (row in 0 until size) {
-            for (col in 0 until size) {
-                val cell = boardState.cells[row][col]
-                if (cell.markType != MarkType.NONE || cell.groupColor == null) continue
+        if (distance <= 0) return null
 
-                val coordinate = if (isColumn) col else row
-                colorToAxisMap.getOrPut(cell.groupColor) { mutableSetOf() }.add(coordinate)
-            }
-        }
+        for (bandSize in 2..size) {
+            val primaryLimit = size - bandSize
+            val secondaryLimit = size - distance
+            if (primaryLimit < 0 || secondaryLimit < 0) continue
 
-        if (colorToAxisMap.isEmpty()) {
-            logger.info("[ConstrainedLinesRule] No unmarked colored cells remained for axis={}.", axis)
-            return null
-        }
+            for (primaryStart in 0..primaryLimit) {
+                val primaryRange = primaryStart until (primaryStart + bandSize)
 
-        val axisSetToColors = mutableMapOf<String, MutableSet<String>>()
-        for ((color, axisSet) in colorToAxisMap.entries) {
-            val key = axisSet.sorted().joinToString(",")
-            axisSetToColors.getOrPut(key) { mutableSetOf() }.add(color)
-        }
+                for (secondaryStart in 0..secondaryLimit) {
+                    val secondaryRange = secondaryStart until (secondaryStart + distance)
+                    val confinedColors = groupedPositions.entries.mapNotNull { (color, positions) ->
+                        val queensInGroup = positions.count { position ->
+                            boardState.cells[position.row][position.col].markType == MarkType.QUEEN
+                        }
+                        if (queensInGroup >= 1) {
+                            return@mapNotNull null
+                        }
 
-        logger.info(
-            "[ConstrainedLinesRule] axis={} colorToAxisMap={} groupedAxisSets={}",
-            axis,
-            colorToAxisMap.mapValues { it.value.toSortedSet() },
-            axisSetToColors.mapValues { it.value.toSortedSet() },
-        )
+                        val candidates = solverSupportService.candidatePositions(boardState, positions)
+                        if (candidates.isEmpty()) {
+                            return@mapNotNull null
+                        }
 
-        for ((axisKey, allowedColors) in axisSetToColors.entries) {
-            if (allowedColors.size < 2 || axisKey.isBlank()) continue
+                        val insideBand = candidates.all { candidate ->
+                            val primaryCoordinate = if (isColumn) candidate.col else candidate.row
+                            val secondaryCoordinate = if (isColumn) candidate.row else candidate.col
+                            primaryCoordinate in primaryRange && secondaryCoordinate in secondaryRange
+                        }
 
-            val axisValues = axisKey.split(",").map(String::toInt)
-            val candidateFlags = mutableListOf<Pair<Int, Int>>()
+                        color.takeIf { insideBand }
+                    }
 
-            for (primaryIndex in axisValues) {
-                for (secondaryIndex in 0 until size) {
-                    val row = if (isColumn) secondaryIndex else primaryIndex
-                    val col = if (isColumn) primaryIndex else secondaryIndex
-                    val cell = boardState.cells[row][col]
+                    if (confinedColors.size != bandSize) continue
 
-                    val isUnmarked = cell.markType == MarkType.NONE
-                    val isOutsideAllowedColors = cell.groupColor == null || cell.groupColor !in allowedColors
-                    if (isUnmarked && isOutsideAllowedColors) {
-                        candidateFlags += row to col
+                    var updatedBoard = boardState
+                    val changedCells = mutableListOf<ChangedCell>()
+                    for (primary in primaryRange) {
+                        for (secondary in secondaryRange) {
+                            val row = if (isColumn) secondary else primary
+                            val col = if (isColumn) primary else secondary
+                            val cell = updatedBoard.cells[row][col]
+                            if (cell.markType != MarkType.NONE) continue
+                            if (cell.groupColor == null || cell.groupColor in confinedColors) continue
+                            if (!solverSupportService.isCandidateCell(updatedBoard, row, col)) continue
+
+                            val (nextBoard, nextChanges) = solverSupportService.placeFlag(
+                                boardState = updatedBoard,
+                                row = row,
+                                col = col,
+                                explanation =
+                                    "outside confined $axisLabel band ${primaryRange.first}-${primaryRange.last} " +
+                                        "within $windowLabel ${secondaryRange.first}-${secondaryRange.last} " +
+                                        "reserved for colors ${confinedColors.sorted().joinToString(", ")}",
+                                changeType = "SOLVER_CONSTRAINED_${axisLabel.uppercase()}_FLAG",
+                            )
+                            updatedBoard = nextBoard
+                            changedCells += nextChanges
+                        }
+                    }
+
+                    if (changedCells.isNotEmpty()) {
+                        return SolverStep(
+                            ruleName = ruleName,
+                            difficultyTier = difficultyTier,
+                            explanation =
+                                "Flagged ${changedCells.size} square${if (changedCells.size == 1) "" else "s"} " +
+                                    "using constrained $axisLabel band ${primaryRange.first}-${primaryRange.last} " +
+                                    "within $windowLabel ${secondaryRange.first}-${secondaryRange.last} for colors " +
+                                    confinedColors.sorted().joinToString(", ") + ".",
+                            boardState = updatedBoard,
+                            changedCells = changedCells,
+                        )
                     }
                 }
             }
-
-            if (candidateFlags.isEmpty()) {
-                logger.info(
-                    "[ConstrainedLinesRule] axis={} axisKey={} allowedColors={} produced no flags.",
-                    axis,
-                    axisKey,
-                    allowedColors.toSortedSet(),
-                )
-                continue
-            }
-
-            var updatedBoard = boardState
-            val changedCells = mutableListOf<ChangedCell>()
-            for ((row, col) in candidateFlags) {
-                val (nextBoard, nextChanges) = solverSupportService.placeFlag(
-                    boardState = updatedBoard,
-                    row = row,
-                    col = col,
-                    explanation =
-                        "outside allowed colors for constrained $axis group [$axisKey] with colors ${allowedColors.sorted().joinToString(", ")}",
-                    changeType = "SOLVER_CONSTRAINED_${axis.uppercase()}_FLAG",
-                )
-                updatedBoard = nextBoard
-                changedCells += nextChanges
-            }
-
-            if (changedCells.isNotEmpty()) {
-                logger.info(
-                    "[ConstrainedLinesRule] axis={} axisKey={} allowedColors={} flagged={}",
-                    axis,
-                    axisKey,
-                    allowedColors.toSortedSet(),
-                    candidateFlags,
-                )
-                return SolverStep(
-                    ruleName = ruleName,
-                    difficultyTier = difficultyTier,
-                    explanation =
-                        "Flagged ${changedCells.size} square${if (changedCells.size == 1) "" else "s"} using constrained $axis group [$axisKey] for colors ${allowedColors.sorted().joinToString(", ")}.",
-                    boardState = updatedBoard,
-                    changedCells = changedCells,
-                )
-            }
         }
 
-        logger.info("[ConstrainedLinesRule] axis={} found no constrained groups that produced flags.", axis)
         return null
     }
 }

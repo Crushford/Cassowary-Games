@@ -13,6 +13,7 @@ import com.queens.admin.domain.solver.rules.ConstrainedWindowRule
 import com.queens.admin.domain.solver.rules.FlagAssumptionContradictionRule
 import com.queens.admin.domain.solver.rules.FlagSquaresWithoutColorGroupsRule
 import com.queens.admin.domain.solver.rules.ForcedCoverageQueenRule
+import com.queens.admin.domain.solver.rules.GroupConfinedToLineRule
 import com.queens.admin.domain.solver.rules.PlaceLastFreeQueensRule
 import com.queens.admin.domain.solver.rules.QueenAssumptionContradictionRule
 import java.time.Instant
@@ -32,6 +33,7 @@ class PuzzleDifficultyAssessmentServiceTest {
             PlaceLastFreeQueensRule(deterministicSolverSupportService),
             ForcedCoverageQueenRule(deterministicSolverSupportService),
             AxisIsolationForcedQueenRule(deterministicSolverSupportService),
+            GroupConfinedToLineRule(deterministicSolverSupportService),
             QueenAssumptionContradictionRule(deterministicSolverSupportService),
             FlagAssumptionContradictionRule(deterministicSolverSupportService),
             ConstrainedWindowRule(deterministicSolverSupportService),

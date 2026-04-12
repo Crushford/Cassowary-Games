@@ -10,6 +10,7 @@ export type QueensAdminTool =
 export type QueensAdminMarkType = 'NONE' | 'FLAG' | 'QUEEN' | 'INVALID';
 export type QueensAdminGenerationStrategy = 'baseline' | 'marker-guided' | 'template-seeded';
 export type QueensAdminQueenCountMode = 'exact' | 'max';
+export type QueensAdminSolverDifficulty = 'easy' | 'medium' | 'hard';
 
 export interface QueensAdminCell {
   row: number;
@@ -194,4 +195,5 @@ export interface QueensAdminSolverPattern {
   size: number;
   cells: Array<{ row: number; col: number; activeSquare?: boolean }>;
   outputFlags: Array<{ row: number; col: number }>;
+  difficulty: QueensAdminSolverDifficulty;
 }

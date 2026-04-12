@@ -83,6 +83,12 @@ class SolverWorkflowService(
 
     fun runSingleColorGroupSolverRule(boardState: BoardState): OperationResult {
         for ((color, positions) in deterministicSolverSupportService.groupedPositions(boardState)) {
+            val queensInGroup = positions.count { position ->
+                boardState.cells[position.row][position.col].markType ==
+                    com.queens.admin.domain.model.MarkType.QUEEN
+            }
+            if (queensInGroup >= 1) continue
+
             val candidates = deterministicSolverSupportService.candidatePositions(boardState, positions)
             if (candidates.size != 1) continue
 

@@ -1,13 +1,19 @@
 import type { ColorName } from '../types/types';
 import { COLOR_PALETTE } from '../utils/colorPalette';
 import type {
+  QueensAdminBoardState,
+  QueensAdminCatalogPuzzleSelection,
+  QueensAdminSolverDifficulty,
   QueensAdminGenerationStrategy,
   QueensAdminQueenCountMode,
   QueensAdminTool,
 } from './types';
+import { isSolverDifficulty } from './solverDifficulty';
 
 const WORKSHOP_INPUTS_KEY = 'queens-admin-workshop-inputs-v2';
 const BATCH_INPUTS_KEY = 'queens-admin-batch-inputs-v2';
+const SOLVER_INPUTS_KEY = 'queens-admin-solver-inputs-v1';
+const SOLVER_SESSION_KEY = 'queens-admin-solver-session-v1';
 const VALID_STRATEGIES: QueensAdminGenerationStrategy[] = [
   'baseline',
   'marker-guided',
@@ -54,6 +60,30 @@ export type QueensAdminBatchInputs = {
   saveSuccessfulPuzzles: boolean;
   selectedStrategies: QueensAdminGenerationStrategy[];
 };
+
+export type QueensAdminSolverInputs = {
+  selectedSize: 'any' | number;
+  selectedDistance: 'any' | number;
+  selectedMinimumGroupSize: 'any' | number;
+  selectedQueenCount: 'any' | number;
+  autoRunSingleColorAfterSolverAction: boolean;
+  stepDifficulties: Record<string, QueensAdminSolverDifficulty>;
+  runAllDifficultyThreshold: QueensAdminSolverDifficulty;
+};
+
+export type QueensAdminSolverSession = {
+  selection: QueensAdminCatalogPuzzleSelection;
+  currentBoard: QueensAdminBoardState;
+};
+
+function normalizeAnyOrInteger(
+  value: unknown,
+  minimum: number,
+  maximum: number
+): 'any' | number | null {
+  if (value === 'any') return 'any';
+  return clampInteger(value, minimum, maximum);
+}
 
 function readJson(key: string): unknown {
   if (typeof window === 'undefined') return null;
@@ -252,4 +282,101 @@ export function loadQueensAdminBatchInputs(): Partial<QueensAdminBatchInputs> | 
 
 export function saveQueensAdminBatchInputs(value: QueensAdminBatchInputs): void {
   writeJson(BATCH_INPUTS_KEY, value);
+}
+
+export function loadQueensAdminSolverInputs(): Partial<QueensAdminSolverInputs> | null {
+  const parsed = readJson(SOLVER_INPUTS_KEY);
+  if (!parsed || typeof parsed !== 'object') return null;
+
+  const selectedSize = normalizeAnyOrInteger(
+    (parsed as { selectedSize?: unknown }).selectedSize,
+    4,
+    20
+  );
+  const selectedDistance = normalizeAnyOrInteger(
+    (parsed as { selectedDistance?: unknown }).selectedDistance,
+    1,
+    400
+  );
+  const selectedMinimumGroupSize = normalizeAnyOrInteger(
+    (parsed as { selectedMinimumGroupSize?: unknown }).selectedMinimumGroupSize,
+    1,
+    20
+  );
+  const selectedQueenCount = normalizeAnyOrInteger(
+    (parsed as { selectedQueenCount?: unknown }).selectedQueenCount,
+    1,
+    400
+  );
+  const autoRunSingleColorAfterSolverAction =
+    typeof (parsed as { autoRunSingleColorAfterSolverAction?: unknown })
+      .autoRunSingleColorAfterSolverAction === 'boolean'
+      ? (parsed as { autoRunSingleColorAfterSolverAction: boolean })
+          .autoRunSingleColorAfterSolverAction
+      : null;
+  const stepDifficulties = normalizeStepDifficulties(
+    (parsed as { stepDifficulties?: unknown }).stepDifficulties
+  );
+  const runAllDifficultyThreshold = isSolverDifficulty(
+    (parsed as { runAllDifficultyThreshold?: unknown }).runAllDifficultyThreshold
+  )
+    ? (parsed as { runAllDifficultyThreshold: QueensAdminSolverDifficulty })
+        .runAllDifficultyThreshold
+    : null;
+
+  return {
+    ...(selectedSize != null ? { selectedSize } : {}),
+    ...(selectedDistance != null ? { selectedDistance } : {}),
+    ...(selectedMinimumGroupSize != null ? { selectedMinimumGroupSize } : {}),
+    ...(selectedQueenCount != null ? { selectedQueenCount } : {}),
+    ...(autoRunSingleColorAfterSolverAction != null ? { autoRunSingleColorAfterSolverAction } : {}),
+    ...(stepDifficulties ? { stepDifficulties } : {}),
+    ...(runAllDifficultyThreshold ? { runAllDifficultyThreshold } : {}),
+  };
+}
+
+export function saveQueensAdminSolverInputs(value: QueensAdminSolverInputs): void {
+  writeJson(SOLVER_INPUTS_KEY, value);
+}
+
+export function loadQueensAdminSolverSession(): QueensAdminSolverSession | null {
+  const parsed = readJson(SOLVER_SESSION_KEY);
+  if (!parsed || typeof parsed !== 'object') return null;
+
+  const selection = (parsed as { selection?: unknown }).selection;
+  const currentBoard = (parsed as { currentBoard?: unknown }).currentBoard;
+
+  if (!selection || typeof selection !== 'object') return null;
+  if (!currentBoard || typeof currentBoard !== 'object') return null;
+
+  return {
+    selection: selection as QueensAdminCatalogPuzzleSelection,
+    currentBoard: currentBoard as QueensAdminBoardState,
+  };
+}
+
+export function saveQueensAdminSolverSession(value: QueensAdminSolverSession | null): void {
+  if (typeof window === 'undefined') return;
+  if (value == null) {
+    window.localStorage.removeItem(SOLVER_SESSION_KEY);
+    return;
+  }
+  writeJson(SOLVER_SESSION_KEY, value);
+}
+
+function normalizeStepDifficulties(
+  value: unknown
+): Record<string, QueensAdminSolverDifficulty> | null {
+  if (!value || typeof value !== 'object') return null;
+
+  const normalized = Object.entries(value as Record<string, unknown>).reduce<
+    Record<string, QueensAdminSolverDifficulty>
+  >((acc, [key, entry]) => {
+    if (isSolverDifficulty(entry)) {
+      acc[key] = entry;
+    }
+    return acc;
+  }, {});
+
+  return Object.keys(normalized).length > 0 ? normalized : null;
 }

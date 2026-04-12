@@ -19,30 +19,21 @@
           </div>
         </div>
 
-        <div class="mt-4 grid gap-2">
+        <div class="mt-4 flex flex-wrap gap-3">
+          <div class="min-w-[180px] flex-1">
+            <Select
+              v-model="runAllDifficultyThreshold"
+              :options="solverDifficultyOptions"
+              option-label="label"
+              option-value="value"
+              class="w-full"
+            />
+          </div>
           <Button
-            label="Place Single Color Queen"
+            label="Run All Through Difficulty"
             :disabled="!currentSolverBoard || actionLoading"
-            :loading="actionLoading && activeAction === 'single-color'"
-            @click="runSingleColorCandidateRule"
-          />
-          <Button
-            label="Run Row / Column Constraints"
-            :disabled="!currentSolverBoard || actionLoading"
-            :loading="actionLoading && activeAction === 'row-column'"
-            @click="runRowColumnConstraintRule"
-          />
-          <Button
-            label="Assume Queen Until Progress"
-            :disabled="!currentSolverBoard || actionLoading"
-            :loading="actionLoading && activeAction === 'assume-progress'"
-            @click="runAssumeQueenUntilProgress"
-          />
-          <Button
-            label="Assume Queen Exhaustive"
-            :disabled="!currentSolverBoard || actionLoading"
-            :loading="actionLoading && activeAction === 'assume-exhaustive'"
-            @click="runAssumeQueenExhaustive"
+            :loading="actionLoading && activeAction === 'run-all-difficulty'"
+            @click="runAllThroughDifficulty"
           />
           <Button
             label="Undo"
@@ -57,6 +48,62 @@
             @click="handleClear"
           />
         </div>
+
+        <div class="mt-4 space-y-3">
+          <div
+            v-for="step in builtInSolverRows"
+            :key="step.id"
+            class="rounded-2xl border border-semantic-neutral-800 bg-surface-darkMuted p-4"
+          >
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div class="min-w-0 flex-1">
+                <div class="text-sm font-semibold text-white">{{ step.label }}</div>
+                <div class="mt-1 text-xs text-semantic-neutral-400">{{ step.description }}</div>
+              </div>
+              <div class="w-full sm:w-40">
+                <Select
+                  :model-value="step.difficulty"
+                  :options="solverDifficultyOptions"
+                  option-label="label"
+                  option-value="value"
+                  class="w-full"
+                  @update:model-value="updateBuiltInStepDifficulty(step.id, $event)"
+                />
+              </div>
+            </div>
+
+            <div class="mt-3 flex flex-wrap gap-2">
+              <Button
+                size="small"
+                label="Run Once"
+                :disabled="!currentSolverBoard || actionLoading"
+                :loading="actionLoading && activeAction === step.runOnceActionId"
+                @click="runBuiltInStepOnce(step.id)"
+              />
+              <Button
+                size="small"
+                outlined
+                label="Run Until No Progress"
+                :disabled="!currentSolverBoard || actionLoading"
+                :loading="actionLoading && activeAction === step.runUntilActionId"
+                @click="runBuiltInStepUntilNoProgress(step.id)"
+              />
+            </div>
+          </div>
+        </div>
+
+        <label
+          class="mt-4 flex items-start justify-between gap-3 rounded-2xl border border-semantic-neutral-800 bg-surface-darkMuted px-4 py-3"
+        >
+          <div class="space-y-1">
+            <div class="text-sm font-semibold text-white">Auto-run Single Color Queen</div>
+            <div class="text-xs text-semantic-neutral-400">
+              After any other solver or pattern action places at least one new flag, run
+              single-color once on the updated board.
+            </div>
+          </div>
+          <ToggleSwitch v-model="autoRunSingleColorAfterSolverAction" />
+        </label>
       </section>
 
       <section class="rounded-[26px] border border-semantic-neutral-800 bg-surface-overlayDim p-4">
@@ -112,7 +159,9 @@
           >
             <div>
               <div class="text-sm font-semibold text-white">{{ step.label }}</div>
-              <div class="text-xs text-semantic-neutral-400">Difficulty {{ step.difficulty }}</div>
+              <div class="text-xs text-semantic-neutral-400">
+                Difficulty {{ formatSolverDifficulty(step.difficulty) }}
+              </div>
             </div>
             <div class="text-lg font-semibold text-semantic-info-100">{{ step.count }}</div>
           </div>
@@ -424,6 +473,24 @@
           v-if="showPatternEditor"
           class="mt-4 rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4"
         >
+          <div class="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <div class="text-sm font-semibold text-white">Pattern Difficulty</div>
+              <div class="mt-1 text-xs text-semantic-neutral-400">
+                Frontend-only label used by the run-all-through-difficulty flow.
+              </div>
+            </div>
+            <div class="w-36">
+              <Select
+                v-model="editingPatternDifficulty"
+                :options="solverDifficultyOptions"
+                option-label="label"
+                option-value="value"
+                class="w-full"
+              />
+            </div>
+          </div>
+
           <SharedPatternDesigner
             v-model="patternDraft"
             :title="editingPatternId ? 'Edit Pattern' : 'Create Pattern'"
@@ -456,37 +523,57 @@
             :key="pattern.id"
             class="rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4"
           >
-            <div class="flex items-start gap-4">
+            <div class="space-y-4">
               <SharedPatternPreview
                 :size="pattern.size"
                 :cells="pattern.cells"
                 :output-flags="pattern.outputFlags"
-                cell-size-class="h-8 w-8"
+                class="mx-auto rounded-2xl border border-semantic-neutral-800 bg-surface-overlayDim p-2"
+                cell-size-class="h-7 w-7"
               />
 
-              <div class="flex-1 space-y-3">
-                <div class="flex items-center justify-between gap-3">
-                  <div class="text-sm text-semantic-neutral-300">
-                    {{ pattern.size }}x{{ pattern.size }} pattern
+              <div class="space-y-3 text-center">
+                <div>
+                  <div class="text-base font-semibold text-white">{{ pattern.id }}</div>
+                  <div class="mt-1 text-sm text-semantic-neutral-400">
+                    {{ pattern.size }}x{{ pattern.size }} • {{ pattern.outputFlags.length }} flag{{
+                      pattern.outputFlags.length === 1 ? '' : 's'
+                    }}
+                    • {{ formatSolverDifficulty(pattern.difficulty) }}
                   </div>
-                  <Tag
-                    severity="secondary"
-                    :value="`${pattern.outputFlags.length} flags`"
-                    rounded
-                  />
                 </div>
 
-                <div class="flex flex-wrap gap-2">
+                <div
+                  class="rounded-2xl border border-semantic-neutral-800 bg-surface-overlayDim px-3 py-2"
+                >
+                  <div
+                    class="text-[11px] font-semibold uppercase tracking-[0.18em] text-semantic-neutral-500"
+                  >
+                    Difficulty
+                  </div>
+                  <div class="mt-2">
+                    <Select
+                      :model-value="pattern.difficulty"
+                      :options="solverDifficultyOptions"
+                      option-label="label"
+                      option-value="value"
+                      class="w-full"
+                      @update:model-value="updatePatternDifficulty(pattern.id, $event)"
+                    />
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 border-t border-semantic-neutral-800 pt-3">
                   <Button
                     size="small"
-                    label="Run Pattern"
+                    label="Run"
                     :disabled="!currentSolverBoard || actionLoading"
                     :loading="actionLoading && activeAction === `pattern-${pattern.id}`"
                     @click="runPatternOnce(pattern)"
                   />
                   <Button
                     size="small"
-                    label="Run Until No Flags"
+                    label="Loop"
                     outlined
                     :disabled="!currentSolverBoard || actionLoading"
                     :loading="actionLoading && activeAction === `pattern-loop-${pattern.id}`"
@@ -497,6 +584,7 @@
                     label="Edit"
                     outlined
                     severity="secondary"
+                    class="col-span-2"
                     :disabled="actionLoading"
                     @click="editPattern(pattern)"
                   />
@@ -514,8 +602,10 @@
 import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
+import Select from 'primevue/select';
 import Slider from 'primevue/slider';
 import Tag from 'primevue/tag';
+import ToggleSwitch from 'primevue/toggleswitch';
 import AdminMessage from './AdminMessage.vue';
 import AdminPanel from './AdminPanel.vue';
 import SharedPatternDesigner from '../queens/SharedPatternDesigner.vue';
@@ -526,10 +616,23 @@ import { queensAdminApi } from '../../admin/api';
 import type {
   QueensAdminBoardState,
   QueensAdminCatalogPuzzleSelection,
+  QueensAdminSolverDifficulty,
   QueensAdminOperationResult,
   QueensAdminPuzzleCatalogGroup,
   QueensAdminSolverPattern,
 } from '../../admin/types';
+import {
+  loadQueensAdminSolverInputs,
+  loadQueensAdminSolverSession,
+  saveQueensAdminSolverInputs,
+  saveQueensAdminSolverSession,
+} from '../../admin/inputPersistence';
+import {
+  formatSolverDifficulty,
+  isDifficultyAtOrBelow,
+  normalizeSolverDifficulty,
+  SOLVER_DIFFICULTY_OPTIONS,
+} from '../../admin/solverDifficulty';
 import type { PatternEditorDraft } from '../queens/patternEditorTypes';
 import { PATTERN_CARD_DEFINITIONS } from '../../utils/incrementalPatternCards';
 
@@ -537,15 +640,45 @@ const QueensPuzzleBoard = defineAsyncComponent(() => import('../queens/QueensPuz
 
 const SOLVER_PATTERN_STORAGE_KEY = 'queens-admin-solver-patterns-v1';
 
-const SOLVER_STEPS = [
-  { id: 'single-color', label: 'Single Color Candidate', difficulty: 0 },
-  { id: 'pattern', label: 'Pattern Match', difficulty: 1 },
-  { id: 'row-column', label: 'Row / Column Constraints', difficulty: 2 },
-  { id: 'assume-progress', label: 'Assume Queen Until Progress', difficulty: 2 },
-  { id: 'assume-exhaustive', label: 'Assume Queen Exhaustive', difficulty: 2 },
+const BUILT_IN_SOLVER_STEPS = [
+  {
+    id: 'single-color',
+    label: 'Single Color Queen',
+    description: 'Place the queen when exactly one valid square remains in a color group.',
+    defaultDifficulty: 'easy',
+  },
+  {
+    id: 'row-column',
+    label: 'Row / Column Constraints',
+    description: 'Use constrained sliding row and column bands to eliminate impossible candidates.',
+    defaultDifficulty: 'medium',
+  },
+  {
+    id: 'group-confined-to-line',
+    label: 'Group Confined To Line',
+    description:
+      'Flag candidates near a color group whose remaining squares are trapped in one row or column.',
+    defaultDifficulty: 'easy',
+  },
+  {
+    id: 'assume-progress',
+    label: 'Assume Queen Until Progress',
+    description: 'Try queen assumptions until one contradiction forces a real move.',
+    defaultDifficulty: 'hard',
+  },
+  {
+    id: 'assume-exhaustive',
+    label: 'Assume Queen Exhaustive',
+    description:
+      'Exhaustively scan queen and flag assumptions until no further forced move exists.',
+    defaultDifficulty: 'hard',
+  },
 ] as const;
 
-type SolverStepId = (typeof SOLVER_STEPS)[number]['id'];
+type BuiltInSolverStepId = (typeof BUILT_IN_SOLVER_STEPS)[number]['id'];
+type SolverMetricId = BuiltInSolverStepId | `pattern:${string}`;
+const persistedSolverInputs = loadQueensAdminSolverInputs();
+const persistedSolverSession = loadQueensAdminSolverSession();
 
 const queensStore = useQueensStore();
 const catalogGroups = ref<QueensAdminPuzzleCatalogGroup[]>([]);
@@ -557,20 +690,32 @@ const statusMessage = ref<string | null>(null);
 const errorMessage = ref<string | null>(null);
 const highlightedChangedCells = ref<string[]>([]);
 const updateCadenceMs = ref(1000);
-const selectedSize = ref<'any' | number>('any');
-const selectedDistance = ref<'any' | number>('any');
-const selectedMinimumGroupSize = ref<'any' | number>('any');
-const selectedQueenCount = ref<'any' | number>('any');
-const solverUsageCounts = ref<Record<SolverStepId, number>>({
+const selectedSize = ref<'any' | number>(persistedSolverInputs?.selectedSize ?? 'any');
+const selectedDistance = ref<'any' | number>(persistedSolverInputs?.selectedDistance ?? 'any');
+const selectedMinimumGroupSize = ref<'any' | number>(
+  persistedSolverInputs?.selectedMinimumGroupSize ?? 'any'
+);
+const selectedQueenCount = ref<'any' | number>(persistedSolverInputs?.selectedQueenCount ?? 'any');
+const autoRunSingleColorAfterSolverAction = ref(
+  persistedSolverInputs?.autoRunSingleColorAfterSolverAction ?? false
+);
+const builtInStepDifficulties = ref<Record<BuiltInSolverStepId, QueensAdminSolverDifficulty>>(
+  buildInitialStepDifficulties(persistedSolverInputs?.stepDifficulties)
+);
+const runAllDifficultyThreshold = ref<QueensAdminSolverDifficulty>(
+  normalizeSolverDifficulty(persistedSolverInputs?.runAllDifficultyThreshold, 'hard')
+);
+const solverUsageCounts = ref<Record<SolverMetricId, number>>({
   'single-color': 0,
-  pattern: 0,
   'row-column': 0,
+  'group-confined-to-line': 0,
   'assume-progress': 0,
   'assume-exhaustive': 0,
 });
 const savedPatterns = ref<QueensAdminSolverPattern[]>(loadInitialPatterns());
 const showPatternEditor = ref(false);
 const editingPatternId = ref<string | null>(null);
+const editingPatternDifficulty = ref<QueensAdminSolverDifficulty>('medium');
 const patternDraft = ref<PatternEditorDraft>(createEmptyPatternDraft());
 const solverLogEntries = ref<SolverLogEntry[]>([]);
 let highlightTimer: ReturnType<typeof setTimeout> | null = null;
@@ -587,6 +732,17 @@ type SolverLogEntry = {
   detail: string;
   error?: string | null;
 };
+
+const solverDifficultyOptions = SOLVER_DIFFICULTY_OPTIONS;
+
+const builtInSolverRows = computed(() =>
+  BUILT_IN_SOLVER_STEPS.map((step) => ({
+    ...step,
+    difficulty: builtInStepDifficulties.value[step.id],
+    runOnceActionId: `${step.id}-once`,
+    runUntilActionId: `${step.id}-loop`,
+  }))
+);
 
 const filteredBySize = computed(() =>
   catalogGroups.value.filter(
@@ -682,17 +838,35 @@ const totalStepUses = computed(() =>
 );
 
 const hardestDifficultyUsed = computed(() => {
-  const usedSteps = SOLVER_STEPS.filter((step) => solverUsageCounts.value[step.id] > 0);
-  if (usedSteps.length === 0) return 'None';
-  return String(Math.max(...usedSteps.map((step) => step.difficulty)));
+  const usedBuiltIn = BUILT_IN_SOLVER_STEPS.filter(
+    (step) => (solverUsageCounts.value[step.id] ?? 0) > 0
+  ).map((step) => builtInStepDifficulties.value[step.id]);
+  const usedPatterns = savedPatterns.value
+    .filter((pattern) => (solverUsageCounts.value[`pattern:${pattern.id}`] ?? 0) > 0)
+    .map((pattern) => pattern.difficulty);
+  const allUsed = [...usedBuiltIn, ...usedPatterns];
+  if (allUsed.length === 0) return 'None';
+  return formatSolverDifficulty(
+    allUsed.reduce((hardest, difficulty) =>
+      isDifficultyAtOrBelow(difficulty, hardest) ? hardest : difficulty
+    )
+  );
 });
 
-const solverStepUsageRows = computed(() =>
-  SOLVER_STEPS.map((step) => ({
-    ...step,
-    count: solverUsageCounts.value[step.id],
-  }))
-);
+const solverStepUsageRows = computed(() => [
+  ...BUILT_IN_SOLVER_STEPS.map((step) => ({
+    id: step.id,
+    label: step.label,
+    difficulty: builtInStepDifficulties.value[step.id],
+    count: solverUsageCounts.value[step.id] ?? 0,
+  })),
+  ...savedPatterns.value.map((pattern) => ({
+    id: `pattern:${pattern.id}`,
+    label: `Pattern ${pattern.id}`,
+    difficulty: pattern.difficulty,
+    count: solverUsageCounts.value[`pattern:${pattern.id}`] ?? 0,
+  })),
+]);
 
 const logEntriesForDisplay = computed(() => solverLogEntries.value.slice(-50).reverse());
 
@@ -738,6 +912,61 @@ watch(selectedMinimumGroupSize, () => {
   selectedQueenCount.value = 'any';
 });
 
+watch(
+  [
+    selectedSize,
+    selectedDistance,
+    selectedMinimumGroupSize,
+    selectedQueenCount,
+    autoRunSingleColorAfterSolverAction,
+    runAllDifficultyThreshold,
+  ],
+  ([
+    nextSelectedSize,
+    nextSelectedDistance,
+    nextSelectedMinimumGroupSize,
+    nextSelectedQueenCount,
+    nextAutoRunSingleColorAfterSolverAction,
+    nextRunAllDifficultyThreshold,
+  ]) => {
+    saveQueensAdminSolverInputs({
+      selectedSize: nextSelectedSize,
+      selectedDistance: nextSelectedDistance,
+      selectedMinimumGroupSize: nextSelectedMinimumGroupSize,
+      selectedQueenCount: nextSelectedQueenCount,
+      autoRunSingleColorAfterSolverAction: nextAutoRunSingleColorAfterSolverAction,
+      runAllDifficultyThreshold: nextRunAllDifficultyThreshold,
+      stepDifficulties: builtInStepDifficulties.value,
+    });
+  }
+);
+
+watch(
+  builtInStepDifficulties,
+  (nextStepDifficulties) => {
+    saveQueensAdminSolverInputs({
+      selectedSize: selectedSize.value,
+      selectedDistance: selectedDistance.value,
+      selectedMinimumGroupSize: selectedMinimumGroupSize.value,
+      selectedQueenCount: selectedQueenCount.value,
+      autoRunSingleColorAfterSolverAction: autoRunSingleColorAfterSolverAction.value,
+      runAllDifficultyThreshold: runAllDifficultyThreshold.value,
+      stepDifficulties: nextStepDifficulties,
+    });
+  },
+  { deep: true }
+);
+
+watch(
+  currentSolverBoard,
+  (boardState) => {
+    if (!boardState || !solverSelection.value) return;
+    persistSolverSession(boardState);
+  },
+  { deep: true }
+);
+
+restorePersistedSolverSession();
 void loadCatalogGroups();
 
 async function loadCatalogGroups(): Promise<void> {
@@ -766,6 +995,7 @@ async function loadRandomPuzzle(): Promise<void> {
 
     if (!selection) {
       solverSelection.value = null;
+      saveQueensAdminSolverSession(null);
       statusMessage.value = 'No puzzle matched those filters.';
       appendLog('Puzzle Source', 'No puzzle matched the selected catalog filters.');
       return;
@@ -778,6 +1008,7 @@ async function loadRandomPuzzle(): Promise<void> {
     });
     resetSolverMetrics();
     highlightedChangedCells.value = [];
+    persistSolverSession(selection.board);
     statusMessage.value = `Loaded random puzzle ${selection.puzzleId}.`;
     appendLog(
       'Puzzle Source',
@@ -800,31 +1031,102 @@ function resetSolverState(): void {
   });
   highlightedChangedCells.value = [];
   resetSolverMetrics();
+  persistSolverSession(solverSelection.value.board);
   statusMessage.value = 'Reset solver marks for the loaded puzzle.';
   errorMessage.value = null;
   appendLog('Solver Board', 'Reset visible queens and flags to the clean puzzle state.');
 }
 
-async function runSingleColorCandidateRule(): Promise<void> {
+async function runBuiltInStepOnce(stepId: BuiltInSolverStepId): Promise<void> {
   const board = currentSolverBoard.value;
   if (!board) return;
-  await runBackendAction('single-color', () => queensAdminApi.runSingleColorGroupSolverRule(board));
+  await runBackendAction(`${stepId}-once`, board, () => executeBuiltInStep(stepId, board), stepId);
 }
 
-async function runRowColumnConstraintRule(): Promise<void> {
-  const board = currentSolverBoard.value;
-  if (!board) return;
-  await runBackendAction('row-column', () =>
-    queensAdminApi.runSpecificSolverRule(board, 'constrained-lines')
-  );
+async function runBuiltInStepUntilNoProgress(stepId: BuiltInSolverStepId): Promise<void> {
+  if (!currentSolverBoard.value) return;
+
+  actionLoading.value = true;
+  activeAction.value = `${stepId}-loop`;
+  errorMessage.value = null;
+
+  try {
+    let currentBoard = currentSolverBoard.value;
+    let progressMade = false;
+    let passCount = 0;
+    let shouldContinue = true;
+    appendLog('Service Call', `Calling solver service for action "${stepId}-loop".`);
+
+    while (shouldContinue) {
+      const previousBoard = currentBoard;
+      const result = await executeBuiltInStep(stepId, currentBoard);
+      if (!result.success || !result.board || result.changedCells.length === 0) {
+        shouldContinue = false;
+        continue;
+      }
+
+      passCount += 1;
+      progressMade = true;
+      applyOperationResult(result);
+      incrementStepUsage(stepId);
+      appendLog(
+        'Service Result',
+        `${result.action}: ${result.explanation} Changed ${result.changedCells.length} cell${result.changedCells.length === 1 ? '' : 's'}.`,
+        result.error
+      );
+
+      currentBoard = result.board;
+
+      if (shouldAutoRunSingleColor(stepId, previousBoard, result)) {
+        currentBoard = await runSingleColorFollowUp(currentBoard);
+      }
+
+      await pauseForCadence();
+    }
+
+    if (!progressMade) {
+      statusMessage.value = `${lookupBuiltInStep(stepId).label} made no change.`;
+      appendLog(
+        'Service Result',
+        'RUN_SPECIFIC_SOLVER_RULE: The requested solver rule made no change. Changed 0 cells.'
+      );
+    } else {
+      statusMessage.value = `${lookupBuiltInStep(stepId).label} ran for ${passCount} pass${passCount === 1 ? '' : 'es'} until no more progress was made.`;
+      appendLog(
+        'Service Result',
+        `${lookupBuiltInStep(stepId).label} loop finished after ${passCount} pass${passCount === 1 ? '' : 'es'}.`
+      );
+    }
+  } catch (error) {
+    errorMessage.value =
+      error instanceof Error ? error.message : `${lookupBuiltInStep(stepId).label} loop failed.`;
+    appendLog('Service Error', `Solver action "${stepId}-loop" failed.`, errorMessage.value);
+  } finally {
+    actionLoading.value = false;
+    activeAction.value = null;
+  }
 }
 
-async function runAssumeQueenUntilProgress(): Promise<void> {
-  await runAssumptionLoop(true);
+async function executeBuiltInStep(
+  stepId: BuiltInSolverStepId,
+  board: QueensAdminBoardState
+): Promise<QueensAdminOperationResult> {
+  switch (stepId) {
+    case 'single-color':
+      return queensAdminApi.runSingleColorGroupSolverRule(board);
+    case 'row-column':
+      return queensAdminApi.runSpecificSolverRule(board, 'constrained-lines');
+    case 'group-confined-to-line':
+      return queensAdminApi.runSpecificSolverRule(board, 'group-confined-to-line');
+    case 'assume-progress':
+      return runAssumeSolver(board, true);
+    case 'assume-exhaustive':
+      return runAssumeSolver(board, false);
+  }
 }
 
-async function runAssumeQueenExhaustive(): Promise<void> {
-  await runAssumptionLoop(false);
+function lookupBuiltInStep(stepId: BuiltInSolverStepId) {
+  return BUILT_IN_SOLVER_STEPS.find((step) => step.id === stepId) ?? BUILT_IN_SOLVER_STEPS[0];
 }
 
 async function runPatternOnce(pattern: QueensAdminSolverPattern): Promise<void> {
@@ -832,8 +1134,9 @@ async function runPatternOnce(pattern: QueensAdminSolverPattern): Promise<void> 
   if (!board) return;
   await runBackendAction(
     `pattern-${pattern.id}`,
+    board,
     () => queensAdminApi.runSolverPattern(board, pattern),
-    'pattern'
+    `pattern:${pattern.id}`
   );
 }
 
@@ -915,6 +1218,7 @@ async function runAllPatternsUntilNoFlags(): Promise<void> {
 
 function startNewPattern(): void {
   editingPatternId.value = null;
+  editingPatternDifficulty.value = 'medium';
   patternDraft.value = createEmptyPatternDraft();
   showPatternEditor.value = true;
   appendLog('Pattern', 'Started creating a new local solver pattern.');
@@ -922,6 +1226,7 @@ function startNewPattern(): void {
 
 function editPattern(pattern: QueensAdminSolverPattern): void {
   editingPatternId.value = pattern.id;
+  editingPatternDifficulty.value = pattern.difficulty;
   patternDraft.value = {
     id: pattern.id,
     size: pattern.size,
@@ -934,6 +1239,7 @@ function editPattern(pattern: QueensAdminSolverPattern): void {
 
 function cancelPatternEditing(): void {
   editingPatternId.value = null;
+  editingPatternDifficulty.value = 'medium';
   patternDraft.value = createEmptyPatternDraft();
   showPatternEditor.value = false;
   appendLog('Pattern', 'Closed the pattern editor without saving.');
@@ -946,6 +1252,7 @@ function savePatternDraft(draft: PatternEditorDraft): void {
       size: draft.size,
       cells: draft.cells,
       outputFlags: draft.outputFlags,
+      difficulty: editingPatternDifficulty.value,
     },
     editingPatternId.value ?? draft.id ?? nextPatternId(savedPatterns.value)
   );
@@ -968,8 +1275,9 @@ function savePatternDraft(draft: PatternEditorDraft): void {
 
 async function runBackendAction(
   actionKey: string,
+  beforeBoard: QueensAdminBoardState,
   action: () => Promise<QueensAdminOperationResult>,
-  usageStepId?: SolverStepId
+  usageStepId?: SolverMetricId
 ): Promise<void> {
   actionLoading.value = true;
   activeAction.value = actionKey;
@@ -981,14 +1289,16 @@ async function runBackendAction(
     applyOperationResult(result);
     if (usageStepId && result.success) {
       incrementStepUsage(usageStepId);
-    } else if (result.action === 'run-single-color-group-solver-rule' && result.success) {
-      incrementStepUsage('single-color');
     }
     appendLog(
       'Service Result',
       `${result.action}: ${result.explanation} Changed ${result.changedCells.length} cell${result.changedCells.length === 1 ? '' : 's'}.`,
       result.error
     );
+
+    if (shouldAutoRunSingleColor(actionKey, beforeBoard, result)) {
+      await runSingleColorFollowUp(result.board);
+    }
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Solver request failed.';
     appendLog('Service Error', `Solver action "${actionKey}" failed.`, errorMessage.value);
@@ -1009,6 +1319,7 @@ async function runPatternLoop(
   let shouldContinue = true;
 
   while (shouldContinue) {
+    const previousBoard = currentBoard;
     const result = await queensAdminApi.runSolverPattern(currentBoard, pattern);
     if (!result.success || !result.board || result.changedCells.length === 0) {
       if (!progressMade) {
@@ -1020,8 +1331,13 @@ async function runPatternLoop(
 
     progressMade = true;
     applyOperationResult(result);
-    incrementStepUsage('pattern');
+    incrementStepUsage(`pattern:${pattern.id}`);
     currentBoard = result.board;
+
+    if (shouldAutoRunSingleColor(`pattern-${pattern.id}`, previousBoard, result)) {
+      currentBoard = await runSingleColorFollowUp(currentBoard);
+    }
+
     if (pauseBetweenIterations) {
       await pauseForCadence();
     }
@@ -1039,6 +1355,7 @@ function applyOperationResult(result: QueensAdminOperationResult): void {
       showSolutionQueens: false,
       saveHistory: true,
     });
+    persistSolverSession(result.board);
   }
 
   highlightedChangedCells.value = result.changedCells.map((cell) => `${cell.row}:${cell.col}`);
@@ -1056,101 +1373,126 @@ function applyOperationResult(result: QueensAdminOperationResult): void {
   }
 }
 
-async function runAssumptionLoop(stopOnQueenPlacement: boolean): Promise<void> {
-  if (!currentSolverBoard.value) return;
+async function runAssumeSolver(
+  board: QueensAdminBoardState,
+  stopOnQueenPlacement: boolean
+): Promise<QueensAdminOperationResult> {
+  let currentBoard = board;
+  const combinedChangedCells: QueensAdminOperationResult['changedCells'] = [];
+  let lastExplanation = stopOnQueenPlacement
+    ? 'Assumption scan found no forced flags or queens.'
+    : 'Exhaustive assumption scan made no progress.';
+  let shouldContinue = true;
 
-  actionLoading.value = true;
-  activeAction.value = stopOnQueenPlacement ? 'assume-progress' : 'assume-exhaustive';
-  errorMessage.value = null;
-
-  try {
-    let currentBoard = currentSolverBoard.value;
-    let progressMade = false;
-    let shouldContinue = true;
-    appendLog(
-      'Assumption',
-      stopOnQueenPlacement
-        ? 'Started queen-assumption scan until a queen is placed.'
-        : 'Started exhaustive queen-assumption scan.'
+  while (shouldContinue) {
+    const queenCountBeforePass = countQueens(currentBoard);
+    const queenAssumption = await queensAdminApi.runSpecificSolverRule(
+      currentBoard,
+      'queen-assumption-contradiction'
     );
 
-    while (shouldContinue) {
-      const beforeQueenCount = countQueens(currentBoard);
-      const queenAssumption = await queensAdminApi.runSpecificSolverRule(
-        currentBoard,
-        'queen-assumption-contradiction'
-      );
-
-      if (queenAssumption.success && queenAssumption.board) {
-        progressMade = true;
-        incrementStepUsage(stopOnQueenPlacement ? 'assume-progress' : 'assume-exhaustive');
-        applyOperationResult(queenAssumption);
-        currentBoard = queenAssumption.board;
-        if (stopOnQueenPlacement && countQueens(currentBoard) > beforeQueenCount) {
-          shouldContinue = false;
-          continue;
-        }
-        await pauseForCadence();
+    if (
+      queenAssumption.success &&
+      queenAssumption.board &&
+      queenAssumption.changedCells.length > 0
+    ) {
+      currentBoard = queenAssumption.board;
+      combinedChangedCells.push(...queenAssumption.changedCells);
+      lastExplanation = queenAssumption.explanation;
+      if (stopOnQueenPlacement && countQueens(currentBoard) > queenCountBeforePass) {
+        shouldContinue = false;
         continue;
       }
-
-      const beforeFlagQueenCount = countQueens(currentBoard);
-      const flagAssumption = await queensAdminApi.runSpecificSolverRule(
-        currentBoard,
-        'flag-assumption-contradiction'
-      );
-
-      if (flagAssumption.success && flagAssumption.board) {
-        progressMade = true;
-        incrementStepUsage(stopOnQueenPlacement ? 'assume-progress' : 'assume-exhaustive');
-        applyOperationResult(flagAssumption);
-        currentBoard = flagAssumption.board;
-        if (stopOnQueenPlacement && countQueens(currentBoard) > beforeFlagQueenCount) {
-          shouldContinue = false;
-          continue;
-        }
-        await pauseForCadence();
+      if (stopOnQueenPlacement) {
+        shouldContinue = false;
         continue;
       }
-
-      if (!progressMade) {
-        statusMessage.value = stopOnQueenPlacement
-          ? 'Assumption scan found no forced flags or queens.'
-          : 'Exhaustive assumption scan made no progress.';
-      }
-      appendLog(
-        'Assumption',
-        stopOnQueenPlacement
-          ? progressMade
-            ? 'Stopped assumption scan after making progress.'
-            : 'Assumption scan found no forced moves.'
-          : progressMade
-            ? 'Exhaustive assumption scan finished after checking all squares.'
-            : 'Exhaustive assumption scan made no progress.'
-      );
-      shouldContinue = false;
+      continue;
     }
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Assumption solver failed.';
-    appendLog('Assumption', 'Assumption solver failed.', errorMessage.value);
-  } finally {
-    actionLoading.value = false;
-    activeAction.value = null;
+
+    const flagAssumption = await queensAdminApi.runSpecificSolverRule(
+      currentBoard,
+      'flag-assumption-contradiction'
+    );
+
+    if (flagAssumption.success && flagAssumption.board && flagAssumption.changedCells.length > 0) {
+      currentBoard = flagAssumption.board;
+      combinedChangedCells.push(...flagAssumption.changedCells);
+      lastExplanation = flagAssumption.explanation;
+      if (stopOnQueenPlacement && countQueens(currentBoard) > queenCountBeforePass) {
+        shouldContinue = false;
+        continue;
+      }
+      if (stopOnQueenPlacement) {
+        shouldContinue = false;
+        continue;
+      }
+      continue;
+    }
+
+    shouldContinue = false;
   }
+
+  return {
+    success: combinedChangedCells.length > 0,
+    action: 'run-specific-solver-rule',
+    explanation: combinedChangedCells.length > 0 ? lastExplanation : lastExplanation,
+    board: currentBoard,
+    changedCells: combinedChangedCells,
+    warnings: [],
+    validation: null,
+    metadata: null,
+    error: null,
+  };
 }
 
-function incrementStepUsage(stepId: SolverStepId): void {
+function incrementStepUsage(stepId: SolverMetricId): void {
   solverUsageCounts.value = {
     ...solverUsageCounts.value,
-    [stepId]: solverUsageCounts.value[stepId] + 1,
+    [stepId]: (solverUsageCounts.value[stepId] ?? 0) + 1,
   };
+}
+
+function shouldAutoRunSingleColor(
+  actionKey: string,
+  beforeBoard: QueensAdminBoardState,
+  result: QueensAdminOperationResult
+): result is QueensAdminOperationResult & { board: QueensAdminBoardState } {
+  return (
+    autoRunSingleColorAfterSolverAction.value &&
+    !actionKey.startsWith('single-color') &&
+    result.success &&
+    !!result.board &&
+    countFlags(result.board) > countFlags(beforeBoard)
+  );
+}
+
+async function runSingleColorFollowUp(
+  board: QueensAdminBoardState
+): Promise<QueensAdminBoardState> {
+  appendLog('Auto Follow-Up', 'Running single-color queen after the previous solver action.');
+
+  const result = await queensAdminApi.runSingleColorGroupSolverRule(board);
+  appendLog(
+    'Auto Follow-Up',
+    `${result.action}: ${result.explanation} Changed ${result.changedCells.length} cell${result.changedCells.length === 1 ? '' : 's'}.`,
+    result.error
+  );
+
+  if (!result.success || !result.board || result.changedCells.length === 0) {
+    return board;
+  }
+
+  applyOperationResult(result);
+  incrementStepUsage('single-color');
+  return result.board;
 }
 
 function resetSolverMetrics(): void {
   solverUsageCounts.value = {
     'single-color': 0,
-    pattern: 0,
     'row-column': 0,
+    'group-confined-to-line': 0,
     'assume-progress': 0,
     'assume-exhaustive': 0,
   };
@@ -1158,6 +1500,10 @@ function resetSolverMetrics(): void {
 
 function countQueens(board: QueensAdminBoardState): number {
   return board.cells.flat().filter((cell) => cell.markType === 'QUEEN').length;
+}
+
+function countFlags(board: QueensAdminBoardState): number {
+  return board.cells.flat().filter((cell) => cell.markType === 'FLAG').length;
 }
 
 async function pauseForCadence(): Promise<void> {
@@ -1170,6 +1516,152 @@ function createEmptyPatternDraft(): PatternEditorDraft {
     cells: [],
     outputFlags: [],
   };
+}
+
+function buildInitialStepDifficulties(
+  persistedDifficulties: Record<string, QueensAdminSolverDifficulty> | undefined
+): Record<BuiltInSolverStepId, QueensAdminSolverDifficulty> {
+  return BUILT_IN_SOLVER_STEPS.reduce<Record<BuiltInSolverStepId, QueensAdminSolverDifficulty>>(
+    (acc, step) => {
+      acc[step.id] = normalizeSolverDifficulty(
+        persistedDifficulties?.[step.id],
+        step.defaultDifficulty
+      );
+      return acc;
+    },
+    {} as Record<BuiltInSolverStepId, QueensAdminSolverDifficulty>
+  );
+}
+
+function updateBuiltInStepDifficulty(stepId: BuiltInSolverStepId, value: unknown): void {
+  builtInStepDifficulties.value = {
+    ...builtInStepDifficulties.value,
+    [stepId]: normalizeSolverDifficulty(value, builtInStepDifficulties.value[stepId]),
+  };
+}
+
+function updatePatternDifficulty(patternId: string, value: unknown): void {
+  savedPatterns.value = savedPatterns.value.map((pattern) =>
+    pattern.id === patternId
+      ? {
+          ...pattern,
+          difficulty: normalizeSolverDifficulty(value, pattern.difficulty),
+        }
+      : pattern
+  );
+  persistPatterns(savedPatterns.value);
+}
+
+async function runAllThroughDifficulty(): Promise<void> {
+  if (!currentSolverBoard.value) return;
+
+  actionLoading.value = true;
+  activeAction.value = 'run-all-difficulty';
+  errorMessage.value = null;
+
+  try {
+    let currentBoard = currentSolverBoard.value;
+    let anyProgress = false;
+    let passCount = 0;
+    let shouldContinue = true;
+    appendLog(
+      'Service Call',
+      `Calling solver service for action "run-all-difficulty" through ${formatSolverDifficulty(runAllDifficultyThreshold.value)}.`
+    );
+
+    while (shouldContinue) {
+      let passProgress = false;
+      passCount += 1;
+
+      for (const step of builtInSolverRows.value) {
+        if (!isDifficultyAtOrBelow(step.difficulty, runAllDifficultyThreshold.value)) continue;
+
+        const result = await executeBuiltInStep(step.id, currentBoard);
+        if (!result.success || !result.board || result.changedCells.length === 0) continue;
+
+        passProgress = true;
+        anyProgress = true;
+        applyOperationResult(result);
+        incrementStepUsage(step.id);
+        appendLog(
+          'Service Result',
+          `${result.action}: ${result.explanation} Changed ${result.changedCells.length} cell${result.changedCells.length === 1 ? '' : 's'}.`,
+          result.error
+        );
+
+        const boardBeforeFollowUp = currentBoard;
+        currentBoard = result.board;
+        if (shouldAutoRunSingleColor(step.id, boardBeforeFollowUp, result)) {
+          currentBoard = await runSingleColorFollowUp(currentBoard);
+        }
+        await pauseForCadence();
+      }
+
+      for (const pattern of savedPatterns.value) {
+        if (!isDifficultyAtOrBelow(pattern.difficulty, runAllDifficultyThreshold.value)) continue;
+
+        const result = await queensAdminApi.runSolverPattern(currentBoard, pattern);
+        if (!result.success || !result.board || result.changedCells.length === 0) continue;
+
+        passProgress = true;
+        anyProgress = true;
+        applyOperationResult(result);
+        incrementStepUsage(`pattern:${pattern.id}`);
+        appendLog(
+          'Service Result',
+          `${result.action}: ${result.explanation} Changed ${result.changedCells.length} cell${result.changedCells.length === 1 ? '' : 's'}.`,
+          result.error
+        );
+
+        const boardBeforeFollowUp = currentBoard;
+        currentBoard = result.board;
+        if (shouldAutoRunSingleColor(`pattern:${pattern.id}`, boardBeforeFollowUp, result)) {
+          currentBoard = await runSingleColorFollowUp(currentBoard);
+        }
+        await pauseForCadence();
+      }
+
+      if (!passProgress) {
+        shouldContinue = false;
+      }
+    }
+
+    statusMessage.value = anyProgress
+      ? `Ran all solver items through ${formatSolverDifficulty(runAllDifficultyThreshold.value)} for ${passCount - 1} pass${passCount - 1 === 1 ? '' : 'es'} until no more progress was made.`
+      : `No solver items through ${formatSolverDifficulty(runAllDifficultyThreshold.value)} made progress.`;
+    appendLog(
+      'Service Result',
+      anyProgress
+        ? `Run-all-through-difficulty finished after ${passCount - 1} pass${passCount - 1 === 1 ? '' : 'es'}.`
+        : 'Run-all-through-difficulty made no progress on the first pass.'
+    );
+  } catch (error) {
+    errorMessage.value =
+      error instanceof Error ? error.message : 'Run-all-through-difficulty failed.';
+    appendLog('Service Error', 'Solver action "run-all-difficulty" failed.', errorMessage.value);
+  } finally {
+    actionLoading.value = false;
+    activeAction.value = null;
+  }
+}
+
+function restorePersistedSolverSession(): void {
+  if (!persistedSolverSession) return;
+
+  solverSelection.value = persistedSolverSession.selection;
+  queensStore.hydrateFromAdminBoard(persistedSolverSession.currentBoard, {
+    showSolutionQueens: false,
+    resetHistory: true,
+  });
+}
+
+function persistSolverSession(boardState: QueensAdminBoardState): void {
+  if (!solverSelection.value) return;
+
+  saveQueensAdminSolverSession({
+    selection: solverSelection.value,
+    currentBoard: boardState,
+  });
 }
 
 function loadInitialPatterns(): QueensAdminSolverPattern[] {
@@ -1213,6 +1705,7 @@ function seedPatterns(): QueensAdminSolverPattern[] {
     size: pattern.size,
     cells: pattern.cells.map((cell) => ({ row: cell.row, col: cell.col, activeSquare: true })),
     outputFlags: pattern.outputFlags.map((flag) => ({ row: flag.row, col: flag.col })),
+    difficulty: 'medium',
   }));
 }
 
@@ -1339,6 +1832,7 @@ function normalizeSolverPattern(input: unknown, fallbackId: string): QueensAdmin
     size,
     cells,
     outputFlags,
+    difficulty: normalizeSolverDifficulty(value.difficulty, 'medium'),
   };
 }
 
