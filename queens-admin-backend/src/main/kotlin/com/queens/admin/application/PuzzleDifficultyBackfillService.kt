@@ -23,8 +23,11 @@ class PuzzleDifficultyBackfillService(
         val hardCount: Int,
         val extraHardCount: Int,
         val unsolvableCount: Int,
+        val updatedCount: Int,
+        val unchangedCount: Int,
         val puzzle: PersistedPuzzle,
         val assessedTier: com.queens.admin.domain.model.PuzzleDifficultyTier,
+        val difficultyChanged: Boolean,
     )
 
     data class BackfillSummary(
@@ -37,6 +40,8 @@ class PuzzleDifficultyBackfillService(
         val hardCount: Int,
         val extraHardCount: Int,
         val unsolvableCount: Int,
+        val updatedCount: Int,
+        val unchangedCount: Int,
     )
 
     fun assessAllPuzzles(
@@ -53,9 +58,12 @@ class PuzzleDifficultyBackfillService(
         var hardCount = 0
         var extraHardCount = 0
         var unsolvableCount = 0
+        var updatedCount = 0
+        var unchangedCount = 0
 
         puzzles.forEach { puzzle ->
             val assessment = puzzleDifficultyAssessmentService.assess(puzzle)
+            val difficultyChanged = puzzle.difficultyTier != assessment.difficultyTier
             puzzleRepository.updateDifficulty(
                 puzzleId = puzzle.id,
                 difficultyTier = assessment.difficultyTier,
@@ -64,6 +72,11 @@ class PuzzleDifficultyBackfillService(
                 difficultyAssessedAt = Instant.now(),
             )
             assessedCount += 1
+            if (difficultyChanged) {
+                updatedCount += 1
+            } else {
+                unchangedCount += 1
+            }
             when (assessment.difficultyTier) {
                 com.queens.admin.domain.model.PuzzleDifficultyTier.EASY -> easyCount += 1
                 com.queens.admin.domain.model.PuzzleDifficultyTier.MEDIUM -> mediumCount += 1
@@ -82,8 +95,11 @@ class PuzzleDifficultyBackfillService(
                     hardCount = hardCount,
                     extraHardCount = extraHardCount,
                     unsolvableCount = unsolvableCount,
+                    updatedCount = updatedCount,
+                    unchangedCount = unchangedCount,
                     puzzle = puzzle,
                     assessedTier = assessment.difficultyTier,
+                    difficultyChanged = difficultyChanged,
                 ),
             )
         }
@@ -98,6 +114,8 @@ class PuzzleDifficultyBackfillService(
             hardCount = hardCount,
             extraHardCount = extraHardCount,
             unsolvableCount = unsolvableCount,
+            updatedCount = updatedCount,
+            unchangedCount = unchangedCount,
         )
     }
 }

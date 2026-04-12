@@ -40,8 +40,11 @@ fun main(args: Array<String>) {
                         "hard=${progress.hardCount} " +
                         "extraHard=${progress.extraHardCount} " +
                         "unsolvable=${progress.unsolvableCount} " +
+                        "updated=${progress.updatedCount} " +
+                        "unchanged=${progress.unchangedCount} " +
                         "-> ${progress.puzzle.id} size ${progress.puzzle.size} " +
-                        "= ${progress.assessedTier.name.lowercase().replace('_', '-')}",
+                        "= ${progress.assessedTier.name.lowercase().replace('_', '-')} " +
+                        if (progress.difficultyChanged) "(updated)" else "(unchanged)",
                 )
             },
         )
@@ -55,6 +58,8 @@ fun main(args: Array<String>) {
         println("  Hard: ${summary.hardCount}")
         println("  Extra Hard: ${summary.extraHardCount}")
         println("  Unsolvable: ${summary.unsolvableCount}")
+        println("  Updated: ${summary.updatedCount}")
+        println("  Unchanged: ${summary.unchangedCount}")
         exitProcess(0)
     } catch (error: Throwable) {
         System.err.println("Puzzle difficulty assessment failed: ${error.message}")
