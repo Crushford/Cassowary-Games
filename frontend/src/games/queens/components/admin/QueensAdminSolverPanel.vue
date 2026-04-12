@@ -151,23 +151,53 @@
           </div>
         </div>
 
-        <div class="mt-4 space-y-2">
-          <div class="text-xs font-semibold uppercase tracking-[0.18em] text-semantic-neutral-500">
-            Difficulty Overview
+        <div class="mt-4 space-y-3">
+          <div class="flex items-center justify-between gap-3">
+            <div
+              class="text-xs font-semibold uppercase tracking-[0.18em] text-semantic-neutral-500"
+            >
+              Difficulty Overview
+            </div>
+            <Button
+              size="small"
+              outlined
+              label="Copy Config"
+              :disabled="difficultyOverviewSections.length === 0"
+              @click="copyDifficultyOverview"
+            />
           </div>
+
           <div
-            v-for="entry in difficultyOverviewRows"
-            :key="entry.id"
-            class="flex items-center justify-between rounded-xl bg-surface-darkMuted px-3 py-2"
+            v-for="section in difficultyOverviewSections"
+            :key="section.id"
+            class="rounded-2xl border border-semantic-neutral-800 bg-surface-darkMuted p-3"
           >
-            <div>
-              <div class="text-sm font-semibold text-white">{{ entry.label }}</div>
-              <div class="text-xs text-semantic-neutral-400">
-                {{ entry.kind === 'step' ? 'Built-in step' : 'Pattern' }}
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <div class="text-sm font-semibold text-white">{{ section.title }}</div>
+                <div class="text-xs text-semantic-neutral-400">{{ section.subtitle }}</div>
+              </div>
+              <div
+                class="rounded-full bg-semantic-neutral-950 px-3 py-1 text-[11px] font-semibold text-semantic-neutral-300"
+              >
+                {{ section.entries.length }}
               </div>
             </div>
-            <div class="text-sm font-semibold text-semantic-info-100">
-              {{ formatSolverDifficulty(entry.difficulty) }}
+
+            <div class="mt-3 space-y-2">
+              <div
+                v-for="entry in section.entries"
+                :key="entry.id"
+                class="flex items-center justify-between gap-3 rounded-xl bg-semantic-neutral-950 px-3 py-2"
+              >
+                <div class="min-w-0 flex-1">
+                  <div class="truncate text-sm font-semibold text-white">{{ entry.label }}</div>
+                  <div class="text-xs text-semantic-neutral-400">{{ entry.meta }}</div>
+                </div>
+                <div class="text-sm font-semibold text-semantic-info-100">
+                  {{ formatSolverDifficulty(entry.difficulty) }}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -926,23 +956,52 @@ const solverStepUsageRows = computed(() => [
     })),
 ]);
 
-const difficultyOverviewRows = computed(() => [
-  ...builtInSolverRows.value.map((step) => ({
+const difficultyOverviewSections = computed(() => {
+  const builtInEntries = builtInSolverRows.value.map((step, index) => ({
     id: step.id,
     label: step.label,
-    kind: 'step',
+    meta: `Built-in step ${index + 1}`,
     difficulty: step.difficulty,
-  })),
-  ...savedPatterns.value
+  }));
+
+  const patternEntries = savedPatterns.value
     .slice()
     .sort((left, right) => left.sortOrder - right.sortOrder)
-    .map((pattern) => ({
+    .map((pattern, index) => ({
       id: `pattern:${pattern.id}`,
       label: pattern.name,
-      kind: 'pattern',
+      meta: `Pattern ${index + 1}`,
       difficulty: pattern.difficulty,
-    })),
-]);
+    }));
+
+  return [
+    {
+      id: 'built-in-steps',
+      title: 'Built-In Steps',
+      subtitle: 'Execution order used by the solver loop.',
+      entries: builtInEntries,
+    },
+    {
+      id: 'patterns',
+      title: 'Patterns',
+      subtitle: 'Backend-backed pattern rules in execution order.',
+      entries: patternEntries,
+    },
+  ].filter((section) => section.entries.length > 0);
+});
+
+const difficultyOverviewClipboardText = computed(() =>
+  difficultyOverviewSections.value
+    .map((section) =>
+      [
+        section.title,
+        ...section.entries.map(
+          (entry) => `- ${entry.label}: ${formatSolverDifficulty(entry.difficulty)} (${entry.meta})`
+        ),
+      ].join('\n')
+    )
+    .join('\n\n')
+);
 
 const logEntriesForDisplay = computed(() => solverLogEntries.value.slice(-50).reverse());
 
@@ -1886,6 +1945,13 @@ async function copyCurrentBoard(): Promise<void> {
 
 async function copyAllLogs(): Promise<void> {
   await copyToClipboard(formatLogsForClipboard(solverLogEntries.value), 'Copied all solver logs.');
+}
+
+async function copyDifficultyOverview(): Promise<void> {
+  await copyToClipboard(
+    difficultyOverviewClipboardText.value,
+    'Copied the solver difficulty overview.'
+  );
 }
 
 async function copyLastFiftyLogLinesAndBoard(): Promise<void> {
