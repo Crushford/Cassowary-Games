@@ -3,7 +3,7 @@ import { COLOR_PALETTE } from '../utils/colorPalette';
 import type {
   QueensAdminBoardState,
   QueensAdminCatalogPuzzleSelection,
-  QueensAdminSolverDifficulty,
+  QueensAdminDifficulty,
   QueensAdminGenerationStrategy,
   QueensAdminQueenCountMode,
   QueensAdminTool,
@@ -67,8 +67,8 @@ export type QueensAdminSolverInputs = {
   selectedMinimumGroupSize: 'any' | number;
   selectedQueenCount: 'any' | number;
   autoRunSingleColorAfterSolverAction: boolean;
-  stepDifficulties: Record<string, QueensAdminSolverDifficulty>;
-  runAllDifficultyThreshold: QueensAdminSolverDifficulty;
+  stepDifficulties: Record<string, QueensAdminDifficulty>;
+  runAllDifficultyThreshold: QueensAdminDifficulty;
 };
 
 export type QueensAdminSolverSession = {
@@ -320,8 +320,7 @@ export function loadQueensAdminSolverInputs(): Partial<QueensAdminSolverInputs> 
   const runAllDifficultyThreshold = isSolverDifficulty(
     (parsed as { runAllDifficultyThreshold?: unknown }).runAllDifficultyThreshold
   )
-    ? (parsed as { runAllDifficultyThreshold: QueensAdminSolverDifficulty })
-        .runAllDifficultyThreshold
+    ? (parsed as { runAllDifficultyThreshold: QueensAdminDifficulty }).runAllDifficultyThreshold
     : null;
 
   return {
@@ -364,13 +363,11 @@ export function saveQueensAdminSolverSession(value: QueensAdminSolverSession | n
   writeJson(SOLVER_SESSION_KEY, value);
 }
 
-function normalizeStepDifficulties(
-  value: unknown
-): Record<string, QueensAdminSolverDifficulty> | null {
+function normalizeStepDifficulties(value: unknown): Record<string, QueensAdminDifficulty> | null {
   if (!value || typeof value !== 'object') return null;
 
   const normalized = Object.entries(value as Record<string, unknown>).reduce<
-    Record<string, QueensAdminSolverDifficulty>
+    Record<string, QueensAdminDifficulty>
   >((acc, [key, entry]) => {
     if (isSolverDifficulty(entry)) {
       acc[key] = entry;

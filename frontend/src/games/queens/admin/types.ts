@@ -10,7 +10,8 @@ export type QueensAdminTool =
 export type QueensAdminMarkType = 'NONE' | 'FLAG' | 'QUEEN' | 'INVALID';
 export type QueensAdminGenerationStrategy = 'baseline' | 'marker-guided' | 'template-seeded';
 export type QueensAdminQueenCountMode = 'exact' | 'max';
-export type QueensAdminSolverDifficulty = 'easy' | 'medium' | 'hard';
+export type QueensAdminDifficulty = 'easy' | 'medium' | 'hard';
+export type QueensAdminPuzzleDifficulty = QueensAdminDifficulty | 'unsolvable';
 
 export interface QueensAdminCell {
   row: number;
@@ -125,7 +126,7 @@ export interface QueensAdminBatchRun {
   error: string | null;
   startedAt: string | null;
   finishedAt: string | null;
-  persistenceState: 'SAVED' | 'DUPLICATE' | 'SKIPPED' | 'ERROR' | null;
+  persistenceState: 'SAVED' | 'DUPLICATE' | 'SKIPPED' | 'ERROR' | 'UNSOLVABLE' | null;
   persistenceMessage: string | null;
   savedPuzzleId: string | null;
   encodedPuzzleLayout: string | null;
@@ -186,14 +187,33 @@ export interface QueensAdminCatalogPuzzleSelection {
   orthogonalMinDistance: number;
   targetQueenCount: number;
   minimumGroupSize: number;
-  difficulty?: 'easy' | 'medium' | 'hard';
+  difficulty?: QueensAdminPuzzleDifficulty;
   board: QueensAdminBoardState;
+}
+
+export interface QueensAdminBuiltInSolverStep {
+  id: string;
+  label: string;
+  description: string;
+  difficulty: QueensAdminDifficulty;
+  enabled: boolean;
+  sortOrder: number;
 }
 
 export interface QueensAdminSolverPattern {
   id: string;
+  name: string;
   size: number;
   cells: Array<{ row: number; col: number; activeSquare?: boolean }>;
   outputFlags: Array<{ row: number; col: number }>;
-  difficulty: QueensAdminSolverDifficulty;
+  difficulty: QueensAdminDifficulty;
+  enabled: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QueensAdminSolverConfig {
+  builtInSteps: QueensAdminBuiltInSolverStep[];
+  patterns: QueensAdminSolverPattern[];
 }

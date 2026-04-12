@@ -152,6 +152,30 @@
         </div>
 
         <div class="mt-4 space-y-2">
+          <div class="text-xs font-semibold uppercase tracking-[0.18em] text-semantic-neutral-500">
+            Difficulty Overview
+          </div>
+          <div
+            v-for="entry in difficultyOverviewRows"
+            :key="entry.id"
+            class="flex items-center justify-between rounded-xl bg-surface-darkMuted px-3 py-2"
+          >
+            <div>
+              <div class="text-sm font-semibold text-white">{{ entry.label }}</div>
+              <div class="text-xs text-semantic-neutral-400">
+                {{ entry.kind === 'step' ? 'Built-in step' : 'Pattern' }}
+              </div>
+            </div>
+            <div class="text-sm font-semibold text-semantic-info-100">
+              {{ formatSolverDifficulty(entry.difficulty) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 space-y-2">
+          <div class="text-xs font-semibold uppercase tracking-[0.18em] text-semantic-neutral-500">
+            Usage
+          </div>
           <div
             v-for="step in solverStepUsageRows"
             :key="step.id"
@@ -451,11 +475,11 @@
     >
       <AdminPanel
         title="Patterns"
-        description="Patterns will stay in local storage, but every run/edit action will still round-trip through the backend with the current puzzle and selected pattern payload."
+        description="Patterns are stored in the backend solver config and reused by the admin solver and difficulty assessment pipeline."
         content-class="mt-0"
       >
         <template #badge>
-          <Tag severity="info" value="Local + API" rounded />
+          <Tag severity="info" value="Backend Config" rounded />
         </template>
 
         <div class="flex flex-wrap gap-3">
@@ -477,7 +501,7 @@
             <div>
               <div class="text-sm font-semibold text-white">Pattern Difficulty</div>
               <div class="mt-1 text-xs text-semantic-neutral-400">
-                Frontend-only label used by the run-all-through-difficulty flow.
+                Stored with the backend solver pattern config.
               </div>
             </div>
             <div class="w-36">
@@ -496,8 +520,8 @@
             :title="editingPatternId ? 'Edit Pattern' : 'Create Pattern'"
             :description="
               editingPatternId
-                ? 'Adjust the selected pattern and save it back to local storage.'
-                : 'Create a new solver pattern and save it to local storage.'
+                ? 'Adjust the selected pattern and save it back to the backend solver config.'
+                : 'Create a new solver pattern and save it to the backend solver config.'
             "
             grid-label="Pattern Grid"
             save-label="Save Pattern"
@@ -511,10 +535,17 @@
         </div>
 
         <div
-          v-if="savedPatterns.length === 0"
+          v-if="savedPatterns.length === 0 && !loadingSolverConfig"
           class="mt-4 rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4 text-sm text-semantic-neutral-300"
         >
           No solver patterns saved yet.
+        </div>
+
+        <div
+          v-else-if="loadingSolverConfig"
+          class="mt-4 rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4 text-sm text-semantic-neutral-300"
+        >
+          Loading solver patterns...
         </div>
 
         <div v-else class="mt-4 space-y-3">
@@ -534,7 +565,7 @@
 
               <div class="space-y-3 text-center">
                 <div>
-                  <div class="text-base font-semibold text-white">{{ pattern.id }}</div>
+                  <div class="text-base font-semibold text-white">{{ pattern.name }}</div>
                   <div class="mt-1 text-sm text-semantic-neutral-400">
                     {{ pattern.size }}x{{ pattern.size }} • {{ pattern.outputFlags.length }} flag{{
                       pattern.outputFlags.length === 1 ? '' : 's'
@@ -567,7 +598,7 @@
                   <Button
                     size="small"
                     label="Run"
-                    :disabled="!currentSolverBoard || actionLoading"
+                    :disabled="!currentSolverBoard || actionLoading || !pattern.enabled"
                     :loading="actionLoading && activeAction === `pattern-${pattern.id}`"
                     @click="runPatternOnce(pattern)"
                   />
@@ -575,7 +606,7 @@
                     size="small"
                     label="Loop"
                     outlined
-                    :disabled="!currentSolverBoard || actionLoading"
+                    :disabled="!currentSolverBoard || actionLoading || !pattern.enabled"
                     :loading="actionLoading && activeAction === `pattern-loop-${pattern.id}`"
                     @click="runPatternUntilNoFlags(pattern)"
                   />
@@ -615,8 +646,9 @@ import { assignRegionPaletteColors } from '../../utils/regionDisplay';
 import { queensAdminApi } from '../../admin/api';
 import type {
   QueensAdminBoardState,
+  QueensAdminBuiltInSolverStep,
   QueensAdminCatalogPuzzleSelection,
-  QueensAdminSolverDifficulty,
+  QueensAdminDifficulty,
   QueensAdminOperationResult,
   QueensAdminPuzzleCatalogGroup,
   QueensAdminSolverPattern,
@@ -634,48 +666,57 @@ import {
   SOLVER_DIFFICULTY_OPTIONS,
 } from '../../admin/solverDifficulty';
 import type { PatternEditorDraft } from '../queens/patternEditorTypes';
-import { PATTERN_CARD_DEFINITIONS } from '../../utils/incrementalPatternCards';
 
 const QueensPuzzleBoard = defineAsyncComponent(() => import('../queens/QueensPuzzleBoard.vue'));
-
-const SOLVER_PATTERN_STORAGE_KEY = 'queens-admin-solver-patterns-v1';
-
-const BUILT_IN_SOLVER_STEPS = [
+const DEFAULT_BUILT_IN_SOLVER_STEPS = [
   {
     id: 'single-color',
     label: 'Single Color Queen',
     description: 'Place the queen when exactly one valid square remains in a color group.',
-    defaultDifficulty: 'easy',
+    difficulty: 'easy',
+    enabled: true,
+    sortOrder: 10,
   },
   {
     id: 'row-column',
     label: 'Row / Column Constraints',
     description: 'Use constrained sliding row and column bands to eliminate impossible candidates.',
-    defaultDifficulty: 'medium',
+    difficulty: 'medium',
+    enabled: true,
+    sortOrder: 20,
   },
   {
     id: 'group-confined-to-line',
     label: 'Group Confined To Line',
     description:
       'Flag candidates near a color group whose remaining squares are trapped in one row or column.',
-    defaultDifficulty: 'easy',
+    difficulty: 'easy',
+    enabled: true,
+    sortOrder: 30,
   },
   {
     id: 'assume-progress',
     label: 'Assume Queen Until Progress',
     description: 'Try queen assumptions until one contradiction forces a real move.',
-    defaultDifficulty: 'hard',
+    difficulty: 'hard',
+    enabled: true,
+    sortOrder: 40,
   },
   {
     id: 'assume-exhaustive',
     label: 'Assume Queen Exhaustive',
     description:
       'Exhaustively scan queen and flag assumptions until no further forced move exists.',
-    defaultDifficulty: 'hard',
+    difficulty: 'hard',
+    enabled: true,
+    sortOrder: 50,
   },
-] as const;
+] as const satisfies ReadonlyArray<QueensAdminBuiltInSolverStep>;
 
-type BuiltInSolverStepId = (typeof BUILT_IN_SOLVER_STEPS)[number]['id'];
+type BuiltInSolverStepId = (typeof DEFAULT_BUILT_IN_SOLVER_STEPS)[number]['id'];
+type BuiltInSolverStepDefinition = Omit<QueensAdminBuiltInSolverStep, 'id'> & {
+  id: BuiltInSolverStepId;
+};
 type SolverMetricId = BuiltInSolverStepId | `pattern:${string}`;
 const persistedSolverInputs = loadQueensAdminSolverInputs();
 const persistedSolverSession = loadQueensAdminSolverSession();
@@ -699,10 +740,16 @@ const selectedQueenCount = ref<'any' | number>(persistedSolverInputs?.selectedQu
 const autoRunSingleColorAfterSolverAction = ref(
   persistedSolverInputs?.autoRunSingleColorAfterSolverAction ?? false
 );
-const builtInStepDifficulties = ref<Record<BuiltInSolverStepId, QueensAdminSolverDifficulty>>(
-  buildInitialStepDifficulties(persistedSolverInputs?.stepDifficulties)
+const builtInStepDefinitions = ref<BuiltInSolverStepDefinition[]>([
+  ...DEFAULT_BUILT_IN_SOLVER_STEPS,
+]);
+const builtInStepDifficulties = ref<Record<BuiltInSolverStepId, QueensAdminDifficulty>>(
+  buildInitialStepDifficulties(
+    DEFAULT_BUILT_IN_SOLVER_STEPS,
+    persistedSolverInputs?.stepDifficulties
+  )
 );
-const runAllDifficultyThreshold = ref<QueensAdminSolverDifficulty>(
+const runAllDifficultyThreshold = ref<QueensAdminDifficulty>(
   normalizeSolverDifficulty(persistedSolverInputs?.runAllDifficultyThreshold, 'hard')
 );
 const solverUsageCounts = ref<Record<SolverMetricId, number>>({
@@ -712,12 +759,13 @@ const solverUsageCounts = ref<Record<SolverMetricId, number>>({
   'assume-progress': 0,
   'assume-exhaustive': 0,
 });
-const savedPatterns = ref<QueensAdminSolverPattern[]>(loadInitialPatterns());
+const savedPatterns = ref<QueensAdminSolverPattern[]>([]);
 const showPatternEditor = ref(false);
 const editingPatternId = ref<string | null>(null);
-const editingPatternDifficulty = ref<QueensAdminSolverDifficulty>('medium');
+const editingPatternDifficulty = ref<QueensAdminDifficulty>('medium');
 const patternDraft = ref<PatternEditorDraft>(createEmptyPatternDraft());
 const solverLogEntries = ref<SolverLogEntry[]>([]);
+const loadingSolverConfig = ref(false);
 let highlightTimer: ReturnType<typeof setTimeout> | null = null;
 
 type RadioOption = {
@@ -736,12 +784,15 @@ type SolverLogEntry = {
 const solverDifficultyOptions = SOLVER_DIFFICULTY_OPTIONS;
 
 const builtInSolverRows = computed(() =>
-  BUILT_IN_SOLVER_STEPS.map((step) => ({
-    ...step,
-    difficulty: builtInStepDifficulties.value[step.id],
-    runOnceActionId: `${step.id}-once`,
-    runUntilActionId: `${step.id}-loop`,
-  }))
+  builtInStepDefinitions.value
+    .filter((step) => step.enabled)
+    .sort((left, right) => left.sortOrder - right.sortOrder)
+    .map((step) => ({
+      ...step,
+      difficulty: builtInStepDifficulties.value[step.id],
+      runOnceActionId: `${step.id}-once`,
+      runUntilActionId: `${step.id}-loop`,
+    }))
 );
 
 const filteredBySize = computed(() =>
@@ -838,9 +889,10 @@ const totalStepUses = computed(() =>
 );
 
 const hardestDifficultyUsed = computed(() => {
-  const usedBuiltIn = BUILT_IN_SOLVER_STEPS.filter(
-    (step) => (solverUsageCounts.value[step.id] ?? 0) > 0
-  ).map((step) => builtInStepDifficulties.value[step.id]);
+  const usedBuiltIn = builtInStepDefinitions.value
+    .filter((step) => step.enabled)
+    .filter((step) => (solverUsageCounts.value[step.id] ?? 0) > 0)
+    .map((step) => builtInStepDifficulties.value[step.id]);
   const usedPatterns = savedPatterns.value
     .filter((pattern) => (solverUsageCounts.value[`pattern:${pattern.id}`] ?? 0) > 0)
     .map((pattern) => pattern.difficulty);
@@ -854,18 +906,42 @@ const hardestDifficultyUsed = computed(() => {
 });
 
 const solverStepUsageRows = computed(() => [
-  ...BUILT_IN_SOLVER_STEPS.map((step) => ({
+  ...builtInStepDefinitions.value
+    .filter((step) => step.enabled)
+    .sort((left, right) => left.sortOrder - right.sortOrder)
+    .map((step) => ({
+      id: step.id,
+      label: step.label,
+      difficulty: builtInStepDifficulties.value[step.id],
+      count: solverUsageCounts.value[step.id] ?? 0,
+    })),
+  ...savedPatterns.value
+    .slice()
+    .sort((left, right) => left.sortOrder - right.sortOrder)
+    .map((pattern) => ({
+      id: `pattern:${pattern.id}`,
+      label: pattern.name,
+      difficulty: pattern.difficulty,
+      count: solverUsageCounts.value[`pattern:${pattern.id}`] ?? 0,
+    })),
+]);
+
+const difficultyOverviewRows = computed(() => [
+  ...builtInSolverRows.value.map((step) => ({
     id: step.id,
     label: step.label,
-    difficulty: builtInStepDifficulties.value[step.id],
-    count: solverUsageCounts.value[step.id] ?? 0,
+    kind: 'step',
+    difficulty: step.difficulty,
   })),
-  ...savedPatterns.value.map((pattern) => ({
-    id: `pattern:${pattern.id}`,
-    label: `Pattern ${pattern.id}`,
-    difficulty: pattern.difficulty,
-    count: solverUsageCounts.value[`pattern:${pattern.id}`] ?? 0,
-  })),
+  ...savedPatterns.value
+    .slice()
+    .sort((left, right) => left.sortOrder - right.sortOrder)
+    .map((pattern) => ({
+      id: `pattern:${pattern.id}`,
+      label: pattern.name,
+      kind: 'pattern',
+      difficulty: pattern.difficulty,
+    })),
 ]);
 
 const logEntriesForDisplay = computed(() => solverLogEntries.value.slice(-50).reverse());
@@ -968,10 +1044,52 @@ watch(
 
 restorePersistedSolverSession();
 void loadCatalogGroups();
+void loadSolverConfig();
 
 async function loadCatalogGroups(): Promise<void> {
   const stats = await queensAdminApi.getPuzzleCatalogStats();
   catalogGroups.value = stats.groups;
+}
+
+function isBuiltInSolverStepId(value: string): value is BuiltInSolverStepId {
+  return DEFAULT_BUILT_IN_SOLVER_STEPS.some((step) => step.id === value);
+}
+
+function normalizeBuiltInStepDefinitions(
+  definitions: QueensAdminBuiltInSolverStep[]
+): BuiltInSolverStepDefinition[] {
+  return definitions
+    .filter((step): step is QueensAdminBuiltInSolverStep & { id: BuiltInSolverStepId } =>
+      isBuiltInSolverStepId(step.id)
+    )
+    .map((step) => ({ ...step }));
+}
+
+async function loadSolverConfig(): Promise<void> {
+  loadingSolverConfig.value = true;
+
+  try {
+    const config = await queensAdminApi.getSolverConfig();
+    const normalizedBuiltInSteps = normalizeBuiltInStepDefinitions(config.builtInSteps);
+    builtInStepDefinitions.value = normalizedBuiltInSteps;
+    builtInStepDifficulties.value = buildInitialStepDifficulties(
+      normalizedBuiltInSteps,
+      persistedSolverInputs?.stepDifficulties
+    );
+    savedPatterns.value = config.patterns
+      .slice()
+      .sort((left, right) => left.sortOrder - right.sortOrder);
+  } catch (error) {
+    errorMessage.value =
+      error instanceof Error ? error.message : 'Failed to load solver configuration.';
+    appendLog(
+      'Solver Config',
+      'Failed to load solver configuration from the backend.',
+      errorMessage.value
+    );
+  } finally {
+    loadingSolverConfig.value = false;
+  }
 }
 
 function uniqueOptions(values: number[]): number[] {
@@ -1126,7 +1244,10 @@ async function executeBuiltInStep(
 }
 
 function lookupBuiltInStep(stepId: BuiltInSolverStepId) {
-  return BUILT_IN_SOLVER_STEPS.find((step) => step.id === stepId) ?? BUILT_IN_SOLVER_STEPS[0];
+  return (
+    builtInStepDefinitions.value.find((step) => step.id === stepId) ??
+    builtInStepDefinitions.value[0]
+  );
 }
 
 async function runPatternOnce(pattern: QueensAdminSolverPattern): Promise<void> {
@@ -1186,6 +1307,7 @@ async function runAllPatternsUntilNoFlags(): Promise<void> {
       let loopPlacedFlags = false;
 
       for (const pattern of savedPatterns.value) {
+        if (!pattern.enabled) continue;
         const patternProgress = await runPatternLoop(pattern, false);
         if (patternProgress) {
           anyProgress = true;
@@ -1221,7 +1343,7 @@ function startNewPattern(): void {
   editingPatternDifficulty.value = 'medium';
   patternDraft.value = createEmptyPatternDraft();
   showPatternEditor.value = true;
-  appendLog('Pattern', 'Started creating a new local solver pattern.');
+  appendLog('Pattern', 'Started creating a new solver pattern.');
 }
 
 function editPattern(pattern: QueensAdminSolverPattern): void {
@@ -1245,32 +1367,47 @@ function cancelPatternEditing(): void {
   appendLog('Pattern', 'Closed the pattern editor without saving.');
 }
 
-function savePatternDraft(draft: PatternEditorDraft): void {
+async function savePatternDraft(draft: PatternEditorDraft): Promise<void> {
   const normalized = normalizeSolverPattern(
     {
       id: editingPatternId.value ?? draft.id ?? nextPatternId(savedPatterns.value),
+      name: editingPatternId.value ?? draft.id ?? nextPatternId(savedPatterns.value),
       size: draft.size,
       cells: draft.cells,
       outputFlags: draft.outputFlags,
       difficulty: editingPatternDifficulty.value,
+      enabled: true,
+      sortOrder:
+        savedPatterns.value.find((pattern) => pattern.id === editingPatternId.value)?.sortOrder ??
+        nextPatternSortOrder(savedPatterns.value),
     },
     editingPatternId.value ?? draft.id ?? nextPatternId(savedPatterns.value)
   );
 
-  if (editingPatternId.value) {
-    savedPatterns.value = savedPatterns.value.map((pattern) =>
-      pattern.id === editingPatternId.value ? normalized : pattern
-    );
-    statusMessage.value = 'Updated solver pattern.';
-    appendLog('Pattern', `Updated local pattern ${normalized.id}.`);
-  } else {
-    savedPatterns.value = [...savedPatterns.value, normalized];
-    statusMessage.value = 'Saved new solver pattern.';
-    appendLog('Pattern', `Saved new local pattern ${normalized.id}.`);
-  }
+  try {
+    const savedPattern = editingPatternId.value
+      ? await queensAdminApi.updateSolverPattern(normalized)
+      : await queensAdminApi.createSolverPattern(normalized);
 
-  persistPatterns(savedPatterns.value);
-  cancelPatternEditing();
+    if (editingPatternId.value) {
+      savedPatterns.value = savedPatterns.value.map((pattern) =>
+        pattern.id === editingPatternId.value ? savedPattern : pattern
+      );
+      statusMessage.value = 'Updated solver pattern.';
+      appendLog('Pattern', `Updated backend pattern ${savedPattern.id}.`);
+    } else {
+      savedPatterns.value = [...savedPatterns.value, savedPattern].sort(
+        (left, right) => left.sortOrder - right.sortOrder
+      );
+      statusMessage.value = 'Saved new solver pattern.';
+      appendLog('Pattern', `Saved new backend pattern ${savedPattern.id}.`);
+    }
+
+    cancelPatternEditing();
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Failed to save solver pattern.';
+    appendLog('Pattern', 'Saving solver pattern failed.', errorMessage.value);
+  }
 }
 
 async function runBackendAction(
@@ -1519,17 +1656,15 @@ function createEmptyPatternDraft(): PatternEditorDraft {
 }
 
 function buildInitialStepDifficulties(
-  persistedDifficulties: Record<string, QueensAdminSolverDifficulty> | undefined
-): Record<BuiltInSolverStepId, QueensAdminSolverDifficulty> {
-  return BUILT_IN_SOLVER_STEPS.reduce<Record<BuiltInSolverStepId, QueensAdminSolverDifficulty>>(
+  definitions: readonly BuiltInSolverStepDefinition[],
+  persistedDifficulties: Record<string, QueensAdminDifficulty> | undefined
+): Record<BuiltInSolverStepId, QueensAdminDifficulty> {
+  return definitions.reduce<Record<BuiltInSolverStepId, QueensAdminDifficulty>>(
     (acc, step) => {
-      acc[step.id] = normalizeSolverDifficulty(
-        persistedDifficulties?.[step.id],
-        step.defaultDifficulty
-      );
+      acc[step.id] = normalizeSolverDifficulty(persistedDifficulties?.[step.id], step.difficulty);
       return acc;
     },
-    {} as Record<BuiltInSolverStepId, QueensAdminSolverDifficulty>
+    {} as Record<BuiltInSolverStepId, QueensAdminDifficulty>
   );
 }
 
@@ -1540,16 +1675,25 @@ function updateBuiltInStepDifficulty(stepId: BuiltInSolverStepId, value: unknown
   };
 }
 
-function updatePatternDifficulty(patternId: string, value: unknown): void {
-  savedPatterns.value = savedPatterns.value.map((pattern) =>
-    pattern.id === patternId
-      ? {
-          ...pattern,
-          difficulty: normalizeSolverDifficulty(value, pattern.difficulty),
-        }
-      : pattern
-  );
-  persistPatterns(savedPatterns.value);
+async function updatePatternDifficulty(patternId: string, value: unknown): Promise<void> {
+  const existingPattern = savedPatterns.value.find((pattern) => pattern.id === patternId);
+  if (!existingPattern) return;
+
+  const nextPattern = {
+    ...existingPattern,
+    difficulty: normalizeSolverDifficulty(value, existingPattern.difficulty),
+  };
+
+  try {
+    const savedPattern = await queensAdminApi.updateSolverPattern(nextPattern);
+    savedPatterns.value = savedPatterns.value
+      .map((pattern) => (pattern.id === patternId ? savedPattern : pattern))
+      .sort((left, right) => left.sortOrder - right.sortOrder);
+  } catch (error) {
+    errorMessage.value =
+      error instanceof Error ? error.message : 'Failed to update solver pattern difficulty.';
+    appendLog('Pattern', `Updating difficulty failed for ${patternId}.`, errorMessage.value);
+  }
 }
 
 async function runAllThroughDifficulty(): Promise<void> {
@@ -1598,6 +1742,7 @@ async function runAllThroughDifficulty(): Promise<void> {
       }
 
       for (const pattern of savedPatterns.value) {
+        if (!pattern.enabled) continue;
         if (!isDifficultyAtOrBelow(pattern.difficulty, runAllDifficultyThreshold.value)) continue;
 
         const result = await queensAdminApi.runSolverPattern(currentBoard, pattern);
@@ -1662,56 +1807,6 @@ function persistSolverSession(boardState: QueensAdminBoardState): void {
     selection: solverSelection.value,
     currentBoard: boardState,
   });
-}
-
-function loadInitialPatterns(): QueensAdminSolverPattern[] {
-  if (typeof window === 'undefined') {
-    return seedPatterns();
-  }
-
-  try {
-    const raw = window.localStorage.getItem(SOLVER_PATTERN_STORAGE_KEY);
-    if (!raw) {
-      const seeds = seedPatterns();
-      persistPatterns(seeds);
-      return seeds;
-    }
-
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) {
-      const seeds = seedPatterns();
-      persistPatterns(seeds);
-      return seeds;
-    }
-
-    const normalized = parsed.map((pattern, index) =>
-      normalizeSolverPattern(pattern, `solver-pattern-${index + 1}`)
-    );
-    if (normalized.length > 0) {
-      return normalized;
-    }
-  } catch {
-    // fall through to seeds
-  }
-
-  const seeds = seedPatterns();
-  persistPatterns(seeds);
-  return seeds;
-}
-
-function seedPatterns(): QueensAdminSolverPattern[] {
-  return PATTERN_CARD_DEFINITIONS.map((pattern) => ({
-    id: pattern.id,
-    size: pattern.size,
-    cells: pattern.cells.map((cell) => ({ row: cell.row, col: cell.col, activeSquare: true })),
-    outputFlags: pattern.outputFlags.map((flag) => ({ row: flag.row, col: flag.col })),
-    difficulty: 'medium',
-  }));
-}
-
-function persistPatterns(patterns: QueensAdminSolverPattern[]): void {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(SOLVER_PATTERN_STORAGE_KEY, JSON.stringify(patterns));
 }
 
 function appendLog(title: string, detail: string, error?: string | null): void {
@@ -1809,6 +1904,7 @@ function normalizeSolverPattern(input: unknown, fallbackId: string): QueensAdmin
   const value = input as Partial<QueensAdminSolverPattern>;
   const size = Math.min(9, Math.max(3, Number(value.size ?? 5)));
   const id = typeof value.id === 'string' && value.id.trim().length > 0 ? value.id : fallbackId;
+  const name = typeof value.name === 'string' && value.name.trim().length > 0 ? value.name : id;
 
   const cells = Array.isArray(value.cells)
     ? value.cells
@@ -1829,10 +1925,16 @@ function normalizeSolverPattern(input: unknown, fallbackId: string): QueensAdmin
 
   return {
     id,
+    name,
     size,
     cells,
     outputFlags,
     difficulty: normalizeSolverDifficulty(value.difficulty, 'medium'),
+    enabled: value.enabled ?? true,
+    sortOrder:
+      typeof value.sortOrder === 'number' && Number.isFinite(value.sortOrder) ? value.sortOrder : 0,
+    createdAt: typeof value.createdAt === 'string' ? value.createdAt : '',
+    updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : '',
   };
 }
 
@@ -1842,6 +1944,14 @@ function nextPatternId(existingPatterns: QueensAdminSolverPattern[]): string {
     nextId += 1;
   }
   return `solver-pattern-${nextId}`;
+}
+
+function nextPatternSortOrder(existingPatterns: QueensAdminSolverPattern[]): number {
+  const maxSortOrder = existingPatterns.reduce(
+    (currentMax, pattern) => Math.max(currentMax, pattern.sortOrder),
+    90
+  );
+  return maxSortOrder + 10;
 }
 
 function handleUndo(): void {

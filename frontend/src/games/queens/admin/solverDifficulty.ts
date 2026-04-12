@@ -1,41 +1,40 @@
-export type QueensAdminSolverDifficulty = 'easy' | 'medium' | 'hard';
+import type { QueensAdminDifficulty } from './types';
 
-export const SOLVER_DIFFICULTY_ORDER: QueensAdminSolverDifficulty[] = ['easy', 'medium', 'hard'];
+export const SOLVER_DIFFICULTY_ORDER: QueensAdminDifficulty[] = ['easy', 'medium', 'hard'];
 
 export const SOLVER_DIFFICULTY_OPTIONS: Array<{
   label: string;
-  value: QueensAdminSolverDifficulty;
+  value: QueensAdminDifficulty;
 }> = [
   { label: 'Easy', value: 'easy' },
   { label: 'Medium', value: 'medium' },
   { label: 'Hard', value: 'hard' },
 ];
 
-export function isSolverDifficulty(value: unknown): value is QueensAdminSolverDifficulty {
+export function isSolverDifficulty(value: unknown): value is QueensAdminDifficulty {
   return (
-    typeof value === 'string' &&
-    SOLVER_DIFFICULTY_ORDER.includes(value as QueensAdminSolverDifficulty)
+    typeof value === 'string' && SOLVER_DIFFICULTY_ORDER.includes(value as QueensAdminDifficulty)
   );
 }
 
 export function normalizeSolverDifficulty(
   value: unknown,
-  fallback: QueensAdminSolverDifficulty = 'medium'
-): QueensAdminSolverDifficulty {
+  fallback: QueensAdminDifficulty = 'medium'
+): QueensAdminDifficulty {
   return isSolverDifficulty(value) ? value : fallback;
 }
 
-export function formatSolverDifficulty(value: QueensAdminSolverDifficulty): string {
+export function formatSolverDifficulty(value: QueensAdminDifficulty): string {
   return SOLVER_DIFFICULTY_OPTIONS.find((option) => option.value === value)?.label ?? 'Medium';
 }
 
-export function solverDifficultyRank(value: QueensAdminSolverDifficulty): number {
+export function solverDifficultyRank(value: QueensAdminDifficulty): number {
   return SOLVER_DIFFICULTY_ORDER.indexOf(value);
 }
 
 export function isDifficultyAtOrBelow(
-  difficulty: QueensAdminSolverDifficulty,
-  threshold: QueensAdminSolverDifficulty
+  difficulty: QueensAdminDifficulty,
+  threshold: QueensAdminDifficulty
 ): boolean {
   return solverDifficultyRank(difficulty) <= solverDifficultyRank(threshold);
 }

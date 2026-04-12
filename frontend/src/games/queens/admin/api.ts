@@ -1,14 +1,18 @@
 import type {
   QueensAdminBatchStatus,
   QueensAdminBoardState,
+  QueensAdminBuiltInSolverStep,
   QueensAdminCatalogPuzzleSelection,
   QueensAdminChangedCell,
+  QueensAdminDifficulty,
+  QueensAdminPuzzleDifficulty,
   QueensAdminGenerationProgress,
   QueensAdminPuzzleCatalogGroup,
   QueensAdminQueenCountMode,
   QueensAdminOperationResult,
   QueensAdminPuzzleCatalogStats,
   QueensAdminGenerationStrategy,
+  QueensAdminSolverConfig,
   QueensAdminSolverPattern,
   QueensAdminSystemLoad,
   QueensAdminValidationSummary,
@@ -129,7 +133,7 @@ interface BatchGenerationRunDto {
   error: string | null;
   startedAt: string | null;
   finishedAt: string | null;
-  persistenceState: 'SAVED' | 'DUPLICATE' | 'SKIPPED' | 'ERROR' | null;
+  persistenceState: 'SAVED' | 'DUPLICATE' | 'SKIPPED' | 'ERROR' | 'UNSOLVABLE' | null;
   persistenceMessage: string | null;
   savedPuzzleId: string | null;
   encodedPuzzleLayout: string | null;
@@ -194,15 +198,42 @@ interface CatalogPuzzleSelectionDto {
   orthogonalMinDistance: number;
   targetQueenCount: number;
   minimumGroupSize: number;
-  difficulty?: 'easy' | 'medium' | 'hard';
+  difficulty?: QueensAdminPuzzleDifficulty;
   boardState: BoardStateDto;
 }
 
 interface SolverPatternDto {
-  id?: string;
+  id: string;
+  name: string;
   size: number;
   cells: Array<{ row: number; col: number; activeSquare?: boolean }>;
   outputFlags: Array<{ row: number; col: number }>;
+  difficultyTier: QueensAdminDifficulty;
+  enabled: boolean;
+  sortOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface SolverPatternExecutionDto {
+  id: string;
+  size: number;
+  cells: Array<{ row: number; col: number; activeSquare?: boolean }>;
+  outputFlags: Array<{ row: number; col: number }>;
+}
+
+interface BuiltInSolverStepDto {
+  id: string;
+  label: string;
+  description: string;
+  difficultyTier: QueensAdminDifficulty;
+  enabled: boolean;
+  sortOrder: number;
+}
+
+interface SolverConfigDto {
+  builtInSteps: BuiltInSolverStepDto[];
+  patterns: SolverPatternDto[];
 }
 
 function toLocalBoardState(boardState: BoardStateDto | null): QueensAdminBoardState | null {
@@ -373,6 +404,39 @@ function toCatalogPuzzleSelection(
   };
 }
 
+function toBuiltInSolverStep(data: BuiltInSolverStepDto): QueensAdminBuiltInSolverStep {
+  return {
+    id: data.id,
+    label: data.label,
+    description: data.description,
+    difficulty: data.difficultyTier,
+    enabled: data.enabled,
+    sortOrder: data.sortOrder,
+  };
+}
+
+function toSolverPattern(data: SolverPatternDto): QueensAdminSolverPattern {
+  return {
+    id: data.id,
+    name: data.name,
+    size: data.size,
+    cells: data.cells,
+    outputFlags: data.outputFlags,
+    difficulty: data.difficultyTier,
+    enabled: data.enabled,
+    sortOrder: data.sortOrder,
+    createdAt: data.createdAt ?? '',
+    updatedAt: data.updatedAt ?? '',
+  };
+}
+
+function toSolverConfig(data: SolverConfigDto): QueensAdminSolverConfig {
+  return {
+    builtInSteps: data.builtInSteps.map(toBuiltInSolverStep),
+    patterns: data.patterns.map(toSolverPattern),
+  };
+}
+
 async function postOperation(
   path: string,
   body: Record<string, unknown>,
@@ -387,11 +451,92 @@ async function postOperation(
     signal,
   });
 
+  if (!response.ok) {
+    let errorMessage = `Request failed (${response.status})`;
+
+    try {
+      const errorBody = (await response.json()) as
+        | { message?: string; error?: string; errors?: string[]; detail?: string }
+        | undefined;
+      errorMessage =
+        errorBody?.message ??
+        errorBody?.error ??
+        errorBody?.detail ??
+        errorBody?.errors?.[0] ??
+        errorMessage;
+    } catch {
+      try {
+        const errorText = await response.text();
+        if (errorText.trim().length > 0) {
+          errorMessage = errorText;
+        }
+      } catch {
+        // Ignore fallback parsing failures and keep the status-based message.
+      }
+    }
+
+    throw new Error(errorMessage);
+  }
+
   const data = (await response.json()) as OperationResultDto;
   return toOperationResult(data);
 }
 
 export const queensAdminApi = {
+  async getSolverConfig(): Promise<QueensAdminSolverConfig> {
+    const response = await fetch('/api/queens/admin/solver/config');
+    if (!response.ok) {
+      throw new Error('Failed to load solver configuration');
+    }
+    return toSolverConfig((await response.json()) as SolverConfigDto);
+  },
+
+  async createSolverPattern(pattern: QueensAdminSolverPattern): Promise<QueensAdminSolverPattern> {
+    const response = await fetch('/api/queens/admin/solver/patterns', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: pattern.id,
+        name: pattern.name,
+        size: pattern.size,
+        cells: pattern.cells,
+        outputFlags: pattern.outputFlags,
+        difficultyTier: pattern.difficulty,
+        enabled: pattern.enabled,
+        sortOrder: pattern.sortOrder,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to create solver pattern');
+    }
+    return toSolverPattern((await response.json()) as SolverPatternDto);
+  },
+
+  async updateSolverPattern(pattern: QueensAdminSolverPattern): Promise<QueensAdminSolverPattern> {
+    const response = await fetch(`/api/queens/admin/solver/patterns/${pattern.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: pattern.id,
+        name: pattern.name,
+        size: pattern.size,
+        cells: pattern.cells,
+        outputFlags: pattern.outputFlags,
+        difficultyTier: pattern.difficulty,
+        enabled: pattern.enabled,
+        sortOrder: pattern.sortOrder,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to update solver pattern');
+    }
+    return toSolverPattern((await response.json()) as SolverPatternDto);
+  },
+
   async getPuzzleCatalogStats(): Promise<QueensAdminPuzzleCatalogStats> {
     const response = await fetch('/api/queens/admin/generation/catalog-stats');
     return toPuzzleCatalogStats((await response.json()) as PuzzleCatalogStatsDto);
@@ -476,7 +621,7 @@ export const queensAdminApi = {
           size: pattern.size,
           cells: pattern.cells,
           outputFlags: pattern.outputFlags,
-        } satisfies SolverPatternDto,
+        } satisfies SolverPatternExecutionDto,
       },
       signal
     );
