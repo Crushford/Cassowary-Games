@@ -56,6 +56,9 @@ class PuzzleCatalogService(
     fun countBySizeAndDistance(): Map<Pair<Int, Int>, Int> =
         puzzleRepository.countBySizeAndDistance()
 
+    fun countByGenerationBucket(): List<PuzzleRepository.PuzzleGenerationBucketCount> =
+        puzzleRepository.countByGenerationBucket()
+
     fun countByRulesetGroup(): List<PuzzleRepository.PuzzleCatalogGroupCount> =
         puzzleRepository.countByRulesetGroup()
 

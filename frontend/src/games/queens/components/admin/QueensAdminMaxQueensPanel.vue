@@ -169,7 +169,9 @@ import InputText from 'primevue/inputtext';
 import { queensAdminApi } from '../../admin/api';
 import {
   loadQueensAdminMaxQueensInputs,
+  loadQueensAdminMaxQueensResults,
   saveQueensAdminMaxQueensInputs,
+  saveQueensAdminMaxQueensResults,
 } from '../../admin/inputPersistence';
 import { QUEENS_MAX_QUEEN_COUNTS } from '../../admin/maxQueenCounts';
 import AdminPanel from './AdminPanel.vue';
@@ -186,10 +188,11 @@ type MaxQueenRow = {
 };
 
 const persistedInputs = loadQueensAdminMaxQueensInputs();
+const persistedResults = loadQueensAdminMaxQueensResults();
 const sizesInput = ref(persistedInputs?.sizesInput ?? '4, 5, 6, 7, 8, 9, 10, 11, 12');
 const distancesInput = ref(persistedInputs?.distancesInput ?? '3, 4, 5, 6, 7, 8, 9, 10, 11, 12');
 const maxConcurrentJobs = ref(persistedInputs?.maxConcurrentJobs ?? 20);
-const rows = ref<MaxQueenRow[]>(seedRowsFromConstants());
+const rows = ref<MaxQueenRow[]>(mergeRows(seedRowsFromConstants(), persistedResults ?? []));
 const isRunning = ref(false);
 const statusMessage = ref('');
 let abortController: AbortController | null = null;
@@ -237,6 +240,18 @@ watch(
   { immediate: true }
 );
 
+watch(
+  rows,
+  () => {
+    saveQueensAdminMaxQueensResults(
+      rows.value
+        .filter((row) => row.state !== 'QUEUED' && row.state !== 'RUNNING')
+        .map((row) => ({ ...row }))
+    );
+  },
+  { deep: true, immediate: true }
+);
+
 function parseIntegerList(raw: string, bounds: { min: number; max: number }): number[] {
   const values = raw
     .split(',')
@@ -277,6 +292,28 @@ function seedRowsFromConstants(): MaxQueenRow[] {
       }
       return left.size - right.size;
     });
+}
+
+function mergeRows(baseRows: MaxQueenRow[], persistedRows: MaxQueenRow[]): MaxQueenRow[] {
+  const merged = new Map<string, MaxQueenRow>();
+  for (const row of baseRows) {
+    merged.set(`${row.size}-${row.orthogonalMinDistance}`, row);
+  }
+  for (const row of persistedRows) {
+    const key = `${row.size}-${row.orthogonalMinDistance}`;
+    const existing = merged.get(key);
+    if (existing?.state === 'COMPLETED' && row.state !== 'COMPLETED') {
+      continue;
+    }
+    merged.set(key, row);
+  }
+
+  return [...merged.values()].sort((left, right) => {
+    if (left.orthogonalMinDistance !== right.orthogonalMinDistance) {
+      return right.orthogonalMinDistance - left.orthogonalMinDistance;
+    }
+    return left.size - right.size;
+  });
 }
 
 async function runMatrix(): Promise<void> {

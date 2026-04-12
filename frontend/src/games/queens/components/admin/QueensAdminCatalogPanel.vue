@@ -14,7 +14,7 @@
         />
       </template>
 
-      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-7">
         <label class="space-y-2 text-sm text-semantic-neutral-300">
           <span class="block">Search</span>
           <InputText v-model="searchText" class="w-full" placeholder="Search values" />
@@ -73,6 +73,17 @@
             >
               {{ minimumGroupSize }}
             </option>
+          </select>
+        </label>
+        <label class="space-y-2 text-sm text-semantic-neutral-300">
+          <span class="block">Ruleset Status</span>
+          <select
+            v-model="selectedRulesetStatus"
+            class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm text-white"
+          >
+            <option value="">All rulesets</option>
+            <option value="active">Active frontier rulesets</option>
+            <option value="blocked">Blocked redundant rulesets</option>
           </select>
         </label>
         <label class="space-y-2 text-sm text-semantic-neutral-300">
@@ -222,6 +233,7 @@ import AdminMessage from './AdminMessage.vue';
 import AdminPanel from './AdminPanel.vue';
 import AdminStat from './AdminStat.vue';
 import { queensAdminApi } from '../../admin/api';
+import { isRedundantPrecomputedDistance } from '../../admin/maxQueenCounts';
 import type {
   QueensAdminPuzzleDifficulty,
   QueensAdminPuzzleCatalogGroup,
@@ -232,6 +244,7 @@ import { buildQueensSelectionRoute } from '../../utils/puzzleSelectionRoute';
 type PuzzleCatalogRow = QueensAdminPuzzleCatalogGroup & {
   groupKey: string;
   difficultySortKey: number;
+  rulesetBlocked: boolean;
   searchText: string;
 };
 
@@ -244,6 +257,7 @@ const selectedSize = ref('');
 const selectedDistance = ref('');
 const selectedQueenCount = ref('');
 const selectedMinimumGroupSize = ref('');
+const selectedRulesetStatus = ref('');
 const selectedDifficulty = ref('');
 const deleteDialogVisible = ref(false);
 const groupPendingDelete = ref<PuzzleCatalogRow | null>(null);
@@ -252,27 +266,32 @@ const openingGroupKey = ref<string | null>(null);
 const router = useRouter();
 
 const groups = computed<PuzzleCatalogRow[]>(() =>
-  (stats.value?.groups ?? []).map((group) => ({
-    ...group,
-    groupKey: [
-      group.size,
-      group.orthogonalMinDistance,
-      group.targetQueenCount,
-      group.minimumGroupSize,
-      group.difficulty ?? 'unknown',
-    ].join(':'),
-    difficultySortKey: difficultySortKey(group.difficulty),
-    searchText: [
-      `${group.size}x${group.size}`,
-      group.orthogonalMinDistance,
-      group.targetQueenCount,
-      group.minimumGroupSize,
-      formatDifficulty(group.difficulty),
-      group.count,
-    ]
-      .join(' ')
-      .toLowerCase(),
-  }))
+  (stats.value?.groups ?? []).map((group) => {
+    const rulesetBlocked = isRedundantPrecomputedDistance(group.size, group.orthogonalMinDistance);
+    return {
+      ...group,
+      groupKey: [
+        group.size,
+        group.orthogonalMinDistance,
+        group.targetQueenCount,
+        group.minimumGroupSize,
+        group.difficulty ?? 'unknown',
+      ].join(':'),
+      difficultySortKey: difficultySortKey(group.difficulty),
+      rulesetBlocked,
+      searchText: [
+        `${group.size}x${group.size}`,
+        group.orthogonalMinDistance,
+        group.targetQueenCount,
+        group.minimumGroupSize,
+        formatDifficulty(group.difficulty),
+        rulesetBlocked ? 'blocked redundant' : 'active frontier',
+        group.count,
+      ]
+        .join(' ')
+        .toLowerCase(),
+    };
+  })
 );
 
 const sizeOptions = computed(() => uniqueNumbers(groups.value.map((group) => group.size)));
@@ -309,6 +328,8 @@ const filteredGroups = computed(() => {
     ) {
       return false;
     }
+    if (selectedRulesetStatus.value === 'blocked' && !group.rulesetBlocked) return false;
+    if (selectedRulesetStatus.value === 'active' && group.rulesetBlocked) return false;
     if (selectedDifficulty.value && group.difficulty !== selectedDifficulty.value) {
       return false;
     }

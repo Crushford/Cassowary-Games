@@ -14,6 +14,8 @@ import com.queens.admin.api.dto.GenerationJobStatusDto
 import com.queens.admin.api.dto.OperationResultDto
 import com.queens.admin.api.dto.PuzzleCatalogGroupDto
 import com.queens.admin.api.dto.PuzzleCatalogStatsDto
+import com.queens.admin.api.dto.ResolveMaxQueensRequestDto
+import com.queens.admin.api.dto.ResolveMaxQueensResultDto
 import com.queens.admin.api.dto.SystemLoadDto
 import com.queens.admin.application.BackendLoadService
 import com.queens.admin.application.BatchGenerationService
@@ -179,13 +181,29 @@ class GenerationController(
         )
     }
 
+    @PostMapping("/resolve-max-queens")
+    fun resolveMaxQueens(@RequestBody request: ResolveMaxQueensRequestDto): ResolveMaxQueensResultDto {
+        val result = generationWorkflowService.resolveMaxQueenCount(
+            size = request.size,
+            orthogonalMinDistance = request.orthogonalMinDistance ?: request.size,
+        )
+        return ResolveMaxQueensResultDto(
+            size = result.size,
+            orthogonalMinDistance = result.orthogonalMinDistance,
+            maxQueenCount = result.maxQueenCount,
+            elapsedMs = result.elapsedMs,
+        )
+    }
+
     @PostMapping("/batches")
     fun startBatchGeneration(@RequestBody request: BatchGenerationRequestDto): BatchGenerationStartedDto {
         return batchGenerationMapper.toStartedDto(
             batchGenerationService.startBatch(
                 sizes = request.sizes,
+                orthogonalMinDistances = request.orthogonalMinDistances,
                 strategies = request.strategies,
                 runsPerCombination = request.runsPerCombination,
+                runMode = request.runMode,
                 queenCountMode = request.queenCountMode,
                 targetQueenCount = request.targetQueenCount,
                 orthogonalMinDistance = request.orthogonalMinDistance,

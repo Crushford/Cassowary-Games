@@ -13,10 +13,34 @@
           <label class="block text-sm text-semantic-neutral-300" for="batch-sizes">
             Puzzle sizes
           </label>
-          <InputText id="batch-sizes" v-model="sizesInput" class="w-full" placeholder="4, 6, 8" />
+          <MultiSelect
+            id="batch-sizes"
+            v-model="selectedSizes"
+            :options="sizeOptions"
+            display="chip"
+            class="w-full"
+            placeholder="Select one or more sizes"
+          />
           <p class="text-xs leading-5 text-semantic-neutral-400">
-            Enter one or more sizes separated by commas. Each size will be run against every
-            selected strategy.
+            Choose the board sizes to include in this batch.
+          </p>
+        </div>
+
+        <div class="mt-4 space-y-4">
+          <label class="block text-sm text-semantic-neutral-300" for="batch-distances">
+            Orthogonal min distances
+          </label>
+          <MultiSelect
+            id="batch-distances"
+            v-model="selectedDistances"
+            :options="distanceOptions"
+            display="chip"
+            class="w-full"
+            placeholder="Select one or more min distances"
+          />
+          <p class="text-xs leading-5 text-semantic-neutral-400">
+            Only supported size and distance pairs from the precomputed max-queen table will be
+            queued.
           </p>
         </div>
 
@@ -49,6 +73,23 @@
           </div>
           <div class="space-y-2">
             <label class="block text-sm text-semantic-neutral-300" for="batch-queen-count-mode">
+              Run mode
+            </label>
+            <Select
+              id="batch-run-mode"
+              v-model="runMode"
+              :options="runModeOptions"
+              option-label="label"
+              option-value="value"
+              class="w-full"
+            />
+            <p class="text-xs leading-5 text-semantic-neutral-400">
+              Cartesian runs every requested combination evenly. Lowest puzzle count prioritizes the
+              catalog buckets with the fewest saved puzzles first.
+            </p>
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm text-semantic-neutral-300" for="batch-queen-count-mode">
               Queen count mode
             </label>
             <Select
@@ -75,19 +116,6 @@
             />
           </div>
           <div class="space-y-2">
-            <label class="block text-sm text-semantic-neutral-300" for="batch-orthogonal-distance">
-              Orthogonal min distance
-            </label>
-            <InputNumber
-              id="batch-orthogonal-distance"
-              v-model="orthogonalMinDistance"
-              :min="1"
-              :max="400"
-              input-class="w-full"
-              fluid
-            />
-          </div>
-          <div class="space-y-2">
             <label class="block text-sm text-semantic-neutral-300" for="batch-min-group">
               Minimum region size
             </label>
@@ -102,8 +130,11 @@
           </div>
         </div>
         <p class="mt-3 text-xs leading-5 text-semantic-neutral-400">
-          These values are applied to every size in the batch. If an exported puzzle does not carry
-          an orthogonal distance, the frontend should assume it matches the board size.
+          These values are applied to every supported size and min-distance pair in the batch.
+          Unsupported pairs are skipped automatically.
+        </p>
+        <p class="mt-2 text-xs leading-5 text-semantic-info-100">
+          Supported combinations queued: {{ supportedBatchCombinationCount }}
         </p>
 
         <div class="mt-4 space-y-2">
@@ -151,9 +182,10 @@
             severity="success"
             :disabled="
               store.batchLoading ||
-              parsedSizes.length === 0 ||
+              selectedSizes.length === 0 ||
+              selectedDistances.length === 0 ||
               selectedStrategies.length === 0 ||
-              !maxBatchConfigValid
+              supportedBatchCombinationCount === 0
             "
             @click="startBatch"
           />
@@ -171,16 +203,16 @@
           />
         </div>
 
-        <AdminMessage v-if="parsedSizes.length === 0" severity="warn" class="mt-4">
-          Enter at least one valid size between 4 and 20.
-        </AdminMessage>
         <AdminMessage
-          v-else-if="queenCountMode === 'max' && !maxBatchConfigValid"
+          v-if="selectedSizes.length === 0 || selectedDistances.length === 0"
           severity="warn"
           class="mt-4"
         >
-          Max mode is only available for precomputed size and distance pairs. Unsupported sizes:
-          {{ unsupportedBatchSizesLabel }}.
+          Select at least one size and one min distance.
+        </AdminMessage>
+        <AdminMessage v-else-if="supportedBatchCombinationCount === 0" severity="warn" class="mt-4">
+          None of the selected size and distance pairs are supported by the precomputed max-queen
+          table.
         </AdminMessage>
       </AdminPanel>
 
@@ -693,7 +725,7 @@ import {
   saveQueensAdminBatchInputs,
 } from '../../admin/inputPersistence';
 import {
-  hasPrecomputedMaxQueenCount,
+  hasEffectiveMaxQueenCount,
   supportedPrecomputedDistances,
 } from '../../admin/maxQueenCounts';
 import AdminMessage from './AdminMessage.vue';
@@ -701,6 +733,7 @@ import AdminPanel from './AdminPanel.vue';
 import { useQueensAdminStore } from '../../stores/queensAdminStore';
 import { QUEENS_PUZZLE_SHARE_BASE_URL } from '../../utils/urlPuzzleEncoding';
 import type {
+  QueensAdminBatchRunMode,
   QueensAdminBatchStatus,
   QueensAdminBatchRun,
   QueensAdminGenerationStrategy,
@@ -710,14 +743,15 @@ import type {
 
 const store = useQueensAdminStore();
 const persistedBatchInputs = loadQueensAdminBatchInputs();
-const sizesInput = ref(persistedBatchInputs?.sizesInput ?? '6, 8');
+const selectedSizes = ref<number[]>(persistedBatchInputs?.selectedSizes ?? [6, 7, 8]);
+const selectedDistances = ref<number[]>(
+  persistedBatchInputs?.selectedDistances ?? [3, 4, 5, 6, 7, 8]
+);
 const runsPerCombination = ref(persistedBatchInputs?.runsPerCombination ?? 5);
 const maxConcurrentJobs = ref(persistedBatchInputs?.maxConcurrentJobs ?? 2);
+const runMode = ref<QueensAdminBatchRunMode>(persistedBatchInputs?.runMode ?? 'cartesian');
 const queenCountMode = ref(persistedBatchInputs?.queenCountMode ?? store.queenCountMode);
 const targetQueenCount = ref(persistedBatchInputs?.targetQueenCount ?? store.targetQueenCount);
-const orthogonalMinDistance = ref(
-  persistedBatchInputs?.orthogonalMinDistance ?? store.orthogonalMinDistance
-);
 const minimumGroupSize = ref(persistedBatchInputs?.minimumGroupSize ?? store.minimumGroupSize);
 const saveSuccessfulPuzzles = ref(persistedBatchInputs?.saveSuccessfulPuzzles ?? true);
 const selectedStrategies = ref<QueensAdminGenerationStrategy[]>(
@@ -733,6 +767,10 @@ const copiedRunId = ref<string | null>(null);
 const queenCountModeOptions: Array<{ label: string; value: 'exact' | 'max' }> = [
   { label: 'Exact target', value: 'exact' },
   { label: 'Maximum that fits', value: 'max' },
+];
+const runModeOptions: Array<{ label: string; value: QueensAdminBatchRunMode }> = [
+  { label: 'Even Cartesian Mix', value: 'cartesian' },
+  { label: 'Lowest Puzzle Count First', value: 'lowest-count' },
 ];
 
 const strategyOptions: Array<{
@@ -758,39 +796,18 @@ const strategyOptions: Array<{
   },
 ];
 
-const parsedSizes = computed(() =>
-  Array.from(
-    new Set(
-      sizesInput.value
-        .split(',')
-        .map((chunk) => Number.parseInt(chunk.trim(), 10))
-        .filter((size) => Number.isInteger(size) && size >= 4 && size <= 20)
-    )
-  ).sort((left, right) => left - right)
-);
+const sizeOptions = Array.from({ length: 17 }, (_, index) => index + 4);
+const distanceOptions = Array.from({ length: 18 }, (_, index) => index + 3);
 
-const unsupportedBatchSizes = computed(() =>
-  parsedSizes.value.filter(
-    (size) =>
-      queenCountMode.value === 'max' &&
-      !hasPrecomputedMaxQueenCount(size, orthogonalMinDistance.value)
+const supportedBatchPairs = computed(() =>
+  selectedSizes.value.flatMap((size) =>
+    selectedDistances.value
+      .filter((distance) => hasEffectiveMaxQueenCount(size, distance))
+      .map((distance) => ({ size, distance }))
   )
 );
 
-const unsupportedBatchSizesLabel = computed(() =>
-  unsupportedBatchSizes.value
-    .map((size) => {
-      const supportedDistances = supportedPrecomputedDistances(size);
-      return supportedDistances.length > 0
-        ? `${size}x${size} (supported d: ${supportedDistances.join(', ')})`
-        : `${size}x${size} (no max presets yet)`;
-    })
-    .join('; ')
-);
-
-const maxBatchConfigValid = computed(
-  () => queenCountMode.value !== 'max' || unsupportedBatchSizes.value.length === 0
-);
+const supportedBatchCombinationCount = computed(() => supportedBatchPairs.value.length);
 
 const batchStateBadgeClass = computed(() => {
   switch (store.batchStatus?.state) {
@@ -893,19 +910,22 @@ const sortedRuns = computed(() =>
 
 async function startBatch(): Promise<void> {
   if (
-    parsedSizes.value.length === 0 ||
+    selectedSizes.value.length === 0 ||
+    selectedDistances.value.length === 0 ||
     selectedStrategies.value.length === 0 ||
-    !maxBatchConfigValid.value
+    supportedBatchCombinationCount.value === 0
   )
     return;
 
   await store.startBatchGeneration({
-    sizes: parsedSizes.value,
+    sizes: selectedSizes.value,
+    orthogonalMinDistances: selectedDistances.value,
     strategies: selectedStrategies.value,
     runsPerCombination: Math.max(1, runsPerCombination.value),
+    runMode: runMode.value,
     queenCountMode: queenCountMode.value,
     targetQueenCount: queenCountMode.value === 'max' ? null : Math.max(1, targetQueenCount.value),
-    orthogonalMinDistance: Math.max(1, orthogonalMinDistance.value),
+    orthogonalMinDistance: null,
     minimumGroupSize: Math.max(1, minimumGroupSize.value),
     maxConcurrentJobs: Math.max(1, maxConcurrentJobs.value),
     saveSuccessfulPuzzles: saveSuccessfulPuzzles.value,
@@ -1073,24 +1093,27 @@ watch(
 
 watch(
   [
-    sizesInput,
+    selectedSizes,
+    selectedDistances,
     runsPerCombination,
     maxConcurrentJobs,
+    runMode,
     queenCountMode,
     targetQueenCount,
-    orthogonalMinDistance,
     minimumGroupSize,
     saveSuccessfulPuzzles,
     selectedStrategies,
   ],
   () => {
     saveQueensAdminBatchInputs({
-      sizesInput: sizesInput.value,
+      selectedSizes: selectedSizes.value,
+      selectedDistances: selectedDistances.value,
       runsPerCombination: runsPerCombination.value,
       maxConcurrentJobs: maxConcurrentJobs.value,
+      runMode: runMode.value,
       queenCountMode: queenCountMode.value,
       targetQueenCount: targetQueenCount.value,
-      orthogonalMinDistance: orthogonalMinDistance.value,
+      orthogonalMinDistance: store.orthogonalMinDistance,
       minimumGroupSize: minimumGroupSize.value,
       saveSuccessfulPuzzles: saveSuccessfulPuzzles.value,
       selectedStrategies: selectedStrategies.value,

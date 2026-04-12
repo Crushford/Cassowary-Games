@@ -13,6 +13,7 @@ import com.queens.admin.domain.model.OperationResult
 import com.queens.admin.domain.model.Position
 import com.queens.admin.domain.model.QueensBoardMetadata
 import com.queens.admin.domain.model.QueensRuleset
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.CancellationException
 import kotlin.math.abs
@@ -25,6 +26,10 @@ class ValidatedPuzzleGenerationService(
     private val queensConstraintService: QueensConstraintService,
     private val deterministicPuzzleAnalysisService: DeterministicPuzzleAnalysisService,
 ) {
+    companion object {
+        private val logger = LoggerFactory.getLogger(ValidatedPuzzleGenerationService::class.java)
+    }
+
     private enum class GenerationStrategy {
         BASELINE,
         MARKER_GUIDED,
@@ -116,6 +121,15 @@ class ValidatedPuzzleGenerationService(
             "Minimum group size cannot exceed the board size because there is one group per queen."
         }
         val strategy = parseGenerationStrategy(generationStrategy)
+        logger.info(
+            "Validated generation starting size={} targetQueenCount={} orthogonalMinDistance={} minimumGroupSize={} strategy={} maxRetries={}",
+            size,
+            targetQueenCount,
+            ruleset.orthogonalMinDistance,
+            minimumGroupSize,
+            strategy.toApiValue(),
+            maxRetries,
+        )
 
         repeat(maxRetries) { attemptIndex ->
             ensureNotCancelled(isCancelled)
@@ -271,6 +285,16 @@ class ValidatedPuzzleGenerationService(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Throwable) {
+                logger.warn(
+                    "Validated generation attempt {} failed size={} targetQueenCount={} orthogonalMinDistance={} minimumGroupSize={} strategy={} reason={}",
+                    attemptNumber,
+                    size,
+                    targetQueenCount,
+                    ruleset.orthogonalMinDistance,
+                    minimumGroupSize,
+                    strategy.toApiValue(),
+                    error.message ?: "unknown error",
+                )
                 // Retry with a fresh board, matching the TS generator's retry behavior.
                 emitProgress(
                     state,
@@ -289,6 +313,16 @@ class ValidatedPuzzleGenerationService(
                 )
             }
         }
+
+        logger.warn(
+            "Validated generation exhausted {} attempts size={} targetQueenCount={} orthogonalMinDistance={} minimumGroupSize={} strategy={}",
+            maxRetries,
+            size,
+            targetQueenCount,
+            ruleset.orthogonalMinDistance,
+            minimumGroupSize,
+            strategy.toApiValue(),
+        )
 
         val emptyBoard = boardFactoryService.createEmptyBoard(
             size = size,
@@ -367,6 +401,17 @@ class ValidatedPuzzleGenerationService(
         strategy: GenerationStrategy,
         progressListener: ((GenerationProgressUpdate) -> Unit)?,
     ) {
+        if (stage == "RETRY_RESET" || stage == "COMPLETED" || attempt <= 3 || attempt % 100 == 0) {
+            logger.info(
+                "Validated generation progress attempt={} stage={} strategy={} colored={}/{} message={}",
+                attempt,
+                stage,
+                strategy.toApiValue(),
+                state.grid.cells.flatten().count { cell -> cell.groupColor != null },
+                state.grid.size * state.grid.size,
+                message,
+            )
+        }
         progressListener?.invoke(
             GenerationProgressUpdate(
                 attempt = attempt,

@@ -62,7 +62,10 @@ const router = createRouter({
       name: 'queens-admin',
       redirect: (to) => {
         const tab =
-          to.query.tab === 'batch' || to.query.tab === 'catalog' || to.query.tab === 'solver'
+          to.query.tab === 'batch' ||
+          to.query.tab === 'catalog' ||
+          to.query.tab === 'solver' ||
+          to.query.tab === 'max-queens'
             ? to.query.tab
             : 'workshop';
         return { name: `queens-admin-${tab}` };
@@ -86,6 +89,11 @@ const router = createRouter({
     {
       path: '/queens/admin/solver',
       name: 'queens-admin-solver',
+      component: QueensAdmin,
+    },
+    {
+      path: '/queens/admin/max-queens',
+      name: 'queens-admin-max-queens',
       component: QueensAdmin,
     },
     {

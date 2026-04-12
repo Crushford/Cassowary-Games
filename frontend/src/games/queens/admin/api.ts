@@ -1,4 +1,5 @@
 import type {
+  QueensAdminBatchRunMode,
   QueensAdminBatchStatus,
   QueensAdminBoardState,
   QueensAdminBuiltInSolverStep,
@@ -7,6 +8,7 @@ import type {
   QueensAdminDifficulty,
   QueensAdminPuzzleDifficulty,
   QueensAdminGenerationProgress,
+  QueensAdminMaxQueenResolution,
   QueensAdminPuzzleCatalogGroup,
   QueensAdminQueenCountMode,
   QueensAdminOperationResult,
@@ -173,6 +175,13 @@ interface SystemLoadDto {
   batchRunsQueued: number;
   runningBatchCount: number;
   sampledAt: string;
+}
+
+interface ResolveMaxQueensResultDto {
+  size: number;
+  orthogonalMinDistance: number;
+  maxQueenCount: number;
+  elapsedMs: number;
 }
 
 interface PuzzleCatalogStatsDto {
@@ -373,6 +382,15 @@ function toSystemLoad(data: SystemLoadDto): QueensAdminSystemLoad {
     batchRunsQueued: data.batchRunsQueued,
     runningBatchCount: data.runningBatchCount,
     sampledAt: data.sampledAt,
+  };
+}
+
+function toMaxQueenResolution(data: ResolveMaxQueensResultDto): QueensAdminMaxQueenResolution {
+  return {
+    size: data.size,
+    orthogonalMinDistance: data.orthogonalMinDistance,
+    maxQueenCount: data.maxQueenCount,
+    elapsedMs: data.elapsedMs,
   };
 }
 
@@ -653,13 +671,34 @@ export const queensAdminApi = {
     return toSystemLoad(data);
   },
 
+  async resolveMaxQueenCount(
+    request: { size: number; orthogonalMinDistance?: number },
+    signal?: AbortSignal
+  ): Promise<QueensAdminMaxQueenResolution> {
+    const response = await fetch('/api/queens/admin/generation/resolve-max-queens', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+      signal,
+    });
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+    const data = (await response.json()) as ResolveMaxQueensResultDto;
+    return toMaxQueenResolution(data);
+  },
+
   async startBatchGeneration(request: {
     sizes: number[];
+    orthogonalMinDistances: number[];
     strategies: QueensAdminGenerationStrategy[];
     runsPerCombination: number;
+    runMode: QueensAdminBatchRunMode;
     queenCountMode: QueensAdminQueenCountMode;
     targetQueenCount?: number | null;
-    orthogonalMinDistance: number;
+    orthogonalMinDistance?: number | null;
     minimumGroupSize: number;
     maxConcurrentJobs: number;
     saveSuccessfulPuzzles: boolean;

@@ -5,6 +5,7 @@ import { COLOR_PALETTE } from '../utils/colorPalette';
 import { queensAdminApi } from '../admin/api';
 import { useQueensStore } from './queensStore';
 import type {
+  QueensAdminBatchRunMode,
   QueensAdminBatchStatus,
   QueensAdminBoardState,
   QueensAdminGenerationProgress,
@@ -524,11 +525,13 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
 
   async function startBatchGeneration(options: {
     sizes: number[];
+    orthogonalMinDistances: number[];
     strategies: QueensAdminGenerationStrategy[];
     runsPerCombination: number;
+    runMode: QueensAdminBatchRunMode;
     queenCountMode: 'exact' | 'max';
     targetQueenCount?: number | null;
-    orthogonalMinDistance: number;
+    orthogonalMinDistance?: number | null;
     minimumGroupSize: number;
     maxConcurrentJobs: number;
     saveSuccessfulPuzzles: boolean;

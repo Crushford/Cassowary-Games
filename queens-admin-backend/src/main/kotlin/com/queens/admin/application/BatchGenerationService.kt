@@ -75,6 +75,12 @@ class BatchGenerationService(
     private val persistedPuzzleBoardCodecService: com.queens.admin.domain.service.PersistedPuzzleBoardCodecService,
 ) {
     private fun com.queens.admin.domain.model.PuzzleDifficultyTier.toApiValue(): String = name.lowercase().replace('_', '-')
+    private data class GenerationBucketKey(
+        val size: Int,
+        val orthogonalMinDistance: Int,
+        val targetQueenCount: Int,
+        val minimumGroupSize: Int,
+    )
 
     private val coordinatorExecutor = Executors.newCachedThreadPool()
     private val workerExecutor = Executors.newCachedThreadPool()
@@ -82,8 +88,10 @@ class BatchGenerationService(
 
     fun startBatch(
         sizes: List<Int>,
+        orthogonalMinDistances: List<Int>?,
         strategies: List<String>,
         runsPerCombination: Int,
+        runMode: String,
         queenCountMode: String,
         targetQueenCount: Int?,
         orthogonalMinDistance: Int?,
@@ -98,33 +106,91 @@ class BatchGenerationService(
         val normalizedSizes = sizes.distinct().sorted().onEach { size ->
             require(size in 4..20) { "Batch generation supports puzzle sizes 4 through 20." }
         }
+        val normalizedDistances =
+            (orthogonalMinDistances ?: normalizedSizes)
+                .distinct()
+                .sorted()
+                .onEach { distance ->
+                    require(distance in 1..400) { "Orthogonal min distance must be between 1 and 400." }
+                }
         val normalizedStrategies = strategies.distinct()
         val normalizedConcurrency = maxConcurrentJobs.coerceIn(1, Runtime.getRuntime().availableProcessors().coerceAtLeast(2))
+        val normalizedRunMode = if (runMode.equals("lowest-count", ignoreCase = true)) "lowest-count" else "cartesian"
+        val bucketCounts =
+            if (normalizedRunMode == "lowest-count") {
+                puzzleCatalogService.countByGenerationBucket().associate {
+                    GenerationBucketKey(
+                        size = it.size,
+                        orthogonalMinDistance = it.orthogonalMinDistance,
+                        targetQueenCount = it.targetQueenCount,
+                        minimumGroupSize = it.minimumGroupSize,
+                    ) to it.count
+                }
+            } else {
+                emptyMap()
+            }
 
-        val runs = buildList {
+        val unsortedRuns = buildList {
             normalizedSizes.forEach { size ->
-                val resolvedOrthogonalMinDistance = (orthogonalMinDistance ?: size).coerceIn(1, size * size)
-                val resolvedTargetQueenCount = (targetQueenCount ?: size).coerceIn(1, size * size)
-                normalizedStrategies.forEach { strategy ->
-                    repeat(runsPerCombination) {
-                        add(
-                            BatchGenerationRunSnapshot(
-                                runId = UUID.randomUUID().toString(),
-                                size = size,
-                                strategy = strategy,
-                                queenCountMode = queenCountMode,
-                                targetQueenCount = resolvedTargetQueenCount,
-                                orthogonalMinDistance = resolvedOrthogonalMinDistance,
-                                minimumGroupSize = minimumGroupSize,
-                                state = BatchGenerationRunState.QUEUED,
-                                coloredCellCount = 0,
-                                totalCellCount = size * size,
-                            ),
-                        )
+                normalizedDistances.forEach { requestedDistance ->
+                    val resolvedOrthogonalMinDistance = requestedDistance.coerceIn(1, size * size)
+                    if (!com.queens.admin.domain.service.PrecomputedMaxQueenCounts.has(size, resolvedOrthogonalMinDistance)) {
+                        return@forEach
+                    }
+                    val precomputedMaxQueenCount =
+                        com.queens.admin.domain.service.PrecomputedMaxQueenCounts.get(
+                            size,
+                            resolvedOrthogonalMinDistance,
+                        ) ?: return@forEach
+                    val resolvedTargetQueenCount = when {
+                        queenCountMode.equals("max", ignoreCase = true) -> precomputedMaxQueenCount
+                        else -> (targetQueenCount ?: size).coerceIn(1, size * size)
+                    }
+                    normalizedStrategies.forEach { strategy ->
+                        repeat(runsPerCombination) {
+                            add(
+                                BatchGenerationRunSnapshot(
+                                    runId = UUID.randomUUID().toString(),
+                                    size = size,
+                                    strategy = strategy,
+                                    queenCountMode = queenCountMode,
+                                    targetQueenCount = resolvedTargetQueenCount,
+                                    orthogonalMinDistance = resolvedOrthogonalMinDistance,
+                                    minimumGroupSize = minimumGroupSize,
+                                    state = BatchGenerationRunState.QUEUED,
+                                    coloredCellCount = 0,
+                                    totalCellCount = size * size,
+                                ),
+                            )
+                        }
                     }
                 }
             }
         }
+        require(unsortedRuns.isNotEmpty()) {
+            "Batch generation only supports size and min-distance combinations with precomputed max queen counts."
+        }
+        val runs =
+            if (normalizedRunMode == "lowest-count") {
+                unsortedRuns.sortedWith(
+                    compareBy<BatchGenerationRunSnapshot> {
+                        bucketCounts[
+                            GenerationBucketKey(
+                                size = it.size,
+                                orthogonalMinDistance = it.orthogonalMinDistance,
+                                targetQueenCount = it.targetQueenCount,
+                                minimumGroupSize = it.minimumGroupSize,
+                            ),
+                        ] ?: 0
+                    }.thenBy { it.size }
+                        .thenBy { it.orthogonalMinDistance }
+                        .thenBy { it.targetQueenCount }
+                        .thenBy { it.minimumGroupSize }
+                        .thenBy { it.strategy }
+                )
+            } else {
+                unsortedRuns
+            }
 
         val batchId = UUID.randomUUID().toString()
         val initialSnapshot = BatchGenerationBatchSnapshot(
@@ -141,11 +207,19 @@ class BatchGenerationService(
             persistenceErrors = 0,
             maxConcurrentJobs = normalizedConcurrency,
             saveSuccessfulPuzzles = saveSuccessfulPuzzles,
-            note = if (saveSuccessfulPuzzles) {
-                "Successful generated puzzles will be saved to the DB when they are unique. Canonical duplicates are skipped."
-            } else {
-                null
-            },
+            note =
+                buildList {
+                    add(
+                        if (saveSuccessfulPuzzles) {
+                            "Successful generated puzzles will be saved to the DB when they are unique. Canonical duplicates are skipped."
+                        } else {
+                            "Save disabled for this batch."
+                        },
+                    )
+                    if (normalizedRunMode == "lowest-count") {
+                        add("Queued runs are ordered by the current lowest catalog count for the matching size, distance, queen-count, and minimum-group bucket.")
+                    }
+                }.joinToString(" "),
             runs = runs,
         )
 

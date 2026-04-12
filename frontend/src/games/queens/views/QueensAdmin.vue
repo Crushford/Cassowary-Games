@@ -1258,10 +1258,7 @@ import {
   loadQueensAdminWorkshopInputs,
   saveQueensAdminWorkshopInputs,
 } from '../admin/inputPersistence';
-import {
-  hasPrecomputedMaxQueenCount,
-  supportedPrecomputedDistances,
-} from '../admin/maxQueenCounts';
+import { hasEffectiveMaxQueenCount, supportedPrecomputedDistances } from '../admin/maxQueenCounts';
 import AdminStat from '../components/admin/AdminStat.vue';
 import QueensAdminBatchPanel from '../components/admin/QueensAdminBatchPanel.vue';
 import QueensAdminCatalogPanel from '../components/admin/QueensAdminCatalogPanel.vue';
@@ -1571,7 +1568,7 @@ const templateSeedOffsets = computed(() => {
 });
 
 const maxQueenConfigSupported = computed(() =>
-  hasPrecomputedMaxQueenCount(selectedBoardSize.value, store.orthogonalMinDistance)
+  hasEffectiveMaxQueenCount(selectedBoardSize.value, store.orthogonalMinDistance)
 );
 
 const supportedMaxDistancesLabel = computed(() => {

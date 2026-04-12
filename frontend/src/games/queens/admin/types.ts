@@ -10,6 +10,8 @@ export type QueensAdminTool =
 export type QueensAdminMarkType = 'NONE' | 'FLAG' | 'QUEEN' | 'INVALID';
 export type QueensAdminGenerationStrategy = 'baseline' | 'marker-guided' | 'template-seeded';
 export type QueensAdminQueenCountMode = 'exact' | 'max';
+export type QueensAdminBatchRunMode = 'cartesian' | 'lowest-count';
+export type QueensAdminSizeOption = number;
 export type QueensAdminDifficulty = 'easy' | 'medium' | 'hard' | 'extra-hard' | 'unsolvable';
 export type QueensAdminPuzzleDifficulty = QueensAdminDifficulty;
 
@@ -166,6 +168,13 @@ export interface QueensAdminSystemLoad {
   batchRunsQueued: number;
   runningBatchCount: number;
   sampledAt: string;
+}
+
+export interface QueensAdminMaxQueenResolution {
+  size: number;
+  orthogonalMinDistance: number;
+  maxQueenCount: number;
+  elapsedMs: number;
 }
 
 export interface QueensAdminPuzzleCatalogStats {

@@ -20,6 +20,14 @@ import org.springframework.stereotype.Repository
 
 @Repository
 class PuzzleRepository {
+    data class PuzzleGenerationBucketCount(
+        val size: Int,
+        val orthogonalMinDistance: Int,
+        val targetQueenCount: Int,
+        val minimumGroupSize: Int,
+        val count: Int,
+    )
+
     data class PuzzleCatalogGroupCount(
         val size: Int,
         val orthogonalMinDistance: Int,
@@ -132,6 +140,34 @@ class PuzzleRepository {
                 .groupBy(PuzzlesTable.size, PuzzlesTable.orthogonalMinDistance)
                 .associate { row ->
                     (row[PuzzlesTable.size] to row[PuzzlesTable.orthogonalMinDistance]) to row[countExpression].toInt()
+                }
+        }
+
+    fun countByGenerationBucket(): List<PuzzleGenerationBucketCount> =
+        transaction {
+            val countExpression = PuzzlesTable.id.count()
+            PuzzlesTable
+                .select(
+                    PuzzlesTable.size,
+                    PuzzlesTable.orthogonalMinDistance,
+                    PuzzlesTable.targetQueenCount,
+                    PuzzlesTable.minimumGroupSize,
+                    countExpression,
+                )
+                .groupBy(
+                    PuzzlesTable.size,
+                    PuzzlesTable.orthogonalMinDistance,
+                    PuzzlesTable.targetQueenCount,
+                    PuzzlesTable.minimumGroupSize,
+                )
+                .map { row ->
+                    PuzzleGenerationBucketCount(
+                        size = row[PuzzlesTable.size],
+                        orthogonalMinDistance = row[PuzzlesTable.orthogonalMinDistance],
+                        targetQueenCount = row[PuzzlesTable.targetQueenCount],
+                        minimumGroupSize = row[PuzzlesTable.minimumGroupSize],
+                        count = row[countExpression].toInt(),
+                    )
                 }
         }
 
