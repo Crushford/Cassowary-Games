@@ -13,6 +13,8 @@
     "test:kotlin:tests": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle test \"$@\"' --",
     "db:import-legacy-puzzles": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle importLegacyPuzzles'",
     "db:export-puzzles-json": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle exportPuzzlesJson'",
+    "db:assess-puzzle-difficulties": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle assessPuzzleDifficulties'",
+    "db:assess-puzzle-difficulties:overwrite": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle assessPuzzleDifficultiesOverwrite'",
     "dev:frontend": "yarn --cwd frontend dev",
     "dev:kotlin-backend": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle bootRun'",
     "lint": "sh -c 'yarn lint:frontend; f=$?; yarn lint:backend; b=$?; test $f -eq 0 -a $b -eq 0'",

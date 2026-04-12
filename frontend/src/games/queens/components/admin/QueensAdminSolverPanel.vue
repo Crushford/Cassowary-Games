@@ -661,6 +661,7 @@
 
 <script setup lang="ts">
 import { computed, defineAsyncComponent, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
 import Select from 'primevue/select';
@@ -716,6 +717,15 @@ const DEFAULT_BUILT_IN_SOLVER_STEPS = [
     sortOrder: 20,
   },
   {
+    id: 'row-column-sets',
+    label: 'Row / Column Set Constraints',
+    description:
+      'Use row and column sets inside a queen-distance window to eliminate impossible candidates, including non-adjacent lines.',
+    difficulty: 'extra-hard',
+    enabled: true,
+    sortOrder: 25,
+  },
+  {
     id: 'group-confined-to-line',
     label: 'Group Confined To Line',
     description:
@@ -725,21 +735,30 @@ const DEFAULT_BUILT_IN_SOLVER_STEPS = [
     sortOrder: 30,
   },
   {
-    id: 'assume-progress',
-    label: 'Assume Queen Until Progress',
-    description: 'Try queen assumptions until one contradiction forces a real move.',
+    id: 'single-queen-contradiction',
+    label: 'Single Queen Contradiction',
+    description:
+      'Try one queen placement. If it immediately makes the puzzle impossible, flag that square.',
     difficulty: 'hard',
     enabled: true,
     sortOrder: 40,
+  },
+  {
+    id: 'assume-progress',
+    label: 'Assume Queen Until Progress',
+    description: 'Try queen assumptions until one contradiction forces a real move.',
+    difficulty: 'unsolvable',
+    enabled: true,
+    sortOrder: 50,
   },
   {
     id: 'assume-exhaustive',
     label: 'Assume Queen Exhaustive',
     description:
       'Exhaustively scan queen and flag assumptions until no further forced move exists.',
-    difficulty: 'hard',
+    difficulty: 'unsolvable',
     enabled: true,
-    sortOrder: 50,
+    sortOrder: 60,
   },
 ] as const satisfies ReadonlyArray<QueensAdminBuiltInSolverStep>;
 
@@ -752,6 +771,7 @@ const persistedSolverInputs = loadQueensAdminSolverInputs();
 const persistedSolverSession = loadQueensAdminSolverSession();
 
 const queensStore = useQueensStore();
+const route = useRoute();
 const catalogGroups = ref<QueensAdminPuzzleCatalogGroup[]>([]);
 const loadingPuzzle = ref(false);
 const actionLoading = ref(false);
@@ -785,7 +805,9 @@ const runAllDifficultyThreshold = ref<QueensAdminDifficulty>(
 const solverUsageCounts = ref<Record<SolverMetricId, number>>({
   'single-color': 0,
   'row-column': 0,
+  'row-column-sets': 0,
   'group-confined-to-line': 0,
+  'single-queen-contradiction': 0,
   'assume-progress': 0,
   'assume-exhaustive': 0,
 });
@@ -796,6 +818,7 @@ const editingPatternDifficulty = ref<QueensAdminDifficulty>('medium');
 const patternDraft = ref<PatternEditorDraft>(createEmptyPatternDraft());
 const solverLogEntries = ref<SolverLogEntry[]>([]);
 const loadingSolverConfig = ref(false);
+const routeLoadedPuzzleId = ref<string | null>(null);
 let highlightTimer: ReturnType<typeof setTimeout> | null = null;
 
 type RadioOption = {
@@ -1101,6 +1124,15 @@ watch(
   { deep: true }
 );
 
+watch(
+  () => (typeof route.query.puzzleId === 'string' ? route.query.puzzleId : null),
+  async (puzzleId) => {
+    if (!puzzleId || puzzleId === routeLoadedPuzzleId.value) return;
+    await loadPuzzleFromRoute(puzzleId);
+  },
+  { immediate: true }
+);
+
 restorePersistedSolverSession();
 void loadCatalogGroups();
 void loadSolverConfig();
@@ -1200,6 +1232,44 @@ async function loadRandomPuzzle(): Promise<void> {
   }
 }
 
+async function loadPuzzleFromRoute(puzzleId: string): Promise<void> {
+  loadingPuzzle.value = true;
+  statusMessage.value = null;
+  errorMessage.value = null;
+  appendLog('Puzzle Source', `Requested catalog puzzle ${puzzleId} from solver route.`);
+
+  try {
+    const selection = await queensAdminApi.getCatalogPuzzleById(puzzleId);
+
+    if (!selection) {
+      statusMessage.value = 'No puzzle matched that solver link.';
+      appendLog('Puzzle Source', `Solver route puzzle ${puzzleId} was not found.`);
+      return;
+    }
+
+    solverSelection.value = selection;
+    queensStore.hydrateFromAdminBoard(selection.board, {
+      showSolutionQueens: false,
+      resetHistory: true,
+    });
+    resetSolverMetrics();
+    highlightedChangedCells.value = [];
+    persistSolverSession(selection.board);
+    routeLoadedPuzzleId.value = selection.puzzleId;
+    statusMessage.value = `Loaded solver-linked puzzle ${selection.puzzleId}.`;
+    appendLog(
+      'Puzzle Source',
+      `Loaded puzzle ${selection.puzzleId} from solver route (${selection.size}x${selection.size}, d${selection.orthogonalMinDistance}, q${selection.targetQueenCount}, g${selection.minimumGroupSize}).`
+    );
+  } catch (error) {
+    errorMessage.value =
+      error instanceof Error ? error.message : 'Failed to load solver-linked catalog puzzle.';
+    appendLog('Puzzle Source', 'Solver route puzzle load failed.', errorMessage.value);
+  } finally {
+    loadingPuzzle.value = false;
+  }
+}
+
 function resetSolverState(): void {
   if (!solverSelection.value) return;
   queensStore.hydrateFromAdminBoard(solverSelection.value.board, {
@@ -1293,8 +1363,12 @@ async function executeBuiltInStep(
       return queensAdminApi.runSingleColorGroupSolverRule(board);
     case 'row-column':
       return queensAdminApi.runSpecificSolverRule(board, 'constrained-lines');
+    case 'row-column-sets':
+      return queensAdminApi.runSpecificSolverRule(board, 'constrained-line-sets');
     case 'group-confined-to-line':
       return queensAdminApi.runSpecificSolverRule(board, 'group-confined-to-line');
+    case 'single-queen-contradiction':
+      return queensAdminApi.runSpecificSolverRule(board, 'queen-assumption-contradiction');
     case 'assume-progress':
       return runAssumeSolver(board, true);
     case 'assume-exhaustive':
@@ -1668,27 +1742,41 @@ async function runSingleColorFollowUp(
 ): Promise<QueensAdminBoardState> {
   appendLog('Auto Follow-Up', 'Running single-color queen after the previous solver action.');
 
-  const result = await queensAdminApi.runSingleColorGroupSolverRule(board);
-  appendLog(
-    'Auto Follow-Up',
-    `${result.action}: ${result.explanation} Changed ${result.changedCells.length} cell${result.changedCells.length === 1 ? '' : 's'}.`,
-    result.error
-  );
+  let currentBoard = board;
+  let shouldContinue = true;
 
-  if (!result.success || !result.board || result.changedCells.length === 0) {
-    return board;
+  while (shouldContinue) {
+    const boardBeforeFollowUp = currentBoard;
+    const result = await queensAdminApi.runSingleColorGroupSolverRule(currentBoard);
+    appendLog(
+      'Auto Follow-Up',
+      `${result.action}: ${result.explanation} Changed ${result.changedCells.length} cell${result.changedCells.length === 1 ? '' : 's'}.`,
+      result.error
+    );
+
+    if (!result.success || !result.board || result.changedCells.length === 0) {
+      return currentBoard;
+    }
+
+    applyOperationResult(result);
+    incrementStepUsage('single-color');
+    currentBoard = result.board;
+
+    if (countFlags(currentBoard) <= countFlags(boardBeforeFollowUp)) {
+      shouldContinue = false;
+    }
   }
 
-  applyOperationResult(result);
-  incrementStepUsage('single-color');
-  return result.board;
+  return currentBoard;
 }
 
 function resetSolverMetrics(): void {
   solverUsageCounts.value = {
     'single-color': 0,
     'row-column': 0,
+    'row-column-sets': 0,
     'group-confined-to-line': 0,
+    'single-queen-contradiction': 0,
     'assume-progress': 0,
     'assume-exhaustive': 0,
   };
@@ -1720,7 +1808,15 @@ function buildInitialStepDifficulties(
 ): Record<BuiltInSolverStepId, QueensAdminDifficulty> {
   return definitions.reduce<Record<BuiltInSolverStepId, QueensAdminDifficulty>>(
     (acc, step) => {
-      acc[step.id] = normalizeSolverDifficulty(persistedDifficulties?.[step.id], step.difficulty);
+      const persistedDifficulty = persistedDifficulties?.[step.id];
+      const migratedDifficulty =
+        step.id === 'row-column-sets' && persistedDifficulty === 'hard'
+          ? 'extra-hard'
+          : (step.id === 'assume-progress' || step.id === 'assume-exhaustive') &&
+              persistedDifficulty === 'hard'
+            ? 'unsolvable'
+            : persistedDifficulty;
+      acc[step.id] = normalizeSolverDifficulty(migratedDifficulty, step.difficulty);
       return acc;
     },
     {} as Record<BuiltInSolverStepId, QueensAdminDifficulty>

@@ -1,6 +1,12 @@
 import type { QueensAdminDifficulty } from './types';
 
-export const SOLVER_DIFFICULTY_ORDER: QueensAdminDifficulty[] = ['easy', 'medium', 'hard'];
+export const SOLVER_DIFFICULTY_ORDER: QueensAdminDifficulty[] = [
+  'easy',
+  'medium',
+  'hard',
+  'extra-hard',
+  'unsolvable',
+];
 
 export const SOLVER_DIFFICULTY_OPTIONS: Array<{
   label: string;
@@ -9,6 +15,8 @@ export const SOLVER_DIFFICULTY_OPTIONS: Array<{
   { label: 'Easy', value: 'easy' },
   { label: 'Medium', value: 'medium' },
   { label: 'Hard', value: 'hard' },
+  { label: 'Extra Hard', value: 'extra-hard' },
+  { label: 'Unsolvable', value: 'unsolvable' },
 ];
 
 export function isSolverDifficulty(value: unknown): value is QueensAdminDifficulty {

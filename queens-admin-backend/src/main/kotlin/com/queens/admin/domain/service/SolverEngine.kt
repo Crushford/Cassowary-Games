@@ -20,7 +20,7 @@ class SolverEngine(
 
     fun runNextStep(
         boardState: BoardState,
-        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.HARD,
+        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.EXTRA_HARD,
     ): SolverResult {
         val nextStep = solverRuleRegistry.orderedRules(maxDifficultyTier)
             .firstNotNullOfOrNull { rule ->
@@ -51,10 +51,10 @@ class SolverEngine(
     fun runSpecificRule(
         boardState: BoardState,
         ruleName: String,
-        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.HARD,
+        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.EXTRA_HARD,
     ): SolverResult {
         val rule = solverRuleRegistry.findByName(ruleName, maxDifficultyTier)
-        logger.info(
+        logger.debug(
             "[SolverEngine] runSpecificRule requestedRule={} resolvedRule={} maxDifficultyTier={}",
             ruleName,
             rule?.ruleName,
@@ -85,7 +85,7 @@ class SolverEngine(
 
     fun runAllStepsUntilStuck(
         boardState: BoardState,
-        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.HARD,
+        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.EXTRA_HARD,
         maxSteps: Int = 256,
     ): SolverResult {
         var currentBoard = boardState

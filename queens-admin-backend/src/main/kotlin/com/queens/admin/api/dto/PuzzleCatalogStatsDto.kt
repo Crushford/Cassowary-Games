@@ -22,6 +22,7 @@ data class PuzzleCatalogGroupDto(
     val orthogonalMinDistance: Int,
     val targetQueenCount: Int,
     val minimumGroupSize: Int,
+    val difficulty: String?,
     val count: Int,
 )
 
@@ -30,6 +31,7 @@ data class DeletePuzzleCatalogGroupRequestDto(
     val orthogonalMinDistance: Int,
     val targetQueenCount: Int,
     val minimumGroupSize: Int,
+    val difficulty: String? = null,
 )
 
 data class DeletePuzzleCatalogGroupResultDto(

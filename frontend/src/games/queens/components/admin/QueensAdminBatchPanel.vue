@@ -897,6 +897,8 @@ function formatPersistence(run: QueensAdminBatchRun): string {
       return run.savedPuzzleId ? `Saved (${run.savedPuzzleId.slice(0, 8)})` : 'Saved';
     case 'DUPLICATE':
       return 'Duplicate';
+    case 'UNSOLVABLE':
+      return 'Unsolvable';
     case 'ERROR':
       return 'Save Error';
     case 'SKIPPED':
@@ -948,6 +950,8 @@ function persistenceBadgeClass(state: QueensAdminBatchRun['persistenceState']): 
       return 'text-semantic-success-200';
     case 'DUPLICATE':
       return 'text-semantic-warning-200';
+    case 'UNSOLVABLE':
+      return 'text-semantic-danger-200';
     case 'ERROR':
       return 'text-semantic-danger-200';
     default:

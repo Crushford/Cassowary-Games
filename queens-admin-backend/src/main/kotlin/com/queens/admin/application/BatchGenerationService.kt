@@ -271,6 +271,7 @@ class BatchGenerationService(
                                 when (persistenceResult?.state) {
                                     "SAVED" -> "Saved to puzzle catalog."
                                     "DUPLICATE" -> "Skipped save because a canonical duplicate already exists."
+                                    "UNSOLVABLE" -> "Rejected because the difficulty assessor could not solve the puzzle."
                                     else -> if (runtime.snapshot.get().saveSuccessfulPuzzles) null else "Save disabled for this batch."
                                 },
                             savedPuzzleId = persistenceResult?.puzzle?.id?.toString(),

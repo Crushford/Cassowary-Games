@@ -21,6 +21,7 @@ import com.queens.admin.application.GenerationJobService
 import com.queens.admin.application.GenerationWorkflowService
 import com.queens.admin.application.PuzzleCatalogService
 import com.queens.admin.domain.model.Position
+import com.queens.admin.domain.model.PuzzleDifficultyTier
 import com.queens.admin.domain.service.PersistedPuzzleBoardCodecService
 import com.queens.admin.infrastructure.persistence.PuzzleRepository
 import com.queens.admin.infrastructure.mapper.BatchGenerationMapper
@@ -50,6 +51,10 @@ class GenerationController(
     private val generationJobMapper: GenerationJobMapper,
     private val operationResultMapper: OperationResultMapper,
 ) {
+    private fun PuzzleDifficultyTier.toApiValue(): String = name.lowercase().replace('_', '-')
+
+    private fun parseDifficultyTier(value: String): PuzzleDifficultyTier = PuzzleDifficultyTier.valueOf(value.uppercase().replace('-', '_'))
+
     @GetMapping("/catalog-stats")
     fun getCatalogStats(): PuzzleCatalogStatsDto {
         val countsBySize = puzzleCatalogService.countBySize()
@@ -66,7 +71,8 @@ class GenerationController(
                     compareBy<PuzzleRepository.PuzzleCatalogGroupCount> { it.size }
                         .thenBy { it.orthogonalMinDistance }
                         .thenBy { it.targetQueenCount }
-                        .thenBy { it.minimumGroupSize },
+                        .thenBy { it.minimumGroupSize }
+                        .thenBy { it.difficultyTier?.ordinal ?: Int.MAX_VALUE },
                 )
                 .map { group ->
                     PuzzleCatalogGroupDto(
@@ -74,6 +80,7 @@ class GenerationController(
                         orthogonalMinDistance = group.orthogonalMinDistance,
                         targetQueenCount = group.targetQueenCount,
                         minimumGroupSize = group.minimumGroupSize,
+                        difficulty = group.difficultyTier?.toApiValue(),
                         count = group.count,
                     )
                 }
@@ -93,6 +100,7 @@ class GenerationController(
         @RequestParam(required = false) orthogonalMinDistance: Int?,
         @RequestParam(required = false) targetQueenCount: Int?,
         @RequestParam(required = false) minimumGroupSize: Int?,
+        @RequestParam(required = false) difficulty: String?,
     ): ResponseEntity<CatalogPuzzleSelectionDto> {
         val puzzle =
             puzzleCatalogService.findRandomFiltered(
@@ -100,6 +108,7 @@ class GenerationController(
                 orthogonalMinDistance = orthogonalMinDistance,
                 targetQueenCount = targetQueenCount,
                 minimumGroupSize = minimumGroupSize,
+                difficultyTier = difficulty?.let(::parseDifficultyTier),
             ) ?: return ResponseEntity.notFound().build()
 
         return ResponseEntity.ok(
@@ -109,11 +118,29 @@ class GenerationController(
                 orthogonalMinDistance = puzzle.orthogonalMinDistance,
                 targetQueenCount = puzzle.targetQueenCount,
                 minimumGroupSize = puzzle.minimumGroupSize,
-                difficulty = puzzle.difficultyTier?.name?.lowercase(),
+                difficulty = puzzle.difficultyTier?.toApiValue(),
                 boardState =
                     boardStateMapper.toDto(
                         persistedPuzzleBoardCodecService.decode(puzzle),
                     ),
+            ),
+        )
+    }
+
+    @GetMapping("/catalog-puzzle/{puzzleId}")
+    fun getCatalogPuzzleById(@PathVariable puzzleId: String): ResponseEntity<CatalogPuzzleSelectionDto> {
+        val puzzle = puzzleCatalogService.findById(java.util.UUID.fromString(puzzleId))
+            ?: return ResponseEntity.notFound().build()
+
+        return ResponseEntity.ok(
+            CatalogPuzzleSelectionDto(
+                puzzleId = puzzle.id.toString(),
+                size = puzzle.size,
+                orthogonalMinDistance = puzzle.orthogonalMinDistance,
+                targetQueenCount = puzzle.targetQueenCount,
+                minimumGroupSize = puzzle.minimumGroupSize,
+                difficulty = puzzle.difficultyTier?.toApiValue(),
+                boardState = boardStateMapper.toDto(persistedPuzzleBoardCodecService.decode(puzzle)),
             ),
         )
     }
@@ -126,10 +153,11 @@ class GenerationController(
             deletedCount =
                 puzzleCatalogService.deleteByRulesetGroup(
                     size = request.size,
-                    orthogonalMinDistance = request.orthogonalMinDistance,
-                    targetQueenCount = request.targetQueenCount,
-                    minimumGroupSize = request.minimumGroupSize,
-                ),
+                orthogonalMinDistance = request.orthogonalMinDistance,
+                targetQueenCount = request.targetQueenCount,
+                minimumGroupSize = request.minimumGroupSize,
+                difficultyTier = request.difficulty?.let(::parseDifficultyTier),
+            ),
         )
 
     @GetMapping("/system-load")

@@ -10,8 +10,8 @@ export type QueensAdminTool =
 export type QueensAdminMarkType = 'NONE' | 'FLAG' | 'QUEEN' | 'INVALID';
 export type QueensAdminGenerationStrategy = 'baseline' | 'marker-guided' | 'template-seeded';
 export type QueensAdminQueenCountMode = 'exact' | 'max';
-export type QueensAdminDifficulty = 'easy' | 'medium' | 'hard';
-export type QueensAdminPuzzleDifficulty = QueensAdminDifficulty | 'unsolvable';
+export type QueensAdminDifficulty = 'easy' | 'medium' | 'hard' | 'extra-hard' | 'unsolvable';
+export type QueensAdminPuzzleDifficulty = QueensAdminDifficulty;
 
 export interface QueensAdminCell {
   row: number;
@@ -178,6 +178,7 @@ export interface QueensAdminPuzzleCatalogGroup {
   orthogonalMinDistance: number;
   targetQueenCount: number;
   minimumGroupSize: number;
+  difficulty?: QueensAdminPuzzleDifficulty;
   count: number;
 }
 

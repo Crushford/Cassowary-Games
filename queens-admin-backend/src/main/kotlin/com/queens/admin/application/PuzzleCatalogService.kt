@@ -2,6 +2,7 @@ package com.queens.admin.application
 
 import com.queens.admin.domain.model.BoardState
 import com.queens.admin.domain.model.PersistedPuzzle
+import com.queens.admin.domain.model.PuzzleDifficultyTier
 import com.queens.admin.domain.model.QueensBoardMetadata
 import com.queens.admin.domain.service.CanonicalPuzzleSignatureService
 import kotlin.random.Random
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service
 class PuzzleCatalogService(
     private val puzzleRepository: PuzzleRepository,
     private val canonicalPuzzleSignatureService: CanonicalPuzzleSignatureService,
+    private val puzzleDifficultyAssessmentService: PuzzleDifficultyAssessmentService,
 ) {
     data class SaveGeneratedPuzzleResult(
         val state: String,
@@ -23,6 +25,9 @@ class PuzzleCatalogService(
     fun findByCanonicalSignature(canonicalSignature: String): PersistedPuzzle? =
         puzzleRepository.findByCanonicalSignature(canonicalSignature)
 
+    fun findById(id: UUID): PersistedPuzzle? =
+        puzzleRepository.findById(id)
+
     fun findAll(): List<PersistedPuzzle> =
         puzzleRepository.findAll()
 
@@ -31,6 +36,7 @@ class PuzzleCatalogService(
         orthogonalMinDistance: Int? = null,
         targetQueenCount: Int? = null,
         minimumGroupSize: Int? = null,
+        difficultyTier: PuzzleDifficultyTier? = null,
     ): PersistedPuzzle? {
         val puzzles =
             puzzleRepository.findAllFiltered(
@@ -38,6 +44,7 @@ class PuzzleCatalogService(
                 orthogonalMinDistance = orthogonalMinDistance,
                 targetQueenCount = targetQueenCount,
                 minimumGroupSize = minimumGroupSize,
+                difficultyTier = difficultyTier,
             )
         if (puzzles.isEmpty()) return null
         return puzzles[Random.nextInt(puzzles.size)]
@@ -57,12 +64,14 @@ class PuzzleCatalogService(
         orthogonalMinDistance: Int,
         targetQueenCount: Int,
         minimumGroupSize: Int,
+        difficultyTier: PuzzleDifficultyTier? = null,
     ): Int =
         puzzleRepository.deleteByRulesetGroup(
             size = size,
             orthogonalMinDistance = orthogonalMinDistance,
             targetQueenCount = targetQueenCount,
             minimumGroupSize = minimumGroupSize,
+            difficultyTier = difficultyTier,
         )
 
     fun save(persistedPuzzle: PersistedPuzzle): PersistedPuzzle =
@@ -100,11 +109,24 @@ class PuzzleCatalogService(
                 generationStrategy = generationStrategy,
                 createdAt = Instant.now(),
             )
+        val assessment = puzzleDifficultyAssessmentService.assess(persistedPuzzle)
+        if (assessment.difficultyTier == PuzzleDifficultyTier.UNSOLVABLE) {
+            return SaveGeneratedPuzzleResult(
+                state = "UNSOLVABLE",
+                puzzle = null,
+            )
+        }
+        val assessedPuzzle = persistedPuzzle.copy(
+            difficultyTier = assessment.difficultyTier,
+            difficultyScore = assessment.difficultyScore,
+            difficultySolverVersion = PuzzleDifficultyAssessmentService.SOLVER_VERSION,
+            difficultyAssessedAt = Instant.now(),
+        )
 
         return try {
             SaveGeneratedPuzzleResult(
                 state = "SAVED",
-                puzzle = save(persistedPuzzle),
+                puzzle = save(assessedPuzzle),
             )
         } catch (error: Exception) {
             val existing = findByCanonicalSignature(canonicalSignature)

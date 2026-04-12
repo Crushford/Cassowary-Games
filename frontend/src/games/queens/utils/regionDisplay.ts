@@ -1,5 +1,5 @@
 import type { GridSquare, QueensRegionColorMode, RegionAppearance } from '../types/types';
-import { getRegionAppearanceTokens } from './colorPalette';
+import { areQueensColorsTooSimilar, getRegionAppearanceTokens } from './colorPalette';
 
 type RegionToken = Pick<RegionAppearance, 'color' | 'shade' | 'pattern'>;
 
@@ -62,21 +62,44 @@ function chooseAppearanceForRegion(
     .filter((token): token is RegionAppearance => token !== undefined);
 
   const neighborAppearanceKeys = new Set(neighborTokens.map(createAppearanceKey));
-  const neighborColors = new Set(neighborTokens.map((token) => token.color));
 
   const scoreToken = (token: RegionToken): number => {
     const appearanceKey = createAppearanceKey(token);
     const appearanceUsage = tokenUsageCounts.get(appearanceKey) ?? 0;
     const colorUsage = colorUsageCounts.get(token.color) ?? 0;
-    const touchesSameColor = neighborColors.has(token.color) ? 1 : 0;
-    return appearanceUsage * 100 + colorUsage * 10 + touchesSameColor;
+    const sameColorAdjacencies = neighborTokens.filter(
+      (neighbor) => neighbor.color === token.color
+    ).length;
+    const similarColorAdjacencies = neighborTokens.filter(
+      (neighbor) =>
+        neighbor.color !== token.color && areQueensColorsTooSimilar(token.color, neighbor.color)
+    ).length;
+    return (
+      appearanceUsage * 1000 +
+      colorUsage * 100 +
+      sameColorAdjacencies * 10 +
+      similarColorAdjacencies
+    );
   };
 
-  const availableWithoutConflict = orderedTokens.filter(
+  const availableWithoutAppearanceConflict = orderedTokens.filter(
     (token) => !neighborAppearanceKeys.has(createAppearanceKey(token))
   );
+  const availableWithoutSameColorConflict = availableWithoutAppearanceConflict.filter(
+    (token) => !neighborTokens.some((neighbor) => neighbor.color === token.color)
+  );
+  const availableWithoutSimilarColorConflict = availableWithoutSameColorConflict.filter(
+    (token) =>
+      !neighborTokens.some((neighbor) => areQueensColorsTooSimilar(token.color, neighbor.color))
+  );
   const candidatePool =
-    availableWithoutConflict.length > 0 ? availableWithoutConflict : orderedTokens;
+    availableWithoutSimilarColorConflict.length > 0
+      ? availableWithoutSimilarColorConflict
+      : availableWithoutSameColorConflict.length > 0
+        ? availableWithoutSameColorConflict
+        : availableWithoutAppearanceConflict.length > 0
+          ? availableWithoutAppearanceConflict
+          : orderedTokens;
 
   let bestToken = candidatePool[0];
   let bestScore = scoreToken(bestToken);

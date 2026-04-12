@@ -94,7 +94,7 @@ const router = createRouter({
       component: QueensGame,
     },
     {
-      path: '/queens/:sizeKey/mindistance:orthogonalMinDistance/:difficulty(easy|medium|hard)/:selectedPuzzleId?',
+      path: '/queens/:sizeKey/mindistance:orthogonalMinDistance/:difficulty(easy|medium|hard|extra-hard)/:selectedPuzzleId?',
       name: 'queens-selection-puzzle-with-difficulty',
       component: QueensGame,
     },

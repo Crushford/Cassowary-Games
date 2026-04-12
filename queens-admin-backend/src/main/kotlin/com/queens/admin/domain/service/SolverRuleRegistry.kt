@@ -9,13 +9,13 @@ import org.springframework.stereotype.Service
 class SolverRuleRegistry(
     private val rules: List<SolverRule>,
 ) {
-    fun orderedRules(maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.HARD): List<SolverRule> =
+    fun orderedRules(maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.EXTRA_HARD): List<SolverRule> =
         rules
             .filter { rule -> maxDifficultyTier.includes(rule.difficultyTier) }
             .sortedWith(AnnotationAwareOrderComparator.INSTANCE)
 
     fun findByName(
         ruleName: String,
-        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.HARD,
+        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.EXTRA_HARD,
     ): SolverRule? = orderedRules(maxDifficultyTier).firstOrNull { it.ruleName == ruleName }
 }

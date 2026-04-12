@@ -44,9 +44,9 @@ describe('inputPersistence solver inputs', () => {
       autoRunSingleColorAfterSolverAction: true,
       stepDifficulties: {
         'single-color': 'easy',
-        'row-column': 'medium',
+        'row-column-sets': 'extra-hard',
       },
-      runAllDifficultyThreshold: 'hard',
+      runAllDifficultyThreshold: 'extra-hard',
     });
 
     expect(loadQueensAdminSolverInputs()).toEqual({
@@ -57,9 +57,9 @@ describe('inputPersistence solver inputs', () => {
       autoRunSingleColorAfterSolverAction: true,
       stepDifficulties: {
         'single-color': 'easy',
-        'row-column': 'medium',
+        'row-column-sets': 'extra-hard',
       },
-      runAllDifficultyThreshold: 'hard',
+      runAllDifficultyThreshold: 'extra-hard',
     });
   });
 

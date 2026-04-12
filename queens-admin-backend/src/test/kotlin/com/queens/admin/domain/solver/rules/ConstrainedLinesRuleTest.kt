@@ -83,6 +83,33 @@ class ConstrainedLinesRuleTest {
         assertNull(step)
     }
 
+    @Test
+    fun `flags remaining candidates in a single confined column when min distance spans the full board`() {
+        val step = rule.apply(
+            board(
+                size = 7,
+                orthogonalMinDistance = 7,
+                groups = mapOf(
+                    Position(1, 6) to "A",
+                    Position(2, 6) to "A",
+                    Position(5, 6) to "B",
+                    Position(6, 5) to "B",
+                ),
+                marks = mapOf(
+                    Position(0, 6) to MarkType.FLAG,
+                    Position(3, 6) to MarkType.FLAG,
+                    Position(4, 6) to MarkType.FLAG,
+                ),
+            ),
+        )
+
+        assertNotNull(step)
+        step!!
+        assertEquals(listOf(Position(5, 6)), step.changedCells.map { Position(it.row, it.col) })
+        assertEquals(MarkType.FLAG, step.boardState.cells[5][6].markType)
+        assertEquals(MarkType.NONE, step.boardState.cells[6][5].markType)
+    }
+
     private fun board(
         size: Int,
         orthogonalMinDistance: Int,

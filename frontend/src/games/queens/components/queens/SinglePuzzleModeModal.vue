@@ -128,7 +128,7 @@ const isRotate = computed(() => currentMode.value === 'rotate');
 const availableSizes = computed(() => queensStore.getAvailableSizes());
 const selectedSize = ref<string>('');
 const selectedDistance = ref<number | null>(null);
-const selectedDifficulty = ref<'easy' | 'medium' | 'hard' | null>(null);
+const selectedDifficulty = ref<'easy' | 'medium' | 'hard' | 'extra-hard' | null>(null);
 
 const availableDistances = computed(() => {
   if (!selectedSize.value) return [];
@@ -192,9 +192,11 @@ function getQueryDistance(): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function getQueryDifficulty(): 'easy' | 'medium' | 'hard' | null {
+function getQueryDifficulty(): 'easy' | 'medium' | 'hard' | 'extra-hard' | null {
   const value = route.query.difficulty;
-  return value === 'easy' || value === 'medium' || value === 'hard' ? value : null;
+  return value === 'easy' || value === 'medium' || value === 'hard' || value === 'extra-hard'
+    ? value
+    : null;
 }
 
 function initializeSelectionState() {
@@ -222,7 +224,7 @@ function rotateSizeButtonClass(_size: string): string {
   return 'border-semantic-success-500 bg-semantic-success-700 text-white hover:bg-semantic-success-600';
 }
 
-function difficultyCountLabel(difficulty: 'easy' | 'medium' | 'hard'): string {
+function difficultyCountLabel(difficulty: 'easy' | 'medium' | 'hard' | 'extra-hard'): string {
   if (!selectedSize.value || selectedDistance.value == null) return '';
   const count = queensStore.countPuzzlesForSelection(
     selectedSize.value,

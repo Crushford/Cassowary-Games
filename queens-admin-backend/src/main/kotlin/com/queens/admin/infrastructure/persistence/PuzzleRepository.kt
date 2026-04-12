@@ -15,6 +15,7 @@ import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNull
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -24,6 +25,7 @@ class PuzzleRepository {
         val orthogonalMinDistance: Int,
         val targetQueenCount: Int,
         val minimumGroupSize: Int,
+        val difficultyTier: PuzzleDifficultyTier?,
         val count: Int,
     )
 
@@ -32,6 +34,16 @@ class PuzzleRepository {
             PuzzlesTable
                 .selectAll()
                 .where { PuzzlesTable.canonicalSignature eq canonicalSignature }
+                .limit(1)
+                .firstOrNull()
+                ?.toPersistedPuzzle()
+        }
+
+    fun findById(id: UUID): PersistedPuzzle? =
+        transaction {
+            PuzzlesTable
+                .selectAll()
+                .where { PuzzlesTable.id eq id }
                 .limit(1)
                 .firstOrNull()
                 ?.toPersistedPuzzle()
@@ -66,11 +78,21 @@ class PuzzleRepository {
                 .map { row -> row.toPersistedPuzzle() }
         }
 
+    fun findAllWithoutDifficulty(): List<PersistedPuzzle> =
+        transaction {
+            PuzzlesTable
+                .selectAll()
+                .where { PuzzlesTable.difficultyTier.isNull() }
+                .orderBy(PuzzlesTable.size to SortOrder.ASC, PuzzlesTable.createdAt to SortOrder.ASC)
+                .map { row -> row.toPersistedPuzzle() }
+        }
+
     fun findAllFiltered(
         size: Int? = null,
         orthogonalMinDistance: Int? = null,
         targetQueenCount: Int? = null,
         minimumGroupSize: Int? = null,
+        difficultyTier: PuzzleDifficultyTier? = null,
     ): List<PersistedPuzzle> =
         transaction {
             PuzzlesTable
@@ -82,6 +104,7 @@ class PuzzleRepository {
                             orthogonalMinDistance?.let { PuzzlesTable.orthogonalMinDistance eq it },
                             targetQueenCount?.let { PuzzlesTable.targetQueenCount eq it },
                             minimumGroupSize?.let { PuzzlesTable.minimumGroupSize eq it },
+                            difficultyTier?.let { PuzzlesTable.difficultyTier eq it.name },
                         )
 
                     predicates.reduceOrNull { accumulator, predicate -> accumulator and predicate }
@@ -121,6 +144,7 @@ class PuzzleRepository {
                     PuzzlesTable.orthogonalMinDistance,
                     PuzzlesTable.targetQueenCount,
                     PuzzlesTable.minimumGroupSize,
+                    PuzzlesTable.difficultyTier,
                     countExpression,
                 )
                 .groupBy(
@@ -128,6 +152,7 @@ class PuzzleRepository {
                     PuzzlesTable.orthogonalMinDistance,
                     PuzzlesTable.targetQueenCount,
                     PuzzlesTable.minimumGroupSize,
+                    PuzzlesTable.difficultyTier,
                 )
                 .map { row ->
                     PuzzleCatalogGroupCount(
@@ -135,6 +160,7 @@ class PuzzleRepository {
                         orthogonalMinDistance = row[PuzzlesTable.orthogonalMinDistance],
                         targetQueenCount = row[PuzzlesTable.targetQueenCount],
                         minimumGroupSize = row[PuzzlesTable.minimumGroupSize],
+                        difficultyTier = row[PuzzlesTable.difficultyTier]?.let(PuzzleDifficultyTier::valueOf),
                         count = row[countExpression].toInt(),
                     )
                 }
@@ -145,13 +171,23 @@ class PuzzleRepository {
         orthogonalMinDistance: Int,
         targetQueenCount: Int,
         minimumGroupSize: Int,
+        difficultyTier: PuzzleDifficultyTier? = null,
     ): Int =
         transaction {
             PuzzlesTable.deleteWhere {
-                (PuzzlesTable.size eq size) and
-                    (PuzzlesTable.orthogonalMinDistance eq orthogonalMinDistance) and
-                    (PuzzlesTable.targetQueenCount eq targetQueenCount) and
-                    (PuzzlesTable.minimumGroupSize eq minimumGroupSize)
+                if (difficultyTier != null) {
+                    (PuzzlesTable.size eq size) and
+                        (PuzzlesTable.orthogonalMinDistance eq orthogonalMinDistance) and
+                        (PuzzlesTable.targetQueenCount eq targetQueenCount) and
+                        (PuzzlesTable.minimumGroupSize eq minimumGroupSize) and
+                        (PuzzlesTable.difficultyTier eq difficultyTier.name)
+                } else {
+                    (PuzzlesTable.size eq size) and
+                        (PuzzlesTable.orthogonalMinDistance eq orthogonalMinDistance) and
+                        (PuzzlesTable.targetQueenCount eq targetQueenCount) and
+                        (PuzzlesTable.minimumGroupSize eq minimumGroupSize) and
+                        PuzzlesTable.difficultyTier.isNull()
+                }
             }
         }
 

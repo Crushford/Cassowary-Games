@@ -19,12 +19,20 @@ describe('solverDifficulty', () => {
     expect(formatSolverDifficulty('easy')).toBe('Easy');
     expect(formatSolverDifficulty('medium')).toBe('Medium');
     expect(formatSolverDifficulty('hard')).toBe('Hard');
+    expect(formatSolverDifficulty('extra-hard')).toBe('Extra Hard');
+    expect(formatSolverDifficulty('unsolvable')).toBe('Unsolvable');
   });
 
   it('orders difficulty thresholds correctly', () => {
     expect(solverDifficultyRank('easy')).toBeLessThan(solverDifficultyRank('medium'));
     expect(solverDifficultyRank('medium')).toBeLessThan(solverDifficultyRank('hard'));
+    expect(solverDifficultyRank('hard')).toBeLessThan(solverDifficultyRank('extra-hard'));
+    expect(solverDifficultyRank('extra-hard')).toBeLessThan(solverDifficultyRank('unsolvable'));
     expect(isDifficultyAtOrBelow('easy', 'hard')).toBe(true);
     expect(isDifficultyAtOrBelow('hard', 'easy')).toBe(false);
+    expect(isDifficultyAtOrBelow('extra-hard', 'hard')).toBe(false);
+    expect(isDifficultyAtOrBelow('hard', 'extra-hard')).toBe(true);
+    expect(isDifficultyAtOrBelow('unsolvable', 'hard')).toBe(false);
+    expect(isDifficultyAtOrBelow('hard', 'unsolvable')).toBe(true);
   });
 });

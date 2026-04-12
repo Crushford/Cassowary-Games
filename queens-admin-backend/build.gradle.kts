@@ -68,3 +68,11 @@ tasks.register<JavaExec>("assessPuzzleDifficulties") {
     classpath = sourceSets["main"].runtimeClasspath
     mainClass.set("com.queens.admin.tools.AssessPuzzleDifficultiesKt")
 }
+
+tasks.register<JavaExec>("assessPuzzleDifficultiesOverwrite") {
+    group = "application"
+    description = "Reassess and persist difficulty labels for all puzzles in PostgreSQL, overwriting existing values."
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.queens.admin.tools.AssessPuzzleDifficultiesKt")
+    systemProperty("queens.assess.overwrite", "true")
+}

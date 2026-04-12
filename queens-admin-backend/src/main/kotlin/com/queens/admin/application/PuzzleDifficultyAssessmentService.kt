@@ -12,7 +12,7 @@ class PuzzleDifficultyAssessmentService(
     private val deterministicPuzzleAnalysisService: DeterministicPuzzleAnalysisService,
 ) {
     companion object {
-        const val SOLVER_VERSION = "difficulty-v1"
+        const val SOLVER_VERSION = "difficulty-v4"
     }
 
     data class AssessmentResult(
@@ -23,11 +23,17 @@ class PuzzleDifficultyAssessmentService(
         val hardBranchCount: Int,
         val finalQueensPlaced: Int,
         val unresolvedSquares: Int,
+        val solved: Boolean,
+        val hardestStepTier: String?,
     )
 
     fun assess(
         puzzle: PersistedPuzzle,
-        ruleset: QueensRuleset = QueensRuleset.classic(puzzle.size),
+        ruleset: QueensRuleset = QueensRuleset(
+            orthogonalMinDistance = puzzle.orthogonalMinDistance,
+            requireRowCoverage = false,
+            requireColumnCoverage = false,
+        ),
     ): AssessmentResult {
         val boardState = deterministicPuzzleAnalysisService.withRuleset(
             boardState = persistedPuzzleBoardCodecService.decode(puzzle),
@@ -35,11 +41,7 @@ class PuzzleDifficultyAssessmentService(
             targetQueenCount = puzzle.targetQueenCount,
         )
         val analysis = deterministicPuzzleAnalysisService.assessDifficulty(boardState)
-        require(analysis.solved) {
-            "Difficulty assessor could not solve puzzle ${puzzle.id} (size ${puzzle.size})."
-        }
-
-        val tier = analysis.difficultyTier ?: PuzzleDifficultyTier.HARD
+        val tier = analysis.difficultyTier ?: PuzzleDifficultyTier.UNSOLVABLE
         return AssessmentResult(
             puzzleId = puzzle.id,
             difficultyTier = tier,
@@ -48,6 +50,8 @@ class PuzzleDifficultyAssessmentService(
             hardBranchCount = 0,
             finalQueensPlaced = analysis.finalQueensPlaced,
             unresolvedSquares = analysis.unresolvedSquares,
+            solved = analysis.solved,
+            hardestStepTier = analysis.hardestTierUsed?.name,
         )
     }
 }

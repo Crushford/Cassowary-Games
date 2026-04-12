@@ -185,6 +185,7 @@ interface PuzzleCatalogGroupDto {
   orthogonalMinDistance: number;
   targetQueenCount: number;
   minimumGroupSize: number;
+  difficulty?: QueensAdminPuzzleDifficulty;
   count: number;
 }
 
@@ -386,6 +387,7 @@ function toPuzzleCatalogGroup(data: PuzzleCatalogGroupDto): QueensAdminPuzzleCat
     orthogonalMinDistance: data.orthogonalMinDistance,
     targetQueenCount: data.targetQueenCount,
     minimumGroupSize: data.minimumGroupSize,
+    difficulty: data.difficulty,
     count: data.count,
   };
 }
@@ -547,6 +549,7 @@ export const queensAdminApi = {
     orthogonalMinDistance?: number;
     targetQueenCount?: number;
     minimumGroupSize?: number;
+    difficulty?: QueensAdminPuzzleDifficulty;
   }): Promise<QueensAdminCatalogPuzzleSelection | null> {
     const query = new URLSearchParams();
     if (filters?.size != null) query.set('size', String(filters.size));
@@ -559,6 +562,9 @@ export const queensAdminApi = {
     if (filters?.minimumGroupSize != null) {
       query.set('minimumGroupSize', String(filters.minimumGroupSize));
     }
+    if (filters?.difficulty) {
+      query.set('difficulty', filters.difficulty);
+    }
 
     const response = await fetch(
       `/api/queens/admin/generation/catalog-random-puzzle${query.size > 0 ? `?${query.toString()}` : ''}`
@@ -570,11 +576,21 @@ export const queensAdminApi = {
     return toCatalogPuzzleSelection((await response.json()) as CatalogPuzzleSelectionDto);
   },
 
+  async getCatalogPuzzleById(puzzleId: string): Promise<QueensAdminCatalogPuzzleSelection | null> {
+    const response = await fetch(`/api/queens/admin/generation/catalog-puzzle/${puzzleId}`);
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      throw new Error('Failed to load the requested catalog puzzle');
+    }
+    return toCatalogPuzzleSelection((await response.json()) as CatalogPuzzleSelectionDto);
+  },
+
   async deletePuzzleCatalogGroup(group: {
     size: number;
     orthogonalMinDistance: number;
     targetQueenCount: number;
     minimumGroupSize: number;
+    difficulty?: QueensAdminPuzzleDifficulty;
   }): Promise<number> {
     const response = await fetch('/api/queens/admin/generation/catalog-groups/delete', {
       method: 'POST',

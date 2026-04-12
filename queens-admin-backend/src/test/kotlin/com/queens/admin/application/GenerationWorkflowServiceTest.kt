@@ -18,6 +18,7 @@ import com.queens.admin.domain.service.SolverRuleRegistry
 import com.queens.admin.domain.service.SolverPatternService
 import com.queens.admin.domain.service.ValidatedPuzzleGenerationService
 import com.queens.admin.domain.solver.rules.AxisIsolationForcedQueenRule
+import com.queens.admin.domain.solver.rules.ConstrainedLinesRule
 import com.queens.admin.domain.solver.rules.ConstrainedWindowRule
 import com.queens.admin.domain.solver.rules.FlagAssumptionContradictionRule
 import com.queens.admin.domain.solver.rules.FlagSquaresWithoutColorGroupsRule
@@ -42,15 +43,18 @@ class GenerationWorkflowServiceTest {
             ForcedCoverageQueenRule(deterministicSolverSupportService),
             AxisIsolationForcedQueenRule(deterministicSolverSupportService),
             GroupConfinedToLineRule(deterministicSolverSupportService),
+            ConstrainedLinesRule(deterministicSolverSupportService),
             QueenAssumptionContradictionRule(deterministicSolverSupportService),
             FlagAssumptionContradictionRule(deterministicSolverSupportService),
             ConstrainedWindowRule(deterministicSolverSupportService),
         ),
     )
     private val solverEngine = SolverEngine(solverRuleRegistry, deterministicSolverSupportService)
+    private val solverPatternService = SolverPatternService(deterministicSolverSupportService)
     private val deterministicPuzzleAnalysisService = DeterministicPuzzleAnalysisService(
         solverEngine = solverEngine,
         solverSupportService = deterministicSolverSupportService,
+        solverPatternService = solverPatternService,
     )
     private val validatedPuzzleGenerationService = ValidatedPuzzleGenerationService(
         boardFactoryService = boardFactoryService,
@@ -69,7 +73,7 @@ class GenerationWorkflowServiceTest {
         solverEngine = solverEngine,
         boardValidationService = boardValidationService,
         deterministicSolverSupportService = deterministicSolverSupportService,
-        solverPatternService = SolverPatternService(deterministicSolverSupportService),
+        solverPatternService = solverPatternService,
     )
 
     @Test

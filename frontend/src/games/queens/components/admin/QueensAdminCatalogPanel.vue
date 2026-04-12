@@ -14,7 +14,7 @@
         />
       </template>
 
-      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <label class="space-y-2 text-sm text-semantic-neutral-300">
           <span class="block">Search</span>
           <InputText v-model="searchText" class="w-full" placeholder="Search values" />
@@ -75,6 +75,18 @@
             </option>
           </select>
         </label>
+        <label class="space-y-2 text-sm text-semantic-neutral-300">
+          <span class="block">Difficulty</span>
+          <select
+            v-model="selectedDifficulty"
+            class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm text-white"
+          >
+            <option value="">All difficulties</option>
+            <option v-for="difficulty in difficultyOptions" :key="difficulty" :value="difficulty">
+              {{ formatDifficulty(difficulty) }}
+            </option>
+          </select>
+        </label>
       </div>
 
       <div class="mt-5 grid gap-3 md:grid-cols-3">
@@ -120,6 +132,11 @@
           <Column field="orthogonalMinDistance" header="Min Distance" sortable />
           <Column field="targetQueenCount" header="Queens" sortable />
           <Column field="minimumGroupSize" header="Min Group Size" sortable />
+          <Column field="difficultySortKey" header="Difficulty" sortable>
+            <template #body="{ data }">
+              {{ formatDifficulty(data.difficulty) }}
+            </template>
+          </Column>
           <Column field="count" header="Puzzle Count" sortable />
           <Column header="Actions" :exportable="false">
             <template #body="{ data }">
@@ -131,6 +148,14 @@
                   @click="openRandomCatalogPuzzle(data)"
                 >
                   {{ openingGroupKey === data.groupKey ? 'Opening…' : 'Play Random' }}
+                </button>
+                <button
+                  type="button"
+                  :disabled="openingGroupKey === data.groupKey"
+                  class="inline-flex items-center justify-center rounded-md border border-semantic-success-700 bg-feedback-successSubtle px-3 py-2 text-sm font-medium text-semantic-success-100 transition hover:bg-feedback-successSoft"
+                  @click="openRandomCatalogPuzzleInSolver(data)"
+                >
+                  {{ openingGroupKey === data.groupKey ? 'Opening…' : 'Open In Solver' }}
                 </button>
                 <Button
                   size="small"
@@ -161,6 +186,7 @@
           <div>Min distance: {{ groupPendingDelete.orthogonalMinDistance }}</div>
           <div>Queens: {{ groupPendingDelete.targetQueenCount }}</div>
           <div>Min group size: {{ groupPendingDelete.minimumGroupSize }}</div>
+          <div>Difficulty: {{ formatDifficulty(groupPendingDelete.difficulty) }}</div>
           <div class="mt-2 font-semibold text-white">
             {{ groupPendingDelete.count }} puzzle{{ groupPendingDelete.count === 1 ? '' : 's' }}
           </div>
@@ -197,6 +223,7 @@ import AdminPanel from './AdminPanel.vue';
 import AdminStat from './AdminStat.vue';
 import { queensAdminApi } from '../../admin/api';
 import type {
+  QueensAdminPuzzleDifficulty,
   QueensAdminPuzzleCatalogGroup,
   QueensAdminPuzzleCatalogStats,
 } from '../../admin/types';
@@ -204,6 +231,7 @@ import { buildQueensSelectionRoute } from '../../utils/puzzleSelectionRoute';
 
 type PuzzleCatalogRow = QueensAdminPuzzleCatalogGroup & {
   groupKey: string;
+  difficultySortKey: number;
   searchText: string;
 };
 
@@ -216,6 +244,7 @@ const selectedSize = ref('');
 const selectedDistance = ref('');
 const selectedQueenCount = ref('');
 const selectedMinimumGroupSize = ref('');
+const selectedDifficulty = ref('');
 const deleteDialogVisible = ref(false);
 const groupPendingDelete = ref<PuzzleCatalogRow | null>(null);
 const deletingGroupKey = ref<string | null>(null);
@@ -230,12 +259,15 @@ const groups = computed<PuzzleCatalogRow[]>(() =>
       group.orthogonalMinDistance,
       group.targetQueenCount,
       group.minimumGroupSize,
+      group.difficulty ?? 'unknown',
     ].join(':'),
+    difficultySortKey: difficultySortKey(group.difficulty),
     searchText: [
       `${group.size}x${group.size}`,
       group.orthogonalMinDistance,
       group.targetQueenCount,
       group.minimumGroupSize,
+      formatDifficulty(group.difficulty),
       group.count,
     ]
       .join(' ')
@@ -253,6 +285,12 @@ const queenCountOptions = computed(() =>
 const minimumGroupSizeOptions = computed(() =>
   uniqueNumbers(groups.value.map((group) => group.minimumGroupSize))
 );
+const difficultyOptions = computed(() => {
+  const values = [
+    ...new Set(groups.value.map((group) => group.difficulty).filter(Boolean)),
+  ] as QueensAdminPuzzleDifficulty[];
+  return values.sort((left, right) => difficultySortKey(left) - difficultySortKey(right));
+});
 
 const filteredGroups = computed(() => {
   const query = searchText.value.trim().toLowerCase();
@@ -271,10 +309,33 @@ const filteredGroups = computed(() => {
     ) {
       return false;
     }
+    if (selectedDifficulty.value && group.difficulty !== selectedDifficulty.value) {
+      return false;
+    }
     if (query && !group.searchText.includes(query)) return false;
     return true;
   });
 });
+
+function difficultySortKey(difficulty?: QueensAdminPuzzleDifficulty): number {
+  switch (difficulty) {
+    case 'easy':
+      return 0;
+    case 'medium':
+      return 1;
+    case 'hard':
+      return 2;
+    case 'unsolvable':
+      return 3;
+    default:
+      return 4;
+  }
+}
+
+function formatDifficulty(difficulty?: QueensAdminPuzzleDifficulty): string {
+  if (!difficulty) return 'Unknown';
+  return difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+}
 
 function uniqueNumbers(values: number[]): number[] {
   return [...new Set(values)].sort((left, right) => left - right);
@@ -303,7 +364,7 @@ async function openRandomCatalogPuzzle(group: PuzzleCatalogRow): Promise<void> {
   openingGroupKey.value = group.groupKey;
   errorMessage.value = null;
 
-  const popup = window.open('', '_blank', 'noopener,noreferrer');
+  const popup = window.open('about:blank', '_blank');
 
   try {
     const selection = await queensAdminApi.getRandomCatalogPuzzle({
@@ -311,6 +372,7 @@ async function openRandomCatalogPuzzle(group: PuzzleCatalogRow): Promise<void> {
       orthogonalMinDistance: group.orthogonalMinDistance,
       targetQueenCount: group.targetQueenCount,
       minimumGroupSize: group.minimumGroupSize,
+      difficulty: group.difficulty,
     });
 
     if (!selection) {
@@ -322,7 +384,7 @@ async function openRandomCatalogPuzzle(group: PuzzleCatalogRow): Promise<void> {
     }
 
     const href = router.resolve({
-      ...(selection.difficulty
+      ...(selection.difficulty && selection.difficulty !== 'unsolvable'
         ? buildQueensSelectionRoute({
             sizeKey: `${selection.size}x${selection.size}`,
             orthogonalMinDistance: selection.orthogonalMinDistance,
@@ -354,6 +416,51 @@ async function openRandomCatalogPuzzle(group: PuzzleCatalogRow): Promise<void> {
   }
 }
 
+async function openRandomCatalogPuzzleInSolver(group: PuzzleCatalogRow): Promise<void> {
+  openingGroupKey.value = group.groupKey;
+  errorMessage.value = null;
+
+  const popup = window.open('about:blank', '_blank');
+
+  try {
+    const selection = await queensAdminApi.getRandomCatalogPuzzle({
+      size: group.size,
+      orthogonalMinDistance: group.orthogonalMinDistance,
+      targetQueenCount: group.targetQueenCount,
+      minimumGroupSize: group.minimumGroupSize,
+      difficulty: group.difficulty,
+    });
+
+    if (!selection) {
+      if (popup) {
+        popup.close();
+      }
+      errorMessage.value = 'No puzzle matched that catalog category.';
+      return;
+    }
+
+    const href = router.resolve({
+      name: 'queens-admin-solver',
+      query: { puzzleId: selection.puzzleId },
+    }).href;
+
+    if (popup) {
+      popup.location.href = href;
+      return;
+    }
+
+    window.open(href, '_blank', 'noopener,noreferrer');
+  } catch (error) {
+    if (popup) {
+      popup.close();
+    }
+    errorMessage.value =
+      error instanceof Error ? error.message : 'Failed to open a random catalog puzzle in solver';
+  } finally {
+    openingGroupKey.value = null;
+  }
+}
+
 async function confirmDelete(): Promise<void> {
   if (!groupPendingDelete.value) return;
 
@@ -368,6 +475,7 @@ async function confirmDelete(): Promise<void> {
       orthogonalMinDistance: group.orthogonalMinDistance,
       targetQueenCount: group.targetQueenCount,
       minimumGroupSize: group.minimumGroupSize,
+      difficulty: group.difficulty,
     });
 
     successMessage.value =

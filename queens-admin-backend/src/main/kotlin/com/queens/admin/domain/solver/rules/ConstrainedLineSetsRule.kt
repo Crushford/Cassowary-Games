@@ -11,36 +11,34 @@ import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 
 @Component
-@Order(30)
-class ConstrainedLinesRule(
+@Order(31)
+class ConstrainedLineSetsRule(
     private val solverSupportService: DeterministicSolverSupportService,
 ) : SolverRule {
-    override val ruleName: String = "constrained-lines"
-    override val difficultyTier: SolverDifficultyTier = SolverDifficultyTier.MEDIUM
+    override val ruleName: String = "constrained-line-sets"
+    override val difficultyTier: SolverDifficultyTier = SolverDifficultyTier.EXTRA_HARD
 
     override fun apply(boardState: BoardState): SolverStep? {
-        findConstrainedBand(boardState, isColumn = false)?.let { return it }
-        findConstrainedBand(boardState, isColumn = true)?.let { return it }
+        findConstrainedLineSet(boardState, isColumn = false)?.let { return it }
+        findConstrainedLineSet(boardState, isColumn = true)?.let { return it }
         return null
     }
 
-    private fun findConstrainedBand(boardState: BoardState, isColumn: Boolean): SolverStep? {
+    private fun findConstrainedLineSet(boardState: BoardState, isColumn: Boolean): SolverStep? {
         val size = boardState.size
         val distance = solverSupportService.ruleset(boardState).orthogonalMinDistance.coerceAtMost(size)
+        if (distance <= 0 || size < 2) return null
+
         val groupedPositions = solverSupportService.groupedPositions(boardState)
         val axisLabel = if (isColumn) "column" else "row"
         val windowLabel = if (isColumn) "rows" else "cols"
+        val secondaryLimit = size - distance
+        if (secondaryLimit < 0) return null
 
-        if (distance <= 0) return null
-
-        val bandSizes = (2..size).toList() + listOf(1)
-        for (bandSize in bandSizes) {
-            val primaryLimit = size - bandSize
-            val secondaryLimit = size - distance
-            if (primaryLimit < 0 || secondaryLimit < 0) continue
-
-            for (primaryStart in 0..primaryLimit) {
-                val primaryRange = primaryStart until (primaryStart + bandSize)
+        for (lineCount in 2..size) {
+            for (selectedLines in lineCombinations(size, lineCount)) {
+                if (selectedLines.last() - selectedLines.first() + 1 > distance) continue
+                if (isConsecutive(selectedLines)) continue
 
                 for (secondaryStart in 0..secondaryLimit) {
                     val secondaryRange = secondaryStart until (secondaryStart + distance)
@@ -56,24 +54,21 @@ class ConstrainedLinesRule(
                         if (candidates.isEmpty()) {
                             return@mapNotNull null
                         }
-                        if (bandSize == 1 && candidates.size <= 1) {
-                            return@mapNotNull null
-                        }
 
-                        val insideBand = candidates.all { candidate ->
+                        val insideSet = candidates.all { candidate ->
                             val primaryCoordinate = if (isColumn) candidate.col else candidate.row
                             val secondaryCoordinate = if (isColumn) candidate.row else candidate.col
-                            primaryCoordinate in primaryRange && secondaryCoordinate in secondaryRange
+                            primaryCoordinate in selectedLines && secondaryCoordinate in secondaryRange
                         }
 
-                        color.takeIf { insideBand }
+                        color.takeIf { insideSet }
                     }
 
-                    if (confinedColors.size != bandSize) continue
+                    if (confinedColors.size != lineCount) continue
 
                     var updatedBoard = boardState
                     val changedCells = mutableListOf<ChangedCell>()
-                    for (primary in primaryRange) {
+                    for (primary in selectedLines) {
                         for (secondary in secondaryRange) {
                             val row = if (isColumn) secondary else primary
                             val col = if (isColumn) primary else secondary
@@ -87,10 +82,10 @@ class ConstrainedLinesRule(
                                 row = row,
                                 col = col,
                                 explanation =
-                                    "outside confined $axisLabel band ${primaryRange.first}-${primaryRange.last} " +
+                                    "outside confined $axisLabel set ${selectedLines.joinToString(", ")} " +
                                         "within $windowLabel ${secondaryRange.first}-${secondaryRange.last} " +
                                         "reserved for colors ${confinedColors.sorted().joinToString(", ")}",
-                                changeType = "SOLVER_CONSTRAINED_${axisLabel.uppercase()}_FLAG",
+                                changeType = "SOLVER_CONSTRAINED_${axisLabel.uppercase()}_SET_FLAG",
                             )
                             updatedBoard = nextBoard
                             changedCells += nextChanges
@@ -103,7 +98,7 @@ class ConstrainedLinesRule(
                             difficultyTier = difficultyTier,
                             explanation =
                                 "Flagged ${changedCells.size} square${if (changedCells.size == 1) "" else "s"} " +
-                                    "using constrained $axisLabel band ${primaryRange.first}-${primaryRange.last} " +
+                                    "using constrained $axisLabel set ${selectedLines.joinToString(", ")} " +
                                     "within $windowLabel ${secondaryRange.first}-${secondaryRange.last} for colors " +
                                     confinedColors.sorted().joinToString(", ") + ".",
                             boardState = updatedBoard,
@@ -115,5 +110,27 @@ class ConstrainedLinesRule(
         }
 
         return null
+    }
+
+    private fun isConsecutive(lines: List<Int>): Boolean = lines.zipWithNext().all { (left, right) -> right == left + 1 }
+
+    private fun lineCombinations(size: Int, count: Int): List<List<Int>> {
+        val results = mutableListOf<List<Int>>()
+
+        fun build(next: Int, remaining: Int, current: MutableList<Int>) {
+            if (remaining == 0) {
+                results += current.toList()
+                return
+            }
+
+            for (value in next..(size - remaining)) {
+                current += value
+                build(value + 1, remaining - 1, current)
+                current.removeAt(current.lastIndex)
+            }
+        }
+
+        build(next = 0, remaining = count, current = mutableListOf())
+        return results
     }
 }

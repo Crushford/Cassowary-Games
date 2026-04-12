@@ -51,7 +51,7 @@ class SolverWorkflowService(
     }
 
     fun runSpecificSolverRule(boardState: BoardState, ruleName: String): OperationResult {
-        logger.info(
+        logger.debug(
             "[SolverWorkflowService] runSpecificSolverRule ruleName={} size={} queensPlaced={} targetQueenCount={} flagsPlaced={}",
             ruleName,
             boardState.size,
@@ -61,7 +61,7 @@ class SolverWorkflowService(
         )
         val solverResult = solverEngine.runSpecificRule(boardState, ruleName)
         val validation = boardValidationService.validate(solverResult.boardState)
-        logger.info(
+        logger.debug(
             "[SolverWorkflowService] runSpecificSolverRule result ruleName={} progressMade={} changedCells={} explanation={}",
             ruleName,
             solverResult.progressMade,

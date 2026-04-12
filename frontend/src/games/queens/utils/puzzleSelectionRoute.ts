@@ -1,4 +1,4 @@
-export type QueensSelectionDifficulty = 'easy' | 'medium' | 'hard';
+export type QueensSelectionDifficulty = 'easy' | 'medium' | 'hard' | 'extra-hard';
 
 interface QueensSelectionRouteInput {
   sizeKey: string;
@@ -12,7 +12,7 @@ interface QueensSelectionRouteInput {
 export function isQueensSelectionDifficulty(
   value: string | null | undefined
 ): value is QueensSelectionDifficulty {
-  return value === 'easy' || value === 'medium' || value === 'hard';
+  return value === 'easy' || value === 'medium' || value === 'hard' || value === 'extra-hard';
 }
 
 export function buildQueensSelectionPath({
