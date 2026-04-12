@@ -137,6 +137,8 @@ interface BatchGenerationRunDto {
   persistenceMessage: string | null;
   savedPuzzleId: string | null;
   encodedPuzzleLayout: string | null;
+  completedQueenCount: number | null;
+  difficulty: QueensAdminPuzzleDifficulty | null;
 }
 
 interface BatchGenerationStatusDto {
@@ -350,6 +352,8 @@ function toBatchStatus(data: BatchGenerationStatusDto): QueensAdminBatchStatus {
       persistenceMessage: run.persistenceMessage,
       savedPuzzleId: run.savedPuzzleId,
       encodedPuzzleLayout: run.encodedPuzzleLayout,
+      completedQueenCount: run.completedQueenCount,
+      difficulty: run.difficulty,
     })),
     updatedAt: data.updatedAt,
   };

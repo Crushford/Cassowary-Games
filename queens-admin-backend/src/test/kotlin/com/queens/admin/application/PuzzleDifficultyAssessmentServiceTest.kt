@@ -11,6 +11,7 @@ import com.queens.admin.domain.service.SolverPatternService
 import com.queens.admin.domain.service.SolverRuleRegistry
 import com.queens.admin.domain.solver.rules.AxisIsolationForcedQueenRule
 import com.queens.admin.domain.solver.rules.ConstrainedLinesRule
+import com.queens.admin.domain.solver.rules.ConstrainedLineSetsRule
 import com.queens.admin.domain.solver.rules.ConstrainedWindowRule
 import com.queens.admin.domain.solver.rules.FlagAssumptionContradictionRule
 import com.queens.admin.domain.solver.rules.FlagSquaresWithoutColorGroupsRule
@@ -36,6 +37,7 @@ class PuzzleDifficultyAssessmentServiceTest {
             AxisIsolationForcedQueenRule(deterministicSolverSupportService),
             GroupConfinedToLineRule(deterministicSolverSupportService),
             ConstrainedLinesRule(deterministicSolverSupportService),
+            ConstrainedLineSetsRule(deterministicSolverSupportService),
             QueenAssumptionContradictionRule(deterministicSolverSupportService),
             FlagAssumptionContradictionRule(deterministicSolverSupportService),
             ConstrainedWindowRule(deterministicSolverSupportService),
@@ -163,6 +165,35 @@ class PuzzleDifficultyAssessmentServiceTest {
         assertEquals(7, result.finalQueensPlaced)
         assertTrue(result.unresolvedSquares >= 0)
         assertTrue(result.difficultyTier in PuzzleDifficultyTier.entries)
+    }
+
+    @Test
+    fun `assess treats uncolored squares like flagged squares during solving`() {
+        val puzzle = persistedPuzzle(
+            layout =
+                "A..B" +
+                    "...." +
+                    "...." +
+                    "C..D",
+            queens =
+                "Q..Q" +
+                    "...." +
+                    "...." +
+                    "Q..Q",
+        )
+        val result = deterministicPuzzleAnalysisService.assessDifficulty(
+            deterministicPuzzleAnalysisService.withRuleset(
+                boardState = persistedPuzzleBoardCodecService.decode(puzzle),
+                ruleset = QueensRuleset(
+                    orthogonalMinDistance = puzzle.orthogonalMinDistance,
+                    requireRowCoverage = false,
+                    requireColumnCoverage = false,
+                ),
+                targetQueenCount = puzzle.targetQueenCount,
+            ),
+        )
+
+        assertTrue(result.solverResult.steps.any { step -> step.ruleName == "flag-squares-without-color-groups" })
     }
 
     private fun persistedPuzzle(

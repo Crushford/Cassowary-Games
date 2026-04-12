@@ -567,6 +567,7 @@
                   <th class="px-3 py-2">Min Distance</th>
                   <th class="px-3 py-2">Strategy</th>
                   <th class="px-3 py-2">State</th>
+                  <th class="px-3 py-2">Completed Puzzle</th>
                   <th class="px-3 py-2">Puzzle</th>
                   <th class="px-3 py-2">Fill</th>
                   <th class="px-3 py-2">Duration</th>
@@ -585,6 +586,20 @@
                   <td class="px-3 py-2">{{ run.orthogonalMinDistance }}</td>
                   <td class="px-3 py-2">{{ strategyLabel(run.strategy) }}</td>
                   <td class="px-3 py-2">{{ run.state }}</td>
+                  <td class="px-3 py-2">
+                    <div v-if="run.completedQueenCount != null || run.difficulty" class="space-y-1">
+                      <div
+                        v-if="run.completedQueenCount != null"
+                        class="text-xs text-semantic-neutral-200"
+                      >
+                        {{ run.completedQueenCount }} queens
+                      </div>
+                      <div v-if="run.difficulty" class="text-xs font-semibold text-white">
+                        {{ formatDifficultyLabel(run.difficulty) }}
+                      </div>
+                    </div>
+                    <span v-else>—</span>
+                  </td>
                   <td class="px-3 py-2">
                     <div class="flex flex-wrap gap-2">
                       <a
@@ -910,6 +925,13 @@ function formatPersistence(run: QueensAdminBatchRun): string {
 
 function batchRunPlayHref(run: QueensAdminBatchRun): string | null {
   return run.encodedPuzzleLayout ? `/queens/puzzle/${run.encodedPuzzleLayout}` : null;
+}
+
+function formatDifficultyLabel(difficulty: string): string {
+  return difficulty
+    .split('-')
+    .map((part) => (part ? `${part[0].toUpperCase()}${part.slice(1)}` : part))
+    .join(' ');
 }
 
 function batchRunShareUrl(run: QueensAdminBatchRun): string | null {

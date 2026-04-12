@@ -19,6 +19,7 @@ import com.queens.admin.domain.service.SolverPatternService
 import com.queens.admin.domain.service.ValidatedPuzzleGenerationService
 import com.queens.admin.domain.solver.rules.AxisIsolationForcedQueenRule
 import com.queens.admin.domain.solver.rules.ConstrainedLinesRule
+import com.queens.admin.domain.solver.rules.ConstrainedLineSetsRule
 import com.queens.admin.domain.solver.rules.ConstrainedWindowRule
 import com.queens.admin.domain.solver.rules.FlagAssumptionContradictionRule
 import com.queens.admin.domain.solver.rules.FlagSquaresWithoutColorGroupsRule
@@ -44,6 +45,7 @@ class GenerationWorkflowServiceTest {
             AxisIsolationForcedQueenRule(deterministicSolverSupportService),
             GroupConfinedToLineRule(deterministicSolverSupportService),
             ConstrainedLinesRule(deterministicSolverSupportService),
+            ConstrainedLineSetsRule(deterministicSolverSupportService),
             QueenAssumptionContradictionRule(deterministicSolverSupportService),
             FlagAssumptionContradictionRule(deterministicSolverSupportService),
             ConstrainedWindowRule(deterministicSolverSupportService),

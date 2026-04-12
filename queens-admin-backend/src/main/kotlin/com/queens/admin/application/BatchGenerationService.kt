@@ -45,6 +45,8 @@ data class BatchGenerationRunSnapshot(
     val persistenceMessage: String? = null,
     val savedPuzzleId: String? = null,
     val encodedPuzzleLayout: String? = null,
+    val completedQueenCount: Int? = null,
+    val difficulty: String? = null,
 )
 
 data class BatchGenerationBatchSnapshot(
@@ -72,6 +74,8 @@ class BatchGenerationService(
     private val puzzleCatalogService: PuzzleCatalogService,
     private val persistedPuzzleBoardCodecService: com.queens.admin.domain.service.PersistedPuzzleBoardCodecService,
 ) {
+    private fun com.queens.admin.domain.model.PuzzleDifficultyTier.toApiValue(): String = name.lowercase().replace('_', '-')
+
     private val coordinatorExecutor = Executors.newCachedThreadPool()
     private val workerExecutor = Executors.newCachedThreadPool()
     private val batches = ConcurrentHashMap<String, BatchRuntime>()
@@ -240,6 +244,9 @@ class BatchGenerationService(
                         finishedAt = Instant.now()
                         val latestRunSnapshot =
                             runtime.snapshot.get().runs.firstOrNull { it.runId == runSnapshot.runId } ?: runSnapshot
+                        val completedQueenCount = result.boardState?.cells?.sumOf { row ->
+                            row.count { cell -> cell.isSolutionQueen }
+                        }
                         val persistenceResult =
                             if (result.success && runtime.snapshot.get().saveSuccessfulPuzzles && result.boardState != null) {
                                 puzzleCatalogService.saveGeneratedPuzzleIfUnique(
@@ -249,6 +256,19 @@ class BatchGenerationService(
                                 )
                             } else {
                                 null
+                            }
+                        val assessedDifficulty =
+                            when {
+                                persistenceResult?.puzzle?.difficultyTier != null -> persistenceResult.puzzle.difficultyTier?.toApiValue()
+                                result.success && result.boardState != null -> puzzleCatalogService
+                                    .assessGeneratedPuzzle(
+                                        boardState = result.boardState,
+                                        minimumGroupSize = runSnapshot.minimumGroupSize,
+                                        generationStrategy = runSnapshot.strategy,
+                                    )
+                                    .difficultyTier
+                                    .toApiValue()
+                                else -> null
                             }
                         BatchGenerationRunSnapshot(
                             runId = runSnapshot.runId,
@@ -276,6 +296,8 @@ class BatchGenerationService(
                                 },
                             savedPuzzleId = persistenceResult?.puzzle?.id?.toString(),
                             encodedPuzzleLayout = result.boardState?.let(persistedPuzzleBoardCodecService::encodeUrlLayout),
+                            completedQueenCount = completedQueenCount,
+                            difficulty = assessedDifficulty,
                         )
                     } catch (error: Throwable) {
                         finishedAt = Instant.now()
@@ -303,6 +325,8 @@ class BatchGenerationService(
                                     "Save disabled for this batch."
                                 },
                             encodedPuzzleLayout = null,
+                            completedQueenCount = null,
+                            difficulty = null,
                         )
                     }
                 }

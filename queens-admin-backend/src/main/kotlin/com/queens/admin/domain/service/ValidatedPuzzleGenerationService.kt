@@ -904,7 +904,7 @@ class ValidatedPuzzleGenerationService(
 
     private fun isSolvable(state: GeneratorState): Boolean {
         state.metrics.solverChecks += 1
-        val analysis = deterministicPuzzleAnalysisService.solve(
+        val analysis = deterministicPuzzleAnalysisService.assessDifficulty(
             boardState = deterministicPuzzleAnalysisService.withRuleset(
                 boardState = state.grid,
                 ruleset = state.ruleset,
@@ -912,7 +912,7 @@ class ValidatedPuzzleGenerationService(
             ),
         )
         updateDeterministicMetrics(state, analysis)
-        return analysis.solved
+        return analysis.solved && analysis.difficultyTier != com.queens.admin.domain.model.PuzzleDifficultyTier.UNSOLVABLE
     }
 
     private fun updateDeterministicMetrics(
@@ -923,7 +923,7 @@ class ValidatedPuzzleGenerationService(
         state.metrics.deterministicStepsTaken = analysis.stepsTaken
         state.metrics.deterministicQueensPlaced = analysis.finalQueensPlaced
         state.metrics.deterministicUnresolvedSquares = analysis.unresolvedSquares
-        state.metrics.deterministicHardestTier = analysis.hardestTierUsed?.name
+        state.metrics.deterministicHardestTier = analysis.hardestTierUsed?.name?.lowercase()?.replace('_', '-')
         state.metrics.deterministicLastRule = analysis.solverResult.steps.lastOrNull()?.ruleName
     }
 

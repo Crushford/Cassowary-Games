@@ -77,6 +77,19 @@ class PuzzleCatalogService(
     fun save(persistedPuzzle: PersistedPuzzle): PersistedPuzzle =
         puzzleRepository.insert(persistedPuzzle)
 
+    fun assessGeneratedPuzzle(
+        boardState: BoardState,
+        minimumGroupSize: Int,
+        generationStrategy: String,
+    ): PuzzleDifficultyAssessmentService.AssessmentResult =
+        puzzleDifficultyAssessmentService.assess(
+            buildGeneratedPersistedPuzzle(
+                boardState = boardState,
+                minimumGroupSize = minimumGroupSize,
+                generationStrategy = generationStrategy,
+            ),
+        )
+
     fun saveGeneratedPuzzleIfUnique(
         boardState: BoardState,
         minimumGroupSize: Int,
@@ -96,19 +109,12 @@ class PuzzleCatalogService(
             )
         }
 
-        val persistedPuzzle =
-            PersistedPuzzle(
-                id = UUID.randomUUID(),
-                size = boardState.size,
-                layout = encodedPuzzle.layout,
-                queens = encodedPuzzle.queens,
-                targetQueenCount = QueensBoardMetadata.targetQueenCount(boardState),
-                orthogonalMinDistance = QueensBoardMetadata.orthogonalMinDistance(boardState),
-                canonicalSignature = canonicalSignature,
-                minimumGroupSize = minimumGroupSize,
-                generationStrategy = generationStrategy,
-                createdAt = Instant.now(),
-            )
+        val persistedPuzzle = buildGeneratedPersistedPuzzle(
+            boardState = boardState,
+            minimumGroupSize = minimumGroupSize,
+            generationStrategy = generationStrategy,
+            canonicalSignature = canonicalSignature,
+        )
         val assessment = puzzleDifficultyAssessmentService.assess(persistedPuzzle)
         if (assessment.difficultyTier == PuzzleDifficultyTier.UNSOLVABLE) {
             return SaveGeneratedPuzzleResult(
@@ -139,5 +145,31 @@ class PuzzleCatalogService(
                 throw error
             }
         }
+    }
+
+    private fun buildGeneratedPersistedPuzzle(
+        boardState: BoardState,
+        minimumGroupSize: Int,
+        generationStrategy: String,
+        canonicalSignature: String? = null,
+    ): PersistedPuzzle {
+        val encodedPuzzle = canonicalPuzzleSignatureService.encodeBoardState(boardState)
+        val resolvedCanonicalSignature =
+            canonicalSignature ?: canonicalPuzzleSignatureService.computeSignature(
+                encodedPuzzle.layout,
+                encodedPuzzle.queens,
+            )
+        return PersistedPuzzle(
+            id = UUID.randomUUID(),
+            size = boardState.size,
+            layout = encodedPuzzle.layout,
+            queens = encodedPuzzle.queens,
+            targetQueenCount = QueensBoardMetadata.targetQueenCount(boardState),
+            orthogonalMinDistance = QueensBoardMetadata.orthogonalMinDistance(boardState),
+            canonicalSignature = resolvedCanonicalSignature,
+            minimumGroupSize = minimumGroupSize,
+            generationStrategy = generationStrategy,
+            createdAt = Instant.now(),
+        )
     }
 }

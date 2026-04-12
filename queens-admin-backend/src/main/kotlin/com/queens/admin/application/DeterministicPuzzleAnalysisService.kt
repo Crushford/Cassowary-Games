@@ -83,7 +83,14 @@ class DeterministicPuzzleAnalysisService(
         var unlockedTier = SolverDifficultyTier.EASY
         val steps = mutableListOf<SolverStep>()
 
-        while (true) {
+        while (unlockedTier != SolverDifficultyTier.UNSOLVABLE) {
+            val precheckStep = applyPrecheckStep(currentBoard)
+            if (precheckStep != null) {
+                steps += precheckStep
+                currentBoard = precheckStep.boardState
+                continue
+            }
+
             if (solverSupportService.isSolved(currentBoard)) {
                 return buildConfiguredAnalysisResult(
                     boardState = currentBoard,
@@ -110,30 +117,24 @@ class DeterministicPuzzleAnalysisService(
                 continue
             }
 
-            unlockedTier =
-                when (unlockedTier) {
-                    SolverDifficultyTier.EASY -> SolverDifficultyTier.MEDIUM
-                    SolverDifficultyTier.MEDIUM -> SolverDifficultyTier.HARD
-                    SolverDifficultyTier.HARD -> SolverDifficultyTier.EXTRA_HARD
-                    SolverDifficultyTier.EXTRA_HARD -> {
-                        return buildConfiguredAnalysisResult(
-                            boardState = currentBoard,
-                            steps = steps,
-                            solved = false,
-                            unlockedTier = unlockedTier,
-                        )
-                    }
-                    SolverDifficultyTier.PRECHECK -> SolverDifficultyTier.EASY
-                    SolverDifficultyTier.UNSOLVABLE -> {
-                        return buildConfiguredAnalysisResult(
-                            boardState = currentBoard,
-                            steps = steps,
-                            solved = false,
-                            unlockedTier = unlockedTier,
-                        )
-                    }
-                }
+            val nextTier = nextAssessmentTier(unlockedTier)
+            if (nextTier == null) {
+                return buildConfiguredAnalysisResult(
+                    boardState = currentBoard,
+                    steps = steps,
+                    solved = false,
+                    unlockedTier = unlockedTier,
+                )
+            }
+            unlockedTier = nextTier
         }
+
+        return buildConfiguredAnalysisResult(
+            boardState = currentBoard,
+            steps = steps,
+            solved = false,
+            unlockedTier = unlockedTier,
+        )
     }
 
     private fun buildConfiguredAnalysisResult(
@@ -334,6 +335,24 @@ class DeterministicPuzzleAnalysisService(
 
         return null
     }
+
+    private fun applyPrecheckStep(boardState: BoardState): SolverStep? =
+        solverEngine.runSpecificRule(
+            boardState = boardState,
+            ruleName = "flag-squares-without-color-groups",
+            maxDifficultyTier = SolverDifficultyTier.PRECHECK,
+        ).toSingleStepOrNull()
+
+    private fun nextAssessmentTier(currentTier: SolverDifficultyTier): SolverDifficultyTier? =
+        when (currentTier) {
+            SolverDifficultyTier.EASY -> SolverDifficultyTier.MEDIUM
+            SolverDifficultyTier.MEDIUM -> SolverDifficultyTier.HARD
+            SolverDifficultyTier.HARD -> SolverDifficultyTier.EXTRA_HARD
+            SolverDifficultyTier.EXTRA_HARD,
+            SolverDifficultyTier.UNSOLVABLE,
+            SolverDifficultyTier.PRECHECK,
+            -> null
+        }
 
     private fun SolverResult.toSingleStepOrNull(): SolverStep? = steps.firstOrNull()
 

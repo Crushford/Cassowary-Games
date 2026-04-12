@@ -130,6 +130,8 @@ export interface QueensAdminBatchRun {
   persistenceMessage: string | null;
   savedPuzzleId: string | null;
   encodedPuzzleLayout: string | null;
+  completedQueenCount: number | null;
+  difficulty: QueensAdminPuzzleDifficulty | null;
 }
 
 export interface QueensAdminBatchStatus {
