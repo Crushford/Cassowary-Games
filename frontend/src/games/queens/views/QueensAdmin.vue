@@ -72,6 +72,9 @@
             Batch Generate
           </Tab>
           <Tab value="catalog" class="rounded-full px-4 py-2 text-sm font-semibold">Catalog</Tab>
+          <Tab value="max-queens" class="rounded-full px-4 py-2 text-sm font-semibold">
+            Max Queens
+          </Tab>
           <Tab value="solver" class="rounded-full px-4 py-2 text-sm font-semibold">Solver</Tab>
         </TabList>
       </Tabs>
@@ -182,6 +185,13 @@
                 the orthogonal distance also equals board size. Use Exact target for a fixed count,
                 or Maximum that fits to let the backend find the densest legal placement first.
               </p>
+              <p
+                v-if="store.queenCountMode === 'max' && !maxQueenConfigSupported"
+                class="sm:col-span-2 text-xs leading-5 text-semantic-warning-200"
+              >
+                Max mode is only available for {{ selectedBoardSize }}x{{ selectedBoardSize }} with
+                orthogonal distances {{ supportedMaxDistancesLabel }}.
+              </p>
             </div>
 
             <div class="mt-4 space-y-3">
@@ -228,6 +238,7 @@
             <div class="mt-4 grid gap-2">
               <button
                 class="rounded-xl bg-semantic-info-600 px-4 py-2.5 font-semibold text-white hover:bg-semantic-info-500"
+                :disabled="store.loading || !maxGenerationConfigValid"
                 @click="
                   store.createBoard(selectedBoardSize, {
                     queenCountMode: store.queenCountMode,
@@ -240,7 +251,7 @@
               </button>
               <button
                 class="rounded-xl bg-semantic-success-600 px-4 py-2.5 font-semibold text-white hover:bg-semantic-success-500 disabled:cursor-not-allowed disabled:opacity-50"
-                :disabled="store.loading || !templateSeedIsValid"
+                :disabled="store.loading || !templateSeedIsValid || !maxGenerationConfigValid"
                 @click="generateBoardFromWorkshop"
               >
                 Generate Full Board
@@ -1220,6 +1231,7 @@
 
       <QueensAdminBatchPanel v-else-if="activeTab === 'batch'" />
       <QueensAdminCatalogPanel v-else-if="activeTab === 'catalog'" />
+      <QueensAdminMaxQueensPanel v-else-if="activeTab === 'max-queens'" />
       <QueensAdminSolverPanel v-else />
     </div>
   </div>
@@ -1246,9 +1258,14 @@ import {
   loadQueensAdminWorkshopInputs,
   saveQueensAdminWorkshopInputs,
 } from '../admin/inputPersistence';
+import {
+  hasPrecomputedMaxQueenCount,
+  supportedPrecomputedDistances,
+} from '../admin/maxQueenCounts';
 import AdminStat from '../components/admin/AdminStat.vue';
 import QueensAdminBatchPanel from '../components/admin/QueensAdminBatchPanel.vue';
 import QueensAdminCatalogPanel from '../components/admin/QueensAdminCatalogPanel.vue';
+import QueensAdminMaxQueensPanel from '../components/admin/QueensAdminMaxQueensPanel.vue';
 import QueensAdminSolverPanel from '../components/admin/QueensAdminSolverPanel.vue';
 import { useQueensAdminStore } from '../stores/queensAdminStore';
 import { useQueensStore } from '../stores/queensStore';
@@ -1313,31 +1330,41 @@ store.generationStrategy = persistedWorkshopInputs?.generationStrategy ?? store.
 store.selectedTool = persistedWorkshopInputs?.selectedTool ?? store.selectedTool;
 store.selectedColor = persistedWorkshopInputs?.selectedColor ?? store.selectedColor;
 
-const activeTab = computed<'workshop' | 'batch' | 'catalog' | 'solver'>(() =>
+const activeTab = computed<'workshop' | 'batch' | 'catalog' | 'max-queens' | 'solver'>(() =>
   route.name === 'queens-admin-batch'
     ? 'batch'
     : route.name === 'queens-admin-catalog'
       ? 'catalog'
-      : route.name === 'queens-admin-solver'
-        ? 'solver'
-        : 'workshop'
+      : route.name === 'queens-admin-max-queens'
+        ? 'max-queens'
+        : route.name === 'queens-admin-solver'
+          ? 'solver'
+          : 'workshop'
 );
 
-function setActiveTab(tab: 'workshop' | 'batch' | 'catalog' | 'solver'): void {
+function setActiveTab(tab: 'workshop' | 'batch' | 'catalog' | 'max-queens' | 'solver'): void {
   const targetRouteName =
     tab === 'batch'
       ? 'queens-admin-batch'
       : tab === 'catalog'
         ? 'queens-admin-catalog'
-        : tab === 'solver'
-          ? 'queens-admin-solver'
-          : 'queens-admin-workshop';
+        : tab === 'max-queens'
+          ? 'queens-admin-max-queens'
+          : tab === 'solver'
+            ? 'queens-admin-solver'
+            : 'queens-admin-workshop';
   if (route.name === targetRouteName) return;
   void router.push({ name: targetRouteName });
 }
 
 function handleActiveTabChange(value: string | number | undefined): void {
-  if (value === 'workshop' || value === 'batch' || value === 'catalog' || value === 'solver') {
+  if (
+    value === 'workshop' ||
+    value === 'batch' ||
+    value === 'catalog' ||
+    value === 'max-queens' ||
+    value === 'solver'
+  ) {
     setActiveTab(value);
   }
 }
@@ -1542,6 +1569,19 @@ const templateSeedOffsets = computed(() => {
     }))
     .sort((left, right) => left.row - right.row || left.col - right.col);
 });
+
+const maxQueenConfigSupported = computed(() =>
+  hasPrecomputedMaxQueenCount(selectedBoardSize.value, store.orthogonalMinDistance)
+);
+
+const supportedMaxDistancesLabel = computed(() => {
+  const supportedDistances = supportedPrecomputedDistances(selectedBoardSize.value);
+  return supportedDistances.length > 0 ? supportedDistances.join(', ') : 'none yet';
+});
+
+const maxGenerationConfigValid = computed(
+  () => store.queenCountMode !== 'max' || maxQueenConfigSupported.value
+);
 
 const templateSeedIsValid = computed(() => {
   return (

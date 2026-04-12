@@ -12,6 +12,7 @@ import { isSolverDifficulty } from './solverDifficulty';
 
 const WORKSHOP_INPUTS_KEY = 'queens-admin-workshop-inputs-v2';
 const BATCH_INPUTS_KEY = 'queens-admin-batch-inputs-v2';
+const MAX_QUEENS_INPUTS_KEY = 'queens-admin-max-queens-inputs-v1';
 const SOLVER_INPUTS_KEY = 'queens-admin-solver-inputs-v1';
 const SOLVER_SESSION_KEY = 'queens-admin-solver-session-v1';
 const VALID_STRATEGIES: QueensAdminGenerationStrategy[] = [
@@ -69,6 +70,12 @@ export type QueensAdminSolverInputs = {
   autoRunSingleColorAfterSolverAction: boolean;
   stepDifficulties: Record<string, QueensAdminDifficulty>;
   runAllDifficultyThreshold: QueensAdminDifficulty;
+};
+
+export type QueensAdminMaxQueensInputs = {
+  sizesInput: string;
+  distancesInput: string;
+  maxConcurrentJobs: number;
 };
 
 export type QueensAdminSolverSession = {
@@ -282,6 +289,35 @@ export function loadQueensAdminBatchInputs(): Partial<QueensAdminBatchInputs> | 
 
 export function saveQueensAdminBatchInputs(value: QueensAdminBatchInputs): void {
   writeJson(BATCH_INPUTS_KEY, value);
+}
+
+export function loadQueensAdminMaxQueensInputs(): Partial<QueensAdminMaxQueensInputs> | null {
+  const parsed = readJson(MAX_QUEENS_INPUTS_KEY);
+  if (!parsed || typeof parsed !== 'object') return null;
+
+  const sizesInput =
+    typeof (parsed as { sizesInput?: unknown }).sizesInput === 'string'
+      ? (parsed as { sizesInput: string }).sizesInput
+      : null;
+  const distancesInput =
+    typeof (parsed as { distancesInput?: unknown }).distancesInput === 'string'
+      ? (parsed as { distancesInput: string }).distancesInput
+      : null;
+  const maxConcurrentJobs = clampInteger(
+    (parsed as { maxConcurrentJobs?: unknown }).maxConcurrentJobs,
+    1,
+    32
+  );
+
+  return {
+    ...(sizesInput != null ? { sizesInput } : {}),
+    ...(distancesInput != null ? { distancesInput } : {}),
+    ...(maxConcurrentJobs != null ? { maxConcurrentJobs } : {}),
+  };
+}
+
+export function saveQueensAdminMaxQueensInputs(value: QueensAdminMaxQueensInputs): void {
+  writeJson(MAX_QUEENS_INPUTS_KEY, value);
 }
 
 export function loadQueensAdminSolverInputs(): Partial<QueensAdminSolverInputs> | null {

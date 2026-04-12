@@ -150,7 +150,10 @@
             label="Start Batch"
             severity="success"
             :disabled="
-              store.batchLoading || parsedSizes.length === 0 || selectedStrategies.length === 0
+              store.batchLoading ||
+              parsedSizes.length === 0 ||
+              selectedStrategies.length === 0 ||
+              !maxBatchConfigValid
             "
             @click="startBatch"
           />
@@ -170,6 +173,14 @@
 
         <AdminMessage v-if="parsedSizes.length === 0" severity="warn" class="mt-4">
           Enter at least one valid size between 4 and 20.
+        </AdminMessage>
+        <AdminMessage
+          v-else-if="queenCountMode === 'max' && !maxBatchConfigValid"
+          severity="warn"
+          class="mt-4"
+        >
+          Max mode is only available for precomputed size and distance pairs. Unsupported sizes:
+          {{ unsupportedBatchSizesLabel }}.
         </AdminMessage>
       </AdminPanel>
 
@@ -681,6 +692,10 @@ import {
   loadQueensAdminBatchInputs,
   saveQueensAdminBatchInputs,
 } from '../../admin/inputPersistence';
+import {
+  hasPrecomputedMaxQueenCount,
+  supportedPrecomputedDistances,
+} from '../../admin/maxQueenCounts';
 import AdminMessage from './AdminMessage.vue';
 import AdminPanel from './AdminPanel.vue';
 import { useQueensAdminStore } from '../../stores/queensAdminStore';
@@ -752,6 +767,29 @@ const parsedSizes = computed(() =>
         .filter((size) => Number.isInteger(size) && size >= 4 && size <= 20)
     )
   ).sort((left, right) => left - right)
+);
+
+const unsupportedBatchSizes = computed(() =>
+  parsedSizes.value.filter(
+    (size) =>
+      queenCountMode.value === 'max' &&
+      !hasPrecomputedMaxQueenCount(size, orthogonalMinDistance.value)
+  )
+);
+
+const unsupportedBatchSizesLabel = computed(() =>
+  unsupportedBatchSizes.value
+    .map((size) => {
+      const supportedDistances = supportedPrecomputedDistances(size);
+      return supportedDistances.length > 0
+        ? `${size}x${size} (supported d: ${supportedDistances.join(', ')})`
+        : `${size}x${size} (no max presets yet)`;
+    })
+    .join('; ')
+);
+
+const maxBatchConfigValid = computed(
+  () => queenCountMode.value !== 'max' || unsupportedBatchSizes.value.length === 0
 );
 
 const batchStateBadgeClass = computed(() => {
@@ -854,7 +892,12 @@ const sortedRuns = computed(() =>
 );
 
 async function startBatch(): Promise<void> {
-  if (parsedSizes.value.length === 0 || selectedStrategies.value.length === 0) return;
+  if (
+    parsedSizes.value.length === 0 ||
+    selectedStrategies.value.length === 0 ||
+    !maxBatchConfigValid.value
+  )
+    return;
 
   await store.startBatchGeneration({
     sizes: parsedSizes.value,

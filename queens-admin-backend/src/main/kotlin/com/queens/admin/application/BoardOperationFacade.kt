@@ -50,6 +50,25 @@ class BoardOperationFacade(
                 errors = listOf("Orthogonal minimum distance must be at least 1."),
             )
         }
+        if (
+            queenCountMode.equals("max", ignoreCase = true) &&
+            !queenPlacementService.hasPrecomputedMaxQueenCount(size, orthogonalMinDistance)
+        ) {
+            val supportedDistances = queenPlacementService.supportedPrecomputedDistances(size)
+            val error =
+                if (supportedDistances.isEmpty()) {
+                    "Max queen mode is not available yet for ${size}x$size boards."
+                } else {
+                    "Max queen mode is only available for ${size}x$size with orthogonal distances ${supportedDistances.joinToString(", ")}."
+                }
+            return OperationResult(
+                success = false,
+                actionType = ActionType.CREATE_BOARD,
+                explanation = error,
+                boardState = null,
+                errors = listOf(error),
+            )
+        }
 
         val resolvedTargetQueenCount = queenPlacementService.resolveTargetQueenCount(
             size = size,
