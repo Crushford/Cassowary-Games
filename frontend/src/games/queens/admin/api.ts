@@ -1,12 +1,21 @@
 import type {
+  QueensAdminBatchRunMode,
   QueensAdminBatchStatus,
   QueensAdminBoardState,
+  QueensAdminBuiltInSolverStep,
+  QueensAdminCatalogPuzzleSelection,
   QueensAdminChangedCell,
+  QueensAdminDifficulty,
+  QueensAdminPuzzleDifficulty,
   QueensAdminGenerationProgress,
+  QueensAdminMaxQueenResolution,
+  QueensAdminPuzzleCatalogGroup,
   QueensAdminQueenCountMode,
   QueensAdminOperationResult,
   QueensAdminPuzzleCatalogStats,
   QueensAdminGenerationStrategy,
+  QueensAdminSolverConfig,
+  QueensAdminSolverPattern,
   QueensAdminSystemLoad,
   QueensAdminValidationSummary,
 } from './types';
@@ -126,10 +135,12 @@ interface BatchGenerationRunDto {
   error: string | null;
   startedAt: string | null;
   finishedAt: string | null;
-  persistenceState: 'SAVED' | 'DUPLICATE' | 'SKIPPED' | 'ERROR' | null;
+  persistenceState: 'SAVED' | 'DUPLICATE' | 'SKIPPED' | 'ERROR' | 'UNSOLVABLE' | null;
   persistenceMessage: string | null;
   savedPuzzleId: string | null;
   encodedPuzzleLayout: string | null;
+  completedQueenCount: number | null;
+  difficulty: QueensAdminPuzzleDifficulty | null;
 }
 
 interface BatchGenerationStatusDto {
@@ -166,10 +177,75 @@ interface SystemLoadDto {
   sampledAt: string;
 }
 
+interface ResolveMaxQueensResultDto {
+  size: number;
+  orthogonalMinDistance: number;
+  maxQueenCount: number;
+  elapsedMs: number;
+}
+
 interface PuzzleCatalogStatsDto {
   totalPuzzles: number;
   countsBySize: Record<string, number>;
   countsBySizeAndDistance: Record<string, number>;
+  groups: PuzzleCatalogGroupDto[];
+}
+
+interface PuzzleCatalogGroupDto {
+  size: number;
+  orthogonalMinDistance: number;
+  targetQueenCount: number;
+  minimumGroupSize: number;
+  difficulty?: QueensAdminPuzzleDifficulty;
+  count: number;
+}
+
+interface DeletePuzzleCatalogGroupResultDto {
+  deletedCount: number;
+}
+
+interface CatalogPuzzleSelectionDto {
+  puzzleId: string;
+  size: number;
+  orthogonalMinDistance: number;
+  targetQueenCount: number;
+  minimumGroupSize: number;
+  difficulty?: QueensAdminPuzzleDifficulty;
+  boardState: BoardStateDto;
+}
+
+interface SolverPatternDto {
+  id: string;
+  name: string;
+  size: number;
+  cells: Array<{ row: number; col: number; activeSquare?: boolean }>;
+  outputFlags: Array<{ row: number; col: number }>;
+  difficultyTier: QueensAdminDifficulty;
+  enabled: boolean;
+  sortOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface SolverPatternExecutionDto {
+  id: string;
+  size: number;
+  cells: Array<{ row: number; col: number; activeSquare?: boolean }>;
+  outputFlags: Array<{ row: number; col: number }>;
+}
+
+interface BuiltInSolverStepDto {
+  id: string;
+  label: string;
+  description: string;
+  difficultyTier: QueensAdminDifficulty;
+  enabled: boolean;
+  sortOrder: number;
+}
+
+interface SolverConfigDto {
+  builtInSteps: BuiltInSolverStepDto[];
+  patterns: SolverPatternDto[];
 }
 
 function toLocalBoardState(boardState: BoardStateDto | null): QueensAdminBoardState | null {
@@ -285,6 +361,8 @@ function toBatchStatus(data: BatchGenerationStatusDto): QueensAdminBatchStatus {
       persistenceMessage: run.persistenceMessage,
       savedPuzzleId: run.savedPuzzleId,
       encodedPuzzleLayout: run.encodedPuzzleLayout,
+      completedQueenCount: run.completedQueenCount,
+      difficulty: run.difficulty,
     })),
     updatedAt: data.updatedAt,
   };
@@ -307,11 +385,79 @@ function toSystemLoad(data: SystemLoadDto): QueensAdminSystemLoad {
   };
 }
 
+function toMaxQueenResolution(data: ResolveMaxQueensResultDto): QueensAdminMaxQueenResolution {
+  return {
+    size: data.size,
+    orthogonalMinDistance: data.orthogonalMinDistance,
+    maxQueenCount: data.maxQueenCount,
+    elapsedMs: data.elapsedMs,
+  };
+}
+
 function toPuzzleCatalogStats(data: PuzzleCatalogStatsDto): QueensAdminPuzzleCatalogStats {
   return {
     totalPuzzles: data.totalPuzzles,
     countsBySize: data.countsBySize,
     countsBySizeAndDistance: data.countsBySizeAndDistance ?? {},
+    groups: (data.groups ?? []).map(toPuzzleCatalogGroup),
+  };
+}
+
+function toPuzzleCatalogGroup(data: PuzzleCatalogGroupDto): QueensAdminPuzzleCatalogGroup {
+  return {
+    size: data.size,
+    orthogonalMinDistance: data.orthogonalMinDistance,
+    targetQueenCount: data.targetQueenCount,
+    minimumGroupSize: data.minimumGroupSize,
+    difficulty: data.difficulty,
+    count: data.count,
+  };
+}
+
+function toCatalogPuzzleSelection(
+  data: CatalogPuzzleSelectionDto
+): QueensAdminCatalogPuzzleSelection {
+  return {
+    puzzleId: data.puzzleId,
+    size: data.size,
+    orthogonalMinDistance: data.orthogonalMinDistance,
+    targetQueenCount: data.targetQueenCount,
+    minimumGroupSize: data.minimumGroupSize,
+    difficulty: data.difficulty,
+    board: toLocalBoardState(data.boardState)!,
+  };
+}
+
+function toBuiltInSolverStep(data: BuiltInSolverStepDto): QueensAdminBuiltInSolverStep {
+  return {
+    id: data.id,
+    label: data.label,
+    description: data.description,
+    difficulty: data.difficultyTier,
+    enabled: data.enabled,
+    sortOrder: data.sortOrder,
+  };
+}
+
+function toSolverPattern(data: SolverPatternDto): QueensAdminSolverPattern {
+  return {
+    id: data.id,
+    name: data.name,
+    size: data.size,
+    cells: data.cells,
+    outputFlags: data.outputFlags,
+    difficulty: data.difficultyTier,
+    enabled: data.enabled,
+    sortOrder: data.sortOrder,
+    createdAt: data.createdAt ?? '',
+    updatedAt: data.updatedAt ?? '',
+  };
+}
+
+function toSolverConfig(data: SolverConfigDto): QueensAdminSolverConfig {
+  return {
+    builtInSteps: data.builtInSteps.map(toBuiltInSolverStep),
+    patterns: data.patterns.map(toSolverPattern),
   };
 }
 
@@ -329,14 +475,194 @@ async function postOperation(
     signal,
   });
 
+  if (!response.ok) {
+    let errorMessage = `Request failed (${response.status})`;
+
+    try {
+      const errorBody = (await response.json()) as
+        | { message?: string; error?: string; errors?: string[]; detail?: string }
+        | undefined;
+      errorMessage =
+        errorBody?.message ??
+        errorBody?.error ??
+        errorBody?.detail ??
+        errorBody?.errors?.[0] ??
+        errorMessage;
+    } catch {
+      try {
+        const errorText = await response.text();
+        if (errorText.trim().length > 0) {
+          errorMessage = errorText;
+        }
+      } catch {
+        // Ignore fallback parsing failures and keep the status-based message.
+      }
+    }
+
+    throw new Error(errorMessage);
+  }
+
   const data = (await response.json()) as OperationResultDto;
   return toOperationResult(data);
 }
 
 export const queensAdminApi = {
+  async getSolverConfig(): Promise<QueensAdminSolverConfig> {
+    const response = await fetch('/api/queens/admin/solver/config');
+    if (!response.ok) {
+      throw new Error('Failed to load solver configuration');
+    }
+    return toSolverConfig((await response.json()) as SolverConfigDto);
+  },
+
+  async createSolverPattern(pattern: QueensAdminSolverPattern): Promise<QueensAdminSolverPattern> {
+    const response = await fetch('/api/queens/admin/solver/patterns', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: pattern.id,
+        name: pattern.name,
+        size: pattern.size,
+        cells: pattern.cells,
+        outputFlags: pattern.outputFlags,
+        difficultyTier: pattern.difficulty,
+        enabled: pattern.enabled,
+        sortOrder: pattern.sortOrder,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to create solver pattern');
+    }
+    return toSolverPattern((await response.json()) as SolverPatternDto);
+  },
+
+  async updateSolverPattern(pattern: QueensAdminSolverPattern): Promise<QueensAdminSolverPattern> {
+    const response = await fetch(`/api/queens/admin/solver/patterns/${pattern.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: pattern.id,
+        name: pattern.name,
+        size: pattern.size,
+        cells: pattern.cells,
+        outputFlags: pattern.outputFlags,
+        difficultyTier: pattern.difficulty,
+        enabled: pattern.enabled,
+        sortOrder: pattern.sortOrder,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to update solver pattern');
+    }
+    return toSolverPattern((await response.json()) as SolverPatternDto);
+  },
+
   async getPuzzleCatalogStats(): Promise<QueensAdminPuzzleCatalogStats> {
     const response = await fetch('/api/queens/admin/generation/catalog-stats');
     return toPuzzleCatalogStats((await response.json()) as PuzzleCatalogStatsDto);
+  },
+
+  async getRandomCatalogPuzzle(filters?: {
+    size?: number;
+    orthogonalMinDistance?: number;
+    targetQueenCount?: number;
+    minimumGroupSize?: number;
+    difficulty?: QueensAdminPuzzleDifficulty;
+  }): Promise<QueensAdminCatalogPuzzleSelection | null> {
+    const query = new URLSearchParams();
+    if (filters?.size != null) query.set('size', String(filters.size));
+    if (filters?.orthogonalMinDistance != null) {
+      query.set('orthogonalMinDistance', String(filters.orthogonalMinDistance));
+    }
+    if (filters?.targetQueenCount != null) {
+      query.set('targetQueenCount', String(filters.targetQueenCount));
+    }
+    if (filters?.minimumGroupSize != null) {
+      query.set('minimumGroupSize', String(filters.minimumGroupSize));
+    }
+    if (filters?.difficulty) {
+      query.set('difficulty', filters.difficulty);
+    }
+
+    const response = await fetch(
+      `/api/queens/admin/generation/catalog-random-puzzle${query.size > 0 ? `?${query.toString()}` : ''}`
+    );
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      throw new Error('Failed to load a random catalog puzzle');
+    }
+    return toCatalogPuzzleSelection((await response.json()) as CatalogPuzzleSelectionDto);
+  },
+
+  async getCatalogPuzzleById(puzzleId: string): Promise<QueensAdminCatalogPuzzleSelection | null> {
+    const response = await fetch(`/api/queens/admin/generation/catalog-puzzle/${puzzleId}`);
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      throw new Error('Failed to load the requested catalog puzzle');
+    }
+    return toCatalogPuzzleSelection((await response.json()) as CatalogPuzzleSelectionDto);
+  },
+
+  async deletePuzzleCatalogGroup(group: {
+    size: number;
+    orthogonalMinDistance: number;
+    targetQueenCount: number;
+    minimumGroupSize: number;
+    difficulty?: QueensAdminPuzzleDifficulty;
+  }): Promise<number> {
+    const response = await fetch('/api/queens/admin/generation/catalog-groups/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(group),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete puzzle catalog group');
+    }
+
+    const data = (await response.json()) as DeletePuzzleCatalogGroupResultDto;
+    return data.deletedCount;
+  },
+
+  runSingleColorGroupSolverRule(
+    boardState: QueensAdminBoardState,
+    signal?: AbortSignal
+  ): Promise<QueensAdminOperationResult> {
+    return postOperation('/api/queens/admin/solver/single-color-group', { boardState }, signal);
+  },
+
+  runSpecificSolverRule(
+    boardState: QueensAdminBoardState,
+    ruleName: string,
+    signal?: AbortSignal
+  ): Promise<QueensAdminOperationResult> {
+    return postOperation('/api/queens/admin/solver/run-rule', { boardState, ruleName }, signal);
+  },
+
+  runSolverPattern(
+    boardState: QueensAdminBoardState,
+    pattern: QueensAdminSolverPattern,
+    signal?: AbortSignal
+  ): Promise<QueensAdminOperationResult> {
+    return postOperation(
+      '/api/queens/admin/solver/pattern',
+      {
+        boardState,
+        pattern: {
+          id: pattern.id,
+          size: pattern.size,
+          cells: pattern.cells,
+          outputFlags: pattern.outputFlags,
+        } satisfies SolverPatternExecutionDto,
+      },
+      signal
+    );
   },
 
   async getSystemLoad(): Promise<QueensAdminSystemLoad> {
@@ -345,13 +671,34 @@ export const queensAdminApi = {
     return toSystemLoad(data);
   },
 
+  async resolveMaxQueenCount(
+    request: { size: number; orthogonalMinDistance?: number },
+    signal?: AbortSignal
+  ): Promise<QueensAdminMaxQueenResolution> {
+    const response = await fetch('/api/queens/admin/generation/resolve-max-queens', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+      signal,
+    });
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+    const data = (await response.json()) as ResolveMaxQueensResultDto;
+    return toMaxQueenResolution(data);
+  },
+
   async startBatchGeneration(request: {
     sizes: number[];
+    orthogonalMinDistances: number[];
     strategies: QueensAdminGenerationStrategy[];
     runsPerCombination: number;
+    runMode: QueensAdminBatchRunMode;
     queenCountMode: QueensAdminQueenCountMode;
     targetQueenCount?: number | null;
-    orthogonalMinDistance: number;
+    orthogonalMinDistance?: number | null;
     minimumGroupSize: number;
     maxConcurrentJobs: number;
     saveSuccessfulPuzzles: boolean;

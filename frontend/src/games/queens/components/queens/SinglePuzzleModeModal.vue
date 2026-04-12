@@ -81,7 +81,7 @@
               :class="selectionButtonClass(selectedDifficulty === difficulty)"
               @click="selectedDifficulty = difficulty"
             >
-              <div>{{ difficulty }}</div>
+              <div>{{ formatDifficultyLabel(difficulty) }}</div>
               <div class="mt-1 text-[11px] font-normal text-semantic-neutral-300">
                 {{ difficultyCountLabel(difficulty) }}
               </div>
@@ -106,7 +106,11 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQueensStore } from '../../stores/queensStore';
-import { buildQueensSelectionRoute } from '../../utils/puzzleSelectionRoute';
+import {
+  buildQueensSelectionRoute,
+  isQueensSelectionDifficulty,
+  type QueensSelectionDifficulty,
+} from '../../utils/puzzleSelectionRoute';
 import Modal from '@/shared/components/Modal.vue';
 
 const props = defineProps<{
@@ -128,7 +132,7 @@ const isRotate = computed(() => currentMode.value === 'rotate');
 const availableSizes = computed(() => queensStore.getAvailableSizes());
 const selectedSize = ref<string>('');
 const selectedDistance = ref<number | null>(null);
-const selectedDifficulty = ref<'easy' | 'medium' | 'hard' | null>(null);
+const selectedDifficulty = ref<QueensSelectionDifficulty | null>(null);
 
 const availableDistances = computed(() => {
   if (!selectedSize.value) return [];
@@ -162,6 +166,24 @@ const canPlayRandom = computed(
       : selectionPuzzles.value.length > 0)
 );
 
+function logSinglePuzzleSelection(event: string, detail?: Record<string, unknown>): void {
+  console.info('[SinglePuzzleModeModal]', event, {
+    fullPath: route.fullPath,
+    query: route.query,
+    isVisible: props.isVisible,
+    isRotate: isRotate.value,
+    selectedSize: selectedSize.value,
+    selectedDistance: selectedDistance.value,
+    selectedDifficulty: selectedDifficulty.value,
+    availableSizes: availableSizes.value,
+    availableDistances: availableDistances.value,
+    availableDifficulties: availableDifficulties.value,
+    selectionCount: selectionPuzzles.value.length,
+    showDifficultySection: showDifficultySection.value,
+    ...detail,
+  });
+}
+
 function getQuerySize(): string | null {
   const value = route.query.size;
   return typeof value === 'string' ? value : null;
@@ -174,9 +196,9 @@ function getQueryDistance(): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function getQueryDifficulty(): 'easy' | 'medium' | 'hard' | null {
+function getQueryDifficulty(): QueensSelectionDifficulty | null {
   const value = route.query.difficulty;
-  return value === 'easy' || value === 'medium' || value === 'hard' ? value : null;
+  return typeof value === 'string' && isQueensSelectionDifficulty(value) ? value : null;
 }
 
 function initializeSelectionState() {
@@ -204,7 +226,7 @@ function rotateSizeButtonClass(_size: string): string {
   return 'border-semantic-success-500 bg-semantic-success-700 text-white hover:bg-semantic-success-600';
 }
 
-function difficultyCountLabel(difficulty: 'easy' | 'medium' | 'hard'): string {
+function difficultyCountLabel(difficulty: QueensSelectionDifficulty): string {
   if (!selectedSize.value || selectedDistance.value == null) return '';
   const count = queensStore.countPuzzlesForSelection(
     selectedSize.value,
@@ -214,13 +236,23 @@ function difficultyCountLabel(difficulty: 'easy' | 'medium' | 'hard'): string {
   return `${count} puzzle${count === 1 ? '' : 's'}`;
 }
 
+function formatDifficultyLabel(difficulty: QueensSelectionDifficulty): string {
+  return difficulty
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 async function handleRotateSizeClick(sizeKey: string) {
+  logSinglePuzzleSelection('rotate:navigate', { sizeKey });
   await queensStore.startRotateModePuzzle(sizeKey);
-  emit('close');
 }
 
 async function handlePlayRandomPuzzle() {
   if (!canPlayRandom.value || selectedDistance.value == null) {
+    logSinglePuzzleSelection('play-random:blocked', {
+      canPlayRandom: canPlayRandom.value,
+    });
     return;
   }
 
@@ -231,19 +263,22 @@ async function handlePlayRandomPuzzle() {
   );
 
   if (!puzzle) {
+    logSinglePuzzleSelection('play-random:no-puzzle');
     alert('No puzzle is available for that combination yet.');
     return;
   }
 
-  emit('close');
-  router.push(
-    buildQueensSelectionRoute({
-      sizeKey: selectedSize.value,
-      orthogonalMinDistance: selectedDistance.value,
-      difficulty: showDifficultySection.value ? selectedDifficulty.value : undefined,
-      puzzleId: puzzle.id,
-    })
-  );
+  const targetRoute = buildQueensSelectionRoute({
+    sizeKey: selectedSize.value,
+    orthogonalMinDistance: selectedDistance.value,
+    difficulty: showDifficultySection.value ? selectedDifficulty.value : undefined,
+    puzzleId: puzzle.id,
+  });
+  logSinglePuzzleSelection('play-random:navigate', {
+    puzzleId: puzzle.id,
+    targetRoute,
+  });
+  router.push(targetRoute);
 }
 
 function handlePrimaryClose() {
@@ -283,6 +318,13 @@ function updateSelectionQuery() {
     return;
   }
 
+  logSinglePuzzleSelection('update-selection-query:replace', {
+    nextQuery,
+    currentMode,
+    currentSize,
+    currentDistance,
+    currentDifficulty,
+  });
   router.replace({
     path: '/queens',
     query: nextQuery,
@@ -293,6 +335,7 @@ watch(
   () => props.isVisible,
   (isVisible) => {
     if (isVisible && !isRotate.value) {
+      logSinglePuzzleSelection('watch:isVisible:initialize');
       initializeSelectionState();
     }
   },
@@ -304,6 +347,7 @@ watch(
   (sizes) => {
     if (!props.isVisible || isRotate.value || sizes.length === 0) return;
     if (!selectedSize.value || !sizes.includes(selectedSize.value)) {
+      logSinglePuzzleSelection('watch:availableSizes:initialize', { sizes });
       initializeSelectionState();
     }
   },
@@ -315,6 +359,7 @@ watch(
   (distances) => {
     if (isRotate.value) return;
     if (distances.length === 0) {
+      logSinglePuzzleSelection('watch:availableDistances:empty');
       selectedDistance.value = null;
       selectedDifficulty.value = null;
       return;
@@ -330,9 +375,15 @@ watch(
           : distances[0];
 
     if (selectedDistance.value == null || !distances.includes(selectedDistance.value)) {
+      logSinglePuzzleSelection('watch:availableDistances:set-distance', {
+        queryDistance,
+        boardDistance,
+        preferredDistance,
+      });
       selectedDistance.value = preferredDistance;
     }
     if (!showDifficultySection.value) {
+      logSinglePuzzleSelection('watch:availableDistances:disable-difficulty');
       selectedDifficulty.value = null;
     }
   },
@@ -344,10 +395,12 @@ watch(
   (difficulties) => {
     if (isRotate.value) return;
     if (!showDifficultySection.value) {
+      logSinglePuzzleSelection('watch:availableDifficulties:hidden');
       selectedDifficulty.value = null;
       return;
     }
     if (difficulties.length === 0) {
+      logSinglePuzzleSelection('watch:availableDifficulties:empty');
       selectedDifficulty.value = null;
       return;
     }
@@ -361,6 +414,10 @@ watch(
           : difficulties[0];
 
     if (selectedDifficulty.value == null || !difficulties.includes(selectedDifficulty.value)) {
+      logSinglePuzzleSelection('watch:availableDifficulties:set-difficulty', {
+        queryDifficulty,
+        preferredDifficulty,
+      });
       selectedDifficulty.value = preferredDifficulty;
     }
   },
@@ -376,6 +433,7 @@ watch(
     () => props.isVisible,
   ],
   () => {
+    logSinglePuzzleSelection('watch:selection-state-changed');
     updateSelectionQuery();
   },
   { immediate: true }

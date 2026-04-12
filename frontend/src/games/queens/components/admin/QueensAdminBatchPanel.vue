@@ -1,35 +1,46 @@
 <template>
   <section class="space-y-6">
     <div class="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
-      <section class="rounded-[30px] border border-semantic-neutral-800 bg-surface-darkFirm p-5">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 class="text-xl font-semibold text-white">Batch Run Setup</h2>
-            <p class="mt-2 text-sm leading-6 text-semantic-neutral-300">
-              Submit many puzzles at once, compare strategies, and time how long each run takes.
-            </p>
-          </div>
-          <div
-            class="rounded-full border border-edge-warningMuted bg-feedback-warningSubtle px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-semantic-warning-200"
-          >
-            Experimental
-          </div>
-        </div>
+      <AdminPanel
+        title="Batch Run Setup"
+        description="Submit many puzzles at once, compare strategies, and time how long each run takes."
+      >
+        <template #badge>
+          <Tag severity="warn" value="Experimental" rounded />
+        </template>
 
-        <div class="mt-5 space-y-4">
+        <div class="space-y-4">
           <label class="block text-sm text-semantic-neutral-300" for="batch-sizes">
             Puzzle sizes
           </label>
-          <input
+          <MultiSelect
             id="batch-sizes"
-            v-model="sizesInput"
-            type="text"
-            class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
-            placeholder="4, 6, 8"
+            v-model="selectedSizes"
+            :options="sizeOptions"
+            display="chip"
+            class="w-full"
+            placeholder="Select one or more sizes"
           />
           <p class="text-xs leading-5 text-semantic-neutral-400">
-            Enter one or more sizes separated by commas. Each size will be run against every
-            selected strategy.
+            Choose the board sizes to include in this batch.
+          </p>
+        </div>
+
+        <div class="mt-4 space-y-4">
+          <label class="block text-sm text-semantic-neutral-300" for="batch-distances">
+            Orthogonal min distances
+          </label>
+          <MultiSelect
+            id="batch-distances"
+            v-model="selectedDistances"
+            :options="distanceOptions"
+            display="chip"
+            class="w-full"
+            placeholder="Select one or more min distances"
+          />
+          <p class="text-xs leading-5 text-semantic-neutral-400">
+            Only supported size and distance pairs from the precomputed max-queen table will be
+            queued.
           </p>
         </div>
 
@@ -38,108 +49,114 @@
             <label class="block text-sm text-semantic-neutral-300" for="batch-runs">
               Runs per combination
             </label>
-            <input
+            <InputNumber
               id="batch-runs"
-              v-model.number="runsPerCombination"
-              type="number"
-              min="1"
-              max="100"
-              class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+              v-model="runsPerCombination"
+              :min="1"
+              :max="100"
+              input-class="w-full"
+              fluid
             />
           </div>
           <div class="space-y-2">
             <label class="block text-sm text-semantic-neutral-300" for="batch-concurrency">
               Max concurrent jobs
             </label>
-            <input
+            <InputNumber
               id="batch-concurrency"
-              v-model.number="maxConcurrentJobs"
-              type="number"
-              min="1"
-              max="12"
-              class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+              v-model="maxConcurrentJobs"
+              :min="1"
+              :max="12"
+              input-class="w-full"
+              fluid
             />
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm text-semantic-neutral-300" for="batch-queen-count-mode">
+              Run mode
+            </label>
+            <Select
+              id="batch-run-mode"
+              v-model="runMode"
+              :options="runModeOptions"
+              option-label="label"
+              option-value="value"
+              class="w-full"
+            />
+            <p class="text-xs leading-5 text-semantic-neutral-400">
+              Cartesian runs every requested combination evenly. Lowest puzzle count prioritizes the
+              catalog buckets with the fewest saved puzzles first.
+            </p>
           </div>
           <div class="space-y-2">
             <label class="block text-sm text-semantic-neutral-300" for="batch-queen-count-mode">
               Queen count mode
             </label>
-            <select
+            <Select
               id="batch-queen-count-mode"
               v-model="queenCountMode"
-              class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
-            >
-              <option value="exact">Exact target</option>
-              <option value="max">Maximum that fits</option>
-            </select>
+              :options="queenCountModeOptions"
+              option-label="label"
+              option-value="value"
+              class="w-full"
+            />
           </div>
           <div class="space-y-2">
             <label class="block text-sm text-semantic-neutral-300" for="batch-target-queens">
               Target queens
             </label>
-            <input
+            <InputNumber
               id="batch-target-queens"
-              v-model.number="targetQueenCount"
-              type="number"
-              min="1"
-              max="400"
+              v-model="targetQueenCount"
+              :min="1"
+              :max="400"
               :disabled="queenCountMode === 'max'"
-              class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
-            />
-          </div>
-          <div class="space-y-2">
-            <label class="block text-sm text-semantic-neutral-300" for="batch-orthogonal-distance">
-              Orthogonal min distance
-            </label>
-            <input
-              id="batch-orthogonal-distance"
-              v-model.number="orthogonalMinDistance"
-              type="number"
-              min="1"
-              max="400"
-              class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+              input-class="w-full"
+              fluid
             />
           </div>
           <div class="space-y-2">
             <label class="block text-sm text-semantic-neutral-300" for="batch-min-group">
               Minimum region size
             </label>
-            <input
+            <InputNumber
               id="batch-min-group"
-              v-model.number="minimumGroupSize"
-              type="number"
-              min="1"
-              max="20"
-              class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm"
+              v-model="minimumGroupSize"
+              :min="1"
+              :max="20"
+              input-class="w-full"
+              fluid
             />
           </div>
         </div>
         <p class="mt-3 text-xs leading-5 text-semantic-neutral-400">
-          These values are applied to every size in the batch. If an exported puzzle does not carry
-          an orthogonal distance, the frontend should assume it matches the board size.
+          These values are applied to every supported size and min-distance pair in the batch.
+          Unsupported pairs are skipped automatically.
+        </p>
+        <p class="mt-2 text-xs leading-5 text-semantic-info-100">
+          Supported combinations queued: {{ supportedBatchCombinationCount }}
         </p>
 
         <div class="mt-4 space-y-2">
           <div class="text-sm text-semantic-neutral-300">Strategies</div>
-          <div class="grid gap-2 md:grid-cols-2">
-            <label
+          <MultiSelect
+            v-model="selectedStrategies"
+            :options="strategyOptions"
+            option-label="label"
+            option-value="value"
+            display="chip"
+            class="w-full"
+            placeholder="Select one or more strategies"
+          />
+          <div class="grid gap-2 md:grid-cols-3">
+            <div
               v-for="strategy in strategyOptions"
               :key="strategy.value"
-              class="flex items-start gap-3 rounded-2xl border border-semantic-neutral-700 bg-semantic-neutral-900 px-3 py-3 text-sm text-semantic-neutral-200"
+              class="rounded-2xl border border-semantic-neutral-700 bg-semantic-neutral-900 px-3 py-3 text-sm text-semantic-neutral-200"
             >
-              <input
-                v-model="selectedStrategies"
-                type="checkbox"
-                :value="strategy.value"
-                class="mt-1"
-              />
-              <span>
-                <span class="block font-semibold text-white">{{ strategy.label }}</span>
-                <span class="mt-1 block text-xs text-semantic-neutral-400">
-                  {{ strategy.description }}
-                </span>
-              </span>
-            </label>
+              <div class="font-semibold text-white">{{ strategy.label }}</div>
+              <div class="mt-1 text-xs text-semantic-neutral-400">{{ strategy.description }}</div>
+            </div>
           </div>
         </div>
 
@@ -152,41 +169,52 @@
                 do not create extra rows.
               </div>
             </div>
-            <input v-model="saveSuccessfulPuzzles" type="checkbox" />
+            <ToggleSwitch
+              :model-value="saveSuccessfulPuzzles"
+              @update:model-value="saveSuccessfulPuzzles = Boolean($event)"
+            />
           </div>
         </div>
 
         <div class="mt-5 flex flex-wrap gap-3">
-          <button
-            class="rounded-xl bg-semantic-success-600 px-4 py-2.5 font-semibold text-white transition hover:bg-semantic-success-500 disabled:cursor-not-allowed disabled:opacity-50"
+          <Button
+            label="Start Batch"
+            severity="success"
             :disabled="
-              store.batchLoading || parsedSizes.length === 0 || selectedStrategies.length === 0
+              store.batchLoading ||
+              selectedSizes.length === 0 ||
+              selectedDistances.length === 0 ||
+              selectedStrategies.length === 0 ||
+              supportedBatchCombinationCount === 0
             "
             @click="startBatch"
-          >
-            Start Batch
-          </button>
-          <button
+          />
+          <Button
             v-if="
               store.batchLoading ||
               store.batchStatus?.state === 'RUNNING' ||
               store.batchStatus?.state === 'QUEUED'
             "
             type="button"
-            class="rounded-xl border border-semantic-danger-700 bg-feedback-dangerSubtle px-4 py-2.5 font-semibold text-semantic-danger-100 transition hover:bg-feedback-dangerSoft"
+            label="Cancel Batch"
+            severity="danger"
+            outlined
             @click="store.cancelCurrentOperation()"
-          >
-            Cancel Batch
-          </button>
+          />
         </div>
 
-        <div
-          v-if="parsedSizes.length === 0"
-          class="mt-4 rounded-xl border border-edge-warningMuted bg-feedback-warningSubtle p-3 text-sm text-semantic-warning-200"
+        <AdminMessage
+          v-if="selectedSizes.length === 0 || selectedDistances.length === 0"
+          severity="warn"
+          class="mt-4"
         >
-          Enter at least one valid size between 4 and 20.
-        </div>
-      </section>
+          Select at least one size and one min distance.
+        </AdminMessage>
+        <AdminMessage v-else-if="supportedBatchCombinationCount === 0" severity="warn" class="mt-4">
+          None of the selected size and distance pairs are supported by the precomputed max-queen
+          table.
+        </AdminMessage>
+      </AdminPanel>
 
       <section class="space-y-6">
         <section class="rounded-[30px] border border-semantic-neutral-800 bg-surface-darkFirm p-5">
@@ -582,6 +610,7 @@
                   <th class="px-3 py-2">Min Distance</th>
                   <th class="px-3 py-2">Strategy</th>
                   <th class="px-3 py-2">State</th>
+                  <th class="px-3 py-2">Completed Puzzle</th>
                   <th class="px-3 py-2">Puzzle</th>
                   <th class="px-3 py-2">Fill</th>
                   <th class="px-3 py-2">Duration</th>
@@ -600,6 +629,20 @@
                   <td class="px-3 py-2">{{ run.orthogonalMinDistance }}</td>
                   <td class="px-3 py-2">{{ strategyLabel(run.strategy) }}</td>
                   <td class="px-3 py-2">{{ run.state }}</td>
+                  <td class="px-3 py-2">
+                    <div v-if="run.completedQueenCount != null || run.difficulty" class="space-y-1">
+                      <div
+                        v-if="run.completedQueenCount != null"
+                        class="text-xs text-semantic-neutral-200"
+                      >
+                        {{ run.completedQueenCount }} queens
+                      </div>
+                      <div v-if="run.difficulty" class="text-xs font-semibold text-white">
+                        {{ formatDifficultyLabel(run.difficulty) }}
+                      </div>
+                    </div>
+                    <span v-else>—</span>
+                  </td>
                   <td class="px-3 py-2">
                     <div class="flex flex-wrap gap-2">
                       <a
@@ -664,6 +707,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import Button from 'primevue/button';
+import InputNumber from 'primevue/inputnumber';
+import InputText from 'primevue/inputtext';
+import MultiSelect from 'primevue/multiselect';
+import Select from 'primevue/select';
+import Tag from 'primevue/tag';
+import ToggleSwitch from 'primevue/toggleswitch';
 import { queensAdminApi } from '../../admin/api';
 import {
   clearBatchHistory,
@@ -674,9 +724,16 @@ import {
   loadQueensAdminBatchInputs,
   saveQueensAdminBatchInputs,
 } from '../../admin/inputPersistence';
+import {
+  hasEffectiveMaxQueenCount,
+  supportedPrecomputedDistances,
+} from '../../admin/maxQueenCounts';
+import AdminMessage from './AdminMessage.vue';
+import AdminPanel from './AdminPanel.vue';
 import { useQueensAdminStore } from '../../stores/queensAdminStore';
 import { QUEENS_PUZZLE_SHARE_BASE_URL } from '../../utils/urlPuzzleEncoding';
 import type {
+  QueensAdminBatchRunMode,
   QueensAdminBatchStatus,
   QueensAdminBatchRun,
   QueensAdminGenerationStrategy,
@@ -686,14 +743,15 @@ import type {
 
 const store = useQueensAdminStore();
 const persistedBatchInputs = loadQueensAdminBatchInputs();
-const sizesInput = ref(persistedBatchInputs?.sizesInput ?? '6, 8');
+const selectedSizes = ref<number[]>(persistedBatchInputs?.selectedSizes ?? [6, 7, 8]);
+const selectedDistances = ref<number[]>(
+  persistedBatchInputs?.selectedDistances ?? [3, 4, 5, 6, 7, 8]
+);
 const runsPerCombination = ref(persistedBatchInputs?.runsPerCombination ?? 5);
 const maxConcurrentJobs = ref(persistedBatchInputs?.maxConcurrentJobs ?? 2);
+const runMode = ref<QueensAdminBatchRunMode>(persistedBatchInputs?.runMode ?? 'cartesian');
 const queenCountMode = ref(persistedBatchInputs?.queenCountMode ?? store.queenCountMode);
 const targetQueenCount = ref(persistedBatchInputs?.targetQueenCount ?? store.targetQueenCount);
-const orthogonalMinDistance = ref(
-  persistedBatchInputs?.orthogonalMinDistance ?? store.orthogonalMinDistance
-);
 const minimumGroupSize = ref(persistedBatchInputs?.minimumGroupSize ?? store.minimumGroupSize);
 const saveSuccessfulPuzzles = ref(persistedBatchInputs?.saveSuccessfulPuzzles ?? true);
 const selectedStrategies = ref<QueensAdminGenerationStrategy[]>(
@@ -705,6 +763,15 @@ const historySnapshot = ref(getBatchHistorySnapshot());
 let systemLoadPoller: ReturnType<typeof setInterval> | null = null;
 let copyResetTimer: ReturnType<typeof setTimeout> | null = null;
 const copiedRunId = ref<string | null>(null);
+
+const queenCountModeOptions: Array<{ label: string; value: 'exact' | 'max' }> = [
+  { label: 'Exact target', value: 'exact' },
+  { label: 'Maximum that fits', value: 'max' },
+];
+const runModeOptions: Array<{ label: string; value: QueensAdminBatchRunMode }> = [
+  { label: 'Even Cartesian Mix', value: 'cartesian' },
+  { label: 'Lowest Puzzle Count First', value: 'lowest-count' },
+];
 
 const strategyOptions: Array<{
   value: QueensAdminGenerationStrategy;
@@ -729,16 +796,18 @@ const strategyOptions: Array<{
   },
 ];
 
-const parsedSizes = computed(() =>
-  Array.from(
-    new Set(
-      sizesInput.value
-        .split(',')
-        .map((chunk) => Number.parseInt(chunk.trim(), 10))
-        .filter((size) => Number.isInteger(size) && size >= 4 && size <= 20)
-    )
-  ).sort((left, right) => left - right)
+const sizeOptions = Array.from({ length: 17 }, (_, index) => index + 4);
+const distanceOptions = Array.from({ length: 18 }, (_, index) => index + 3);
+
+const supportedBatchPairs = computed(() =>
+  selectedSizes.value.flatMap((size) =>
+    selectedDistances.value
+      .filter((distance) => hasEffectiveMaxQueenCount(size, distance))
+      .map((distance) => ({ size, distance }))
+  )
 );
+
+const supportedBatchCombinationCount = computed(() => supportedBatchPairs.value.length);
 
 const batchStateBadgeClass = computed(() => {
   switch (store.batchStatus?.state) {
@@ -840,15 +909,23 @@ const sortedRuns = computed(() =>
 );
 
 async function startBatch(): Promise<void> {
-  if (parsedSizes.value.length === 0 || selectedStrategies.value.length === 0) return;
+  if (
+    selectedSizes.value.length === 0 ||
+    selectedDistances.value.length === 0 ||
+    selectedStrategies.value.length === 0 ||
+    supportedBatchCombinationCount.value === 0
+  )
+    return;
 
   await store.startBatchGeneration({
-    sizes: parsedSizes.value,
+    sizes: selectedSizes.value,
+    orthogonalMinDistances: selectedDistances.value,
     strategies: selectedStrategies.value,
     runsPerCombination: Math.max(1, runsPerCombination.value),
+    runMode: runMode.value,
     queenCountMode: queenCountMode.value,
     targetQueenCount: queenCountMode.value === 'max' ? null : Math.max(1, targetQueenCount.value),
-    orthogonalMinDistance: Math.max(1, orthogonalMinDistance.value),
+    orthogonalMinDistance: null,
     minimumGroupSize: Math.max(1, minimumGroupSize.value),
     maxConcurrentJobs: Math.max(1, maxConcurrentJobs.value),
     saveSuccessfulPuzzles: saveSuccessfulPuzzles.value,
@@ -898,6 +975,8 @@ function formatPersistence(run: QueensAdminBatchRun): string {
       return run.savedPuzzleId ? `Saved (${run.savedPuzzleId.slice(0, 8)})` : 'Saved';
     case 'DUPLICATE':
       return 'Duplicate';
+    case 'UNSOLVABLE':
+      return 'Unsolvable';
     case 'ERROR':
       return 'Save Error';
     case 'SKIPPED':
@@ -909,6 +988,13 @@ function formatPersistence(run: QueensAdminBatchRun): string {
 
 function batchRunPlayHref(run: QueensAdminBatchRun): string | null {
   return run.encodedPuzzleLayout ? `/queens/puzzle/${run.encodedPuzzleLayout}` : null;
+}
+
+function formatDifficultyLabel(difficulty: string): string {
+  return difficulty
+    .split('-')
+    .map((part) => (part ? `${part[0].toUpperCase()}${part.slice(1)}` : part))
+    .join(' ');
 }
 
 function batchRunShareUrl(run: QueensAdminBatchRun): string | null {
@@ -949,6 +1035,8 @@ function persistenceBadgeClass(state: QueensAdminBatchRun['persistenceState']): 
       return 'text-semantic-success-200';
     case 'DUPLICATE':
       return 'text-semantic-warning-200';
+    case 'UNSOLVABLE':
+      return 'text-semantic-danger-200';
     case 'ERROR':
       return 'text-semantic-danger-200';
     default:
@@ -1005,24 +1093,27 @@ watch(
 
 watch(
   [
-    sizesInput,
+    selectedSizes,
+    selectedDistances,
     runsPerCombination,
     maxConcurrentJobs,
+    runMode,
     queenCountMode,
     targetQueenCount,
-    orthogonalMinDistance,
     minimumGroupSize,
     saveSuccessfulPuzzles,
     selectedStrategies,
   ],
   () => {
     saveQueensAdminBatchInputs({
-      sizesInput: sizesInput.value,
+      selectedSizes: selectedSizes.value,
+      selectedDistances: selectedDistances.value,
       runsPerCombination: runsPerCombination.value,
       maxConcurrentJobs: maxConcurrentJobs.value,
+      runMode: runMode.value,
       queenCountMode: queenCountMode.value,
       targetQueenCount: targetQueenCount.value,
-      orthogonalMinDistance: orthogonalMinDistance.value,
+      orthogonalMinDistance: store.orthogonalMinDistance,
       minimumGroupSize: minimumGroupSize.value,
       saveSuccessfulPuzzles: saveSuccessfulPuzzles.value,
       selectedStrategies: selectedStrategies.value,

@@ -8,5 +8,5 @@ data class SolverResult(
     val progressMade: Boolean,
     val solved: Boolean,
     val stuck: Boolean,
-    val maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.HARD,
+    val maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.EXTRA_HARD,
 )

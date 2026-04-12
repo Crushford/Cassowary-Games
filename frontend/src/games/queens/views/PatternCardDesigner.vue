@@ -22,89 +22,15 @@
 
     <div class="grid md:grid-cols-2 gap-4">
       <div class="bg-semantic-neutral-800 rounded-lg p-4 space-y-4">
-        <div class="grid grid-cols-2 gap-2">
-          <label class="text-sm">
-            <div class="text-semantic-neutral-300 mb-1">ID</div>
-            <input
-              v-model="id"
-              class="w-full px-2 py-1 rounded bg-semantic-neutral-700 border border-semantic-neutral-600"
-            />
-          </label>
-          <label class="text-sm">
-            <div class="text-semantic-neutral-300 mb-1">Cost</div>
-            <input
-              v-model.number="cost"
-              type="number"
-              min="0"
-              class="w-full px-2 py-1 rounded bg-semantic-neutral-700 border border-semantic-neutral-600"
-            />
-          </label>
-          <label class="text-sm">
-            <div class="text-semantic-neutral-300 mb-1">Size</div>
-            <input
-              v-model.number="size"
-              type="number"
-              min="3"
-              max="9"
-              class="w-full px-2 py-1 rounded bg-semantic-neutral-700 border border-semantic-neutral-600"
-            />
-          </label>
-        </div>
-
-        <div>
-          <div class="text-sm text-semantic-neutral-300 mb-2">Tool</div>
-          <div class="flex gap-2">
-            <button
-              v-for="tool in tools"
-              :key="tool.id"
-              class="px-3 py-1 rounded text-sm font-semibold"
-              :class="
-                selectedTool === tool.id
-                  ? tool.activeClass
-                  : 'bg-semantic-neutral-700 hover:bg-semantic-neutral-600'
-              "
-              @click="selectedTool = tool.id"
-            >
-              {{ tool.label }}
-            </button>
-          </div>
-        </div>
-
-        <div class="space-y-2">
-          <div class="text-sm text-semantic-neutral-300">Grid</div>
-          <div class="inline-grid gap-1" :style="gridStyle">
-            <button
-              v-for="cell in gridCells"
-              :key="cell.key"
-              class="w-8 h-8 rounded border border-semantic-neutral-500 flex items-center justify-center text-xs"
-              :class="cell.cellClass"
-              @click="applyTool(cell.row, cell.col)"
-            >
-              <span v-if="cell.hasFlag">🚧</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="flex gap-2">
-          <button
-            class="px-3 py-1 rounded bg-semantic-neutral-700 hover:bg-semantic-neutral-600 text-sm"
-            @click="clearFlags"
-          >
-            Clear Flags
-          </button>
-          <button
-            class="px-3 py-1 rounded bg-semantic-neutral-700 hover:bg-semantic-neutral-600 text-sm"
-            @click="clearActive"
-          >
-            Clear Active
-          </button>
-          <button
-            class="px-3 py-1 rounded bg-semantic-danger-700 hover:bg-semantic-danger-600 text-sm"
-            @click="resetAll"
-          >
-            Reset
-          </button>
-        </div>
+        <SharedPatternDesigner
+          v-model="draft"
+          grid-label="Grid"
+          id-placeholder="pc-custom"
+          :show-id="true"
+          :show-cost="true"
+          :show-reset="true"
+          :show-actions="false"
+        />
       </div>
 
       <div class="bg-semantic-neutral-800 rounded-lg p-4">
@@ -126,129 +52,30 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
+import SharedPatternDesigner from '../components/queens/SharedPatternDesigner.vue';
+import type { PatternEditorDraft } from '../components/queens/patternEditorTypes';
 
-type DesignerTool = 'active' | 'other' | 'flag';
-
-const id = ref('pc-custom');
-const cost = ref(60);
-const size = ref(5);
-const selectedTool = ref<DesignerTool>('active');
-
-const activeCells = ref(new Set<string>());
-const flagCells = ref(new Set<string>());
-
-const tools: Array<{ id: DesignerTool; label: string; activeClass: string }> = [
-  { id: 'active', label: 'Active (Green)', activeClass: 'bg-semantic-success-700' },
-  { id: 'other', label: 'Other (Grey)', activeClass: 'bg-semantic-neutral-500' },
-  { id: 'flag', label: 'Flag Output', activeClass: 'bg-semantic-warning-700' },
-];
-
-function toKey(row: number, col: number): string {
-  return `${row},${col}`;
-}
-
-function fromKey(key: string): { row: number; col: number } {
-  const [row, col] = key.split(',').map(Number);
-  return { row, col };
-}
-
-watch(size, (nextSize) => {
-  if (nextSize < 3) size.value = 3;
-  if (nextSize > 9) size.value = 9;
-
-  const max = size.value - 1;
-  for (const key of Array.from(activeCells.value)) {
-    const pos = fromKey(key);
-    if (pos.row > max || pos.col > max) {
-      activeCells.value.delete(key);
-    }
-  }
-  for (const key of Array.from(flagCells.value)) {
-    const pos = fromKey(key);
-    if (pos.row > max || pos.col > max) {
-      flagCells.value.delete(key);
-    }
-  }
+const draft = ref<PatternEditorDraft>({
+  id: 'pc-custom',
+  cost: 60,
+  size: 5,
+  cells: [],
+  outputFlags: [],
 });
-
-function applyTool(row: number, col: number) {
-  const key = toKey(row, col);
-
-  if (selectedTool.value === 'active') {
-    activeCells.value.add(key);
-    flagCells.value.delete(key);
-    return;
-  }
-
-  if (selectedTool.value === 'other') {
-    activeCells.value.delete(key);
-    flagCells.value.delete(key);
-    return;
-  }
-
-  if (selectedTool.value === 'flag') {
-    flagCells.value.add(key);
-    activeCells.value.delete(key);
-  }
-}
-
-function clearFlags() {
-  flagCells.value.clear();
-}
-
-function clearActive() {
-  activeCells.value.clear();
-}
-
-function resetAll() {
-  activeCells.value.clear();
-  flagCells.value.clear();
-}
-
-const gridStyle = computed(() => ({
-  gridTemplateColumns: `repeat(${size.value}, minmax(0, 1fr))`,
-}));
-
-const gridCells = computed(() => {
-  const cells: Array<{
-    key: string;
-    row: number;
-    col: number;
-    hasFlag: boolean;
-    cellClass: string;
-  }> = [];
-
-  for (let row = 0; row < size.value; row++) {
-    for (let col = 0; col < size.value; col++) {
-      const key = toKey(row, col);
-      const isActive = activeCells.value.has(key);
-      const hasFlag = flagCells.value.has(key);
-      const cellClass = isActive ? 'bg-semantic-success-600' : 'bg-semantic-neutral-600';
-
-      cells.push({ key, row, col, hasFlag, cellClass });
-    }
-  }
-
-  return cells;
-});
-
-function sortedPositions(keys: Set<string>): Array<{ row: number; col: number }> {
-  return Array.from(keys)
-    .map(fromKey)
-    .sort((a, b) => (a.row === b.row ? a.col - b.col : a.row - b.row));
-}
 
 const generatedCode = computed(() => {
-  const cellLines = sortedPositions(activeCells.value)
+  const cellLines = [...draft.value.cells]
+    .sort((a, b) => (a.row === b.row ? a.col - b.col : a.row - b.row))
     .map((pos) => `      { row: ${pos.row}, col: ${pos.col}, activeSquare: true },`)
     .join('\n');
 
-  const flagLines = sortedPositions(flagCells.value)
+  const flagLines = [...draft.value.outputFlags]
+    .sort((a, b) => (a.row === b.row ? a.col - b.col : a.row - b.row))
     .map((pos) => `      { row: ${pos.row}, col: ${pos.col} },`)
     .join('\n');
 
-  return `  {\n    id: '${id.value}',\n    cost: ${cost.value},\n    size: ${size.value},\n    cells: [\n${cellLines}\n    ],\n    outputFlags: [\n${flagLines}\n    ],\n  },`;
+  return `  {\n    id: '${draft.value.id ?? ''}',\n    cost: ${draft.value.cost ?? 0},\n    size: ${draft.value.size},\n    cells: [\n${cellLines}\n    ],\n    outputFlags: [\n${flagLines}\n    ],\n  },`;
 });
 
 async function copyCode() {

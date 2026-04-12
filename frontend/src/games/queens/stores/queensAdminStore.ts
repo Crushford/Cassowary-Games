@@ -3,7 +3,9 @@ import { defineStore } from 'pinia';
 import type { ColorName } from '../types/types';
 import { COLOR_PALETTE } from '../utils/colorPalette';
 import { queensAdminApi } from '../admin/api';
+import { useQueensStore } from './queensStore';
 import type {
+  QueensAdminBatchRunMode,
   QueensAdminBatchStatus,
   QueensAdminBoardState,
   QueensAdminGenerationProgress,
@@ -17,10 +19,12 @@ import type {
 
 const DEFAULT_BOARD_SIZE = 6;
 const MAX_HISTORY_ENTRIES = 30;
+const MAX_BOARD_HISTORY_ENTRIES = 30;
 const TRACKED_BATCH_STORAGE_KEY = 'queens-admin-tracked-batches-v1';
 const MAX_TRACKED_BATCHES = 8;
 
 export const useQueensAdminStore = defineStore('queensAdmin', () => {
+  const queensStore = useQueensStore();
   const board = ref<QueensAdminBoardState | null>(null);
   const boardSize = ref(DEFAULT_BOARD_SIZE);
   const queenCountMode = ref<QueensAdminQueenCountMode>('exact');
@@ -42,6 +46,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
   const batchStatus = ref<QueensAdminBatchStatus | null>(null);
   const trackedBatches = ref<QueensAdminBatchStatus[]>([]);
   const batchLoading = ref(false);
+  const workshopBoardHistory = ref<QueensAdminBoardState[]>([]);
   let highlightTimer: ReturnType<typeof setTimeout> | null = null;
   let currentRequestController: AbortController | null = null;
   let currentGenerationJobId: string | null = null;
@@ -145,6 +150,25 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     return board.value.cells[row]?.[col] ?? null;
   });
 
+  const canUndoWorkshopBoard = computed(() => workshopBoardHistory.value.length > 0);
+
+  function cloneAdminBoardState(boardState: QueensAdminBoardState): QueensAdminBoardState {
+    return {
+      size: boardState.size,
+      cells: boardState.cells.map((row) => row.map((cell) => ({ ...cell }))),
+      generationPhase: boardState.generationPhase,
+      metadata: boardState.metadata ? { ...boardState.metadata } : undefined,
+    };
+  }
+
+  function pushWorkshopBoardHistory(snapshot: QueensAdminBoardState | null): void {
+    if (!snapshot) return;
+    workshopBoardHistory.value = [
+      cloneAdminBoardState(snapshot),
+      ...workshopBoardHistory.value,
+    ].slice(0, MAX_BOARD_HISTORY_ENTRIES);
+  }
+
   function setSelectedTool(tool: QueensAdminTool): void {
     selectedTool.value = tool;
   }
@@ -174,6 +198,10 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
       nextBoard.metadata?.orthogonalMinDistance ?? nextBoard.size
     );
     selectedCellKey.value = null;
+    queensStore.hydrateFromAdminBoard(nextBoard, {
+      showSolutionQueens: true,
+      resetHistory: false,
+    });
   }
 
   function applyResult(result: QueensAdminOperationResult): QueensAdminOperationResult {
@@ -181,13 +209,34 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     lastActionResult.value = result;
     backendError.value = result.success ? null : result.error || 'Operation failed';
 
+    const previousBoard = board.value;
     if (result.board) {
+      if (previousBoard && previousBoard !== result.board) {
+        pushWorkshopBoardHistory(previousBoard);
+      }
       board.value = result.board;
       boardSize.value = result.board.size;
       targetQueenCount.value = Number(result.board.metadata?.targetQueenCount ?? result.board.size);
       orthogonalMinDistance.value = Number(
         result.board.metadata?.orthogonalMinDistance ?? result.board.size
       );
+
+      const shouldResetHistory =
+        !previousBoard ||
+        previousBoard.size !== result.board.size ||
+        result.action === 'create-board';
+
+      if (shouldResetHistory) {
+        queensStore.hydrateFromAdminBoard(result.board, {
+          showSolutionQueens: true,
+          resetHistory: true,
+        });
+      } else {
+        queensStore.applyAdminBoardResult(result.board, {
+          showSolutionQueens: true,
+          saveHistory: true,
+        });
+      }
     }
 
     validation.value = result.validation;
@@ -476,11 +525,13 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
 
   async function startBatchGeneration(options: {
     sizes: number[];
+    orthogonalMinDistances: number[];
     strategies: QueensAdminGenerationStrategy[];
     runsPerCombination: number;
+    runMode: QueensAdminBatchRunMode;
     queenCountMode: 'exact' | 'max';
     targetQueenCount?: number | null;
-    orthogonalMinDistance: number;
+    orthogonalMinDistance?: number | null;
     minimumGroupSize: number;
     maxConcurrentJobs: number;
     saveSuccessfulPuzzles: boolean;
@@ -573,6 +624,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
   }
 
   function deleteBoard(): void {
+    workshopBoardHistory.value = [];
     board.value = null;
     validation.value = null;
     backendError.value = null;
@@ -580,6 +632,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     generationProgress.value = null;
     selectedCellKey.value = null;
     clearHighlights();
+    queensStore.initializeGrid();
     actionHistory.value.unshift({
       id: `${Date.now()}-delete-board`,
       action: 'delete-board',
@@ -591,6 +644,29 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
       createdAt: new Date().toISOString(),
     });
     actionHistory.value = actionHistory.value.slice(0, MAX_HISTORY_ENTRIES);
+  }
+
+  function undoWorkshopBoardChange(): void {
+    const previousBoard = workshopBoardHistory.value.shift();
+    if (!previousBoard) return;
+
+    clearHighlights();
+    applyBoardSnapshot(previousBoard);
+    validation.value = null;
+    backendError.value = null;
+    lastActionResult.value = null;
+  }
+
+  function clearWorkshopBoardMarks(): void {
+    if (!board.value) return;
+
+    pushWorkshopBoardHistory(board.value);
+    queensStore.clearAdminMarks();
+    board.value = queensStore.exportAdminBoardState();
+    validation.value = null;
+    backendError.value = null;
+    lastActionResult.value = null;
+    clearHighlights();
   }
 
   async function validateCurrentBoard(): Promise<void> {
@@ -668,6 +744,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     batchStatus,
     trackedBatches,
     batchLoading,
+    canUndoWorkshopBoard,
     highlightedChangedCells,
     selectedCell,
     boardSummary,
@@ -685,7 +762,9 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
     expandSelectedGroup,
     expandBlockedSquares,
     clearBoard,
+    clearWorkshopBoardMarks,
     deleteBoard,
+    undoWorkshopBoardChange,
     validateCurrentBoard,
     callBackendOperation,
     cancelCurrentOperation,

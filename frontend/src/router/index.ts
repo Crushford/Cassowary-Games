@@ -61,7 +61,13 @@ const router = createRouter({
       path: '/queens/admin',
       name: 'queens-admin',
       redirect: (to) => {
-        const tab = to.query.tab === 'batch' ? 'batch' : 'workshop';
+        const tab =
+          to.query.tab === 'batch' ||
+          to.query.tab === 'catalog' ||
+          to.query.tab === 'solver' ||
+          to.query.tab === 'max-queens'
+            ? to.query.tab
+            : 'workshop';
         return { name: `queens-admin-${tab}` };
       },
     },
@@ -76,12 +82,27 @@ const router = createRouter({
       component: QueensAdmin,
     },
     {
+      path: '/queens/admin/catalog',
+      name: 'queens-admin-catalog',
+      component: QueensAdmin,
+    },
+    {
+      path: '/queens/admin/solver',
+      name: 'queens-admin-solver',
+      component: QueensAdmin,
+    },
+    {
+      path: '/queens/admin/max-queens',
+      name: 'queens-admin-max-queens',
+      component: QueensAdmin,
+    },
+    {
       path: '/queens/puzzle/:encodedLayout',
       name: 'queens-encoded-puzzle',
       component: QueensGame,
     },
     {
-      path: '/queens/:sizeKey/mindistance:orthogonalMinDistance/:difficulty(easy|medium|hard)/:selectedPuzzleId?',
+      path: '/queens/:sizeKey/mindistance:orthogonalMinDistance/:difficulty(extra-easy|easy|medium|hard|extra-hard)/:selectedPuzzleId?',
       name: 'queens-selection-puzzle-with-difficulty',
       component: QueensGame,
     },

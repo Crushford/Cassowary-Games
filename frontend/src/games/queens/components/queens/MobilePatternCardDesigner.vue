@@ -1,112 +1,24 @@
 <template>
-  <div class="space-y-3">
-    <h3 class="text-lg font-bold text-semantic-info-300">Create Pattern Card</h3>
-
-    <div class="grid grid-cols-2 gap-2">
-      <label class="text-sm">
-        <div class="text-semantic-neutral-300 mb-1">ID (optional)</div>
-        <input
-          v-model="idInput"
-          class="w-full px-2 py-1 rounded bg-semantic-neutral-700 border border-semantic-neutral-600"
-          placeholder="pc-custom-1"
-        />
-      </label>
-      <label class="text-sm">
-        <div class="text-semantic-neutral-300 mb-1">Size</div>
-        <input
-          v-model.number="size"
-          type="number"
-          min="3"
-          max="9"
-          class="w-full px-2 py-1 rounded bg-semantic-neutral-700 border border-semantic-neutral-600"
-        />
-      </label>
-    </div>
-
-    <div>
-      <div class="text-sm text-semantic-neutral-300 mb-2">Tool</div>
-      <div class="flex gap-2">
-        <button
-          v-for="tool in tools"
-          :key="tool.id"
-          type="button"
-          class="px-3 py-1 rounded text-xs font-semibold"
-          :class="
-            selectedTool === tool.id
-              ? tool.activeClass
-              : 'bg-semantic-neutral-700 hover:bg-semantic-neutral-600'
-          "
-          :aria-label="`Select ${tool.label} tool`"
-          :aria-pressed="selectedTool === tool.id"
-          @click="selectedTool = tool.id"
-        >
-          {{ tool.label }}
-        </button>
-      </div>
-    </div>
-
-    <div class="space-y-2">
-      <div class="text-sm text-semantic-neutral-300">Pattern Grid</div>
-      <div class="inline-grid gap-1" :style="gridStyle">
-        <button
-          v-for="cell in gridCells"
-          :key="cell.key"
-          type="button"
-          class="w-8 h-8 rounded border border-semantic-neutral-500 flex items-center justify-center text-xs"
-          :class="cell.cellClass"
-          :aria-label="cell.ariaLabel"
-          @click="applyTool(cell.row, cell.col)"
-        >
-          <span v-if="cell.hasFlag">🚧</span>
-        </button>
-      </div>
-    </div>
-
-    <div class="flex gap-2">
-      <button
-        type="button"
-        class="flex-1 px-3 py-2 rounded bg-semantic-neutral-700 hover:bg-semantic-neutral-600 text-sm"
-        aria-label="Clear all flagged output cells"
-        @click="clearFlags"
-      >
-        Clear Flags
-      </button>
-      <button
-        type="button"
-        class="flex-1 px-3 py-2 rounded bg-semantic-neutral-700 hover:bg-semantic-neutral-600 text-sm"
-        aria-label="Clear all active pattern cells"
-        @click="clearActive"
-      >
-        Clear Active
-      </button>
-    </div>
-
-    <div class="flex gap-2">
-      <button
-        type="button"
-        class="flex-1 px-3 py-2 rounded bg-semantic-neutral-600 hover:bg-semantic-neutral-500 text-sm font-semibold"
-        aria-label="Cancel custom pattern card creation"
-        @click="$emit('cancel')"
-      >
-        Cancel
-      </button>
-      <button
-        type="button"
-        class="flex-1 px-3 py-2 rounded bg-semantic-info-700 hover:bg-semantic-info-600 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-        :disabled="activeCells.size === 0 || flagCells.size === 0"
-        aria-label="Save custom pattern card"
-        @click="handleSave"
-      >
-        Save Card
-      </button>
-    </div>
-  </div>
+  <SharedPatternDesigner
+    v-model="draft"
+    title="Create Pattern Card"
+    grid-label="Pattern Grid"
+    save-label="Save Card"
+    cancel-label="Cancel"
+    id-placeholder="pc-custom-1"
+    :show-id="true"
+    :id-optional="true"
+    :show-actions="true"
+    :show-cancel="true"
+    @save="handleSave"
+    @cancel="$emit('cancel')"
+  />
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-
-type DesignerTool = 'active' | 'other' | 'flag';
+import { ref } from 'vue';
+import SharedPatternDesigner from './SharedPatternDesigner.vue';
+import type { PatternEditorDraft } from './patternEditorTypes';
 
 const emit = defineEmits<{
   save: [
@@ -120,118 +32,19 @@ const emit = defineEmits<{
   cancel: [];
 }>();
 
-const idInput = ref('');
-const size = ref(5);
-const selectedTool = ref<DesignerTool>('active');
-
-const activeCells = ref(new Set<string>());
-const flagCells = ref(new Set<string>());
-
-const tools: Array<{ id: DesignerTool; label: string; activeClass: string }> = [
-  { id: 'active', label: 'Active', activeClass: 'bg-semantic-success-700' },
-  { id: 'other', label: 'Other', activeClass: 'bg-semantic-neutral-500' },
-  { id: 'flag', label: 'Flag', activeClass: 'bg-semantic-warning-700' },
-];
-
-function toKey(row: number, col: number): string {
-  return `${row},${col}`;
-}
-
-function fromKey(key: string): { row: number; col: number } {
-  const [row, col] = key.split(',').map(Number);
-  return { row, col };
-}
-
-watch(size, (nextSize) => {
-  if (nextSize < 3) size.value = 3;
-  if (nextSize > 9) size.value = 9;
-
-  const max = size.value - 1;
-  for (const key of Array.from(activeCells.value)) {
-    const pos = fromKey(key);
-    if (pos.row > max || pos.col > max) {
-      activeCells.value.delete(key);
-    }
-  }
-  for (const key of Array.from(flagCells.value)) {
-    const pos = fromKey(key);
-    if (pos.row > max || pos.col > max) {
-      flagCells.value.delete(key);
-    }
-  }
+const draft = ref<PatternEditorDraft>({
+  id: '',
+  size: 5,
+  cells: [],
+  outputFlags: [],
 });
 
-function applyTool(row: number, col: number) {
-  const key = toKey(row, col);
-
-  if (selectedTool.value === 'active') {
-    activeCells.value.add(key);
-    flagCells.value.delete(key);
-    return;
-  }
-
-  if (selectedTool.value === 'other') {
-    activeCells.value.delete(key);
-    flagCells.value.delete(key);
-    return;
-  }
-
-  if (selectedTool.value === 'flag') {
-    flagCells.value.add(key);
-    activeCells.value.delete(key);
-  }
-}
-
-function clearFlags() {
-  flagCells.value.clear();
-}
-
-function clearActive() {
-  activeCells.value.clear();
-}
-
-const gridStyle = computed(() => ({
-  gridTemplateColumns: `repeat(${size.value}, minmax(0, 1fr))`,
-}));
-
-const gridCells = computed(() => {
-  const cells: Array<{
-    key: string;
-    row: number;
-    col: number;
-    hasFlag: boolean;
-    cellClass: string;
-    ariaLabel: string;
-  }> = [];
-
-  for (let row = 0; row < size.value; row++) {
-    for (let col = 0; col < size.value; col++) {
-      const key = toKey(row, col);
-      const isActive = activeCells.value.has(key);
-      const hasFlag = flagCells.value.has(key);
-      const cellClass = isActive ? 'bg-semantic-success-600' : 'bg-semantic-neutral-600';
-      const stateLabel = hasFlag ? 'flagged output' : isActive ? 'active pattern' : 'other';
-      const ariaLabel = `Pattern cell row ${row + 1}, column ${col + 1}, currently ${stateLabel}`;
-
-      cells.push({ key, row, col, hasFlag, cellClass, ariaLabel });
-    }
-  }
-
-  return cells;
-});
-
-function sortedPositions(keys: Set<string>): Array<{ row: number; col: number }> {
-  return Array.from(keys)
-    .map(fromKey)
-    .sort((a, b) => (a.row === b.row ? a.col - b.col : a.row - b.row));
-}
-
-function handleSave() {
+function handleSave(nextDraft: PatternEditorDraft) {
   emit('save', {
-    id: idInput.value.trim() || undefined,
-    size: size.value,
-    cells: sortedPositions(activeCells.value).map((pos) => ({ ...pos, activeSquare: true })),
-    outputFlags: sortedPositions(flagCells.value),
+    id: nextDraft.id?.trim() || undefined,
+    size: nextDraft.size,
+    cells: nextDraft.cells,
+    outputFlags: nextDraft.outputFlags,
   });
 }
 

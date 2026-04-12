@@ -87,8 +87,33 @@ export const QUEENS_PATTERN_ORDER: QueensPatternVariant[] = [
   'crosshatch',
 ];
 
+export const QUEENS_ADJACENT_COLOR_CONFLICTS: Record<
+  QueensBaseColorName,
+  readonly QueensBaseColorName[]
+> = {
+  red: [],
+  blue: ['indigo'],
+  green: ['teal'],
+  yellow: [],
+  purple: ['pink'],
+  pink: ['purple'],
+  teal: ['green'],
+  indigo: ['blue'],
+};
+
 export function getRegionAppearanceBackgroundClass(appearance: RegionAppearance): string {
   return `bg-group-${appearance.color}-${appearance.shade}`;
+}
+
+export function areQueensColorsTooSimilar(
+  left: QueensBaseColorName,
+  right: QueensBaseColorName
+): boolean {
+  if (left === right) return true;
+  return (
+    QUEENS_ADJACENT_COLOR_CONFLICTS[left].includes(right) ||
+    QUEENS_ADJACENT_COLOR_CONFLICTS[right].includes(left)
+  );
 }
 
 export function getRegionAppearanceTokens(

@@ -147,6 +147,8 @@ describe('batch history migration', () => {
         persistenceMessage: null,
         savedPuzzleId: 'p-1',
         encodedPuzzleLayout: null,
+        completedQueenCount: 6,
+        difficulty: 'medium',
       },
     ]);
 
@@ -218,6 +220,8 @@ describe('batch history migration', () => {
         persistenceMessage: null,
         savedPuzzleId: 'p-5',
         encodedPuzzleLayout: null,
+        completedQueenCount: 10,
+        difficulty: 'hard',
       },
       {
         runId: 'distance-2',
@@ -239,6 +243,8 @@ describe('batch history migration', () => {
         persistenceMessage: null,
         savedPuzzleId: null,
         encodedPuzzleLayout: null,
+        completedQueenCount: 7,
+        difficulty: 'easy',
       },
     ]);
 

@@ -159,7 +159,11 @@ function handleClick() {
 }
 
 function shouldShowQueen(): boolean {
-  return queensStore.playerMarks[props.rowIndex]?.[props.colIndex] === 'queen';
+  if (queensStore.playerMarks[props.rowIndex]?.[props.colIndex] === 'queen') {
+    return true;
+  }
+
+  return queensStore.showSolution && gridCell.value?.isSolutionQueen === true;
 }
 
 function shouldShowFlag(): boolean {

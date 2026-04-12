@@ -15,7 +15,7 @@ class QueenAssumptionContradictionRule(
     private val solverSupportService: DeterministicSolverSupportService,
 ) : SolverRule {
     override val ruleName: String = "queen-assumption-contradiction"
-    override val difficultyTier: SolverDifficultyTier = SolverDifficultyTier.MEDIUM
+    override val difficultyTier: SolverDifficultyTier = SolverDifficultyTier.HARD
 
     override fun apply(boardState: BoardState): SolverStep? {
         for (row in 0 until boardState.size) {

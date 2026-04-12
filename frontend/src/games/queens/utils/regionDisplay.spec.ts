@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { GridSquare, RegionAppearance } from '../types/types';
+import { areQueensColorsTooSimilar } from './colorPalette';
 import { assignRegionPaletteColors } from './regionDisplay';
 
 function buildUniqueRegionGrid(rows: number, cols: number): GridSquare[][] {
@@ -18,6 +19,24 @@ function getAppearanceKey(appearance: RegionAppearance | undefined): string {
   return `${appearance.color}:${appearance.shade}:${appearance.pattern}`;
 }
 
+function expectNoAdjacentColorConflicts(grid: GridSquare[][]): void {
+  for (let row = 0; row < grid.length; row += 1) {
+    for (let col = 0; col < grid[row].length; col += 1) {
+      const currentAppearance = grid[row][col].groupAppearance;
+      expect(currentAppearance).toBeDefined();
+
+      const neighbors = [
+        grid[row]?.[col + 1]?.groupAppearance,
+        grid[row + 1]?.[col]?.groupAppearance,
+      ].filter((appearance): appearance is RegionAppearance => appearance !== undefined);
+
+      for (const neighbor of neighbors) {
+        expect(neighbor.color).not.toBe(currentAppearance?.color);
+      }
+    }
+  }
+}
+
 describe('assignRegionPaletteColors', () => {
   it('reuses the 8 base colors only after exhausting them in repeat mode', () => {
     const grid = buildUniqueRegionGrid(3, 3);
@@ -27,23 +46,7 @@ describe('assignRegionPaletteColors', () => {
     const uniqueAppearances = new Set(appearanceKeys);
 
     expect(uniqueAppearances.size).toBe(8);
-
-    for (let row = 0; row < assigned.length; row += 1) {
-      for (let col = 0; col < assigned[row].length; col += 1) {
-        const currentKey = getAppearanceKey(assigned[row][col].groupAppearance);
-        const rightKey =
-          col + 1 < assigned[row].length
-            ? getAppearanceKey(assigned[row][col + 1].groupAppearance)
-            : null;
-        const downKey =
-          row + 1 < assigned.length
-            ? getAppearanceKey(assigned[row + 1][col].groupAppearance)
-            : null;
-
-        expect(rightKey).not.toBe(currentKey);
-        expect(downKey).not.toBe(currentKey);
-      }
-    }
+    expectNoAdjacentColorConflicts(assigned);
   });
 
   it('exhausts all 24 color-shade combinations before reuse in shade mode', () => {
@@ -66,5 +69,43 @@ describe('assignRegionPaletteColors', () => {
     );
 
     expect(uniqueAppearances.size).toBe(12);
+  });
+
+  it('does not place the same base color next to itself in pattern mode', () => {
+    const grid = buildUniqueRegionGrid(4, 4);
+
+    const assigned = assignRegionPaletteColors(grid, 'pattern-variants');
+
+    expectNoAdjacentColorConflicts(assigned);
+  });
+
+  it('avoids adjacent similar color families when other colors are available', () => {
+    const grid = buildUniqueRegionGrid(4, 4);
+
+    const assigned = assignRegionPaletteColors(grid, 'pattern-variants');
+
+    for (let row = 0; row < assigned.length; row += 1) {
+      for (let col = 0; col < assigned[row].length; col += 1) {
+        const currentAppearance = assigned[row][col].groupAppearance;
+        expect(currentAppearance).toBeDefined();
+
+        const neighbors = [
+          assigned[row]?.[col + 1]?.groupAppearance,
+          assigned[row + 1]?.[col]?.groupAppearance,
+        ].filter((appearance): appearance is RegionAppearance => appearance !== undefined);
+
+        for (const neighbor of neighbors) {
+          expect(areQueensColorsTooSimilar(currentAppearance!.color, neighbor.color)).toBeFalsy();
+        }
+      }
+    }
+  });
+
+  it('falls back to reusing similar families when the board outgrows the conflict-safe palette', () => {
+    const grid = buildUniqueRegionGrid(5, 5);
+
+    const assigned = assignRegionPaletteColors(grid, 'repeat-base-colors');
+
+    expect(assigned.flat().every((cell) => cell.groupAppearance)).toBe(true);
   });
 });

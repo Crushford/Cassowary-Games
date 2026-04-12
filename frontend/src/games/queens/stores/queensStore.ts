@@ -17,7 +17,12 @@ import {
   keepOnlyOriginalPuzzleVariants,
   type PuzzleForDiversity,
 } from '../utils/puzzleDiversitySelector';
-import { buildQueensSelectionRoute } from '../utils/puzzleSelectionRoute';
+import {
+  buildQueensSelectionRoute,
+  type QueensSelectionDifficulty,
+  QUEENS_SELECTION_DIFFICULTY_ORDER,
+} from '../utils/puzzleSelectionRoute';
+import type { QueensAdminBoardState, QueensAdminMarkType } from '../admin/types';
 
 export type GameMode = 'standard' | 'speed' | 'rotate';
 export type { MarkType };
@@ -29,7 +34,8 @@ interface PuzzleRecord {
   queens: string;
   targetQueenCount?: number;
   orthogonalMinDistance?: number;
-  difficulty?: 'easy' | 'medium' | 'hard';
+  minimumGroupSize?: number;
+  difficulty?: QueensSelectionDifficulty;
 }
 
 function isPerfectSquareLength(length: number): boolean {
@@ -214,6 +220,9 @@ interface QueensState {
     usedFallbackPool: boolean;
     candidatesAboveThreshold: number;
   } | null;
+  adminBoardMetadata: Record<string, string> | undefined;
+  adminGenerationPhase: string | null;
+  adminShowSolutionPreview: boolean;
 }
 
 // LocalStorage key for completed puzzles
@@ -254,6 +263,13 @@ function saveRegionColorMode(mode: QueensRegionColorMode) {
   } catch (e) {
     console.error('Error saving region color mode to localStorage:', e);
   }
+}
+
+function toAdminMarkType(mark: MarkType): QueensAdminMarkType {
+  if (mark === 'queen') return 'QUEEN';
+  if (mark === 'flag') return 'FLAG';
+  if (mark === 'invalid') return 'INVALID';
+  return 'NONE';
 }
 
 // Helper functions for localStorage
@@ -536,6 +552,9 @@ export const useQueensStore = defineStore('queens', {
     diversityAverageBySize: {},
     recentPuzzleIdsBySize: {},
     lastDiversitySelectionSummary: null,
+    adminBoardMetadata: undefined,
+    adminGenerationPhase: null,
+    adminShowSolutionPreview: false,
   }),
 
   getters: {
@@ -735,6 +754,33 @@ export const useQueensStore = defineStore('queens', {
       (row: number, col: number): AutoFlagAnimationSource | null => {
         return state.autoFlagAnimationSources.get(`${row},${col}`) ?? null;
       },
+    minimumFlagOrthogonalDistance: (state): number | null => {
+      const flags: Pos[] = [];
+      for (let row = 0; row < state.gridSize; row++) {
+        for (let col = 0; col < state.gridSize; col++) {
+          if (state.playerMarks[row][col] === 'flag') {
+            flags.push({ row, col });
+          }
+        }
+      }
+
+      if (flags.length < 2) return null;
+
+      let minimumDistance = Number.POSITIVE_INFINITY;
+      for (let index = 0; index < flags.length; index++) {
+        for (let nextIndex = index + 1; nextIndex < flags.length; nextIndex++) {
+          const left = flags[index];
+          const right = flags[nextIndex];
+          if (left.row === right.row) {
+            minimumDistance = Math.min(minimumDistance, Math.abs(left.col - right.col));
+          } else if (left.col === right.col) {
+            minimumDistance = Math.min(minimumDistance, Math.abs(left.row - right.row));
+          }
+        }
+      }
+
+      return Number.isFinite(minimumDistance) ? minimumDistance : null;
+    },
   },
 
   actions: {
@@ -836,6 +882,116 @@ export const useQueensStore = defineStore('queens', {
 
     refreshRegionAppearances() {
       this.grid = assignRegionPaletteColors(this.grid, this.regionColorMode);
+    },
+
+    hydrateFromAdminBoard(
+      boardState: QueensAdminBoardState,
+      options?: {
+        showSolutionQueens?: boolean;
+        resetHistory?: boolean;
+      }
+    ) {
+      const showSolutionQueens = options?.showSolutionQueens ?? true;
+      const nextGrid = assignRegionPaletteColors(
+        boardState.cells.map((row) =>
+          row.map((cell) => ({
+            position: { row: cell.row, col: cell.col },
+            groupColor: cell.groupColor ?? undefined,
+            isSolutionQueen: cell.isSolutionQueen,
+          }))
+        ),
+        this.regionColorMode
+      );
+
+      const nextMarks = boardState.cells.map((row) =>
+        row.map((cell) => {
+          if (cell.markType === 'FLAG') return 'flag';
+          if (cell.markType === 'INVALID') return 'invalid';
+          if (cell.markType === 'QUEEN') {
+            return 'queen';
+          }
+          return null;
+        })
+      );
+
+      this.clearPendingRotateTimeout();
+      this.grid = nextGrid;
+      this.gridSize = boardState.size;
+      this.playerMarks = nextMarks;
+      this.targetQueenCount = Number(boardState.metadata?.targetQueenCount ?? boardState.size);
+      this.orthogonalMinDistance = Number(
+        boardState.metadata?.orthogonalMinDistance ?? boardState.size
+      );
+      this.adminBoardMetadata = boardState.metadata;
+      this.adminGenerationPhase = boardState.generationPhase;
+      this.adminShowSolutionPreview = showSolutionQueens;
+      this.showSolution = showSolutionQueens;
+      this.persistProgressEnabled = false;
+      this.currentPuzzle = null;
+      this.currentPuzzleId = null;
+      this.isTutorialMode = false;
+      this.showErrorFeedback = false;
+      this.errorFeedbackSquare = null;
+      this.errorSquares = new Set();
+      this.errorMessage = null;
+      this.isComplete = false;
+      this.boardRotationCount = 0;
+      this.rotationHistory = [];
+      this.isSwipeActive = false;
+      this.swipePlacedFlags = false;
+
+      if (options?.resetHistory !== false) {
+        this.moveHistory = [];
+      }
+    },
+
+    exportAdminBoardState(): QueensAdminBoardState {
+      return {
+        size: this.gridSize,
+        cells: this.grid.map((row, rowIndex) =>
+          row.map((cell, colIndex) => ({
+            row: rowIndex,
+            col: colIndex,
+            groupColor: cell.groupColor ?? null,
+            isSolutionQueen: cell.isSolutionQueen === true,
+            markType: toAdminMarkType(this.playerMarks[rowIndex][colIndex]),
+          }))
+        ),
+        generationPhase: this.adminGenerationPhase,
+        metadata: this.adminBoardMetadata,
+      };
+    },
+
+    applyAdminBoardResult(
+      boardState: QueensAdminBoardState,
+      options?: {
+        showSolutionQueens?: boolean;
+        saveHistory?: boolean;
+      }
+    ) {
+      if (options?.saveHistory !== false) {
+        this.saveToHistory();
+      }
+      this.hydrateFromAdminBoard(boardState, {
+        showSolutionQueens: options?.showSolutionQueens,
+        resetHistory: false,
+      });
+    },
+
+    clearAdminMarks() {
+      this.saveToHistory();
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          this.playerMarks[row][col] = null;
+        }
+      }
+      this.isComplete = false;
+      this.showSolution = false;
+      this.adminShowSolutionPreview = false;
+      this.showErrorFeedback = false;
+      this.errorFeedbackSquare = null;
+      this.errorSquares = new Set();
+      this.errorMessage = null;
     },
 
     saveToHistory() {
@@ -1506,12 +1662,20 @@ export const useQueensStore = defineStore('queens', {
     getRandomPuzzleForSelection(
       sizeKey: string,
       orthogonalMinDistance: number,
-      difficulty?: 'easy' | 'medium' | 'hard',
+      difficulty?: QueensSelectionDifficulty,
+      targetQueenCount?: number,
+      minimumGroupSize?: number,
       currentPuzzle?: PuzzleRecord | null
     ): PuzzleRecord | null {
-      const candidates = this.getPuzzlesForSelection(sizeKey, orthogonalMinDistance, difficulty);
+      const candidates = this.getPuzzlesForSelection(
+        sizeKey,
+        orthogonalMinDistance,
+        difficulty,
+        targetQueenCount,
+        minimumGroupSize
+      );
       return this.chooseNextDiversePuzzleFromCandidates(
-        `${sizeKey}|d${orthogonalMinDistance}|${difficulty}`,
+        `${sizeKey}|d${orthogonalMinDistance}|${difficulty}|q${targetQueenCount ?? 'any'}|g${minimumGroupSize ?? 'any'}`,
         candidates,
         (currentPuzzle ?? null) as PuzzleForDiversity | null
       );
@@ -2027,6 +2191,8 @@ export const useQueensStore = defineStore('queens', {
         sizeKey,
         orthogonalMinDistance,
         difficulty,
+        undefined,
+        undefined,
         this.currentPuzzle
       );
 
@@ -2112,7 +2278,9 @@ export const useQueensStore = defineStore('queens', {
     getPuzzlesForSelection(
       sizeKey: string,
       orthogonalMinDistance?: number,
-      difficulty?: 'easy' | 'medium' | 'hard'
+      difficulty?: QueensSelectionDifficulty,
+      targetQueenCount?: number,
+      minimumGroupSize?: number
     ): PuzzleRecord[] {
       if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
         return [];
@@ -2121,11 +2289,22 @@ export const useQueensStore = defineStore('queens', {
       const boardSize = parseInt(sizeKey.split('x')[0], 10);
       return this.puzzleDatabase[sizeKey].filter((puzzle) => {
         const puzzleDistance = puzzle.orthogonalMinDistance ?? boardSize;
+        const puzzleTargetQueenCount =
+          puzzle.targetQueenCount ?? deriveTargetQueenCountFromQueensString(puzzle.queens);
+        const puzzleMinimumGroupSize = puzzle.minimumGroupSize ?? 3;
         if (orthogonalMinDistance != null && puzzleDistance !== orthogonalMinDistance) {
           return false;
         }
 
         if (difficulty && (puzzle.difficulty ?? 'easy') !== difficulty) {
+          return false;
+        }
+
+        if (targetQueenCount != null && puzzleTargetQueenCount !== targetQueenCount) {
+          return false;
+        }
+
+        if (minimumGroupSize != null && puzzleMinimumGroupSize !== minimumGroupSize) {
           return false;
         }
 
@@ -2136,14 +2315,14 @@ export const useQueensStore = defineStore('queens', {
     getAvailableDifficultiesForSelection(
       sizeKey: string,
       orthogonalMinDistance: number
-    ): Array<'easy' | 'medium' | 'hard'> {
+    ): QueensSelectionDifficulty[] {
       const puzzles = this.getPuzzlesForSelection(sizeKey, orthogonalMinDistance);
       if (puzzles.length === 0) {
         return [];
       }
 
-      const difficultyOrder: Array<'easy' | 'medium' | 'hard'> = ['easy', 'medium', 'hard'];
-      const difficulties = new Set<'easy' | 'medium' | 'hard'>();
+      const difficultyOrder = QUEENS_SELECTION_DIFFICULTY_ORDER;
+      const difficulties = new Set<QueensSelectionDifficulty>();
       for (const puzzle of puzzles) {
         difficulties.add(puzzle.difficulty ?? 'easy');
       }
@@ -2151,10 +2330,10 @@ export const useQueensStore = defineStore('queens', {
       return difficultyOrder.filter((difficulty) => difficulties.has(difficulty));
     },
 
-    getAvailableDifficultiesForSize(sizeKey: string): Array<'easy' | 'medium' | 'hard'> {
+    getAvailableDifficultiesForSize(sizeKey: string): QueensSelectionDifficulty[] {
       const distances = this.getAvailableOrthogonalDistancesForSize(sizeKey);
-      const difficultyOrder: Array<'easy' | 'medium' | 'hard'> = ['easy', 'medium', 'hard'];
-      const difficulties = new Set<'easy' | 'medium' | 'hard'>();
+      const difficultyOrder = QUEENS_SELECTION_DIFFICULTY_ORDER;
+      const difficulties = new Set<QueensSelectionDifficulty>();
 
       for (const distance of distances) {
         for (const difficulty of this.getAvailableDifficultiesForSelection(sizeKey, distance)) {
@@ -2168,14 +2347,14 @@ export const useQueensStore = defineStore('queens', {
     countPuzzlesForSelection(
       sizeKey: string,
       orthogonalMinDistance: number,
-      difficulty: 'easy' | 'medium' | 'hard'
+      difficulty: QueensSelectionDifficulty
     ): number {
       return this.getPuzzlesForSelection(sizeKey, orthogonalMinDistance, difficulty).length;
     },
 
     countPuzzlesForSizeAndDifficulty(
       sizeKey: string,
-      difficulty: 'easy' | 'medium' | 'hard'
+      difficulty: QueensSelectionDifficulty
     ): number {
       return this.getPuzzlesForSelection(sizeKey, undefined, difficulty).length;
     },
@@ -2344,7 +2523,7 @@ export const useQueensStore = defineStore('queens', {
 
     getNextUncompletedPuzzleForSizeAndDifficulty(
       sizeKey: string,
-      difficulty: 'easy' | 'medium' | 'hard'
+      difficulty: QueensSelectionDifficulty
     ): PuzzleRecord | null {
       const distances = this.getAvailableOrthogonalDistancesForSize(sizeKey);
       for (const distance of distances) {
@@ -2359,7 +2538,7 @@ export const useQueensStore = defineStore('queens', {
     getNextUncompletedPuzzleForSelection(
       sizeKey: string,
       orthogonalMinDistance: number,
-      difficulty: 'easy' | 'medium' | 'hard'
+      difficulty: QueensSelectionDifficulty
     ): PuzzleRecord | null {
       if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
         return null;
@@ -2384,7 +2563,7 @@ export const useQueensStore = defineStore('queens', {
 
     getFirstPuzzleForSizeAndDifficulty(
       sizeKey: string,
-      difficulty: 'easy' | 'medium' | 'hard'
+      difficulty: QueensSelectionDifficulty
     ): PuzzleRecord | null {
       const distances = this.getAvailableOrthogonalDistancesForSize(sizeKey);
       for (const distance of distances) {
@@ -2399,15 +2578,22 @@ export const useQueensStore = defineStore('queens', {
     getFirstPuzzleForSelection(
       sizeKey: string,
       orthogonalMinDistance: number,
-      difficulty: 'easy' | 'medium' | 'hard'
+      difficulty: QueensSelectionDifficulty,
+      targetQueenCount?: number,
+      minimumGroupSize?: number
     ): PuzzleRecord | null {
       if (!this.puzzleDatabase || !this.puzzleDatabase[sizeKey]) {
         return null;
       }
 
       return (
-        this.getPuzzlesForSelection(sizeKey, orthogonalMinDistance, difficulty).find(() => true) ??
-        null
+        this.getPuzzlesForSelection(
+          sizeKey,
+          orthogonalMinDistance,
+          difficulty,
+          targetQueenCount,
+          minimumGroupSize
+        ).find(() => true) ?? null
       );
     },
 

@@ -8,6 +8,9 @@ import com.queens.admin.domain.model.MarkType
 import com.queens.admin.domain.model.OperationResult
 import com.queens.admin.domain.model.Position
 import com.queens.admin.domain.model.QueensBoardMetadata
+import org.slf4j.LoggerFactory
+import java.time.Duration
+import java.time.Instant
 import org.springframework.stereotype.Service
 import kotlin.random.Random
 
@@ -16,17 +19,73 @@ class QueenPlacementService(
     private val boardValidationService: BoardValidationService,
     private val queensConstraintService: QueensConstraintService,
 ) {
+    companion object {
+        private val logger = LoggerFactory.getLogger(QueenPlacementService::class.java)
+        private const val MAX_QUEEN_PROGRESS_LOG_INTERVAL = 100_000L
+    }
+
     fun resolveTargetQueenCount(
         size: Int,
         requestedTargetQueenCount: Int,
         queenCountMode: String,
         ruleset: com.queens.admin.domain.model.QueensRuleset,
-    ): Int =
-        if (queenCountMode.equals("max", ignoreCase = true)) {
-            maxQueensForBoard(size, ruleset)
+        progressListener: ((String) -> Unit)? = null,
+        allowExpensiveSearch: Boolean = false,
+    ): Int {
+        return if (queenCountMode.equals("max", ignoreCase = true)) {
+            val precomputed = PrecomputedMaxQueenCounts.get(size, ruleset.orthogonalMinDistance)
+            if (precomputed != null) {
+                progressListener?.invoke(
+                    "Using precomputed max queen count $precomputed for ${size}x$size with orthogonal distance ${ruleset.orthogonalMinDistance}.",
+                )
+                logger.info(
+                    "Using precomputed max queen count size={} orthogonalMinDistance={} resolvedTargetQueenCount={}",
+                    size,
+                    ruleset.orthogonalMinDistance,
+                    precomputed,
+                )
+                return precomputed
+            }
+            if (!allowExpensiveSearch) {
+                val supportedDistances = PrecomputedMaxQueenCounts.supportedDistancesForSize(size)
+                throw IllegalArgumentException(
+                    if (supportedDistances.isEmpty()) {
+                        "Max queen mode is not available yet for ${size}x$size boards."
+                    } else {
+                        "Max queen mode is not available yet for ${size}x$size with orthogonal distance ${ruleset.orthogonalMinDistance}. Supported distances: ${supportedDistances.joinToString(", ")}."
+                    },
+                )
+            }
+            progressListener?.invoke(
+                "Resolving max queen count for ${size}x$size with orthogonal distance ${ruleset.orthogonalMinDistance}.",
+            )
+            logger.info(
+                "Resolving max queen count size={} requestedTargetQueenCount={} orthogonalMinDistance={} requireRowCoverage={} requireColumnCoverage={}",
+                size,
+                requestedTargetQueenCount,
+                ruleset.orthogonalMinDistance,
+                ruleset.requireRowCoverage,
+                ruleset.requireColumnCoverage,
+            )
+            maxQueensForBoard(size, ruleset, progressListener).also { resolved ->
+                logger.info(
+                    "Resolved max queen count size={} requestedTargetQueenCount={} resolvedTargetQueenCount={} orthogonalMinDistance={}",
+                    size,
+                    requestedTargetQueenCount,
+                    resolved,
+                    ruleset.orthogonalMinDistance,
+                )
+            }
         } else {
             requestedTargetQueenCount
         }
+    }
+
+    fun hasPrecomputedMaxQueenCount(size: Int, orthogonalMinDistance: Int): Boolean =
+        PrecomputedMaxQueenCounts.has(size, orthogonalMinDistance)
+
+    fun supportedPrecomputedDistances(size: Int): List<Int> =
+        PrecomputedMaxQueenCounts.supportedDistancesForSize(size)
 
     fun placeQueens(boardState: BoardState): OperationResult {
         val targetQueenCount = QueensBoardMetadata.targetQueenCount(boardState)
@@ -104,16 +163,46 @@ class QueenPlacementService(
     private fun maxQueensForBoard(
         size: Int,
         ruleset: com.queens.admin.domain.model.QueensRuleset,
+        progressListener: ((String) -> Unit)? = null,
     ): Int {
+        val startedAt = Instant.now()
         val allPositions = (0 until size).flatMap { row ->
             (0 until size).map { col -> Position(row, col) }
         }
         val placed = mutableListOf<Position>()
         var best = 0
+        var exploredNodes = 0L
+        var lastLoggedNodeCount = 0L
 
         fun backtrack(startIndex: Int) {
+            exploredNodes += 1
+            if (exploredNodes - lastLoggedNodeCount >= MAX_QUEEN_PROGRESS_LOG_INTERVAL) {
+                lastLoggedNodeCount = exploredNodes
+                val progressMessage =
+                    "Max queen search explored $exploredNodes nodes, current branch has ${placed.size} queens, best so far is $best."
+                logger.info(
+                    "Max queen search progress size={} orthogonalMinDistance={} exploredNodes={} currentPlaced={} bestSoFar={} elapsedMs={}",
+                    size,
+                    ruleset.orthogonalMinDistance,
+                    exploredNodes,
+                    placed.size,
+                    best,
+                    Duration.between(startedAt, Instant.now()).toMillis(),
+                )
+                progressListener?.invoke(progressMessage)
+            }
             if (placed.size > best) {
                 best = placed.size
+                val bestMessage = "Max queen search found a new best candidate with $best queens."
+                logger.info(
+                    "Max queen search found new best size={} orthogonalMinDistance={} best={} exploredNodes={} elapsedMs={}",
+                    size,
+                    ruleset.orthogonalMinDistance,
+                    best,
+                    exploredNodes,
+                    Duration.between(startedAt, Instant.now()).toMillis(),
+                )
+                progressListener?.invoke(bestMessage)
             }
             if (startIndex >= allPositions.size) {
                 return
@@ -132,6 +221,15 @@ class QueenPlacementService(
         }
 
         backtrack(0)
+        logger.info(
+            "Resolved max queen count size={} orthogonalMinDistance={} best={} exploredNodes={} elapsedMs={}",
+            size,
+            ruleset.orthogonalMinDistance,
+            best,
+            exploredNodes,
+            Duration.between(startedAt, Instant.now()).toMillis(),
+        )
+        progressListener?.invoke("Resolved max queen count to $best.")
         return best
     }
 }

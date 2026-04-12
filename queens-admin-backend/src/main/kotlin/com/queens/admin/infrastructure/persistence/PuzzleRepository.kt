@@ -7,21 +7,51 @@ import java.util.UUID
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.count
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNull
 import org.springframework.stereotype.Repository
 
 @Repository
 class PuzzleRepository {
+    data class PuzzleGenerationBucketCount(
+        val size: Int,
+        val orthogonalMinDistance: Int,
+        val targetQueenCount: Int,
+        val minimumGroupSize: Int,
+        val count: Int,
+    )
+
+    data class PuzzleCatalogGroupCount(
+        val size: Int,
+        val orthogonalMinDistance: Int,
+        val targetQueenCount: Int,
+        val minimumGroupSize: Int,
+        val difficultyTier: PuzzleDifficultyTier?,
+        val count: Int,
+    )
+
     fun findByCanonicalSignature(canonicalSignature: String): PersistedPuzzle? =
         transaction {
             PuzzlesTable
                 .selectAll()
                 .where { PuzzlesTable.canonicalSignature eq canonicalSignature }
+                .limit(1)
+                .firstOrNull()
+                ?.toPersistedPuzzle()
+        }
+
+    fun findById(id: UUID): PersistedPuzzle? =
+        transaction {
+            PuzzlesTable
+                .selectAll()
+                .where { PuzzlesTable.id eq id }
                 .limit(1)
                 .firstOrNull()
                 ?.toPersistedPuzzle()
@@ -56,6 +86,41 @@ class PuzzleRepository {
                 .map { row -> row.toPersistedPuzzle() }
         }
 
+    fun findAllWithoutDifficulty(): List<PersistedPuzzle> =
+        transaction {
+            PuzzlesTable
+                .selectAll()
+                .where { PuzzlesTable.difficultyTier.isNull() }
+                .orderBy(PuzzlesTable.size to SortOrder.ASC, PuzzlesTable.createdAt to SortOrder.ASC)
+                .map { row -> row.toPersistedPuzzle() }
+        }
+
+    fun findAllFiltered(
+        size: Int? = null,
+        orthogonalMinDistance: Int? = null,
+        targetQueenCount: Int? = null,
+        minimumGroupSize: Int? = null,
+        difficultyTier: PuzzleDifficultyTier? = null,
+    ): List<PersistedPuzzle> =
+        transaction {
+            PuzzlesTable
+                .selectAll()
+                .where {
+                    val predicates =
+                        listOfNotNull(
+                            size?.let { PuzzlesTable.size eq it },
+                            orthogonalMinDistance?.let { PuzzlesTable.orthogonalMinDistance eq it },
+                            targetQueenCount?.let { PuzzlesTable.targetQueenCount eq it },
+                            minimumGroupSize?.let { PuzzlesTable.minimumGroupSize eq it },
+                            difficultyTier?.let { PuzzlesTable.difficultyTier eq it.name },
+                        )
+
+                    predicates.reduceOrNull { accumulator, predicate -> accumulator and predicate }
+                        ?: org.jetbrains.exposed.sql.Op.TRUE
+                }
+                .map { row -> row.toPersistedPuzzle() }
+        }
+
     fun countBySize(): Map<Int, Int> =
         transaction {
             val countExpression = PuzzlesTable.id.count()
@@ -76,6 +141,90 @@ class PuzzleRepository {
                 .associate { row ->
                     (row[PuzzlesTable.size] to row[PuzzlesTable.orthogonalMinDistance]) to row[countExpression].toInt()
                 }
+        }
+
+    fun countByGenerationBucket(): List<PuzzleGenerationBucketCount> =
+        transaction {
+            val countExpression = PuzzlesTable.id.count()
+            PuzzlesTable
+                .select(
+                    PuzzlesTable.size,
+                    PuzzlesTable.orthogonalMinDistance,
+                    PuzzlesTable.targetQueenCount,
+                    PuzzlesTable.minimumGroupSize,
+                    countExpression,
+                )
+                .groupBy(
+                    PuzzlesTable.size,
+                    PuzzlesTable.orthogonalMinDistance,
+                    PuzzlesTable.targetQueenCount,
+                    PuzzlesTable.minimumGroupSize,
+                )
+                .map { row ->
+                    PuzzleGenerationBucketCount(
+                        size = row[PuzzlesTable.size],
+                        orthogonalMinDistance = row[PuzzlesTable.orthogonalMinDistance],
+                        targetQueenCount = row[PuzzlesTable.targetQueenCount],
+                        minimumGroupSize = row[PuzzlesTable.minimumGroupSize],
+                        count = row[countExpression].toInt(),
+                    )
+                }
+        }
+
+    fun countByRulesetGroup(): List<PuzzleCatalogGroupCount> =
+        transaction {
+            val countExpression = PuzzlesTable.id.count()
+            PuzzlesTable
+                .select(
+                    PuzzlesTable.size,
+                    PuzzlesTable.orthogonalMinDistance,
+                    PuzzlesTable.targetQueenCount,
+                    PuzzlesTable.minimumGroupSize,
+                    PuzzlesTable.difficultyTier,
+                    countExpression,
+                )
+                .groupBy(
+                    PuzzlesTable.size,
+                    PuzzlesTable.orthogonalMinDistance,
+                    PuzzlesTable.targetQueenCount,
+                    PuzzlesTable.minimumGroupSize,
+                    PuzzlesTable.difficultyTier,
+                )
+                .map { row ->
+                    PuzzleCatalogGroupCount(
+                        size = row[PuzzlesTable.size],
+                        orthogonalMinDistance = row[PuzzlesTable.orthogonalMinDistance],
+                        targetQueenCount = row[PuzzlesTable.targetQueenCount],
+                        minimumGroupSize = row[PuzzlesTable.minimumGroupSize],
+                        difficultyTier = row[PuzzlesTable.difficultyTier]?.let(PuzzleDifficultyTier::valueOf),
+                        count = row[countExpression].toInt(),
+                    )
+                }
+        }
+
+    fun deleteByRulesetGroup(
+        size: Int,
+        orthogonalMinDistance: Int,
+        targetQueenCount: Int,
+        minimumGroupSize: Int,
+        difficultyTier: PuzzleDifficultyTier? = null,
+    ): Int =
+        transaction {
+            PuzzlesTable.deleteWhere {
+                if (difficultyTier != null) {
+                    (PuzzlesTable.size eq size) and
+                        (PuzzlesTable.orthogonalMinDistance eq orthogonalMinDistance) and
+                        (PuzzlesTable.targetQueenCount eq targetQueenCount) and
+                        (PuzzlesTable.minimumGroupSize eq minimumGroupSize) and
+                        (PuzzlesTable.difficultyTier eq difficultyTier.name)
+                } else {
+                    (PuzzlesTable.size eq size) and
+                        (PuzzlesTable.orthogonalMinDistance eq orthogonalMinDistance) and
+                        (PuzzlesTable.targetQueenCount eq targetQueenCount) and
+                        (PuzzlesTable.minimumGroupSize eq minimumGroupSize) and
+                        PuzzlesTable.difficultyTier.isNull()
+                }
+            }
         }
 
     fun updateDifficulty(

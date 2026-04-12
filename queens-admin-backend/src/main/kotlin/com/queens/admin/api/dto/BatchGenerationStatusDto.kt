@@ -39,4 +39,6 @@ data class BatchGenerationRunDto(
     val persistenceMessage: String? = null,
     val savedPuzzleId: String? = null,
     val encodedPuzzleLayout: String? = null,
+    val completedQueenCount: Int? = null,
+    val difficulty: String? = null,
 )

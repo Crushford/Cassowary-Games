@@ -1,16 +1,28 @@
-export type QueensSelectionDifficulty = 'easy' | 'medium' | 'hard';
+export type QueensSelectionDifficulty = 'extra-easy' | 'easy' | 'medium' | 'hard' | 'extra-hard';
+export const QUEENS_SELECTION_DIFFICULTY_ORDER: QueensSelectionDifficulty[] = [
+  'extra-easy',
+  'easy',
+  'medium',
+  'hard',
+  'extra-hard',
+];
 
 interface QueensSelectionRouteInput {
   sizeKey: string;
   orthogonalMinDistance: number;
   difficulty?: QueensSelectionDifficulty | null;
   puzzleId?: string | number | null;
+  targetQueenCount?: number | null;
+  minimumGroupSize?: number | null;
 }
 
 export function isQueensSelectionDifficulty(
   value: string | null | undefined
 ): value is QueensSelectionDifficulty {
-  return value === 'easy' || value === 'medium' || value === 'hard';
+  return (
+    typeof value === 'string' &&
+    QUEENS_SELECTION_DIFFICULTY_ORDER.includes(value as QueensSelectionDifficulty)
+  );
 }
 
 export function buildQueensSelectionPath({
@@ -31,8 +43,13 @@ export function buildQueensSelectionRoute({
   orthogonalMinDistance,
   difficulty,
   puzzleId,
+  targetQueenCount,
+  minimumGroupSize,
 }: QueensSelectionRouteInput): { path: string } {
-  return {
+  const route: {
+    path: string;
+    query?: Record<string, string>;
+  } = {
     path: buildQueensSelectionPath({
       sizeKey,
       orthogonalMinDistance,
@@ -40,4 +57,18 @@ export function buildQueensSelectionRoute({
       puzzleId,
     }),
   };
+
+  const query: Record<string, string> = {};
+  if (targetQueenCount != null) {
+    query.targetQueenCount = String(targetQueenCount);
+  }
+  if (minimumGroupSize != null) {
+    query.minimumGroupSize = String(minimumGroupSize);
+  }
+
+  if (Object.keys(query).length > 0) {
+    route.query = query;
+  }
+
+  return route;
 }

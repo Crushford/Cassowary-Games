@@ -4,6 +4,7 @@ import com.queens.admin.domain.model.BoardState
 import com.queens.admin.domain.solver.SolverDifficultyTier
 import com.queens.admin.domain.solver.SolverResult
 import com.queens.admin.domain.solver.SolverStep
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
@@ -11,13 +12,15 @@ class SolverEngine(
     private val solverRuleRegistry: SolverRuleRegistry,
     private val solverSupportService: DeterministicSolverSupportService,
 ) {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     fun clearSolverMarks(boardState: BoardState): BoardState {
         return solverSupportService.clearAllMarks(boardState)
     }
 
     fun runNextStep(
         boardState: BoardState,
-        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.HARD,
+        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.EXTRA_HARD,
     ): SolverResult {
         val nextStep = solverRuleRegistry.orderedRules(maxDifficultyTier)
             .firstNotNullOfOrNull { rule ->
@@ -48,9 +51,15 @@ class SolverEngine(
     fun runSpecificRule(
         boardState: BoardState,
         ruleName: String,
-        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.HARD,
+        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.EXTRA_HARD,
     ): SolverResult {
         val rule = solverRuleRegistry.findByName(ruleName, maxDifficultyTier)
+        logger.debug(
+            "[SolverEngine] runSpecificRule requestedRule={} resolvedRule={} maxDifficultyTier={}",
+            ruleName,
+            rule?.ruleName,
+            maxDifficultyTier,
+        )
         val step = rule?.apply(boardState)
 
         return if (step == null) {
@@ -76,7 +85,7 @@ class SolverEngine(
 
     fun runAllStepsUntilStuck(
         boardState: BoardState,
-        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.HARD,
+        maxDifficultyTier: SolverDifficultyTier = SolverDifficultyTier.EXTRA_HARD,
         maxSteps: Int = 256,
     ): SolverResult {
         var currentBoard = boardState

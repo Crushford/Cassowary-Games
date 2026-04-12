@@ -1,6 +1,8 @@
 package com.queens.admin.application
 
 import com.queens.admin.domain.model.MarkType
+import com.queens.admin.domain.model.BoardState
+import com.queens.admin.domain.model.CellState
 import com.queens.admin.domain.model.Position
 import com.queens.admin.domain.model.QueensBoardMetadata
 import com.queens.admin.domain.service.BlockedSquareExpansionService
@@ -13,12 +15,16 @@ import com.queens.admin.domain.service.QueensConstraintService
 import com.queens.admin.domain.service.QueenPlacementService
 import com.queens.admin.domain.service.SolverEngine
 import com.queens.admin.domain.service.SolverRuleRegistry
+import com.queens.admin.domain.service.SolverPatternService
 import com.queens.admin.domain.service.ValidatedPuzzleGenerationService
 import com.queens.admin.domain.solver.rules.AxisIsolationForcedQueenRule
+import com.queens.admin.domain.solver.rules.ConstrainedLinesRule
+import com.queens.admin.domain.solver.rules.ConstrainedLineSetsRule
 import com.queens.admin.domain.solver.rules.ConstrainedWindowRule
 import com.queens.admin.domain.solver.rules.FlagAssumptionContradictionRule
 import com.queens.admin.domain.solver.rules.FlagSquaresWithoutColorGroupsRule
 import com.queens.admin.domain.solver.rules.ForcedCoverageQueenRule
+import com.queens.admin.domain.solver.rules.GroupConfinedToLineRule
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -37,15 +43,20 @@ class GenerationWorkflowServiceTest {
             PlaceLastFreeQueensRule(deterministicSolverSupportService),
             ForcedCoverageQueenRule(deterministicSolverSupportService),
             AxisIsolationForcedQueenRule(deterministicSolverSupportService),
+            GroupConfinedToLineRule(deterministicSolverSupportService),
+            ConstrainedLinesRule(deterministicSolverSupportService),
+            ConstrainedLineSetsRule(deterministicSolverSupportService),
             QueenAssumptionContradictionRule(deterministicSolverSupportService),
             FlagAssumptionContradictionRule(deterministicSolverSupportService),
             ConstrainedWindowRule(deterministicSolverSupportService),
         ),
     )
     private val solverEngine = SolverEngine(solverRuleRegistry, deterministicSolverSupportService)
+    private val solverPatternService = SolverPatternService(deterministicSolverSupportService)
     private val deterministicPuzzleAnalysisService = DeterministicPuzzleAnalysisService(
         solverEngine = solverEngine,
         solverSupportService = deterministicSolverSupportService,
+        solverPatternService = solverPatternService,
     )
     private val validatedPuzzleGenerationService = ValidatedPuzzleGenerationService(
         boardFactoryService = boardFactoryService,
@@ -59,6 +70,12 @@ class GenerationWorkflowServiceTest {
         colorExpansionService = ColorExpansionService(boardValidationService),
         blockedSquareExpansionService = BlockedSquareExpansionService(boardValidationService),
         validatedPuzzleGenerationService = validatedPuzzleGenerationService,
+    )
+    private val solverWorkflowService = SolverWorkflowService(
+        solverEngine = solverEngine,
+        boardValidationService = boardValidationService,
+        deterministicSolverSupportService = deterministicSolverSupportService,
+        solverPatternService = solverPatternService,
     )
 
     @Test
@@ -213,6 +230,43 @@ class GenerationWorkflowServiceTest {
         assertEquals("5", boardState.metadata[QueensBoardMetadata.ORTHOGONAL_MIN_DISTANCE_KEY])
         assertEquals(7, boardState.cells.flatten().count { it.isSolutionQueen })
         assertTrue(boardValidationService.validate(boardState).isValid)
+    }
+
+    @Test
+    fun `single color workflow ignores groups that already have a queen`() {
+        val boardState = BoardState(
+            size = 4,
+            metadata = QueensBoardMetadata.metadata(boardSize = 4),
+            cells = List(4) { row ->
+                List(4) { col ->
+                    val position = Position(row, col)
+                    val groupColor =
+                        when (position) {
+                            Position(0, 0), Position(0, 1) -> "A"
+                            Position(2, 2), Position(2, 3) -> "B"
+                            else -> null
+                        }
+                    val markType =
+                        when (position) {
+                            Position(0, 0) -> MarkType.QUEEN
+                            Position(2, 3) -> MarkType.FLAG
+                            else -> MarkType.NONE
+                        }
+
+                    CellState(
+                        position = position,
+                        groupColor = groupColor,
+                        markType = markType,
+                    )
+                }
+            },
+        )
+
+        val result = solverWorkflowService.runSingleColorGroupSolverRule(boardState)
+
+        assertTrue(result.success)
+        assertEquals("Placed a queen in color group B because it had one candidate left.", result.explanation)
+        assertEquals(MarkType.QUEEN, requireNotNull(result.boardState).cells[2][2].markType)
     }
 
     @Test

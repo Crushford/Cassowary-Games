@@ -77,18 +77,14 @@
 
     <!-- Board stack -->
     <div class="flex-1 flex flex-col justify-center px-4 pb-2">
-      <PlayGrid
-        class="w-full max-w-full aspect-square"
-        :style="boardAnimationStyle"
+      <QueensPuzzleBoard
         :store="queensStore"
         :enable-touch="true"
+        :board-style="boardAnimationStyle"
+        aria-label="Queens puzzle grid"
         @swipe-start="queensStore.onSwipeStart"
         @swipe-end="queensStore.onSwipeEnd"
-      >
-        <template #default="{ rowIndex, colIndex, store }">
-          <QueensSquare :row-index="rowIndex" :col-index="colIndex" :store="store" />
-        </template>
-      </PlayGrid>
+      />
 
       <div class="mt-3 flex items-center justify-center gap-2">
         <Button
@@ -137,10 +133,11 @@ import {
   isQueensSelectionDifficulty,
 } from '../utils/puzzleSelectionRoute';
 
-const PlayGrid = defineAsyncComponent(() => import('@/shared/components/PlayGrid.vue'));
-const QueensSquare = defineAsyncComponent(() => import('../components/queens/QueensSquare.vue'));
 const QueensGameHeader = defineAsyncComponent(
   () => import('../components/queens/QueensGameHeader.vue')
+);
+const QueensPuzzleBoard = defineAsyncComponent(
+  () => import('../components/queens/QueensPuzzleBoard.vue')
 );
 const QueensCompletionModal = defineAsyncComponent(
   () => import('../components/queens/QueensCompletionModal.vue')
@@ -163,6 +160,16 @@ const speedModeStore = useSpeedModeStore();
 
 const shouldShakeErrorToast = ref(false);
 const isRouteLoading = ref(false);
+
+function logQueensRoute(event: string, detail?: Record<string, unknown>): void {
+  console.info('[QueensGame route]', event, {
+    fullPath: route.fullPath,
+    name: route.name,
+    params: route.params,
+    query: route.query,
+    ...detail,
+  });
+}
 
 // Board rotation animation
 const boardRotationDeg = ref(0);
@@ -240,10 +247,27 @@ async function loadPuzzleFromRoute() {
   const routeOrthogonalMinDistance = route.params.orthogonalMinDistance as string | undefined;
   const routeDifficultyParam = route.params.difficulty as string | undefined;
   const selectedPuzzleId = route.params.selectedPuzzleId as string | undefined;
+  const routeTargetQueenCount =
+    typeof route.query.targetQueenCount === 'string' ? route.query.targetQueenCount : undefined;
+  const routeMinimumGroupSize =
+    typeof route.query.minimumGroupSize === 'string' ? route.query.minimumGroupSize : undefined;
+
+  logQueensRoute('loadPuzzleFromRoute:start', {
+    puzzleId,
+    levelName,
+    encodedLayout,
+    sizeKey,
+    routeOrthogonalMinDistance,
+    routeDifficultyParam,
+    selectedPuzzleId,
+    routeTargetQueenCount,
+    routeMinimumGroupSize,
+  });
 
   try {
     // Check if this is a tutorial puzzle
     if (levelName) {
+      logQueensRoute('branch:tutorial', { levelName });
       await queensStore.loadTutorialPuzzle(levelName);
       initializeTutorialSteps(levelName);
       trackGameStart({
@@ -256,6 +280,7 @@ async function loadPuzzleFromRoute() {
     }
 
     if (encodedLayout) {
+      logQueensRoute('branch:encoded-layout', { encodedLayout });
       if (queensStore.isTutorialMode) {
         queensStore.exitTutorialMode();
       }
@@ -272,19 +297,30 @@ async function loadPuzzleFromRoute() {
     }
 
     if (sizeKey && routeOrthogonalMinDistance) {
+      logQueensRoute('branch:selection-route', {
+        sizeKey,
+        routeOrthogonalMinDistance,
+        routeDifficultyParam,
+        selectedPuzzleId,
+      });
       if (queensStore.isTutorialMode) {
         queensStore.exitTutorialMode();
       }
 
       const orthogonalMinDistance = Number.parseInt(routeOrthogonalMinDistance, 10);
       if (!Number.isFinite(orthogonalMinDistance)) {
+        logQueensRoute('redirect:invalid-orthogonal-distance', {
+          routeOrthogonalMinDistance,
+        });
         router.push('/queens');
         return;
       }
 
       if (!queensStore.puzzleDatabase) {
         const success = await queensStore.loadPuzzleDatabase();
+        logQueensRoute('puzzle-database:load-result', { success });
         if (!success) {
+          logQueensRoute('redirect:puzzle-database-load-failed');
           router.push('/queens');
           return;
         }
@@ -293,29 +329,76 @@ async function loadPuzzleFromRoute() {
       const difficulty = isQueensSelectionDifficulty(routeDifficultyParam)
         ? routeDifficultyParam
         : undefined;
+      const targetQueenCount =
+        routeTargetQueenCount != null ? Number.parseInt(routeTargetQueenCount, 10) : undefined;
+      const minimumGroupSize =
+        routeMinimumGroupSize != null ? Number.parseInt(routeMinimumGroupSize, 10) : undefined;
+
+      if (targetQueenCount != null && !Number.isFinite(targetQueenCount)) {
+        logQueensRoute('redirect:invalid-target-queen-count', { routeTargetQueenCount });
+        router.push('/queens');
+        return;
+      }
+
+      if (minimumGroupSize != null && !Number.isFinite(minimumGroupSize)) {
+        logQueensRoute('redirect:invalid-minimum-group-size', { routeMinimumGroupSize });
+        router.push('/queens');
+        return;
+      }
+
+      const puzzlesForSelection = queensStore.getPuzzlesForSelection(
+        sizeKey,
+        orthogonalMinDistance,
+        difficulty,
+        targetQueenCount,
+        minimumGroupSize
+      );
+      logQueensRoute('selection-pool:resolved', {
+        sizeKey,
+        orthogonalMinDistance,
+        difficulty,
+        targetQueenCount,
+        minimumGroupSize,
+        selectionCount: puzzlesForSelection.length,
+        selectedPuzzleId,
+      });
 
       let selectedPuzzle =
         selectedPuzzleId != null
-          ? (queensStore
-              .getPuzzlesForSelection(sizeKey, orthogonalMinDistance, difficulty)
-              .find((puzzle) => String(puzzle.id) === selectedPuzzleId) ?? null)
+          ? (puzzlesForSelection.find((puzzle) => String(puzzle.id) === selectedPuzzleId) ?? null)
           : null;
 
       if (!selectedPuzzle) {
+        logQueensRoute('selection-pool:pick-random', {
+          reason:
+            selectedPuzzleId == null ? 'missing-selectedPuzzleId' : 'selected-puzzle-not-found',
+          selectedPuzzleId,
+        });
         selectedPuzzle = queensStore.getRandomPuzzleForSelection(
           sizeKey,
           orthogonalMinDistance,
-          difficulty
+          difficulty,
+          targetQueenCount,
+          minimumGroupSize
         );
       }
 
       if (!selectedPuzzle) {
+        logQueensRoute('redirect:no-puzzle-for-selection', {
+          sizeKey,
+          orthogonalMinDistance,
+          difficulty,
+          targetQueenCount,
+          minimumGroupSize,
+        });
         router.push({
           path: '/queens',
           query: {
             mode: 'single',
             size: sizeKey,
             distance: String(orthogonalMinDistance),
+            ...(targetQueenCount != null ? { targetQueenCount: String(targetQueenCount) } : {}),
+            ...(minimumGroupSize != null ? { minimumGroupSize: String(minimumGroupSize) } : {}),
             ...(difficulty ? { difficulty } : {}),
           },
         });
@@ -323,17 +406,29 @@ async function loadPuzzleFromRoute() {
       }
 
       if (selectedPuzzleId == null || String(selectedPuzzle.id) !== selectedPuzzleId) {
-        router.replace(
-          buildQueensSelectionRoute({
-            sizeKey,
-            orthogonalMinDistance,
-            difficulty,
-            puzzleId: selectedPuzzle.id,
-          })
-        );
+        const replacementRoute = buildQueensSelectionRoute({
+          sizeKey,
+          orthogonalMinDistance,
+          difficulty,
+          puzzleId: selectedPuzzle.id,
+          targetQueenCount,
+          minimumGroupSize,
+        });
+        logQueensRoute('replace:canonical-selection-route', {
+          selectedPuzzleId,
+          canonicalPuzzleId: selectedPuzzle.id,
+          replacementRoute,
+        });
+        router.replace(replacementRoute);
       }
 
+      logQueensRoute('load:selected-puzzle', {
+        selectedPuzzleId: selectedPuzzle.id,
+      });
       await queensStore.loadPuzzleById(selectedPuzzle.id);
+      logQueensRoute('load:selected-puzzle:complete', {
+        currentPuzzleId: queensStore.currentPuzzleId,
+      });
       trackGameStart({
         game_name: 'queens',
         game_mode: queensStore.isSpeedMode ? 'speed' : 'standard',
@@ -345,10 +440,14 @@ async function loadPuzzleFromRoute() {
     }
 
     if (puzzleId) {
+      logQueensRoute('branch:direct-puzzle', { puzzleId });
       if (queensStore.isTutorialMode) {
         queensStore.exitTutorialMode();
       }
       await queensStore.loadPuzzleById(puzzleId);
+      logQueensRoute('branch:direct-puzzle:complete', {
+        currentPuzzleId: queensStore.currentPuzzleId,
+      });
       trackGameStart({
         game_name: 'queens',
         game_mode: queensStore.isSpeedMode ? 'speed' : 'standard',
@@ -359,11 +458,19 @@ async function loadPuzzleFromRoute() {
       return;
     }
 
+    logQueensRoute('redirect:no-matching-route-params');
     router.push('/queens');
   } catch (err) {
     console.error('[QueensGame] Error loading puzzle route:', err);
+    logQueensRoute('redirect:error', {
+      error: err instanceof Error ? err.message : String(err),
+    });
     router.push('/queens');
   } finally {
+    logQueensRoute('loadPuzzleFromRoute:finish', {
+      isRouteLoading: false,
+      currentPuzzleId: queensStore.currentPuzzleId,
+    });
     isRouteLoading.value = false;
   }
 }
@@ -514,6 +621,7 @@ watch(
     route.params.selectedPuzzleId,
   ],
   async () => {
+    logQueensRoute('watch:route-params-changed');
     await loadPuzzleFromRoute();
   }
 );

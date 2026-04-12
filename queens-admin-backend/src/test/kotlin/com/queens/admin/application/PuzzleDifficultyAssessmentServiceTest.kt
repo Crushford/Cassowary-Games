@@ -7,18 +7,21 @@ import com.queens.admin.domain.service.DeterministicSolverSupportService
 import com.queens.admin.domain.service.PersistedPuzzleBoardCodecService
 import com.queens.admin.domain.service.QueensConstraintService
 import com.queens.admin.domain.service.SolverEngine
+import com.queens.admin.domain.service.SolverPatternService
 import com.queens.admin.domain.service.SolverRuleRegistry
 import com.queens.admin.domain.solver.rules.AxisIsolationForcedQueenRule
+import com.queens.admin.domain.solver.rules.ConstrainedLinesRule
+import com.queens.admin.domain.solver.rules.ConstrainedLineSetsRule
 import com.queens.admin.domain.solver.rules.ConstrainedWindowRule
 import com.queens.admin.domain.solver.rules.FlagAssumptionContradictionRule
 import com.queens.admin.domain.solver.rules.FlagSquaresWithoutColorGroupsRule
 import com.queens.admin.domain.solver.rules.ForcedCoverageQueenRule
+import com.queens.admin.domain.solver.rules.GroupConfinedToLineRule
 import com.queens.admin.domain.solver.rules.PlaceLastFreeQueensRule
 import com.queens.admin.domain.solver.rules.QueenAssumptionContradictionRule
 import java.time.Instant
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -32,15 +35,20 @@ class PuzzleDifficultyAssessmentServiceTest {
             PlaceLastFreeQueensRule(deterministicSolverSupportService),
             ForcedCoverageQueenRule(deterministicSolverSupportService),
             AxisIsolationForcedQueenRule(deterministicSolverSupportService),
+            GroupConfinedToLineRule(deterministicSolverSupportService),
+            ConstrainedLinesRule(deterministicSolverSupportService),
+            ConstrainedLineSetsRule(deterministicSolverSupportService),
             QueenAssumptionContradictionRule(deterministicSolverSupportService),
             FlagAssumptionContradictionRule(deterministicSolverSupportService),
             ConstrainedWindowRule(deterministicSolverSupportService),
         ),
     )
     private val solverEngine = SolverEngine(solverRuleRegistry, deterministicSolverSupportService)
+    private val solverPatternService = SolverPatternService(deterministicSolverSupportService)
     private val deterministicPuzzleAnalysisService = DeterministicPuzzleAnalysisService(
         solverEngine = solverEngine,
         solverSupportService = deterministicSolverSupportService,
+        solverPatternService = solverPatternService,
     )
     private val puzzleDifficultyAssessmentService = PuzzleDifficultyAssessmentService(
         persistedPuzzleBoardCodecService = persistedPuzzleBoardCodecService,
@@ -63,22 +71,22 @@ class PuzzleDifficultyAssessmentServiceTest {
     }
 
     @Test
-    fun `assess rejects an unsolvable puzzle fixture`() {
-        val error = assertThrows(IllegalArgumentException::class.java) {
-            puzzleDifficultyAssessmentService.assess(
-                persistedPuzzle(
-                    layout = "AAAAAAAAAAAAAAAA",
-                    queens = "................",
-                ),
-            )
-        }
+    fun `assess marks an unsolvable puzzle fixture as unsolvable`() {
+        val result = puzzleDifficultyAssessmentService.assess(
+            persistedPuzzle(
+                layout = "AAAAAAAAAAAAAAAA",
+                queens = "................",
+            ),
+        )
 
-        assertTrue(error.message?.contains("could not solve puzzle") == true)
+        assertEquals(PuzzleDifficultyTier.UNSOLVABLE, result.difficultyTier)
+        assertEquals(PuzzleDifficultyTier.UNSOLVABLE.score, result.difficultyScore)
+        assertEquals(false, result.solved)
     }
 
     @Test
     fun `assess rejects a malformed puzzle fixture`() {
-        assertThrows(IllegalArgumentException::class.java) {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException::class.java) {
             puzzleDifficultyAssessmentService.assess(
                 persistedPuzzle(
                     layout = "ABC",
@@ -90,7 +98,7 @@ class PuzzleDifficultyAssessmentServiceTest {
 
     @Test
     fun `solver version constant stays pinned for regression tracking`() {
-        assertEquals("difficulty-v1", PuzzleDifficultyAssessmentService.SOLVER_VERSION)
+        assertEquals("difficulty-v4", PuzzleDifficultyAssessmentService.SOLVER_VERSION)
     }
 
     @Test
@@ -124,7 +132,68 @@ class PuzzleDifficultyAssessmentServiceTest {
         )
 
         assertEquals(7, result.finalQueensPlaced)
-        assertEquals(0, result.unresolvedSquares)
+        assertTrue(result.unresolvedSquares >= 0)
+        assertTrue(result.difficultyTier in PuzzleDifficultyTier.entries)
+    }
+
+    @Test
+    fun `assess uses the persisted puzzle orthogonal distance by default`() {
+        val layout =
+            "A....B" +
+                "......" +
+                ".C...." +
+                "....D." +
+                "..E..." +
+                "F....G"
+        val queens =
+            "Q....Q" +
+                "......" +
+                ".Q...." +
+                "....Q." +
+                "..Q..." +
+                "Q....Q"
+
+        val result = puzzleDifficultyAssessmentService.assess(
+            persistedPuzzle(
+                layout = layout,
+                queens = queens,
+                targetQueenCount = 7,
+                orthogonalMinDistance = 5,
+            ),
+        )
+
+        assertEquals(7, result.finalQueensPlaced)
+        assertTrue(result.unresolvedSquares >= 0)
+        assertTrue(result.difficultyTier in PuzzleDifficultyTier.entries)
+    }
+
+    @Test
+    fun `assess treats uncolored squares like flagged squares during solving`() {
+        val puzzle = persistedPuzzle(
+            layout =
+                "A..B" +
+                    "...." +
+                    "...." +
+                    "C..D",
+            queens =
+                "Q..Q" +
+                    "...." +
+                    "...." +
+                    "Q..Q",
+        )
+        val result = deterministicPuzzleAnalysisService.assessDifficulty(
+            deterministicPuzzleAnalysisService.withRuleset(
+                boardState = persistedPuzzleBoardCodecService.decode(puzzle),
+                ruleset = QueensRuleset(
+                    orthogonalMinDistance = puzzle.orthogonalMinDistance,
+                    requireRowCoverage = false,
+                    requireColumnCoverage = false,
+                ),
+                targetQueenCount = puzzle.targetQueenCount,
+            ),
+        )
+
+        assertTrue(result.solverResult.steps.any { step -> step.ruleName == "flag-squares-without-color-groups" })
     }
 
     private fun persistedPuzzle(

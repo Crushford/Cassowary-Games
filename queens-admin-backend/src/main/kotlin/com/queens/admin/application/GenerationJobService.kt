@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
@@ -15,6 +16,7 @@ class GenerationJobService(
 ) {
     companion object {
         private const val MAX_HISTORY_ENTRIES = 40
+        private val logger = LoggerFactory.getLogger(GenerationJobService::class.java)
     }
 
     private val executor = Executors.newCachedThreadPool()
@@ -56,6 +58,17 @@ class GenerationJobService(
             snapshot = AtomicReference(initialSnapshot),
         )
         jobs[jobId] = runtime
+        logger.info(
+            "Queued generation job {} size={} queenCountMode={} targetQueenCount={} orthogonalMinDistance={} minimumGroupSize={} strategy={} progressUpdates={}",
+            jobId,
+            size,
+            queenCountMode,
+            targetQueenCount,
+            orthogonalMinDistance,
+            minimumGroupSize,
+            generationStrategy,
+            includeProgressUpdates,
+        )
 
         executor.submit {
             runJob(jobId, runtime)
@@ -91,6 +104,16 @@ class GenerationJobService(
     }
 
     private fun runJob(jobId: String, runtime: GenerationJobRuntime) {
+        logger.info(
+            "Starting generation job {} size={} queenCountMode={} targetQueenCount={} orthogonalMinDistance={} minimumGroupSize={} strategy={}",
+            jobId,
+            runtime.size,
+            runtime.queenCountMode,
+            runtime.targetQueenCount,
+            runtime.orthogonalMinDistance,
+            runtime.minimumGroupSize,
+            runtime.generationStrategy,
+        )
         updateSnapshot(
             runtime = runtime,
             state = GenerationJobState.RUNNING,
@@ -103,6 +126,20 @@ class GenerationJobService(
             metrics = runtime.snapshot.get().metrics,
             generationPhase = null,
         )
+        if (runtime.queenCountMode.equals("max", ignoreCase = true)) {
+            updateSnapshot(
+                runtime = runtime,
+                state = GenerationJobState.RUNNING,
+                attempt = 0,
+                stage = "RESOLVING_TARGET_QUEENS",
+                message = "Resolving the maximum queen count for the requested ruleset before generation can start.",
+                coloredCellCount = 0,
+                totalCellCount = runtime.size * runtime.size,
+                strategy = runtime.generationStrategy,
+                metrics = runtime.snapshot.get().metrics,
+                generationPhase = null,
+            )
+        }
 
         try {
             val result = generationWorkflowService.generateValidBoard(
@@ -133,6 +170,20 @@ class GenerationJobService(
                     null
                 },
                 isCancelled = { runtime.cancelled.get() },
+                targetQueenResolutionListener = { status ->
+                    updateSnapshot(
+                        runtime = runtime,
+                        state = if (runtime.cancelled.get()) GenerationJobState.CANCELLED else GenerationJobState.RUNNING,
+                        attempt = 0,
+                        stage = "RESOLVING_TARGET_QUEENS",
+                        message = status,
+                        coloredCellCount = 0,
+                        totalCellCount = runtime.size * runtime.size,
+                        strategy = runtime.generationStrategy,
+                        metrics = runtime.snapshot.get().metrics,
+                        generationPhase = null,
+                    )
+                },
             )
 
             val terminalState = when {
@@ -163,6 +214,14 @@ class GenerationJobService(
                 boardState = result.boardState,
                 result = result,
             )
+            logger.info(
+                "Generation job {} finished state={} attempt={} stage={} message={}",
+                jobId,
+                terminalState,
+                runtime.snapshot.get().attempt,
+                runtime.snapshot.get().stage,
+                runtime.snapshot.get().message,
+            )
         } catch (_: CancellationException) {
             updateSnapshot(
                 runtime = runtime,
@@ -177,6 +236,13 @@ class GenerationJobService(
                 generationPhase = runtime.snapshot.get().generationPhase,
                 boardState = runtime.snapshot.get().boardState,
             )
+            logger.info(
+                "Generation job {} cancelled at attempt={} stage={} message={}",
+                jobId,
+                runtime.snapshot.get().attempt,
+                runtime.snapshot.get().stage,
+                runtime.snapshot.get().message,
+            )
         } catch (error: Throwable) {
             updateSnapshot(
                 runtime = runtime,
@@ -190,6 +256,14 @@ class GenerationJobService(
                 metrics = runtime.snapshot.get().metrics,
                 generationPhase = runtime.snapshot.get().generationPhase,
                 boardState = runtime.snapshot.get().boardState,
+            )
+            logger.error(
+                "Generation job {} crashed at attempt={} stage={} message={}",
+                jobId,
+                runtime.snapshot.get().attempt,
+                runtime.snapshot.get().stage,
+                error.message ?: "Generation crashed unexpectedly.",
+                error,
             )
         }
     }
