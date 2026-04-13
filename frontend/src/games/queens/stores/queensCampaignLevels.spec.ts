@@ -152,4 +152,121 @@ describe('Queens campaign level selector entries', () => {
     });
     expect(chapters[1]?.levels).toEqual([]);
   }, 30000);
+
+  it('skips generated campaign buckets with fewer than 10 playable puzzles', async () => {
+    const { useQueensStore } = await import('./queensStore');
+    const store = useQueensStore();
+
+    const limitedTutorial4x4 = (puzzlesJson['4x4'] ?? []).filter(
+      (puzzle: any) => puzzle.difficulty === 'tutorial'
+    );
+    expect(limitedTutorial4x4.length).toBeGreaterThanOrEqual(10);
+
+    const tutorial5x5 = (puzzlesJson['5x5'] ?? []).filter(
+      (puzzle: any) => puzzle.difficulty === 'tutorial'
+    );
+    expect(tutorial5x5.length).toBeGreaterThanOrEqual(10);
+
+    store.puzzleDatabase = {
+      '4x4': limitedTutorial4x4.slice(0, 9),
+      '5x5': tutorial5x5.slice(0, 10),
+    } as typeof store.puzzleDatabase;
+    store.campaignBucketCache = null;
+
+    const buckets = store.getCampaignBuckets();
+
+    expect(
+      buckets.some((bucket) => bucket.sizeKey === '4x4' && bucket.difficulty === 'tutorial')
+    ).toBe(false);
+    expect(buckets[0]).toMatchObject({
+      sizeKey: '5x5',
+      difficulty: 'tutorial',
+      levelIndex: 1,
+    });
+  }, 30000);
+
+  it('drops story-index levels with fewer than 10 playable puzzles and reindexes the campaign', async () => {
+    const { useQueensStore } = await import('./queensStore');
+    const store = useQueensStore();
+
+    const tutorial4x4 = (puzzlesJson['4x4'] ?? []).filter(
+      (puzzle: any) => puzzle.difficulty === 'tutorial'
+    );
+    const tutorial5x5 = (puzzlesJson['5x5'] ?? []).filter(
+      (puzzle: any) => puzzle.difficulty === 'tutorial'
+    );
+    expect(tutorial4x4.length).toBeGreaterThanOrEqual(10);
+    expect(tutorial5x5.length).toBeGreaterThanOrEqual(10);
+
+    const jsonResponse = (payload: unknown, status = 200) => ({
+      ok: status >= 200 && status < 300,
+      status,
+      async json() {
+        return payload;
+      },
+    });
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string) => {
+        if (input === '/queens/catalog/story-index.json') {
+          return jsonResponse([
+            {
+              levelIndex: 1,
+              sizeKey: '4x4',
+              difficulty: 'tutorial',
+              orthogonalMinDistance: 4,
+            },
+            {
+              levelIndex: 2,
+              sizeKey: '5x5',
+              difficulty: 'tutorial',
+              orthogonalMinDistance: 5,
+            },
+          ]);
+        }
+        if (input === '/queens/catalog/classic-index.json') {
+          return jsonResponse([
+            {
+              sizeKey: '4x4',
+              difficulty: 'tutorial',
+              orthogonalMinDistances: [4],
+              count: 9,
+              path: '/queens/catalog/classic/4x4/tutorial.json',
+            },
+            {
+              sizeKey: '5x5',
+              difficulty: 'tutorial',
+              orthogonalMinDistances: [5],
+              count: 10,
+              path: '/queens/catalog/classic/5x5/tutorial.json',
+            },
+          ]);
+        }
+        if (input === '/queens/catalog/extended-index.json') {
+          return jsonResponse([]);
+        }
+        if (input === '/queens/catalog/classic/4x4/tutorial.json') {
+          return jsonResponse({ '4x4': tutorial4x4.slice(0, 9) });
+        }
+        if (input === '/queens/catalog/classic/5x5/tutorial.json') {
+          return jsonResponse({ '5x5': tutorial5x5.slice(0, 10) });
+        }
+        return jsonResponse(null, 404);
+      })
+    );
+
+    const loaded = await store.loadCampaignCatalog();
+    expect(loaded).toBe(true);
+
+    const buckets = store.getCampaignBuckets();
+    expect(buckets).toHaveLength(1);
+    expect(buckets[0]).toMatchObject({
+      sizeKey: '5x5',
+      difficulty: 'tutorial',
+      levelIndex: 1,
+      chapterLevelNumber: 1,
+    });
+    expect(store.getCampaignBucketByRoute('4x4', 'tutorial')).toBeNull();
+  }, 30000);
 });

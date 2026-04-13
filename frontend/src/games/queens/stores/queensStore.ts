@@ -320,6 +320,8 @@ function bucketKey(sizeKey: string, difficulty: QueensSelectionDifficulty): stri
   return `${sizeKey}|${difficulty}`;
 }
 
+const MIN_CAMPAIGN_PUZZLES_PER_LEVEL = 10;
+
 export interface TutorialStep {
   id: string;
   instruction: string;
@@ -1489,27 +1491,64 @@ export const useQueensStore = defineStore('queens', {
       this.loadingMessage = 'Loading story campaign...';
 
       try {
-        const storyResponse = await fetch('/queens/catalog/story-index.json', {
-          cache: 'no-store',
-        });
+        const loadIndex = async (path: string): Promise<QueensCampaignCatalogEntry[]> => {
+          const response = await fetch(path, { cache: 'no-store' });
+          if (!response.ok) {
+            if (response.status === 404) {
+              return [];
+            }
+            throw new Error(`Failed to load ${path}: ${response.status}`);
+          }
+          const payload = (await response.json()) as QueensCampaignCatalogEntry[];
+          return payload.map((entry) => ({
+            ...entry,
+            difficulty: this.normalizePuzzleDifficulty(entry.difficulty) ?? 'easy',
+          }));
+        };
+
+        const [storyResponse, classicIndex, extendedIndex] = await Promise.all([
+          fetch('/queens/catalog/story-index.json', { cache: 'no-store' }),
+          loadIndex('/queens/catalog/classic-index.json'),
+          loadIndex('/queens/catalog/extended-index.json'),
+        ]);
+
+        this.campaignCatalogIndex = mergeCampaignCatalogEntries(classicIndex, extendedIndex);
+
         if (storyResponse.ok) {
           const payload = (await storyResponse.json()) as QueensStoryIndexEntry[];
           const storyBuckets: QueensCampaignBucket[] = [];
           const targetTimeIndex: Record<string, number> = {};
+          const chapterLevelNumbers = new Map<string, number>();
 
           for (const entry of payload) {
             const difficulty = this.normalizePuzzleDifficulty(entry.difficulty) ?? 'easy';
             const chapterDefinition = getStoryChapterDefinition(
               entry.chapterId ?? 'honey-pot-ant-farming'
             );
+            const playablePuzzleCount =
+              Object.keys(this.campaignCatalogIndex).length > 0
+                ? await this.loadCampaignPlayablePuzzleCount(
+                    entry.sizeKey,
+                    entry.orthogonalMinDistance,
+                    difficulty
+                  )
+                : MIN_CAMPAIGN_PUZZLES_PER_LEVEL;
+            if (playablePuzzleCount < MIN_CAMPAIGN_PUZZLES_PER_LEVEL) {
+              continue;
+            }
+
+            const chapterId = entry.chapterId ?? chapterDefinition.id;
+            const nextChapterLevelNumber = (chapterLevelNumbers.get(chapterId) ?? 0) + 1;
+            chapterLevelNumbers.set(chapterId, nextChapterLevelNumber);
+
             const bucket: QueensCampaignBucket = {
-              levelIndex: entry.levelIndex,
+              levelIndex: storyBuckets.length + 1,
               sizeKey: entry.sizeKey,
               difficulty,
               orthogonalMinDistance: entry.orthogonalMinDistance,
-              chapterId: entry.chapterId ?? chapterDefinition.id,
+              chapterId,
               chapterName: entry.chapterName ?? chapterDefinition.name,
-              chapterLevelNumber: entry.chapterLevelNumber ?? entry.levelIndex,
+              chapterLevelNumber: entry.chapterLevelNumber ?? nextChapterLevelNumber,
               chapterIntroTitle: entry.chapterIntroTitle ?? chapterDefinition.introTitle,
               chapterIntroBody: entry.chapterIntroBody ?? chapterDefinition.introBody,
             };
@@ -1527,28 +1566,6 @@ export const useQueensStore = defineStore('queens', {
             return true;
           }
         }
-
-        const loadIndex = async (path: string): Promise<QueensCampaignCatalogEntry[]> => {
-          const response = await fetch(path, { cache: 'no-store' });
-          if (!response.ok) {
-            if (response.status === 404) {
-              return [];
-            }
-            throw new Error(`Failed to load ${path}: ${response.status}`);
-          }
-          const payload = (await response.json()) as QueensCampaignCatalogEntry[];
-          return payload.map((entry) => ({
-            ...entry,
-            difficulty: this.normalizePuzzleDifficulty(entry.difficulty) ?? 'easy',
-          }));
-        };
-
-        const [classicIndex, extendedIndex] = await Promise.all([
-          loadIndex('/queens/catalog/classic-index.json'),
-          loadIndex('/queens/catalog/extended-index.json'),
-        ]);
-
-        this.campaignCatalogIndex = mergeCampaignCatalogEntries(classicIndex, extendedIndex);
         if (Object.keys(this.campaignCatalogIndex).length === 0) {
           return this.loadPuzzleDatabase();
         }
@@ -1642,6 +1659,29 @@ export const useQueensStore = defineStore('queens', {
       }
     },
 
+    getCampaignPlayablePuzzleCount(
+      sizeKey: string,
+      orthogonalMinDistance: number,
+      difficulty: QueensSelectionDifficulty
+    ): number {
+      return this.getPuzzlesForSelection(sizeKey, orthogonalMinDistance, difficulty).filter(
+        (puzzle) => this.isCampaignPuzzleSolvable(puzzle, difficulty)
+      ).length;
+    },
+
+    async loadCampaignPlayablePuzzleCount(
+      sizeKey: string,
+      orthogonalMinDistance: number,
+      difficulty: QueensSelectionDifficulty
+    ): Promise<number> {
+      const boardSize = Number.parseInt(sizeKey, 10);
+      return (await this.loadCampaignBucketPuzzles(sizeKey, difficulty)).filter(
+        (puzzle) =>
+          (puzzle.orthogonalMinDistance ?? boardSize) === orthogonalMinDistance &&
+          this.isCampaignPuzzleSolvable(puzzle, difficulty)
+      ).length;
+    },
+
     async buildCampaignBucketsFromCatalog(): Promise<QueensCampaignBucket[]> {
       const sizeKeys = Array.from(
         new Set(Object.values(this.campaignCatalogIndex).map((entry) => entry.sizeKey))
@@ -1660,13 +1700,12 @@ export const useQueensStore = defineStore('queens', {
           if (!group.orthogonalMinDistances.includes(boardSize)) continue;
           const orthogonalMinDistance = boardSize;
 
-          const puzzles = await this.loadCampaignBucketPuzzles(sizeKey, difficulty);
-          const hasPlayablePuzzle = puzzles
-            .filter(
-              (puzzle) => (puzzle.orthogonalMinDistance ?? boardSize) === orthogonalMinDistance
-            )
-            .some((puzzle) => this.isCampaignPuzzleSolvable(puzzle, difficulty));
-          if (!hasPlayablePuzzle) continue;
+          const playablePuzzleCount = await this.loadCampaignPlayablePuzzleCount(
+            sizeKey,
+            orthogonalMinDistance,
+            difficulty
+          );
+          if (playablePuzzleCount < MIN_CAMPAIGN_PUZZLES_PER_LEVEL) continue;
 
           levelIndex += 1;
           chapterLevelNumber += 1;
@@ -1767,12 +1806,12 @@ export const useQueensStore = defineStore('queens', {
           const boardSize = Number.parseInt(sizeKey, 10);
           const orthogonalMinDistance = this.getPreferredCampaignDistance(sizeKey, difficulty);
           if (orthogonalMinDistance == null || orthogonalMinDistance !== boardSize) continue;
-          const hasPlayablePuzzle = this.getPuzzlesForSelection(
+          const playablePuzzleCount = this.getCampaignPlayablePuzzleCount(
             sizeKey,
             orthogonalMinDistance,
             difficulty
-          ).some((puzzle) => this.isCampaignPuzzleSolvable(puzzle, difficulty));
-          if (!hasPlayablePuzzle) continue;
+          );
+          if (playablePuzzleCount < MIN_CAMPAIGN_PUZZLES_PER_LEVEL) continue;
           levelIndex += 1;
           chapterLevelNumber += 1;
           buckets.push({
