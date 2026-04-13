@@ -2,6 +2,9 @@
 
 set -e
 
+echo "Checking Queens DB-backed export fingerprint..."
+yarn db:sync-exported-artifacts
+
 yarn lint:fix
 yarn --cwd frontend build
 

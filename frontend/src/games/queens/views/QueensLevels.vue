@@ -1,7 +1,22 @@
 <template>
   <div
-    class="h-svh w-full max-w-[480px] mx-auto bg-semantic-neutral-800 text-white flex flex-col overflow-hidden"
+    class="relative h-svh w-full max-w-[480px] mx-auto bg-semantic-neutral-800 text-white flex flex-col overflow-hidden"
   >
+    <div
+      v-if="isStartingCampaign"
+      class="absolute inset-0 z-20 flex items-center justify-center bg-surface-overlay backdrop-blur-sm"
+    >
+      <div
+        class="flex flex-col items-center gap-3 rounded-2xl border border-semantic-neutral-700 bg-surface-darkSoft px-6 py-5 text-center shadow-xl"
+      >
+        <div
+          class="h-10 w-10 animate-spin rounded-full border-4 border-semantic-neutral-700 border-t-semantic-warning-400"
+          aria-hidden="true"
+        ></div>
+        <div class="text-sm font-semibold text-semantic-neutral-100">Starting campaign...</div>
+      </div>
+    </div>
+
     <!-- Header -->
     <div class="flex-none p-6 text-center">
       <h1 class="text-4xl font-bold mb-2 text-semantic-danger-400">Queens Game</h1>
@@ -34,6 +49,31 @@
         >
           <div class="text-xl font-bold mb-1">Single Puzzle Mode</div>
           <div class="text-sm opacity-90">Play puzzles one at a time</div>
+        </button>
+
+        <button
+          class="w-full py-4 px-6 bg-semantic-warning-700 hover:bg-semantic-warning-600 text-white font-semibold rounded-lg transition-colors duration-200 text-left disabled:cursor-wait disabled:opacity-70"
+          :disabled="isStartingCampaign"
+          :aria-busy="isStartingCampaign"
+          @click="startCampaign"
+        >
+          <div class="mb-1 flex items-center gap-3 text-xl font-bold">
+            <span
+              v-if="isStartingCampaign"
+              class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-semantic-warning-200/40 border-t-semantic-warning-100"
+              aria-hidden="true"
+            ></span>
+            <span>Story Campaign</span>
+          </div>
+          <div class="text-sm opacity-90">Climb the Queens ladder from the smallest available farms upward</div>
+        </button>
+
+        <button
+          class="w-full py-4 px-6 bg-semantic-neutral-800 hover:bg-semantic-neutral-700 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          @click="goToCampaignSelector"
+        >
+          <div class="text-xl font-bold mb-1">Select Level</div>
+          <div class="text-sm opacity-90">Browse the full story map, replay farms, and check what unlocks next</div>
         </button>
 
         <!-- Speed Mode Button -->
@@ -109,6 +149,7 @@ const RecordsModal = defineAsyncComponent(() => import('../components/queens/Rec
 const queensStore = useQueensStore();
 const speedModeStore = useSpeedModeStore();
 const showRotateModeModal = ref(false);
+const isStartingCampaign = ref(false);
 const router = useRouter();
 const route = useRoute();
 
@@ -116,6 +157,24 @@ type QueensMenuMode = 'single' | 'speed' | 'rotate' | 'records';
 
 function goToIncrementalMode() {
   router.push('/queens/incremental');
+}
+
+function goToCampaignSelector() {
+  router.push('/queens/campaign');
+}
+
+async function startCampaign() {
+  if (isStartingCampaign.value) {
+    return;
+  }
+
+  isStartingCampaign.value = true;
+  try {
+    await queensStore.startCampaign();
+  } catch (error) {
+    isStartingCampaign.value = false;
+    throw error;
+  }
 }
 
 function openMenuMode(mode: QueensMenuMode) {

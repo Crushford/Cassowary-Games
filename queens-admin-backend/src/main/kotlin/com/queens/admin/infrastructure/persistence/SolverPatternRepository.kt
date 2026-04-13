@@ -20,6 +20,11 @@ import org.springframework.stereotype.Repository
 class SolverPatternRepository(
     private val objectMapper: ObjectMapper,
 ) {
+    data class SolverPatternExportFingerprint(
+        val count: Long,
+        val latestUpdatedAt: Instant?,
+    )
+
     fun findAll(): List<PersistedSolverPattern> =
         transaction {
             SolverPatternsTable
@@ -68,6 +73,23 @@ class SolverPatternRepository(
                 it[updatedAt] = pattern.updatedAt
             }
             pattern
+        }
+
+    fun exportFingerprint(): SolverPatternExportFingerprint =
+        transaction {
+            val count = SolverPatternsTable.selectAll().count()
+            val latestUpdatedAt =
+                SolverPatternsTable
+                    .select(SolverPatternsTable.updatedAt)
+                    .orderBy(SolverPatternsTable.updatedAt to SortOrder.DESC, SolverPatternsTable.id to SortOrder.ASC)
+                    .limit(1)
+                    .firstOrNull()
+                    ?.get(SolverPatternsTable.updatedAt)
+
+            SolverPatternExportFingerprint(
+                count = count,
+                latestUpdatedAt = latestUpdatedAt,
+            )
         }
 
     private fun ResultRow.toPersistedSolverPattern(): PersistedSolverPattern =

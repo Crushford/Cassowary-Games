@@ -1833,6 +1833,8 @@ function formatDifficultyPhase(phase: QueensDifficultyPhase): string {
 
 function difficultyPhaseBadgeClass(phase: QueensDifficultyPhase): string {
   switch (phase) {
+    case 'tutorial':
+      return 'bg-semantic-neutral-800 text-semantic-neutral-100';
     case 'extra-easy':
       return 'bg-feedback-infoSubtle text-semantic-info-200';
     case 'easy':

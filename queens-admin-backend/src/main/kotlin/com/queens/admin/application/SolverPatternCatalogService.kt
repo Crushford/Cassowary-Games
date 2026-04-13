@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service
 @Service
 class SolverPatternCatalogService(
     private val solverPatternRepository: SolverPatternRepository,
+    private val sharedQueensSolverConfigService: SharedQueensSolverConfigService,
 ) {
     data class UpsertSolverPatternRequest(
         val id: String,
@@ -64,21 +65,6 @@ class SolverPatternCatalogService(
     }
 
     companion object {
-        private val canonicalDifficultyOverrides: Map<String, PuzzleDifficultyTier> = mapOf(
-            "pc-1" to PuzzleDifficultyTier.EXTRA_EASY,
-            "pc-2" to PuzzleDifficultyTier.EASY,
-            "solver-pattern-3" to PuzzleDifficultyTier.EXTRA_EASY,
-            "solver-pattern-4" to PuzzleDifficultyTier.MEDIUM,
-            "solver-pattern-5" to PuzzleDifficultyTier.MEDIUM,
-            "solver-pattern-6" to PuzzleDifficultyTier.MEDIUM,
-            "solver-pattern-7" to PuzzleDifficultyTier.MEDIUM,
-        )
-
-        private fun applyConfiguredDefaults(pattern: PersistedSolverPattern): PersistedSolverPattern {
-            val canonicalDifficulty = canonicalDifficultyOverrides[pattern.id] ?: return pattern
-            return pattern.copy(difficultyTier = canonicalDifficulty)
-        }
-
         fun normalizeForPersistence(request: UpsertSolverPatternRequest): UpsertSolverPatternRequest {
             val activeCells = request.cells.filter { it.activeSquare }
             val relevantPoints = buildList {
@@ -117,4 +103,41 @@ class SolverPatternCatalogService(
             )
         }
     }
+
+    private fun applyConfiguredDefaults(pattern: PersistedSolverPattern): PersistedSolverPattern {
+        val sharedPattern = sharedPatternDefaults().find { it.id == pattern.id } ?: return pattern
+        return pattern.copy(
+            name = sharedPattern.name,
+            difficultyTier = sharedPattern.difficultyTier,
+            enabled = sharedPattern.enabled,
+            sortOrder = sharedPattern.sortOrder,
+            cells = if (sharedPattern.cells.isNotEmpty()) sharedPattern.cells else pattern.cells,
+            outputFlags = if (sharedPattern.outputFlags.isNotEmpty()) sharedPattern.outputFlags else pattern.outputFlags,
+            size = if (sharedPattern.size > 0) sharedPattern.size else pattern.size,
+        )
+    }
+
+    private fun sharedPatternDefaults(): List<PersistedSolverPattern> =
+        sharedQueensSolverConfigService.load().patterns.map { pattern ->
+            PersistedSolverPattern(
+                id = pattern.id,
+                name = pattern.name,
+                size = pattern.size,
+                cells = pattern.cells.map { cell ->
+                    SolverPatternCellRecord(
+                        row = cell.row,
+                        col = cell.col,
+                        activeSquare = cell.activeSquare,
+                    )
+                },
+                outputFlags = pattern.outputFlags.map { offset ->
+                    SolverPatternOffsetRecord(row = offset.row, col = offset.col)
+                },
+                difficultyTier = PuzzleDifficultyTier.valueOf(pattern.difficultyTier.uppercase().replace('-', '_')),
+                enabled = pattern.enabled,
+                sortOrder = pattern.sortOrder,
+                createdAt = Instant.EPOCH,
+                updatedAt = Instant.EPOCH,
+            )
+        }
 }

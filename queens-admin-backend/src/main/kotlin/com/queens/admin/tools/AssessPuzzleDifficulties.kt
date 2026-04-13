@@ -35,6 +35,7 @@ fun main(args: Array<String>) {
                 println(
                     "[${progress.processedCount}/${progress.totalToProcess}] " +
                         "remaining=${progress.remainingCount} " +
+                        "tutorial=${progress.tutorialCount} " +
                         "extraEasy=${progress.extraEasyCount} " +
                         "easy=${progress.easyCount} " +
                         "medium=${progress.mediumCount} " +
@@ -54,6 +55,7 @@ fun main(args: Array<String>) {
         println("  Puzzles targeted this run: ${summary.totalToProcess}")
         println("  Assessed: ${summary.assessedCount}")
         println("  Skipped existing: ${summary.skippedExistingCount}")
+        println("  Tutorial: ${summary.tutorialCount}")
         println("  Extra Easy: ${summary.extraEasyCount}")
         println("  Easy: ${summary.easyCount}")
         println("  Medium: ${summary.mediumCount}")

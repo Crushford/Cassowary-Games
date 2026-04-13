@@ -1,0 +1,159 @@
+{
+  "difficultyOrder": [
+    "tutorial",
+    "extra-easy",
+    "easy",
+    "medium",
+    "hard",
+    "extra-hard",
+    "unsolvable"
+  ],
+  "builtInSteps": [
+    {
+      "id": "single-color",
+      "label": "Single Color Queen",
+      "description": "Place the queen when exactly one valid square remains in a color group.",
+      "difficultyTier": "tutorial",
+      "enabled": true,
+      "sortOrder": 10
+    },
+    {
+      "id": "row-column",
+      "label": "Row / Column Constraints",
+      "description": "Use constrained sliding row and column bands to eliminate impossible candidates.",
+      "difficultyTier": "hard",
+      "enabled": true,
+      "sortOrder": 40
+    },
+    {
+      "id": "group-confined-to-line",
+      "label": "Group Confined To Line",
+      "description": "Flag candidates near a color group whose remaining squares are trapped in one row or column.",
+      "difficultyTier": "tutorial",
+      "enabled": true,
+      "sortOrder": 20
+    },
+    {
+      "id": "single-queen-contradiction",
+      "label": "Single Queen Contradiction",
+      "description": "Try one queen placement. If it immediately makes the puzzle impossible, flag that square.",
+      "difficultyTier": "hard",
+      "enabled": true,
+      "sortOrder": 50
+    },
+    {
+      "id": "row-column-sets",
+      "label": "Row / Column Set Constraints",
+      "description": "Use row and column sets inside a queen-distance window to eliminate impossible candidates, including non-adjacent lines.",
+      "difficultyTier": "extra-hard",
+      "enabled": true,
+      "sortOrder": 60
+    },
+    {
+      "id": "assume-progress",
+      "label": "Assume Queen Until Progress",
+      "description": "Try queen assumptions until one contradiction forces a real move.",
+      "difficultyTier": "unsolvable",
+      "enabled": true,
+      "sortOrder": 70
+    },
+    {
+      "id": "assume-exhaustive",
+      "label": "Assume Queen Exhaustive",
+      "description": "Exhaustively scan queen and flag assumptions until no further forced move exists.",
+      "difficultyTier": "unsolvable",
+      "enabled": true,
+      "sortOrder": 80
+    }
+  ],
+  "patterns": [
+    {
+      "id": "pc-1",
+      "name": "pc-1",
+      "size": 3,
+      "cells": [
+        { "row": 0, "col": 1, "activeSquare": true },
+        { "row": 1, "col": 1, "activeSquare": true },
+        { "row": 1, "col": 2, "activeSquare": true }
+      ],
+      "outputFlags": [
+        { "row": 0, "col": 2 },
+        { "row": 1, "col": 0 },
+        { "row": 2, "col": 1 }
+      ],
+      "difficultyTier": "extra-easy",
+      "enabled": true,
+      "sortOrder": 100
+    },
+    {
+      "id": "pc-2",
+      "name": "pc-2",
+      "size": 4,
+      "cells": [
+        { "row": 1, "col": 2, "activeSquare": true },
+        { "row": 2, "col": 1, "activeSquare": true }
+      ],
+      "outputFlags": [
+        { "row": 0, "col": 1 },
+        { "row": 1, "col": 0 },
+        { "row": 1, "col": 1 },
+        { "row": 2, "col": 2 },
+        { "row": 2, "col": 3 },
+        { "row": 3, "col": 2 }
+      ],
+      "difficultyTier": "easy",
+      "enabled": true,
+      "sortOrder": 110
+    },
+    {
+      "id": "solver-pattern-3",
+      "name": "solver-pattern-3",
+      "size": 0,
+      "cells": [],
+      "outputFlags": [],
+      "difficultyTier": "extra-easy",
+      "enabled": true,
+      "sortOrder": 120
+    },
+    {
+      "id": "solver-pattern-4",
+      "name": "solver-pattern-4",
+      "size": 0,
+      "cells": [],
+      "outputFlags": [],
+      "difficultyTier": "medium",
+      "enabled": true,
+      "sortOrder": 130
+    },
+    {
+      "id": "solver-pattern-5",
+      "name": "solver-pattern-5",
+      "size": 0,
+      "cells": [],
+      "outputFlags": [],
+      "difficultyTier": "medium",
+      "enabled": true,
+      "sortOrder": 140
+    },
+    {
+      "id": "solver-pattern-6",
+      "name": "solver-pattern-6",
+      "size": 0,
+      "cells": [],
+      "outputFlags": [],
+      "difficultyTier": "medium",
+      "enabled": true,
+      "sortOrder": 150
+    },
+    {
+      "id": "solver-pattern-7",
+      "name": "solver-pattern-7",
+      "size": 0,
+      "cells": [],
+      "outputFlags": [],
+      "difficultyTier": "medium",
+      "enabled": true,
+      "sortOrder": 160
+    }
+  ]
+}

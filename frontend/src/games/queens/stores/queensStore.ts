@@ -23,6 +23,13 @@ import {
   QUEENS_SELECTION_DIFFICULTY_ORDER,
 } from '../utils/puzzleSelectionRoute';
 import type { QueensAdminBoardState, QueensAdminMarkType } from '../admin/types';
+import {
+  applyQueensSolverStep,
+  isQueensSolverStateSolved,
+  type QueensSolverStep,
+  type QueensSolverState,
+  runQueensSolverUntilStuck,
+} from '../solver/stagedSolver';
 
 export type GameMode = 'standard' | 'speed' | 'rotate';
 export type { MarkType };
@@ -36,6 +43,76 @@ interface PuzzleRecord {
   orthogonalMinDistance?: number;
   minimumGroupSize?: number;
   difficulty?: QueensSelectionDifficulty;
+}
+
+interface QueensCampaignBucket {
+  levelIndex: number;
+  sizeKey: string;
+  difficulty: QueensSelectionDifficulty;
+  orthogonalMinDistance: number;
+}
+
+export interface QueensCampaignLevelEntry {
+  levelNumber: number;
+  boardSize: string;
+  difficulty: QueensSelectionDifficulty;
+  isLocked: boolean;
+  isCompleted: boolean;
+  isCurrent: boolean;
+  bestTime: number | null;
+  route: string;
+  bucket: QueensCampaignBucket;
+}
+
+function buildSolverStateFromPuzzleRecord(puzzleData: PuzzleRecord): QueensSolverState {
+  const gridSize = Math.sqrt(puzzleData.layout.length);
+  const targetQueenCount =
+    puzzleData.targetQueenCount ?? deriveTargetQueenCountFromQueensString(puzzleData.queens);
+  const orthogonalMinDistance = puzzleData.orthogonalMinDistance ?? gridSize;
+  const grid: GridSquare[][] = Array.from({ length: gridSize }, (_, row) =>
+    Array.from({ length: gridSize }, (_, col) => {
+      const index = row * gridSize + col;
+      const symbol = puzzleData.layout[index];
+      return {
+        position: { row, col },
+        groupColor: symbol === '.' ? undefined : symbol,
+        isSolutionQueen: puzzleData.queens[index] === 'Q',
+      };
+    })
+  );
+
+  return {
+    grid,
+    gridSize,
+    targetQueenCount,
+    orthogonalMinDistance,
+    playerMarks: Array.from({ length: gridSize }, () => Array<MarkType>(gridSize).fill(null)),
+  };
+}
+
+function isPuzzleSolvableWithinDifficulty(
+  puzzleData: PuzzleRecord,
+  difficulty: QueensSelectionDifficulty
+): boolean {
+  const initialState = buildSolverStateFromPuzzleRecord(puzzleData);
+  const maxSteps = Math.max(256, initialState.gridSize * initialState.gridSize * 4);
+  const steps = runQueensSolverUntilStuck(initialState, maxSteps, difficulty);
+  let playerMarks = initialState.playerMarks;
+
+  for (const step of steps) {
+    playerMarks = applyQueensSolverStep(
+      {
+        ...initialState,
+        playerMarks,
+      },
+      step
+    );
+  }
+
+  return isQueensSolverStateSolved({
+    ...initialState,
+    playerMarks,
+  });
 }
 
 function isPerfectSquareLength(length: number): boolean {
@@ -98,6 +175,7 @@ function requiresLineCoverage(
 }
 
 type PuzzleDatabase = Record<string, PuzzleRecord[]>;
+type PuzzleSelectionIndex = Record<string, PuzzleRecord[]>;
 
 function normalizePuzzleDatabase(data: unknown): PuzzleDatabase {
   if (!data || typeof data !== 'object') return {};
@@ -149,6 +227,7 @@ interface QueensState {
   moveHistory: MarkType[][][];
   playerMarks: MarkType[][];
   puzzleDatabase: PuzzleDatabase | null;
+  puzzleSelectionIndex: PuzzleSelectionIndex;
   allPuzzles: PuzzleRecord[]; // Flat array of all puzzles ending in -0
   puzzleIdMap: Map<string, PuzzleRecord>; // Map from string ID to puzzle
   tutorialPuzzles: PuzzleRecord[]; // Tutorial puzzles (level-1 through level-10)
@@ -223,6 +302,23 @@ interface QueensState {
   adminBoardMetadata: Record<string, string> | undefined;
   adminGenerationPhase: string | null;
   adminShowSolutionPreview: boolean;
+  hintMessage: string | null;
+  hintStep: QueensSolverStep | null;
+  hintEvidenceCellKeys: Set<string>;
+  hintOutputCellKeys: Set<string>;
+  hintDisplayTimeout: number | null;
+  isCampaignMode: boolean;
+  currentCampaignBucket: QueensCampaignBucket | null;
+  showCampaignIntroModal: boolean;
+  isCampaignFullyComplete: boolean;
+  campaignBucketCache: QueensCampaignBucket[] | null;
+  campaignSolvabilityCache: Record<string, boolean>;
+  campaignDifficultyCache: Record<string, QueensSelectionDifficulty | null>;
+  storyUnlockedLevelIndex: number;
+  storyPassedLevelBestTimes: Record<string, number>;
+  storyLevelBestTimes: Record<string, number>;
+  hasUsedCampaignHintThisAttempt: boolean;
+  allowCampaignHintPassForTesting: boolean;
 }
 
 // LocalStorage key for completed puzzles
@@ -240,6 +336,111 @@ const PUZZLE_PROGRESS_KEY_PREFIX = 'queens-puzzle-progress-';
 const PUZZLE_HISTORY_KEY_PREFIX = 'queens-puzzle-history-';
 const REGION_COLOR_MODE_KEY = 'queens-region-color-mode';
 const ROTATE_DELAY_MS = 500;
+const STORY_PROGRESS_KEY = 'queens-story-progress-v1';
+
+interface QueensStoryProgress {
+  unlockedLevelIndex: number;
+  passedLevelBestTimes: Record<string, number>;
+  levelBestTimes: Record<string, number>;
+}
+
+function calculateCampaignTargetTime(bucket: QueensCampaignBucket): number {
+  const boardSize = Number.parseInt(bucket.sizeKey, 10);
+  const baseSecondsBySize: Record<number, number> = {
+    4: 30,
+    5: 45,
+    6: 60,
+    7: 90,
+    8: 120,
+    9: 180,
+    10: 240,
+    11: 300,
+  };
+  const difficultyMultiplier: Record<QueensSelectionDifficulty, number> = {
+    tutorial: 1,
+    'extra-easy': 1.15,
+    easy: 1.35,
+    medium: 1.6,
+    hard: 2,
+    'extra-hard': 2.5,
+  };
+  const base = baseSecondsBySize[boardSize] ?? Math.max(30, boardSize * 30);
+  return Math.round(base * difficultyMultiplier[bucket.difficulty]);
+}
+
+function buildCampaignBucketStorageKey(bucket: QueensCampaignBucket): string {
+  return `${bucket.sizeKey}|${bucket.difficulty}`;
+}
+
+function buildSizeDifficultyRecordKey(
+  sizeKey: string,
+  difficulty: QueensSelectionDifficulty
+): string {
+  return `${sizeKey}|${difficulty}`;
+}
+
+function buildPuzzleSelectionIndex(database: PuzzleDatabase): PuzzleSelectionIndex {
+  const index: PuzzleSelectionIndex = {};
+
+  for (const [sizeKey, puzzles] of Object.entries(database)) {
+    const boardSize = parseInt(sizeKey.split('x')[0], 10);
+    for (const puzzle of puzzles) {
+      const distance = puzzle.orthogonalMinDistance ?? boardSize;
+      const difficulty = (puzzle.difficulty?.replace(/_/g, '-') ?? 'easy') as QueensSelectionDifficulty;
+      const key = `${sizeKey}|${distance}|${difficulty}`;
+      if (!index[key]) {
+        index[key] = [];
+      }
+      index[key].push(puzzle);
+    }
+  }
+
+  return index;
+}
+
+function getDefaultStoryProgress(): QueensStoryProgress {
+  return {
+    unlockedLevelIndex: 1,
+    passedLevelBestTimes: {},
+    levelBestTimes: {},
+  };
+}
+
+function loadStoryProgress(): QueensStoryProgress {
+  try {
+    const stored = localStorage.getItem(STORY_PROGRESS_KEY);
+    if (!stored) {
+      return getDefaultStoryProgress();
+    }
+
+    const parsed = JSON.parse(stored) as Partial<QueensStoryProgress>;
+    return {
+      unlockedLevelIndex:
+        typeof parsed.unlockedLevelIndex === 'number' && parsed.unlockedLevelIndex > 0
+          ? parsed.unlockedLevelIndex
+          : 1,
+      passedLevelBestTimes:
+        parsed.passedLevelBestTimes && typeof parsed.passedLevelBestTimes === 'object'
+          ? parsed.passedLevelBestTimes
+          : {},
+      levelBestTimes:
+        parsed.levelBestTimes && typeof parsed.levelBestTimes === 'object'
+          ? parsed.levelBestTimes
+          : {},
+    };
+  } catch (e) {
+    console.error('Error reading story progress from localStorage:', e);
+    return getDefaultStoryProgress();
+  }
+}
+
+function saveStoryProgress(progress: QueensStoryProgress) {
+  try {
+    localStorage.setItem(STORY_PROGRESS_KEY, JSON.stringify(progress));
+  } catch (e) {
+    console.error('Error saving story progress to localStorage:', e);
+  }
+}
 
 function isQueensRegionColorMode(value: unknown): value is QueensRegionColorMode {
   return (
@@ -480,6 +681,14 @@ function clearPuzzleProgress(puzzleId: string | number | null) {
 
 export const useQueensStore = defineStore('queens', {
   state: (): QueensState => ({
+    ...(() => {
+      const storyProgress = loadStoryProgress();
+      return {
+        storyUnlockedLevelIndex: storyProgress.unlockedLevelIndex,
+        storyPassedLevelBestTimes: storyProgress.passedLevelBestTimes,
+        storyLevelBestTimes: storyProgress.levelBestTimes,
+      };
+    })(),
     grid: createEmptyGrid(4),
     gridSize: 4,
     targetQueenCount: 4,
@@ -488,6 +697,7 @@ export const useQueensStore = defineStore('queens', {
     moveHistory: [],
     playerMarks: Array.from({ length: 4 }, () => Array(4).fill(null as MarkType)),
     puzzleDatabase: null,
+    puzzleSelectionIndex: {},
     allPuzzles: [],
     puzzleIdMap: new Map<string, PuzzleRecord>(),
     tutorialPuzzles: [],
@@ -555,6 +765,20 @@ export const useQueensStore = defineStore('queens', {
     adminBoardMetadata: undefined,
     adminGenerationPhase: null,
     adminShowSolutionPreview: false,
+    hintMessage: null,
+    hintStep: null,
+    hintEvidenceCellKeys: new Set<string>(),
+    hintOutputCellKeys: new Set<string>(),
+    hintDisplayTimeout: null,
+    isCampaignMode: false,
+    currentCampaignBucket: null,
+    showCampaignIntroModal: false,
+    isCampaignFullyComplete: false,
+    campaignBucketCache: null,
+    campaignSolvabilityCache: {},
+    campaignDifficultyCache: {},
+    hasUsedCampaignHintThisAttempt: false,
+    allowCampaignHintPassForTesting: false,
   }),
 
   getters: {
@@ -754,6 +978,66 @@ export const useQueensStore = defineStore('queens', {
       (row: number, col: number): AutoFlagAnimationSource | null => {
         return state.autoFlagAnimationSources.get(`${row},${col}`) ?? null;
       },
+    isHintEvidenceCell:
+      (state) =>
+      (row: number, col: number): boolean => {
+        return state.hintEvidenceCellKeys.has(`${row},${col}`);
+      },
+    isHintOutputCell:
+      (state) =>
+      (row: number, col: number): boolean => {
+        return state.hintOutputCellKeys.has(`${row},${col}`);
+      },
+    nextCampaignBucket(state): QueensCampaignBucket | null {
+      if (!state.currentCampaignBucket) return null;
+      const buckets = (
+        this as unknown as { getCampaignBuckets: () => QueensCampaignBucket[] }
+      ).getCampaignBuckets();
+      const currentIndex = buckets.findIndex(
+        (bucket: QueensCampaignBucket) =>
+          bucket.sizeKey === state.currentCampaignBucket?.sizeKey &&
+          bucket.difficulty === state.currentCampaignBucket?.difficulty
+      );
+      return currentIndex >= 0 ? buckets[currentIndex + 1] ?? null : null;
+    },
+    canAdvanceCampaign(state): boolean {
+      return (
+        state.isCampaignMode &&
+        state.isComplete &&
+        this.hasPassedCurrentCampaignLevel &&
+        !!this.nextCampaignBucket
+      );
+    },
+    currentCampaignTargetTime(): number | null {
+      if (!this.currentCampaignBucket) {
+        return null;
+      }
+      return calculateCampaignTargetTime(this.currentCampaignBucket);
+    },
+    hasPassedCurrentCampaignLevel(): boolean {
+      if (!this.currentCampaignBucket || this.puzzleCompletionTime === null) {
+        return false;
+      }
+      if (this.hasUsedCampaignHintThisAttempt && !this.allowCampaignHintPassForTesting) {
+        return false;
+      }
+      return this.puzzleCompletionTime <= calculateCampaignTargetTime(this.currentCampaignBucket);
+    },
+    currentCampaignLevelBestTime(): number | null {
+      if (!this.currentCampaignBucket) {
+        return null;
+      }
+      return this.storyLevelBestTimes[buildCampaignBucketStorageKey(this.currentCampaignBucket)] ?? null;
+    },
+    currentCampaignPassedBestTime(): number | null {
+      if (!this.currentCampaignBucket) {
+        return null;
+      }
+      return (
+        this.storyPassedLevelBestTimes[buildCampaignBucketStorageKey(this.currentCampaignBucket)] ??
+        null
+      );
+    },
     minimumFlagOrthogonalDistance: (state): number | null => {
       const flags: Pos[] = [];
       for (let row = 0; row < state.gridSize; row++) {
@@ -784,6 +1068,451 @@ export const useQueensStore = defineStore('queens', {
   },
 
   actions: {
+    normalizePuzzleDifficulty(
+      rawDifficulty: string | null | undefined
+    ): QueensSelectionDifficulty | undefined {
+      if (!rawDifficulty) return undefined;
+      const normalized = rawDifficulty.replace(/_/g, '-');
+      return QUEENS_SELECTION_DIFFICULTY_ORDER.includes(normalized as QueensSelectionDifficulty)
+        ? (normalized as QueensSelectionDifficulty)
+        : undefined;
+    },
+
+    clearHintState() {
+      this.hintMessage = null;
+      this.hintStep = null;
+      this.hintEvidenceCellKeys = new Set<string>();
+      this.hintOutputCellKeys = new Set<string>();
+      if (this.hintDisplayTimeout !== null) {
+        clearTimeout(this.hintDisplayTimeout);
+        this.hintDisplayTimeout = null;
+      }
+    },
+
+    showHint(step: QueensSolverStep | null, message: string, durationMs: number = 4200) {
+      this.clearHintState();
+      this.hintStep = step;
+      this.hintMessage = message;
+      if (step) {
+        this.hintEvidenceCellKeys = new Set(
+          step.evidenceCells.map((cell) => `${cell.row},${cell.col}`)
+        );
+        this.hintOutputCellKeys = new Set(step.outputCells.map((cell) => `${cell.row},${cell.col}`));
+      }
+      this.hintDisplayTimeout = window.setTimeout(() => {
+        this.clearHintState();
+      }, durationMs);
+    },
+
+    applyResolvedSolverStep(
+      step: QueensSolverStep,
+      applyStep: typeof import('../solver/stagedSolver').applyQueensSolverStep
+    ) {
+      this.saveToHistory();
+      this.playerMarks = applyStep(
+        {
+          grid: this.grid,
+          playerMarks: this.playerMarks,
+          gridSize: this.gridSize,
+          targetQueenCount: this.targetQueenCount,
+          orthogonalMinDistance: this.orthogonalMinDistance,
+        },
+        step
+      );
+      if (this.persistProgressEnabled) {
+        savePuzzleProgress(this.currentPuzzleId, this.playerMarks, this.puzzleStartTime);
+        savePuzzleHistory(this.currentPuzzleId, this.moveHistory);
+      }
+      this.checkBoardCompletion();
+      this.checkFullyFlaggedGroups();
+    },
+
+    async requestHint() {
+      const { applyQueensSolverStep, getNextQueensSolverStep } = await import('../solver/stagedSolver');
+      const maxDifficultyTier = this.currentPuzzle?.difficulty ?? 'unsolvable';
+      const step = getNextQueensSolverStep({
+        grid: this.grid,
+        playerMarks: this.playerMarks,
+        gridSize: this.gridSize,
+        targetQueenCount: this.targetQueenCount,
+        orthogonalMinDistance: this.orthogonalMinDistance,
+      }, maxDifficultyTier);
+
+      if (!step) {
+        this.showHint(null, "Nothing stands out yet.\nTry checking another part of the board.");
+        return null;
+      }
+
+      if (this.isCampaignMode) {
+        this.hasUsedCampaignHintThisAttempt = true;
+      }
+      this.applyResolvedSolverStep(step, applyQueensSolverStep);
+      this.showHint(step, step.explanation);
+      return step;
+    },
+
+    getPreferredCampaignDistance(
+      sizeKey: string,
+      difficulty: QueensSelectionDifficulty
+    ): number | null {
+      const distances = this.getAvailableOrthogonalDistancesForSize(sizeKey);
+      const boardSize = Number.parseInt(sizeKey, 10);
+      const matching = distances.filter(
+        (distance) => this.getPuzzlesForSelection(sizeKey, distance, difficulty).length > 0
+      );
+      if (matching.length === 0) return null;
+      return matching.includes(boardSize) ? boardSize : matching[0];
+    },
+
+    isCampaignPuzzleSolvable(
+      puzzleData: PuzzleRecord,
+      difficulty: QueensSelectionDifficulty
+    ): boolean {
+      const key = `${String(puzzleData.id)}|${difficulty}`;
+      const cached = this.campaignSolvabilityCache[key];
+      if (cached !== undefined) {
+        return cached;
+      }
+
+      const solvable = isPuzzleSolvableWithinDifficulty(puzzleData, difficulty);
+      this.campaignSolvabilityCache = {
+        ...this.campaignSolvabilityCache,
+        [key]: solvable,
+      };
+      return solvable;
+    },
+
+    getCampaignDifficultyForPuzzle(
+      puzzleData: PuzzleRecord
+    ): QueensSelectionDifficulty | null {
+      const key = String(puzzleData.id);
+      const cached = this.campaignDifficultyCache[key];
+      if (cached !== undefined) {
+        return cached;
+      }
+
+      const derivedDifficulty =
+        QUEENS_SELECTION_DIFFICULTY_ORDER.find((difficulty) =>
+          this.isCampaignPuzzleSolvable(puzzleData, difficulty)
+        ) ?? null;
+
+      this.campaignDifficultyCache = {
+        ...this.campaignDifficultyCache,
+        [key]: derivedDifficulty,
+      };
+
+      return derivedDifficulty;
+    },
+
+    getCampaignBuckets(): QueensCampaignBucket[] {
+      if (this.campaignBucketCache) {
+        return this.campaignBucketCache;
+      }
+
+      const buckets: QueensCampaignBucket[] = [];
+      let levelIndex = 0;
+      for (const difficulty of QUEENS_SELECTION_DIFFICULTY_ORDER) {
+        for (const sizeKey of this.getAvailableSizes()) {
+          const orthogonalMinDistance = this.getPreferredCampaignDistance(sizeKey, difficulty);
+          if (orthogonalMinDistance == null) continue;
+          const hasPlayablePuzzle = this.getPuzzlesForSelection(
+            sizeKey,
+            orthogonalMinDistance,
+            difficulty
+          ).some((puzzle) => this.isCampaignPuzzleSolvable(puzzle, difficulty));
+          if (!hasPlayablePuzzle) continue;
+          levelIndex += 1;
+          buckets.push({
+            levelIndex,
+            sizeKey,
+            difficulty,
+            orthogonalMinDistance,
+          });
+        }
+      }
+      this.campaignBucketCache = buckets;
+      return buckets;
+    },
+
+    getCampaignBucketByRoute(
+      sizeKey: string,
+      difficulty: QueensSelectionDifficulty
+    ): QueensCampaignBucket | null {
+      return (
+        this.getCampaignBuckets().find(
+          (bucket) => bucket.sizeKey === sizeKey && bucket.difficulty === difficulty
+        ) ?? null
+      );
+    },
+
+    getCampaignBucketKey(bucket: QueensCampaignBucket): string {
+      return buildCampaignBucketStorageKey(bucket);
+    },
+
+    getBestTimeRecordKey(
+      sizeKey: string,
+      difficulty: QueensSelectionDifficulty | null | undefined
+    ): string | null {
+      if (!difficulty) {
+        return null;
+      }
+      return buildSizeDifficultyRecordKey(sizeKey, difficulty);
+    },
+
+    getCampaignTargetTime(bucket: QueensCampaignBucket): number {
+      return calculateCampaignTargetTime(bucket);
+    },
+
+    getCampaignBucketBestTime(bucket: QueensCampaignBucket): number | null {
+      const key = this.getCampaignBucketKey(bucket);
+      return this.storyLevelBestTimes[key] ?? null;
+    },
+
+    getCampaignBucketPassedBestTime(bucket: QueensCampaignBucket): number | null {
+      const key = this.getCampaignBucketKey(bucket);
+      return this.storyPassedLevelBestTimes[key] ?? null;
+    },
+
+    getBestTimeForSizeAndDifficulty(
+      sizeKey: string,
+      difficulty: QueensSelectionDifficulty | null | undefined
+    ): number | null {
+      const key = this.getBestTimeRecordKey(sizeKey, difficulty);
+      if (!key) {
+        return null;
+      }
+      return this.storyLevelBestTimes[key] ?? null;
+    },
+
+    isCampaignBucketPassed(bucket: QueensCampaignBucket): boolean {
+      return this.getCampaignBucketPassedBestTime(bucket) !== null;
+    },
+
+    syncStoryProgressState() {
+      const progress = loadStoryProgress();
+      this.storyUnlockedLevelIndex = progress.unlockedLevelIndex;
+      this.storyPassedLevelBestTimes = progress.passedLevelBestTimes;
+      this.storyLevelBestTimes = progress.levelBestTimes;
+    },
+
+    persistStoryProgress() {
+      saveStoryProgress({
+        unlockedLevelIndex: this.storyUnlockedLevelIndex,
+        passedLevelBestTimes: this.storyPassedLevelBestTimes,
+        levelBestTimes: this.storyLevelBestTimes,
+      });
+    },
+
+    recordCampaignLevelResult(bucket: QueensCampaignBucket, completionTimeSeconds: number) {
+      const key = this.getCampaignBucketKey(bucket);
+      const existingLevelBest = this.storyLevelBestTimes[key];
+      const nextLevelBest =
+        existingLevelBest == null
+          ? completionTimeSeconds
+          : Math.min(existingLevelBest, completionTimeSeconds);
+
+      this.storyLevelBestTimes = {
+        ...this.storyLevelBestTimes,
+        [key]: nextLevelBest,
+      };
+
+      const targetTime = this.getCampaignTargetTime(bucket);
+      const canPass =
+        completionTimeSeconds <= targetTime &&
+        (!this.hasUsedCampaignHintThisAttempt || this.allowCampaignHintPassForTesting);
+
+      if (!canPass) {
+        this.persistStoryProgress();
+        return false;
+      }
+
+      const existingBest = this.storyPassedLevelBestTimes[key];
+      const nextBest =
+        existingBest == null ? completionTimeSeconds : Math.min(existingBest, completionTimeSeconds);
+
+      this.storyPassedLevelBestTimes = {
+        ...this.storyPassedLevelBestTimes,
+        [key]: nextBest,
+      };
+      this.storyUnlockedLevelIndex = Math.max(
+        this.storyUnlockedLevelIndex,
+        Math.min(bucket.levelIndex + 1, this.getCampaignBuckets().length)
+      );
+      this.persistStoryProgress();
+      return true;
+    },
+
+    isCampaignBucketCompleted(bucket: QueensCampaignBucket): boolean {
+      return this.isCampaignBucketPassed(bucket);
+    },
+
+    getCurrentCampaignProgressBucket(): QueensCampaignBucket | null {
+      const buckets = this.getCampaignBuckets();
+      if (buckets.length === 0) {
+        return null;
+      }
+
+      const firstIncompleteBucket = buckets.find((bucket) => !this.isCampaignBucketPassed(bucket));
+      return firstIncompleteBucket ?? buckets[buckets.length - 1] ?? null;
+    },
+
+    isCampaignBucketUnlocked(bucket: QueensCampaignBucket): boolean {
+      return bucket.levelIndex <= this.storyUnlockedLevelIndex;
+    },
+
+    getCampaignLevelEntries(): QueensCampaignLevelEntry[] {
+      const buckets = this.getCampaignBuckets();
+      const currentProgressBucket = this.getCurrentCampaignProgressBucket();
+
+      return buckets.map((bucket) => ({
+        levelNumber: bucket.levelIndex,
+        boardSize: bucket.sizeKey,
+        difficulty: bucket.difficulty,
+        isLocked: !this.isCampaignBucketUnlocked(bucket),
+        isCompleted: this.isCampaignBucketPassed(bucket),
+        isCurrent:
+          currentProgressBucket != null &&
+          currentProgressBucket.levelIndex === bucket.levelIndex &&
+          currentProgressBucket.sizeKey === bucket.sizeKey &&
+          currentProgressBucket.difficulty === bucket.difficulty,
+        bestTime: this.getCampaignBucketBestTime(bucket),
+        route: `/queens/campaign/${bucket.sizeKey}/${bucket.difficulty}`,
+        bucket,
+      }));
+    },
+
+    async selectCampaignPuzzle(bucket: QueensCampaignBucket): Promise<PuzzleRecord> {
+      const candidates = this.getPuzzlesForSelection(
+        bucket.sizeKey,
+        bucket.orthogonalMinDistance,
+        bucket.difficulty
+      );
+      const solvableCandidates = candidates.filter((candidate) =>
+        this.isCampaignPuzzleSolvable(candidate, bucket.difficulty)
+      );
+
+      const puzzle = this.chooseNextDiversePuzzleFromCandidates(
+        `campaign|${bucket.sizeKey}|d${bucket.orthogonalMinDistance}|${bucket.difficulty}`,
+        solvableCandidates,
+        this.currentPuzzle
+      );
+
+      if (!puzzle) {
+        throw new Error(`No campaign puzzle available for ${bucket.sizeKey} ${bucket.difficulty}`);
+      }
+
+      return puzzle;
+    },
+
+    async loadCampaignBucket(bucket: QueensCampaignBucket, options?: { showIntroModal?: boolean }) {
+      const puzzle = await this.selectCampaignPuzzle(bucket);
+
+      this.isCampaignMode = true;
+      this.currentCampaignBucket = bucket;
+      this.isCampaignFullyComplete = false;
+      this.parsePuzzleData(puzzle);
+      this.showCampaignIntroModal = options?.showIntroModal ?? true;
+      return puzzle;
+    },
+
+    async loadCampaignPuzzle(sizeKey: string, difficulty: QueensSelectionDifficulty) {
+      if (!this.puzzleDatabase) {
+        const success = await this.loadPuzzleDatabase();
+        if (!success) {
+          throw new Error('Failed to load puzzle database');
+        }
+      }
+
+      const bucket = this.getCampaignBucketByRoute(sizeKey, difficulty);
+      if (!bucket) {
+        throw new Error(`No campaign bucket found for ${sizeKey} ${difficulty}`);
+      }
+      this.syncStoryProgressState();
+      if (!this.isCampaignBucketUnlocked(bucket)) {
+        const fallbackBucket = this.getCurrentCampaignProgressBucket() ?? this.getCampaignBuckets()[0];
+        if (!fallbackBucket) {
+          throw new Error('No campaign buckets are available');
+        }
+        await router.replace(`/queens/campaign/${fallbackBucket.sizeKey}/${fallbackBucket.difficulty}`);
+        return this.loadCampaignBucket(fallbackBucket, { showIntroModal: true });
+      }
+      return this.loadCampaignBucket(bucket, { showIntroModal: true });
+    },
+
+    closeCampaignIntroModal() {
+      this.showCampaignIntroModal = false;
+    },
+
+    async beginCampaignRun(options?: { showIntroModal?: boolean }) {
+      if (!this.puzzleDatabase) {
+        const success = await this.loadPuzzleDatabase();
+        if (!success) {
+          throw new Error('Failed to load puzzle database');
+        }
+      }
+
+      this.syncStoryProgressState();
+      const currentBucket = this.getCurrentCampaignProgressBucket();
+      if (!currentBucket) {
+        throw new Error('No campaign buckets are available');
+      }
+
+      this.currentMode = 'standard';
+      this.isTutorialMode = false;
+      this.isCampaignFullyComplete = false;
+      return this.loadCampaignBucket(currentBucket, {
+        showIntroModal: options?.showIntroModal ?? true,
+      });
+    },
+
+    async advanceCampaign(options?: { showIntroModal?: boolean }) {
+      if (!this.isCampaignMode || !this.currentCampaignBucket) {
+        throw new Error('Campaign mode is not active');
+      }
+      if (!this.isComplete) {
+        throw new Error('Current campaign puzzle is not complete');
+      }
+      if (!this.hasPassedCurrentCampaignLevel) {
+        throw new Error('Current campaign level has not been passed yet');
+      }
+
+      const nextBucket = this.nextCampaignBucket;
+      if (!nextBucket) {
+        this.isCampaignFullyComplete = true;
+        this.showCampaignIntroModal = false;
+        return null;
+      }
+
+      return this.loadCampaignBucket(nextBucket, {
+        showIntroModal: options?.showIntroModal ?? true,
+      });
+    },
+
+    async startCampaign() {
+      this.syncStoryProgressState();
+      const currentBucket = this.getCurrentCampaignProgressBucket();
+      if (!currentBucket) {
+        throw new Error('No campaign buckets are available');
+      }
+      await router.push(`/queens/campaign/${currentBucket.sizeKey}/${currentBucket.difficulty}`);
+    },
+
+    async applyHintsUntilSolved(maxHints: number = 512) {
+      let appliedHints = 0;
+      while (!this.isComplete && appliedHints < maxHints) {
+        const step = await this.requestHint();
+        if (!step) {
+          break;
+        }
+        appliedHints += 1;
+      }
+      return {
+        appliedHints,
+        solved: this.isComplete,
+        hintStep: this.hintStep,
+      };
+    },
+
     clearAutoFlagAnimations() {
       for (const timeoutId of this.autoFlagAnimationTimeouts.values()) {
         clearTimeout(timeoutId);
@@ -856,6 +1585,7 @@ export const useQueensStore = defineStore('queens', {
       this.stopProgressSaving();
       this.clearAutoFlagAnimations();
       this.clearPendingRotateTimeout();
+      this.clearHintState();
 
       this.grid = createEmptyGrid(this.gridSize);
       this.moveHistory = [];
@@ -869,12 +1599,15 @@ export const useQueensStore = defineStore('queens', {
       this.puzzleCompletionTime = null;
       this.puzzleBestTime = null;
       this.puzzleIsNewRecord = false;
+      this.hasUsedCampaignHintThisAttempt = false;
 
       // Reset rotation state (keep isRotateMode, but reset per-puzzle rotation tracking)
       this.boardRotationCount = 0;
       this.rotationHistory = [];
       this.isSwipeActive = false;
       this.swipePlacedFlags = false;
+      this.showCampaignIntroModal = false;
+      this.isCampaignFullyComplete = false;
 
       // Start error checking
       this.startErrorChecking();
@@ -934,6 +1667,7 @@ export const useQueensStore = defineStore('queens', {
       this.errorFeedbackSquare = null;
       this.errorSquares = new Set();
       this.errorMessage = null;
+      this.clearHintState();
       this.isComplete = false;
       this.boardRotationCount = 0;
       this.rotationHistory = [];
@@ -1352,11 +2086,39 @@ export const useQueensStore = defineStore('queens', {
 
           const sizeKey = `${this.gridSize}x${this.gridSize}`;
           const isNewRecord = updateBestTimeForSize(sizeKey, completionTimeSeconds);
-          this.puzzleIsNewRecord = isNewRecord;
+          const levelDifficulty = this.currentPuzzle?.difficulty;
+          const levelRecordKey = this.getBestTimeRecordKey(sizeKey, levelDifficulty);
+          if (levelRecordKey) {
+            const existingLevelBest = this.storyLevelBestTimes[levelRecordKey];
+            const nextLevelBest =
+              existingLevelBest == null
+                ? completionTimeSeconds
+                : Math.min(existingLevelBest, completionTimeSeconds);
+            this.storyLevelBestTimes = {
+              ...this.storyLevelBestTimes,
+              [levelRecordKey]: nextLevelBest,
+            };
+            this.persistStoryProgress();
+            this.puzzleBestTime = nextLevelBest;
+            this.puzzleIsNewRecord = existingLevelBest == null || completionTimeSeconds <= existingLevelBest;
+          } else {
+            this.puzzleBestTime = getBestTimesPerSize()[sizeKey] || null;
+            this.puzzleIsNewRecord = isNewRecord;
+          }
 
           // Update best time display
-          const bestTimes = getBestTimesPerSize();
-          this.puzzleBestTime = bestTimes[sizeKey] || null;
+          if (!levelRecordKey) {
+            const bestTimes = getBestTimesPerSize();
+            this.puzzleBestTime = bestTimes[sizeKey] || null;
+          }
+        }
+
+        if (
+          this.isCampaignMode &&
+          this.currentCampaignBucket &&
+          this.puzzleCompletionTime !== null
+        ) {
+          this.recordCampaignLevelResult(this.currentCampaignBucket, this.puzzleCompletionTime);
         }
 
         // Save completion to localStorage
@@ -1416,9 +2178,12 @@ export const useQueensStore = defineStore('queens', {
         }
 
         this.puzzleDatabase = mergePuzzleDatabases(classicData, extendedData);
+        this.puzzleSelectionIndex = buildPuzzleSelectionIndex(this.puzzleDatabase);
         this.puzzleIdMap = new Map<string, PuzzleRecord>(); // optional cache; stays empty for now
         this.allPuzzles = []; // not needed anymore, but keep type happy
         this.diversityAverageBySize = {}; // recompute averages lazily after a new database load
+        this.campaignBucketCache = null;
+        this.campaignSolvabilityCache = {};
 
         this.loadingProgress = 100;
         this.loadingMessage = 'Puzzles loaded';
@@ -1441,6 +2206,7 @@ export const useQueensStore = defineStore('queens', {
 
     parsePuzzleData(puzzleData: PuzzleRecord, options?: { persistProgress?: boolean }) {
       this.persistProgressEnabled = options?.persistProgress ?? true;
+      this.clearHintState();
 
       const gridSize = Math.sqrt(puzzleData.layout.length);
       this.gridSize = gridSize;
@@ -1479,7 +2245,10 @@ export const useQueensStore = defineStore('queens', {
         }
       }
 
-      this.currentPuzzle = puzzleData;
+      this.currentPuzzle = {
+        ...puzzleData,
+        difficulty: this.normalizePuzzleDifficulty(puzzleData.difficulty),
+      };
       if (puzzleData.id) {
         this.recordPuzzleAsRecentlyServed(`${gridSize}x${gridSize}`, String(puzzleData.id));
       }
@@ -1569,11 +2338,17 @@ export const useQueensStore = defineStore('queens', {
         this.startProgressSaving();
       }
 
-      // Load best time for this size (for display purposes)
+      // Load best time for this size+difficulty level when available.
       if (this.currentMode !== 'speed') {
         const sizeKey = `${this.gridSize}x${this.gridSize}`;
-        const bestTimes = getBestTimesPerSize();
-        this.puzzleBestTime = bestTimes[sizeKey] || null;
+        const levelDifficulty = this.currentPuzzle?.difficulty;
+        const levelBestTime = this.getBestTimeForSizeAndDifficulty(sizeKey, levelDifficulty);
+        if (levelBestTime !== null) {
+          this.puzzleBestTime = levelBestTime;
+        } else {
+          const bestTimes = getBestTimesPerSize();
+          this.puzzleBestTime = bestTimes[sizeKey] || null;
+        }
       }
     },
 
@@ -1816,6 +2591,7 @@ export const useQueensStore = defineStore('queens', {
       this.stopErrorChecking();
       this.clearAutoFlagAnimations();
       this.clearPendingRotateTimeout();
+      this.clearHintState();
 
       // Clear all marks by setting each cell to null
       for (let row = 0; row < this.gridSize; row++) {
@@ -2118,6 +2894,13 @@ export const useQueensStore = defineStore('queens', {
         this.resetRotateMode();
       }
 
+      this.isCampaignMode = false;
+      this.currentCampaignBucket = null;
+      this.showCampaignIntroModal = false;
+      this.isCampaignFullyComplete = false;
+      this.clearHintState();
+      this.syncStoryProgressState();
+
       await router.push('/queens');
     },
 
@@ -2169,6 +2952,21 @@ export const useQueensStore = defineStore('queens', {
     },
 
     async startNextPuzzle() {
+      if (this.isCampaignMode && this.currentCampaignBucket) {
+        if (!this.hasPassedCurrentCampaignLevel) {
+          await this.loadCampaignBucket(this.currentCampaignBucket, { showIntroModal: false });
+          return;
+        }
+        if (!this.nextCampaignBucket) {
+          await router.push('/queens/campaign');
+          return;
+        }
+        await router.push(
+          `/queens/campaign/${this.nextCampaignBucket.sizeKey}/${this.nextCampaignBucket.difficulty}`
+        );
+        return;
+      }
+
       // Load database if not already loaded
       if (!this.puzzleDatabase) {
         const success = await this.loadPuzzleDatabase();
@@ -2227,6 +3025,10 @@ export const useQueensStore = defineStore('queens', {
       return getBestTimesPerSize();
     },
 
+    getBestTimesByLevel(): Record<string, number> {
+      return this.storyLevelBestTimes;
+    },
+
     // Check if a time is a record for a given size
     isRecordForSize(size: string, time: number): boolean {
       const bestTimes = getBestTimesPerSize();
@@ -2243,6 +3045,10 @@ export const useQueensStore = defineStore('queens', {
         localStorage.removeItem(SPEED_MODE_5MIN_SIZE_RECORDS_KEY);
         // Clear best times per size
         localStorage.removeItem(BEST_TIMES_PER_SIZE_KEY);
+        localStorage.removeItem(STORY_PROGRESS_KEY);
+        this.storyUnlockedLevelIndex = 1;
+        this.storyPassedLevelBestTimes = {};
+        this.storyLevelBestTimes = {};
         // Trigger reactivity update
         this.recordsRefreshTrigger = Date.now();
       } catch (e) {
@@ -2287,8 +3093,16 @@ export const useQueensStore = defineStore('queens', {
       }
 
       const boardSize = parseInt(sizeKey.split('x')[0], 10);
-      return this.puzzleDatabase[sizeKey].filter((puzzle) => {
+      const basePool =
+        orthogonalMinDistance != null && difficulty
+          ? (this.puzzleSelectionIndex[
+              `${sizeKey}|${orthogonalMinDistance}|${difficulty}`
+            ] ?? this.puzzleDatabase[sizeKey])
+          : this.puzzleDatabase[sizeKey];
+
+      return basePool.filter((puzzle) => {
         const puzzleDistance = puzzle.orthogonalMinDistance ?? boardSize;
+        const puzzleDifficulty = this.normalizePuzzleDifficulty(puzzle.difficulty) ?? 'easy';
         const puzzleTargetQueenCount =
           puzzle.targetQueenCount ?? deriveTargetQueenCountFromQueensString(puzzle.queens);
         const puzzleMinimumGroupSize = puzzle.minimumGroupSize ?? 3;
@@ -2296,7 +3110,7 @@ export const useQueensStore = defineStore('queens', {
           return false;
         }
 
-        if (difficulty && (puzzle.difficulty ?? 'easy') !== difficulty) {
+        if (difficulty && puzzleDifficulty !== difficulty) {
           return false;
         }
 
@@ -2324,7 +3138,7 @@ export const useQueensStore = defineStore('queens', {
       const difficultyOrder = QUEENS_SELECTION_DIFFICULTY_ORDER;
       const difficulties = new Set<QueensSelectionDifficulty>();
       for (const puzzle of puzzles) {
-        difficulties.add(puzzle.difficulty ?? 'easy');
+        difficulties.add(this.normalizePuzzleDifficulty(puzzle.difficulty) ?? 'easy');
       }
 
       return difficultyOrder.filter((difficulty) => difficulties.has(difficulty));

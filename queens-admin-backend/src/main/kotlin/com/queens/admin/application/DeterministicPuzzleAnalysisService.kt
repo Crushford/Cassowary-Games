@@ -20,6 +20,7 @@ class DeterministicPuzzleAnalysisService(
     private val solverEngine: SolverEngine,
     private val solverSupportService: DeterministicSolverSupportService,
     private val solverPatternService: SolverPatternService,
+    private val solverConfigService: SolverConfigService? = null,
     private val solverPatternCatalogService: SolverPatternCatalogService? = null,
 ) {
     companion object {
@@ -43,6 +44,18 @@ class DeterministicPuzzleAnalysisService(
         val sortOrder: Int,
         val execute: (BoardState) -> SolverStep?,
     )
+
+    private fun compareConfiguredAssessmentSteps(
+        left: ConfiguredAssessmentStep,
+        right: ConfiguredAssessmentStep,
+    ): Int =
+        compareValuesBy(
+            left,
+            right,
+            ConfiguredAssessmentStep::difficultyTier,
+            ConfiguredAssessmentStep::sortOrder,
+            ConfiguredAssessmentStep::id,
+        )
 
     fun solve(
         boardState: BoardState,
@@ -80,7 +93,7 @@ class DeterministicPuzzleAnalysisService(
         val clearedBoard = solverEngine.clearSolverMarks(normalizedBoard)
         val configuredSteps = configuredAssessmentSteps()
         var currentBoard = clearedBoard
-        var unlockedTier = SolverDifficultyTier.EXTRA_EASY
+        var unlockedTier = SolverDifficultyTier.TUTORIAL
         val steps = mutableListOf<SolverStep>()
 
         while (unlockedTier != SolverDifficultyTier.UNSOLVABLE) {
@@ -143,18 +156,21 @@ class DeterministicPuzzleAnalysisService(
         solved: Boolean,
         unlockedTier: SolverDifficultyTier,
     ): AnalysisResult {
-        val hardestTierUsed = steps
+        val relevantTiers = steps
             .map { step -> step.difficultyTier }
             .filter { tier -> tier != SolverDifficultyTier.PRECHECK }
-            .maxByOrNull { tier -> tier.rank }
+        val hardestTierUsed = relevantTiers.maxByOrNull { tier -> tier.rank }
+        val effectiveTier =
+            listOfNotNull(unlockedTier, hardestTierUsed).maxByOrNull { it.rank } ?: unlockedTier
         val difficultyTier =
             when {
                 !solved -> PuzzleDifficultyTier.UNSOLVABLE
                 steps.any { step -> step.ruleName in ASSUMPTION_STEP_IDS } -> PuzzleDifficultyTier.UNSOLVABLE
-                unlockedTier == SolverDifficultyTier.EXTRA_EASY -> PuzzleDifficultyTier.EXTRA_EASY
-                unlockedTier == SolverDifficultyTier.EXTRA_HARD -> PuzzleDifficultyTier.EXTRA_HARD
-                unlockedTier == SolverDifficultyTier.HARD -> PuzzleDifficultyTier.HARD
-                unlockedTier == SolverDifficultyTier.MEDIUM -> PuzzleDifficultyTier.MEDIUM
+                effectiveTier == SolverDifficultyTier.TUTORIAL -> PuzzleDifficultyTier.TUTORIAL
+                effectiveTier == SolverDifficultyTier.EXTRA_EASY -> PuzzleDifficultyTier.EXTRA_EASY
+                effectiveTier == SolverDifficultyTier.EXTRA_HARD -> PuzzleDifficultyTier.EXTRA_HARD
+                effectiveTier == SolverDifficultyTier.HARD -> PuzzleDifficultyTier.HARD
+                effectiveTier == SolverDifficultyTier.MEDIUM -> PuzzleDifficultyTier.MEDIUM
                 else -> PuzzleDifficultyTier.EASY
             }
 
@@ -180,7 +196,7 @@ class DeterministicPuzzleAnalysisService(
     }
 
     private fun configuredAssessmentSteps(): List<ConfiguredAssessmentStep> {
-        val builtInSteps = SolverConfigService.defaultBuiltInSolverSteps()
+        val builtInSteps = (solverConfigService?.builtInSolverSteps() ?: SolverConfigService.defaultBuiltInSolverSteps())
             .filter { step -> step.enabled && step.id != "single-color" && step.difficultyTier != PuzzleDifficultyTier.UNSOLVABLE }
             .map { step ->
                 ConfiguredAssessmentStep(
@@ -203,7 +219,7 @@ class DeterministicPuzzleAnalysisService(
             }
             .orEmpty()
 
-        return (builtInSteps + patternSteps).sortedBy { step -> step.sortOrder }
+        return (builtInSteps + patternSteps).sortedWith(::compareConfiguredAssessmentSteps)
     }
 
     private fun executeBuiltInConfiguredStep(
@@ -212,9 +228,15 @@ class DeterministicPuzzleAnalysisService(
         boardState: BoardState,
     ): SolverStep? =
         when (stepId) {
-            "row-column" -> solverEngine.runSpecificRule(boardState, "constrained-lines").toSingleStepOrNull()
-            "row-column-sets" -> solverEngine.runSpecificRule(boardState, "constrained-line-sets").toSingleStepOrNull()
-            "group-confined-to-line" -> solverEngine.runSpecificRule(boardState, "group-confined-to-line").toSingleStepOrNull()
+            "row-column" -> solverEngine.runSpecificRule(boardState, "constrained-lines")
+                .toSingleStepOrNull()
+                ?.copy(difficultyTier = difficultyTier.toSolverDifficultyTier())
+            "row-column-sets" -> solverEngine.runSpecificRule(boardState, "constrained-line-sets")
+                .toSingleStepOrNull()
+                ?.copy(difficultyTier = difficultyTier.toSolverDifficultyTier())
+            "group-confined-to-line" -> solverEngine.runSpecificRule(boardState, "group-confined-to-line")
+                .toSingleStepOrNull()
+                ?.copy(difficultyTier = difficultyTier.toSolverDifficultyTier())
             "single-queen-contradiction" -> solverEngine.runSpecificRule(boardState, "queen-assumption-contradiction")
                 .toSingleStepOrNull()
                 ?.copy(ruleName = "single-queen-contradiction", difficultyTier = difficultyTier.toSolverDifficultyTier())
@@ -307,6 +329,8 @@ class DeterministicPuzzleAnalysisService(
     }
 
     private fun applySingleColorStep(boardState: BoardState): SolverStep? {
+        val configuredDifficulty =
+            configuredBuiltInDifficulty(stepId = "single-color", fallback = PuzzleDifficultyTier.TUTORIAL)
         for ((color, positions) in solverSupportService.groupedPositions(boardState)) {
             val queensInGroup = positions.count { position ->
                 boardState.cells[position.row][position.col].markType == MarkType.QUEEN
@@ -327,7 +351,7 @@ class DeterministicPuzzleAnalysisService(
             )
             return SolverStep(
                 ruleName = "single-color",
-                difficultyTier = SolverDifficultyTier.EXTRA_EASY,
+                difficultyTier = configuredDifficulty.toSolverDifficultyTier(),
                 explanation = "Placed a queen in color group $color because it had one candidate left.",
                 boardState = updatedBoard,
                 changedCells = changedCells,
@@ -336,6 +360,15 @@ class DeterministicPuzzleAnalysisService(
 
         return null
     }
+
+    private fun configuredBuiltInDifficulty(
+        stepId: String,
+        fallback: PuzzleDifficultyTier,
+    ): PuzzleDifficultyTier =
+        (solverConfigService?.builtInSolverSteps() ?: SolverConfigService.defaultBuiltInSolverSteps())
+            .firstOrNull { step -> step.id == stepId }
+            ?.difficultyTier
+            ?: fallback
 
     private fun applyPrecheckStep(boardState: BoardState): SolverStep? =
         solverEngine.runSpecificRule(
@@ -346,6 +379,7 @@ class DeterministicPuzzleAnalysisService(
 
     private fun nextAssessmentTier(currentTier: SolverDifficultyTier): SolverDifficultyTier? =
         when (currentTier) {
+            SolverDifficultyTier.TUTORIAL -> SolverDifficultyTier.EXTRA_EASY
             SolverDifficultyTier.EXTRA_EASY -> SolverDifficultyTier.EASY
             SolverDifficultyTier.EASY -> SolverDifficultyTier.MEDIUM
             SolverDifficultyTier.MEDIUM -> SolverDifficultyTier.HARD
@@ -379,6 +413,7 @@ class DeterministicPuzzleAnalysisService(
 
     private fun PuzzleDifficultyTier.toSolverDifficultyTier(): SolverDifficultyTier =
         when (this) {
+            PuzzleDifficultyTier.TUTORIAL -> SolverDifficultyTier.TUTORIAL
             PuzzleDifficultyTier.EXTRA_EASY -> SolverDifficultyTier.EXTRA_EASY
             PuzzleDifficultyTier.EASY -> SolverDifficultyTier.EASY
             PuzzleDifficultyTier.MEDIUM -> SolverDifficultyTier.MEDIUM

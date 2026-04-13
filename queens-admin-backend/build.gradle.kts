@@ -76,3 +76,17 @@ tasks.register<JavaExec>("assessPuzzleDifficultiesOverwrite") {
     mainClass.set("com.queens.admin.tools.AssessPuzzleDifficultiesKt")
     systemProperty("queens.assess.overwrite", "true")
 }
+
+tasks.register<JavaExec>("exportSharedSolverConfig") {
+    group = "application"
+    description = "Export the shared Queens solver config artifact from the current backend/admin config."
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.queens.admin.tools.ExportSharedSolverConfigKt")
+}
+
+tasks.register<JavaExec>("printExportFingerprint") {
+    group = "application"
+    description = "Print a compact fingerprint for DB-backed Queens puzzle and solver-pattern exports."
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.queens.admin.tools.PrintExportFingerprintKt")
+}

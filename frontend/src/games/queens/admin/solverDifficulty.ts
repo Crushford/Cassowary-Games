@@ -1,18 +1,15 @@
 import type { QueensAdminDifficulty } from './types';
+import { SHARED_QUEENS_SOLVER_DIFFICULTY_ORDER } from '../solver/sharedSolverConfig';
 
 export const SOLVER_DIFFICULTY_ORDER: QueensAdminDifficulty[] = [
-  'extra-easy',
-  'easy',
-  'medium',
-  'hard',
-  'extra-hard',
-  'unsolvable',
+  ...SHARED_QUEENS_SOLVER_DIFFICULTY_ORDER,
 ];
 
 export const SOLVER_DIFFICULTY_OPTIONS: Array<{
   label: string;
   value: QueensAdminDifficulty;
 }> = [
+  { label: 'Tutorial', value: 'tutorial' },
   { label: 'Extra Easy', value: 'extra-easy' },
   { label: 'Easy', value: 'easy' },
   { label: 'Medium', value: 'medium' },

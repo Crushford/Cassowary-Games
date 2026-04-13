@@ -58,6 +58,16 @@ const router = createRouter({
       component: IncrementalQueensEntry,
     },
     {
+      path: '/queens/campaign',
+      name: 'queens-campaign-levels',
+      component: () => import('@/games/queens/views/QueensCampaignLevels.vue'),
+    },
+    {
+      path: '/queens/campaign/:sizeKey/:difficulty(tutorial|extra-easy|easy|medium|hard|extra-hard)',
+      name: 'queens-campaign',
+      component: QueensGame,
+    },
+    {
       path: '/queens/admin',
       name: 'queens-admin',
       redirect: (to) => {
@@ -102,7 +112,7 @@ const router = createRouter({
       component: QueensGame,
     },
     {
-      path: '/queens/:sizeKey/mindistance:orthogonalMinDistance/:difficulty(extra-easy|easy|medium|hard|extra-hard)/:selectedPuzzleId?',
+      path: '/queens/:sizeKey/mindistance:orthogonalMinDistance/:difficulty(tutorial|extra-easy|easy|medium|hard|extra-hard)/:selectedPuzzleId?',
       name: 'queens-selection-puzzle-with-difficulty',
       component: QueensGame,
     },
