@@ -852,12 +852,11 @@ function runPatternStep(
           continue;
         }
 
-        for (const cell of absoluteActive) {
-          evidenceCells.push(cell);
-        }
-
         if (matchedPreviewVariant === null) {
           matchedPreviewVariant = variant;
+          for (const cell of absoluteActive) {
+            evidenceCells.push(cell);
+          }
         }
 
         for (const output of variant.outputFlags) {
