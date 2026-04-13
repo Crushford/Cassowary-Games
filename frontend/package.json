@@ -8,6 +8,8 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:story:smoke": "vitest run src/games/queens/stores/queensStoryMode.headless.spec.ts",
+    "test:story:full": "QUEENS_FULL_STORY=1 vitest run src/games/queens/stores/queensStoryMode.headless.spec.ts",
     "lint": "eslint --ext .js,.ts,.vue --ignore-path .gitignore src && yarn lint:theme-colors",
     "lint:fix": "eslint --ext .js,.ts,.vue --ignore-path .gitignore --fix src",
     "lint:theme-colors": "node scripts/lint-theme-colors.mjs",
