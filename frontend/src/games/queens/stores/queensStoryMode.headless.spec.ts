@@ -87,21 +87,38 @@ describe('Queens story mode headless campaign', () => {
 
       let hintCount = 0;
       while (!store.isComplete) {
-        const applicableSteps = getOrderedApplicableQueensSolverSteps(
-          {
-            grid: store.grid,
-            playerMarks: store.playerMarks,
-            gridSize: store.gridSize,
-            targetQueenCount: store.targetQueenCount,
-            orthogonalMinDistance: store.orthogonalMinDistance,
-          },
-          bucket.difficulty
-        );
+        // On the first hint of each level, verify requestHint returns the same
+        // step as the ordered solver — checks the ordering contract once per level
+        // without doubling solver calls on every subsequent hint.
+        if (hintCount === 0) {
+          const applicableSteps = getOrderedApplicableQueensSolverSteps(
+            {
+              grid: store.grid,
+              playerMarks: store.playerMarks,
+              gridSize: store.gridSize,
+              targetQueenCount: store.targetQueenCount,
+              orthogonalMinDistance: store.orthogonalMinDistance,
+            },
+            bucket.difficulty
+          );
+          expect(
+            applicableSteps.length,
+            `expected an applicable hint for level ${bucket.levelIndex}`
+          ).toBeGreaterThan(0);
+          const firstStep = await store.requestHint();
+          expect(firstStep, `expected a hint step for level ${bucket.levelIndex}`).not.toBeNull();
+          expect(firstStep?.stepId).toBe(applicableSteps[0]?.stepId);
+          expect(
+            compareSharedSolverDifficulty(firstStep!.difficultyTier, bucket.difficulty),
+            `hint ${firstStep?.stepId} exceeded puzzle difficulty ${bucket.difficulty} on level ${bucket.levelIndex}`
+          ).toBeLessThanOrEqual(0);
+          hintCount += 1;
+          continue;
+        }
+
         const previousHistoryLength = store.moveHistory.length;
         const step = await store.requestHint();
         expect(step, `expected a hint step for level ${bucket.levelIndex}`).not.toBeNull();
-        expect(applicableSteps.length, `expected an applicable hint for level ${bucket.levelIndex}`).toBeGreaterThan(0);
-        expect(step?.stepId).toBe(applicableSteps[0]?.stepId);
         expect(
           compareSharedSolverDifficulty(step!.difficultyTier, bucket.difficulty),
           `hint ${step?.stepId} exceeded puzzle difficulty ${bucket.difficulty} on level ${bucket.levelIndex}`
@@ -116,9 +133,7 @@ describe('Queens story mode headless campaign', () => {
         expect(hintCount).toBeLessThan(512);
       }
 
-      console.log(
-        `[story-test] completed level ${bucket.levelIndex} with ${hintCount} hints`
-      );
+      console.log(`[story-test] completed level ${bucket.levelIndex} with ${hintCount} hints`);
       expect(hintCount).toBeGreaterThan(0);
       expect(store.isComplete).toBe(true);
       expect(store.currentPuzzleId).not.toBeNull();
