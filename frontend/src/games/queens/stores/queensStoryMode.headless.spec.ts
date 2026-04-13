@@ -242,11 +242,13 @@ describe('Queens story mode headless campaign', () => {
       const isLastLevelOverall = isLastSlice && isLastInSlice;
 
       if (!isLastLevelOverall) {
-        expect(store.canAdvanceCampaign).toBe(true);
-        await store.advanceCampaign({ showIntroModal: false });
+        const advanceResult = await store.advanceCampaign({ showIntroModal: false });
         if (!isLastInSlice) {
+          expect(advanceResult).not.toBe(null);
           expect(store.currentCampaignBucket).toEqual(bucketSlice[index + 1]);
           expect(store.isCampaignFullyComplete).toBe(false);
+        } else {
+          expect(advanceResult).not.toBe(null);
         }
       } else {
         expect(store.nextCampaignBucket).toBe(null);
