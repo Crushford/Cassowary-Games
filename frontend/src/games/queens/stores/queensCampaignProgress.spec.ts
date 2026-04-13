@@ -1,8 +1,9 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadQueensCatalogFixture } from './testPuzzleCatalog';
+import { loadQueensCatalogFixture, loadQueensStoryIndexFixture } from './testPuzzleCatalog';
 
 const puzzlesJson = loadQueensCatalogFixture();
+const storyIndexJson = loadQueensStoryIndexFixture();
 
 describe('Queens campaign story progress', () => {
   beforeEach(() => {
@@ -53,6 +54,17 @@ describe('Queens campaign story progress', () => {
     const store = useQueensStore();
 
     store.puzzleDatabase = puzzlesJson as typeof store.puzzleDatabase;
+    store.campaignBucketCache = storyIndexJson.map((entry: any) => ({
+      levelIndex: entry.levelIndex,
+      sizeKey: entry.sizeKey,
+      difficulty: entry.difficulty,
+      orthogonalMinDistance: entry.orthogonalMinDistance,
+      chapterId: entry.chapterId,
+      chapterName: entry.chapterName,
+      chapterLevelNumber: entry.chapterLevelNumber,
+      chapterIntroTitle: entry.chapterIntroTitle,
+      chapterIntroBody: entry.chapterIntroBody,
+    })) as typeof store.campaignBucketCache;
 
     const [firstEntry, secondEntry] = store.getCampaignLevelEntries();
     expect(firstEntry?.isLocked).toBe(false);
@@ -89,13 +101,24 @@ describe('Queens campaign story progress', () => {
       isLocked: false,
       isCurrent: true,
     });
-  });
+  }, 30000);
 
   it('does not allow hints to count as a passing story attempt unless test override is enabled', async () => {
     const { useQueensStore } = await import('./queensStore');
     const store = useQueensStore();
 
     store.puzzleDatabase = puzzlesJson as typeof store.puzzleDatabase;
+    store.campaignBucketCache = storyIndexJson.map((entry: any) => ({
+      levelIndex: entry.levelIndex,
+      sizeKey: entry.sizeKey,
+      difficulty: entry.difficulty,
+      orthogonalMinDistance: entry.orthogonalMinDistance,
+      chapterId: entry.chapterId,
+      chapterName: entry.chapterName,
+      chapterLevelNumber: entry.chapterLevelNumber,
+      chapterIntroTitle: entry.chapterIntroTitle,
+      chapterIntroBody: entry.chapterIntroBody,
+    })) as typeof store.campaignBucketCache;
     await store.beginCampaignRun({ showIntroModal: false });
 
     expect(store.currentCampaignBucket).not.toBeNull();

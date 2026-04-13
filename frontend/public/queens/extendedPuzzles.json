@@ -10496,17 +10496,17 @@
     "orthogonalMinDistance" : 5,
     "difficulty" : "tutorial"
   }, {
-    "id" : "1e16e2a4-0f0c-4127-998f-c02dab17c065",
-    "layout" : "0001112000111234445523355555666575588877998888889",
-    "queens" : "....Q...Q....Q...Q...Q....Q...Q........Q...Q....Q",
-    "orthogonalMinDistance" : 5,
-    "difficulty" : "extra_easy"
-  }, {
     "id" : "75ca5be2-7ea6-4eab-ae0f-c586ed12c420",
     "layout" : "0000011222301123334113355446555446675886667789996",
     "queens" : "...Q...Q....Q...Q........Q...Q....Q...Q...Q....Q.",
     "orthogonalMinDistance" : 5,
     "difficulty" : "medium"
+  }, {
+    "id" : "1e16e2a4-0f0c-4127-998f-c02dab17c065",
+    "layout" : "0001112000111234445523355555666575588877998888889",
+    "queens" : "....Q...Q....Q...Q...Q....Q...Q........Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "extra_easy"
   }, {
     "id" : "c5432f50-0b42-4405-a6db-ba0158b13284",
     "layout" : "0012223001122301112435112244556227899667789999778",

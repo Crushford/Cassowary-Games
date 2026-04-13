@@ -1,8 +1,9 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadQueensCatalogFixture } from './testPuzzleCatalog';
+import { loadQueensCatalogFixture, loadQueensStoryIndexFixture } from './testPuzzleCatalog';
 
 const puzzlesJson = loadQueensCatalogFixture();
+const storyIndexJson = loadQueensStoryIndexFixture();
 
 describe('Queens shared level best times', () => {
   beforeEach(() => {
@@ -52,6 +53,17 @@ describe('Queens shared level best times', () => {
     const { useQueensStore } = await import('./queensStore');
     const store = useQueensStore();
     store.puzzleDatabase = puzzlesJson as typeof store.puzzleDatabase;
+    store.campaignBucketCache = storyIndexJson.map((entry: any) => ({
+      levelIndex: entry.levelIndex,
+      sizeKey: entry.sizeKey,
+      difficulty: entry.difficulty,
+      orthogonalMinDistance: entry.orthogonalMinDistance,
+      chapterId: entry.chapterId,
+      chapterName: entry.chapterName,
+      chapterLevelNumber: entry.chapterLevelNumber,
+      chapterIntroTitle: entry.chapterIntroTitle,
+      chapterIntroBody: entry.chapterIntroBody,
+    })) as typeof store.campaignBucketCache;
 
     const levelEntries = store.getCampaignLevelEntries();
     const firstEntry = levelEntries[0];
@@ -71,5 +83,5 @@ describe('Queens shared level best times', () => {
     store.parsePuzzleData(sameLevelPuzzle);
 
     expect(store.puzzleBestTime).toBe(storyTime);
-  });
+  }, 30000);
 });

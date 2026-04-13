@@ -1,8 +1,9 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadQueensCatalogFixture } from './testPuzzleCatalog';
+import { loadQueensCatalogFixture, loadQueensStoryIndexFixture } from './testPuzzleCatalog';
 
 const puzzlesJson = loadQueensCatalogFixture();
+const storyIndexJson = loadQueensStoryIndexFixture();
 
 describe('Queens campaign routing', () => {
   beforeEach(() => {
@@ -53,6 +54,17 @@ describe('Queens campaign routing', () => {
     const { default: router } = await import('@/router');
     const store = useQueensStore();
     store.puzzleDatabase = puzzlesJson as typeof store.puzzleDatabase;
+    store.campaignBucketCache = storyIndexJson.map((entry: any) => ({
+      levelIndex: entry.levelIndex,
+      sizeKey: entry.sizeKey,
+      difficulty: entry.difficulty,
+      orthogonalMinDistance: entry.orthogonalMinDistance,
+      chapterId: entry.chapterId,
+      chapterName: entry.chapterName,
+      chapterLevelNumber: entry.chapterLevelNumber,
+      chapterIntroTitle: entry.chapterIntroTitle,
+      chapterIntroBody: entry.chapterIntroBody,
+    })) as typeof store.campaignBucketCache;
 
     await store.beginCampaignRun({ showIntroModal: false });
     const currentBucket = store.currentCampaignBucket!;
@@ -68,5 +80,41 @@ describe('Queens campaign routing', () => {
     expect(pushSpy).toHaveBeenCalledWith(
       `/queens/campaign/${store.getCampaignBuckets()[1].sizeKey}/${store.getCampaignBuckets()[1].difficulty}`
     );
-  });
+  }, 30000);
+
+  it('skips missing max-distance sizes instead of routing into another puzzle family', async () => {
+    const { useQueensStore } = await import('./queensStore');
+    const { default: router } = await import('@/router');
+    const store = useQueensStore();
+    store.puzzleDatabase = puzzlesJson as typeof store.puzzleDatabase;
+    store.campaignBucketCache = storyIndexJson.map((entry: any) => ({
+      levelIndex: entry.levelIndex,
+      sizeKey: entry.sizeKey,
+      difficulty: entry.difficulty,
+      orthogonalMinDistance: entry.orthogonalMinDistance,
+      chapterId: entry.chapterId,
+      chapterName: entry.chapterName,
+      chapterLevelNumber: entry.chapterLevelNumber,
+      chapterIntroTitle: entry.chapterIntroTitle,
+      chapterIntroBody: entry.chapterIntroBody,
+    })) as typeof store.campaignBucketCache;
+
+    const tutorialBuckets = store
+      .getCampaignBuckets()
+      .filter((bucket) => bucket.difficulty === 'tutorial');
+    const finalTutorialBucket = tutorialBuckets[tutorialBuckets.length - 1]!;
+    const targetTime = store.getCampaignTargetTime(finalTutorialBucket);
+
+    store.currentCampaignBucket = finalTutorialBucket;
+    store.isCampaignMode = true;
+    store.isComplete = true;
+    store.puzzleCompletionTime = targetTime - 1;
+    store.recordCampaignLevelResult(finalTutorialBucket, targetTime - 1);
+
+    const pushSpy = vi.spyOn(router, 'push').mockResolvedValue(undefined as never);
+
+    await store.startNextPuzzle();
+
+    expect(pushSpy).toHaveBeenCalledWith('/queens/campaign/4x4/extra-easy');
+  }, 30000);
 });

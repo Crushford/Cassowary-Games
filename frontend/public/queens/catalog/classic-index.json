@@ -158,13 +158,13 @@
   "sizeKey" : "9x9",
   "difficulty" : "easy",
   "orthogonalMinDistances" : [ 9 ],
-  "count" : 3,
+  "count" : 5,
   "path" : "/queens/catalog/classic/9x9/easy.json"
 }, {
   "sizeKey" : "9x9",
   "difficulty" : "extra-easy",
   "orthogonalMinDistances" : [ 9 ],
-  "count" : 12,
+  "count" : 78,
   "path" : "/queens/catalog/classic/9x9/extra-easy.json"
 }, {
   "sizeKey" : "9x9",
@@ -176,14 +176,20 @@
   "sizeKey" : "9x9",
   "difficulty" : "hard",
   "orthogonalMinDistances" : [ 9 ],
-  "count" : 91,
+  "count" : 220,
   "path" : "/queens/catalog/classic/9x9/hard.json"
 }, {
   "sizeKey" : "9x9",
   "difficulty" : "medium",
   "orthogonalMinDistances" : [ 9 ],
-  "count" : 2,
+  "count" : 5,
   "path" : "/queens/catalog/classic/9x9/medium.json"
+}, {
+  "sizeKey" : "9x9",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistances" : [ 9 ],
+  "count" : 29,
+  "path" : "/queens/catalog/classic/9x9/tutorial.json"
 }, {
   "sizeKey" : "10x10",
   "difficulty" : "extra-easy",

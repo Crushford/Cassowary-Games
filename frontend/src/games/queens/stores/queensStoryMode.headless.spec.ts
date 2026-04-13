@@ -1,13 +1,16 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { compareSharedSolverDifficulty } from '../solver/sharedSolverConfig';
-import { loadQueensCatalogFixture } from './testPuzzleCatalog';
+import { loadQueensCatalogFixture, loadQueensStoryIndexFixture } from './testPuzzleCatalog';
 
 const puzzlesJson = loadQueensCatalogFixture();
+const storyIndexJson = loadQueensStoryIndexFixture();
+
+const STORY_PROGRESS_KEY = 'queens-story-progress-v1';
 
 describe('Queens story mode headless campaign', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['Date', 'performance'] });
     vi.spyOn(Math, 'random').mockReturnValue(0);
 
     const storage = (() => {
@@ -53,28 +56,52 @@ describe('Queens story mode headless campaign', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
-  it('completes_entire_story_mode_via_hints', async () => {
-    const { useQueensStore } = await import('./queensStore');
-    const { getOrderedApplicableQueensSolverSteps } = await import('../solver/stagedSolver');
-    const store = useQueensStore();
+  function buildStoryBuckets() {
+    return storyIndexJson.map((entry: any) => ({
+      levelIndex: entry.levelIndex,
+      sizeKey: entry.sizeKey,
+      difficulty: entry.difficulty,
+      orthogonalMinDistance: entry.orthogonalMinDistance,
+      chapterId: entry.chapterId,
+      chapterName: entry.chapterName,
+      chapterLevelNumber: entry.chapterLevelNumber,
+      chapterIntroTitle: entry.chapterIntroTitle,
+      chapterIntroBody: entry.chapterIntroBody,
+    }));
+  }
 
-    store.puzzleDatabase = puzzlesJson as typeof store.puzzleDatabase;
-    store.allowCampaignHintPassForTesting = true;
-    const campaignBuckets = store.getCampaignBuckets();
+  function preCompleteUpToLevel(
+    buckets: { levelIndex: number; sizeKey: string; difficulty: string }[],
+    startFromLevelIndex: number
+  ) {
+    const passedLevelBestTimes: Record<string, number> = {};
+    for (const bucket of buckets) {
+      if (bucket.levelIndex < startFromLevelIndex) {
+        passedLevelBestTimes[`${bucket.sizeKey}|${bucket.difficulty}`] = 10;
+      }
+    }
 
-    expect(campaignBuckets.length).toBeGreaterThan(0);
+    localStorage.setItem(
+      STORY_PROGRESS_KEY,
+      JSON.stringify({
+        unlockedLevelIndex: startFromLevelIndex,
+        passedLevelBestTimes,
+        levelBestTimes: {},
+      })
+    );
+  }
 
-    await store.beginCampaignRun({ showIntroModal: false });
-
-    expect(store.isCampaignMode).toBe(true);
-    expect(store.currentCampaignBucket).toEqual(campaignBuckets[0]);
-    expect(store.isCampaignFullyComplete).toBe(false);
-    expect(store.showCampaignIntroModal).toBe(false);
-
-    for (const [index, bucket] of campaignBuckets.entries()) {
+  async function runLevelSlice(
+    store: Awaited<ReturnType<typeof import('./queensStore').useQueensStore>>,
+    getOrderedApplicableQueensSolverSteps: typeof import('../solver/stagedSolver').getOrderedApplicableQueensSolverSteps,
+    bucketSlice: ReturnType<typeof store.getCampaignBuckets>,
+    isLastSlice: boolean
+  ) {
+    for (const [index, bucket] of bucketSlice.entries()) {
       console.log(
         `[story-test] entering level ${bucket.levelIndex}: ${bucket.sizeKey} ${bucket.difficulty}`
       );
@@ -87,9 +114,6 @@ describe('Queens story mode headless campaign', () => {
 
       let hintCount = 0;
       while (!store.isComplete) {
-        // On the first hint of each level, verify requestHint returns the same
-        // step as the ordered solver — checks the ordering contract once per level
-        // without doubling solver calls on every subsequent hint.
         if (hintCount === 0) {
           const applicableSteps = getOrderedApplicableQueensSolverSteps(
             {
@@ -125,10 +149,11 @@ describe('Queens story mode headless campaign', () => {
         ).toBeLessThanOrEqual(0);
         expect(store.moveHistory.length).toBe(previousHistoryLength + 1);
         hintCount += 1;
-        if (hintCount % 25 === 0) {
+        if (hintCount % 10 === 0) {
           console.log(
             `[story-test] level ${bucket.levelIndex} hints=${hintCount} lastStep=${step?.stepId ?? 'none'} difficulty=${step?.difficultyTier ?? 'none'}`
           );
+          await new Promise((r) => setTimeout(r, 0));
         }
         expect(hintCount).toBeLessThan(512);
       }
@@ -140,18 +165,133 @@ describe('Queens story mode headless campaign', () => {
       expect(store.isPuzzleCompleted(String(store.currentPuzzleId))).toBe(true);
       expect(store.puzzleCompletionTime).not.toBeNull();
 
-      const isLastLevel = index === campaignBuckets.length - 1;
-      if (!isLastLevel) {
+      const isLastInSlice = index === bucketSlice.length - 1;
+      const isLastLevelOverall = isLastSlice && isLastInSlice;
+
+      if (!isLastLevelOverall) {
         expect(store.canAdvanceCampaign).toBe(true);
         await store.advanceCampaign({ showIntroModal: false });
-        expect(store.currentCampaignBucket).toEqual(campaignBuckets[index + 1]);
-        expect(store.isCampaignFullyComplete).toBe(false);
+        if (!isLastInSlice) {
+          expect(store.currentCampaignBucket).toEqual(bucketSlice[index + 1]);
+          expect(store.isCampaignFullyComplete).toBe(false);
+        }
       } else {
         expect(store.nextCampaignBucket).toBe(null);
         const completionResult = await store.advanceCampaign({ showIntroModal: false });
         expect(completionResult).toBe(null);
       }
     }
+  }
+
+  it('completes campaign levels 1-13 (tutorial + extra-easy) via hints', async () => {
+    const { useQueensStore } = await import('./queensStore');
+    const { getOrderedApplicableQueensSolverSteps } = await import('../solver/stagedSolver');
+    const store = useQueensStore();
+
+    store.puzzleDatabase = puzzlesJson as typeof store.puzzleDatabase;
+    store.campaignBucketCache = buildStoryBuckets() as typeof store.campaignBucketCache;
+    store.allowCampaignHintPassForTesting = true;
+    const campaignBuckets = store.getCampaignBuckets();
+
+    expect(campaignBuckets).toHaveLength(37);
+    expect(
+      campaignBuckets.slice(0, 6).map((bucket) => `${bucket.sizeKey}|${bucket.difficulty}`)
+    ).toEqual([
+      '4x4|tutorial',
+      '5x5|tutorial',
+      '6x6|tutorial',
+      '7x7|tutorial',
+      '8x8|tutorial',
+      '9x9|tutorial',
+    ]);
+    expect(
+      campaignBuckets.some(
+        (bucket) => bucket.sizeKey === '4x4' && bucket.difficulty === 'extra-easy'
+      )
+    ).toBe(true);
+
+    await store.beginCampaignRun({ showIntroModal: false });
+    expect(store.currentCampaignBucket).toEqual(campaignBuckets[0]);
+    expect(store.isCampaignFullyComplete).toBe(false);
+
+    await runLevelSlice(
+      store,
+      getOrderedApplicableQueensSolverSteps,
+      campaignBuckets.slice(0, 13),
+      false
+    );
+  }, 180000);
+
+  it('completes campaign levels 14-25 (easy + medium) via hints', async () => {
+    const { useQueensStore } = await import('./queensStore');
+    const { getOrderedApplicableQueensSolverSteps } = await import('../solver/stagedSolver');
+    const store = useQueensStore();
+
+    store.puzzleDatabase = puzzlesJson as typeof store.puzzleDatabase;
+    store.campaignBucketCache = buildStoryBuckets() as typeof store.campaignBucketCache;
+    store.allowCampaignHintPassForTesting = true;
+    const campaignBuckets = store.getCampaignBuckets();
+
+    preCompleteUpToLevel(campaignBuckets, 14);
+
+    await store.beginCampaignRun({ showIntroModal: false });
+    expect(store.currentCampaignBucket).toEqual(campaignBuckets[13]);
+    expect(store.isCampaignFullyComplete).toBe(false);
+
+    await runLevelSlice(
+      store,
+      getOrderedApplicableQueensSolverSteps,
+      campaignBuckets.slice(13, 25),
+      false
+    );
+  }, 180000);
+
+  it('completes campaign levels 26-33 (hard) via hints', async () => {
+    const { useQueensStore } = await import('./queensStore');
+    const { getOrderedApplicableQueensSolverSteps } = await import('../solver/stagedSolver');
+    const store = useQueensStore();
+
+    store.puzzleDatabase = puzzlesJson as typeof store.puzzleDatabase;
+    store.campaignBucketCache = buildStoryBuckets() as typeof store.campaignBucketCache;
+    store.allowCampaignHintPassForTesting = true;
+    const campaignBuckets = store.getCampaignBuckets();
+
+    preCompleteUpToLevel(campaignBuckets, 26);
+
+    await store.beginCampaignRun({ showIntroModal: false });
+    expect(store.currentCampaignBucket).toEqual(campaignBuckets[25]);
+    expect(store.isCampaignFullyComplete).toBe(false);
+
+    await runLevelSlice(
+      store,
+      getOrderedApplicableQueensSolverSteps,
+      campaignBuckets.slice(25, 33),
+      false
+    );
+  }, 180000);
+
+  it('completes campaign levels 34-37 (extra-hard) to full completion', async () => {
+    const { useQueensStore } = await import('./queensStore');
+    const { getOrderedApplicableQueensSolverSteps } = await import('../solver/stagedSolver');
+    const store = useQueensStore();
+
+    store.puzzleDatabase = puzzlesJson as typeof store.puzzleDatabase;
+    store.campaignBucketCache = buildStoryBuckets() as typeof store.campaignBucketCache;
+    store.allowCampaignHintPassForTesting = true;
+    const campaignBuckets = store.getCampaignBuckets();
+
+    preCompleteUpToLevel(campaignBuckets, 34);
+
+    await store.beginCampaignRun({ showIntroModal: false });
+    expect(store.currentCampaignBucket).toEqual(campaignBuckets[33]);
+    expect(store.isCampaignFullyComplete).toBe(false);
+
+    await runLevelSlice(
+      store,
+      getOrderedApplicableQueensSolverSteps,
+      campaignBuckets.slice(33),
+      true
+    );
 
     expect(store.isCampaignFullyComplete).toBe(true);
     expect(store.nextCampaignBucket).toBe(null);

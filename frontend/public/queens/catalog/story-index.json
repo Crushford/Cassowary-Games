@@ -32,7 +32,7 @@
   "levelIndex" : 6,
   "sizeKey" : "9x9",
   "difficulty" : "tutorial",
-  "orthogonalMinDistance" : 5,
+  "orthogonalMinDistance" : 9,
   "targetTimeSeconds" : 180
 }, {
   "levelIndex" : 7,

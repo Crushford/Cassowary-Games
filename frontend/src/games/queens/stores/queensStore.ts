@@ -51,10 +51,18 @@ interface QueensCampaignBucket {
   sizeKey: string;
   difficulty: QueensSelectionDifficulty;
   orthogonalMinDistance: number;
+  chapterId: string;
+  chapterName: string;
+  chapterLevelNumber: number;
+  chapterIntroTitle?: string;
+  chapterIntroBody?: string;
 }
 
 export interface QueensCampaignLevelEntry {
   levelNumber: number;
+  chapterId: string;
+  chapterName: string;
+  chapterLevelNumber: number;
   boardSize: string;
   difficulty: QueensSelectionDifficulty;
   isLocked: boolean;
@@ -198,8 +206,54 @@ interface QueensStoryIndexEntry {
   sizeKey: string;
   difficulty: QueensSelectionDifficulty;
   orthogonalMinDistance: number;
+  chapterId?: string;
+  chapterName?: string;
+  chapterLevelNumber?: number;
+  chapterIntroTitle?: string;
+  chapterIntroBody?: string;
   targetTimeSeconds?: number;
 }
+
+interface QueensCampaignChapterDefinition {
+  id: string;
+  name: string;
+  description: string;
+  teaser: string;
+  introTitle: string;
+  introBody: string;
+}
+
+export interface QueensCampaignChapterEntry {
+  chapterId: string;
+  chapterName: string;
+  description: string;
+  teaser: string;
+  isLocked: boolean;
+  isCurrent: boolean;
+  levels: QueensCampaignLevelEntry[];
+}
+
+const QUEENS_STORY_CHAPTERS: QueensCampaignChapterDefinition[] = [
+  {
+    id: 'honey-pot-ant-farming',
+    name: 'Honey Pot Ant Farming',
+    description:
+      'Classic farms where each queen must keep a full-board spacing in its row or column.',
+    teaser:
+      'Finish Honey Pot Ant Farming to unlock the next ant-farming chapter and its new spacing rules.',
+    introTitle: 'Honey Pot Ant Farming',
+    introBody:
+      'These opening farms use the classic queen rules: the minimum row or column spacing matches the full board size.',
+  },
+  {
+    id: 'coming-soon',
+    name: 'Next Chapter',
+    description: 'A new kind of ant farm will open once Honey Pot Ant Farming is complete.',
+    teaser: 'Locked until you finish Honey Pot Ant Farming.',
+    introTitle: 'Next Chapter',
+    introBody: 'A different min-distance ruleset will be introduced here in a future update.',
+  },
+];
 
 function normalizePuzzleDatabase(data: unknown): PuzzleDatabase {
   if (!data || typeof data !== 'object') return {};
@@ -432,6 +486,83 @@ function calculateCampaignTargetTime(bucket: QueensCampaignBucket): number {
 
 function buildCampaignBucketStorageKey(bucket: QueensCampaignBucket): string {
   return `${bucket.sizeKey}|${bucket.difficulty}`;
+}
+
+function getStoryChapterDefinition(chapterId: string): QueensCampaignChapterDefinition {
+  return (
+    QUEENS_STORY_CHAPTERS.find((chapter) => chapter.id === chapterId) ?? QUEENS_STORY_CHAPTERS[0]
+  );
+}
+
+function positionsContainPosition(positions: Pos[], target: Pos): boolean {
+  return positions.some((position) => position.row === target.row && position.col === target.col);
+}
+
+function narrowPatternEvidenceCells(step: QueensSolverStep, output: Pos): Pos[] | null {
+  if (!step.patternPreview) {
+    return null;
+  }
+
+  const activeCells = step.patternPreview.cells
+    .filter((cell) => cell.activeSquare)
+    .map((cell) => ({ row: cell.row, col: cell.col }));
+  const previewOutputs = step.patternPreview.outputFlags.map((flag) => ({
+    row: flag.row,
+    col: flag.col,
+  }));
+
+  if (activeCells.length === 0 || previewOutputs.length === 0) {
+    return null;
+  }
+
+  for (const previewOutput of previewOutputs) {
+    const origin = {
+      row: output.row - previewOutput.row,
+      col: output.col - previewOutput.col,
+    };
+    const translatedActive = activeCells.map((cell) => ({
+      row: origin.row + cell.row,
+      col: origin.col + cell.col,
+    }));
+    const translatedOutputs = previewOutputs.map((flag) => ({
+      row: origin.row + flag.row,
+      col: origin.col + flag.col,
+    }));
+
+    const activeMatches = translatedActive.every((cell) =>
+      positionsContainPosition(step.evidenceCells, cell)
+    );
+    const outputsMatch = translatedOutputs.every((cell) =>
+      positionsContainPosition(step.outputCells, cell)
+    );
+
+    if (activeMatches && outputsMatch) {
+      return translatedActive;
+    }
+  }
+
+  return null;
+}
+
+function narrowInteractiveHintStep(step: QueensSolverStep): QueensSolverStep {
+  if (!step.patternPreview || step.changes.length <= 1) {
+    return step;
+  }
+
+  const [firstChange] = step.changes;
+  if (!firstChange) {
+    return step;
+  }
+
+  const firstOutput = { row: firstChange.row, col: firstChange.col };
+  const narrowedEvidenceCells = narrowPatternEvidenceCells(step, firstOutput);
+
+  return {
+    ...step,
+    evidenceCells: narrowedEvidenceCells ?? step.evidenceCells,
+    outputCells: [firstOutput],
+    changes: [firstChange],
+  };
 }
 
 function buildSizeDifficultyRecordKey(
@@ -1218,12 +1349,14 @@ export const useQueensStore = defineStore('queens', {
         return null;
       }
 
+      const interactiveStep = narrowInteractiveHintStep(step);
+
       if (this.isCampaignMode) {
         this.hasUsedCampaignHintThisAttempt = true;
       }
-      this.applyResolvedSolverStep(step, applyQueensSolverStep);
-      this.showHint(step, step.explanation);
-      return step;
+      this.applyResolvedSolverStep(interactiveStep, applyQueensSolverStep);
+      this.showHint(interactiveStep, interactiveStep.explanation);
+      return interactiveStep;
     },
 
     async loadCampaignCatalog() {
@@ -1246,11 +1379,19 @@ export const useQueensStore = defineStore('queens', {
 
           for (const entry of payload) {
             const difficulty = this.normalizePuzzleDifficulty(entry.difficulty) ?? 'easy';
+            const chapterDefinition = getStoryChapterDefinition(
+              entry.chapterId ?? 'honey-pot-ant-farming'
+            );
             const bucket: QueensCampaignBucket = {
               levelIndex: entry.levelIndex,
               sizeKey: entry.sizeKey,
               difficulty,
               orthogonalMinDistance: entry.orthogonalMinDistance,
+              chapterId: entry.chapterId ?? chapterDefinition.id,
+              chapterName: entry.chapterName ?? chapterDefinition.name,
+              chapterLevelNumber: entry.chapterLevelNumber ?? entry.levelIndex,
+              chapterIntroTitle: entry.chapterIntroTitle ?? chapterDefinition.introTitle,
+              chapterIntroBody: entry.chapterIntroBody ?? chapterDefinition.introBody,
             };
             storyBuckets.push(bucket);
             if (typeof entry.targetTimeSeconds === 'number') {
@@ -1388,16 +1529,16 @@ export const useQueensStore = defineStore('queens', {
 
       const buckets: QueensCampaignBucket[] = [];
       let levelIndex = 0;
+      let chapterLevelNumber = 0;
+      const chapterDefinition = getStoryChapterDefinition('honey-pot-ant-farming');
       for (const difficulty of QUEENS_SELECTION_DIFFICULTY_ORDER) {
         for (const sizeKey of sizeKeys) {
           const group = this.campaignCatalogIndex[`${sizeKey}|${difficulty}`];
           if (!group) continue;
 
           const boardSize = Number.parseInt(sizeKey, 10);
-          const orthogonalMinDistance = group.orthogonalMinDistances.includes(boardSize)
-            ? boardSize
-            : (group.orthogonalMinDistances[0] ?? null);
-          if (orthogonalMinDistance == null) continue;
+          if (!group.orthogonalMinDistances.includes(boardSize)) continue;
+          const orthogonalMinDistance = boardSize;
 
           const puzzles = await this.loadCampaignBucketPuzzles(sizeKey, difficulty);
           const hasPlayablePuzzle = puzzles
@@ -1408,11 +1549,17 @@ export const useQueensStore = defineStore('queens', {
           if (!hasPlayablePuzzle) continue;
 
           levelIndex += 1;
+          chapterLevelNumber += 1;
           buckets.push({
             levelIndex,
             sizeKey,
             difficulty,
             orthogonalMinDistance,
+            chapterId: chapterDefinition.id,
+            chapterName: chapterDefinition.name,
+            chapterLevelNumber,
+            chapterIntroTitle: chapterDefinition.introTitle,
+            chapterIntroBody: chapterDefinition.introBody,
           });
         }
       }
@@ -1493,10 +1640,13 @@ export const useQueensStore = defineStore('queens', {
 
       const buckets: QueensCampaignBucket[] = [];
       let levelIndex = 0;
+      let chapterLevelNumber = 0;
+      const chapterDefinition = getStoryChapterDefinition('honey-pot-ant-farming');
       for (const difficulty of QUEENS_SELECTION_DIFFICULTY_ORDER) {
         for (const sizeKey of this.getAvailableSizes()) {
+          const boardSize = Number.parseInt(sizeKey, 10);
           const orthogonalMinDistance = this.getPreferredCampaignDistance(sizeKey, difficulty);
-          if (orthogonalMinDistance == null) continue;
+          if (orthogonalMinDistance == null || orthogonalMinDistance !== boardSize) continue;
           const hasPlayablePuzzle = this.getPuzzlesForSelection(
             sizeKey,
             orthogonalMinDistance,
@@ -1504,11 +1654,17 @@ export const useQueensStore = defineStore('queens', {
           ).some((puzzle) => this.isCampaignPuzzleSolvable(puzzle, difficulty));
           if (!hasPlayablePuzzle) continue;
           levelIndex += 1;
+          chapterLevelNumber += 1;
           buckets.push({
             levelIndex,
             sizeKey,
             difficulty,
             orthogonalMinDistance,
+            chapterId: chapterDefinition.id,
+            chapterName: chapterDefinition.name,
+            chapterLevelNumber,
+            chapterIntroTitle: chapterDefinition.introTitle,
+            chapterIntroBody: chapterDefinition.introBody,
           });
         }
       }
@@ -1653,6 +1809,9 @@ export const useQueensStore = defineStore('queens', {
 
       return buckets.map((bucket) => ({
         levelNumber: bucket.levelIndex,
+        chapterId: bucket.chapterId,
+        chapterName: bucket.chapterName,
+        chapterLevelNumber: bucket.chapterLevelNumber,
         boardSize: bucket.sizeKey,
         difficulty: bucket.difficulty,
         isLocked: !this.isCampaignBucketUnlocked(bucket),
@@ -1666,6 +1825,39 @@ export const useQueensStore = defineStore('queens', {
         route: `/queens/campaign/${bucket.sizeKey}/${bucket.difficulty}`,
         bucket,
       }));
+    },
+
+    getCampaignChapterEntries(): QueensCampaignChapterEntry[] {
+      const levelEntries = this.getCampaignLevelEntries();
+      const chapterEntries = new Map<string, QueensCampaignLevelEntry[]>();
+
+      for (const entry of levelEntries) {
+        const chapterLevels = chapterEntries.get(entry.chapterId) ?? [];
+        chapterLevels.push(entry);
+        chapterEntries.set(entry.chapterId, chapterLevels);
+      }
+
+      return QUEENS_STORY_CHAPTERS.map((chapter, index) => {
+        const levels = chapterEntries.get(chapter.id) ?? [];
+        const previousChapter = index > 0 ? QUEENS_STORY_CHAPTERS[index - 1] : null;
+        const previousLevels = previousChapter
+          ? (chapterEntries.get(previousChapter.id) ?? [])
+          : [];
+        const previousChapterComplete =
+          previousChapter == null ||
+          (previousLevels.length > 0 && previousLevels.every((entry) => entry.isCompleted));
+        const isLocked = levels.length === 0 || !previousChapterComplete;
+
+        return {
+          chapterId: chapter.id,
+          chapterName: chapter.name,
+          description: chapter.description,
+          teaser: chapter.teaser,
+          isLocked,
+          isCurrent: levels.some((entry) => entry.isCurrent),
+          levels,
+        };
+      });
     },
 
     async selectCampaignPuzzle(bucket: QueensCampaignBucket): Promise<PuzzleRecord> {
