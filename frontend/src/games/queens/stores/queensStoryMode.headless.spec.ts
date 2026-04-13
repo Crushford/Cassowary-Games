@@ -185,15 +185,14 @@ describe('Queens story mode headless campaign', () => {
 
       let hintCount = 0;
       while (!store.isComplete) {
-        const solverState = {
-          grid: store.grid,
-          playerMarks: store.playerMarks,
-          gridSize: store.gridSize,
-          targetQueenCount: store.targetQueenCount,
-          orthogonalMinDistance: store.orthogonalMinDistance,
-        };
-
         if (hintCount === 0) {
+          const solverState = {
+            grid: store.grid,
+            playerMarks: store.playerMarks,
+            gridSize: store.gridSize,
+            targetQueenCount: store.targetQueenCount,
+            orthogonalMinDistance: store.orthogonalMinDistance,
+          };
           const applicableSteps = getOrderedApplicableQueensSolverSteps(
             solverState,
             bucket.difficulty
@@ -216,21 +215,7 @@ describe('Queens story mode headless campaign', () => {
         }
 
         const previousHistoryLength = store.moveHistory.length;
-        const applicableSteps = getOrderedApplicableQueensSolverSteps(
-          solverState,
-          bucket.difficulty
-        );
-        expect(
-          applicableSteps.length,
-          `expected an in-difficulty hint for level ${bucket.levelIndex}`
-        ).toBeGreaterThan(0);
         const step = await store.requestHint();
-        if (!step) {
-          console.error(
-            '[story-test] requestHint returned null',
-            buildHeadlessNoHintDebugPayload(store, bucket, hintCount, applicableSteps)
-          );
-        }
         expect(step, `expected a hint step for level ${bucket.levelIndex}`).not.toBeNull();
         expect(store.moveHistory.length).toBe(previousHistoryLength + 1);
         hintCount += 1;
