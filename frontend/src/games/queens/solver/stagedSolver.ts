@@ -55,11 +55,11 @@ interface ContradictionResult {
 
 interface PatternVariant {
   activeCells: Pos[];
-  activeWindowCells: Set<string>;
-  activeWindowOrigin: Pos;
   activeWindowHeight: number;
   activeWindowWidth: number;
   outputFlags: Pos[];
+  previewCells: Pos[];
+  previewOutputFlags: Pos[];
 }
 
 type FlipMode = 'none' | 'horizontal' | 'vertical';
@@ -760,14 +760,22 @@ function getPatternVariants(pattern: SharedSolverPatternConfig): PatternVariant[
         ? Math.max(...transformedActive.map((cell) => cell.col))
         : 0;
       const variant: PatternVariant = {
-        activeCells: sortPositions(transformedActive),
-        activeWindowCells: new Set(
-          transformedActive.map((cell) => keyForPos(cell.row - minRow, cell.col - minCol))
+        activeCells: sortPositions(
+          transformedActive.map((cell) => ({
+            row: cell.row - minRow,
+            col: cell.col - minCol,
+          }))
         ),
-        activeWindowOrigin: { row: minRow, col: minCol },
         activeWindowHeight: maxRow - minRow + 1,
         activeWindowWidth: maxCol - minCol + 1,
-        outputFlags: sortPositions(transformedFlags),
+        outputFlags: sortPositions(
+          transformedFlags.map((flag) => ({
+            row: flag.row - minRow,
+            col: flag.col - minCol,
+          }))
+        ),
+        previewCells: sortPositions(transformedActive),
+        previewOutputFlags: sortPositions(transformedFlags),
       };
       const signature = `${variant.activeCells.map((cell) => keyForPos(cell.row, cell.col)).join('|')}::${variant.outputFlags
         .map((flag) => keyForPos(flag.row, flag.col))
@@ -800,13 +808,9 @@ function runPatternStep(
   for (const variant of variants) {
     for (let baseRow = 0; baseRow <= state.gridSize - variant.activeWindowHeight; baseRow++) {
       for (let baseCol = 0; baseCol <= state.gridSize - variant.activeWindowWidth; baseCol++) {
-        const anchor = variant.activeCells[0];
-        if (!anchor) continue;
-        const originRow = baseRow - (anchor.row - variant.activeWindowOrigin.row);
-        const originCol = baseCol - (anchor.col - variant.activeWindowOrigin.col);
         const absoluteActive = variant.activeCells.map((cell) => ({
-          row: originRow + cell.row,
-          col: originCol + cell.col,
+          row: baseRow + cell.row,
+          col: baseCol + cell.col,
         }));
         if (
           absoluteActive.some(
@@ -857,8 +861,8 @@ function runPatternStep(
         }
 
         for (const output of variant.outputFlags) {
-          const row = originRow + output.row;
-          const col = originCol + output.col;
+          const row = baseRow + output.row;
+          const col = baseCol + output.col;
           if (row < 0 || row >= state.gridSize || col < 0 || col >= state.gridSize) continue;
           if (state.playerMarks[row][col] !== null) continue;
           if (!isCandidateCell(state, row, col)) continue;
@@ -888,12 +892,12 @@ function runPatternStep(
             id: pattern.id,
             name: pattern.name,
             size: pattern.size,
-            cells: matchedPreviewVariant.activeCells.map((cell) => ({
+            cells: matchedPreviewVariant.previewCells.map((cell) => ({
               row: cell.row,
               col: cell.col,
               activeSquare: true,
             })),
-            outputFlags: matchedPreviewVariant.outputFlags.map((flag) => ({
+            outputFlags: matchedPreviewVariant.previewOutputFlags.map((flag) => ({
               row: flag.row,
               col: flag.col,
             })),

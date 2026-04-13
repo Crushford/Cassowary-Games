@@ -565,6 +565,94 @@ function narrowInteractiveHintStep(step: QueensSolverStep): QueensSolverStep {
   };
 }
 
+function snapshotBoardGroups(grid: GridSquare[][]): string[] {
+  return grid.map((row) => row.map((cell) => cell.groupColor ?? '.').join(''));
+}
+
+function snapshotPlayerMarks(playerMarks: MarkType[][]): string[] {
+  return playerMarks.map((row) =>
+    row
+      .map((mark) => {
+        if (mark === 'queen') return 'Q';
+        if (mark === 'flag') return 'F';
+        if (mark === 'invalid') return 'X';
+        return '.';
+      })
+      .join('')
+  );
+}
+
+function collectMarkedPositions(playerMarks: MarkType[][], markType: MarkType): Pos[] {
+  const positions: Pos[] = [];
+  for (let row = 0; row < playerMarks.length; row++) {
+    for (let col = 0; col < (playerMarks[row]?.length ?? 0); col++) {
+      if (playerMarks[row]?.[col] === markType) {
+        positions.push({ row, col });
+      }
+    }
+  }
+  return positions;
+}
+
+function getWindowLocationContext(): { pathname: string; search: string; hash: string } | null {
+  if (typeof window === 'undefined' || !window.location) {
+    return null;
+  }
+  return {
+    pathname: window.location.pathname,
+    search: window.location.search,
+    hash: window.location.hash,
+  };
+}
+
+function summarizeSolverSteps(steps: QueensSolverStep[]) {
+  return steps.map((step) => ({
+    stepId: step.stepId,
+    difficultyTier: step.difficultyTier,
+    outputCells: step.outputCells,
+    evidenceCells: step.evidenceCells,
+    changeCount: step.changes.length,
+    hasPatternPreview: !!step.patternPreview,
+  }));
+}
+
+function buildNoHintDebugPayload(args: {
+  currentPuzzle: PuzzleRecord | null;
+  currentPuzzleId: string | number | null;
+  grid: GridSquare[][];
+  playerMarks: MarkType[][];
+  gridSize: number;
+  targetQueenCount: number;
+  orthogonalMinDistance: number;
+  isComplete: boolean;
+  currentCampaignBucket: QueensCampaignBucket | null;
+  orderedApplicableSteps: QueensSolverStep[];
+}) {
+  return {
+    puzzleId: args.currentPuzzleId,
+    puzzleDifficulty: args.currentPuzzle?.difficulty ?? null,
+    gridSize: args.gridSize,
+    targetQueenCount: args.targetQueenCount,
+    orthogonalMinDistance: args.orthogonalMinDistance,
+    isComplete: args.isComplete,
+    campaignBucket: args.currentCampaignBucket
+      ? {
+          levelIndex: args.currentCampaignBucket.levelIndex,
+          sizeKey: args.currentCampaignBucket.sizeKey,
+          difficulty: args.currentCampaignBucket.difficulty,
+          chapterId: args.currentCampaignBucket.chapterId,
+          chapterLevelNumber: args.currentCampaignBucket.chapterLevelNumber,
+        }
+      : null,
+    route: getWindowLocationContext(),
+    placedQueens: collectMarkedPositions(args.playerMarks, 'queen'),
+    flaggedSquares: collectMarkedPositions(args.playerMarks, 'flag'),
+    boardGroups: snapshotBoardGroups(args.grid),
+    boardMarks: snapshotPlayerMarks(args.playerMarks),
+    orderedApplicableSteps: summarizeSolverSteps(args.orderedApplicableSteps),
+  };
+}
+
 function buildSizeDifficultyRecordKey(
   sizeKey: string,
   difficulty: QueensSelectionDifficulty
@@ -1329,22 +1417,39 @@ export const useQueensStore = defineStore('queens', {
     },
 
     async requestHint() {
-      const { applyQueensSolverStep, getNextQueensSolverStep } = await import(
+      const { applyQueensSolverStep, getOrderedApplicableQueensSolverSteps } = await import(
         '../solver/stagedSolver'
       );
       const maxDifficultyTier = this.currentPuzzle?.difficulty ?? 'unsolvable';
-      const step = getNextQueensSolverStep(
-        {
-          grid: this.grid,
-          playerMarks: this.playerMarks,
-          gridSize: this.gridSize,
-          targetQueenCount: this.targetQueenCount,
-          orthogonalMinDistance: this.orthogonalMinDistance,
-        },
+      const solverState = {
+        grid: this.grid,
+        playerMarks: this.playerMarks,
+        gridSize: this.gridSize,
+        targetQueenCount: this.targetQueenCount,
+        orthogonalMinDistance: this.orthogonalMinDistance,
+      };
+      const orderedApplicableSteps = getOrderedApplicableQueensSolverSteps(
+        solverState,
         maxDifficultyTier
       );
+      const step = orderedApplicableSteps[0] ?? null;
 
       if (!step) {
+        console.error(
+          '[queensStore] No hint available',
+          buildNoHintDebugPayload({
+            currentPuzzle: this.currentPuzzle,
+            currentPuzzleId: this.currentPuzzleId,
+            grid: this.grid,
+            playerMarks: this.playerMarks,
+            gridSize: this.gridSize,
+            targetQueenCount: this.targetQueenCount,
+            orthogonalMinDistance: this.orthogonalMinDistance,
+            isComplete: this.isComplete,
+            currentCampaignBucket: this.currentCampaignBucket,
+            orderedApplicableSteps,
+          })
+        );
         this.showHint(null, 'Nothing stands out yet.\nTry checking another part of the board.');
         return null;
       }

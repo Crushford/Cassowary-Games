@@ -25,8 +25,7 @@ function buildState(layout: string, queens: string, marks?: MarkType[][]): Queen
     targetQueenCount: gridSize,
     orthogonalMinDistance: gridSize,
     playerMarks:
-      marks ??
-      Array.from({ length: gridSize }, () => Array<MarkType>(gridSize).fill(null)),
+      marks ?? Array.from({ length: gridSize }, () => Array<MarkType>(gridSize).fill(null)),
   };
 }
 
@@ -132,4 +131,33 @@ describe('stagedSolver', () => {
     });
   });
 
+  it('finds a hint for the reported 4x4 extra-easy campaign state', () => {
+    const state = buildState('0011002200323332', '..Q.Q......Q.Q..', [
+      ['flag', 'flag', null, null],
+      [null, null, null, null],
+      [null, null, null, null],
+      [null, null, null, null],
+    ]);
+
+    const extraEasyApplicable = getOrderedApplicableQueensSolverSteps(state, 'extra-easy');
+    const anyDifficultyApplicable = getOrderedApplicableQueensSolverSteps(state, 'unsolvable');
+
+    expect(
+      extraEasyApplicable,
+      JSON.stringify({ extraEasyApplicable, anyDifficultyApplicable }, null, 2)
+    ).not.toHaveLength(0);
+    expect(getNextQueensSolverStep(state, 'extra-easy')).not.toBeNull();
+  });
+
+  it('matches rotated solver-pattern-3 variants flush against the board edge', () => {
+    const state = buildState('0011002200323332', '..Q.Q......Q.Q..', [
+      ['flag', 'flag', null, null],
+      [null, null, null, null],
+      [null, null, null, null],
+      [null, null, null, null],
+    ]);
+
+    const next = getNextQueensSolverStep(state, 'extra-easy');
+    expect(next?.stepId).toBe('solver-pattern-3');
+  });
 });
