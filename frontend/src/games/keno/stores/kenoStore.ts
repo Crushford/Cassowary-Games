@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { loadQueensPuzzleCatalogForSize } from '@/games/queens/utils/puzzleCatalog';
 import type { GridSquare } from '@/games/queens/types/types';
 import { COLOR_SYMBOLS } from '@/games/queens/utils/colorPalette';
 import { buildOddsRowsInteger, fairPayoutsTo1Integer } from '../lib/kenoOdds';
@@ -181,13 +182,7 @@ export const useKenoStore = defineStore('keno', {
         // Use provided size or default to current puzzleSize
         const size = puzzleSize || this.puzzleSize;
 
-        // Load puzzles.json
-        const response = await fetch('/queens/puzzles.json');
-        if (!response.ok) {
-          throw new Error(`Failed to load puzzles.json: ${response.status}`);
-        }
-
-        const data = await response.json();
+        const data = await loadQueensPuzzleCatalogForSize(size);
         const puzzlesForSize = data[size] || [];
 
         // Filter for puzzles ending in "-0"

@@ -13,6 +13,7 @@ export type QueensAdminQueenCountMode = 'exact' | 'max';
 export type QueensAdminBatchRunMode = 'cartesian' | 'lowest-count';
 export type QueensAdminSizeOption = number;
 export type QueensAdminDifficulty =
+  | 'tutorial'
   | 'extra-easy'
   | 'easy'
   | 'medium'

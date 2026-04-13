@@ -1,0 +1,9 @@
+{
+  "6x6" : [ {
+    "id" : "7c1e4ee7-ef04-4a74-8488-51ed54f42489",
+    "layout" : "000111000001222000333440555444555554",
+    "queens" : ".....Q...Q..Q.......Q.......Q..Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_hard"
+  } ]
+}

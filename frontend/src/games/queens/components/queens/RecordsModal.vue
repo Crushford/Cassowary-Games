@@ -73,18 +73,17 @@
         </div>
       </div>
 
-      <!-- Best Times Per Size (Individual Puzzle Completion) -->
       <div v-if="bestTimesEntries.length > 0" class="mb-6">
         <h3 class="text-lg font-semibold text-semantic-neutral-300 mb-3">
-          Best Times by Size (Individual Puzzles)
+          Best Times by Level
         </h3>
         <div class="space-y-2">
           <div
-            v-for="[size, time] in bestTimesEntries"
-            :key="size"
+            v-for="[levelKey, time] in bestTimesEntries"
+            :key="levelKey"
             class="flex justify-between items-center p-2 bg-semantic-neutral-700 rounded-lg"
           >
-            <span class="text-white font-semibold">{{ size }}</span>
+            <span class="text-white font-semibold">{{ formatLevelLabel(levelKey) }}</span>
             <span class="text-semantic-warning-400 font-bold">{{
               queensStore.formatTime(time)
             }}</span>
@@ -163,19 +162,28 @@ const speedMode5MinSizeEntries = computed(() => {
   });
 });
 
-const bestTimesPerSize = computed(() => {
+const bestTimesByLevel = computed(() => {
   const refreshTrigger = queensStore.recordsRefreshTrigger;
   if (refreshTrigger < 0) return {};
-  return queensStore.getBestTimesPerSize();
+  return queensStore.getBestTimesByLevel();
 });
 
 const bestTimesEntries = computed(() => {
-  return Object.entries(bestTimesPerSize.value).sort((a, b) => {
+  return Object.entries(bestTimesByLevel.value).sort((a, b) => {
     const aSize = parseInt(a[0].split('x')[0], 10);
     const bSize = parseInt(b[0].split('x')[0], 10);
     return aSize - bSize;
   });
 });
+
+function formatLevelLabel(levelKey: string): string {
+  const [size, difficulty] = levelKey.split('|');
+  const difficultyLabel = (difficulty ?? '')
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+  return difficultyLabel ? `${size} • ${difficultyLabel}` : size;
+}
 
 function handleResetRecords() {
   if (confirm('Are you sure you want to reset all records? This cannot be undone.')) {

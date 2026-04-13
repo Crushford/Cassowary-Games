@@ -1,5 +1,12 @@
-export type QueensSelectionDifficulty = 'extra-easy' | 'easy' | 'medium' | 'hard' | 'extra-hard';
+export type QueensSelectionDifficulty =
+  | 'tutorial'
+  | 'extra-easy'
+  | 'easy'
+  | 'medium'
+  | 'hard'
+  | 'extra-hard';
 export const QUEENS_SELECTION_DIFFICULTY_ORDER: QueensSelectionDifficulty[] = [
+  'tutorial',
   'extra-easy',
   'easy',
   'medium',

@@ -152,8 +152,8 @@ const selectionPuzzles = computed(() => {
   return queensStore.getPuzzlesForSelection(selectedSize.value, selectedDistance.value);
 });
 
-const showDifficultySection = computed(() =>
-  selectionPuzzles.value.some((puzzle) => puzzle.difficulty != null)
+const showDifficultySection = computed(
+  () => availableDifficulties.value.length > 0 || selectionPuzzles.value.some((puzzle) => puzzle.difficulty != null)
 );
 
 const canPlayRandom = computed(
@@ -256,10 +256,10 @@ async function handlePlayRandomPuzzle() {
     return;
   }
 
-  const puzzle = queensStore.getRandomPuzzleForSelection(
-    selectedSize.value,
-    selectedDistance.value,
-    showDifficultySection.value ? (selectedDifficulty.value ?? undefined) : undefined
+    const puzzle = await queensStore.getRandomPuzzleForSelectionAsync(
+      selectedSize.value,
+      selectedDistance.value,
+      showDifficultySection.value ? (selectedDifficulty.value ?? undefined) : undefined
   );
 
   if (!puzzle) {
@@ -333,8 +333,9 @@ function updateSelectionQuery() {
 
 watch(
   () => props.isVisible,
-  (isVisible) => {
+  async (isVisible) => {
     if (isVisible && !isRotate.value) {
+      await queensStore.ensureSelectionCatalogLoaded();
       logSinglePuzzleSelection('watch:isVisible:initialize');
       initializeSelectionState();
     }

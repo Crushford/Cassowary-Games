@@ -1,4 +1,5 @@
 import { keepOnlyOriginalPuzzleVariants } from '@/games/queens/utils/puzzleDiversitySelector';
+import { loadQueensPuzzleCatalogForSize } from '@/games/queens/utils/puzzleCatalog';
 
 import type { MiningPuzzleRecord } from '../types';
 
@@ -10,12 +11,10 @@ async function loadPuzzlePool(size: number): Promise<MiningPuzzleRecord[]> {
     return cachedPool;
   }
 
-  const response = await fetch('/queens/puzzles.json', { cache: 'force-cache' });
-  if (!response.ok) {
-    throw new Error(`Failed to load Queens puzzles: ${response.status}`);
-  }
-
-  const payload = (await response.json()) as Record<string, MiningPuzzleRecord[]>;
+  const payload = (await loadQueensPuzzleCatalogForSize(`${size}x${size}`)) as Record<
+    string,
+    MiningPuzzleRecord[]
+  >;
   const sizeKey = `${size}x${size}`;
   const pool = payload[sizeKey];
 

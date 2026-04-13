@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { loadQueensPuzzleCatalogForSize } from '../utils/puzzleCatalog';
 import { rulesStorage } from '../utils/rulesStorage';
 import type {
   GridSquare,
@@ -1084,15 +1085,12 @@ export const useHarvestStore = defineStore('game', {
       }
     },
 
-    // Load puzzle database from puzzles.json
+    // Load puzzle database from the split catalog, with monolith fallback handled by the loader
     async loadPuzzleDatabase() {
       try {
-        const response = await fetch('/queens/puzzles.json');
-        if (!response.ok) {
-          throw new Error(`Failed to load puzzles.json: ${response.status}`);
-        }
-        //filter for id ending in -0
-        const data = await response.json();
+        const sizes = ['4x4', '5x5', '6x6', '7x7', '8x8', '9x9', '10x10', '11x11'];
+        const catalogs = await Promise.all(sizes.map((sizeKey) => loadQueensPuzzleCatalogForSize(sizeKey)));
+        const data = Object.assign({}, ...catalogs);
         // The data is an object with keys like "5x5", each containing an array of puzzles
         // Filter each size's puzzles to only include those with id ending in -0
         this.puzzleDatabase = {};

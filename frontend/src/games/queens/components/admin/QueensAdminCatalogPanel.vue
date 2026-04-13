@@ -349,20 +349,22 @@ const filteredGroups = computed(() => {
 
 function difficultySortKey(difficulty?: QueensAdminPuzzleDifficulty): number {
   switch (difficulty) {
-    case 'extra-easy':
+    case 'tutorial':
       return 0;
-    case 'easy':
+    case 'extra-easy':
       return 1;
-    case 'medium':
+    case 'easy':
       return 2;
-    case 'hard':
+    case 'medium':
       return 3;
-    case 'extra-hard':
+    case 'hard':
       return 4;
-    case 'unsolvable':
+    case 'extra-hard':
       return 5;
-    default:
+    case 'unsolvable':
       return 6;
+    default:
+      return 7;
   }
 }
 

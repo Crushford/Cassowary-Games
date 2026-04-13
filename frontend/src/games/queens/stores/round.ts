@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { loadQueensPuzzleCatalogForSize } from '../utils/puzzleCatalog';
 import { useGlobalStore } from './global';
 import type { GridSquare } from '../types/types';
 import { COLOR_SYMBOLS } from '../utils/colorPalette';
@@ -200,13 +201,7 @@ export const useRoundStore = defineStore('round', {
 
     async loadRandomPuzzle() {
       try {
-        // Load puzzles.json
-        const response = await fetch('/queens/puzzles.json');
-        if (!response.ok) {
-          throw new Error(`Failed to load puzzles.json: ${response.status}`);
-        }
-
-        const data = await response.json();
+        const data = await loadQueensPuzzleCatalogForSize('4x4');
         const puzzles4x4 = data['4x4'] || [];
 
         // Filter for puzzles ending in "-0"

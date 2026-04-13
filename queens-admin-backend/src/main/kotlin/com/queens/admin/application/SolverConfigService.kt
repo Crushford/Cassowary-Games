@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service
 @Service
 class SolverConfigService(
     private val solverPatternCatalogService: SolverPatternCatalogService,
+    private val sharedQueensSolverConfigService: SharedQueensSolverConfigService,
 ) {
     data class BuiltInSolverStepDefinition(
         val id: String,
@@ -22,6 +23,26 @@ class SolverConfigService(
         val patterns: List<PersistedSolverPattern>,
     )
 
+    fun loadConfig(): SolverConfig =
+        SolverConfig(
+            builtInSteps = builtInSolverSteps(),
+            patterns = solverPatternCatalogService.findAll(),
+        )
+
+    fun builtInSolverSteps(): List<BuiltInSolverStepDefinition> =
+        runCatching {
+            sharedQueensSolverConfigService.load().builtInSteps.map { step ->
+                BuiltInSolverStepDefinition(
+                    id = step.id,
+                    label = step.label,
+                    description = step.description,
+                    difficultyTier = step.difficultyTier.toPuzzleDifficultyTier(),
+                    enabled = step.enabled,
+                    sortOrder = step.sortOrder,
+                )
+            }
+        }.getOrElse { defaultBuiltInSolverSteps() }
+
     companion object {
         fun defaultBuiltInSolverSteps(): List<BuiltInSolverStepDefinition> =
             listOf(
@@ -29,9 +50,18 @@ class SolverConfigService(
                     id = "single-color",
                     label = "Single Color Queen",
                     description = "Place the queen when exactly one valid square remains in a color group.",
-                    difficultyTier = PuzzleDifficultyTier.EXTRA_EASY,
+                    difficultyTier = PuzzleDifficultyTier.TUTORIAL,
                     enabled = true,
                     sortOrder = 10,
+                )
+                ,
+                BuiltInSolverStepDefinition(
+                    id = "group-confined-to-line",
+                    label = "Group Confined To Line",
+                    description = "Flag candidates near a color group whose remaining squares are trapped in one row or column.",
+                    difficultyTier = PuzzleDifficultyTier.TUTORIAL,
+                    enabled = true,
+                    sortOrder = 20,
                 ),
                 BuiltInSolverStepDefinition(
                     id = "row-column",
@@ -39,23 +69,7 @@ class SolverConfigService(
                     description = "Use constrained sliding row and column bands to eliminate impossible candidates.",
                     difficultyTier = PuzzleDifficultyTier.HARD,
                     enabled = true,
-                    sortOrder = 20,
-                ),
-                BuiltInSolverStepDefinition(
-                    id = "row-column-sets",
-                    label = "Row / Column Set Constraints",
-                    description = "Use row and column sets inside a queen-distance window to eliminate impossible candidates, including non-adjacent lines.",
-                    difficultyTier = PuzzleDifficultyTier.EXTRA_HARD,
-                    enabled = true,
-                    sortOrder = 25,
-                ),
-                BuiltInSolverStepDefinition(
-                    id = "group-confined-to-line",
-                    label = "Group Confined To Line",
-                    description = "Flag candidates near a color group whose remaining squares are trapped in one row or column.",
-                    difficultyTier = PuzzleDifficultyTier.EXTRA_EASY,
-                    enabled = true,
-                    sortOrder = 30,
+                    sortOrder = 40,
                 ),
                 BuiltInSolverStepDefinition(
                     id = "single-queen-contradiction",
@@ -63,7 +77,15 @@ class SolverConfigService(
                     description = "Try one queen placement. If it immediately makes the puzzle impossible, flag that square.",
                     difficultyTier = PuzzleDifficultyTier.HARD,
                     enabled = true,
-                    sortOrder = 40,
+                    sortOrder = 50,
+                ),
+                BuiltInSolverStepDefinition(
+                    id = "row-column-sets",
+                    label = "Row / Column Set Constraints",
+                    description = "Use row and column sets inside a queen-distance window to eliminate impossible candidates, including non-adjacent lines.",
+                    difficultyTier = PuzzleDifficultyTier.EXTRA_HARD,
+                    enabled = true,
+                    sortOrder = 60,
                 ),
                 BuiltInSolverStepDefinition(
                     id = "assume-progress",
@@ -71,7 +93,7 @@ class SolverConfigService(
                     description = "Try queen assumptions until one contradiction forces a real move.",
                     difficultyTier = PuzzleDifficultyTier.UNSOLVABLE,
                     enabled = true,
-                    sortOrder = 50,
+                    sortOrder = 70,
                 ),
                 BuiltInSolverStepDefinition(
                     id = "assume-exhaustive",
@@ -79,16 +101,11 @@ class SolverConfigService(
                     description = "Exhaustively scan queen and flag assumptions until no further forced move exists.",
                     difficultyTier = PuzzleDifficultyTier.UNSOLVABLE,
                     enabled = true,
-                    sortOrder = 60,
+                    sortOrder = 80,
                 ),
             )
+
+        private fun String.toPuzzleDifficultyTier(): PuzzleDifficultyTier =
+            PuzzleDifficultyTier.valueOf(uppercase().replace('-', '_'))
     }
-
-    fun loadConfig(): SolverConfig =
-        SolverConfig(
-            builtInSteps = builtInSolverSteps(),
-            patterns = solverPatternCatalogService.findAll(),
-        )
-
-    fun builtInSolverSteps(): List<BuiltInSolverStepDefinition> = defaultBuiltInSolverSteps()
 }

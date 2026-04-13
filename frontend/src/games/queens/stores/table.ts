@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { loadQueensPuzzleCatalogForSize } from '../utils/puzzleCatalog';
 
 export interface TableConfig {
   id: string;
@@ -143,12 +144,7 @@ export const useTableStore = defineStore('table', {
         throw new Error(`Table ${tableId} not found`);
       }
 
-      // Load puzzles.json if we haven't already
-      const response = await fetch('/queens/puzzles.json');
-      if (!response.ok) {
-        throw new Error(`Failed to load puzzles.json: ${response.status}`);
-      }
-      const puzzlesData: Record<string, any[]> = await response.json();
+      const puzzlesData = await loadQueensPuzzleCatalogForSize(table.boardSize);
 
       // First, try to use puzzles from the curated list based on puzzleQueueIndex
       if (
@@ -164,9 +160,9 @@ export const useTableStore = defineStore('table', {
             const puzzle = puzzles.find(
               (p: any) => p.id === puzzleIdOrName || p.name === puzzleIdOrName
             );
-            if (puzzle && !history.usedIds.has(puzzle.id)) {
+            if (puzzle && !history.usedIds.has(String(puzzle.id))) {
               return {
-                id: puzzle.id,
+                id: String(puzzle.id),
                 name: puzzle.name,
                 layout: puzzle.layout,
                 queens: puzzle.queens,
@@ -183,14 +179,14 @@ export const useTableStore = defineStore('table', {
 
       for (const puzzle of sizePuzzles) {
         // Skip if already used
-        if (history.usedIds.has(puzzle.id)) {
+        if (history.usedIds.has(String(puzzle.id))) {
           continue;
         }
 
         // Check puzzleFilter constraint
         if (table.puzzleFilter) {
           const regex = new RegExp(table.puzzleFilter);
-          const matchesId = regex.test(puzzle.id);
+          const matchesId = regex.test(String(puzzle.id));
           const matchesName = puzzle.name ? regex.test(puzzle.name) : false;
 
           if (!matchesId && !matchesName) {
@@ -199,7 +195,7 @@ export const useTableStore = defineStore('table', {
         }
 
         filteredPool.push({
-          id: puzzle.id,
+          id: String(puzzle.id),
           name: puzzle.name,
           layout: puzzle.layout,
           queens: puzzle.queens,

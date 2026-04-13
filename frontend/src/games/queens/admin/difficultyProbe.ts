@@ -1,8 +1,14 @@
 import type { QueensAdminBoardState } from './types';
 import type { GridSquare, MarkType } from '../types/types';
 
-export type QueensDifficultyTier = 'Extra Easy' | 'Easy' | 'Medium' | 'Hard' | 'Not Solved';
-export type QueensDifficultyPhase = 'extra-easy' | 'easy' | 'medium' | 'hard';
+export type QueensDifficultyTier =
+  | 'Tutorial'
+  | 'Extra Easy'
+  | 'Easy'
+  | 'Medium'
+  | 'Hard'
+  | 'Not Solved';
+export type QueensDifficultyPhase = 'tutorial' | 'extra-easy' | 'easy' | 'medium' | 'hard';
 
 export interface QueensDifficultyTraceEntry {
   phase: QueensDifficultyPhase;
@@ -445,7 +451,7 @@ export function analyzeQueensDifficulty(board: QueensAdminBoardState): QueensDif
     return {
       solved: false,
       tier: 'Not Solved',
-      hardestStepReached: 'extra-easy',
+      hardestStepReached: 'tutorial',
       totalFlagsPlaced: 0,
       totalQueensPlaced: 0,
       loops: 0,
@@ -453,7 +459,7 @@ export function analyzeQueensDifficulty(board: QueensAdminBoardState): QueensDif
       unresolvedSquares: board.size * board.size,
       trace: [
         {
-          phase: 'extra-easy',
+          phase: 'tutorial',
           label: 'Probe blocked',
           message: readiness.error ?? 'Puzzle is not ready for difficulty probing.',
           flagsPlaced: 0,
@@ -470,7 +476,7 @@ export function analyzeQueensDifficulty(board: QueensAdminBoardState): QueensDif
   let totalFlagsPlaced = 0;
   let totalQueensPlaced = 0;
   let loops = 0;
-  let hardestStepReached: QueensDifficultyPhase = 'extra-easy';
+  let hardestStepReached: QueensDifficultyPhase = 'tutorial';
 
   let shouldContinue = true;
   while (shouldContinue) {

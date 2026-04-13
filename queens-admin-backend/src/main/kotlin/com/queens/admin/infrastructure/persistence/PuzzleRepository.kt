@@ -20,6 +20,12 @@ import org.springframework.stereotype.Repository
 
 @Repository
 class PuzzleRepository {
+    data class PuzzleExportFingerprint(
+        val count: Long,
+        val latestCreatedAt: Instant?,
+        val latestDifficultyAssessedAt: Instant?,
+    )
+
     data class PuzzleGenerationBucketCount(
         val size: Int,
         val orthogonalMinDistance: Int,
@@ -243,6 +249,32 @@ class PuzzleRepository {
             }
         }
     }
+
+    fun exportFingerprint(): PuzzleExportFingerprint =
+        transaction {
+            val count = PuzzlesTable.selectAll().count()
+            val latestCreatedAt =
+                PuzzlesTable
+                    .select(PuzzlesTable.createdAt)
+                    .orderBy(PuzzlesTable.createdAt to SortOrder.DESC)
+                    .limit(1)
+                    .firstOrNull()
+                    ?.get(PuzzlesTable.createdAt)
+            val latestDifficultyAssessedAt =
+                PuzzlesTable
+                    .select(PuzzlesTable.difficultyAssessedAt)
+                    .where { PuzzlesTable.difficultyAssessedAt.isNotNull() }
+                    .orderBy(PuzzlesTable.difficultyAssessedAt to SortOrder.DESC)
+                    .limit(1)
+                    .firstOrNull()
+                    ?.get(PuzzlesTable.difficultyAssessedAt)
+
+            PuzzleExportFingerprint(
+                count = count,
+                latestCreatedAt = latestCreatedAt,
+                latestDifficultyAssessedAt = latestDifficultyAssessedAt,
+            )
+        }
 
     private fun ResultRow.toPersistedPuzzle(): PersistedPuzzle =
         PersistedPuzzle(

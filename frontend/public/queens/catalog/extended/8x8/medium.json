@@ -1,0 +1,1191 @@
+{
+  "8x8" : [ {
+    "id" : "c5f47163-1c5a-4916-a8d9-a000753ba4bf",
+    "layout" : "000111223111142531677445336674558867779988AA7999888ABB99CCCABB99",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "5350934d-6a44-4464-9961-84a152d01e72",
+    "layout" : "0001223300012232001112224444125544441665478666957788AA957778AA95",
+    "queens" : "....Q...Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "0cca4eef-ac6a-4774-b66d-93c3f0baee37",
+    "layout" : "0111111200113212001332224443355544666755444897559988975599999AAA",
+    "queens" : "...Q.....Q.....Q....Q...Q.....Q...Q..........Q.....Q.....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "2298f9d0-4d83-4a1a-aeb1-368104dd2c7d",
+    "layout" : "001122220011122203442222033445567333885677988856799988AA779888AA",
+    "queens" : "..Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "28aed9f7-f24f-462f-9d59-50bc91056ef8",
+    "layout" : "0000112200001132444443325555633355566788955677789555AA77995AAAA7",
+    "queens" : "Q.....Q.....Q.....Q..........Q...Q.....Q...Q....Q.....Q.....Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "04e0e265-b745-488f-b6c4-7ebbd2cf16ec",
+    "layout" : "00001112000012223333422255534677588346795588666955AAA6995AAAA999",
+    "queens" : ".....Q...Q.....Q...Q....Q.....Q.....Q.....Q..........Q...Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "29e4749e-6fe2-4a34-8a20-aceb8ea556a8",
+    "layout" : "00001111001111220344112203445552036652223367899A3367889A3777779A",
+    "queens" : "....Q....Q.....Q...Q.........Q....Q.....Q.....Q.....Q....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "e97847a3-5183-4f78-89a2-8ee6f1a6e7d8",
+    "layout" : "00122222031122240331154403111544666555546766899477888994777AAA99",
+    "queens" : "Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "6f1a8114-d09a-4ce1-bada-50232e99f78f",
+    "layout" : "0000122200011344004143345044444454444666557888995777799955AAA999",
+    "queens" : ".Q.....Q...Q.........Q....Q.....Q.....Q.....Q....Q.....Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "e8b893f1-37e4-42ea-b782-ef72fa9d3f00",
+    "layout" : "0000001100002211000332415563334457663899776688997777799977777AAA",
+    "queens" : ".Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q.....Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "a5927ad8-5a19-4948-a6a5-d58a934c6aa8",
+    "layout" : "00111222000113230011333344443566475555567775555897955A8899955AA8",
+    "queens" : ".....Q...Q.....Q...Q....Q.....Q.....Q.....Q..........Q...Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "819c31ef-417a-42ba-836c-690ed44a78a9",
+    "layout" : "011223330122233301244353011645537766655377688855777999AA777777AA",
+    "queens" : "...Q.....Q.....Q....Q...Q.....Q...Q..........Q.....Q.....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "177c9ab5-313f-40f1-8946-71e736352a79",
+    "layout" : "001111110221311104213331445536317475666677788866777999997AAA9999",
+    "queens" : "Q.....Q...Q..........Q.....Q.....Q.....Q....Q...Q.....Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "5e78d097-11b4-46ae-b1ad-ef8c7d8d5ae1",
+    "layout" : "00111222000122230000423355504222655442726554887766588999AAA88999",
+    "queens" : "...Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "b4455fb8-d23d-48fa-98f5-9e3995e7e88b",
+    "layout" : "00111122033312224433122244331225443666554477899544798899AAA99999",
+    "queens" : "....Q...Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "d2ccaa1a-cc55-4d98-a6e6-05986bafef26",
+    "layout" : "000111110001111200111322004453326644537266895777688999AA88889AAA",
+    "queens" : "...Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "2a66659c-0aaf-4f2a-9f98-d60633360904",
+    "layout" : "00011233001112330114223355442266554444665778866657788999777AAA99",
+    "queens" : ".Q.....Q...Q.........Q....Q.....Q.....Q.....Q....Q.....Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "119067f7-9cd4-40af-9e07-29a4426aece0",
+    "layout" : "00001223400112334411122544617755666777886667778869977788999AAA88",
+    "queens" : ".Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q.....Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "ac3aba49-2455-4ca1-b3df-c2f91086e7cb",
+    "layout" : "000122230401112344522223455226772222267788999677888AAA7788AAA777",
+    "queens" : ".Q.....Q....Q...Q.....Q...Q..........Q.....Q.....Q.....Q....Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "f4c7186f-4100-4adf-9972-15a104666a51",
+    "layout" : "000001120033312204331122445333664555556785859577888899778888AAA7",
+    "queens" : ".Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q.....Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "cf82c360-91f5-457b-9c1a-8bc646941ef9",
+    "layout" : "01111222001342220333442203335466333555563335778699AAA788999A8888",
+    "queens" : "..Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "d1cea0be-8807-41dd-b39a-aed6812615d3",
+    "layout" : "000111110011122100344225033346653337465577778899AA778899AA778999",
+    "queens" : "....Q...Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "b863463b-0b5e-4947-9576-9d01ca2156a3",
+    "layout" : "000122220011212233111144533316645555666677888696777A669677AA6696",
+    "queens" : "Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "d5cf2e0c-f664-43e7-aaab-d6239a8d6977",
+    "layout" : "0001111120000033224455632244456377448669A7748889AAA88B89CCC88BBB",
+    "queens" : "....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "692be330-7cb1-45c2-a93c-e79027e48ab6",
+    "layout" : "0000122230111144311154443165577836665778366677883997778899AAA888",
+    "queens" : ".Q.....Q...Q....Q.....Q.....Q.....Q..........Q...Q.....Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "2ef051f8-a22f-4d19-ba92-5d51c2c8e810",
+    "layout" : "00012222000111113441151633411566337785993AA789993AA7899B3CCC8BBB",
+    "queens" : ".Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "d54beb20-21ed-4a6d-ae0a-444a40c63781",
+    "layout" : "0112233301222433005444460555776685557796885A7B99C8BAABBBCCBBBBBB",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "80723c55-09ac-4375-97eb-8c2619e09efa",
+    "layout" : "00122233101222231111244356612244556667489999977899999AA899AAAA88",
+    "queens" : ".Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "a97a7a9d-ff6d-4ac2-9942-adf8e3786cc9",
+    "layout" : "00111222003222220332224233335242665557448665774489AAA44989999999",
+    "queens" : "...Q....Q.....Q...Q.........Q....Q.....Q.....Q.....Q....Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "873ab94b-b96a-4495-9642-576cba57ea44",
+    "layout" : "000112220001112233341522364445773644857966AA8879BBAA8CC9BBACCCCC",
+    "queens" : "....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "6fb95b8f-af62-45ee-86e6-678b7be4f058",
+    "layout" : "000111110002113300024536077245667788454698884444988444449944AAA4",
+    "queens" : "....Q...Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "c1e9c6ef-01d9-43be-a658-2ffa3043f36c",
+    "layout" : "000011223301112433051144355516647511166678888669778AA669788AAAA9",
+    "queens" : ".Q.....Q....Q...Q.....Q...Q..........Q.....Q.....Q.....Q....Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "b7e1cde0-e2e2-4c5a-bfb8-b8c944d21afe",
+    "layout" : "011222330122433501624445006227556668877799998A77B99C8A77BBCCAA77",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "22abc635-6296-474c-b591-9610d112e940",
+    "layout" : "001111110001223340052663444566675555586755955887559AA777599A7777",
+    "queens" : "...Q.....Q.....Q....Q...Q.....Q...Q..........Q.....Q.....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "3b269d91-1159-4b1f-9f86-28e6d9e534e5",
+    "layout" : "00011112000111223334422233444526334755667777888877778999AAA88999",
+    "queens" : "....Q...Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "5d85a842-9bbb-4cc9-9358-b2de50461d67",
+    "layout" : "000122220311122233114255661744556667788899977ABB9C977AAB9CCCBBBB",
+    "queens" : "Q....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "1a8a7275-70e4-4f87-869b-5399f9dbd3d2",
+    "layout" : "000111112200311122233111444445554444456674888566777985A6777995AA",
+    "queens" : "Q.....Q.....Q.....Q..........Q...Q.....Q...Q....Q.....Q.....Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "6e9d1dae-c605-4063-a8e9-50e678b1de33",
+    "layout" : "00112222300112223341555533444567899AAA67899BCC67899BBCCC889CCCCC",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "8adca5c2-3441-4689-8a2a-a41991b957e6",
+    "layout" : "001112220333122204433322554222265544266655576688995766A8999766AA",
+    "queens" : "...Q....Q.....Q.....Q.....Q..........Q...Q.....Q...Q....Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "3ef62af0-1e28-4922-85a2-1c092fc22835",
+    "layout" : "0011112200111132111333321445333677458866774598997AAA99997AAA9999",
+    "queens" : "Q.....Q...Q.........Q....Q.....Q.....Q.....Q....Q.....Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "2394c82f-64b6-472d-a681-c4186d8bd50e",
+    "layout" : "001122220311442503314445333364453377688833976888999A68889AAA6888",
+    "queens" : "Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "3edb5092-52f4-48e1-b03e-da6f6d0a4455",
+    "layout" : "001111120034122203344522333365678899656789996667899A6666889AA666",
+    "queens" : "...Q....Q.....Q.....Q.....Q..........Q...Q.....Q...Q....Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "0e5548e1-a9f8-4a0e-af2c-2827d04de011",
+    "layout" : "0000122230011444355554443657889A3677889A6667BB9A66BBBBBA6CCCBBBA",
+    "queens" : ".Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "913d1fc2-54e5-4d87-9a83-b285cdcdd00c",
+    "layout" : "011111110021334402225334662555746668577496688AAA99BB8AAC9BBB88CC",
+    "queens" : "...Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "10119a7e-cbd6-4d48-8a3a-8e3a6d451c94",
+    "layout" : "01112233011122330045677304456877045568889AA668889AAB6CC899ABBC88",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "94f30b88-60a5-458d-b7b7-cef7975a416b",
+    "layout" : "01112233011224430222244305522666557788895577AA99B77CCA99BBCCCC99",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "2e9cd93a-fdf6-4326-9993-682424b72d86",
+    "layout" : "01111222000112230004433355044333556643336666773869AA777899A88888",
+    "queens" : "..Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "e01bed6e-0cb4-4ca8-838e-8d63d20226b0",
+    "layout" : "000111112203344422333454666377546666775899AA7B8899ABBB889CCCBBBB",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "8ab7a9e7-9a12-4ba3-a4e5-6d6e133b0485",
+    "layout" : "011123440511233405122234556262775566677899AAAB88999CBB8899CCB888",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "7d9480ec-e7f9-4446-8051-e549ad6d30ca",
+    "layout" : "00012222330144223311445563174445637789AA667B899ACCBB8988CCCB8888",
+    "queens" : "Q....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "6c82a4ca-3851-4e61-9c1f-dba827476cf3",
+    "layout" : "00011122003441420533444255554466778884667798AA6B77999ABB9999CCCB",
+    "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "5775ad38-8512-4a74-a621-d455aab672e2",
+    "layout" : "00111222001333420033344250066644557688849576A88B977AABBB997ACCCB",
+    "queens" : "..Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "a3cfbbc1-b74d-494f-840d-f547e393279a",
+    "layout" : "0001233304112255441226554411665577889655A7789BBCAAA99BBCAAAA999C",
+    "queens" : ".Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "b25ddf40-4907-42f8-aec1-ec77ca50e62e",
+    "layout" : "0011222230112445333144553334444677889666778999A67B8CC9AA7BBCAAAA",
+    "queens" : "Q....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "b306571d-1db1-4e71-8a55-6f96232efbd9",
+    "layout" : "0001122233111222334115564444455644447786994A7788994AA88899AAAAA8",
+    "queens" : "Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "7ce4b471-35f0-4544-a8fd-0140f6894187",
+    "layout" : "0000112230041552330415623744456837944468A799BCC8A999BC88A99BBCC8",
+    "queens" : "....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "208a7e3b-165a-40da-a7df-ad31110683ce",
+    "layout" : "00011112000311124003552244633572446777784467778846679988AAAA9988",
+    "queens" : "....Q....Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "1e9d849d-aaf1-4cdf-a34a-03e3e81df1c2",
+    "layout" : "000011110021133340256663402577834225788842977AAA42997AAA42999AAA",
+    "queens" : "....Q....Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "29880364-6c52-4908-805b-d97efc16d2ec",
+    "layout" : "01111233000122234445526644457668499577784A997778AA9BCC88AABBCC88",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "0173cb5b-e251-4cf7-a381-476f3acaa3cb",
+    "layout" : "0000122211111122111334421113334566663555766688957666889977AAA888",
+    "queens" : "Q.....Q...Q..........Q.....Q.....Q.....Q....Q...Q.....Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "ca407265-f4fe-427d-a8e3-366cfb015ace",
+    "layout" : "0112223301112234001123345516666455577884995A7B8C99AABBCC99AAABBC",
+    "queens" : "....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "7ec3ffba-6823-430b-899c-69a030d9f1b8",
+    "layout" : "0001233340512233445122264758826677778999A77B8999A77B99C9AA7BBCC9",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "7f3bba36-f91c-4487-bb12-9b3e0740c908",
+    "layout" : "000122230001222301114223011544667755888697758866999AA86699AAAA66",
+    "queens" : ".Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q.....Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "2144f2e7-388a-4a50-81ba-19f0d1f47c93",
+    "layout" : "01111222011133340133355466773584666775886997778899AAA7889AAAA778",
+    "queens" : "Q.....Q...Q.........Q....Q.....Q.....Q.....Q....Q.....Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "ccc39d48-cad0-4412-9543-0f936df82d99",
+    "layout" : "0001222200312224033122245361177456687799568888895888899955AAA999",
+    "queens" : "Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "62ec74db-82ca-4b83-964f-1edcad5fe20e",
+    "layout" : "0011112200112222011133220044332250466772588867775899777A889AAAAA",
+    "queens" : "...Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "c13da52c-a53f-4375-95ea-dbaabcc5fedf",
+    "layout" : "000111220011133200114322500446225074466655744488977AA4489977A448",
+    "queens" : "....Q....Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "4a51a463-d875-43c3-8996-545cb4634dad",
+    "layout" : "0111233401552234005553346665778869655788696A5588999A5888999A5888",
+    "queens" : ".Q.....Q....Q...Q.....Q...Q..........Q.....Q.....Q.....Q....Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "99baa167-eb0c-42a8-becb-6ca6db63bd4b",
+    "layout" : "0001222203012455331114556777445566744889667A48B9CCAAABB9CCAABBBB",
+    "queens" : "Q....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "bebdbc7e-d348-446d-9a03-5971bd8d981e",
+    "layout" : "00122333011123330114253366644533677445386799998867669A8A66699AAA",
+    "queens" : "....Q...Q.....Q...Q..........Q.....Q.....Q.....Q....Q...Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "1be2c809-0a9c-42da-8bfe-6cb0048d22e9",
+    "layout" : "00001222011111231145552344444433644477736688897766AA9999AAA99999",
+    "queens" : "Q.....Q...Q.........Q....Q.....Q.....Q.....Q....Q.....Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "184f0753-4614-4d7d-805e-8b2f6b861b15",
+    "layout" : "0001222200011122003311224431155544361577844699978886AA99888AA999",
+    "queens" : "Q.....Q.....Q.....Q..........Q...Q.....Q...Q....Q.....Q.....Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "2d8907c8-8a2c-49d8-b883-a39e63ebea44",
+    "layout" : "000111220003111204433322554677885546978856669888566996AA6666666A",
+    "queens" : "....Q....Q.....Q...Q.........Q....Q.....Q.....Q.....Q....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "0c772638-58e4-4ac7-9f90-eb4b7b5eed70",
+    "layout" : "001222330011133344111115644411156477788566779888677998A8666888AA",
+    "queens" : "....Q...Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "0df03693-509f-48f4-9175-2369e8278aab",
+    "layout" : "000111110022221133344455336745589967A8889967AAABCC77AABBCC7AABBB",
+    "queens" : "Q....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "9c4a0463-3cd6-41b6-9ba0-58d704b2199d",
+    "layout" : "001222220314225533144455633778886377799966A779BB6AAAC9BBAAAACCCC",
+    "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "1fc9626e-2f64-4542-acc3-57892014b382",
+    "layout" : "0122233301222333011455530444657788466677988AABBB99AAAACC99AACCCC",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "d5a262b4-aad5-4267-a284-170e569cf71a",
+    "layout" : "0001123344012223450111164577186655778899A777B999AA7BBC99AA7BCC99",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "e1336a9b-50f6-44f2-91b7-017ffbd5be4f",
+    "layout" : "01112222013455520334465603446666334777889AAABB8899ABBB8899CCCBBB",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "b62fcdf1-dd2d-4f99-bca8-7027b7b2d464",
+    "layout" : "000112220341115533441655374886693788899977899999777AAAB97CCCABBB",
+    "queens" : ".Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "bd40754d-96b9-4b39-b371-de1fb5d8b788",
+    "layout" : "001122220031444255311422553364775533668799AA6887B9BA6CC7BBBACCC7",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "d5485e2c-a1c6-4b9f-983d-43ca0b6684e8",
+    "layout" : "00011222333311224333352243335526444556667748886674489AA674499AA6",
+    "queens" : "Q.....Q.....Q.....Q..........Q...Q.....Q...Q....Q.....Q.....Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "7858374a-7260-491a-977c-74e472e7882c",
+    "layout" : "000011112203334122224444225556778855667789AAB67789A9BCCC8999BCCC",
+    "queens" : "..Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "15ca7e89-0372-41bf-a10f-ee1e7c889bad",
+    "layout" : "0011222300112233444553336445553366788599677A88896B7A888CBBAA88CC",
+    "queens" : "Q....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "4f09b2f4-c9d3-4926-a9b2-5995f13aed90",
+    "layout" : "00111233001442230015442266555772668777796A888999AAAABB9CAAAABCCC",
+    "queens" : "..Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "6b2201aa-c00e-4ecd-b01c-aa08906ecd68",
+    "layout" : "011122230111423305144463557776689777AA889997BAA899CCBB8899CBB888",
+    "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "a50351ed-2e89-49a9-8f1d-800e764ad621",
+    "layout" : "00112222001332220411335204466355006666667086996670869A6670889AAA",
+    "queens" : "..Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "c18076d8-264a-4ed1-96ea-e659c223e770",
+    "layout" : "00112233001223330022223344222536447225564472888697788A8A99998AAA",
+    "queens" : "..Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "d618ddd3-f964-4c92-8f20-02c6aac9c17a",
+    "layout" : "0111223301142233004452330645557366888577966887779A88BBC79AA8BBCC",
+    "queens" : "...Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "7315c064-0da4-40d9-8d5e-8d143dde0970",
+    "layout" : "000001110022013304225553442256634447768899A788889AA7B8CCAAABB88C",
+    "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "37300427-eecb-45b8-b792-1eea592304de",
+    "layout" : "000112223011142533661425366774253687999938877A9988BAAAC988BBBCCC",
+    "queens" : ".Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "604be6c8-c085-41a3-929d-3f965bca2d35",
+    "layout" : "001112220111322241333222445552224446662744488977A8889999AA899999",
+    "queens" : "...Q....Q.....Q.....Q.....Q..........Q...Q.....Q...Q....Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "c3053177-5793-453d-9489-eaf525defcf5",
+    "layout" : "0001222300111233011144556664475786999777899AB77788AAB7CC8AAABBCC",
+    "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "133d40b5-f504-425b-bb05-00050ddfd418",
+    "layout" : "0011222300142233054443335554436657899A6677899AAB77888CBB7888CCCC",
+    "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "a0adb7d2-4e76-4947-b2bb-7cce176969f4",
+    "layout" : "000111123041111234445112345556773338867798886666999886A6999AAAA6",
+    "queens" : ".Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q.....Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "c1c90e8d-30c5-40a5-b1b1-4dc35b0b1e12",
+    "layout" : "0112333401122344011255550122567508829677A8BB96CCABB996CCA6666666",
+    "queens" : "....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "927a645d-7d65-4d4a-aee1-8c64bf25bda6",
+    "layout" : "0001111200003122044331120441111254444662557748669597788A999998AA",
+    "queens" : ".....Q...Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "28147c49-2c96-4713-800e-a244b44740f6",
+    "layout" : "00011222330014443551144433511674885516778888669988886AA9888AAA99",
+    "queens" : ".Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q.....Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "775fc8b8-5129-48ec-9fe0-981ee2e8c49e",
+    "layout" : "0011122230011445333644557366445577888999A77BB999AA7BBC99ACCCCCC9",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "d51842dd-41d9-466d-8f44-0007079bd11f",
+    "layout" : "001112223001455531114555331145563311446637788669777866697778AAA9",
+    "queens" : ".Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q.....Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "38f94db9-e592-4378-a633-f503433d7b3c",
+    "layout" : "0001112340411223444115336411153564781555677899AA7778899A777799AA",
+    "queens" : ".Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q.....Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "ba1c4619-43f3-4cbd-b849-ed49bea55896",
+    "layout" : "001111120000332200400325604783356447885566977555A6997577AAA97777",
+    "queens" : "...Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "367f3ef5-1ffa-4781-8984-59ab6f72cff8",
+    "layout" : "011222330111123201111222004556220444567784899667888A996788AA9667",
+    "queens" : "Q.....Q...Q..........Q.....Q.....Q.....Q....Q...Q.....Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "8de6c685-f9ab-4621-a02e-74637846717d",
+    "layout" : "0112233301223343000554440555546677588886777988AA7BB98CACBBB98CCC",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "b9417366-047f-41ab-b5a3-1e1d38d12059",
+    "layout" : "00011222000122334444433344445536777756667888966ABBC9996ABBCC9AAA",
+    "queens" : "...Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "226eb34e-8223-43b7-8cff-78f8587ea873",
+    "layout" : "0001111122003341220533442255554672866666778696ABCC8696ABCC6696AB",
+    "queens" : "..Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "36f50fd1-0b74-4616-a997-9c1ccd4b5b56",
+    "layout" : "00001111022003410020534400555344665554447666888476999AA4799999AA",
+    "queens" : "Q.....Q...Q..........Q.....Q.....Q.....Q....Q...Q.....Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "f49bb3a7-5709-4597-932c-b3a526784e90",
+    "layout" : "000111220331112203341111555441115555466157888966777779997777AAA9",
+    "queens" : ".Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q.....Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "a972d6be-f574-47bf-8390-8124727e2fcb",
+    "layout" : "01111222011112230004222355542633444446337778666697988A6699998AA6",
+    "queens" : "....Q...Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "3f62058d-913b-4ef8-b8d3-fd1e7eb90fbb",
+    "layout" : "00011112003111223333144453336664557338445577788955A9999955AA9999",
+    "queens" : ".Q.....Q...Q....Q.....Q.....Q.....Q..........Q...Q.....Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "a48c435f-5779-4c9e-99d4-3eed374bd2af",
+    "layout" : "000111123334412255344466554446665557786695A7786699ABB8CC99AAB8CC",
+    "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "ccac1ff9-5744-4704-aad0-47f870937052",
+    "layout" : "000111120301111233344122553444665784446957888999778899A97778AAA9",
+    "queens" : ".Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q.....Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "30404d63-40d8-4675-bef5-8116f94c8fa2",
+    "layout" : "0012223301121333011114330555444677588886975AA86697BBAC669BBBCCC6",
+    "queens" : "....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "c8b8b63d-e15b-4759-adb1-84f6e7607124",
+    "layout" : "00111122033144420033344566738555967888AA9777B8AA97CCBBAA99CCCBAA",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "282f3753-eea7-41ac-8f17-df7e6437e5fc",
+    "layout" : "000112220301112433335444336355778666599786555999866AA9BBCCCAABBB",
+    "queens" : "Q....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "cd496386-61e2-4b8b-965a-bbfb5c9b91e2",
+    "layout" : "0001112300412223554163335744633877776998777AAB98C7AABB99CCCABBBB",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "87f01647-d415-4a31-be77-f96fb52ea978",
+    "layout" : "000111220301144253364422555644775566487854444888444499AA44499AAA",
+    "queens" : ".Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "06d34340-5c7b-4d45-9e18-52029557f257",
+    "layout" : "00111222001111324441333245566333455677778888977A8888977A88899AAA",
+    "queens" : ".Q.....Q...Q....Q.....Q.....Q.....Q..........Q...Q.....Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "8392dd21-3044-4af1-98da-fae7f69b807a",
+    "layout" : "0000111200031422005344260053377688533376899333769993AAA699933366",
+    "queens" : ".....Q...Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "bc6dcdf0-5c1a-4b06-aa06-2f86a383cc71",
+    "layout" : "001222234011112344516133775566887995588A779588AA77B58CACBBB55CCC",
+    "queens" : "Q....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "9d45a83c-3b1a-4512-ae49-3d32fa468a40",
+    "layout" : "00111222031142220311442253366728555667885956678859566AA8995666AA",
+    "queens" : "..Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "c9cfa087-1b47-4030-af6f-b48580b8e059",
+    "layout" : "001122330041222304455223664455738649997786699A7B8C99AAAB8CCCAAAB",
+    "queens" : "...Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "dbfaea47-0b82-4110-9656-ab98790e75a8",
+    "layout" : "0111222201334442003335426663355566677855999778AABB9C788ABCCC888A",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "3eeb4c31-01fe-4bce-82c3-5adbdde828f0",
+    "layout" : "000122334401123344551236775586667558869977789999A7BB9C99AABCCC99",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "15e5eb75-552e-475c-809c-8ef5825d5d06",
+    "layout" : "000112223300112453366164553666647588896677ABB99977ABBB9C77AAACCC",
+    "queens" : ".Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "41dcbc85-34cc-4a0b-b76b-2a8f796d4d59",
+    "layout" : "0001112200113112001433220544666255466666577766668888699A888869AA",
+    "queens" : ".....Q...Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "f0cb4220-b588-4f9b-ae3e-ea36abc291fd",
+    "layout" : "001223330011233301114355664443758694A3758699A37B88C9AAABCCC9AABB",
+    "queens" : "...Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "3ef815fb-9c67-4402-b160-17f898986f11",
+    "layout" : "00123333041225360411556644155565771855557118855577798AA5779988A5",
+    "queens" : "Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "20adbf20-43e9-4e3e-a5ee-097e8aef6ab1",
+    "layout" : "0011111100012133400022234556667345666677856666998866AA9988666A99",
+    "queens" : ".....Q...Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "6dfaaa2e-30b0-4172-b6eb-9a51b4ab9466",
+    "layout" : "00011122300111123345167744455667844556668999555588555555888AAA55",
+    "queens" : ".Q.....Q....Q...Q.....Q...Q..........Q.....Q.....Q.....Q....Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "fc729e72-b911-484c-ae99-03c5fa779956",
+    "layout" : "0011111100111233400512364075622644756666847996AA888896AA8888866A",
+    "queens" : "....Q....Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "2575b8c8-be3a-4c64-baca-6e95afe6718f",
+    "layout" : "00000112333401123444111234455111666755819977778899A77BBC99AAABCC",
+    "queens" : "...Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "bd42c222-eb3e-4f30-8ddf-18323883d222",
+    "layout" : "00001112300411223304415673444856738888567799A666B799AC66BB99ACCC",
+    "queens" : "..Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "219468bf-b0a0-47b1-bff7-a054b52a6b21",
+    "layout" : "00011222030011425333444455667744556777889997A7B8CC77A7BBCC77ABBB",
+    "queens" : "..Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "9c3ead08-e58b-4e57-ad80-9463709d3c7f",
+    "layout" : "0011122200131222003333320333442205556466755566687595A668799AA888",
+    "queens" : "....Q....Q.....Q...Q.........Q....Q.....Q.....Q.....Q....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "30375ba2-0358-4cd2-b13f-6df2854713f2",
+    "layout" : "0111233301042253000462557044622870466888774699AA777699AA77799999",
+    "queens" : ".Q.....Q....Q...Q.....Q...Q..........Q.....Q.....Q.....Q....Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "67ad3d81-7f2f-4577-8c26-84d887091969",
+    "layout" : "00011122300041223000444235666772355555773388855533999555AAA55555",
+    "queens" : "....Q....Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "c57ad381-4993-4647-aeed-52aacd75857e",
+    "layout" : "00011122331141253644452536665555766688597AAA8B99777CCBB9777CBBB9",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "6977db9a-dc33-4c46-93ee-60cd4c25a3fb",
+    "layout" : "0011111102221344022113340526784455967888A99677BBAA99C77BAA99CC7B",
+    "queens" : "....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "44458a3c-331a-40b6-afbf-4e0686432c6e",
+    "layout" : "001222330112223405222334555244445556777455566678999688889AAA8888",
+    "queens" : "Q.....Q...Q.........Q....Q.....Q.....Q.....Q....Q.....Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "55588b41-b685-493d-bfba-b44f4ca293b8",
+    "layout" : "000111110001122103334255066647556664477468844444698AA4449988AA44",
+    "queens" : "....Q...Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "4e019763-67ad-472a-bdcc-8b09cd96f866",
+    "layout" : "000011223330112230000422330504226005044766650877966888AA9968AAAA",
+    "queens" : "....Q...Q.....Q...Q..........Q.....Q.....Q.....Q....Q...Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "1d1d7b2f-670a-4c77-b5b9-40972815871e",
+    "layout" : "0001222200311442003444456033444567744455667885597777895977AAA999",
+    "queens" : ".Q.....Q...Q.........Q....Q.....Q.....Q.....Q....Q.....Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "ae1a9e97-ce72-4f31-a73e-f868b197791c",
+    "layout" : "011112220013224211133244115566641755899977AA8899777AAA99777AAAAA",
+    "queens" : "Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "74047f32-8ff4-42f9-98c7-0e94c0c591a5",
+    "layout" : "01112333044122230455563374485666778896667788999A778BCCAA788BBCAA",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "f38d2d0d-e7d8-4ba9-b983-6ae404584a2f",
+    "layout" : "00001122000013321111143311155443666557486997778869997AA86999AA88",
+    "queens" : ".Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q.....Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "a0fa4844-ef8e-4ec1-86f2-5a70250e3cc4",
+    "layout" : "0011112200000122333004425536647285664472899AAA7B89999CCB8889CCCB",
+    "queens" : "....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "1562aa60-6c56-4591-b3a4-41a09a06e83b",
+    "layout" : "0011112203411552334455663374466633748699377886A9BBCCAAA9BBBCAA99",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "40ee7d2e-52c9-4389-b3d9-50a15bc5ca94",
+    "layout" : "0011122230011244355116443755566437888664978888AA977BBBAC999BBBCC",
+    "queens" : ".Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "70cdf327-923a-448a-b3c2-0313f969d663",
+    "layout" : "001111220011112233441125333416554444667788847779888AA99988AAAAAA",
+    "queens" : "Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "2d47320b-3659-4b5a-a91e-820545397302",
+    "layout" : "01112233001124435514444465554477668889776AA999776AAABCCC6AAABBBC",
+    "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "f6fdd9f0-e5f9-44fc-94b3-a3cb2e29165e",
+    "layout" : "0001112304011123544116235576663355776888597AA8889977A88B9CCCABBB",
+    "queens" : ".Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "d98af96b-7653-436d-b0fb-aab3f9c08af2",
+    "layout" : "00000112030441523334555255555666755586997558869977889999777AAA99",
+    "queens" : "Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "7406aa24-7c5a-458c-88ec-6453e2b50ffb",
+    "layout" : "00000011022330142222344425622744556827745568889A5555599A555999AA",
+    "queens" : ".Q.....Q....Q...Q.....Q...Q..........Q.....Q.....Q.....Q....Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "5773ed3a-2096-4464-aed0-1a2981d4a3b8",
+    "layout" : "00011222300122223344425233677552336678993377788933A79999AAA77999",
+    "queens" : "...Q.....Q.....Q....Q...Q.....Q...Q..........Q.....Q.....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "dbe8bb3b-738f-4215-a1c8-8901ee2531c8",
+    "layout" : "01112333000422230504672705546777088966AA88999BBA8899CBAA88CCCBBB",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "ff9f35f7-2994-430c-b68a-d363a81df32f",
+    "layout" : "00011222001113324411332244455526444776664444748899A4448899AA4444",
+    "queens" : "Q.....Q...Q..........Q.....Q.....Q.....Q....Q...Q.....Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "4bc69419-3027-46b8-933e-06ae65e0f527",
+    "layout" : "0001222211113222445133224455333644758996A7788996A77BB999ABBBCCC9",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "eb7cf28d-bead-4c51-8f23-546d0988506a",
+    "layout" : "00111222301111443311155433115544336678489396784899997888999AAA88",
+    "queens" : "Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "82ac3678-8825-4013-99ed-1c96736766ba",
+    "layout" : "011122230001442355055433555554446667777768677777886977AA899977AA",
+    "queens" : "Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "dae69461-84b5-4107-9d8a-8e17c25b3205",
+    "layout" : "001222330011422311114444111154446611557466188877668899996AAA9999",
+    "queens" : "...Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "4452257d-de6a-4431-a508-79ced3d6675d",
+    "layout" : "01112223012222330004555560444755688447796A8A4BB96AAACCB9AAACCBBB",
+    "queens" : "..Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "18012907-0b98-458f-a3dc-b5c32afa988f",
+    "layout" : "0011222301122433054444430564477355664877999668AA9BBC688ABBCCCCCC",
+    "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "bec5db04-505d-4ef0-9634-0489b7051730",
+    "layout" : "001112220003322400053244665537746859779A6889999ABB89C99ABBB9CC99",
+    "queens" : "..Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "87095ca2-bb6e-430c-a98a-7a5ea7898547",
+    "layout" : "00011223404511234445522366455777684557776849A7BB8899AABC999999CC",
+    "queens" : ".Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "49683d2c-f0a4-4ff4-9bab-247de531044f",
+    "layout" : "0001122233441252334411523366715533677885399A7788B9BAA78CBBBBCCCC",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "06b8e376-919c-4bf0-b4e0-187ddef37f2c",
+    "layout" : "000122220031122233311444353664443537688835977AAAB999CCCABB99CAAA",
+    "queens" : "...Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "04855a00-c965-4f4d-8fa6-0f00346b9091",
+    "layout" : "00112223041152330415526644758866497778889997888A9BBB888A9BBCCCAA",
+    "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "32db6eb5-5bc7-4cc2-84e8-fb6cf07516da",
+    "layout" : "0001112231112224335116645555664455758889A7758999A77B8C99AABBCC99",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "da51a01c-5df2-4f11-91da-0a5879929bfa",
+    "layout" : "000001120003312203333112043555564447556648877669888889998888AAA9",
+    "queens" : ".Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q.....Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "f8efc0cc-79ee-44af-80b1-893a524b595c",
+    "layout" : "0001122230112244305226643356664477558894777589947A7B8C99AA7BBCC9",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "697b2f78-5159-4450-95b1-a42e07b1c64c",
+    "layout" : "000122220311244403155444335555556375899966778AA9B6B88ACCBBBCCCCC",
+    "queens" : "Q....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "40750d55-56b9-42ce-8b23-649a8ebe2ab0",
+    "layout" : "000012220033124533311445666144556768444977688999AABBB99CAAAA99CC",
+    "queens" : ".Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "b9784167-d6c7-477d-a10b-8a401083b1db",
+    "layout" : "00011223004212330442223305556773859966738599AA7B8559AAAB88CCCAAB",
+    "queens" : "...Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "c4c7d4f9-96fa-44ca-93cb-98d317a2a4d4",
+    "layout" : "001222330014425360114253666147558889975588A9775588A9BCCC88AABBCC",
+    "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "d3e7bc4b-1e05-48c5-968f-abb6a5271949",
+    "layout" : "0011123300141253064422530674225366748553997788AA9BBBCCCA999BBCAA",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "5325b6ca-d278-4863-833a-f400d36c589b",
+    "layout" : "00111222033312443333222433335544663557778699977A86B99CCA86BBCCAA",
+    "queens" : "...Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "87ea9ac9-c739-4cdb-8c55-ed67f35af8e4",
+    "layout" : "00012333011123440115224466657784699577889997777A99BCC7AA99BBCCCC",
+    "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "52bf1505-7a67-43b9-b498-4c903667f122",
+    "layout" : "0011112230001124335566643557768435977788AA978888AA9BBB8CAA999CCC",
+    "queens" : ".Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "936c2728-4856-4fdc-be6b-67f12466cd94",
+    "layout" : "000122230111443304444444054446778559966788A9966688A9BCCC88AABBBC",
+    "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "4dffd4ae-edfd-44ea-969b-edccd7e9ccdd",
+    "layout" : "01112233000442230554222205444677058666798886AA99BB8CAA9AB88CCAAA",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "54f404b5-d4e7-4f26-87c0-e635a1310ba3",
+    "layout" : "0012222301122233045662784456977855599888A5555B88A55C5BB8ACCCBBB8",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "84063db6-4bdd-42a4-a6d5-42276318b8ef",
+    "layout" : "0011112300144423555662235577622258777222988877AA988B7CCA998BBCAA",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "d9cf8f13-aeba-4f08-9c76-0c542947726a",
+    "layout" : "000122334551223244511222645517776668879966668999AABBCC99ABBBCCC9",
+    "queens" : ".Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q..",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "d482dc82-3598-4633-8f0d-b810a89ce621",
+    "layout" : "0111223304412223045122660455566700087777088877990AABBBC9AAAAACC9",
+    "queens" : "..Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "ca0553ea-f16a-4a01-9e1e-75b38eee19ee",
+    "layout" : "0111223300012443000522430655774466899744668999AAB88B99CABBBBCCCA",
+    "queens" : "..Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "2b998181-faa8-4ca2-a411-0e803d9f0ea6",
+    "layout" : "0111234400012344552223445552336655777668999A7888B99ACCC8BBAACCC8",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "9c9fe552-4381-4f61-8fd4-22d815f63d40",
+    "layout" : "0111233300222443055244445564477756648889A66BB999AACCBBC9AAACCCCC",
+    "queens" : "..Q....QQ....Q.....Q.....Q....Q.....Q.....Q....QQ....Q.....Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "b2caf0b9-3336-4c00-a242-238b43c866f3",
+    "layout" : "001222230111223301455566774545687744488899A4888B9AAACCCB9AAACCCB",
+    "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "1ae9a5ab-c8e3-41a3-8d85-0124c5acce06",
+    "layout" : "001123334011222341122225446277558466979988869999888AAAB98CCCAABB",
+    "queens" : ".Q....Q.....Q.....Q....QQ....Q.....Q.....Q....Q.....Q.....Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "7c3b2f38-34fd-477b-af8a-82855ba35e3f",
+    "layout" : "000011223004411233334512336665117388659977885559A778BBC9AAABBBCC",
+    "queens" : "..Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q....Q.",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "medium"
+  }, {
+    "id" : "5ff49bbf-d44c-4825-97d1-299ca4250096",
+    "layout" : "00112223000111134001111544411155666111556677555566775859AA777859",
+    "queens" : ".....Q...Q.....Q....Q.....Q.....Q.....Q....Q.........Q...Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "cb9c57bd-48a1-4a32-9bef-7ed75734a089",
+    "layout" : "0012233301122332011222220111442211155446775558467999A8669999A886",
+    "queens" : "....Q...Q.....Q...Q..........Q.....Q.....Q.....Q....Q...Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "51bc298e-5593-46d8-b648-56baaf7403fa",
+    "layout" : "01111121031411213344411133551166335517778999977789999977889999AA",
+    "queens" : "..Q.....Q.....Q.....Q....Q.....Q...Q.........Q....Q.....Q.....Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "c8cc9d92-85e7-4017-9635-7292f0b1c692",
+    "layout" : "00111102000000020000332204403333544678335546788899966AA89996AAAA",
+    "queens" : "...Q.....Q.....Q.....Q....Q.........Q...Q.....Q....Q.....Q.....Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "medium"
+  }, {
+    "id" : "1e2779ef-496a-4633-b83b-5a839067c4b4",
+    "layout" : "0011122203311124003331440003355400065564776666648766699486666444",
+    "queens" : "Q......Q....Q.....Q...........Q....Q.....Q...........Q..Q......Q",
+    "orthogonalMinDistance" : 7,
+    "difficulty" : "medium"
+  }, {
+    "id" : "45ceb33a-29d4-401a-b02f-cec94ec370cd",
+    "layout" : "0000112200111122111111331141155567445555677758596677788966667799",
+    "queens" : "Q......Q...Q..........Q...Q.........Q....Q...........Q..Q......Q",
+    "orthogonalMinDistance" : 7,
+    "difficulty" : "medium"
+  }, {
+    "id" : "e64dca0d-37a1-4119-aa04-6cd63f639104",
+    "layout" : "0000011200000122003311220031114255516142577166447788699977776999",
+    "queens" : "Q......Q.....Q.....Q..........Q..Q..........Q.....Q.....Q......Q",
+    "orthogonalMinDistance" : 7,
+    "difficulty" : "medium"
+  } ]
+}

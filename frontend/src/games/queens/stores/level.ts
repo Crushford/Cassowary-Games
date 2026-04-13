@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { loadQueensPuzzleCatalogForSize } from '../utils/puzzleCatalog';
 
 export interface LevelConfig {
   boardSize: string;
@@ -87,12 +88,7 @@ export const useLevelStore = defineStore('level', {
         throw new Error(`Level ${boardSize} not found`);
       }
 
-      // Load puzzles.json if we haven't already
-      const response = await fetch('/queens/puzzles.json');
-      if (!response.ok) {
-        throw new Error(`Failed to load puzzles.json: ${response.status}`);
-      }
-      const puzzlesData: Record<string, any[]> = await response.json();
+      const puzzlesData = await loadQueensPuzzleCatalogForSize(boardSize);
 
       // Build filtered pool
       const filteredPool: PuzzleRecord[] = [];
@@ -100,14 +96,14 @@ export const useLevelStore = defineStore('level', {
 
       for (const puzzle of sizePuzzles) {
         // Skip if already used
-        if (history.usedIds.has(puzzle.id)) {
+        if (history.usedIds.has(String(puzzle.id))) {
           continue;
         }
 
         // Check puzzleFilter constraint
         if (level.puzzleFilter) {
           const regex = new RegExp(level.puzzleFilter);
-          const matchesId = regex.test(puzzle.id);
+          const matchesId = regex.test(String(puzzle.id));
           const matchesName = puzzle.name ? regex.test(puzzle.name) : false;
 
           if (!matchesId && !matchesName) {
@@ -116,7 +112,7 @@ export const useLevelStore = defineStore('level', {
         }
 
         filteredPool.push({
-          id: puzzle.id,
+          id: String(puzzle.id),
           name: puzzle.name,
           layout: puzzle.layout,
           queens: puzzle.queens,
@@ -136,7 +132,7 @@ export const useLevelStore = defineStore('level', {
       const selectedPuzzle = filteredPool[randomIndex];
 
       // Add to used history
-      history.usedIds.add(selectedPuzzle.id);
+      history.usedIds.add(String(selectedPuzzle.id));
 
       return selectedPuzzle;
     },

@@ -16,6 +16,7 @@ describe('solverDifficulty', () => {
   });
 
   it('formats stored values for UI labels', () => {
+    expect(formatSolverDifficulty('tutorial')).toBe('Tutorial');
     expect(formatSolverDifficulty('extra-easy')).toBe('Extra Easy');
     expect(formatSolverDifficulty('easy')).toBe('Easy');
     expect(formatSolverDifficulty('medium')).toBe('Medium');
@@ -25,11 +26,14 @@ describe('solverDifficulty', () => {
   });
 
   it('orders difficulty thresholds correctly', () => {
+    expect(solverDifficultyRank('tutorial')).toBeLessThan(solverDifficultyRank('extra-easy'));
     expect(solverDifficultyRank('extra-easy')).toBeLessThan(solverDifficultyRank('easy'));
     expect(solverDifficultyRank('easy')).toBeLessThan(solverDifficultyRank('medium'));
     expect(solverDifficultyRank('medium')).toBeLessThan(solverDifficultyRank('hard'));
     expect(solverDifficultyRank('hard')).toBeLessThan(solverDifficultyRank('extra-hard'));
     expect(solverDifficultyRank('extra-hard')).toBeLessThan(solverDifficultyRank('unsolvable'));
+    expect(isDifficultyAtOrBelow('tutorial', 'extra-easy')).toBe(true);
+    expect(isDifficultyAtOrBelow('extra-easy', 'tutorial')).toBe(false);
     expect(isDifficultyAtOrBelow('extra-easy', 'easy')).toBe(true);
     expect(isDifficultyAtOrBelow('easy', 'extra-easy')).toBe(false);
     expect(isDifficultyAtOrBelow('easy', 'hard')).toBe(true);

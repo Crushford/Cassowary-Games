@@ -1,0 +1,2037 @@
+{
+  "6x6" : [ {
+    "id" : "b57e87a5-b913-4282-b269-549be6a55d22",
+    "layout" : "001122111134511334551164776664776444",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2b0c5455-5a98-4c91-b69d-9ab94d336448",
+    "layout" : "001122001322111333114355664477666677",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "8772f171-d424-4f56-9220-d6e62b1c13ea",
+    "layout" : "000011200331223334223344255366777766",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "19d96abb-1cf5-4373-8f5d-1b37dd77f250",
+    "layout" : "000111002111002231044335667755666655",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "4c92f9ee-1321-481b-ab18-92d61abdceb9",
+    "layout" : "001122001122111332144432444536774566",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "9dde247d-9433-423c-ad96-cf8d23121a42",
+    "layout" : "000001200331222333222445226645777755",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "7cb2a1d9-25b5-484c-b781-caaa6d1e10cd",
+    "layout" : "001222001122001332041222045526775526",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "44e0cde3-70f1-4bcd-b1da-93abf7e40ebc",
+    "layout" : "000111002111002233044235666555666577",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "1714e4d0-2a2e-4345-bf8a-4b6d88df1b51",
+    "layout" : "011111002211333111435676445676444666",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3debe4e6-fc36-4768-844e-c0816d6ff8b2",
+    "layout" : "000001002211333111331144566447555557",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c07621fb-d1be-4d54-8f95-bd555a696b04",
+    "layout" : "000011002211002231044531064577666677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "5c8d4051-10b2-46c2-9710-9ef6bc3ba3ce",
+    "layout" : "011122011111111331141335644775664455",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "e8674fc8-cb3d-42a4-af2d-ba2d6c889a19",
+    "layout" : "001112001122000033450033456667444467",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "8bc7b5c1-a956-4e4c-96e9-5f7d223a10a6",
+    "layout" : "000011020331020411445466445447444447",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "5be1b105-7a72-48f0-9292-64be143b1e1c",
+    "layout" : "011111002211333241555241556677555577",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "60df053f-96b2-4bf4-9949-8eeedc26f481",
+    "layout" : "001111002111032441032211536677555677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "da793dd3-01e6-402d-a339-c7bfa0843dc9",
+    "layout" : "001222011122031142031142555667555567",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "06fe5f4a-45ed-416b-9c6c-ce2ccafe033f",
+    "layout" : "001122001112000132443332445562777566",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "9f49674c-2a8c-412a-a57a-8b8057d9eb50",
+    "layout" : "000011002221333344333555663577663377",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "947b075c-f732-4fa4-ba38-b1e73fe6e741",
+    "layout" : "000011000221030024333444566777555777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "fc67b081-2186-419d-9806-6a876a73fcf2",
+    "layout" : "012233011233011243001145006445776555",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "a55705ce-2fcd-4cb6-ae32-1b6e677ca8af",
+    "layout" : "000122001132455132455677444677444477",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "176e7d23-5a99-4412-a10e-574d30f7b2ac",
+    "layout" : "001122011133041113445663745333777333",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "79d8f081-daba-4189-bf82-5528fb9e03cb",
+    "layout" : "000011002211333211333244556224556277",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "261ab352-5a92-44fc-8740-17938e93d89b",
+    "layout" : "001112301112331142531144555647555667",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2c911199-abc7-421b-870c-d7430bc3fab1",
+    "layout" : "001111023311022244225664775744777774",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "64ee47db-ccd6-495f-8718-9b548bc4a92c",
+    "layout" : "000111002111002331044555647755644555",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c1fc61aa-a036-47e1-8695-9f7c72669341",
+    "layout" : "000011200331222233245566445777444477",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b0c89103-74ec-4d52-9e2d-450482a8512b",
+    "layout" : "001222331122311144355554333667333667",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "88868d25-1a4c-46c3-b02e-ba115c7bd233",
+    "layout" : "000111002211033311034356774356777766",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "545eb81e-cc91-4c50-8441-57a0d2afe0ce",
+    "layout" : "000111022111032441032221556671556677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "bd7dc06c-353f-4446-ab28-8f3b3a323ff1",
+    "layout" : "000112111122311144333333355663555577",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "50e7da21-28b6-49ef-bd45-aa0993ed585b",
+    "layout" : "000122031122033142333342355446777466",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "7303f487-1ab3-4eca-b03f-1957408ebb90",
+    "layout" : "001112001112033144111145116555776555",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "ca03efd7-35bb-4c1c-85ae-ee01702e12d5",
+    "layout" : "000112030112333112333142335546775556",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "0225f807-323a-44fb-87a6-de7eec1eaaa6",
+    "layout" : "000011123311121111111141155446775666",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "57541d77-d838-4fbe-a5c2-13c8cecfef57",
+    "layout" : "001233021233222244222255225556777766",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "ebfee25e-9e46-4718-94e0-c59c4272df5a",
+    "layout" : "011111002111022334552224662774664444",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c6ae06e8-3808-47d5-9f29-c4cb26eacac3",
+    "layout" : "011123001223111123114455664677666677",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "0c286e2e-5c56-4bd8-bdf7-c2558e3d842d",
+    "layout" : "000011022221322444355644333677333377",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2fd23041-5a50-47f4-b8c2-544b5fdf3197",
+    "layout" : "000111023311022111422156447756444666",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "156f1421-741b-46e1-b180-c3c464bfce91",
+    "layout" : "001222001122031142334442333544665577",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "a57ef61c-2227-4c68-89c8-a2620d3f21ad",
+    "layout" : "001122011133441113444453446553776333",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "56af508b-a0ae-4744-b6b8-cad9eece183c",
+    "layout" : "000122000112333144355644556667555567",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "d309edf4-30b4-44a0-a8f6-4f473bcb94a7",
+    "layout" : "000111002111022131042536747556777666",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "a8505609-0c8f-4090-a10e-beb8a8daf369",
+    "layout" : "000001023311021111221144255666777666",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c349c296-e70e-4a92-8504-40c9a0491967",
+    "layout" : "001122003112033111033141056447556477",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "54008ef0-6955-45fa-913f-7a61cd41b65c",
+    "layout" : "001111022211222231242531646577666777",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "1e0b2fc3-ab17-4ab5-a3e0-4b72bbbe380c",
+    "layout" : "000011002311222311224455664777666777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "bdb00af5-2776-4331-a6e4-8afb4b62744b",
+    "layout" : "000112333122333122334155664477666477",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "44ade74a-9cf6-4e79-811b-cec70985cc1b",
+    "layout" : "001112001112003144333566666566776666",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "215861fd-5f23-4af2-9a66-3b0fafb6e552",
+    "layout" : "000011000222032245632545677555666655",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b7323d60-49e2-40d1-8dc8-a29720500d09",
+    "layout" : "000011020331220334200044566447555777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "adcf005d-459d-42e0-b6ec-57e680b3f55a",
+    "layout" : "011111002331222331224351664451664777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "daa57478-5c5c-4584-9f60-4c791f5d379b",
+    "layout" : "001111023311024451067454667444666444",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "7eb60407-95c6-423a-9c6f-8a54cea55aed",
+    "layout" : "001222011222313244333555635555665577",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "75288c48-89cb-4cf4-99ed-f8f594aa60cb",
+    "layout" : "000011002211333314556344556377555557",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "31adbf05-a8d6-474f-871a-cf506bfacce1",
+    "layout" : "000112033142151142151662111667111777",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2cf2c5c2-5106-4e21-ba99-77f9dcf27ac7",
+    "layout" : "000111002331002331444331444556775556",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c33e7fd4-3b0f-4573-b2e6-56f666c2b270",
+    "layout" : "000122001132004132444432444566774566",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "4519f818-2f4f-4677-9ee6-d11d32f3dfe7",
+    "layout" : "000011222333222243256643556677555677",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "d50d2ecb-7c4f-418d-9152-d20e62dcb79d",
+    "layout" : "000111002111002341033341053647553677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "459fe422-07a7-4dc9-8460-6b4b653e2baa",
+    "layout" : "001122111122313144333555335566775566",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "0e24fa01-0e1f-46f3-996b-dfc26c3612a3",
+    "layout" : "001112001112331415364455766444776444",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "21db65a5-a4f6-4b75-aa56-fba0086cea55",
+    "layout" : "001222011112011134551134551664777644",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "1100fdb8-c444-4855-9396-4c640086adcf",
+    "layout" : "011122000120330000333440556644556677",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "20beff94-b5b3-4d92-b8e3-7f4fc5ecdeb1",
+    "layout" : "001122111111331141331141335666555677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3e5279f1-1349-4456-b67f-3c6f18410085",
+    "layout" : "011222011222011233443335643755667755",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "bca919a2-376d-4d24-a9bb-7eedd2dfd2dd",
+    "layout" : "000111000211033245666545677555665555",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "cf40e12f-cf15-43ee-8daf-d952e205037e",
+    "layout" : "000112331112431112433355446677444667",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "8c683eed-8e40-4ac7-9a00-e39b50784835",
+    "layout" : "001112011322011322111342115546775666",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "8ca90e11-de48-41ab-8f3b-276c069895ba",
+    "layout" : "000001002211332221333244566447555577",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "db245a80-a6a9-498e-8635-bff495713edc",
+    "layout" : "011222011222013344055333556633776333",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b25f4f73-557d-49e2-9b2d-7b5fd0383ad2",
+    "layout" : "000112030122435556455566477555445555",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "a15dd07f-4177-485c-b758-6d0ac3823723",
+    "layout" : "011122033141111141155111166111661177",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "9c267934-c403-4469-8abe-44213f060bae",
+    "layout" : "011112011112333144333155333556773336",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "278c5573-9f5e-4c11-a280-75e0609a8cc3",
+    "layout" : "001111022211331111111144516664511177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "65f08c72-6f3c-464c-8092-efe4f5dc5345",
+    "layout" : "000111000221033224333554667744664444",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3cc02465-0c8e-47fd-9922-e49467baf3a9",
+    "layout" : "012223011223222244222222222522662577",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "ba8d1111-5eb8-4008-a7c9-097c010f953e",
+    "layout" : "011112011112111133141111441556771116",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "46c0c923-8df9-4496-90c6-d49372c29830",
+    "layout" : "001233111211144151111151617711611111",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "a887a279-328d-4a21-b0dd-eeb82c953252",
+    "layout" : "000123000123044222056277556222566622",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "004fb00e-0825-49b7-a568-0d61e0d67040",
+    "layout" : "000011023311022244222222225526777226",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "73a952a6-8a20-409c-a489-b21a94077d42",
+    "layout" : "001111123311121111111144516617511117",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "9a6ae4e5-6609-4516-81ec-020e2b7a03ee",
+    "layout" : "000122001134001534565544565447555547",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3176b426-173a-4ad7-a6d5-13845923ecbc",
+    "layout" : "011111022311024351044651446611466677",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c76c5813-6f53-4f47-8444-b5f3cf274e41",
+    "layout" : "011233011211441111411156117756111166",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "6da6f330-d71d-405b-9158-3b4b8b9641dd",
+    "layout" : "000011002111032141031141556671555677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "88dd54ed-fb21-4b3e-9df6-611bdbce5724",
+    "layout" : "000011022111000330040000540600500677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "8d940918-eafb-49af-bcd1-26e7c64f41c8",
+    "layout" : "001122113141113141111111511667511117",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "a86ace6e-487d-497b-9c69-9c1a37f73e53",
+    "layout" : "011111002111302144333555633755633755",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "e4dcb3f9-898e-452f-92eb-c20cc3602d44",
+    "layout" : "011111012211111131141531641571611177",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "47557065-d14f-42fd-9819-323edc663dae",
+    "layout" : "000112001122033344333345333665773335",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "d42557b1-521d-4390-ab9b-3d786d71f339",
+    "layout" : "000011002211333344333533363537663337",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "ee157ead-3128-4315-8ff1-65af587a0fcc",
+    "layout" : "001112111312111311111144115566775556",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "1e1405ab-1d74-48e9-ac0a-80a43481f207",
+    "layout" : "000122300144350064350064347744344444",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3d7bf575-55e9-4a8b-8a75-732e51ce89d0",
+    "layout" : "011122013111113441155111111661111177",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c20cef00-aaaf-4083-909c-963112413e9b",
+    "layout" : "000011002131002131441111511617511677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "ed0e6b54-0f87-4d8a-a03f-80726cac2473",
+    "layout" : "011223011223422255422255422667442667",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "910d3058-e0de-46dc-b5f1-a98a60e8204a",
+    "layout" : "001111121331121111111141516147516117",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "1d3b20e1-0548-471a-99ce-103d1f0c32b8",
+    "layout" : "001222331222333344553333333333663377",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "232b5943-8a45-40af-bd30-b6b174bd1657",
+    "layout" : "011112034412531111556771556111511111",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "1eb768d9-edab-4311-bb93-12bf33effaf7",
+    "layout" : "001112111112331111111441516111516177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "ad2c7070-783d-4edf-8f04-12efca60869e",
+    "layout" : "011111002131002131441111516617511117",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b5b0d367-ffa1-48e2-9426-06ba167893c7",
+    "layout" : "001112111222111133144153166557665557",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b13e08a5-fd32-432c-8fb6-14daeb5f1d67",
+    "layout" : "011112033142151141151111111661111177",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "6a607e92-a557-42f5-9fb5-43e1a367d77c",
+    "layout" : "000011002233343553343333336637333337",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "d8241d8b-06e5-4c1e-b62c-2be23ceb7f8c",
+    "layout" : "011111011221341111341151366157333357",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "27b54407-63ad-44cd-8677-1930b0dfed45",
+    "layout" : "011112011132111132445633755655755555",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "a4312b0b-2373-4683-95fd-1781161b9f9b",
+    "layout" : "001112111322111324111144115444665577",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "36b5a722-0ca4-47ef-8717-15e9ee191a50",
+    "layout" : "011111011221344333335363735363733333",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "f7c877a3-6ef4-43c5-965a-93318d6ea5a5",
+    "layout" : "000122001132041535045555665555655577",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "0224fe37-61e1-4099-b324-870370189c3a",
+    "layout" : "001111112111112331144511111516771116",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "aa2051db-de50-4296-b2ba-a60dd10f9f69",
+    "layout" : "011213011213111111114556714666711666",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "36de2bf8-02c6-427a-b1ab-9fa3ec1f7417",
+    "layout" : "001111022113043553043333637733633333",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "26623a2f-489c-4c65-b619-247a11bb19c0",
+    "layout" : "000122300133344333333353366353773333",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c5616a20-9519-4b31-b106-20d8f2fbb29d",
+    "layout" : "001111000221033111011144566111511177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "5fa20b9b-791e-4a8e-a868-084a899a8412",
+    "layout" : "011112011112331442111144566447544447",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c939de6b-d062-404b-a09c-954ce644dd56",
+    "layout" : "001112111322111344151144556447556447",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "d499ce63-de95-4a94-a857-26a0cdfc03a2",
+    "layout" : "011112011112111133141115644555644477",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "0cfe2479-c923-4e28-a901-b409ec65c6a3",
+    "layout" : "011211011211331111111141516647511117",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "dc4454d1-9b0d-4ac8-b457-a63e2a7f8f0a",
+    "layout" : "001122001222011132044135066555665577",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "6f688318-310b-4f67-b57e-2f83f9557059",
+    "layout" : "001111002211000033044555066755666755",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "bb0302a1-4e45-46e3-b5ea-145cd2d08ffc",
+    "layout" : "000011020311020311045677445666444466",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b734e72f-6c6b-497a-924e-e9e9fe458b51",
+    "layout" : "001112113312111111441111516617511117",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "32d550e7-b2bb-49ac-b204-c6fbdf81b946",
+    "layout" : "001111223311222441252221252661222277",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c21ebadc-28bd-430f-81ef-1c6024aceb0e",
+    "layout" : "001122111331111111111441566777577777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2caee3a3-d6aa-4164-8b48-3901b24df8d1",
+    "layout" : "000011023344024454006454706444700044",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "828adc86-5569-4a8c-8d00-04665d0ded4b",
+    "layout" : "000001002201344353336353336333333377",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c7bb6bd8-6833-4e5a-b5d2-4bfc4851d966",
+    "layout" : "011122031411131451111151116111116177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c6669689-aec8-41b4-a4b8-875f037eb21a",
+    "layout" : "011111022131111131144111556611555577",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "788c9d0b-5a09-4423-9c87-3b54211f0a3e",
+    "layout" : "001111223141253141251111226611222277",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2000a555-a5be-4fa2-8154-478f52c1b00a",
+    "layout" : "001122111111334411444455446777446777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "fe32610d-45ec-4f93-8732-09d2cb1ca91f",
+    "layout" : "012223012223412445444455644455644477",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "72ac1c56-5736-4254-af10-a81787bc6085",
+    "layout" : "001111121311121311111441155666776666",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "a255e48d-ecdb-4308-aee5-ac1897c570d4",
+    "layout" : "001123141223141111111151116151776111",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "6e0a292f-df23-49b2-aaa1-1805ad0dd5f0",
+    "layout" : "011233041211541161557161557111551111",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "e8c554b0-afe5-49c8-ae9b-f697de1cac3f",
+    "layout" : "001233111211144111115161115161111177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "6c9bb828-0c20-4e68-b3cc-b141569dea29",
+    "layout" : "000011000221344322333355677333633333",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "d0223f70-e291-43be-87ab-d4679a61bb4f",
+    "layout" : "000122030144033444444454444454664477",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3b9bfe1e-864f-433c-a2a3-8817751688ff",
+    "layout" : "000011002233443333333553637733633333",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3bb892e7-02b2-4d4d-8e4e-b6e4ad0abdac",
+    "layout" : "011223011123111222144522111522665577",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "94a4c14d-17ec-4878-b911-e0b42b2f8b52",
+    "layout" : "001112111112131144131114511664511177",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3d0584e3-e83d-4524-a22e-c9c5b74bb5f7",
+    "layout" : "001111223311221111111144516644511177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "df3d29c0-cd96-4a5b-a8d1-ddd325a09837",
+    "layout" : "001233001223042255242622222622772222",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "9a8d615a-dde6-46c3-8879-151b3f128929",
+    "layout" : "012223012223111441151111651711611711",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "5d07cada-e2a9-4271-8fc2-9a7ef79c9394",
+    "layout" : "001112333112341115341155366557333557",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "558c6a65-b1f4-4830-aad7-8612ecde74a0",
+    "layout" : "011213041213141111111155617111617111",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "83d838cd-22a6-49c9-af94-83861ed3f77c",
+    "layout" : "011213041213141111115161115161111177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "325127e5-676d-4b4d-9ee3-3a65542a8c8a",
+    "layout" : "000111002211003241033241533611533677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c56e0c95-3af5-4dfa-8476-72feec4214fe",
+    "layout" : "011122011112111132144332155672555677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "de810e0c-beb3-47d7-91d2-f6064c77c912",
+    "layout" : "000001203341252242252222222662772222",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "711917e8-57b6-4bec-8ca9-c2f86f6517e4",
+    "layout" : "011112013112113445166755111755111155",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "cd78d2de-c587-4676-b8f8-26efd8b30f1d",
+    "layout" : "011111012211034551634441667744664444",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b27a387f-cbe5-4006-8dde-fdc070e5a144",
+    "layout" : "001111203311245565247565227555225555",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3e86d45c-d863-404e-87bf-598540f96c21",
+    "layout" : "011223014223414253444454446444776444",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "7b3a6353-114e-4753-80d9-fa6a82e3faec",
+    "layout" : "001223011223212244222224526627522227",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "249d782c-6ca1-4c11-9b68-4ee247dfa914",
+    "layout" : "000011002213003333443333445536773336",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "8290c0cd-87c0-4645-8616-42d45a97dbd1",
+    "layout" : "011213011213441111111111566117511117",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "bab369dd-9f58-4ac5-92d6-1ca29b221484",
+    "layout" : "011122011334551134111164117764114444",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "7ea534d7-1137-4d41-be72-3faf625a55d1",
+    "layout" : "001122001331411111415667475777477777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "a5d2afff-131a-4a72-9504-e5f71a58029d",
+    "layout" : "011111022113333443553633333633773333",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "bfff9388-cdf4-42f8-a6b5-8b114250d082",
+    "layout" : "001112101322111322111144516117516117",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b3c1709d-349f-4bc0-b725-168893027478",
+    "layout" : "011112011112033111044551446111446677",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3fd57ffe-2134-41b4-a181-79917983970c",
+    "layout" : "001111112231141131141111111556771116",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "f243d2df-e321-43a4-bc36-f654b9918d35",
+    "layout" : "001022001032000032450633450633440077",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "87106f98-576c-491d-b054-c479254e5610",
+    "layout" : "011213011213111111111144516677511117",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "948adf1b-c242-4d8d-8399-99245b6cb623",
+    "layout" : "001122111334511444551466557444557444",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "ff0fcd91-cdd9-4c59-8e3c-ccfc10e9406b",
+    "layout" : "000112003312003313043333543637533637",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "a4af02fa-26de-4623-9b38-ba04b2d4c5fa",
+    "layout" : "000111022111031141035141555666555577",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2f9f4430-5d5a-42f1-bbb3-b2859f940fed",
+    "layout" : "011233011233001222042222444522666577",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "66615725-6884-454b-868d-9356aac4a5c5",
+    "layout" : "001122000112033342033342056677556677",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b05ec1d2-0906-42ca-96ff-e38a44e192ee",
+    "layout" : "000123222123222224525544555566775666",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "da4988c6-ea4e-426d-9c61-660e4f422522",
+    "layout" : "000122000122031112333442566777577777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "918177cd-95f1-46bf-95b6-35d5ee603095",
+    "layout" : "001122111122111333144333545637555637",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "0aca03ea-99ca-4580-8e81-f299622e79a1",
+    "layout" : "001112001112011333041333544667554477",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "1f978a39-99c8-4c44-bbfc-adcd8e114da7",
+    "layout" : "000012031112333112333344566447555577",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "6089abf1-89bf-44cd-bdc5-d8cff7466e28",
+    "layout" : "011122011122331144331144333556773556",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "5aeaefd3-7307-4baa-865b-4d5e478e5c4c",
+    "layout" : "000011002211033214555564557764555544",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "19925fb5-047a-44f5-89cc-986c16df77ba",
+    "layout" : "001112001132004434564444566774566444",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c0225b05-1f87-4eb3-b393-6f486f3dd0c3",
+    "layout" : "012333012343111141551111567711666611",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "14e3caf5-a4a9-4577-9a7f-db47c81c1ea9",
+    "layout" : "000112300112331114331144566674555577",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3a84935c-abbd-4e9a-8369-f2af22b7e179",
+    "layout" : "000011000222033332333345366645777555",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "04c385db-2137-4ea3-b1f9-6b5d068fe817",
+    "layout" : "000011002222333333433356447756446666",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c8926ea6-c84c-4a80-a5c3-3d9788561d8b",
+    "layout" : "001112002112032222033442056777556777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2dc38a11-a3ed-443a-9470-7c2c5fca722e",
+    "layout" : "000011002211033244556774556444555444",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "08093d6d-8c17-44b9-9d57-25e8dbea49df",
+    "layout" : "000001002031002231044566744566774666",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3d120cb1-71c6-4d41-afab-2d9cb3ae8bd8",
+    "layout" : "000011002211333455444456477466444446",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "f000defa-ac10-4270-9453-7611214b131b",
+    "layout" : "001233001234022254622254667744666444",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "d65eb9b3-b6ad-44a3-8c89-bea9a3a0a90c",
+    "layout" : "000012001112344112311155366557333557",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "fdc2f345-0838-4644-8c52-59c2b193488f",
+    "layout" : "000122030122333122435662435777437777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "40c05871-24e0-46e6-9d73-e580c6b9878d",
+    "layout" : "001112001222000032444433555666555777",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "0f95ea0a-16b9-4ab1-acc1-158e3b284db7",
+    "layout" : "011122000122033112333144566444555477",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "699bb3e5-058a-43e9-81e2-43b48b625dbc",
+    "layout" : "000111000211033221332244556667555567",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "021d45ed-0dec-49cc-9386-a2909795e70b",
+    "layout" : "011112001122003142033542063572666577",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "fbf8a0c0-d093-4ee3-bfde-f4f31d56d447",
+    "layout" : "000111002211033241033546777556776666",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "1367ffc9-210e-4e87-86c8-c2bd86d7776a",
+    "layout" : "011123001223111123111144156147556177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "16380070-760c-49f5-a8fb-ada7e50761f2",
+    "layout" : "011222011222011333441355644755647755",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "eedab68b-576d-4fae-8630-d28fff09ae5f",
+    "layout" : "011222031122031442031222535677555677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "70ff870d-9d6b-493e-9fba-2d4d5de11ce6",
+    "layout" : "000122300112344156333756377766333366",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c94e6a7c-cae5-4e4d-8762-a16a5affdb54",
+    "layout" : "011111002211333245667545667555655555",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "52e51d69-cf8d-4417-a8cb-e7b2b46ae2ba",
+    "layout" : "001112033112331114335544655577655577",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "18643e55-4a6e-4d50-b389-e30d0139ab9b",
+    "layout" : "000122033122033142055647556647556647",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "f304cf86-3835-4be1-b2be-64e49650399c",
+    "layout" : "001233001222011222041152046757446777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "74cfd17e-869b-4b04-b6b8-6f23bee7bb95",
+    "layout" : "000001000221030021033445066555777555",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "21a30796-2546-462c-915a-d6cd7b6ebe95",
+    "layout" : "001111002131042131041111556671555677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "9ee0ad5b-dfb4-431b-99a2-029809f78674",
+    "layout" : "001233111222112222111452644457666677",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "792e5e78-e313-4ece-ac78-eca7c6a3f9a9",
+    "layout" : "000122300124351114355664357744344444",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "8a4579cd-9a72-4bd7-9bb0-231dc9a9ebd7",
+    "layout" : "000011200333222223445263445563444477",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "d528d4a8-dd1e-4ba2-8249-0fc337d24d1c",
+    "layout" : "001123001223111133111456774456766666",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2714fff4-96a8-4028-a4f4-8e447b4708dc",
+    "layout" : "001222001122333222333244355446774446",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "bf38618e-acec-4a06-97e0-1282c57a210c",
+    "layout" : "001122331142331144333555666557665557",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "6b5e60d5-de28-42a8-b891-eedc62f4fbf2",
+    "layout" : "001112331112333444333344556447556477",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "caeb9662-b3ca-4417-b827-479de707b603",
+    "layout" : "001122333112334444333444355666777666",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "248cd48f-a38a-4c1c-bbf9-8b5169f47f82",
+    "layout" : "000111000221030021333345367745666645",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "16ded198-432d-4d82-ae34-e2b80d4e59f8",
+    "layout" : "001111022111032144331111556666556677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "111e5639-3683-40ce-a2d8-c48291524492",
+    "layout" : "011111002211002231444335667755666555",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "bdb0d3b4-fa7f-47e9-9d6e-8c8ad6f578f6",
+    "layout" : "000111000211332211222245627245627255",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "5dbd54a7-3cb7-443a-b84a-ee9f19c5ded9",
+    "layout" : "000111023311022114022154667754666444",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "f6582e15-7700-42e2-b358-4b89e0e2b039",
+    "layout" : "000001002211333211333441356777556777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "442daf22-e226-4ba4-8638-bfbfd3b9c9c1",
+    "layout" : "001222001223041553641133667733663333",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "29869987-bcab-494f-8cf3-17a7c0724c8f",
+    "layout" : "000011200331222111422566445557444447",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "d1aa9a36-914a-4a96-8d29-923139756e01",
+    "layout" : "000011223311222222224255664677666667",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "736e6259-aeb9-4158-8438-b41718037b71",
+    "layout" : "000001002231004431544677554677555777",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "97d704cc-93f8-4985-9e70-739fa47e3fd3",
+    "layout" : "011233013223113333111143566147566777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c0eeeec0-2c8a-4cc4-b28f-d19e0c9a8020",
+    "layout" : "000122001122011332044432544632544677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "33fc2639-e6bd-4b3f-a69e-1288188354e8",
+    "layout" : "000011000211033222333445677555666555",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "bca71da7-867b-4b9e-809f-8918562697ab",
+    "layout" : "000122331122434222444252446255466777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b98cd79e-b8cf-4518-b043-36b0e9868b3c",
+    "layout" : "000122000112034111034455466444444477",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "a0d58e82-b540-4057-be20-872d8739d4ff",
+    "layout" : "000001022331022211045667445777445777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "4566c607-e138-4b81-95a5-a2d3c5e006da",
+    "layout" : "011112011132441132544167544667556667",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "0e8226e8-6c39-430c-9d7d-f5ab757dabfe",
+    "layout" : "001122101333111133111145116645777755",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b6be1739-8ae1-4628-9c82-fe00c6d26d16",
+    "layout" : "011233012244111444111554617544617744",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3cc90442-69da-4f84-92f9-3b951aa281e2",
+    "layout" : "000011002211032441035677055677555557",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "1452e74a-7fc4-45ca-83cf-665c1d5769f9",
+    "layout" : "000122003112033111334155664477666677",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "9ad34c62-f70c-436a-96d6-0297bf0bcb76",
+    "layout" : "001122001122001132045632045622555677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "9f6825b8-04fe-4ceb-8d8c-9e49db07af4b",
+    "layout" : "001233041211041111111151166755111777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "0a9922e9-5b4d-4169-b494-0a4610f12199",
+    "layout" : "001222311142334442334442555644556677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "8ec5c7fb-d46b-405b-bc49-f2f9553e5c7b",
+    "layout" : "000111002111002345633345667745666555",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "68fcc074-5097-4cbd-b7fd-c74d0779f965",
+    "layout" : "000111002111342556344666337766333666",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3ed9b025-7982-4df6-a840-ea7b5c9367d5",
+    "layout" : "011122001222111132141135641775611115",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2bb9d05c-34d1-4d43-8f9d-c025a33b185a",
+    "layout" : "000122001122011332455677445677444477",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "e272f67b-ea00-4ed5-941b-bfff433a6855",
+    "layout" : "000001020301422351446657446777444777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "10449abf-dd46-40c6-a991-9cbef546e79e",
+    "layout" : "000011002211344561355565377555335555",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2815f294-4e1e-4380-b425-6dd59e1b36e0",
+    "layout" : "001233111222111222114252114252666277",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "e4536e4b-7260-493d-84ec-a5f7efbbf33d",
+    "layout" : "001223001223042255042222622772622222",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "68e35a2d-68df-453e-8616-a30a4bb538c4",
+    "layout" : "011122033144151164151464111444144477",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2a8b503a-46db-4407-b92a-7fd943099a5b",
+    "layout" : "000011002211031111031441005661775566",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "f121d497-242b-4db6-998a-4db847bb15fa",
+    "layout" : "012113012143111141151111151611111677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "7611542a-c662-4ac5-b4c0-3f44f2e7fcd6",
+    "layout" : "012133012111111141111141111556771116",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "093cbbdf-de75-46e5-872f-a48a9e793b46",
+    "layout" : "000112001132454436454466444667444667",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "7dc52da0-4b58-4aa7-9f6f-421d9ad1ad96",
+    "layout" : "000011020330020000004556704666700666",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "1274ecad-a7b1-4daf-879c-ccf95e863a96",
+    "layout" : "011111023311021114222554677444644444",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "599e32f9-a5ea-4f6c-8f75-56cbee2842b9",
+    "layout" : "001112334412333313355333333633773633",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "93e08389-8aba-42f1-91e4-38db2efbb761",
+    "layout" : "001111223311222221222441526444526477",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c3d820be-1c70-4bb8-bfce-c1d8c620b915",
+    "layout" : "011112011222322244355266336667333367",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "78d23b1c-e3a2-4a09-8947-f3d539c8cbbf",
+    "layout" : "001112000112033444055464554464544477",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "a2d825d4-5cf1-4bc5-ac8d-24cc032597e5",
+    "layout" : "000011002222222233455222446622444777",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "06ca2c79-0bd5-4c11-9311-7bc6da110648",
+    "layout" : "011122031411131451111151617711611111",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "00ac055b-9a60-4bc1-8b8b-fec1f2d22c10",
+    "layout" : "000012000112031114031444566447555447",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "a03bd684-5389-400f-b91f-ac42aa8a4377",
+    "layout" : "001111223311222241552241556444556477",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "01d2d7c5-8b08-4486-9f6b-229b4249118b",
+    "layout" : "001233001222041552042222627722622222",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "4f3f2a4b-af0d-42e5-98b0-91d04ffaaff7",
+    "layout" : "011112034412333311333331335511666577",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "eee065dd-28db-4f3f-8941-22e0e4d88f32",
+    "layout" : "012333012333111441551111111661111177",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "56fd3bdc-bb23-4418-b784-3486265ec5f5",
+    "layout" : "001111223311241115246175226175222155",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "0878cc95-1b88-432a-b2c9-2eb745fba68b",
+    "layout" : "001213111213111111111144566117511117",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "f4bb06c3-7955-4bbc-8f06-b1a6a9c26b97",
+    "layout" : "000011002111342255342222336622333377",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "45491169-8853-49aa-a3ad-1554cefcb07f",
+    "layout" : "001112111112331111111441516111556177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "a6d89afe-ab8f-4371-b35d-3a8b021a6a92",
+    "layout" : "011112011112331111111441516777516777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "97859960-e2ac-4196-b2e7-e3752cee13ac",
+    "layout" : "011112011312441311111551116611771111",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "417cef14-9f32-4862-8f73-1de64b1f5853",
+    "layout" : "001233111211111111111144115566777776",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c42bc028-2445-44a2-a176-14ff9dcacd77",
+    "layout" : "001112111112331111111141516147516117",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "0324326b-0c5d-42f9-b335-b1e190c8de58",
+    "layout" : "001111122131111131451671451677441777",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "94c84d17-5bc4-4dc3-a58a-13c4cac26bb1",
+    "layout" : "012113012113111144155111167711661111",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "8317b8cc-eda5-4fd3-8f57-72ba59bddf88",
+    "layout" : "001111002111002331044566744566744466",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "798551ec-a0fe-4c51-865c-a3316aaa6cad",
+    "layout" : "011223041223141151111151677111611111",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "1a043770-bda5-49e3-a8ea-f11055da256f",
+    "layout" : "000001000221030044035044065004666077",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "43cc561a-97f1-4437-8bdc-aa322832f67c",
+    "layout" : "012222011222111233445555655555655577",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2a7928cb-e41e-4221-8a64-25f978d9773a",
+    "layout" : "011123011223111111111144516111516177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "5eb7fc2e-b7cc-4c0c-9cc4-43dd331da2bd",
+    "layout" : "001233111233141151146151116111771111",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "91165778-d302-4e2d-b2d9-2b1a040d0aa2",
+    "layout" : "001111002211033111045161445167441117",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "38b7b556-e038-44d1-ad89-73745bf2af1b",
+    "layout" : "011233011211111111111141115141665177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "bc2f1466-43d1-453c-872a-5a8f32974a87",
+    "layout" : "001122111111131144131514111516771116",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "0220a554-7cb6-4f85-8641-d1e7d30d2ed8",
+    "layout" : "000012000112340115346155336157333337",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3637ff7a-1c2e-4fb4-b68c-dd5d821637db",
+    "layout" : "011234011234511533555533556337556337",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "42d10582-87c0-425d-bf71-8b731f55723f",
+    "layout" : "011111002211133111111144516617511117",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "287f5cfd-72d9-4ccb-92d4-fabaff9d9ab2",
+    "layout" : "001233111211141111145667115557111177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "47468e96-0c46-4ae5-b21b-78ad8bf6f153",
+    "layout" : "001122331111434415444455446555446577",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2dd2cf1e-90b2-4ec4-8ddc-631d1033d2c9",
+    "layout" : "000001002211343551343331333667333377",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "1e36849b-af0f-4a0a-9fa4-4a37cf65b5ff",
+    "layout" : "011111022113111133144533666537666337",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "4bf24f18-1424-4943-a0b2-7751b8855420",
+    "layout" : "012133012111111111144111445511665577",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "5a0081ed-b2af-47a4-92a7-0bc1cb73f9c9",
+    "layout" : "011122011134551134555444555644775644",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b2867440-cee1-4b90-9975-a82c0666ecfc",
+    "layout" : "000001000221033454067454067444664444",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "4396bdab-b85e-41a2-825b-528a68b74d6e",
+    "layout" : "001112111112311144351677351677331777",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "7fcdfbe7-f2a5-4781-a739-6c993dfd5067",
+    "layout" : "011112013312111142551647111677111177",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "ab4f3184-db67-4e76-83ac-67eddb5259ee",
+    "layout" : "001123011223222222442222456622555777",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "fd15411b-95c8-4964-94f8-e41410e784dd",
+    "layout" : "001111002211031111031141536641555577",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "3bb942f0-97e5-45a3-b05a-545c9cbab6fd",
+    "layout" : "011122011331441111111551617711611111",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2842baac-55dd-40dd-87e0-3f75d47e9d1c",
+    "layout" : "011111012111132141131141111556771116",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "41924944-1334-41ca-9f6d-4402d0afad6c",
+    "layout" : "011122031445631155667151667111661111",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "56556b8f-bd84-4186-b91a-7e74a66a4fd5",
+    "layout" : "001111002311022311222441225666775666",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "8fef9cf2-4699-473b-8b68-03a4ae1c5b0a",
+    "layout" : "001112133112111144155111617711611111",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "77e3d191-a264-4612-850c-01a8f7e56231",
+    "layout" : "000012000112030004030044055444664477",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b74c2aef-1b46-4828-8217-9771a7e3f62e",
+    "layout" : "001233141211141111111151166155111177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "4a41fe33-b4cc-4612-a347-64997c09a005",
+    "layout" : "001222331122333144335555333655773655",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "016de941-4939-4d77-b0a8-27545b024538",
+    "layout" : "000011022111022231455333446673444477",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "99f1c532-6e00-43f1-9bbe-6b265c608676",
+    "layout" : "011122011111133111114151614151611177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c67d5b4d-8b24-4e09-8b1a-ab7acc19f9e7",
+    "layout" : "001123111223111453414455444446774446",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2297fcf6-3e61-42fd-8e01-d9aefddcbc69",
+    "layout" : "000012034112434454444454446444776444",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "2929ec86-c688-4c56-94da-36cd7e3d2ca0",
+    "layout" : "011122033111141155141111111667111117",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "0ba9f159-65ec-4f27-b6c3-ea0fc9e22234",
+    "layout" : "001223001243252246252766222766222266",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "cfb8fe0e-5e0d-46ef-b1bc-c575ca5ed59d",
+    "layout" : "001122111111133141111141115116775116",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "715b1f7d-0024-4a6d-85e0-d1e9e1b7656b",
+    "layout" : "012111012111111133141111441516771516",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "072961b3-dc66-4147-bc34-dfe708a3c70d",
+    "layout" : "001111002231004431444531644511644777",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "6ef7f761-7853-48cd-8360-e37c24ea0c57",
+    "layout" : "001111111211133211144451446651444477",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "f66f3c7c-fad2-470e-b0ab-ab5d586f7a05",
+    "layout" : "001112344112331111331111536637533337",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "ebf2986d-5e0d-4b7d-97a1-5973181913e5",
+    "layout" : "001222221222222233244555446755666755",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "a18ecc61-9a97-4c63-86c4-b4d81dfce653",
+    "layout" : "001122111111133111111141115141665177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "adbf5721-9b4d-40ba-baeb-c80651ce626e",
+    "layout" : "000122000111030111034566054557555557",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "7bae7304-5ba7-4d78-a870-ebf621f69abb",
+    "layout" : "011112013312111111111441516111516177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "802b277e-8ba6-434d-b53d-6b19de872e7a",
+    "layout" : "011112011112111133145555645755655755",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "1cd3a782-1daa-4490-9e4b-6041c7fdccb8",
+    "layout" : "000001002211222233453333456633444477",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "6ad31a56-a973-4c28-8e63-0043fd5de3cb",
+    "layout" : "000122011133111133455333444667444447",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b259d47d-e2c1-44c8-b627-3f0b5ce3e1c6",
+    "layout" : "011111011221331111111144566117511177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c4c12a78-3b7a-475f-aa13-30d6eb2fdab1",
+    "layout" : "012113012143111141151111151111661177",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "13eba985-473c-46d9-af56-a332bd68ffeb",
+    "layout" : "000011020344020344005664705004700004",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "0364d3de-90db-4221-b895-0d4c2c77496e",
+    "layout" : "011112001112111334454444454647444647",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "c8cb5538-28dc-4e5e-9aa0-d1dd83f93d98",
+    "layout" : "001233001242202242222222225526772226",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "98f0a73b-ae65-4eb6-a870-aff67661eccc",
+    "layout" : "001112111112331111445161445166444177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "bcee4b27-fda5-4b48-ba59-502e5840981d",
+    "layout" : "000111002233344333335363335363333377",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "08d6e7ac-f48c-4b34-a1ca-52b67af7a3db",
+    "layout" : "001233221222222442222222225522666677",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "d8d2429d-41c1-4517-92b5-976c884884d3",
+    "layout" : "011122013311111111114551614111611177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b5de3fd0-62e1-4368-a105-cba399df6411",
+    "layout" : "011112013342111141551111667711611111",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "89a8fe2b-74d3-40e6-98fb-b3935f3d9878",
+    "layout" : "011233011211441111111551166111111177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "0ac86300-db88-4d86-b2dc-2655c890d5e6",
+    "layout" : "011122011331111111114155114111661177",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b46fb51c-67b2-4e88-ab54-b0b49bc043a7",
+    "layout" : "001111233111241551241111226617221117",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "b4f2e5c1-b5f7-4d70-96c0-d6d903581025",
+    "layout" : "000112301122334554334444444647444647",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "e2c329c4-54b9-45d3-b035-74de07b5b314",
+    "layout" : "000011222231443331444556777556777666",
+    "queens" : "Q....Q..Q.......Q..Q.......Q..Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  }, {
+    "id" : "5a2e1384-fb66-41fc-9de7-d5231e3f8095",
+    "layout" : "012222013333011444005546775566777666",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "tutorial"
+  } ]
+}

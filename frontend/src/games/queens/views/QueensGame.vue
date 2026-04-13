@@ -32,10 +32,29 @@
       variant="error"
     />
 
+    <QueensHintToast
+      v-if="
+        !queensStore.isTutorialMode &&
+        !queensStore.errorMessage &&
+        queensStore.hintMessage
+      "
+      id="hint-message"
+      :message="queensStore.hintMessage"
+      :step="queensStore.hintStep"
+    />
+
     <!-- Tutorial Overlay -->
     <TutorialOverlay
       :is-visible="queensStore.isTutorialMode && queensStore.highlightToolSelector"
       :highlight-tool-selector="queensStore.highlightToolSelector"
+    />
+
+    <QueensCampaignIntroModal
+      :is-visible="queensStore.showCampaignIntroModal"
+      :level-index="queensStore.currentCampaignBucket?.levelIndex ?? 1"
+      :size-key="queensStore.currentCampaignBucket?.sizeKey ?? `${queensStore.gridSize}x${queensStore.gridSize}`"
+      :difficulty="queensStore.currentCampaignBucket?.difficulty ?? 'tutorial'"
+      @close="queensStore.closeCampaignIntroModal()"
     />
 
     <div
@@ -102,6 +121,13 @@
           aria-label="Clear all marks from the board"
           @click="handleClear"
         />
+        <Button
+          label="Hint"
+          unstyled
+          class="h-9 rounded-xl border !min-w-0 px-2.5 !py-2 text-xs font-semibold leading-none shadow-none transition-colors duration-150 active:translate-y-px border-semantic-info-700 bg-semantic-info-900 text-semantic-info-100 enabled:hover:bg-semantic-info-800 enabled:hover:border-semantic-info-600"
+          aria-label="Show the next solver hint"
+          @click="handleHint"
+        />
       </div>
     </div>
 
@@ -151,6 +177,12 @@ const QueensActionMenu = defineAsyncComponent(
 );
 const TutorialOverlay = defineAsyncComponent(
   () => import('../components/queens/TutorialOverlay.vue')
+);
+const QueensCampaignIntroModal = defineAsyncComponent(
+  () => import('../components/queens/QueensCampaignIntroModal.vue')
+);
+const QueensHintToast = defineAsyncComponent(
+  () => import('../components/queens/QueensHintToast.vue')
 );
 
 const route = useRoute();
@@ -247,6 +279,7 @@ async function loadPuzzleFromRoute() {
   const routeOrthogonalMinDistance = route.params.orthogonalMinDistance as string | undefined;
   const routeDifficultyParam = route.params.difficulty as string | undefined;
   const selectedPuzzleId = route.params.selectedPuzzleId as string | undefined;
+  const isCampaignRoute = route.name === 'queens-campaign';
   const routeTargetQueenCount =
     typeof route.query.targetQueenCount === 'string' ? route.query.targetQueenCount : undefined;
   const routeMinimumGroupSize =
@@ -260,6 +293,7 @@ async function loadPuzzleFromRoute() {
     routeOrthogonalMinDistance,
     routeDifficultyParam,
     selectedPuzzleId,
+    isCampaignRoute,
     routeTargetQueenCount,
     routeMinimumGroupSize,
   });
@@ -292,6 +326,25 @@ async function loadPuzzleFromRoute() {
         game_mode: 'standard',
         grid_size: queensStore.gridSize,
         puzzle_id: 'url-preview',
+      });
+      return;
+    }
+
+    if (isCampaignRoute && sizeKey && isQueensSelectionDifficulty(routeDifficultyParam)) {
+      logQueensRoute('branch:campaign-route', {
+        sizeKey,
+        difficulty: routeDifficultyParam,
+      });
+      if (queensStore.isTutorialMode) {
+        queensStore.exitTutorialMode();
+      }
+      await queensStore.loadCampaignPuzzle(sizeKey, routeDifficultyParam);
+      trackGameStart({
+        game_name: 'queens',
+        game_mode: 'campaign',
+        grid_size: queensStore.gridSize,
+        puzzle_id:
+          queensStore.currentPuzzleId === null ? undefined : String(queensStore.currentPuzzleId),
       });
       return;
     }
@@ -481,6 +534,10 @@ function handleUndo() {
 
 function handleClear() {
   queensStore.clearAll();
+}
+
+function handleHint() {
+  queensStore.requestHint();
 }
 
 function initializeTutorialSteps(levelName: string) {

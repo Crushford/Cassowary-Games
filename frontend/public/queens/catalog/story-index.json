@@ -1,0 +1,223 @@
+[ {
+  "levelIndex" : 1,
+  "sizeKey" : "4x4",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistance" : 4,
+  "targetTimeSeconds" : 30
+}, {
+  "levelIndex" : 2,
+  "sizeKey" : "5x5",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistance" : 5,
+  "targetTimeSeconds" : 45
+}, {
+  "levelIndex" : 3,
+  "sizeKey" : "6x6",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistance" : 6,
+  "targetTimeSeconds" : 60
+}, {
+  "levelIndex" : 4,
+  "sizeKey" : "7x7",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistance" : 7,
+  "targetTimeSeconds" : 90
+}, {
+  "levelIndex" : 5,
+  "sizeKey" : "8x8",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistance" : 8,
+  "targetTimeSeconds" : 120
+}, {
+  "levelIndex" : 6,
+  "sizeKey" : "9x9",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistance" : 9,
+  "targetTimeSeconds" : 180
+}, {
+  "levelIndex" : 7,
+  "sizeKey" : "4x4",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistance" : 4,
+  "targetTimeSeconds" : 34
+}, {
+  "levelIndex" : 8,
+  "sizeKey" : "5x5",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistance" : 5,
+  "targetTimeSeconds" : 52
+}, {
+  "levelIndex" : 9,
+  "sizeKey" : "6x6",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistance" : 6,
+  "targetTimeSeconds" : 69
+}, {
+  "levelIndex" : 10,
+  "sizeKey" : "7x7",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistance" : 7,
+  "targetTimeSeconds" : 103
+}, {
+  "levelIndex" : 11,
+  "sizeKey" : "8x8",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistance" : 8,
+  "targetTimeSeconds" : 138
+}, {
+  "levelIndex" : 12,
+  "sizeKey" : "9x9",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistance" : 9,
+  "targetTimeSeconds" : 207
+}, {
+  "levelIndex" : 13,
+  "sizeKey" : "10x10",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistance" : 10,
+  "targetTimeSeconds" : 276
+}, {
+  "levelIndex" : 14,
+  "sizeKey" : "4x4",
+  "difficulty" : "easy",
+  "orthogonalMinDistance" : 4,
+  "targetTimeSeconds" : 40
+}, {
+  "levelIndex" : 15,
+  "sizeKey" : "5x5",
+  "difficulty" : "easy",
+  "orthogonalMinDistance" : 5,
+  "targetTimeSeconds" : 61
+}, {
+  "levelIndex" : 16,
+  "sizeKey" : "6x6",
+  "difficulty" : "easy",
+  "orthogonalMinDistance" : 6,
+  "targetTimeSeconds" : 81
+}, {
+  "levelIndex" : 17,
+  "sizeKey" : "7x7",
+  "difficulty" : "easy",
+  "orthogonalMinDistance" : 7,
+  "targetTimeSeconds" : 122
+}, {
+  "levelIndex" : 18,
+  "sizeKey" : "8x8",
+  "difficulty" : "easy",
+  "orthogonalMinDistance" : 8,
+  "targetTimeSeconds" : 162
+}, {
+  "levelIndex" : 19,
+  "sizeKey" : "9x9",
+  "difficulty" : "easy",
+  "orthogonalMinDistance" : 9,
+  "targetTimeSeconds" : 243
+}, {
+  "levelIndex" : 20,
+  "sizeKey" : "4x4",
+  "difficulty" : "medium",
+  "orthogonalMinDistance" : 4,
+  "targetTimeSeconds" : 48
+}, {
+  "levelIndex" : 21,
+  "sizeKey" : "5x5",
+  "difficulty" : "medium",
+  "orthogonalMinDistance" : 5,
+  "targetTimeSeconds" : 72
+}, {
+  "levelIndex" : 22,
+  "sizeKey" : "6x6",
+  "difficulty" : "medium",
+  "orthogonalMinDistance" : 6,
+  "targetTimeSeconds" : 96
+}, {
+  "levelIndex" : 23,
+  "sizeKey" : "7x7",
+  "difficulty" : "medium",
+  "orthogonalMinDistance" : 7,
+  "targetTimeSeconds" : 144
+}, {
+  "levelIndex" : 24,
+  "sizeKey" : "8x8",
+  "difficulty" : "medium",
+  "orthogonalMinDistance" : 8,
+  "targetTimeSeconds" : 192
+}, {
+  "levelIndex" : 25,
+  "sizeKey" : "9x9",
+  "difficulty" : "medium",
+  "orthogonalMinDistance" : 9,
+  "targetTimeSeconds" : 288
+}, {
+  "levelIndex" : 26,
+  "sizeKey" : "4x4",
+  "difficulty" : "hard",
+  "orthogonalMinDistance" : 4,
+  "targetTimeSeconds" : 60
+}, {
+  "levelIndex" : 27,
+  "sizeKey" : "5x5",
+  "difficulty" : "hard",
+  "orthogonalMinDistance" : 5,
+  "targetTimeSeconds" : 90
+}, {
+  "levelIndex" : 28,
+  "sizeKey" : "6x6",
+  "difficulty" : "hard",
+  "orthogonalMinDistance" : 6,
+  "targetTimeSeconds" : 120
+}, {
+  "levelIndex" : 29,
+  "sizeKey" : "7x7",
+  "difficulty" : "hard",
+  "orthogonalMinDistance" : 7,
+  "targetTimeSeconds" : 180
+}, {
+  "levelIndex" : 30,
+  "sizeKey" : "8x8",
+  "difficulty" : "hard",
+  "orthogonalMinDistance" : 8,
+  "targetTimeSeconds" : 240
+}, {
+  "levelIndex" : 31,
+  "sizeKey" : "9x9",
+  "difficulty" : "hard",
+  "orthogonalMinDistance" : 9,
+  "targetTimeSeconds" : 360
+}, {
+  "levelIndex" : 32,
+  "sizeKey" : "10x10",
+  "difficulty" : "hard",
+  "orthogonalMinDistance" : 10,
+  "targetTimeSeconds" : 480
+}, {
+  "levelIndex" : 33,
+  "sizeKey" : "11x11",
+  "difficulty" : "hard",
+  "orthogonalMinDistance" : 11,
+  "targetTimeSeconds" : 600
+}, {
+  "levelIndex" : 34,
+  "sizeKey" : "6x6",
+  "difficulty" : "extra-hard",
+  "orthogonalMinDistance" : 6,
+  "targetTimeSeconds" : 150
+}, {
+  "levelIndex" : 35,
+  "sizeKey" : "7x7",
+  "difficulty" : "extra-hard",
+  "orthogonalMinDistance" : 5,
+  "targetTimeSeconds" : 225
+}, {
+  "levelIndex" : 36,
+  "sizeKey" : "8x8",
+  "difficulty" : "extra-hard",
+  "orthogonalMinDistance" : 6,
+  "targetTimeSeconds" : 300
+}, {
+  "levelIndex" : 37,
+  "sizeKey" : "9x9",
+  "difficulty" : "extra-hard",
+  "orthogonalMinDistance" : 9,
+  "targetTimeSeconds" : 450
+} ]

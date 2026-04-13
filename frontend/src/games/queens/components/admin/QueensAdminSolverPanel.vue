@@ -709,30 +709,21 @@ const DEFAULT_BUILT_IN_SOLVER_STEPS = [
     sortOrder: 10,
   },
   {
-    id: 'row-column',
-    label: 'Row / Column Constraints',
-    description: 'Use constrained sliding row and column bands to eliminate impossible candidates.',
-    difficulty: 'medium',
-    enabled: true,
-    sortOrder: 20,
-  },
-  {
-    id: 'row-column-sets',
-    label: 'Row / Column Set Constraints',
-    description:
-      'Use row and column sets inside a queen-distance window to eliminate impossible candidates, including non-adjacent lines.',
-    difficulty: 'extra-hard',
-    enabled: true,
-    sortOrder: 25,
-  },
-  {
     id: 'group-confined-to-line',
     label: 'Group Confined To Line',
     description:
       'Flag candidates near a color group whose remaining squares are trapped in one row or column.',
     difficulty: 'easy',
     enabled: true,
-    sortOrder: 30,
+    sortOrder: 20,
+  },
+  {
+    id: 'row-column',
+    label: 'Row / Column Constraints',
+    description: 'Use constrained sliding row and column bands to eliminate impossible candidates.',
+    difficulty: 'medium',
+    enabled: true,
+    sortOrder: 40,
   },
   {
     id: 'single-queen-contradiction',
@@ -741,7 +732,16 @@ const DEFAULT_BUILT_IN_SOLVER_STEPS = [
       'Try one queen placement. If it immediately makes the puzzle impossible, flag that square.',
     difficulty: 'hard',
     enabled: true,
-    sortOrder: 40,
+    sortOrder: 50,
+  },
+  {
+    id: 'row-column-sets',
+    label: 'Row / Column Set Constraints',
+    description:
+      'Use row and column sets inside a queen-distance window to eliminate impossible candidates, including non-adjacent lines.',
+    difficulty: 'extra-hard',
+    enabled: true,
+    sortOrder: 60,
   },
   {
     id: 'assume-progress',
@@ -749,7 +749,7 @@ const DEFAULT_BUILT_IN_SOLVER_STEPS = [
     description: 'Try queen assumptions until one contradiction forces a real move.',
     difficulty: 'unsolvable',
     enabled: true,
-    sortOrder: 50,
+    sortOrder: 70,
   },
   {
     id: 'assume-exhaustive',
@@ -758,7 +758,7 @@ const DEFAULT_BUILT_IN_SOLVER_STEPS = [
       'Exhaustively scan queen and flag assumptions until no further forced move exists.',
     difficulty: 'unsolvable',
     enabled: true,
-    sortOrder: 60,
+    sortOrder: 80,
   },
 ] as const satisfies ReadonlyArray<QueensAdminBuiltInSolverStep>;
 

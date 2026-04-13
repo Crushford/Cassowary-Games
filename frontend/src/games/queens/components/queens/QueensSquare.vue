@@ -9,6 +9,10 @@
       {
         'ring-4 ring-semantic-warning-500 ring-offset-2 ring-offset-semantic-neutral-900 animate-pulse':
           isTutorialTarget,
+        'ring-4 ring-semantic-info-300 ring-offset-2 ring-offset-semantic-neutral-900':
+          isHintEvidenceCell,
+        'ring-4 ring-semantic-success-400 ring-offset-2 ring-offset-semantic-neutral-900':
+          isHintOutputCell,
         'auto-flag-tint-blocked': isAutoFlagAnimating && autoFlagAnimationSource === 'blocked',
         'auto-flag-tint-pattern': isAutoFlagAnimating && autoFlagAnimationSource === 'pattern',
       },
@@ -119,6 +123,12 @@ const ariaLabel = computed(() => {
 
 const isInError = computed(() => {
   return queensStore.isSquareInError(props.rowIndex, props.colIndex);
+});
+const isHintEvidenceCell = computed(() => {
+  return queensStore.isHintEvidenceCell(props.rowIndex, props.colIndex);
+});
+const isHintOutputCell = computed(() => {
+  return queensStore.isHintOutputCell(props.rowIndex, props.colIndex);
 });
 const isAutoFlagAnimating = computed(() => {
   return queensStore.isAutoFlagAnimating(props.rowIndex, props.colIndex);

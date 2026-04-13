@@ -1,0 +1,9 @@
+{
+  "5x5" : [ {
+    "id" : "0d70127d-940f-4b56-86c1-4c5c500db5c6",
+    "layout" : "0111200122003324443345555",
+    "queens" : "Q...Q..Q.......Q...Q..Q..",
+    "orthogonalMinDistance" : 3,
+    "difficulty" : "unsolvable"
+  } ]
+}

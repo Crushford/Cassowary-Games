@@ -1,0 +1,211 @@
+[ {
+  "sizeKey" : "4x4",
+  "difficulty" : "easy",
+  "orthogonalMinDistances" : [ 4 ],
+  "count" : 5,
+  "path" : "/queens/catalog/classic/4x4/easy.json"
+}, {
+  "sizeKey" : "4x4",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistances" : [ 4 ],
+  "count" : 95,
+  "path" : "/queens/catalog/classic/4x4/extra-easy.json"
+}, {
+  "sizeKey" : "4x4",
+  "difficulty" : "hard",
+  "orthogonalMinDistances" : [ 4 ],
+  "count" : 86,
+  "path" : "/queens/catalog/classic/4x4/hard.json"
+}, {
+  "sizeKey" : "4x4",
+  "difficulty" : "medium",
+  "orthogonalMinDistances" : [ 4 ],
+  "count" : 30,
+  "path" : "/queens/catalog/classic/4x4/medium.json"
+}, {
+  "sizeKey" : "4x4",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistances" : [ 4 ],
+  "count" : 23,
+  "path" : "/queens/catalog/classic/4x4/tutorial.json"
+}, {
+  "sizeKey" : "5x5",
+  "difficulty" : "easy",
+  "orthogonalMinDistances" : [ 5 ],
+  "count" : 16,
+  "path" : "/queens/catalog/classic/5x5/easy.json"
+}, {
+  "sizeKey" : "5x5",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistances" : [ 5 ],
+  "count" : 253,
+  "path" : "/queens/catalog/classic/5x5/extra-easy.json"
+}, {
+  "sizeKey" : "5x5",
+  "difficulty" : "hard",
+  "orthogonalMinDistances" : [ 5 ],
+  "count" : 264,
+  "path" : "/queens/catalog/classic/5x5/hard.json"
+}, {
+  "sizeKey" : "5x5",
+  "difficulty" : "medium",
+  "orthogonalMinDistances" : [ 5 ],
+  "count" : 29,
+  "path" : "/queens/catalog/classic/5x5/medium.json"
+}, {
+  "sizeKey" : "5x5",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistances" : [ 5 ],
+  "count" : 63,
+  "path" : "/queens/catalog/classic/5x5/tutorial.json"
+}, {
+  "sizeKey" : "6x6",
+  "difficulty" : "easy",
+  "orthogonalMinDistances" : [ 6 ],
+  "count" : 17,
+  "path" : "/queens/catalog/classic/6x6/easy.json"
+}, {
+  "sizeKey" : "6x6",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistances" : [ 6 ],
+  "count" : 170,
+  "path" : "/queens/catalog/classic/6x6/extra-easy.json"
+}, {
+  "sizeKey" : "6x6",
+  "difficulty" : "extra-hard",
+  "orthogonalMinDistances" : [ 6 ],
+  "count" : 1,
+  "path" : "/queens/catalog/classic/6x6/extra-hard.json"
+}, {
+  "sizeKey" : "6x6",
+  "difficulty" : "hard",
+  "orthogonalMinDistances" : [ 6 ],
+  "count" : 655,
+  "path" : "/queens/catalog/classic/6x6/hard.json"
+}, {
+  "sizeKey" : "6x6",
+  "difficulty" : "medium",
+  "orthogonalMinDistances" : [ 6 ],
+  "count" : 67,
+  "path" : "/queens/catalog/classic/6x6/medium.json"
+}, {
+  "sizeKey" : "6x6",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistances" : [ 6 ],
+  "count" : 47,
+  "path" : "/queens/catalog/classic/6x6/tutorial.json"
+}, {
+  "sizeKey" : "7x7",
+  "difficulty" : "easy",
+  "orthogonalMinDistances" : [ 7 ],
+  "count" : 7,
+  "path" : "/queens/catalog/classic/7x7/easy.json"
+}, {
+  "sizeKey" : "7x7",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistances" : [ 7 ],
+  "count" : 165,
+  "path" : "/queens/catalog/classic/7x7/extra-easy.json"
+}, {
+  "sizeKey" : "7x7",
+  "difficulty" : "hard",
+  "orthogonalMinDistances" : [ 7 ],
+  "count" : 593,
+  "path" : "/queens/catalog/classic/7x7/hard.json"
+}, {
+  "sizeKey" : "7x7",
+  "difficulty" : "medium",
+  "orthogonalMinDistances" : [ 7 ],
+  "count" : 33,
+  "path" : "/queens/catalog/classic/7x7/medium.json"
+}, {
+  "sizeKey" : "7x7",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistances" : [ 7 ],
+  "count" : 27,
+  "path" : "/queens/catalog/classic/7x7/tutorial.json"
+}, {
+  "sizeKey" : "8x8",
+  "difficulty" : "easy",
+  "orthogonalMinDistances" : [ 8 ],
+  "count" : 3,
+  "path" : "/queens/catalog/classic/8x8/easy.json"
+}, {
+  "sizeKey" : "8x8",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistances" : [ 8 ],
+  "count" : 110,
+  "path" : "/queens/catalog/classic/8x8/extra-easy.json"
+}, {
+  "sizeKey" : "8x8",
+  "difficulty" : "hard",
+  "orthogonalMinDistances" : [ 8 ],
+  "count" : 329,
+  "path" : "/queens/catalog/classic/8x8/hard.json"
+}, {
+  "sizeKey" : "8x8",
+  "difficulty" : "medium",
+  "orthogonalMinDistances" : [ 8 ],
+  "count" : 10,
+  "path" : "/queens/catalog/classic/8x8/medium.json"
+}, {
+  "sizeKey" : "8x8",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistances" : [ 8 ],
+  "count" : 22,
+  "path" : "/queens/catalog/classic/8x8/tutorial.json"
+}, {
+  "sizeKey" : "9x9",
+  "difficulty" : "easy",
+  "orthogonalMinDistances" : [ 9 ],
+  "count" : 5,
+  "path" : "/queens/catalog/classic/9x9/easy.json"
+}, {
+  "sizeKey" : "9x9",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistances" : [ 9 ],
+  "count" : 78,
+  "path" : "/queens/catalog/classic/9x9/extra-easy.json"
+}, {
+  "sizeKey" : "9x9",
+  "difficulty" : "extra-hard",
+  "orthogonalMinDistances" : [ 9 ],
+  "count" : 2,
+  "path" : "/queens/catalog/classic/9x9/extra-hard.json"
+}, {
+  "sizeKey" : "9x9",
+  "difficulty" : "hard",
+  "orthogonalMinDistances" : [ 9 ],
+  "count" : 220,
+  "path" : "/queens/catalog/classic/9x9/hard.json"
+}, {
+  "sizeKey" : "9x9",
+  "difficulty" : "medium",
+  "orthogonalMinDistances" : [ 9 ],
+  "count" : 5,
+  "path" : "/queens/catalog/classic/9x9/medium.json"
+}, {
+  "sizeKey" : "9x9",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistances" : [ 9 ],
+  "count" : 29,
+  "path" : "/queens/catalog/classic/9x9/tutorial.json"
+}, {
+  "sizeKey" : "10x10",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistances" : [ 10 ],
+  "count" : 1,
+  "path" : "/queens/catalog/classic/10x10/extra-easy.json"
+}, {
+  "sizeKey" : "10x10",
+  "difficulty" : "hard",
+  "orthogonalMinDistances" : [ 10 ],
+  "count" : 21,
+  "path" : "/queens/catalog/classic/10x10/hard.json"
+}, {
+  "sizeKey" : "11x11",
+  "difficulty" : "hard",
+  "orthogonalMinDistances" : [ 11 ],
+  "count" : 6,
+  "path" : "/queens/catalog/classic/11x11/hard.json"
+} ]
