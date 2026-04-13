@@ -799,11 +799,6 @@ function runPatternStep(
 
   const state = cloneState(initialState);
   const variants = getPatternVariants(pattern);
-  const outputs: Pos[] = [];
-  const evidenceCells: Pos[] = [];
-  const changes: QueensSolverCellChange[] = [];
-  const seen = new Set<string>();
-  let matchedPreviewVariant: PatternVariant | null = null;
 
   for (const variant of variants) {
     for (let baseRow = 0; baseRow <= state.gridSize - variant.activeWindowHeight; baseRow++) {
@@ -852,12 +847,9 @@ function runPatternStep(
           continue;
         }
 
-        if (matchedPreviewVariant === null) {
-          matchedPreviewVariant = variant;
-          for (const cell of absoluteActive) {
-            evidenceCells.push(cell);
-          }
-        }
+        const outputs: Pos[] = [];
+        const changes: QueensSolverCellChange[] = [];
+        const seen = new Set<string>();
 
         for (const output of variant.outputFlags) {
           const row = baseRow + output.row;
@@ -871,39 +863,39 @@ function runPatternStep(
           outputs.push({ row, col });
           changes.push(...placeFlag(state, row, col, `Flagged by solver pattern ${pattern.name}.`));
         }
+
+        if (changes.length === 0) {
+          continue;
+        }
+
+        return buildStep(
+          pattern,
+          "Here's a common pattern. When a color group forms the green shape, we can place flags in these squares.\nThey can't be queens because each one would block all remaining squares in the group.",
+          absoluteActive,
+          outputs,
+          changes,
+          {
+            patternPreview: {
+              id: pattern.id,
+              name: pattern.name,
+              size: pattern.size,
+              cells: variant.previewCells.map((cell) => ({
+                row: cell.row,
+                col: cell.col,
+                activeSquare: true,
+              })),
+              outputFlags: variant.previewOutputFlags.map((flag) => ({
+                row: flag.row,
+                col: flag.col,
+              })),
+            },
+          }
+        );
       }
     }
   }
 
-  if (changes.length === 0) {
-    return null;
-  }
-
-  return buildStep(
-    pattern,
-    `This group matches the ${pattern.name} pattern.\nWhen a group has this shape, these squares cannot hold the queen.`,
-    evidenceCells,
-    outputs,
-    changes,
-    {
-      patternPreview: matchedPreviewVariant
-        ? {
-            id: pattern.id,
-            name: pattern.name,
-            size: pattern.size,
-            cells: matchedPreviewVariant.previewCells.map((cell) => ({
-              row: cell.row,
-              col: cell.col,
-              activeSquare: true,
-            })),
-            outputFlags: matchedPreviewVariant.previewOutputFlags.map((flag) => ({
-              row: flag.row,
-              col: flag.col,
-            })),
-          }
-        : undefined,
-    }
-  );
+  return null;
 }
 
 function runConfiguredStep(

@@ -57,7 +57,7 @@ describe('Queens interactive hint behavior', () => {
     localStorage.clear();
   });
 
-  it('applies pattern hints one output cell at a time', async () => {
+  it('applies all outputs from a matched pattern hint at once', async () => {
     const { useQueensStore } = await import('./queensStore');
     const store = useQueensStore();
 
@@ -78,24 +78,18 @@ describe('Queens interactive hint behavior', () => {
     expect(firstHint).not.toBeNull();
     expect(firstHint?.stepId).toBe('pc-1');
     expect(firstHint?.patternPreview).not.toBeUndefined();
-    expect(firstHint?.outputCells).toHaveLength(1);
-    expect(firstHint?.changes).toHaveLength(1);
+    expect(firstHint?.outputCells).toHaveLength(3);
+    expect(firstHint?.changes).toHaveLength(3);
 
-    const firstOutput = firstHint!.outputCells[0]!;
-    expect(store.playerMarks[firstOutput.row][firstOutput.col]).toBe('flag');
+    for (const output of firstHint!.outputCells) {
+      expect(store.playerMarks[output.row][output.col]).toBe('flag');
+    }
 
     const flaggedAfterFirstHint = store.playerMarks.flat().filter((mark) => mark === 'flag').length;
-    expect(flaggedAfterFirstHint).toBe(1);
+    expect(flaggedAfterFirstHint).toBe(3);
 
     const secondHint = await store.requestHint();
-    expect(secondHint).not.toBeNull();
-    expect(secondHint?.stepId).toBe('pc-1');
-    expect(secondHint?.outputCells).toHaveLength(1);
-
-    const flaggedAfterSecondHint = store.playerMarks
-      .flat()
-      .filter((mark) => mark === 'flag').length;
-    expect(flaggedAfterSecondHint).toBe(2);
+    expect(secondHint).toBeNull();
   });
 
   it('logs a full debug payload whenever no hint is available', async () => {
