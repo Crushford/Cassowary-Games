@@ -266,6 +266,33 @@ function bucketKey(sizeKey: string, difficulty: QueensSelectionDifficulty): stri
   return `${sizeKey}|${difficulty}`;
 }
 
+function createTimingLogger(scope: string, detail?: Record<string, unknown>) {
+  const start = performance.now();
+  console.info(`[queens][perf] ${scope}:start`, {
+    ...detail,
+    startedAtMs: Math.round(start),
+  });
+
+  return {
+    checkpoint(label: string, extra?: Record<string, unknown>) {
+      const now = performance.now();
+      console.info(`[queens][perf] ${scope}:${label}`, {
+        ...detail,
+        ...extra,
+        elapsedMs: Math.round(now - start),
+      });
+    },
+    end(extra?: Record<string, unknown>) {
+      const now = performance.now();
+      console.info(`[queens][perf] ${scope}:end`, {
+        ...detail,
+        ...extra,
+        elapsedMs: Math.round(now - start),
+      });
+    },
+  };
+}
+
 export interface TutorialStep {
   id: string;
   instruction: string;
@@ -1217,7 +1244,9 @@ export const useQueensStore = defineStore('queens', {
     },
 
     async loadCampaignCatalog() {
+      const timing = createTimingLogger('loadCampaignCatalog');
       if (Object.keys(this.campaignCatalogIndex).length > 0 && this.campaignBucketCache) {
+        timing.end({ result: 'cache-hit', bucketCount: this.campaignBucketCache.length });
         return true;
       }
 
@@ -1227,8 +1256,13 @@ export const useQueensStore = defineStore('queens', {
 
       try {
         const storyResponse = await fetch('/queens/catalog/story-index.json', { cache: 'no-store' });
+        timing.checkpoint('story-index:response', {
+          ok: storyResponse.ok,
+          status: storyResponse.status,
+        });
         if (storyResponse.ok) {
           const payload = (await storyResponse.json()) as QueensStoryIndexEntry[];
+          timing.checkpoint('story-index:parsed', { entryCount: payload.length });
           const storyBuckets: QueensCampaignBucket[] = [];
           const targetTimeIndex: Record<string, number> = {};
 
@@ -1251,6 +1285,7 @@ export const useQueensStore = defineStore('queens', {
             this.campaignTargetTimeIndex = targetTimeIndex;
             this.loadingProgress = 100;
             this.loadingMessage = 'Story campaign ready';
+            timing.end({ result: 'story-index', bucketCount: storyBuckets.length });
             return true;
           }
         }
@@ -1274,17 +1309,30 @@ export const useQueensStore = defineStore('queens', {
           loadIndex('/queens/catalog/classic-index.json'),
           loadIndex('/queens/catalog/extended-index.json'),
         ]);
+        timing.checkpoint('selection-index:loaded', {
+          classicEntries: classicIndex.length,
+          extendedEntries: extendedIndex.length,
+        });
 
         this.campaignCatalogIndex = mergeCampaignCatalogEntries(classicIndex, extendedIndex);
         if (Object.keys(this.campaignCatalogIndex).length === 0) {
+          timing.checkpoint('selection-index:fallback-to-full-db');
           return this.loadPuzzleDatabase();
         }
         this.campaignBucketCache = await this.buildCampaignBucketsFromCatalog();
         this.loadingProgress = 100;
         this.loadingMessage = 'Story campaign ready';
+        timing.end({
+          result: 'selection-index',
+          bucketCount: this.campaignBucketCache.length,
+        });
         return true;
       } catch (error) {
         console.error('[queensStore] Error loading campaign catalog:', error);
+        timing.end({
+          result: 'error',
+          error: error instanceof Error ? error.message : String(error),
+        });
         return false;
       } finally {
         this.isLoadingPuzzles = false;
@@ -1297,9 +1345,11 @@ export const useQueensStore = defineStore('queens', {
       sizeKey: string,
       difficulty: QueensSelectionDifficulty
     ): Promise<PuzzleRecord[]> {
+      const timing = createTimingLogger('loadCampaignBucketPuzzles', { sizeKey, difficulty });
       const bucketKey = `${sizeKey}|${difficulty}`;
       const cached = this.campaignBucketPuzzleCache[bucketKey];
       if (cached) {
+        timing.end({ result: 'cache-hit', puzzleCount: cached.length });
         return cached;
       }
 
@@ -1307,12 +1357,14 @@ export const useQueensStore = defineStore('queens', {
       if (!group) {
         const loaded = await this.ensureSelectionCatalogLoaded();
         if (!loaded) {
+          timing.end({ result: 'selection-catalog-missing' });
           return [];
         }
       }
 
       const resolvedGroup = this.campaignCatalogIndex[bucketKey];
       if (!resolvedGroup) {
+        timing.end({ result: 'missing-group' });
         return [];
       }
 
@@ -1325,6 +1377,9 @@ export const useQueensStore = defineStore('queens', {
           return normalizePuzzleDatabase(await response.json());
         })
       );
+      timing.checkpoint('bucket-files:loaded', {
+        fileCount: resolvedGroup.paths.length,
+      });
 
       const merged = mergePuzzleDatabases(...responses);
       const puzzles = merged[sizeKey] ?? [];
@@ -1332,6 +1387,7 @@ export const useQueensStore = defineStore('queens', {
         ...this.campaignBucketPuzzleCache,
         [bucketKey]: puzzles,
       };
+      timing.end({ result: 'loaded', puzzleCount: puzzles.length });
       return puzzles;
     },
 
@@ -1655,6 +1711,12 @@ export const useQueensStore = defineStore('queens', {
     },
 
     async selectCampaignPuzzle(bucket: QueensCampaignBucket): Promise<PuzzleRecord> {
+      const timing = createTimingLogger('selectCampaignPuzzle', {
+        levelIndex: bucket.levelIndex,
+        sizeKey: bucket.sizeKey,
+        difficulty: bucket.difficulty,
+        orthogonalMinDistance: bucket.orthogonalMinDistance,
+      });
       const boardSize = Number.parseInt(bucket.sizeKey, 10);
       const candidates = this.puzzleDatabase
         ? this.getPuzzlesForSelection(
@@ -1666,9 +1728,14 @@ export const useQueensStore = defineStore('queens', {
             (puzzle) =>
               (puzzle.orthogonalMinDistance ?? boardSize) === bucket.orthogonalMinDistance
           );
-      const solvableCandidates = candidates.filter((candidate) =>
-        this.isCampaignPuzzleSolvable(candidate, bucket.difficulty)
-      );
+      timing.checkpoint('candidates:resolved', { candidateCount: candidates.length });
+      const solvableCandidates = this.puzzleDatabase
+        ? candidates.filter((candidate) => this.isCampaignPuzzleSolvable(candidate, bucket.difficulty))
+        : candidates;
+      timing.checkpoint('candidates:solvable-filtered', {
+        solvableCount: solvableCandidates.length,
+        usedExportedStoryBucket: !this.puzzleDatabase,
+      });
 
       const puzzle = this.chooseNextDiversePuzzleFromCandidates(
         `campaign|${bucket.sizeKey}|d${bucket.orthogonalMinDistance}|${bucket.difficulty}`,
@@ -1677,50 +1744,67 @@ export const useQueensStore = defineStore('queens', {
       );
 
       if (!puzzle) {
+        timing.end({ result: 'no-puzzle' });
         throw new Error(`No campaign puzzle available for ${bucket.sizeKey} ${bucket.difficulty}`);
       }
 
+      timing.end({ result: 'selected', puzzleId: String(puzzle.id) });
       return puzzle;
     },
 
     async loadCampaignBucket(bucket: QueensCampaignBucket, options?: { showIntroModal?: boolean }) {
+      const timing = createTimingLogger('loadCampaignBucket', {
+        levelIndex: bucket.levelIndex,
+        sizeKey: bucket.sizeKey,
+        difficulty: bucket.difficulty,
+      });
       const puzzle = await this.selectCampaignPuzzle(bucket);
+      timing.checkpoint('puzzle:selected', { puzzleId: String(puzzle.id) });
 
       this.isCampaignMode = true;
       this.currentCampaignBucket = bucket;
       this.isCampaignFullyComplete = false;
       this.parsePuzzleData(puzzle);
+      timing.checkpoint('puzzle:parsed', {
+        gridSize: this.gridSize,
+        currentPuzzleId: this.currentPuzzleId === null ? null : String(this.currentPuzzleId),
+      });
       this.showCampaignIntroModal = options?.showIntroModal ?? true;
+      timing.end({ result: 'loaded' });
       return puzzle;
     },
 
     async loadCampaignPuzzle(sizeKey: string, difficulty: QueensSelectionDifficulty) {
+      const timing = createTimingLogger('loadCampaignPuzzle', { sizeKey, difficulty });
       if (!this.puzzleDatabase && !this.campaignBucketCache) {
         const success = await this.loadCampaignCatalog();
+        timing.checkpoint('campaign-catalog:ensured', { success });
         if (!success) {
+          timing.end({ result: 'catalog-failed' });
           throw new Error('Failed to load campaign catalog');
-        }
-      } else if (!this.puzzleDatabase && Object.keys(this.campaignCatalogIndex).length === 0) {
-        const success = await this.loadPuzzleDatabase();
-        if (!success) {
-          throw new Error('Failed to load puzzle database');
         }
       }
 
       const bucket = this.getCampaignBucketByRoute(sizeKey, difficulty);
       if (!bucket) {
+        timing.end({ result: 'missing-bucket' });
         throw new Error(`No campaign bucket found for ${sizeKey} ${difficulty}`);
       }
       this.syncStoryProgressState();
       if (!this.isCampaignBucketUnlocked(bucket)) {
         const fallbackBucket = this.getCurrentCampaignProgressBucket() ?? this.getCampaignBuckets()[0];
         if (!fallbackBucket) {
+          timing.end({ result: 'missing-fallback-bucket' });
           throw new Error('No campaign buckets are available');
         }
         await router.replace(`/queens/campaign/${fallbackBucket.sizeKey}/${fallbackBucket.difficulty}`);
-        return this.loadCampaignBucket(fallbackBucket, { showIntroModal: true });
+        const result = await this.loadCampaignBucket(fallbackBucket, { showIntroModal: true });
+        timing.end({ result: 'redirected-to-fallback', fallbackLevel: fallbackBucket.levelIndex });
+        return result;
       }
-      return this.loadCampaignBucket(bucket, { showIntroModal: true });
+      const result = await this.loadCampaignBucket(bucket, { showIntroModal: true });
+      timing.end({ result: 'loaded', levelIndex: bucket.levelIndex });
+      return result;
     },
 
     closeCampaignIntroModal() {
@@ -1732,11 +1816,6 @@ export const useQueensStore = defineStore('queens', {
         const success = await this.loadCampaignCatalog();
         if (!success) {
           throw new Error('Failed to load campaign catalog');
-        }
-      } else if (!this.puzzleDatabase && Object.keys(this.campaignCatalogIndex).length === 0) {
-        const success = await this.loadPuzzleDatabase();
-        if (!success) {
-          throw new Error('Failed to load puzzle database');
         }
       }
 
@@ -1778,12 +1857,20 @@ export const useQueensStore = defineStore('queens', {
     },
 
     async startCampaign() {
+      const timing = createTimingLogger('startCampaign');
       this.syncStoryProgressState();
       const currentBucket = this.getCurrentCampaignProgressBucket();
       if (!currentBucket) {
+        timing.end({ result: 'missing-current-bucket' });
         throw new Error('No campaign buckets are available');
       }
+      timing.checkpoint('route:push', {
+        levelIndex: currentBucket.levelIndex,
+        sizeKey: currentBucket.sizeKey,
+        difficulty: currentBucket.difficulty,
+      });
       await router.push(`/queens/campaign/${currentBucket.sizeKey}/${currentBucket.difficulty}`);
+      timing.end({ result: 'route-pushed' });
     },
 
     async applyHintsUntilSolved(maxHints: number = 512) {

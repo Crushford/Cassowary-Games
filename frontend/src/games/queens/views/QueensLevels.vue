@@ -168,11 +168,22 @@ async function startCampaign() {
     return;
   }
 
+  const start = performance.now();
+  console.info('[queens][perf] menu:startCampaign:click', {
+    atMs: Math.round(start),
+  });
   isStartingCampaign.value = true;
   try {
     await queensStore.startCampaign();
+    console.info('[queens][perf] menu:startCampaign:complete', {
+      elapsedMs: Math.round(performance.now() - start),
+    });
   } catch (error) {
     isStartingCampaign.value = false;
+    console.info('[queens][perf] menu:startCampaign:error', {
+      elapsedMs: Math.round(performance.now() - start),
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw error;
   }
 }
