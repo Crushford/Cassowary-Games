@@ -266,33 +266,6 @@ function bucketKey(sizeKey: string, difficulty: QueensSelectionDifficulty): stri
   return `${sizeKey}|${difficulty}`;
 }
 
-function createTimingLogger(scope: string, detail?: Record<string, unknown>) {
-  const start = performance.now();
-  console.info(`[queens][perf] ${scope}:start`, {
-    ...detail,
-    startedAtMs: Math.round(start),
-  });
-
-  return {
-    checkpoint(label: string, extra?: Record<string, unknown>) {
-      const now = performance.now();
-      console.info(`[queens][perf] ${scope}:${label}`, {
-        ...detail,
-        ...extra,
-        elapsedMs: Math.round(now - start),
-      });
-    },
-    end(extra?: Record<string, unknown>) {
-      const now = performance.now();
-      console.info(`[queens][perf] ${scope}:end`, {
-        ...detail,
-        ...extra,
-        elapsedMs: Math.round(now - start),
-      });
-    },
-  };
-}
-
 export interface TutorialStep {
   id: string;
   instruction: string;
@@ -475,7 +448,8 @@ function buildPuzzleSelectionIndex(database: PuzzleDatabase): PuzzleSelectionInd
     const boardSize = parseInt(sizeKey.split('x')[0], 10);
     for (const puzzle of puzzles) {
       const distance = puzzle.orthogonalMinDistance ?? boardSize;
-      const difficulty = (puzzle.difficulty?.replace(/_/g, '-') ?? 'easy') as QueensSelectionDifficulty;
+      const difficulty = (puzzle.difficulty?.replace(/_/g, '-') ??
+        'easy') as QueensSelectionDifficulty;
       const key = `${sizeKey}|${distance}|${difficulty}`;
       if (!index[key]) {
         index[key] = [];
@@ -1090,7 +1064,7 @@ export const useQueensStore = defineStore('queens', {
           bucket.sizeKey === state.currentCampaignBucket?.sizeKey &&
           bucket.difficulty === state.currentCampaignBucket?.difficulty
       );
-      return currentIndex >= 0 ? buckets[currentIndex + 1] ?? null : null;
+      return currentIndex >= 0 ? (buckets[currentIndex + 1] ?? null) : null;
     },
     canAdvanceCampaign(state): boolean {
       return (
@@ -1119,7 +1093,9 @@ export const useQueensStore = defineStore('queens', {
       if (!this.currentCampaignBucket) {
         return null;
       }
-      return this.storyLevelBestTimes[buildCampaignBucketStorageKey(this.currentCampaignBucket)] ?? null;
+      return (
+        this.storyLevelBestTimes[buildCampaignBucketStorageKey(this.currentCampaignBucket)] ?? null
+      );
     },
     currentCampaignPassedBestTime(): number | null {
       if (!this.currentCampaignBucket) {
@@ -1189,7 +1165,9 @@ export const useQueensStore = defineStore('queens', {
         this.hintEvidenceCellKeys = new Set(
           step.evidenceCells.map((cell) => `${cell.row},${cell.col}`)
         );
-        this.hintOutputCellKeys = new Set(step.outputCells.map((cell) => `${cell.row},${cell.col}`));
+        this.hintOutputCellKeys = new Set(
+          step.outputCells.map((cell) => `${cell.row},${cell.col}`)
+        );
       }
       this.hintDisplayTimeout = window.setTimeout(() => {
         this.clearHintState();
@@ -1220,18 +1198,23 @@ export const useQueensStore = defineStore('queens', {
     },
 
     async requestHint() {
-      const { applyQueensSolverStep, getNextQueensSolverStep } = await import('../solver/stagedSolver');
+      const { applyQueensSolverStep, getNextQueensSolverStep } = await import(
+        '../solver/stagedSolver'
+      );
       const maxDifficultyTier = this.currentPuzzle?.difficulty ?? 'unsolvable';
-      const step = getNextQueensSolverStep({
-        grid: this.grid,
-        playerMarks: this.playerMarks,
-        gridSize: this.gridSize,
-        targetQueenCount: this.targetQueenCount,
-        orthogonalMinDistance: this.orthogonalMinDistance,
-      }, maxDifficultyTier);
+      const step = getNextQueensSolverStep(
+        {
+          grid: this.grid,
+          playerMarks: this.playerMarks,
+          gridSize: this.gridSize,
+          targetQueenCount: this.targetQueenCount,
+          orthogonalMinDistance: this.orthogonalMinDistance,
+        },
+        maxDifficultyTier
+      );
 
       if (!step) {
-        this.showHint(null, "Nothing stands out yet.\nTry checking another part of the board.");
+        this.showHint(null, 'Nothing stands out yet.\nTry checking another part of the board.');
         return null;
       }
 
@@ -1244,9 +1227,7 @@ export const useQueensStore = defineStore('queens', {
     },
 
     async loadCampaignCatalog() {
-      const timing = createTimingLogger('loadCampaignCatalog');
       if (Object.keys(this.campaignCatalogIndex).length > 0 && this.campaignBucketCache) {
-        timing.end({ result: 'cache-hit', bucketCount: this.campaignBucketCache.length });
         return true;
       }
 
@@ -1255,14 +1236,11 @@ export const useQueensStore = defineStore('queens', {
       this.loadingMessage = 'Loading story campaign...';
 
       try {
-        const storyResponse = await fetch('/queens/catalog/story-index.json', { cache: 'no-store' });
-        timing.checkpoint('story-index:response', {
-          ok: storyResponse.ok,
-          status: storyResponse.status,
+        const storyResponse = await fetch('/queens/catalog/story-index.json', {
+          cache: 'no-store',
         });
         if (storyResponse.ok) {
           const payload = (await storyResponse.json()) as QueensStoryIndexEntry[];
-          timing.checkpoint('story-index:parsed', { entryCount: payload.length });
           const storyBuckets: QueensCampaignBucket[] = [];
           const targetTimeIndex: Record<string, number> = {};
 
@@ -1285,7 +1263,6 @@ export const useQueensStore = defineStore('queens', {
             this.campaignTargetTimeIndex = targetTimeIndex;
             this.loadingProgress = 100;
             this.loadingMessage = 'Story campaign ready';
-            timing.end({ result: 'story-index', bucketCount: storyBuckets.length });
             return true;
           }
         }
@@ -1309,30 +1286,17 @@ export const useQueensStore = defineStore('queens', {
           loadIndex('/queens/catalog/classic-index.json'),
           loadIndex('/queens/catalog/extended-index.json'),
         ]);
-        timing.checkpoint('selection-index:loaded', {
-          classicEntries: classicIndex.length,
-          extendedEntries: extendedIndex.length,
-        });
 
         this.campaignCatalogIndex = mergeCampaignCatalogEntries(classicIndex, extendedIndex);
         if (Object.keys(this.campaignCatalogIndex).length === 0) {
-          timing.checkpoint('selection-index:fallback-to-full-db');
           return this.loadPuzzleDatabase();
         }
         this.campaignBucketCache = await this.buildCampaignBucketsFromCatalog();
         this.loadingProgress = 100;
         this.loadingMessage = 'Story campaign ready';
-        timing.end({
-          result: 'selection-index',
-          bucketCount: this.campaignBucketCache.length,
-        });
         return true;
       } catch (error) {
         console.error('[queensStore] Error loading campaign catalog:', error);
-        timing.end({
-          result: 'error',
-          error: error instanceof Error ? error.message : String(error),
-        });
         return false;
       } finally {
         this.isLoadingPuzzles = false;
@@ -1345,11 +1309,9 @@ export const useQueensStore = defineStore('queens', {
       sizeKey: string,
       difficulty: QueensSelectionDifficulty
     ): Promise<PuzzleRecord[]> {
-      const timing = createTimingLogger('loadCampaignBucketPuzzles', { sizeKey, difficulty });
       const bucketKey = `${sizeKey}|${difficulty}`;
       const cached = this.campaignBucketPuzzleCache[bucketKey];
       if (cached) {
-        timing.end({ result: 'cache-hit', puzzleCount: cached.length });
         return cached;
       }
 
@@ -1357,14 +1319,12 @@ export const useQueensStore = defineStore('queens', {
       if (!group) {
         const loaded = await this.ensureSelectionCatalogLoaded();
         if (!loaded) {
-          timing.end({ result: 'selection-catalog-missing' });
           return [];
         }
       }
 
       const resolvedGroup = this.campaignCatalogIndex[bucketKey];
       if (!resolvedGroup) {
-        timing.end({ result: 'missing-group' });
         return [];
       }
 
@@ -1377,9 +1337,6 @@ export const useQueensStore = defineStore('queens', {
           return normalizePuzzleDatabase(await response.json());
         })
       );
-      timing.checkpoint('bucket-files:loaded', {
-        fileCount: resolvedGroup.paths.length,
-      });
 
       const merged = mergePuzzleDatabases(...responses);
       const puzzles = merged[sizeKey] ?? [];
@@ -1387,7 +1344,6 @@ export const useQueensStore = defineStore('queens', {
         ...this.campaignBucketPuzzleCache,
         [bucketKey]: puzzles,
       };
-      timing.end({ result: 'loaded', puzzleCount: puzzles.length });
       return puzzles;
     },
 
@@ -1440,14 +1396,13 @@ export const useQueensStore = defineStore('queens', {
           const boardSize = Number.parseInt(sizeKey, 10);
           const orthogonalMinDistance = group.orthogonalMinDistances.includes(boardSize)
             ? boardSize
-            : group.orthogonalMinDistances[0] ?? null;
+            : (group.orthogonalMinDistances[0] ?? null);
           if (orthogonalMinDistance == null) continue;
 
           const puzzles = await this.loadCampaignBucketPuzzles(sizeKey, difficulty);
           const hasPlayablePuzzle = puzzles
             .filter(
-              (puzzle) =>
-                (puzzle.orthogonalMinDistance ?? boardSize) === orthogonalMinDistance
+              (puzzle) => (puzzle.orthogonalMinDistance ?? boardSize) === orthogonalMinDistance
             )
             .some((puzzle) => this.isCampaignPuzzleSolvable(puzzle, difficulty));
           if (!hasPlayablePuzzle) continue;
@@ -1507,9 +1462,7 @@ export const useQueensStore = defineStore('queens', {
       return solvable;
     },
 
-    getCampaignDifficultyForPuzzle(
-      puzzleData: PuzzleRecord
-    ): QueensSelectionDifficulty | null {
+    getCampaignDifficultyForPuzzle(puzzleData: PuzzleRecord): QueensSelectionDifficulty | null {
       const key = String(puzzleData.id);
       const cached = this.campaignDifficultyCache[key];
       if (cached !== undefined) {
@@ -1589,7 +1542,10 @@ export const useQueensStore = defineStore('queens', {
     },
 
     getCampaignTargetTime(bucket: QueensCampaignBucket): number {
-      return this.campaignTargetTimeIndex[buildCampaignBucketStorageKey(bucket)] ?? calculateCampaignTargetTime(bucket);
+      return (
+        this.campaignTargetTimeIndex[buildCampaignBucketStorageKey(bucket)] ??
+        calculateCampaignTargetTime(bucket)
+      );
     },
 
     getCampaignBucketBestTime(bucket: QueensCampaignBucket): number | null {
@@ -1657,7 +1613,9 @@ export const useQueensStore = defineStore('queens', {
 
       const existingBest = this.storyPassedLevelBestTimes[key];
       const nextBest =
-        existingBest == null ? completionTimeSeconds : Math.min(existingBest, completionTimeSeconds);
+        existingBest == null
+          ? completionTimeSeconds
+          : Math.min(existingBest, completionTimeSeconds);
 
       this.storyPassedLevelBestTimes = {
         ...this.storyPassedLevelBestTimes,
@@ -1711,12 +1669,6 @@ export const useQueensStore = defineStore('queens', {
     },
 
     async selectCampaignPuzzle(bucket: QueensCampaignBucket): Promise<PuzzleRecord> {
-      const timing = createTimingLogger('selectCampaignPuzzle', {
-        levelIndex: bucket.levelIndex,
-        sizeKey: bucket.sizeKey,
-        difficulty: bucket.difficulty,
-        orthogonalMinDistance: bucket.orthogonalMinDistance,
-      });
       const boardSize = Number.parseInt(bucket.sizeKey, 10);
       const candidates = this.puzzleDatabase
         ? this.getPuzzlesForSelection(
@@ -1725,17 +1677,13 @@ export const useQueensStore = defineStore('queens', {
             bucket.difficulty
           )
         : (await this.loadCampaignBucketPuzzles(bucket.sizeKey, bucket.difficulty)).filter(
-            (puzzle) =>
-              (puzzle.orthogonalMinDistance ?? boardSize) === bucket.orthogonalMinDistance
+            (puzzle) => (puzzle.orthogonalMinDistance ?? boardSize) === bucket.orthogonalMinDistance
           );
-      timing.checkpoint('candidates:resolved', { candidateCount: candidates.length });
       const solvableCandidates = this.puzzleDatabase
-        ? candidates.filter((candidate) => this.isCampaignPuzzleSolvable(candidate, bucket.difficulty))
+        ? candidates.filter((candidate) =>
+            this.isCampaignPuzzleSolvable(candidate, bucket.difficulty)
+          )
         : candidates;
-      timing.checkpoint('candidates:solvable-filtered', {
-        solvableCount: solvableCandidates.length,
-        usedExportedStoryBucket: !this.puzzleDatabase,
-      });
 
       const puzzle = this.chooseNextDiversePuzzleFromCandidates(
         `campaign|${bucket.sizeKey}|d${bucket.orthogonalMinDistance}|${bucket.difficulty}`,
@@ -1744,67 +1692,48 @@ export const useQueensStore = defineStore('queens', {
       );
 
       if (!puzzle) {
-        timing.end({ result: 'no-puzzle' });
         throw new Error(`No campaign puzzle available for ${bucket.sizeKey} ${bucket.difficulty}`);
       }
 
-      timing.end({ result: 'selected', puzzleId: String(puzzle.id) });
       return puzzle;
     },
 
     async loadCampaignBucket(bucket: QueensCampaignBucket, options?: { showIntroModal?: boolean }) {
-      const timing = createTimingLogger('loadCampaignBucket', {
-        levelIndex: bucket.levelIndex,
-        sizeKey: bucket.sizeKey,
-        difficulty: bucket.difficulty,
-      });
       const puzzle = await this.selectCampaignPuzzle(bucket);
-      timing.checkpoint('puzzle:selected', { puzzleId: String(puzzle.id) });
 
       this.isCampaignMode = true;
       this.currentCampaignBucket = bucket;
       this.isCampaignFullyComplete = false;
       this.parsePuzzleData(puzzle);
-      timing.checkpoint('puzzle:parsed', {
-        gridSize: this.gridSize,
-        currentPuzzleId: this.currentPuzzleId === null ? null : String(this.currentPuzzleId),
-      });
       this.showCampaignIntroModal = options?.showIntroModal ?? true;
-      timing.end({ result: 'loaded' });
       return puzzle;
     },
 
     async loadCampaignPuzzle(sizeKey: string, difficulty: QueensSelectionDifficulty) {
-      const timing = createTimingLogger('loadCampaignPuzzle', { sizeKey, difficulty });
       if (!this.puzzleDatabase && !this.campaignBucketCache) {
         const success = await this.loadCampaignCatalog();
-        timing.checkpoint('campaign-catalog:ensured', { success });
         if (!success) {
-          timing.end({ result: 'catalog-failed' });
           throw new Error('Failed to load campaign catalog');
         }
       }
 
       const bucket = this.getCampaignBucketByRoute(sizeKey, difficulty);
       if (!bucket) {
-        timing.end({ result: 'missing-bucket' });
         throw new Error(`No campaign bucket found for ${sizeKey} ${difficulty}`);
       }
       this.syncStoryProgressState();
       if (!this.isCampaignBucketUnlocked(bucket)) {
-        const fallbackBucket = this.getCurrentCampaignProgressBucket() ?? this.getCampaignBuckets()[0];
+        const fallbackBucket =
+          this.getCurrentCampaignProgressBucket() ?? this.getCampaignBuckets()[0];
         if (!fallbackBucket) {
-          timing.end({ result: 'missing-fallback-bucket' });
           throw new Error('No campaign buckets are available');
         }
-        await router.replace(`/queens/campaign/${fallbackBucket.sizeKey}/${fallbackBucket.difficulty}`);
-        const result = await this.loadCampaignBucket(fallbackBucket, { showIntroModal: true });
-        timing.end({ result: 'redirected-to-fallback', fallbackLevel: fallbackBucket.levelIndex });
-        return result;
+        await router.replace(
+          `/queens/campaign/${fallbackBucket.sizeKey}/${fallbackBucket.difficulty}`
+        );
+        return this.loadCampaignBucket(fallbackBucket, { showIntroModal: true });
       }
-      const result = await this.loadCampaignBucket(bucket, { showIntroModal: true });
-      timing.end({ result: 'loaded', levelIndex: bucket.levelIndex });
-      return result;
+      return this.loadCampaignBucket(bucket, { showIntroModal: true });
     },
 
     closeCampaignIntroModal() {
@@ -1857,20 +1786,12 @@ export const useQueensStore = defineStore('queens', {
     },
 
     async startCampaign() {
-      const timing = createTimingLogger('startCampaign');
       this.syncStoryProgressState();
       const currentBucket = this.getCurrentCampaignProgressBucket();
       if (!currentBucket) {
-        timing.end({ result: 'missing-current-bucket' });
         throw new Error('No campaign buckets are available');
       }
-      timing.checkpoint('route:push', {
-        levelIndex: currentBucket.levelIndex,
-        sizeKey: currentBucket.sizeKey,
-        difficulty: currentBucket.difficulty,
-      });
       await router.push(`/queens/campaign/${currentBucket.sizeKey}/${currentBucket.difficulty}`);
-      timing.end({ result: 'route-pushed' });
     },
 
     async applyHintsUntilSolved(maxHints: number = 512) {
@@ -2476,7 +2397,8 @@ export const useQueensStore = defineStore('queens', {
             };
             this.persistStoryProgress();
             this.puzzleBestTime = nextLevelBest;
-            this.puzzleIsNewRecord = existingLevelBest == null || completionTimeSeconds <= existingLevelBest;
+            this.puzzleIsNewRecord =
+              existingLevelBest == null || completionTimeSeconds <= existingLevelBest;
           } else {
             this.puzzleBestTime = getBestTimesPerSize()[sizeKey] || null;
             this.puzzleIsNewRecord = isNewRecord;
@@ -2528,7 +2450,9 @@ export const useQueensStore = defineStore('queens', {
       this.loadingMessage = 'Loading puzzle database...';
 
       try {
-        this.puzzleDatabase = normalizePuzzleDatabase(await loadMergedQueensPuzzleCatalog('no-store'));
+        this.puzzleDatabase = normalizePuzzleDatabase(
+          await loadMergedQueensPuzzleCatalog('no-store')
+        );
         this.puzzleSelectionIndex = buildPuzzleSelectionIndex(this.puzzleDatabase);
         this.puzzleIdMap = new Map<string, PuzzleRecord>(); // optional cache; stays empty for now
         this.allPuzzles = []; // not needed anymore, but keep type happy
@@ -3471,9 +3395,8 @@ export const useQueensStore = defineStore('queens', {
       const boardSize = parseInt(sizeKey.split('x')[0], 10);
       const basePool =
         orthogonalMinDistance != null && difficulty
-          ? (this.puzzleSelectionIndex[
-              `${sizeKey}|${orthogonalMinDistance}|${difficulty}`
-            ] ?? this.puzzleDatabase[sizeKey])
+          ? (this.puzzleSelectionIndex[`${sizeKey}|${orthogonalMinDistance}|${difficulty}`] ??
+            this.puzzleDatabase[sizeKey])
           : this.puzzleDatabase[sizeKey];
 
       return basePool.filter((puzzle) => {

@@ -5,12 +5,12 @@
       :id="id"
       :role="role"
       :aria-live="ariaLive"
-      class="absolute left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-2xl border border-semantic-info-500/40 bg-semantic-info-950/95 px-4 py-4 text-white shadow-2xl backdrop-blur-sm"
+      class="absolute left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-2xl border border-edge-infoMuted bg-surface-infoDeep px-4 py-4 text-white shadow-2xl backdrop-blur-sm"
     >
       <div class="flex items-start gap-4">
         <div
           v-if="step?.patternPreview"
-          class="shrink-0 rounded-2xl border border-semantic-neutral-700 bg-semantic-neutral-950/90 p-2"
+          class="shrink-0 rounded-2xl border border-semantic-neutral-700 bg-surface-darkStrong p-2"
         >
           <SharedPatternPreview
             :size="step.patternPreview.size"

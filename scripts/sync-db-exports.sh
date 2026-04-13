@@ -8,7 +8,7 @@ FINGERPRINT_PATH="$ROOT_DIR/shared/queens-export-fingerprint.json"
 cd "$ROOT_DIR"
 
 CURRENT_FINGERPRINT="$(
-  yarn -s db:print-export-fingerprint | awk '
+  yarn db:print-export-fingerprint 2>/dev/null | awk '
     BEGIN { capture = 0 }
     /^\{/ { capture = 1 }
     capture { print }

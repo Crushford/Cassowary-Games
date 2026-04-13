@@ -15,8 +15,8 @@
         class="mb-4 rounded-xl border p-3"
         :class="
           queensStore.hasPassedCurrentCampaignLevel
-            ? 'border-semantic-success-700 bg-semantic-success-500/10'
-            : 'border-semantic-warning-700 bg-semantic-warning-500/10'
+            ? 'border-semantic-success-700 bg-edge-successFaint'
+            : 'border-semantic-warning-700 bg-feedback-warningFaint'
         "
       >
         <p
@@ -52,18 +52,15 @@
             }}</span>
           </div>
           <div v-if="displayBestTime !== null" class="text-xs text-semantic-neutral-400">
-            <span
-              v-if="isLevelRecord"
-              class="text-semantic-warning-400 font-semibold"
-            >
+            <span v-if="isLevelRecord" class="text-semantic-warning-400 font-semibold">
               🏆 New Best Time!
             </span>
-            <span v-else>
-              Best Time: {{ queensStore.formatTime(displayBestTime) }}
-            </span>
+            <span v-else> Best Time: {{ queensStore.formatTime(displayBestTime) }} </span>
           </div>
           <div v-else class="text-xs text-semantic-neutral-400">
-            {{ isCampaignResultVisible ? 'First clear for this level.' : 'First time for this size!' }}
+            {{
+              isCampaignResultVisible ? 'First clear for this level.' : 'First time for this size!'
+            }}
           </div>
           <div v-if="isCampaignResultVisible" class="mt-2 text-xs text-semantic-neutral-300">
             Story target: {{ targetTimeLabel }}
@@ -100,7 +97,9 @@ const targetTimeLabel = computed(() => {
   if (!queensStore.currentCampaignBucket) {
     return '';
   }
-  return queensStore.formatTime(queensStore.getCampaignTargetTime(queensStore.currentCampaignBucket));
+  return queensStore.formatTime(
+    queensStore.getCampaignTargetTime(queensStore.currentCampaignBucket)
+  );
 });
 
 const displayBestTime = computed(() =>

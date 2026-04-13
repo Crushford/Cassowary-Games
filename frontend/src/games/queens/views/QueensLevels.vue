@@ -44,7 +44,7 @@
       <div class="w-full space-y-4">
         <!-- Single Puzzle Mode Button -->
         <button
-          class="w-full py-4 px-6 bg-semantic-info-600 hover:bg-semantic-info-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          class="w-full py-4 px-6 bg-group-blue-base hover:bg-group-blue-strong text-white font-semibold rounded-lg transition-colors duration-200 text-left"
           @click="openMenuMode('single')"
         >
           <div class="text-xl font-bold mb-1">Single Puzzle Mode</div>
@@ -52,7 +52,7 @@
         </button>
 
         <button
-          class="w-full py-4 px-6 bg-semantic-warning-700 hover:bg-semantic-warning-600 text-white font-semibold rounded-lg transition-colors duration-200 text-left disabled:cursor-wait disabled:opacity-70"
+          class="w-full py-4 px-6 bg-group-yellow-base hover:bg-group-yellow-strong text-white font-semibold rounded-lg transition-colors duration-200 text-left disabled:cursor-wait disabled:opacity-70"
           :disabled="isStartingCampaign"
           :aria-busy="isStartingCampaign"
           @click="startCampaign"
@@ -60,25 +60,29 @@
           <div class="mb-1 flex items-center gap-3 text-xl font-bold">
             <span
               v-if="isStartingCampaign"
-              class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-semantic-warning-200/40 border-t-semantic-warning-100"
+              class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-group-yellow-soft border-t-white"
               aria-hidden="true"
             ></span>
             <span>Story Campaign</span>
           </div>
-          <div class="text-sm opacity-90">Climb the Queens ladder from the smallest available farms upward</div>
+          <div class="text-sm opacity-90">
+            Climb the Queens ladder from the smallest available farms upward
+          </div>
         </button>
 
         <button
-          class="w-full py-4 px-6 bg-semantic-neutral-800 hover:bg-semantic-neutral-700 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          class="w-full py-4 px-6 bg-group-indigo-base hover:bg-group-indigo-strong text-white font-semibold rounded-lg transition-colors duration-200 text-left"
           @click="goToCampaignSelector"
         >
           <div class="text-xl font-bold mb-1">Select Level</div>
-          <div class="text-sm opacity-90">Browse the full story map, replay farms, and check what unlocks next</div>
+          <div class="text-sm opacity-90">
+            Browse the full story map, replay farms, and check what unlocks next
+          </div>
         </button>
 
         <!-- Speed Mode Button -->
         <button
-          class="w-full py-4 px-6 bg-semantic-warning-600 hover:bg-semantic-warning-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          class="w-full py-4 px-6 bg-group-red-base hover:bg-group-red-strong text-white font-semibold rounded-lg transition-colors duration-200 text-left"
           @click="openMenuMode('speed')"
         >
           <div class="text-xl font-bold mb-1">Speed Mode ⚡</div>
@@ -87,7 +91,7 @@
 
         <!-- Rotate Mode Button -->
         <button
-          class="w-full py-4 px-6 bg-semantic-success-600 hover:bg-semantic-success-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          class="w-full py-4 px-6 bg-group-teal-base hover:bg-group-teal-strong text-white font-semibold rounded-lg transition-colors duration-200 text-left"
           @click="openMenuMode('rotate')"
         >
           <div class="text-xl font-bold mb-1">Rotate Mode 🔄</div>
@@ -96,7 +100,7 @@
 
         <!-- Incremental Mode Button -->
         <button
-          class="w-full py-4 px-6 bg-semantic-success-600 hover:bg-semantic-success-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          class="w-full py-4 px-6 bg-group-purple-base hover:bg-group-purple-strong text-white font-semibold rounded-lg transition-colors duration-200 text-left"
           @click="goToIncrementalMode"
         >
           <div class="text-xl font-bold mb-1">Incremental Queens 🧪</div>
@@ -105,7 +109,7 @@
 
         <!-- Records Button -->
         <button
-          class="w-full py-4 px-6 bg-semantic-info-600 hover:bg-semantic-info-500 text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          class="w-full py-4 px-6 bg-group-green-base hover:bg-group-green-strong text-white font-semibold rounded-lg transition-colors duration-200 text-left"
           @click="openMenuMode('records')"
         >
           <div class="text-xl font-bold mb-1">Records 🏆</div>
@@ -168,22 +172,11 @@ async function startCampaign() {
     return;
   }
 
-  const start = performance.now();
-  console.info('[queens][perf] menu:startCampaign:click', {
-    atMs: Math.round(start),
-  });
   isStartingCampaign.value = true;
   try {
     await queensStore.startCampaign();
-    console.info('[queens][perf] menu:startCampaign:complete', {
-      elapsedMs: Math.round(performance.now() - start),
-    });
   } catch (error) {
     isStartingCampaign.value = false;
-    console.info('[queens][perf] menu:startCampaign:error', {
-      elapsedMs: Math.round(performance.now() - start),
-      error: error instanceof Error ? error.message : String(error),
-    });
     throw error;
   }
 }
