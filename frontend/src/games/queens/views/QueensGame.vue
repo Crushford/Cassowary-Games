@@ -33,14 +33,11 @@
     />
 
     <QueensHintToast
-      v-if="
-        !queensStore.isTutorialMode &&
-        !queensStore.errorMessage &&
-        queensStore.hintMessage
-      "
+      v-if="!queensStore.isTutorialMode && !queensStore.errorMessage && queensStore.hintMessage"
       id="hint-message"
       :message="queensStore.hintMessage"
       :step="queensStore.hintStep"
+      @dismiss="queensStore.clearHintState()"
     />
 
     <!-- Tutorial Overlay -->
@@ -52,7 +49,10 @@
     <QueensCampaignIntroModal
       :is-visible="queensStore.showCampaignIntroModal"
       :level-index="queensStore.currentCampaignBucket?.levelIndex ?? 1"
-      :size-key="queensStore.currentCampaignBucket?.sizeKey ?? `${queensStore.gridSize}x${queensStore.gridSize}`"
+      :size-key="
+        queensStore.currentCampaignBucket?.sizeKey ??
+        `${queensStore.gridSize}x${queensStore.gridSize}`
+      "
       :difficulty="queensStore.currentCampaignBucket?.difficulty ?? 'tutorial'"
       @close="queensStore.closeCampaignIntroModal()"
     />
@@ -540,6 +540,16 @@ function handleHint() {
   queensStore.requestHint();
 }
 
+function handleGlobalHintDismiss(event: PointerEvent): void {
+  if (!queensStore.hintMessage) return;
+
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+  if (target.closest('[data-hint-toast="true"]')) return;
+
+  queensStore.clearHintState();
+}
+
 function initializeTutorialSteps(levelName: string) {
   // Get solution queens for the current puzzle
   const solutionQueens = queensStore.solutionQueenPositions;
@@ -663,6 +673,7 @@ function initializeTutorialSteps(levelName: string) {
 }
 
 onMounted(async () => {
+  document.addEventListener('pointerdown', handleGlobalHintDismiss, true);
   await loadPuzzleFromRoute();
 });
 
@@ -685,6 +696,7 @@ watch(
 
 // Cleanup speed mode timer, rotate mode, and error checking on unmount
 onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', handleGlobalHintDismiss, true);
   if (queensStore.isSpeedMode) {
     speedModeStore.end();
   }

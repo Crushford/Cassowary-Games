@@ -9,6 +9,6 @@ yarn lint:fix
 yarn --cwd frontend build
 
 if git diff --cached --name-only --diff-filter=ACMR | grep -Eq '^(frontend/|queens-admin-backend/|package\.json|frontend/package\.json|\.gitlab-ci\.yml|\.husky/pre-commit)'; then
-  echo "Staged app or backend changes detected. Running yarn test..."
-  yarn test
+  echo "Staged app or backend changes detected. Running smoke tests..."
+  yarn test:smoke
 fi

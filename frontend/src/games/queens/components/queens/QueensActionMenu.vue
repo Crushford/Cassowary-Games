@@ -48,7 +48,9 @@ const containerClass = computed(() => {
   if (props.compact) {
     return queensStore.isCampaignMode ? 'grid grid-cols-3 gap-2' : 'grid grid-cols-4 gap-2';
   }
-  return queensStore.isCampaignMode ? 'grid grid-cols-1 gap-2 sm:grid-cols-3' : 'grid grid-cols-2 gap-2 sm:grid-cols-4';
+  return queensStore.isCampaignMode
+    ? 'grid grid-cols-1 gap-2 sm:grid-cols-3'
+    : 'grid grid-cols-2 gap-2 sm:grid-cols-4';
 });
 
 const nextActionLabel = computed(() => {
@@ -58,7 +60,9 @@ const nextActionLabel = computed(() => {
   if (queensStore.hasPassedCurrentCampaignLevel && !queensStore.nextCampaignBucket) {
     return 'Story Map';
   }
-  return queensStore.hasPassedCurrentCampaignLevel ? 'Next Level' : 'Try Again';
+  return queensStore.hasPassedCurrentCampaignLevel
+    ? 'Next Level'
+    : 'Load a New Puzzle in This Level';
 });
 
 defineOptions({ name: 'QueensActionMenu' });

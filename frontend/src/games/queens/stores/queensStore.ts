@@ -498,7 +498,10 @@ function positionsContainPosition(positions: Pos[], target: Pos): boolean {
   return positions.some((position) => position.row === target.row && position.col === target.col);
 }
 
-function narrowPatternEvidenceCells(step: QueensSolverStep, output: Pos): Pos[] | null {
+function narrowPatternMatch(
+  step: QueensSolverStep,
+  output: Pos
+): { evidenceCells: Pos[]; outputCells: Pos[] } | null {
   if (!step.patternPreview) {
     return null;
   }
@@ -537,7 +540,10 @@ function narrowPatternEvidenceCells(step: QueensSolverStep, output: Pos): Pos[] 
     );
 
     if (activeMatches && outputsMatch) {
-      return translatedActive;
+      return {
+        evidenceCells: translatedActive,
+        outputCells: translatedOutputs,
+      };
     }
   }
 
@@ -555,13 +561,20 @@ function narrowInteractiveHintStep(step: QueensSolverStep): QueensSolverStep {
   }
 
   const firstOutput = { row: firstChange.row, col: firstChange.col };
-  const narrowedEvidenceCells = narrowPatternEvidenceCells(step, firstOutput);
+  const narrowedPatternMatch = narrowPatternMatch(step, firstOutput);
+  if (!narrowedPatternMatch) {
+    return step;
+  }
+
+  const narrowedOutputSet = new Set(
+    narrowedPatternMatch.outputCells.map((cell) => `${cell.row},${cell.col}`)
+  );
 
   return {
     ...step,
-    evidenceCells: narrowedEvidenceCells ?? step.evidenceCells,
-    outputCells: [firstOutput],
-    changes: [firstChange],
+    evidenceCells: narrowedPatternMatch.evidenceCells,
+    outputCells: narrowedPatternMatch.outputCells,
+    changes: step.changes.filter((change) => narrowedOutputSet.has(`${change.row},${change.col}`)),
   };
 }
 
@@ -1376,7 +1389,7 @@ export const useQueensStore = defineStore('queens', {
       }
     },
 
-    showHint(step: QueensSolverStep | null, message: string, durationMs: number = 4200) {
+    showHint(step: QueensSolverStep | null, message: string, durationMs: number | null = null) {
       this.clearHintState();
       this.hintStep = step;
       this.hintMessage = message;
@@ -1388,9 +1401,11 @@ export const useQueensStore = defineStore('queens', {
           step.outputCells.map((cell) => `${cell.row},${cell.col}`)
         );
       }
-      this.hintDisplayTimeout = window.setTimeout(() => {
-        this.clearHintState();
-      }, durationMs);
+      if (durationMs !== null) {
+        this.hintDisplayTimeout = window.setTimeout(() => {
+          this.clearHintState();
+        }, durationMs);
+      }
     },
 
     applyResolvedSolverStep(
