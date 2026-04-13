@@ -1,0 +1,21 @@
+{
+  "9x9" : [ {
+    "id" : "fecd912b-4876-44a9-bec7-efbfe7115500",
+    "layout" : "BBBBBBBBBBBBBBBBBITBBBBBBIITTBBBBBOOKKBBBBBOAYKKKPPPAAYYYYPGPAAYYYYGGGAAYYYYGAAAA",
+    "queens" : "...Q.............QQ...............Q..Q............Q.....Q..........Q..........Q..",
+    "orthogonalMinDistance" : 9,
+    "difficulty" : "easy"
+  }, {
+    "id" : "c19340d4-f358-4421-a9d2-f6596dde9610",
+    "layout" : "001111222301111112311141122331144555661114447666187477666187777666188777666666777",
+    "queens" : ".Q...............QQ...............Q......Q......Q...........Q......Q......Q......",
+    "orthogonalMinDistance" : 9,
+    "difficulty" : "easy"
+  }, {
+    "id" : "7ab16d6b-a8e3-4c66-b296-9864abf064bc",
+    "layout" : "000000000110002233110000234150504444150566474555566477555666666855666666885666666",
+    "queens" : "...Q..........Q..........Q.Q..............Q..........Q..Q..........Q.....Q.......",
+    "orthogonalMinDistance" : 9,
+    "difficulty" : "easy"
+  } ]
+}

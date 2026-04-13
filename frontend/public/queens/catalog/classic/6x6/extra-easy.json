@@ -1,0 +1,1023 @@
+{
+  "6x6" : [ {
+    "id" : "0ae5d857-2a19-4a64-9ea9-bb8c008cf502",
+    "layout" : "BBBBBBIIIBBBITTBBBTTTOOOTTTKKKPPPPPP",
+    "queens" : "....Q.Q.......Q........Q...Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "ac068092-b084-450e-b95b-e6436c2f56ee",
+    "layout" : "KKIOBBKIIOBTKIOOBTKIOOBTKKOPPTKKOPPT",
+    "queens" : "....Q..Q.........Q..Q...Q........Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "7fb25e49-312f-45b6-a418-935bc3d3df77",
+    "layout" : "BOOIITBOIIITBOIITTBOITTPBOIKKPBOIIKP",
+    "queens" : "Q.......Q.......Q..Q.......Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "ed1a5e91-6684-4fdb-b40d-c9ebe3d1ef70",
+    "layout" : "TBBOIKTTBOIKTTBOIKTTPOKKTTPOKKTTPPPK",
+    "queens" : ".Q........Q.Q........Q.......Q..Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "1df8fad2-c2fb-43f9-8f6b-57bad778ecad",
+    "layout" : "BBBBBBBIIBBTIITTTTTTTTTOKKKOOOKPPPPP",
+    "queens" : "....Q..Q.......Q.......QQ.......Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "b0241ba4-0547-4684-ba62-7a366d96d477",
+    "layout" : "AAAAAAITAAATITTTTTIIIOOOKKKKKOPPPKKK",
+    "queens" : "....Q.Q.......Q........Q...Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "741087ea-37bc-49da-a6c2-274da17d1f11",
+    "layout" : "IIIBBBIIIIIITTTIIITTTOOOTTTTKKPPPKKK",
+    "queens" : "....Q...Q...Q........Q.......Q.Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "2323a18e-8af3-4e64-b00f-99b9ff462197",
+    "layout" : "KTBBOIKTBBOIKTTBOIKKTOOPKKTOPPKKTOPP",
+    "queens" : "..Q........Q.Q.......Q..Q.........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "10f2192f-d909-45c6-a7f6-d979086d67b2",
+    "layout" : "IIBBBBIITTTTTTTOOOKKOOOOPKKKKKPPPKKK",
+    "queens" : "....Q.Q.......Q........Q...Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "3d2f911c-eddb-48ff-abd3-e85b9575b471",
+    "layout" : "BBBBBBBIBTBBIITTBBOOTKPBOKKKPBKKPPPB",
+    "queens" : ".....Q.Q.......Q..Q.......Q.......Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "049abf31-9abe-460e-8384-9824b44f2f7b",
+    "layout" : "BBBBBBIBBBBBIIITTTOOOOTTKKKOOOKKKPPP",
+    "queens" : "..Q...Q..........Q...Q...Q........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "3bfe56ea-9e20-437a-8c50-d28c40bb8cb8",
+    "layout" : "IBBTOOIBBTOOIBTTOOKKTPOOKKTPOOKKTPPO",
+    "queens" : "..Q...Q........Q.......Q.Q........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "8604c803-8ebd-423a-bfc4-523ffb3b29cd",
+    "layout" : "TBBOIKTTBOIKTTBOIKTTPOOKTTPOOKTTPPKK",
+    "queens" : ".Q........Q.Q........Q.......Q..Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "ed50c5a3-1b2d-4002-a079-83998013ce86",
+    "layout" : "IIBBTTOIBTTTOIBTTTOKBBBTOKKPPTOKPPPT",
+    "queens" : "...Q...Q.........QQ.......Q.......Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "8efa0349-1ddf-4e66-9259-3fb6922e2e22",
+    "layout" : "BIIIOPBTIIOPBTIOOPTTKOOPTKKOOPTKOOPP",
+    "queens" : "Q........Q...Q........Q...Q........Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "9b4f28e5-1ece-4f0d-9105-357e1c161e30",
+    "layout" : "BBBIIIIIIIITOOOTTTOKKKKKKKKKKKKKKPPP",
+    "queens" : ".Q.......Q.......QQ.......Q.......Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "16cd40ba-4982-4fe0-8a60-e29c0f07beca",
+    "layout" : "BBBBBBIBBBBBIIITTTOOOOOTKKKOOOKKKPPP",
+    "queens" : "..Q...Q..........Q...Q...Q........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "97b429ef-2c2f-40f4-a944-213e302c99f2",
+    "layout" : "BBBBBBBBBTIBBBTTIIBPTKOOBPKKKOBPPPKK",
+    "queens" : "Q.........Q...Q........Q...Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "dcb18aad-95f8-406a-a95f-5c58660676ae",
+    "layout" : "BBBBBBBBBTIBBBTTIIBPKTOOBPKKKOBPPPKK",
+    "queens" : "Q.........Q...Q........Q...Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "9a9f3b06-d74f-44a4-b498-a656b8ec9c61",
+    "layout" : "TBBIIOTBBIIOTTBIIOKTPIOOKTPIOOKTPPOO",
+    "queens" : "..Q.......Q..Q.........QQ........Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "4403f0e6-9654-4b6e-9e52-8c439eae96e6",
+    "layout" : "KIIPBBKIIPPBKOOOPTKKOOPTKKOOPTKKOPPT",
+    "queens" : "....Q..Q.........Q..Q...Q........Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "d5055391-0caf-4d9e-ba14-9e6b937f6fa4",
+    "layout" : "IIOBBTIIOBTTKIOBTTKOOPTTKOOPTTKOPPTT",
+    "queens" : "....Q..Q.........Q..Q...Q........Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "40dfd7d8-6c6e-4bac-9e8c-efc51519f5e8",
+    "layout" : "BBBBBBIBBBBBIIITTBOOITTTOOKKPTOOOKPP",
+    "queens" : "..Q...Q.........Q..Q.......Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "cf45cfe5-3600-47a8-b9d7-58b1b85092f2",
+    "layout" : "TTBBIOTTTBIOTTPBIOTTPBIOTTPKOOTPPKKO",
+    "queens" : "..Q.......Q.Q..........Q...Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "d7bbbf95-590a-4813-bd1f-43e84c6aead0",
+    "layout" : "BBBOIIBBOOOIBTOOOITTOOOPKKOOOPKOOOPP",
+    "queens" : "..Q........Q.Q.......Q..Q.........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "31f15934-a06b-4632-8633-8b02fd4d00cb",
+    "layout" : "IOOBBTIIOBTTKIOBTTKOOPTTKOOPTTKOPPTT",
+    "queens" : "....Q..Q.........Q..Q...Q........Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "e3d61b7c-ffd8-4d4b-a035-44d35d6c7688",
+    "layout" : "BBBBBBBIIIBBOIIITBOOIKTTOOIKPTOOKKPP",
+    "queens" : "Q.......Q.......Q..Q.......Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "8bc71033-ca63-484e-8106-f55c5257fe63",
+    "layout" : "BBBBBBIBBBBBIITTTTOOKTTTPOKKPPPPPPPP",
+    "queens" : "..Q...Q.........Q..Q.......Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "762a35ef-d121-410e-992b-042301e7babc",
+    "layout" : "BBBBBBBIIBBBIIITTTTTTTOOTTKKOOPPPKKK",
+    "queens" : "....Q..Q.......Q.......Q..Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "bdc54153-1212-40c0-a462-c05f33f90bdc",
+    "layout" : "BBBBBBIBBBBBIIBTTTOOOOOTKKOOOOKKPPPP",
+    "queens" : "..Q...Q..........Q...Q...Q........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "329e4ce8-43b6-4f54-b57f-f027ec9d0d01",
+    "layout" : "BBBBBBBBBBBITTTBIITOOOOOOOOKKKPPPKKK",
+    "queens" : "...Q.......QQ.......Q.......Q..Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "c5b888df-bbff-4803-8858-25c4925c97b9",
+    "layout" : "IIBBBBTITTTTTTTTTTTTOOOOTPKOOOPPKKOO",
+    "queens" : "....Q..Q.......Q.......Q..Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "94e0ef9d-db73-442a-a00d-3529a6fb75ad",
+    "layout" : "IIBBBBOITTTTOOTTTTOOOOOOOPKOOOPPKKOO",
+    "queens" : "....Q..Q.......Q.......Q..Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "4770ab67-2b64-4e96-a5df-3d11cc717eaf",
+    "layout" : "BBBBBBIIIIBBIIIITBOIIITTOOIIIKPPPPKK",
+    "queens" : "...Q...Q........Q.Q..........Q..Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "280adc34-1c84-43fb-be26-2490311d32ed",
+    "layout" : "BBIITTTBITTTTTTTTTTTTOOOTKOOOOKKPPPP",
+    "queens" : "Q.......Q........Q...Q...Q........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "3b5ae93c-efae-4148-b5db-9ac585b3ef35",
+    "layout" : "BTTTTTBBTIIITTTTTTTTTKTOPTKKOOPPKOOO",
+    "queens" : "Q.........Q...Q........Q...Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "78d2def1-2434-4411-a59a-4fca0905d248",
+    "layout" : "ITTAAOIITAOOTTTOOPTKOOOPTKOPOPTKOPPP",
+    "queens" : "...Q..Q.......Q.......Q..Q.........Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "8ac57ff1-7f7c-4960-8667-d5735ddaa91a",
+    "layout" : "IIIIBBIITTTBTTTTTTTOOOTTOOOOTKPPPPKK",
+    "queens" : "....Q.Q........Q...Q.........Q..Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "1a5187e2-2cda-4b71-bd1e-1781a379fc21",
+    "layout" : "BBITTTOBIITTOOTTTTOOOOOOKOOOOOKKPPPP",
+    "queens" : ".Q.......Q.......Q..Q...Q.........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "6f46d6f9-adbe-44ab-ae32-b1c6f28449bb",
+    "layout" : "BBBBBBIBBBBBIIITTTOOOOOTOKKOOOKKKPPP",
+    "queens" : "..Q...Q..........Q...Q...Q........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "e5d10769-4af1-4cc7-9a84-48b5af5d5879",
+    "layout" : "TBBOIITTBOOITTBOOIKTPOOOKTPOOOKTPPOO",
+    "queens" : "..Q........Q.Q........Q.Q........Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "f9fbfabc-9a89-4b9d-a7bc-841a020490c3",
+    "layout" : "BBITTTTBIITTTTTTTTTTTOOTTKOOOOKKPPPP",
+    "queens" : "Q.......Q........Q...Q...Q........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "d2977141-ed04-45cf-ba29-473d50e5fda4",
+    "layout" : "BBBBBBIIBTBBIKTTOOKKOOOOKPPPPPPPPPPP",
+    "queens" : "....Q..Q.......Q.......QQ.......Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "cef32746-577a-48e3-a18f-4bb204f69a5a",
+    "layout" : "BBBBBBBTTIBBTTIIBBTOOOOOOOOOKKPPPKKK",
+    "queens" : ".....Q...Q..Q.......Q.......Q..Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "a19359fc-79a7-4e11-a19b-a614ff034033",
+    "layout" : "TTBBOITTTBOITTKBOITKKPOOTKKPOOTKKPPO",
+    "queens" : "..Q........QQ.........Q..Q.......Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "9527db4e-0314-40e9-a3e5-1d6b917b4121",
+    "layout" : "BBBBBBBIIBBBIITTTTTTTTOOTKKKKOPPPKKK",
+    "queens" : "....Q..Q.......Q.......Q..Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "f267c52a-1248-4e6c-b55d-91fd79566e7d",
+    "layout" : "TTBBIITTTBIOTTPBIOTTPBIOTTPKOOTPPKKO",
+    "queens" : "..Q.......Q.Q..........Q...Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "e88a14af-eab3-429b-b25d-2042c5e9afcd",
+    "layout" : "IIBBTTOIBTTTOIBTTTOOBBBTOKKPPTOKPPPT",
+    "queens" : "...Q...Q.........QQ.......Q.......Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "3f69b326-e404-4ded-be7c-3f0b7e858b4c",
+    "layout" : "BBBBBBBIIBBBIITTTTTTTTOOTKKKOOPPPKKK",
+    "queens" : "....Q..Q.......Q.......Q..Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "af396c66-e459-4162-a4ec-e7e48a32a5c4",
+    "layout" : "BBBBBBBITBBBIITTBBOOKKPBOKKPPBOKPPPB",
+    "queens" : ".....Q.Q.......Q..Q.......Q.......Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "4d4f9c09-e92a-4c09-a050-279cffbdd858",
+    "layout" : "BBBBBBBBBIIBTTIIIITOOOOITPKKOOPPKOOO",
+    "queens" : ".....Q...Q...Q........Q...Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "5451bc40-7472-498a-8386-b508314dbf37",
+    "layout" : "BBBBBBBBBTIBBBTTIIBPKKOOBPPKKOBPPPKK",
+    "queens" : "Q.........Q...Q........Q...Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "b52cb049-6762-4fe8-8a63-6c5dfaa4d293",
+    "layout" : "BBBBBBBBIIIBBTIIIITTOOOOTPKOOOPPKKOO",
+    "queens" : ".....Q...Q...Q........Q...Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "693ad72c-df78-4bca-930a-8c2cd570e2c4",
+    "layout" : "BBOOIIBTOOIOTTOOOOOOOKOKPPKKKKPPPPPP",
+    "queens" : ".Q........Q.Q.......Q........Q...Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "bbb91415-a350-47a3-8907-880350983625",
+    "layout" : "BBBBBBIBBTBBIITTTTOOKTTTPOKKPPPPPPPP",
+    "queens" : "..Q...Q.........Q..Q.......Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "cee09a38-b8bd-47dc-89cc-7b94f2986f9d",
+    "layout" : "IBBBTTIIBBTTOOTTTOOOOTTOKOOOOOKKPPPP",
+    "queens" : "...Q...Q........Q...Q...Q..........Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "327d187d-1618-402b-a9f5-3e1ded415e04",
+    "layout" : "IIOOOBIIIIOBITIOOBTTOOOOTPKOOOPPKKOO",
+    "queens" : ".....Q...Q...Q........Q...Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "85238a31-6487-47b5-a828-41263db27c25",
+    "layout" : "BBIIIITBITTTTTTTTTTTTOOOTKOOOOKKPPPP",
+    "queens" : "Q.......Q........Q...Q...Q........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "7d347b45-de12-4a54-a9e1-bcc1b9f37929",
+    "layout" : "IIBBTTOIBTTTOOTTTOOOOOTOKOOOOOKKPPPP",
+    "queens" : "...Q...Q........Q...Q...Q..........Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "51b68bad-ad94-45d4-afe7-647e84bc8926",
+    "layout" : "IIAATTOIATTTOOTTTOOOOTTOKOOOOOKKPPPP",
+    "queens" : "...Q...Q........Q...Q...Q..........Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "9a197842-410d-42a1-b1cc-1ac9ff7e5d88",
+    "layout" : "IIBBTTIBBTTTOOOKTTPOOKTTPOOKKTPPOOKT",
+    "queens" : "...Q..Q..........Q..Q.......Q..Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "ddafc9a6-0dba-4447-9dce-99c4cf326414",
+    "layout" : "IIIBBBIIIIIBTTTIIITOOOIIOOOOKIPPPKKK",
+    "queens" : ".....Q...Q..Q.......Q.......Q..Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "54bfe084-43e3-4369-bb94-5ed30faacb36",
+    "layout" : "BBBBBBIITBBBOITTBBOOKKPBOKKPPBOKPPPB",
+    "queens" : ".....Q.Q.......Q..Q.......Q.......Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "56949c5d-c451-41c5-928a-ac0fe7605190",
+    "layout" : "BBIITTOBITTTOOTTTTPOKKKKPPPKKPPPPPPP",
+    "queens" : "Q.......Q.......Q..Q.......Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "cd446f11-c181-4e00-96a0-fd180565a2cc",
+    "layout" : "BBTTTTBTTIIIOTTKKKOOOKKKKKKKKPKKKPPP",
+    "queens" : ".Q........Q...Q...Q........Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "2ef8b3d0-2760-40ea-b83a-4d6372b0650d",
+    "layout" : "BBBBBBBIBTTTIIBTTTKIIOTTKKOOTTPPPOOO",
+    "queens" : "....Q..Q.........Q...Q..Q.......Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "93909f6e-32c6-433b-8a0d-0f8d169157d6",
+    "layout" : "BIIPPPBBIIPPTTKOPPTKKOOPKKKOPPKKKOPP",
+    "queens" : "Q........Q...Q........Q...Q........Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "310c8fb8-1025-48fc-bc1e-fbba42d632a7",
+    "layout" : "BBTTIOBTTIIOTTTIOOTTTIOOPPKKOOPKKOOO",
+    "queens" : ".Q........Q...Q........Q...Q..Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "ec9536f7-5c00-4ff9-afd0-ccf2924413e0",
+    "layout" : "PPPIIBPPIIBBPPOOTTPOOOOTPOKKOTPPPKOT",
+    "queens" : ".....Q..Q.......Q..Q.......Q..Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "27f9e598-dffc-4f2b-b6fb-0e1021b33ec5",
+    "layout" : "IIAATTIAATTTOOOTTTPOOOKTPOOOKTPPOKKT",
+    "queens" : "...Q..Q..........Q..Q.......Q..Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "a06ec1c1-d79e-429d-8cce-16bcaa2d5604",
+    "layout" : "001123001223001223400225400255440005",
+    "queens" : "..Q........Q...Q...Q........Q.Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "3852548f-ae84-4c3e-8ffb-0a4501dbea7e",
+    "layout" : "000122011112013313333333333334555344",
+    "queens" : "....Q...Q...Q........Q.......Q.Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "f58b0577-d707-4205-8d68-266bcecb81ed",
+    "layout" : "000000111022333332433433444435444455",
+    "queens" : "...Q...Q.........Q..Q...Q.........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "4f7cbbd1-89bd-4f3f-931a-ccd0e9eb8aa8",
+    "layout" : "001222001112000333333333333334555444",
+    "queens" : "....Q...Q...Q........Q.......Q.Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "753a78c0-60b0-49ce-a912-c865735c7f70",
+    "layout" : "011222001122344522344522344552334452",
+    "queens" : "Q........Q.......Q..Q.......Q..Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "3965cdba-6cc6-4c0c-86cb-408ee29add96",
+    "layout" : "000000110000220330222220422222445552",
+    "queens" : ".....Q.Q........Q...Q...Q........Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "0cbc8141-4a24-4122-a2ce-a8bc38b2b11b",
+    "layout" : "000011000011230041230041222041222555",
+    "queens" : "..Q........Q.Q........Q.Q........Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "6209691f-00f7-47b9-93c4-668c9e70de9b",
+    "layout" : "000001222201222221222333425533444433",
+    "queens" : "...Q.......Q.Q........Q...Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "96d3f6cf-4aa0-42cd-ab63-9a331ef9b5a6",
+    "layout" : "011112031222032222332222433552444442",
+    "queens" : "...Q..Q..........Q.Q........Q...Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "2427c3e9-312c-45d8-86b3-0fec681c7f28",
+    "layout" : "011222022222022344055343000333000003",
+    "queens" : ".Q.......Q.......Q..Q.......Q.Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "fe2ba53f-211c-4022-9ed4-d85a0a58a66a",
+    "layout" : "001002001002000003400033400033445555",
+    "queens" : "..Q........Q.Q........Q.Q........Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "5bc7de32-ae2a-4ddd-a00c-906cb8c6ab91",
+    "layout" : "000112300042330042330042000000550000",
+    "queens" : "...Q.......Q.Q........Q...Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "df57758c-679d-4ba6-825d-b541dca7bc8d",
+    "layout" : "012333012333012344111344111115111115",
+    "queens" : "...Q..Q.......Q.......Q..Q.........Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "a4e4f02f-7d22-4a81-ab57-c62d825de337",
+    "layout" : "000011020111023111223111224445224555",
+    "queens" : ".Q........Q...Q...Q........Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "3650f5fd-99e9-4d80-9289-d8f7d244beca",
+    "layout" : "001223001223002200400000405550444440",
+    "queens" : "..Q........Q...Q...Q........Q.Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "eb03d2e3-ef8a-4151-8db5-c71229ed1a15",
+    "layout" : "001111221111322144331114333354333354",
+    "queens" : "Q........Q...Q.........Q..Q.......Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "7f154c1f-271b-4eb5-9cdf-9ba33b8ce7a7",
+    "layout" : "011222000022000222000234003334055333",
+    "queens" : "..Q.......Q.Q..........Q...Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "a63a5e14-fd4d-4365-af11-d6fccdc2afc3",
+    "layout" : "012233012233022233222233222435222445",
+    "queens" : ".Q........Q.Q.......Q........Q...Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "aeee9ee4-15fd-4d13-adf8-63cd512beaa4",
+    "layout" : "001111222111222222333222333445333555",
+    "queens" : ".Q........Q...Q...Q........Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "982c5d00-7eb7-404d-98e9-ddb6638307c9",
+    "layout" : "001123001223001243011143511113555133",
+    "queens" : ".....Q...Q...Q........Q...Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "835eda9b-5ae0-4dd6-aab9-f088a6004897",
+    "layout" : "011112011322011322011122441152411152",
+    "queens" : "..Q...Q........Q.......Q.Q........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "b09717b0-66a5-43fa-a608-353b7874b028",
+    "layout" : "000011000012003112033111044115445555",
+    "queens" : "Q..........Q..Q.......Q..Q.......Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "9edd8c61-4148-4386-9d44-09acb2119b76",
+    "layout" : "000122000111111111113144333133553333",
+    "queens" : "....Q..Q.......Q.......Q..Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "cca3b5c0-18ec-4e97-b729-468e18c084ca",
+    "layout" : "000011220311223334225334225334222333",
+    "queens" : ".Q........Q.Q.......Q........Q...Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "b998bfb4-bb77-4cd2-953d-c64fd087b103",
+    "layout" : "000112330022333322332222433522433552",
+    "queens" : "....Q...Q........Q.Q.......Q..Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "2bf3771f-94b3-4b09-b63e-e702146bc16c",
+    "layout" : "000112003312033422033422053322053333",
+    "queens" : "....Q...Q...Q........Q.......Q.Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "4c3b4599-098c-4841-b0dc-53c45b6af252",
+    "layout" : "000122001133000330450300450000555000",
+    "queens" : ".....Q..Q.......Q.Q........Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "9e471013-87f1-4227-aeb4-b041a3f004c4",
+    "layout" : "001112001222002222332442333332553333",
+    "queens" : "...Q.......Q.Q........Q...Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "287041bd-3b97-4b8c-84cb-8c6a08791173",
+    "layout" : "000000110022113000333000334444555444",
+    "queens" : "...Q.......QQ.......Q.......Q..Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "504927c1-93ac-4063-a6df-472fde164d21",
+    "layout" : "000111220011211111331444444444444455",
+    "queens" : "..Q...Q.........Q..Q.......Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "25535f37-c0bb-4023-b55b-1f0b739d08da",
+    "layout" : "011111012221111111113331114455155555",
+    "queens" : "Q........Q...Q........Q...Q........Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "9fa31833-f143-4dc7-afa3-399773692407",
+    "layout" : "000001220001223301200000444000445500",
+    "queens" : ".....QQ.......Q.......Q..Q.......Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "0fc8f6e5-2b5c-42ac-ab8b-01debb7ac8a5",
+    "layout" : "000000000122333122331144331544331544",
+    "queens" : ".Q........Q.Q.......Q........Q...Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "b794b8be-7156-4ecc-92eb-2437fd63f97a",
+    "layout" : "001111000012301112333312444222455222",
+    "queens" : "....Q..Q.........Q...Q..Q.......Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "17935ef8-77cf-4e0c-a835-9df8a7b2b211",
+    "layout" : "000000110022110023114223114553115555",
+    "queens" : ".Q........Q.Q.......Q........Q...Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "b583379b-0d65-471b-beed-bdd8ea145a2b",
+    "layout" : "000000000111022211332244222244222555",
+    "queens" : ".Q........Q...Q...Q..........Q...Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "053125b8-091a-4c4b-9a7b-af6242ad379a",
+    "layout" : "012222012222000022003444033554035544",
+    "queens" : ".Q........Q.Q.......Q........Q...Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "4430bd4c-9005-4f06-a9d0-763c8bca3461",
+    "layout" : "012333012233113333144433444335444335",
+    "queens" : "Q........Q...Q........Q...Q........Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "de54aeab-b73a-4540-a903-d246bcc30a21",
+    "layout" : "011111001111221314333314333354333354",
+    "queens" : "Q........Q...Q.........Q..Q.......Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "1dd07149-a2c1-474b-b07e-78a3a9e5bbba",
+    "layout" : "001223001223400222440022544022544022",
+    "queens" : ".....Q..Q.......Q..Q.......Q..Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "1f122a31-627c-4eae-b58a-5acf72b4843a",
+    "layout" : "001111111112113112113111144511144511",
+    "queens" : "Q..........Q..Q.......Q..Q.......Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "694ca713-a441-4bc5-a7c7-634fbc4223e6",
+    "layout" : "000001222221333331433344435544444444",
+    "queens" : "....Q...Q........Q.Q.......Q..Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "9c3ed4b5-f8a6-403c-9179-b60d51a2a5ad",
+    "layout" : "000111221111111111334441555541555544",
+    "queens" : "..Q...Q.........Q..Q.......Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "cbb22ec4-16b2-40b9-9ae0-882d5a5159e5",
+    "layout" : "001122002223003333044343004443055444",
+    "queens" : "..Q.......Q.Q..........Q...Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "d9953267-a561-47a8-8248-aeb8c0dde128",
+    "layout" : "012222012232002232222222222455222455",
+    "queens" : ".Q........Q.Q.......Q........Q...Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "4ddeea64-f919-47bd-96ad-2922f1607f20",
+    "layout" : "000000102000102300000300044005000005",
+    "queens" : "....Q...Q...Q........Q...Q.........Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "68ac43ed-12ae-4c35-b910-46f0ad82a971",
+    "layout" : "001222221222222223242223242233222255",
+    "queens" : "Q.......Q........Q...Q...Q........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "45bdea77-509f-42ef-851d-666bc762a6ba",
+    "layout" : "001122002222032242032242022222222255",
+    "queens" : "..Q...Q.........Q..Q.......Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "2e8236b9-d57b-411a-ab4a-66011d6f08a1",
+    "layout" : "000000000112331112111144111111551111",
+    "queens" : "...Q.......Q.Q........Q...Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "4959bd9b-daaa-4616-9dd4-e9880cfac9b6",
+    "layout" : "011000000020000320000300044005000005",
+    "queens" : "..Q.......Q.Q........Q...Q.........Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "2b78c807-9669-4702-82df-0fcc1e3a05d7",
+    "layout" : "000111001111002213411113444111551111",
+    "queens" : "....Q..Q.......Q.......Q..Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "0c797b52-c706-443b-868e-c0d71ac0f37d",
+    "layout" : "000112002222003224003224055522055552",
+    "queens" : "...Q..Q..........Q..Q.......Q..Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "a3a63a83-aa22-447e-9690-952e26109704",
+    "layout" : "001112000022000000000330405500400000",
+    "queens" : "...Q.......Q.Q........Q...Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "78079502-ece9-47d1-a5f2-867e028d60fb",
+    "layout" : "011222000022300044333444333355333333",
+    "queens" : "..Q.......Q..Q.......Q.......QQ.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "30a7f444-6dd0-4d64-9144-7ef3d8043573",
+    "layout" : "001111111111111122133111114155114111",
+    "queens" : "Q........Q.......Q.Q........Q...Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "976be968-9858-4af2-9bfa-812418f09c2c",
+    "layout" : "000011020330020000004050004050000555",
+    "queens" : ".....Q...Q...Q........Q...Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "b5e11c30-1c3a-45f1-88dd-b6da1e26fe19",
+    "layout" : "000011002000332200222200222244552222",
+    "queens" : ".....Q...Q..Q.......Q.......Q..Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "a1b7da3d-8d60-4f7d-8d44-6aabe862820d",
+    "layout" : "000110022000000000300440305555355555",
+    "queens" : "....Q..Q.........Q...Q..Q.......Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "52e015fd-bab4-4dde-975e-2355099cf872",
+    "layout" : "001211111213111113111111441111411155",
+    "queens" : ".Q.......Q.......Q..Q...Q.........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "35fd4173-ffd1-4e6e-b32e-1086f2875966",
+    "layout" : "000012000112000133441111111111155111",
+    "queens" : ".....Q..Q.......Q.Q........Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "16c8c295-42ca-47c6-aef8-0de3d6464044",
+    "layout" : "001112001112111133111111441511111511",
+    "queens" : ".....Q.Q........Q...Q...Q........Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "4c0eee59-e372-4237-95ba-6872ef57a44a",
+    "layout" : "001110002210300000300004005554044444",
+    "queens" : "....Q...Q........QQ........Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "c91a0df4-6fc6-47a3-a659-e8caa12ed0cc",
+    "layout" : "010000010222000000300000300445000555",
+    "queens" : ".Q........Q...Q...Q........Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "2c7e946a-207b-44a9-a665-4910eef4fb89",
+    "layout" : "001111203111203114202214222211255111",
+    "queens" : "Q.........Q...Q........Q...Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "e26c11d2-8c02-4dac-ba6a-086268661cc6",
+    "layout" : "000122300100300000004055004555000555",
+    "queens" : ".....Q...Q..Q.......Q.......Q..Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "2046cdde-be3e-4390-bfa8-22d23f2389b9",
+    "layout" : "000000011000112334112134111144551444",
+    "queens" : "...Q...Q........Q...Q........QQ.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "49500203-10ef-4a9b-ba8b-b2669ded1a96",
+    "layout" : "001000001203000203000000400050400050",
+    "queens" : "..Q........Q...Q...Q........Q.Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "9daecfeb-93b4-4ad9-bd28-6cfa70bac13e",
+    "layout" : "011222022222022233044222000255000000",
+    "queens" : ".Q.......Q.......Q..Q.......Q.Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "38430d49-f861-423b-9b92-4ccc4a1f646d",
+    "layout" : "011111011221331111334151334151333333",
+    "queens" : "Q........Q.......Q..Q.......Q..Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "7a601c26-0093-4af6-be94-9c94cb09244a",
+    "layout" : "011002000002000000340050340050333000",
+    "queens" : "..Q........Q...Q...Q........Q.Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "95dc703c-9c9d-4ead-b7e3-0f200632abfd",
+    "layout" : "000122000111330041000044000000550000",
+    "queens" : ".....Q...Q...Q........Q...Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "63872bb9-aed8-4ac5-b31f-5d6f8ae0dd1a",
+    "layout" : "001122300022302222000044000000550000",
+    "queens" : "..Q.......Q.Q..........Q...Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "6a5d8600-7219-4557-a405-aa4b926d569f",
+    "layout" : "001222331222431112441115444415441111",
+    "queens" : "Q........Q...Q.........Q..Q.......Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "ae61108d-97d9-4a14-b506-23f6d26613ae",
+    "layout" : "001112300112301111001111041151041155",
+    "queens" : ".....Q..Q...Q........Q...Q........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "c2e9b2f5-beb5-4e14-b0d3-eb68b78ae734",
+    "layout" : "000111200010200010003000003044000555",
+    "queens" : ".Q........Q.Q.......Q........Q...Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "6d5bed74-7d0b-44d2-bc1d-74a7ac1971e0",
+    "layout" : "001111200031200033000000000440000055",
+    "queens" : "..Q...Q.........Q..Q.......Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "e3a31ced-f984-4e0b-b617-f5e8b34835d4",
+    "layout" : "012222012222112223114233114235144235",
+    "queens" : "Q........Q...Q........Q...Q........Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "c8df309a-393e-4b9b-a83a-09d690261c09",
+    "layout" : "000001002201300000340000445500444400",
+    "queens" : ".....Q..Q.......Q.Q........Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "5308be6b-9a29-460c-839b-f2be1825e582",
+    "layout" : "001112000332400002400002000000055000",
+    "queens" : "..Q.......Q.Q..........Q...Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "b0bf07fb-ed61-4f02-99d7-ca783e75e9fa",
+    "layout" : "000000110000000220330444000554000444",
+    "queens" : "..Q...Q.........Q..Q.......Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "4b34ef77-446c-4216-ba1a-7db21d8f23ff",
+    "layout" : "000001002201000000340500340500333300",
+    "queens" : ".....Q..Q.......Q..Q.......Q..Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "4dd92492-1c32-4397-a471-5f75ddb1da8a",
+    "layout" : "000011200111200111003111003144005554",
+    "queens" : ".Q........Q.Q.......Q........Q...Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "3984affe-5ca8-47f3-867f-34c83a665adf",
+    "layout" : "011000000000000220330000455000444440",
+    "queens" : ".Q.........Q...Q..Q.......Q.......Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "10323de7-9913-4dee-b356-4c71843e8d65",
+    "layout" : "001122033224032224030000000000550000",
+    "queens" : "..Q........Q...Q...Q........Q.Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "de866bfd-c42a-4e85-bf16-d7105df8628f",
+    "layout" : "010000010220000000003300000004555004",
+    "queens" : ".Q........Q.Q........Q.......Q..Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "d070791e-c7fb-4dd5-b4cc-229733b2ef2e",
+    "layout" : "012334012344112345122445122444124444",
+    "queens" : "Q........Q...Q.........Q..Q.......Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "2c6b2fa4-bef8-4da0-af97-adde6705860b",
+    "layout" : "000111221111333111131411131415111115",
+    "queens" : "..Q...Q.........Q..Q.......Q.......Q",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "745e744f-1ff5-4ee9-b5c7-5a181d342324",
+    "layout" : "001111221111222133222122442222222255",
+    "queens" : ".Q.......Q.......Q..Q...Q.........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "1c483390-489a-4ef9-a3fc-72915d9242b6",
+    "layout" : "011000000022000333044335333335333355",
+    "queens" : ".Q........Q.Q.......Q........Q...Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "ab1cc7d2-9e34-4c98-9f2f-3dfc24c8b714",
+    "layout" : "000001002201000000330000000440055000",
+    "queens" : ".....Q..Q.......Q.Q........Q...Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "89e73204-b87c-4c82-ad9f-aee11b12d4aa",
+    "layout" : "000111211133211111111114115114115111",
+    "queens" : ".Q........Q.Q........Q.......Q..Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "8bbdf24f-85d3-47ac-870c-2fe2f785400e",
+    "layout" : "010022010022000000033000000044005555",
+    "queens" : ".Q........Q.Q.......Q........Q...Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "ff56081c-c537-4f22-89e3-b6633ecfe0a7",
+    "layout" : "001233111233111133111111141151141151",
+    "queens" : "Q........Q.......Q..Q.......Q..Q....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "121f0697-9036-4b0e-ba3d-679e61a31673",
+    "layout" : "000111020003220003000044000000550000",
+    "queens" : "...Q.......Q.Q........Q...Q...Q.....",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "80111314-e0dc-4fe0-a031-dc6f2156c56d",
+    "layout" : "001111111111112211134411134441115544",
+    "queens" : "Q..........Q...Q...Q........Q...Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "e2340002-cf07-479f-9b26-a5f075ed15a4",
+    "layout" : "000111000112000112000322443333445555",
+    "queens" : "....Q..Q.........Q...Q..Q.......Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "cba2969d-017e-411b-945b-fa9ff9712626",
+    "layout" : "011111001122301112301112344452345555",
+    "queens" : "...Q...Q.........QQ.......Q.......Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "57de1e26-094e-4511-9f03-a79cd3a524d0",
+    "layout" : "011112001122003425003445003345003345",
+    "queens" : ".Q........Q.Q........Q.......Q..Q...",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "d01f869d-69b8-454d-8bf7-3d316ed816c7",
+    "layout" : "000011222011222013224443224553222553",
+    "queens" : ".Q........Q.Q.......Q........Q...Q..",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  }, {
+    "id" : "dae66b5a-6f10-4038-a24f-cf9d3818686a",
+    "layout" : "011112010132000032440332400355400355",
+    "queens" : "..Q........Q.Q.......Q..Q.........Q.",
+    "orthogonalMinDistance" : 6,
+    "difficulty" : "extra_easy"
+  } ]
+}

@@ -1,0 +1,175 @@
+[ {
+  "sizeKey" : "5x5",
+  "difficulty" : "easy",
+  "orthogonalMinDistances" : [ 3 ],
+  "count" : 38,
+  "path" : "/queens/catalog/extended/5x5/easy.json"
+}, {
+  "sizeKey" : "5x5",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistances" : [ 3 ],
+  "count" : 234,
+  "path" : "/queens/catalog/extended/5x5/extra-easy.json"
+}, {
+  "sizeKey" : "5x5",
+  "difficulty" : "hard",
+  "orthogonalMinDistances" : [ 3 ],
+  "count" : 83,
+  "path" : "/queens/catalog/extended/5x5/hard.json"
+}, {
+  "sizeKey" : "5x5",
+  "difficulty" : "medium",
+  "orthogonalMinDistances" : [ 3 ],
+  "count" : 88,
+  "path" : "/queens/catalog/extended/5x5/medium.json"
+}, {
+  "sizeKey" : "5x5",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistances" : [ 3 ],
+  "count" : 37,
+  "path" : "/queens/catalog/extended/5x5/tutorial.json"
+}, {
+  "sizeKey" : "5x5",
+  "difficulty" : "unsolvable",
+  "orthogonalMinDistances" : [ 3 ],
+  "count" : 1,
+  "path" : "/queens/catalog/extended/5x5/unsolvable.json"
+}, {
+  "sizeKey" : "6x6",
+  "difficulty" : "easy",
+  "orthogonalMinDistances" : [ 5 ],
+  "count" : 4,
+  "path" : "/queens/catalog/extended/6x6/easy.json"
+}, {
+  "sizeKey" : "6x6",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistances" : [ 5 ],
+  "count" : 65,
+  "path" : "/queens/catalog/extended/6x6/extra-easy.json"
+}, {
+  "sizeKey" : "6x6",
+  "difficulty" : "hard",
+  "orthogonalMinDistances" : [ 5 ],
+  "count" : 61,
+  "path" : "/queens/catalog/extended/6x6/hard.json"
+}, {
+  "sizeKey" : "6x6",
+  "difficulty" : "medium",
+  "orthogonalMinDistances" : [ 5 ],
+  "count" : 128,
+  "path" : "/queens/catalog/extended/6x6/medium.json"
+}, {
+  "sizeKey" : "6x6",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistances" : [ 5 ],
+  "count" : 339,
+  "path" : "/queens/catalog/extended/6x6/tutorial.json"
+}, {
+  "sizeKey" : "7x7",
+  "difficulty" : "easy",
+  "orthogonalMinDistances" : [ 5, 6 ],
+  "count" : 46,
+  "path" : "/queens/catalog/extended/7x7/easy.json"
+}, {
+  "sizeKey" : "7x7",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistances" : [ 5, 6 ],
+  "count" : 653,
+  "path" : "/queens/catalog/extended/7x7/extra-easy.json"
+}, {
+  "sizeKey" : "7x7",
+  "difficulty" : "extra-hard",
+  "orthogonalMinDistances" : [ 5 ],
+  "count" : 2,
+  "path" : "/queens/catalog/extended/7x7/extra-hard.json"
+}, {
+  "sizeKey" : "7x7",
+  "difficulty" : "hard",
+  "orthogonalMinDistances" : [ 5, 6 ],
+  "count" : 450,
+  "path" : "/queens/catalog/extended/7x7/hard.json"
+}, {
+  "sizeKey" : "7x7",
+  "difficulty" : "medium",
+  "orthogonalMinDistances" : [ 5, 6 ],
+  "count" : 207,
+  "path" : "/queens/catalog/extended/7x7/medium.json"
+}, {
+  "sizeKey" : "7x7",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistances" : [ 5, 6 ],
+  "count" : 452,
+  "path" : "/queens/catalog/extended/7x7/tutorial.json"
+}, {
+  "sizeKey" : "8x8",
+  "difficulty" : "easy",
+  "orthogonalMinDistances" : [ 5, 6, 7 ],
+  "count" : 74,
+  "path" : "/queens/catalog/extended/8x8/easy.json"
+}, {
+  "sizeKey" : "8x8",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistances" : [ 5, 6, 7 ],
+  "count" : 1076,
+  "path" : "/queens/catalog/extended/8x8/extra-easy.json"
+}, {
+  "sizeKey" : "8x8",
+  "difficulty" : "extra-hard",
+  "orthogonalMinDistances" : [ 6 ],
+  "count" : 2,
+  "path" : "/queens/catalog/extended/8x8/extra-hard.json"
+}, {
+  "sizeKey" : "8x8",
+  "difficulty" : "hard",
+  "orthogonalMinDistances" : [ 5, 6, 7 ],
+  "count" : 544,
+  "path" : "/queens/catalog/extended/8x8/hard.json"
+}, {
+  "sizeKey" : "8x8",
+  "difficulty" : "medium",
+  "orthogonalMinDistances" : [ 5, 6, 7 ],
+  "count" : 198,
+  "path" : "/queens/catalog/extended/8x8/medium.json"
+}, {
+  "sizeKey" : "8x8",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistances" : [ 5, 6, 7 ],
+  "count" : 715,
+  "path" : "/queens/catalog/extended/8x8/tutorial.json"
+}, {
+  "sizeKey" : "9x9",
+  "difficulty" : "easy",
+  "orthogonalMinDistances" : [ 5, 6, 7 ],
+  "count" : 12,
+  "path" : "/queens/catalog/extended/9x9/easy.json"
+}, {
+  "sizeKey" : "9x9",
+  "difficulty" : "extra-easy",
+  "orthogonalMinDistances" : [ 5, 6, 7 ],
+  "count" : 246,
+  "path" : "/queens/catalog/extended/9x9/extra-easy.json"
+}, {
+  "sizeKey" : "9x9",
+  "difficulty" : "extra-hard",
+  "orthogonalMinDistances" : [ 7 ],
+  "count" : 1,
+  "path" : "/queens/catalog/extended/9x9/extra-hard.json"
+}, {
+  "sizeKey" : "9x9",
+  "difficulty" : "hard",
+  "orthogonalMinDistances" : [ 5, 6, 7 ],
+  "count" : 171,
+  "path" : "/queens/catalog/extended/9x9/hard.json"
+}, {
+  "sizeKey" : "9x9",
+  "difficulty" : "medium",
+  "orthogonalMinDistances" : [ 5, 6, 7 ],
+  "count" : 25,
+  "path" : "/queens/catalog/extended/9x9/medium.json"
+}, {
+  "sizeKey" : "9x9",
+  "difficulty" : "tutorial",
+  "orthogonalMinDistances" : [ 5, 6, 7 ],
+  "count" : 169,
+  "path" : "/queens/catalog/extended/9x9/tutorial.json"
+} ]

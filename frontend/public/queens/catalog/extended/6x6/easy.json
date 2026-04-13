@@ -1,0 +1,27 @@
+{
+  "6x6" : [ {
+    "id" : "7955ca5c-e86f-47d7-a86b-e93c63a4be58",
+    "layout" : "001233101233111222111442156777556677",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "easy"
+  }, {
+    "id" : "228e4dd6-8edf-4c39-af07-235b20e028b8",
+    "layout" : "012223012233411153444155444556775556",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "easy"
+  }, {
+    "id" : "7d6d3399-0e2d-4209-bf79-86f958a10653",
+    "layout" : "000011223331422351442655466675467777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "easy"
+  }, {
+    "id" : "30c71606-2fab-43b3-8ba9-0a7568993e19",
+    "layout" : "012233011223012243015444655577666777",
+    "queens" : "Q....Q...Q...Q........Q...Q...Q....Q",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "easy"
+  } ]
+}

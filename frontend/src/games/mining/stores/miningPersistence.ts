@@ -77,6 +77,38 @@ function readFlagGrid(
   });
 }
 
+function inferSavedBoardSize(boardSnapshot: Record<string, unknown>, fallbackSize: number): number {
+  const explicitSize = boardSnapshot.boardSize;
+  if (
+    typeof explicitSize === 'number' &&
+    Number.isInteger(explicitSize) &&
+    explicitSize > 0
+  ) {
+    return explicitSize;
+  }
+
+  const truthGold = boardSnapshot.truthGold;
+  if (Array.isArray(truthGold) && truthGold.length > 0) {
+    return truthGold.length;
+  }
+
+  const revealed = boardSnapshot.revealed;
+  if (Array.isArray(revealed) && revealed.length > 0) {
+    return revealed.length;
+  }
+
+  const regionIds = boardSnapshot.regionIds;
+  if (Array.isArray(regionIds) && regionIds.length > 0) {
+    return regionIds.length;
+  }
+
+  return fallbackSize;
+}
+
+function createFlagGrid(size: number): Array<Array<MiningFlagType | null>> {
+  return Array.from({ length: size }, () => Array<MiningFlagType | null>(size).fill(null));
+}
+
 function readPhase(value: unknown, fallback: MiningStoreState['run']['phase']) {
   if (
     value === 'idle' ||
@@ -230,12 +262,15 @@ export function restoreMiningState(target: MiningStoreState, snapshot: MiningSav
     ? rootSnapshot.progression
     : rootSnapshot;
   const uiSnapshot = isRecord(rootSnapshot.ui) ? rootSnapshot.ui : rootSnapshot;
+  const savedBoardSize = inferSavedBoardSize(boardSnapshot, base.board.boardSize);
+  const flagGridFallback = createFlagGrid(savedBoardSize);
 
   target.board = {
     ...base.board,
     ...boardSnapshot,
-    playerFlags: readFlagGrid(boardSnapshot.playerFlags, base.board.playerFlags),
-    systemFlags: readFlagGrid(boardSnapshot.systemFlags, base.board.systemFlags),
+    boardSize: savedBoardSize,
+    playerFlags: readFlagGrid(boardSnapshot.playerFlags, flagGridFallback),
+    systemFlags: readFlagGrid(boardSnapshot.systemFlags, flagGridFallback),
   };
   target.run = {
     ...base.run,

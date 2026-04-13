@@ -13,6 +13,15 @@ fun main() {
     val context =
         SpringApplicationBuilder(QueensAdminApplication::class.java)
             .web(WebApplicationType.NONE)
+            .properties(
+                mapOf(
+                    "spring.main.banner-mode" to "off",
+                    "spring.main.log-startup-info" to "false",
+                    "logging.level.root" to "OFF",
+                    "spring.devtools.add-properties" to "false",
+                    "spring.devtools.livereload.enabled" to "false",
+                ),
+            )
             .run()
 
     try {

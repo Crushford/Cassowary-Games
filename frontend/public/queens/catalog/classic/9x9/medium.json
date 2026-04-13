@@ -1,0 +1,15 @@
+{
+  "9x9" : [ {
+    "id" : "885f830e-3bd2-4042-b34d-936f4f0de7e1",
+    "layout" : "IIIIITBBOPPPIITTBOPPPTTTKBOPPPTKKKOOPPPKKAAOYPPPAAAAOYPPPAAAAOYGGPAAAAOYGAAAAAAOY",
+    "queens" : "......Q.....Q..........Q..........Q.....Q.....Q...............QQ..........Q......",
+    "orthogonalMinDistance" : 9,
+    "difficulty" : "medium"
+  }, {
+    "id" : "b3514219-9888-480a-9f61-cc1a2009f979",
+    "layout" : "000111002000000002330000022330000002300004005330444405367888445367844445367744445",
+    "queens" : ".....Q.....Q.............Q.Q................Q......Q......Q.....Q..........Q.....",
+    "orthogonalMinDistance" : 9,
+    "difficulty" : "medium"
+  } ]
+}

@@ -1,14 +1,9 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { compareSharedSolverDifficulty } from '../solver/sharedSolverConfig';
+import { loadQueensCatalogFixture } from './testPuzzleCatalog';
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-const puzzlesJson = JSON.parse(
-  readFileSync(path.resolve(dirname, '../../../../public/queens/puzzles.json'), 'utf-8')
-);
+const puzzlesJson = loadQueensCatalogFixture();
 
 describe('Queens story mode headless campaign', () => {
   beforeEach(() => {

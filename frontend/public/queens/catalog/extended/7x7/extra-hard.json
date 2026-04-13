@@ -1,0 +1,15 @@
+{
+  "7x7" : [ {
+    "id" : "bdb1ea94-1420-409f-a424-bb81afd2cc85",
+    "layout" : "0001233400125346112534666255477829977882997788899",
+    "queens" : ".Q....Q...Q...Q....Q...Q........Q...Q....Q...Q...",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "extra_hard"
+  }, {
+    "id" : "16b9909d-4fe5-45a5-85a9-4e08bc604b89",
+    "layout" : "0001111203341123334442223555627778566798886999888",
+    "queens" : "Q....Q...Q........Q...Q....Q...Q...Q....Q...Q....",
+    "orthogonalMinDistance" : 5,
+    "difficulty" : "extra_hard"
+  } ]
+}

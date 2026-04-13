@@ -1,8 +1,8 @@
 <template>
   <div
-    class="min-h-svh w-full bg-[radial-gradient(120%_120%_at_50%_-15%,var(--tw-gradient-from)_0%,var(--tw-gradient-to)_55%)] from-queens-gradientStart to-queens-gradientEnd text-semantic-neutral-100"
+    class="min-h-dvh w-screen overflow-x-hidden bg-[radial-gradient(120%_120%_at_50%_-15%,var(--tw-gradient-from)_0%,var(--tw-gradient-to)_55%)] from-queens-gradientStart to-queens-gradientEnd text-semantic-neutral-100"
   >
-    <div class="mx-auto min-h-svh w-full max-w-[480px] px-5 pb-8 pt-5">
+    <div class="mx-auto min-h-dvh w-full max-w-[480px] px-5 pb-8 pt-5">
       <div class="flex items-center justify-between">
       <button
         type="button"
@@ -150,13 +150,13 @@ async function openLevel(entry: QueensCampaignLevelEntry) {
 }
 
 onMounted(async () => {
-  if (queensStore.puzzleDatabase) {
+  if (queensStore.getCampaignBuckets().length > 0) {
     return;
   }
 
   isLoading.value = true;
   try {
-    await queensStore.loadPuzzleDatabase();
+    await queensStore.loadCampaignCatalog();
   } finally {
     isLoading.value = false;
   }

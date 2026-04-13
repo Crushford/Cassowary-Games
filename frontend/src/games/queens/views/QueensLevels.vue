@@ -187,8 +187,8 @@ function openMenuMode(mode: QueensMenuMode) {
 }
 
 onMounted(async () => {
-  if (!queensStore.puzzleDatabase) {
-    await queensStore.loadPuzzleDatabase();
+  if (!queensStore.puzzleDatabase && queensStore.getCampaignBuckets().length === 0) {
+    await queensStore.loadCampaignCatalog();
   }
 });
 

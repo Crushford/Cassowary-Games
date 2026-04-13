@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { GridSquare, MarkType, Pos } from '../types/types';
 import {
@@ -7,6 +6,7 @@ import {
   getPatternCardById,
   type PatternCardDefinition,
 } from './incrementalPatternCards';
+import { loadQueensPuzzleCatalogFromPublicDir } from './puzzleCatalogFile';
 
 interface PuzzleStringFormat {
   id: string;
@@ -15,8 +15,11 @@ interface PuzzleStringFormat {
 }
 
 function loadFiveByFivePuzzles(): PuzzleStringFormat[] {
-  const jsonPath = new URL('../../../../public/queens/puzzles.json', import.meta.url);
-  const data = JSON.parse(readFileSync(jsonPath, 'utf8')) as Record<string, PuzzleStringFormat[]>;
+  const publicDir = new URL('../../../../public', import.meta.url);
+  const data = loadQueensPuzzleCatalogFromPublicDir(publicDir.pathname) as Record<
+    string,
+    PuzzleStringFormat[]
+  >;
   return data['5x5'].filter((puzzle) => puzzle.id.endsWith('-0'));
 }
 
