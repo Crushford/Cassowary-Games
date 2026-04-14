@@ -18,6 +18,7 @@ interface SplitCatalogIndexEntry {
   sizeKey: string;
   difficulty: string;
   orthogonalMinDistances: number[];
+  countsByOrthogonalMinDistance?: Record<string, number>;
   count: number;
   path: string;
 }
@@ -75,7 +76,9 @@ export function loadQueensPuzzleCatalogFromPublicDir(publicDir: string): QueensP
   const extendedFallbackPath = path.resolve(publicDir, 'queens/extendedPuzzles.json');
 
   return mergeCatalogs(
-    existsSync(classicFallbackPath) ? readJsonFile<QueensPuzzleCatalogFile>(classicFallbackPath) : null,
+    existsSync(classicFallbackPath)
+      ? readJsonFile<QueensPuzzleCatalogFile>(classicFallbackPath)
+      : null,
     existsSync(extendedFallbackPath)
       ? readJsonFile<QueensPuzzleCatalogFile>(extendedFallbackPath)
       : null

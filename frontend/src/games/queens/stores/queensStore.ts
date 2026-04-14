@@ -189,6 +189,7 @@ interface QueensCampaignCatalogEntry {
   sizeKey: string;
   difficulty: QueensSelectionDifficulty;
   orthogonalMinDistances: number[];
+  countsByOrthogonalMinDistance?: Record<string, number>;
   count: number;
   path: string;
 }
@@ -197,6 +198,7 @@ interface QueensCampaignCatalogGroup {
   sizeKey: string;
   difficulty: QueensSelectionDifficulty;
   orthogonalMinDistances: number[];
+  countsByOrthogonalMinDistance: Record<string, number>;
   paths: string[];
   count: number;
 }
@@ -299,6 +301,7 @@ function mergeCampaignCatalogEntries(
           sizeKey: entry.sizeKey,
           difficulty: entry.difficulty,
           orthogonalMinDistances: [...entry.orthogonalMinDistances].sort((a, b) => a - b),
+          countsByOrthogonalMinDistance: { ...(entry.countsByOrthogonalMinDistance ?? {}) },
           paths: [entry.path],
           count: entry.count,
         };
@@ -308,6 +311,10 @@ function mergeCampaignCatalogEntries(
       existing.orthogonalMinDistances = Array.from(
         new Set([...existing.orthogonalMinDistances, ...entry.orthogonalMinDistances])
       ).sort((a, b) => a - b);
+      for (const [distance, count] of Object.entries(entry.countsByOrthogonalMinDistance ?? {})) {
+        existing.countsByOrthogonalMinDistance[distance] =
+          (existing.countsByOrthogonalMinDistance[distance] ?? 0) + count;
+      }
       existing.paths = Array.from(new Set([...existing.paths, entry.path]));
       existing.count += entry.count;
     }
@@ -321,6 +328,25 @@ function bucketKey(sizeKey: string, difficulty: QueensSelectionDifficulty): stri
 }
 
 const MIN_CAMPAIGN_PUZZLES_PER_LEVEL = 10;
+
+function getIndexedBucketPuzzleCount(
+  campaignCatalogIndex: Record<string, QueensCampaignCatalogGroup>,
+  sizeKey: string,
+  orthogonalMinDistance: number,
+  difficulty: QueensSelectionDifficulty
+): number | null {
+  const group = campaignCatalogIndex[bucketKey(sizeKey, difficulty)];
+  if (!group) {
+    return null;
+  }
+
+  const indexedCount = group.countsByOrthogonalMinDistance[String(orthogonalMinDistance)];
+  if (typeof indexedCount === 'number') {
+    return indexedCount;
+  }
+
+  return group.orthogonalMinDistances.includes(orthogonalMinDistance) ? group.count : 0;
+}
 
 export interface TutorialStep {
   id: string;
@@ -1525,14 +1551,13 @@ export const useQueensStore = defineStore('queens', {
             const chapterDefinition = getStoryChapterDefinition(
               entry.chapterId ?? 'honey-pot-ant-farming'
             );
-            const playablePuzzleCount =
-              Object.keys(this.campaignCatalogIndex).length > 0
-                ? await this.loadCampaignPlayablePuzzleCount(
-                    entry.sizeKey,
-                    entry.orthogonalMinDistance,
-                    difficulty
-                  )
-                : MIN_CAMPAIGN_PUZZLES_PER_LEVEL;
+            const indexedPuzzleCount = getIndexedBucketPuzzleCount(
+              this.campaignCatalogIndex,
+              entry.sizeKey,
+              entry.orthogonalMinDistance,
+              difficulty
+            );
+            const playablePuzzleCount = indexedPuzzleCount ?? MIN_CAMPAIGN_PUZZLES_PER_LEVEL;
             if (playablePuzzleCount < MIN_CAMPAIGN_PUZZLES_PER_LEVEL) {
               continue;
             }
@@ -1699,6 +1724,7 @@ export const useQueensStore = defineStore('queens', {
           const boardSize = Number.parseInt(sizeKey, 10);
           if (!group.orthogonalMinDistances.includes(boardSize)) continue;
           const orthogonalMinDistance = boardSize;
+          if (group.count < MIN_CAMPAIGN_PUZZLES_PER_LEVEL) continue;
 
           const playablePuzzleCount = await this.loadCampaignPlayablePuzzleCount(
             sizeKey,
@@ -3828,8 +3854,14 @@ export const useQueensStore = defineStore('queens', {
       difficulty: QueensSelectionDifficulty
     ): number {
       if (!this.puzzleDatabase) {
-        const group = this.campaignCatalogIndex[bucketKey(sizeKey, difficulty)];
-        return group?.orthogonalMinDistances.includes(orthogonalMinDistance) ? group.count : 0;
+        return (
+          getIndexedBucketPuzzleCount(
+            this.campaignCatalogIndex,
+            sizeKey,
+            orthogonalMinDistance,
+            difficulty
+          ) ?? 0
+        );
       }
       return this.getPuzzlesForSelection(sizeKey, orthogonalMinDistance, difficulty).length;
     },

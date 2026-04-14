@@ -15,6 +15,7 @@ interface SplitCatalogIndexEntry {
   sizeKey: string;
   difficulty: string;
   orthogonalMinDistances: number[];
+  countsByOrthogonalMinDistance?: Record<string, number>;
   count: number;
   path: string;
 }
@@ -34,7 +35,9 @@ async function fetchJson<T>(path: string, cache: RequestCache = 'force-cache'): 
   return (await response.json()) as T;
 }
 
-function mergeCatalogs(...catalogs: Array<QueensPuzzleCatalog | null | undefined>): QueensPuzzleCatalog {
+function mergeCatalogs(
+  ...catalogs: Array<QueensPuzzleCatalog | null | undefined>
+): QueensPuzzleCatalog {
   const merged: QueensPuzzleCatalog = {};
   for (const catalog of catalogs) {
     if (!catalog) continue;
@@ -48,14 +51,18 @@ function mergeCatalogs(...catalogs: Array<QueensPuzzleCatalog | null | undefined
   return merged;
 }
 
-async function loadSplitIndex(namespace: 'classic' | 'extended'): Promise<SplitCatalogIndexEntry[]> {
+async function loadSplitIndex(
+  namespace: 'classic' | 'extended'
+): Promise<SplitCatalogIndexEntry[]> {
   const cached = indexCache.get(namespace);
   if (cached) {
     return cached;
   }
 
   const promise = (async () => {
-    const payload = await fetchJson<SplitCatalogIndexEntry[]>(`/queens/catalog/${namespace}-index.json`);
+    const payload = await fetchJson<SplitCatalogIndexEntry[]>(
+      `/queens/catalog/${namespace}-index.json`
+    );
     return Array.isArray(payload) ? payload : [];
   })();
 
@@ -78,7 +85,9 @@ export async function loadQueensPuzzleCatalogForSize(
       loadSplitIndex('extended'),
     ]);
 
-    const matchingEntries = [...classicIndex, ...extendedIndex].filter((entry) => entry.sizeKey === sizeKey);
+    const matchingEntries = [...classicIndex, ...extendedIndex].filter(
+      (entry) => entry.sizeKey === sizeKey
+    );
 
     if (matchingEntries.length > 0) {
       const catalogs = await Promise.all(
