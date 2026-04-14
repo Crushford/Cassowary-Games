@@ -269,4 +269,82 @@ describe('Queens campaign level selector entries', () => {
     });
     expect(store.getCampaignBucketByRoute('4x4', 'tutorial')).toBeNull();
   }, 30000);
+
+  it('uses indexed per-distance counts so story bootstrap does not overcount merged buckets', async () => {
+    const { useQueensStore } = await import('./queensStore');
+    const store = useQueensStore();
+
+    const jsonResponse = (payload: unknown, status = 200) => ({
+      ok: status >= 200 && status < 300,
+      status,
+      async json() {
+        return payload;
+      },
+    });
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string) => {
+        if (input === '/queens/catalog/story-index.json') {
+          return jsonResponse([
+            {
+              levelIndex: 1,
+              sizeKey: '7x7',
+              difficulty: 'easy',
+              orthogonalMinDistance: 7,
+            },
+            {
+              levelIndex: 2,
+              sizeKey: '8x8',
+              difficulty: 'easy',
+              orthogonalMinDistance: 8,
+            },
+          ]);
+        }
+        if (input === '/queens/catalog/classic-index.json') {
+          return jsonResponse([
+            {
+              sizeKey: '7x7',
+              difficulty: 'easy',
+              orthogonalMinDistances: [7],
+              countsByOrthogonalMinDistance: { '7': 7 },
+              count: 7,
+              path: '/queens/catalog/classic/7x7/easy.json',
+            },
+            {
+              sizeKey: '8x8',
+              difficulty: 'easy',
+              orthogonalMinDistances: [8],
+              countsByOrthogonalMinDistance: { '8': 12 },
+              count: 12,
+              path: '/queens/catalog/classic/8x8/easy.json',
+            },
+          ]);
+        }
+        if (input === '/queens/catalog/extended-index.json') {
+          return jsonResponse([
+            {
+              sizeKey: '7x7',
+              difficulty: 'easy',
+              orthogonalMinDistances: [5, 6],
+              countsByOrthogonalMinDistance: { '5': 20, '6': 20 },
+              count: 40,
+              path: '/queens/catalog/extended/7x7/easy.json',
+            },
+          ]);
+        }
+        throw new Error(`unexpected fetch: ${input}`);
+      })
+    );
+
+    const loaded = await store.loadCampaignCatalog();
+    expect(loaded).toBe(true);
+
+    expect(store.getCampaignBuckets()).toHaveLength(1);
+    expect(store.getCampaignBuckets()[0]).toMatchObject({
+      sizeKey: '8x8',
+      difficulty: 'easy',
+    });
+    expect(store.getCampaignBucketByRoute('7x7', 'easy')).toBeNull();
+  }, 30000);
 });

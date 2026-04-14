@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { loadQueensPuzzleCatalogForSize } from '../utils/puzzleCatalog';
+import { buildQueensAssetUrl, loadQueensPuzzleCatalogForSize } from '../utils/puzzleCatalog';
 
 export interface TableConfig {
   id: string;
@@ -64,7 +64,7 @@ export const useTableStore = defineStore('table', {
   actions: {
     async loadTables() {
       try {
-        const response = await fetch('/queens/tables.json', {
+        const response = await fetch(buildQueensAssetUrl('/queens/tables.json'), {
           headers: {
             'Cache-Control': 'no-cache',
             Pragma: 'no-cache',

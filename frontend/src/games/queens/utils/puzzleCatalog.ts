@@ -15,6 +15,7 @@ interface SplitCatalogIndexEntry {
   sizeKey: string;
   difficulty: string;
   orthogonalMinDistances: number[];
+  countsByOrthogonalMinDistance?: Record<string, number>;
   count: number;
   path: string;
 }
@@ -23,8 +24,15 @@ const indexCache = new Map<string, Promise<SplitCatalogIndexEntry[]>>();
 const sizeCatalogCache = new Map<string, Promise<QueensPuzzleCatalog>>();
 let fullCatalogCache: Promise<QueensPuzzleCatalog> | null = null;
 
+export function buildQueensAssetUrl(path: string): string {
+  const baseUrl = import.meta.env.BASE_URL ?? '/';
+  const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+  return `${normalizedBase}${normalizedPath}`;
+}
+
 async function fetchJson<T>(path: string, cache: RequestCache = 'force-cache'): Promise<T | null> {
-  const response = await fetch(path, { cache });
+  const response = await fetch(buildQueensAssetUrl(path), { cache });
   if (response.status === 404) {
     return null;
   }
@@ -34,7 +42,9 @@ async function fetchJson<T>(path: string, cache: RequestCache = 'force-cache'): 
   return (await response.json()) as T;
 }
 
-function mergeCatalogs(...catalogs: Array<QueensPuzzleCatalog | null | undefined>): QueensPuzzleCatalog {
+function mergeCatalogs(
+  ...catalogs: Array<QueensPuzzleCatalog | null | undefined>
+): QueensPuzzleCatalog {
   const merged: QueensPuzzleCatalog = {};
   for (const catalog of catalogs) {
     if (!catalog) continue;
@@ -48,14 +58,18 @@ function mergeCatalogs(...catalogs: Array<QueensPuzzleCatalog | null | undefined
   return merged;
 }
 
-async function loadSplitIndex(namespace: 'classic' | 'extended'): Promise<SplitCatalogIndexEntry[]> {
+async function loadSplitIndex(
+  namespace: 'classic' | 'extended'
+): Promise<SplitCatalogIndexEntry[]> {
   const cached = indexCache.get(namespace);
   if (cached) {
     return cached;
   }
 
   const promise = (async () => {
-    const payload = await fetchJson<SplitCatalogIndexEntry[]>(`/queens/catalog/${namespace}-index.json`);
+    const payload = await fetchJson<SplitCatalogIndexEntry[]>(
+      `/queens/catalog/${namespace}-index.json`
+    );
     return Array.isArray(payload) ? payload : [];
   })();
 
@@ -78,7 +92,9 @@ export async function loadQueensPuzzleCatalogForSize(
       loadSplitIndex('extended'),
     ]);
 
-    const matchingEntries = [...classicIndex, ...extendedIndex].filter((entry) => entry.sizeKey === sizeKey);
+    const matchingEntries = [...classicIndex, ...extendedIndex].filter(
+      (entry) => entry.sizeKey === sizeKey
+    );
 
     if (matchingEntries.length > 0) {
       const catalogs = await Promise.all(

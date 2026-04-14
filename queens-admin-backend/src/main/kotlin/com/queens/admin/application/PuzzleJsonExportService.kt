@@ -23,6 +23,7 @@ class PuzzleJsonExportService(
         val sizeKey: String,
         val difficulty: String,
         val orthogonalMinDistances: List<Int>,
+        val countsByOrthogonalMinDistance: Map<Int, Int>,
         val count: Int,
         val path: String,
     )
@@ -129,6 +130,11 @@ class PuzzleJsonExportService(
                     val (sizeKey, difficulty) = key
                     val outputPath = namespaceRoot.resolve(sizeKey).resolve("$difficulty.json")
                     Files.createDirectories(outputPath.parent)
+                    val countsByOrthogonalMinDistance =
+                        bucketPuzzles
+                            .groupingBy { it.orthogonalMinDistance }
+                            .eachCount()
+                            .toSortedMap()
                     Files.newBufferedWriter(outputPath).use { writer ->
                         objectMapper.writerWithDefaultPrettyPrinter().writeValue(
                             writer,
@@ -141,6 +147,7 @@ class PuzzleJsonExportService(
                         difficulty = difficulty,
                         orthogonalMinDistances =
                             bucketPuzzles.map { it.orthogonalMinDistance }.distinct().sorted(),
+                        countsByOrthogonalMinDistance = countsByOrthogonalMinDistance,
                         count = bucketPuzzles.size,
                         path = "/queens/$SPLIT_EXPORT_DIRECTORY/$namespace/$sizeKey/$difficulty.json",
                     )

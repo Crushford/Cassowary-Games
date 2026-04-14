@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { loadQueensPuzzleCatalogForSize } from '../utils/puzzleCatalog';
+import { buildQueensAssetUrl, loadQueensPuzzleCatalogForSize } from '../utils/puzzleCatalog';
 
 export interface LevelConfig {
   boardSize: string;
@@ -50,7 +50,7 @@ export const useLevelStore = defineStore('level', {
   actions: {
     async loadLevels() {
       try {
-        const response = await fetch('/queens/levels.json', {
+        const response = await fetch(buildQueensAssetUrl('/queens/levels.json'), {
           headers: {
             'Cache-Control': 'no-cache',
             Pragma: 'no-cache',
