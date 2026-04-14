@@ -24,8 +24,15 @@ const indexCache = new Map<string, Promise<SplitCatalogIndexEntry[]>>();
 const sizeCatalogCache = new Map<string, Promise<QueensPuzzleCatalog>>();
 let fullCatalogCache: Promise<QueensPuzzleCatalog> | null = null;
 
+export function buildQueensAssetUrl(path: string): string {
+  const baseUrl = import.meta.env.BASE_URL ?? '/';
+  const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+  return `${normalizedBase}${normalizedPath}`;
+}
+
 async function fetchJson<T>(path: string, cache: RequestCache = 'force-cache'): Promise<T | null> {
-  const response = await fetch(path, { cache });
+  const response = await fetch(buildQueensAssetUrl(path), { cache });
   if (response.status === 404) {
     return null;
   }

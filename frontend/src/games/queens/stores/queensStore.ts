@@ -22,7 +22,7 @@ import {
   type QueensSelectionDifficulty,
   QUEENS_SELECTION_DIFFICULTY_ORDER,
 } from '../utils/puzzleSelectionRoute';
-import { loadMergedQueensPuzzleCatalog } from '../utils/puzzleCatalog';
+import { buildQueensAssetUrl, loadMergedQueensPuzzleCatalog } from '../utils/puzzleCatalog';
 import type { QueensAdminBoardState, QueensAdminMarkType } from '../admin/types';
 import {
   applyQueensSolverStep,
@@ -1518,7 +1518,7 @@ export const useQueensStore = defineStore('queens', {
 
       try {
         const loadIndex = async (path: string): Promise<QueensCampaignCatalogEntry[]> => {
-          const response = await fetch(path, { cache: 'no-store' });
+          const response = await fetch(buildQueensAssetUrl(path), { cache: 'no-store' });
           if (!response.ok) {
             if (response.status === 404) {
               return [];
@@ -1533,7 +1533,7 @@ export const useQueensStore = defineStore('queens', {
         };
 
         const [storyResponse, classicIndex, extendedIndex] = await Promise.all([
-          fetch('/queens/catalog/story-index.json', { cache: 'no-store' }),
+          fetch(buildQueensAssetUrl('/queens/catalog/story-index.json'), { cache: 'no-store' }),
           loadIndex('/queens/catalog/classic-index.json'),
           loadIndex('/queens/catalog/extended-index.json'),
         ]);
@@ -1633,7 +1633,7 @@ export const useQueensStore = defineStore('queens', {
 
       const responses = await Promise.all(
         resolvedGroup.paths.map(async (path) => {
-          const response = await fetch(path, { cache: 'no-store' });
+          const response = await fetch(buildQueensAssetUrl(path), { cache: 'no-store' });
           if (!response.ok) {
             throw new Error(`Failed to load ${path}: ${response.status}`);
           }
@@ -1657,7 +1657,7 @@ export const useQueensStore = defineStore('queens', {
 
       try {
         const loadIndex = async (path: string): Promise<QueensCampaignCatalogEntry[]> => {
-          const response = await fetch(path, { cache: 'no-store' });
+          const response = await fetch(buildQueensAssetUrl(path), { cache: 'no-store' });
           if (!response.ok) {
             if (response.status === 404) {
               return [];
