@@ -16,6 +16,7 @@ const BATCH_INPUTS_KEY = 'queens-admin-batch-inputs-v2';
 const MAX_QUEENS_INPUTS_KEY = 'queens-admin-max-queens-inputs-v1';
 const SOLVER_INPUTS_KEY = 'queens-admin-solver-inputs-v1';
 const SOLVER_SESSION_KEY = 'queens-admin-solver-session-v1';
+const STITCHING_INPUTS_KEY = 'queens-admin-stitching-inputs-v1';
 const VALID_STRATEGIES: QueensAdminGenerationStrategy[] = [
   'baseline',
   'marker-guided',
@@ -74,6 +75,24 @@ export type QueensAdminSolverInputs = {
   autoRunSingleColorAfterSolverAction: boolean;
   stepDifficulties: Record<string, QueensAdminDifficulty>;
   runAllDifficultyThreshold: QueensAdminDifficulty;
+};
+
+export type QueensAdminStitchingInputs = {
+  showQueens: boolean;
+  selectedBatchPreset:
+    | 'top-right'
+    | 'bottom-left'
+    | 'bottom-right'
+    | 'all-preview'
+    | 'all-left-only'
+    | 'all-top-only'
+    | 'all-both'
+    | 'all-reachable';
+  runsPerFingerprint: number;
+  stitchingConcurrency: number;
+  discoveryGenerationLimit: number;
+  discoverySkipSatisfiedBuckets: boolean;
+  discoveryMaxConcurrentJobs: number;
 };
 
 export type QueensAdminMaxQueensInputs = {
@@ -353,6 +372,67 @@ export function loadQueensAdminBatchInputs(): Partial<QueensAdminBatchInputs> | 
 
 export function saveQueensAdminBatchInputs(value: QueensAdminBatchInputs): void {
   writeJson(BATCH_INPUTS_KEY, value);
+}
+
+export function loadQueensAdminStitchingInputs(): Partial<QueensAdminStitchingInputs> | null {
+  const parsed = readJson(STITCHING_INPUTS_KEY);
+  if (!parsed || typeof parsed !== 'object') return null;
+
+  const showQueens =
+    typeof (parsed as { showQueens?: unknown }).showQueens === 'boolean'
+      ? (parsed as { showQueens: boolean }).showQueens
+      : null;
+  const selectedBatchPresetRaw = (parsed as { selectedBatchPreset?: unknown }).selectedBatchPreset;
+  const selectedBatchPreset =
+    selectedBatchPresetRaw === 'top-right' ||
+    selectedBatchPresetRaw === 'bottom-left' ||
+    selectedBatchPresetRaw === 'bottom-right' ||
+    selectedBatchPresetRaw === 'all-preview' ||
+    selectedBatchPresetRaw === 'all-left-only' ||
+    selectedBatchPresetRaw === 'all-top-only' ||
+    selectedBatchPresetRaw === 'all-both' ||
+    selectedBatchPresetRaw === 'all-reachable'
+      ? selectedBatchPresetRaw
+      : null;
+  const runsPerFingerprint = clampInteger(
+    (parsed as { runsPerFingerprint?: unknown }).runsPerFingerprint,
+    1,
+    100
+  );
+  const stitchingConcurrency = clampInteger(
+    (parsed as { stitchingConcurrency?: unknown }).stitchingConcurrency,
+    1,
+    8
+  );
+  const discoveryGenerationLimit = clampInteger(
+    (parsed as { discoveryGenerationLimit?: unknown }).discoveryGenerationLimit,
+    1,
+    10000
+  );
+  const discoverySkipSatisfiedBuckets =
+    typeof (parsed as { discoverySkipSatisfiedBuckets?: unknown }).discoverySkipSatisfiedBuckets ===
+    'boolean'
+      ? (parsed as { discoverySkipSatisfiedBuckets: boolean }).discoverySkipSatisfiedBuckets
+      : null;
+  const discoveryMaxConcurrentJobs = clampInteger(
+    (parsed as { discoveryMaxConcurrentJobs?: unknown }).discoveryMaxConcurrentJobs,
+    1,
+    8
+  );
+
+  return {
+    ...(showQueens != null ? { showQueens } : {}),
+    ...(selectedBatchPreset ? { selectedBatchPreset } : {}),
+    ...(runsPerFingerprint != null ? { runsPerFingerprint } : {}),
+    ...(stitchingConcurrency != null ? { stitchingConcurrency } : {}),
+    ...(discoveryGenerationLimit != null ? { discoveryGenerationLimit } : {}),
+    ...(discoverySkipSatisfiedBuckets != null ? { discoverySkipSatisfiedBuckets } : {}),
+    ...(discoveryMaxConcurrentJobs != null ? { discoveryMaxConcurrentJobs } : {}),
+  };
+}
+
+export function saveQueensAdminStitchingInputs(value: QueensAdminStitchingInputs): void {
+  writeJson(STITCHING_INPUTS_KEY, value);
 }
 
 export function loadQueensAdminMaxQueensInputs(): Partial<QueensAdminMaxQueensInputs> | null {

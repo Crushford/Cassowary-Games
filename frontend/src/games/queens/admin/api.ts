@@ -16,6 +16,10 @@ import type {
   QueensAdminGenerationStrategy,
   QueensAdminSolverConfig,
   QueensAdminStitchingBoard,
+  QueensAdminStitchingBatchStatus,
+  QueensAdminStitchingCatalogStats,
+  QueensAdminStitchingDiscoveryStatus,
+  QueensAdminStitchingFingerprintSpace,
   QueensAdminStitchingCell,
   QueensAdminStitchingPreview,
   QueensAdminStitchingQuadrant,
@@ -285,6 +289,133 @@ interface StitchingPreviewDto {
   stitchedBoard: StitchingPreviewBoardDto;
 }
 
+interface StitchingBatchRunRequestDto {
+  pieceKind: string;
+  leftBlackoutSignature: number[];
+  topBlackoutSignature: number[];
+  targetQueenCount: number;
+}
+
+interface StitchingBatchRequestDto {
+  size: number;
+  orthogonalMinDistance: number;
+  minimumGroupSize: number;
+  runsPerFingerprint: number;
+  maxConcurrentJobs: number;
+  preset?: string | null;
+  runs: StitchingBatchRunRequestDto[];
+}
+
+interface StitchingBatchStartedDto {
+  batchId: string;
+}
+
+interface StitchingBatchRunDto {
+  runId: string;
+  pieceKind: string;
+  leftBlackoutSignature: number[];
+  topBlackoutSignature: number[];
+  leftBlackoutFingerprint: string;
+  topBlackoutFingerprint: string;
+  fingerprintKey: string;
+  pieceCategory: 'STANDARD' | 'LEFT_ONLY' | 'TOP_ONLY' | 'BOTH';
+  targetQueenCount: number;
+  state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  queenCount: number | null;
+  canonicalSignature: string | null;
+  savedPuzzleId: string | null;
+  persistenceState: 'SAVED' | 'DUPLICATE' | null;
+  persistenceMessage: string | null;
+  error: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+}
+
+interface StitchingBatchStatusDto {
+  batchId: string;
+  state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'CANCELLED';
+  totalJobs: number;
+  queuedJobs: number;
+  activeJobs: number;
+  completedJobs: number;
+  failedJobs: number;
+  cancelledJobs: number;
+  savedUniquePuzzles: number;
+  duplicatePuzzles: number;
+  note: string | null;
+  runs: StitchingBatchRunDto[];
+  updatedAt: string;
+}
+
+interface StitchingCatalogBucketStatsDto {
+  boardSize: number;
+  orthogonalMinDistance: number;
+  targetQueenCount: number;
+  pieceCategory: 'STANDARD' | 'LEFT_ONLY' | 'TOP_ONLY' | 'BOTH';
+  leftBlackoutFingerprint: string;
+  topBlackoutFingerprint: string;
+  fingerprintKey: string;
+  puzzleCount: number;
+  countsByPieceKind: Record<string, number>;
+}
+
+interface StitchingCatalogStatsDto {
+  totalPuzzles: number;
+  bucketCount: number;
+  buckets: StitchingCatalogBucketStatsDto[];
+}
+
+interface StitchingCatalogExportDto {
+  outputPath: string;
+  bucketCount: number;
+  puzzleCount: number;
+}
+
+interface StitchingFingerprintSpaceDto {
+  leftOnlyFingerprintCount: number;
+  topOnlyFingerprintCount: number;
+  bothFingerprintCount: number;
+  totalFingerprintCount: number;
+}
+
+interface StitchingDiscoveryBucketDto {
+  bucketKey: string;
+  pieceCategory: string;
+  pieceKind: string;
+  fingerprintKey: string;
+  leftBlackoutSignature: number[];
+  topBlackoutSignature: number[];
+  targetQueenCount: number;
+  state: 'INFERRED' | 'QUEUED' | 'GENERATED' | 'SKIPPED' | 'FAILED';
+  provenance: string[];
+  message: string | null;
+  puzzleId: string | null;
+  canonicalSignature: string | null;
+}
+
+interface StitchingDiscoveryStatusDto {
+  runId: string;
+  state: 'IDLE' | 'RUNNING' | 'STOPPING' | 'COMPLETED' | 'INTERRUPTED' | 'FAILED';
+  generationLimit: number;
+  skipSatisfiedBuckets: boolean;
+  maxConcurrentJobs: number;
+  activeJobs: number;
+  generatedCount: number;
+  skippedCount: number;
+  inferredCount: number;
+  validatedCount: number;
+  failedCount: number;
+  queuedCount: number;
+  activeBucket: StitchingDiscoveryBucketDto | null;
+  generatedBuckets: StitchingDiscoveryBucketDto[];
+  skippedBuckets: StitchingDiscoveryBucketDto[];
+  failedBuckets: StitchingDiscoveryBucketDto[];
+  queuedBuckets: StitchingDiscoveryBucketDto[];
+  inferredBuckets: StitchingDiscoveryBucketDto[];
+  note: string | null;
+  updatedAt: string;
+}
+
 function toLocalBoardState(boardState: BoardStateDto | null): QueensAdminBoardState | null {
   if (!boardState) return null;
 
@@ -379,6 +510,26 @@ function toStitchingPreview(data: StitchingPreviewDto): QueensAdminStitchingPrev
     bottomRight: toStitchingQuadrant(data.bottomRight),
     stitchedBoard: toStitchingBoard(data.stitchedBoard),
   };
+}
+
+function toStitchingBatchStatus(data: StitchingBatchStatusDto): QueensAdminStitchingBatchStatus {
+  return { ...data };
+}
+
+function toStitchingCatalogStats(data: StitchingCatalogStatsDto): QueensAdminStitchingCatalogStats {
+  return { ...data };
+}
+
+function toStitchingFingerprintSpace(
+  data: StitchingFingerprintSpaceDto
+): QueensAdminStitchingFingerprintSpace {
+  return { ...data };
+}
+
+function toStitchingDiscoveryStatus(
+  data: StitchingDiscoveryStatusDto
+): QueensAdminStitchingDiscoveryStatus {
+  return { ...data };
 }
 
 function toGenerationProgress(data: GenerationJobStatusDto): QueensAdminGenerationProgress {
@@ -762,6 +913,103 @@ export const queensAdminApi = {
       throw new Error(message);
     }
     return toStitchingPreview((await response.json()) as StitchingPreviewDto);
+  },
+
+  async startStitchingBatch(request: StitchingBatchRequestDto): Promise<string> {
+    const response = await fetch('/api/stitching/batch/start', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+    const data = (await response.json()) as StitchingBatchStartedDto;
+    return data.batchId;
+  },
+
+  async getStitchingBatchStatus(batchId: string): Promise<QueensAdminStitchingBatchStatus> {
+    const response = await fetch(`/api/stitching/batch/${batchId}`);
+    if (!response.ok) {
+      throw new Error('Failed to load stitching batch status');
+    }
+    return toStitchingBatchStatus((await response.json()) as StitchingBatchStatusDto);
+  },
+
+  async cancelStitchingBatch(batchId: string): Promise<QueensAdminStitchingBatchStatus> {
+    const response = await fetch(`/api/stitching/batch/${batchId}/cancel`, {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to cancel stitching batch');
+    }
+    return toStitchingBatchStatus((await response.json()) as StitchingBatchStatusDto);
+  },
+
+  async getStitchingCatalogStats(): Promise<QueensAdminStitchingCatalogStats> {
+    const response = await fetch('/api/stitching/catalog/stats');
+    if (!response.ok) {
+      throw new Error('Failed to load stitching catalog stats');
+    }
+    return toStitchingCatalogStats((await response.json()) as StitchingCatalogStatsDto);
+  },
+
+  async getStitchingFingerprintSpace(): Promise<QueensAdminStitchingFingerprintSpace> {
+    const response = await fetch('/api/stitching/fingerprint-space');
+    if (!response.ok) {
+      throw new Error('Failed to load stitching fingerprint space');
+    }
+    return toStitchingFingerprintSpace((await response.json()) as StitchingFingerprintSpaceDto);
+  },
+
+  async startStitchingDiscovery(request: {
+    generationLimit: number;
+    skipSatisfiedBuckets: boolean;
+    maxConcurrentJobs: number;
+  }): Promise<QueensAdminStitchingDiscoveryStatus> {
+    const response = await fetch('/api/stitching/discovery/start', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+    return toStitchingDiscoveryStatus((await response.json()) as StitchingDiscoveryStatusDto);
+  },
+
+  async getStitchingDiscoveryStatus(): Promise<QueensAdminStitchingDiscoveryStatus | null> {
+    const response = await fetch('/api/stitching/discovery');
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      throw new Error('Failed to load stitching discovery status');
+    }
+    return toStitchingDiscoveryStatus((await response.json()) as StitchingDiscoveryStatusDto);
+  },
+
+  async stopStitchingDiscovery(): Promise<QueensAdminStitchingDiscoveryStatus | null> {
+    const response = await fetch('/api/stitching/discovery/stop', {
+      method: 'POST',
+    });
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      throw new Error('Failed to stop stitching discovery');
+    }
+    return toStitchingDiscoveryStatus((await response.json()) as StitchingDiscoveryStatusDto);
+  },
+
+  async exportStitchingCatalog(): Promise<StitchingCatalogExportDto> {
+    const response = await fetch('/api/stitching/catalog/export', {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to export stitching catalog');
+    }
+    return (await response.json()) as StitchingCatalogExportDto;
   },
 
   async resolveMaxQueenCount(

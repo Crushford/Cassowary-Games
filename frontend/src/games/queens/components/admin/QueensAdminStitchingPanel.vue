@@ -210,16 +210,622 @@
             @cell-click="onCellClick"
           />
         </AdminPanel>
+
+        <AdminPanel
+          title="Stitching Catalog"
+          description="Batch-generate stitched-piece puzzles into the dedicated stitching catalog, inspect per-fingerprint counts, and export fingerprint buckets for frontend lookup."
+        >
+          <div class="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+            <section class="space-y-4">
+              <div class="rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4">
+                <div class="text-sm font-semibold text-white">Batch Setup</div>
+                <div class="mt-3 space-y-3">
+                  <label class="block text-sm text-semantic-neutral-300">
+                    Fingerprint source
+                    <select
+                      v-model="selectedBatchPreset"
+                      class="mt-2 w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm text-white"
+                    >
+                      <option value="top-right">Preview Top Right (left-only)</option>
+                      <option value="bottom-left">Preview Bottom Left (top-only)</option>
+                      <option value="bottom-right">Preview Bottom Right (left + top)</option>
+                      <option value="all-preview">All preview stitched shapes</option>
+                      <option value="all-left-only">
+                        All reachable left-only fingerprints
+                        {{
+                          fingerprintSpace ? `(${fingerprintSpace.leftOnlyFingerprintCount})` : ''
+                        }}
+                      </option>
+                      <option value="all-top-only">
+                        All reachable top-only fingerprints
+                        {{
+                          fingerprintSpace ? `(${fingerprintSpace.topOnlyFingerprintCount})` : ''
+                        }}
+                      </option>
+                      <option value="all-both">
+                        All reachable both-edge fingerprints
+                        {{
+                          fingerprintSpace
+                            ? `(${formatLargeCount(fingerprintSpace.bothFingerprintCount)})`
+                            : ''
+                        }}
+                      </option>
+                      <option value="all-reachable">
+                        All reachable stitched fingerprints
+                        {{
+                          fingerprintSpace
+                            ? `(${formatLargeCount(fingerprintSpace.totalFingerprintCount)})`
+                            : ''
+                        }}
+                      </option>
+                    </select>
+                  </label>
+
+                  <label class="block text-sm text-semantic-neutral-300">
+                    Runs per fingerprint
+                    <input
+                      v-model.number="runsPerFingerprint"
+                      type="number"
+                      min="1"
+                      max="100"
+                      class="mt-2 w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm text-white"
+                    />
+                  </label>
+
+                  <label class="block text-sm text-semantic-neutral-300">
+                    Max concurrent jobs
+                    <input
+                      v-model.number="stitchingConcurrency"
+                      type="number"
+                      min="1"
+                      max="8"
+                      class="mt-2 w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm text-white"
+                    />
+                  </label>
+                </div>
+
+                <div
+                  class="mt-4 rounded-xl border border-semantic-neutral-800 bg-semantic-neutral-950/70 p-3 text-xs text-semantic-neutral-300"
+                >
+                  <div class="font-semibold text-white">Planned runs</div>
+                  <template v-if="selectedBatchPreset.startsWith('all-')">
+                    <div class="mt-2">
+                      {{ selectedBatchSummary }}
+                    </div>
+                    <div class="mt-2 text-semantic-warning-200">
+                      Large presets stream recent activity only. The batch status panel keeps
+                      aggregate progress and the latest runs instead of every queued fingerprint.
+                    </div>
+                  </template>
+                  <template v-else>
+                    <div
+                      v-for="run in selectedBatchRuns"
+                      :key="`${run.pieceKind}-${run.leftBlackoutSignature.join(',')}-${run.topBlackoutSignature.join(',')}`"
+                      class="mt-2"
+                    >
+                      {{ run.pieceKind }} · target {{ run.targetQueenCount }} · L[{{
+                        run.leftBlackoutSignature.join(',')
+                      }}] · T[{{ run.topBlackoutSignature.join(',') }}]
+                    </div>
+                  </template>
+                </div>
+
+                <div class="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    class="rounded-xl border border-semantic-success-700 bg-feedback-successSoft px-3 py-2 text-sm font-semibold text-semantic-success-100 transition hover:opacity-90 disabled:opacity-50"
+                    :disabled="selectedBatchRuns.length === 0 || stitchingBatchLoading"
+                    @click="startStitchingBatch"
+                  >
+                    {{ stitchingBatchLoading ? 'Starting…' : 'Start Stitching Batch' }}
+                  </button>
+                  <button
+                    v-if="
+                      activeStitchingBatch?.state === 'RUNNING' ||
+                      activeStitchingBatch?.state === 'QUEUED'
+                    "
+                    type="button"
+                    class="rounded-xl border border-semantic-error-700 bg-feedback-errorSoft px-3 py-2 text-sm font-semibold text-semantic-error-100 transition hover:opacity-90"
+                    @click="cancelStitchingBatch"
+                  >
+                    Cancel Batch
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-xl border border-semantic-info-700 bg-feedback-infoFaint px-3 py-2 text-sm font-semibold text-semantic-info-100 transition hover:opacity-90 disabled:opacity-50"
+                    :disabled="stitchingExportLoading"
+                    @click="exportCatalog"
+                  >
+                    {{ stitchingExportLoading ? 'Exporting…' : 'Export JSON' }}
+                  </button>
+                </div>
+
+                <div
+                  v-if="stitchingExportResult"
+                  class="mt-4 rounded-xl border border-semantic-info-800 bg-feedback-infoFaint p-3 text-xs text-semantic-info-100"
+                >
+                  Exported {{ stitchingExportResult.puzzleCount }} puzzles across
+                  {{ stitchingExportResult.bucketCount }} buckets to
+                  {{ stitchingExportResult.outputPath }}
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <div class="text-sm font-semibold text-white">Discovery Scheduler</div>
+                    <div class="mt-1 text-xs leading-5 text-semantic-neutral-400">
+                      Expand reachable stitched fingerprint buckets from real seed puzzles instead
+                      of brute-forcing the full space.
+                    </div>
+                  </div>
+                  <span
+                    class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                    :class="
+                      discoveryStatusTone === 'info'
+                        ? 'bg-feedback-infoFaint text-semantic-info-100'
+                        : discoveryStatusTone === 'warn'
+                          ? 'bg-feedback-warningSoft text-semantic-warning-100'
+                          : discoveryStatusTone === 'danger'
+                            ? 'bg-feedback-errorSoft text-semantic-error-100'
+                            : discoveryStatusTone === 'success'
+                              ? 'bg-feedback-successSoft text-semantic-success-100'
+                              : 'bg-semantic-neutral-900 text-semantic-neutral-300'
+                    "
+                  >
+                    {{ activeDiscoveryRun?.state ?? 'IDLE' }}
+                  </span>
+                </div>
+
+                <div class="mt-4 space-y-3">
+                  <label class="block text-sm text-semantic-neutral-300">
+                    Generation limit
+                    <input
+                      v-model.number="discoveryGenerationLimit"
+                      type="number"
+                      min="1"
+                      max="10000"
+                      class="mt-2 w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm text-white"
+                    />
+                  </label>
+
+                  <label class="block text-sm text-semantic-neutral-300">
+                    Max concurrent jobs
+                    <input
+                      v-model.number="discoveryMaxConcurrentJobs"
+                      type="number"
+                      min="1"
+                      max="8"
+                      class="mt-2 w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm text-white"
+                    />
+                  </label>
+
+                  <label
+                    class="flex items-start justify-between gap-4 rounded-xl border border-semantic-neutral-800 bg-semantic-neutral-950/70 px-3 py-3 text-sm text-semantic-neutral-300"
+                  >
+                    <div>
+                      <div class="font-semibold text-white">Skip satisfied buckets</div>
+                      <div class="mt-1 text-xs leading-5 text-semantic-neutral-400">
+                        Checked by default. If a fingerprint bucket already has a saved stitching
+                        puzzle, mark it as satisfied and expand from the existing puzzle instead of
+                        generating a new one.
+                      </div>
+                    </div>
+                    <input
+                      v-model="discoverySkipSatisfiedBuckets"
+                      type="checkbox"
+                      class="mt-1 h-4 w-4 rounded border-semantic-neutral-600 bg-semantic-neutral-900 text-semantic-info-500"
+                    />
+                  </label>
+                </div>
+
+                <div class="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    class="rounded-xl border border-semantic-success-700 bg-feedback-successSoft px-3 py-2 text-sm font-semibold text-semantic-success-100 transition hover:opacity-90 disabled:opacity-50"
+                    :disabled="
+                      stitchingDiscoveryLoading ||
+                      activeDiscoveryRun?.state === 'RUNNING' ||
+                      activeDiscoveryRun?.state === 'STOPPING'
+                    "
+                    @click="startDiscoveryRun"
+                  >
+                    {{ stitchingDiscoveryLoading ? 'Starting…' : 'Start Discovery Run' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-xl border border-semantic-error-700 bg-feedback-errorSoft px-3 py-2 text-sm font-semibold text-semantic-error-100 transition hover:opacity-90 disabled:opacity-50"
+                    :disabled="
+                      !activeDiscoveryRun ||
+                      (activeDiscoveryRun.state !== 'RUNNING' &&
+                        activeDiscoveryRun.state !== 'STOPPING')
+                    "
+                    @click="stopDiscoveryRun"
+                  >
+                    {{ activeDiscoveryRun?.state === 'STOPPING' ? 'Stopping…' : 'Stop Run' }}
+                  </button>
+                </div>
+
+                <div
+                  v-if="activeDiscoveryRun"
+                  class="mt-4 rounded-xl border border-semantic-neutral-800 bg-semantic-neutral-950/70 p-3 text-xs text-semantic-neutral-300"
+                >
+                  <div class="font-semibold text-white">Run Summary</div>
+                  <div class="mt-2">{{ discoveryProgressSummary }}</div>
+                  <div class="mt-1">
+                    inferred {{ activeDiscoveryRun.inferredCount }} · validated
+                    {{ activeDiscoveryRun.validatedCount }} · limit
+                    {{ activeDiscoveryRun.generationLimit }}
+                  </div>
+                  <div class="mt-1">
+                    active jobs {{ activeDiscoveryRun.activeJobs }} /
+                    {{ activeDiscoveryRun.maxConcurrentJobs }}
+                  </div>
+                  <div v-if="activeDiscoveryRun.activeBucket" class="mt-2 text-semantic-info-100">
+                    active {{ activeDiscoveryRun.activeBucket.pieceCategory }} ·
+                    {{ activeDiscoveryRun.activeBucket.fingerprintKey }}
+                  </div>
+                  <div v-if="activeDiscoveryRun.note" class="mt-2 whitespace-pre-wrap break-words">
+                    {{ activeDiscoveryRun.note }}
+                  </div>
+                </div>
+              </div>
+
+              <AdminMessage v-if="stitchingMessage" severity="info">
+                {{ stitchingMessage }}
+              </AdminMessage>
+              <AdminMessage v-if="stitchingError" severity="error">
+                {{ stitchingError }}
+              </AdminMessage>
+            </section>
+
+            <section class="space-y-4">
+              <div class="grid gap-3 md:grid-cols-3">
+                <AdminStat
+                  label="Buckets"
+                  :value="String(stitchingStats?.bucketCount ?? 0)"
+                  detail="exact fingerprint keys"
+                />
+                <AdminStat
+                  label="Catalog Puzzles"
+                  :value="String(stitchingStats?.totalPuzzles ?? 0)"
+                  detail="dedicated stitching table"
+                />
+                <AdminStat
+                  label="Active Batch"
+                  :value="activeStitchingBatch?.state ?? 'IDLE'"
+                  detail="queue state"
+                />
+              </div>
+
+              <div class="grid gap-3 md:grid-cols-4">
+                <AdminStat
+                  label="Discovery State"
+                  :value="activeDiscoveryRun?.state ?? 'IDLE'"
+                  detail="scheduler"
+                />
+                <AdminStat
+                  label="Generated"
+                  :value="String(activeDiscoveryRun?.generatedCount ?? 0)"
+                  detail="new puzzles this run"
+                />
+                <AdminStat
+                  label="Skipped"
+                  :value="String(activeDiscoveryRun?.skippedCount ?? 0)"
+                  detail="already satisfied"
+                />
+                <AdminStat
+                  label="Queued"
+                  :value="String(activeDiscoveryRun?.queuedCount ?? 0)"
+                  detail="pending buckets"
+                />
+                <AdminStat
+                  label="Workers"
+                  :value="
+                    activeDiscoveryRun
+                      ? `${activeDiscoveryRun.activeJobs}/${activeDiscoveryRun.maxConcurrentJobs}`
+                      : '0/1'
+                  "
+                  detail="active / max"
+                />
+              </div>
+
+              <div
+                v-if="activeStitchingBatch"
+                class="rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4"
+              >
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-sm font-semibold text-white">
+                    Batch {{ activeStitchingBatch.batchId.slice(0, 8) }}
+                  </div>
+                  <div class="text-xs text-semantic-neutral-400">
+                    {{ activeStitchingBatch.completedJobs }} / {{ activeStitchingBatch.totalJobs }}
+                    complete
+                  </div>
+                </div>
+                <div class="mt-3 h-2 overflow-hidden rounded-full bg-semantic-neutral-900">
+                  <div
+                    class="h-full bg-semantic-info-500 transition-all"
+                    :style="{ width: `${stitchingBatchProgress}%` }"
+                  />
+                </div>
+                <div class="mt-3 max-h-64 space-y-2 overflow-auto">
+                  <div
+                    v-for="run in activeStitchingBatch.runs"
+                    :key="run.runId"
+                    class="rounded-xl border border-semantic-neutral-800 bg-semantic-neutral-950/70 px-3 py-2 text-xs text-semantic-neutral-300"
+                  >
+                    <div class="flex items-center justify-between gap-3">
+                      <div class="font-semibold text-white">
+                        {{ run.pieceKind }} · {{ run.pieceCategory }} ·
+                        {{ run.fingerprintKey || '(standard)' }}
+                      </div>
+                      <div>{{ run.state }}</div>
+                    </div>
+                    <div class="mt-1">
+                      queens {{ run.queenCount ?? '—' }} / {{ run.targetQueenCount }} ·
+                      {{ run.persistenceState ?? 'pending' }}
+                    </div>
+                    <div v-if="run.persistenceMessage" class="mt-1 text-semantic-info-100">
+                      {{ run.persistenceMessage }}
+                    </div>
+                    <div
+                      v-if="run.canonicalSignature"
+                      class="mt-1 break-all text-[11px] text-semantic-neutral-500"
+                    >
+                      {{ run.canonicalSignature }}
+                    </div>
+                    <div
+                      v-if="run.error"
+                      class="mt-1 max-h-24 overflow-auto whitespace-pre-wrap break-words text-semantic-error-200"
+                    >
+                      {{ run.error }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                v-if="activeDiscoveryRun"
+                class="rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4"
+              >
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-sm font-semibold text-white">
+                    Discovery {{ activeDiscoveryRun.runId.slice(0, 8) }}
+                  </div>
+                  <div class="text-xs text-semantic-neutral-400">
+                    inferred {{ activeDiscoveryRun.inferredCount }} · validated
+                    {{ activeDiscoveryRun.validatedCount }} · failed
+                    {{ activeDiscoveryRun.failedCount }}
+                  </div>
+                </div>
+
+                <div class="mt-4 grid gap-4 xl:grid-cols-2">
+                  <div
+                    class="rounded-xl border border-semantic-neutral-800 bg-semantic-neutral-950/70 p-3"
+                  >
+                    <div
+                      class="text-xs font-semibold uppercase tracking-[0.18em] text-semantic-neutral-400"
+                    >
+                      Generated
+                    </div>
+                    <div
+                      v-if="activeDiscoveryRun.generatedBuckets.length === 0"
+                      class="mt-3 text-xs text-semantic-neutral-500"
+                    >
+                      No generated buckets in this run yet.
+                    </div>
+                    <div v-else class="mt-3 max-h-64 space-y-2 overflow-auto">
+                      <div
+                        v-for="bucket in activeDiscoveryRun.generatedBuckets"
+                        :key="bucket.bucketKey"
+                        class="rounded-xl border border-semantic-neutral-800 bg-surface-darkSoft px-3 py-2 text-xs text-semantic-neutral-300"
+                      >
+                        <div class="font-semibold text-white">
+                          {{ bucket.pieceCategory }} · {{ bucket.fingerprintKey }}
+                        </div>
+                        <div class="mt-1">
+                          {{ bucket.pieceKind }} · target {{ bucket.targetQueenCount }} · puzzle
+                          {{ bucket.puzzleId ?? '—' }}
+                        </div>
+                        <div v-if="bucket.message" class="mt-1 text-semantic-info-100">
+                          {{ bucket.message }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="rounded-xl border border-semantic-neutral-800 bg-semantic-neutral-950/70 p-3"
+                  >
+                    <div
+                      class="text-xs font-semibold uppercase tracking-[0.18em] text-semantic-neutral-400"
+                    >
+                      Skipped / Satisfied
+                    </div>
+                    <div
+                      v-if="activeDiscoveryRun.skippedBuckets.length === 0"
+                      class="mt-3 text-xs text-semantic-neutral-500"
+                    >
+                      No skipped buckets in this run yet.
+                    </div>
+                    <div v-else class="mt-3 max-h-64 space-y-2 overflow-auto">
+                      <div
+                        v-for="bucket in activeDiscoveryRun.skippedBuckets"
+                        :key="bucket.bucketKey"
+                        class="rounded-xl border border-semantic-neutral-800 bg-surface-darkSoft px-3 py-2 text-xs text-semantic-neutral-300"
+                      >
+                        <div class="font-semibold text-white">
+                          {{ bucket.pieceCategory }} · {{ bucket.fingerprintKey }}
+                        </div>
+                        <div class="mt-1">
+                          {{ bucket.pieceKind }} · puzzle {{ bucket.puzzleId ?? '—' }}
+                        </div>
+                        <div v-if="bucket.message" class="mt-1 text-semantic-info-100">
+                          {{ bucket.message }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="rounded-xl border border-semantic-neutral-800 bg-semantic-neutral-950/70 p-3"
+                  >
+                    <div
+                      class="text-xs font-semibold uppercase tracking-[0.18em] text-semantic-neutral-400"
+                    >
+                      Failed
+                    </div>
+                    <div
+                      v-if="activeDiscoveryRun.failedBuckets.length === 0"
+                      class="mt-3 text-xs text-semantic-neutral-500"
+                    >
+                      No failed buckets in this run yet.
+                    </div>
+                    <div v-else class="mt-3 max-h-64 space-y-2 overflow-auto">
+                      <div
+                        v-for="bucket in activeDiscoveryRun.failedBuckets"
+                        :key="bucket.bucketKey"
+                        class="rounded-xl border border-semantic-error-900 bg-feedback-errorSoft px-3 py-2 text-xs text-semantic-error-100"
+                      >
+                        <div class="font-semibold text-white">
+                          {{ bucket.pieceCategory }} · {{ bucket.fingerprintKey }}
+                        </div>
+                        <div class="mt-1">
+                          target {{ bucket.targetQueenCount }} · L[{{
+                            bucket.leftBlackoutSignature.join(',')
+                          }}] · T[{{ bucket.topBlackoutSignature.join(',') }}]
+                        </div>
+                        <div
+                          v-if="bucket.message"
+                          class="mt-1 max-h-24 overflow-auto whitespace-pre-wrap break-words"
+                        >
+                          {{ bucket.message }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="rounded-xl border border-semantic-neutral-800 bg-semantic-neutral-950/70 p-3"
+                  >
+                    <div
+                      class="text-xs font-semibold uppercase tracking-[0.18em] text-semantic-neutral-400"
+                    >
+                      Pending / Inferred
+                    </div>
+                    <div
+                      v-if="
+                        activeDiscoveryRun.queuedBuckets.length === 0 &&
+                        activeDiscoveryRun.inferredBuckets.length === 0
+                      "
+                      class="mt-3 text-xs text-semantic-neutral-500"
+                    >
+                      No pending buckets in this run yet.
+                    </div>
+                    <div v-else class="mt-3 max-h-64 space-y-2 overflow-auto">
+                      <div
+                        v-for="bucket in activeDiscoveryRun.queuedBuckets"
+                        :key="`queued-${bucket.bucketKey}`"
+                        class="rounded-xl border border-semantic-neutral-800 bg-surface-darkSoft px-3 py-2 text-xs text-semantic-neutral-300"
+                      >
+                        <div class="font-semibold text-white">
+                          {{ bucket.pieceCategory }} · {{ bucket.fingerprintKey }}
+                        </div>
+                        <div class="mt-1">{{ bucket.state }} · {{ bucket.pieceKind }}</div>
+                      </div>
+                      <div
+                        v-for="bucket in activeDiscoveryRun.inferredBuckets"
+                        :key="`inferred-${bucket.bucketKey}`"
+                        class="rounded-xl border border-semantic-neutral-800 bg-surface-darkSoft px-3 py-2 text-xs text-semantic-neutral-300"
+                      >
+                        <div class="font-semibold text-white">
+                          {{ bucket.pieceCategory }} · {{ bucket.fingerprintKey }}
+                        </div>
+                        <div class="mt-1">
+                          {{ bucket.state }} · {{ bucket.provenance.join(' · ') || 'seeded' }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-semantic-neutral-800 bg-surface-darkSoft p-4">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-sm font-semibold text-white">Fingerprint Buckets</div>
+                  <button
+                    type="button"
+                    class="rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-1.5 text-xs font-semibold text-semantic-neutral-200 transition hover:border-semantic-neutral-500 hover:text-white"
+                    @click="loadStitchingCatalogStats"
+                  >
+                    Refresh
+                  </button>
+                </div>
+                <div
+                  v-if="!stitchingStats?.buckets.length"
+                  class="mt-4 text-sm text-semantic-neutral-400"
+                >
+                  No stitched catalog rows yet.
+                </div>
+                <div v-else class="mt-4 max-h-80 space-y-2 overflow-auto">
+                  <div
+                    v-for="bucket in stitchingStats.buckets"
+                    :key="bucket.fingerprintKey"
+                    class="rounded-xl border border-semantic-neutral-800 bg-semantic-neutral-950/70 px-3 py-3 text-xs text-semantic-neutral-300"
+                  >
+                    <div class="flex items-center justify-between gap-3">
+                      <div class="font-semibold text-white">
+                        {{ bucket.pieceCategory }} · {{ bucket.fingerprintKey || '(standard)' }}
+                      </div>
+                      <div>{{ bucket.puzzleCount }} puzzles</div>
+                    </div>
+                    <div class="mt-2">
+                      size {{ bucket.boardSize }} · distance {{ bucket.orthogonalMinDistance }} ·
+                      target {{ bucket.targetQueenCount }}
+                    </div>
+                    <div class="mt-1">
+                      kinds:
+                      {{
+                        Object.entries(bucket.countsByPieceKind)
+                          .map(([pieceKind, count]) => `${pieceKind} ${count}`)
+                          .join(' · ')
+                      }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </AdminPanel>
       </section>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, h, onMounted, ref, type PropType } from 'vue';
+import {
+  computed,
+  defineComponent,
+  h,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+  type PropType,
+} from 'vue';
 import Tag from 'primevue/tag';
 import { queensAdminApi } from '../../admin/api';
+import {
+  loadQueensAdminStitchingInputs,
+  saveQueensAdminStitchingInputs,
+} from '../../admin/inputPersistence';
 import type {
+  QueensAdminStitchingBatchRunRequest,
+  QueensAdminStitchingBatchStatus,
+  QueensAdminStitchingCatalogStats,
+  QueensAdminStitchingDiscoveryStatus,
+  QueensAdminStitchingFingerprintSpace,
   QueensAdminStitchingCell,
   QueensAdminStitchingPreview,
   QueensAdminStitchingQuadrant,
@@ -576,8 +1182,40 @@ const QuadrantStatusBadge = defineComponent({
 const preview = ref<QueensAdminStitchingPreview | null>(null);
 const loading = ref(false);
 const errorMessage = ref<string | null>(null);
-const showQueens = ref(true);
+const persistedInputs = loadQueensAdminStitchingInputs();
+const showQueens = ref(persistedInputs?.showQueens ?? true);
 const playMarks = ref<Record<string, 'queen' | 'flag'>>({});
+const stitchingStats = ref<QueensAdminStitchingCatalogStats | null>(null);
+const stitchingError = ref<string | null>(null);
+const stitchingMessage = ref<string | null>(null);
+const stitchingBatchLoading = ref(false);
+const stitchingExportLoading = ref(false);
+const stitchingDiscoveryLoading = ref(false);
+const activeStitchingBatch = ref<QueensAdminStitchingBatchStatus | null>(null);
+const activeDiscoveryRun = ref<QueensAdminStitchingDiscoveryStatus | null>(null);
+const fingerprintSpace = ref<QueensAdminStitchingFingerprintSpace | null>(null);
+const selectedBatchPreset = ref<
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-right'
+  | 'all-preview'
+  | 'all-left-only'
+  | 'all-top-only'
+  | 'all-both'
+  | 'all-reachable'
+>(persistedInputs?.selectedBatchPreset ?? 'all-preview');
+const runsPerFingerprint = ref(persistedInputs?.runsPerFingerprint ?? 5);
+const stitchingConcurrency = ref(persistedInputs?.stitchingConcurrency ?? 2);
+const discoveryGenerationLimit = ref(persistedInputs?.discoveryGenerationLimit ?? 50);
+const discoverySkipSatisfiedBuckets = ref(persistedInputs?.discoverySkipSatisfiedBuckets ?? true);
+const discoveryMaxConcurrentJobs = ref(persistedInputs?.discoveryMaxConcurrentJobs ?? 1);
+const stitchingExportResult = ref<{
+  outputPath: string;
+  bucketCount: number;
+  puzzleCount: number;
+} | null>(null);
+let stitchingBatchPollHandle: number | null = null;
+let stitchingDiscoveryPollHandle: number | null = null;
 
 // ── Computed ─────────────────────────────────────────────────────────────────
 
@@ -596,6 +1234,106 @@ const quadrantBlackoutSummary = computed(() => {
 const stitchedSizeLabel = computed(() => {
   if (!preview.value) return '14 × 14';
   return `${preview.value.stitchedBoard.width} × ${preview.value.stitchedBoard.height}`;
+});
+
+const selectedBatchRuns = computed<QueensAdminStitchingBatchRunRequest[]>(() => {
+  if (!preview.value) return [];
+  const runs: Record<
+    'top-right' | 'bottom-left' | 'bottom-right' | 'all-preview',
+    QueensAdminStitchingBatchRunRequest[]
+  > = {
+    'top-right': [
+      {
+        pieceKind: 'TOP_RIGHT',
+        leftBlackoutSignature: preview.value.topRight.leftBlackoutSignature,
+        topBlackoutSignature: preview.value.topRight.topBlackoutSignature,
+        targetQueenCount: preview.value.topRight.targetQueenCount,
+      },
+    ],
+    'bottom-left': [
+      {
+        pieceKind: 'BOTTOM_LEFT',
+        leftBlackoutSignature: preview.value.bottomLeft.leftBlackoutSignature,
+        topBlackoutSignature: preview.value.bottomLeft.topBlackoutSignature,
+        targetQueenCount: preview.value.bottomLeft.targetQueenCount,
+      },
+    ],
+    'bottom-right': [
+      {
+        pieceKind: 'BOTTOM_RIGHT',
+        leftBlackoutSignature: preview.value.bottomRight.leftBlackoutSignature,
+        topBlackoutSignature: preview.value.bottomRight.topBlackoutSignature,
+        targetQueenCount: preview.value.bottomRight.targetQueenCount,
+      },
+    ],
+    'all-preview': [
+      {
+        pieceKind: 'TOP_RIGHT',
+        leftBlackoutSignature: preview.value.topRight.leftBlackoutSignature,
+        topBlackoutSignature: preview.value.topRight.topBlackoutSignature,
+        targetQueenCount: preview.value.topRight.targetQueenCount,
+      },
+      {
+        pieceKind: 'BOTTOM_LEFT',
+        leftBlackoutSignature: preview.value.bottomLeft.leftBlackoutSignature,
+        topBlackoutSignature: preview.value.bottomLeft.topBlackoutSignature,
+        targetQueenCount: preview.value.bottomLeft.targetQueenCount,
+      },
+      {
+        pieceKind: 'BOTTOM_RIGHT',
+        leftBlackoutSignature: preview.value.bottomRight.leftBlackoutSignature,
+        topBlackoutSignature: preview.value.bottomRight.topBlackoutSignature,
+        targetQueenCount: preview.value.bottomRight.targetQueenCount,
+      },
+    ],
+  };
+  if (!(selectedBatchPreset.value in runs)) return [];
+  return runs[selectedBatchPreset.value as keyof typeof runs];
+});
+
+const selectedBatchSummary = computed(() => {
+  const space = fingerprintSpace.value;
+  if (!space) return 'Loading fingerprint-space counts…';
+  switch (selectedBatchPreset.value) {
+    case 'all-left-only':
+      return `${space.leftOnlyFingerprintCount} left-only fingerprints × ${runsPerFingerprint.value} runs each`;
+    case 'all-top-only':
+      return `${space.topOnlyFingerprintCount} top-only fingerprints × ${runsPerFingerprint.value} runs each`;
+    case 'all-both':
+      return `${formatLargeCount(space.bothFingerprintCount)} both-edge fingerprints × ${runsPerFingerprint.value} runs each`;
+    case 'all-reachable':
+      return `${formatLargeCount(space.totalFingerprintCount)} total reachable fingerprints × ${runsPerFingerprint.value} runs each`;
+    default:
+      return `${selectedBatchRuns.value.length} preview-derived fingerprints × ${runsPerFingerprint.value} runs each`;
+  }
+});
+
+const stitchingBatchProgress = computed(() => {
+  const batch = activeStitchingBatch.value;
+  if (!batch || batch.totalJobs === 0) return 0;
+  return Math.round((batch.completedJobs / batch.totalJobs) * 100);
+});
+
+const discoveryProgressSummary = computed(() => {
+  const run = activeDiscoveryRun.value;
+  if (!run) return 'No discovery run yet.';
+  return `${run.generatedCount} generated · ${run.skippedCount} skipped · ${run.failedCount} failed · ${run.queuedCount} queued`;
+});
+
+const discoveryStatusTone = computed(() => {
+  switch (activeDiscoveryRun.value?.state) {
+    case 'RUNNING':
+      return 'info';
+    case 'STOPPING':
+      return 'warn';
+    case 'FAILED':
+      return 'danger';
+    case 'COMPLETED':
+    case 'INTERRUPTED':
+      return 'success';
+    default:
+      return 'neutral';
+  }
 });
 
 const playerQueenCount = computed(
@@ -667,6 +1405,187 @@ async function loadPreview(): Promise<void> {
   }
 }
 
+async function loadStitchingCatalogStats(): Promise<void> {
+  try {
+    stitchingStats.value = await queensAdminApi.getStitchingCatalogStats();
+  } catch (error) {
+    stitchingError.value =
+      error instanceof Error ? error.message : 'Failed to load stitching catalog stats';
+  }
+}
+
+async function loadFingerprintSpace(): Promise<void> {
+  try {
+    fingerprintSpace.value = await queensAdminApi.getStitchingFingerprintSpace();
+  } catch (error) {
+    stitchingError.value =
+      error instanceof Error ? error.message : 'Failed to load stitching fingerprint space';
+  }
+}
+
+function formatLargeCount(value: number): string {
+  return new Intl.NumberFormat().format(value);
+}
+
+function stopStitchingBatchPolling(): void {
+  if (stitchingBatchPollHandle != null) {
+    window.clearInterval(stitchingBatchPollHandle);
+    stitchingBatchPollHandle = null;
+  }
+}
+
+function stopDiscoveryPolling(): void {
+  if (stitchingDiscoveryPollHandle != null) {
+    window.clearInterval(stitchingDiscoveryPollHandle);
+    stitchingDiscoveryPollHandle = null;
+  }
+}
+
+function startStitchingBatchPolling(batchId: string): void {
+  stopStitchingBatchPolling();
+  stitchingBatchPollHandle = window.setInterval(async () => {
+    try {
+      const status = await queensAdminApi.getStitchingBatchStatus(batchId);
+      activeStitchingBatch.value = status;
+      if (status.state !== 'RUNNING' && status.state !== 'QUEUED') {
+        stopStitchingBatchPolling();
+        await loadStitchingCatalogStats();
+      }
+    } catch (error) {
+      stitchingError.value =
+        error instanceof Error ? error.message : 'Failed to poll stitching batch status';
+      stopStitchingBatchPolling();
+    }
+  }, 2000);
+}
+
+function startDiscoveryPolling(): void {
+  stopDiscoveryPolling();
+  stitchingDiscoveryPollHandle = window.setInterval(async () => {
+    try {
+      const status = await queensAdminApi.getStitchingDiscoveryStatus();
+      activeDiscoveryRun.value = status;
+      if (!status || !['RUNNING', 'STOPPING'].includes(status.state)) {
+        stopDiscoveryPolling();
+        await loadStitchingCatalogStats();
+      }
+    } catch (error) {
+      stitchingError.value =
+        error instanceof Error ? error.message : 'Failed to poll discovery status';
+      stopDiscoveryPolling();
+    }
+  }, 2000);
+}
+
+async function startStitchingBatch(): Promise<void> {
+  if (!selectedBatchPreset.value.startsWith('all-') && selectedBatchRuns.value.length === 0) return;
+  stitchingBatchLoading.value = true;
+  stitchingError.value = null;
+  stitchingMessage.value = null;
+  try {
+    const batchId = await queensAdminApi.startStitchingBatch({
+      size: 7,
+      orthogonalMinDistance: 5,
+      minimumGroupSize: 3,
+      runsPerFingerprint: runsPerFingerprint.value,
+      maxConcurrentJobs: stitchingConcurrency.value,
+      preset:
+        selectedBatchPreset.value === 'all-left-only'
+          ? 'ALL_LEFT_ONLY'
+          : selectedBatchPreset.value === 'all-top-only'
+            ? 'ALL_TOP_ONLY'
+            : selectedBatchPreset.value === 'all-both'
+              ? 'ALL_BOTH'
+              : selectedBatchPreset.value === 'all-reachable'
+                ? 'ALL_REACHABLE'
+                : null,
+      runs: selectedBatchPreset.value.startsWith('all-') ? [] : selectedBatchRuns.value,
+    });
+    activeStitchingBatch.value = await queensAdminApi.getStitchingBatchStatus(batchId);
+    stitchingMessage.value = `Started stitching batch ${batchId}.`;
+    startStitchingBatchPolling(batchId);
+  } catch (error) {
+    stitchingError.value =
+      error instanceof Error ? error.message : 'Failed to start stitching batch';
+  } finally {
+    stitchingBatchLoading.value = false;
+  }
+}
+
+async function cancelStitchingBatch(): Promise<void> {
+  if (!activeStitchingBatch.value) return;
+  try {
+    activeStitchingBatch.value = await queensAdminApi.cancelStitchingBatch(
+      activeStitchingBatch.value.batchId
+    );
+    stopStitchingBatchPolling();
+    await loadStitchingCatalogStats();
+  } catch (error) {
+    stitchingError.value =
+      error instanceof Error ? error.message : 'Failed to cancel stitching batch';
+  }
+}
+
+async function exportCatalog(): Promise<void> {
+  stitchingExportLoading.value = true;
+  stitchingError.value = null;
+  try {
+    stitchingExportResult.value = await queensAdminApi.exportStitchingCatalog();
+  } catch (error) {
+    stitchingError.value =
+      error instanceof Error ? error.message : 'Failed to export stitching catalog';
+  } finally {
+    stitchingExportLoading.value = false;
+  }
+}
+
+async function loadDiscoveryStatus(): Promise<void> {
+  try {
+    activeDiscoveryRun.value = await queensAdminApi.getStitchingDiscoveryStatus();
+    if (
+      activeDiscoveryRun.value &&
+      ['RUNNING', 'STOPPING'].includes(activeDiscoveryRun.value.state)
+    ) {
+      startDiscoveryPolling();
+    }
+  } catch (error) {
+    stitchingError.value =
+      error instanceof Error ? error.message : 'Failed to load stitching discovery status';
+  }
+}
+
+async function startDiscoveryRun(): Promise<void> {
+  stitchingDiscoveryLoading.value = true;
+  stitchingError.value = null;
+  stitchingMessage.value = null;
+  try {
+    activeDiscoveryRun.value = await queensAdminApi.startStitchingDiscovery({
+      generationLimit: discoveryGenerationLimit.value,
+      skipSatisfiedBuckets: discoverySkipSatisfiedBuckets.value,
+      maxConcurrentJobs: discoveryMaxConcurrentJobs.value,
+    });
+    stitchingMessage.value = `Started discovery run ${activeDiscoveryRun.value.runId.slice(0, 8)}.`;
+    startDiscoveryPolling();
+  } catch (error) {
+    stitchingError.value =
+      error instanceof Error ? error.message : 'Failed to start stitching discovery run';
+  } finally {
+    stitchingDiscoveryLoading.value = false;
+  }
+}
+
+async function stopDiscoveryRun(): Promise<void> {
+  try {
+    activeDiscoveryRun.value = await queensAdminApi.stopStitchingDiscovery();
+    if (!activeDiscoveryRun.value || activeDiscoveryRun.value.state !== 'STOPPING') {
+      stopDiscoveryPolling();
+    }
+  } catch (error) {
+    stitchingError.value =
+      error instanceof Error ? error.message : 'Failed to stop stitching discovery run';
+  }
+}
+
 function onCellClick(row: number, col: number): void {
   const cell = preview.value?.stitchedBoard.cells[row]?.[col];
   if (!cell || cell.state === 'blackout') return;
@@ -695,5 +1614,37 @@ function onCellClick(row: number, col: number): void {
 
 onMounted(() => {
   void loadPreview();
+  void loadStitchingCatalogStats();
+  void loadFingerprintSpace();
+  void loadDiscoveryStatus();
 });
+
+onUnmounted(() => {
+  stopStitchingBatchPolling();
+  stopDiscoveryPolling();
+});
+
+watch(
+  [
+    showQueens,
+    selectedBatchPreset,
+    runsPerFingerprint,
+    stitchingConcurrency,
+    discoveryGenerationLimit,
+    discoverySkipSatisfiedBuckets,
+    discoveryMaxConcurrentJobs,
+  ],
+  () => {
+    saveQueensAdminStitchingInputs({
+      showQueens: showQueens.value,
+      selectedBatchPreset: selectedBatchPreset.value,
+      runsPerFingerprint: runsPerFingerprint.value,
+      stitchingConcurrency: stitchingConcurrency.value,
+      discoveryGenerationLimit: discoveryGenerationLimit.value,
+      discoverySkipSatisfiedBuckets: discoverySkipSatisfiedBuckets.value,
+      discoveryMaxConcurrentJobs: discoveryMaxConcurrentJobs.value,
+    });
+  },
+  { deep: false }
+);
 </script>

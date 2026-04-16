@@ -228,6 +228,92 @@
       </template>
     </Dialog>
   </section>
+  <section class="space-y-6">
+    <AdminPanel
+      title="Stitching Catalog"
+      description="Inspect stitched-piece catalog buckets keyed by exact blackout fingerprints. This is the dedicated stitched catalog, separate from the normal Queens puzzle table."
+    >
+      <template #actions>
+        <Button
+          type="button"
+          :label="stitchingLoading ? 'Refreshing…' : 'Refresh'"
+          outlined
+          :disabled="stitchingLoading"
+          @click="refreshStitchingCatalog"
+        />
+      </template>
+
+      <div class="grid gap-3 md:grid-cols-4">
+        <AdminStat label="Buckets" :value="stitchingStats?.bucketCount ?? 0" />
+        <AdminStat label="Total Puzzles" :value="stitchingStats?.totalPuzzles ?? 0" />
+        <AdminStat
+          label="Left Only"
+          :value="stitchingCategoryCounts.LEFT_ONLY"
+          detail="fingerprint buckets"
+        />
+        <AdminStat
+          label="Top Only / Both"
+          :value="`${stitchingCategoryCounts.TOP_ONLY} / ${stitchingCategoryCounts.BOTH}`"
+          detail="fingerprint buckets"
+        />
+      </div>
+
+      <AdminMessage v-if="stitchingErrorMessage" severity="error" class="mt-5">
+        {{ stitchingErrorMessage }}
+      </AdminMessage>
+
+      <div class="mt-5 overflow-hidden rounded-[24px] border border-semantic-neutral-800">
+        <DataTable
+          :value="stitchingBuckets"
+          data-key="fingerprintKey"
+          paginator
+          :rows="20"
+          :rows-per-page-options="[10, 20, 50, 100]"
+          removable-sort
+          sort-field="puzzleCount"
+          :sort-order="-1"
+          striped-rows
+          table-style="min-width: 62rem"
+          paginator-template="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+          current-page-report-template="{first} to {last} of {totalRecords}"
+        >
+          <template #empty>
+            <div class="px-4 py-8 text-center text-sm text-semantic-neutral-400">
+              {{
+                stitchingLoading
+                  ? 'Loading stitched catalog buckets…'
+                  : 'No stitched catalog buckets yet.'
+              }}
+            </div>
+          </template>
+
+          <Column field="boardSize" header="Board" sortable>
+            <template #body="{ data }"> {{ data.boardSize }} x {{ data.boardSize }} </template>
+          </Column>
+          <Column field="orthogonalMinDistance" header="Min Distance" sortable />
+          <Column field="targetQueenCount" header="Queens" sortable />
+          <Column field="pieceCategory" header="Category" sortable />
+          <Column field="puzzleCount" header="Puzzle Count" sortable />
+          <Column header="Piece Kinds">
+            <template #body="{ data }">
+              {{
+                Object.entries(data.countsByPieceKind)
+                  .map(([pieceKind, count]) => `${pieceKind} ${count}`)
+                  .join(' · ')
+              }}
+            </template>
+          </Column>
+          <Column header="Fingerprint Key">
+            <template #body="{ data }">
+              <div class="max-w-[22rem] break-all text-xs text-semantic-neutral-300">
+                {{ data.fingerprintKey || '(standard)' }}
+              </div>
+            </template>
+          </Column>
+        </DataTable>
+      </div>
+    </AdminPanel>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -247,6 +333,8 @@ import type {
   QueensAdminPuzzleDifficulty,
   QueensAdminPuzzleCatalogGroup,
   QueensAdminPuzzleCatalogStats,
+  QueensAdminStitchingCatalogBucket,
+  QueensAdminStitchingCatalogStats,
 } from '../../admin/types';
 import { buildQueensSelectionRoute } from '../../utils/puzzleSelectionRoute';
 
@@ -259,8 +347,11 @@ type PuzzleCatalogRow = QueensAdminPuzzleCatalogGroup & {
 
 const stats = ref<QueensAdminPuzzleCatalogStats | null>(null);
 const loading = ref(false);
+const stitchingLoading = ref(false);
 const errorMessage = ref<string | null>(null);
+const stitchingErrorMessage = ref<string | null>(null);
 const successMessage = ref<string | null>(null);
+const stitchingStats = ref<QueensAdminStitchingCatalogStats | null>(null);
 const searchText = ref('');
 const selectedSize = ref('');
 const selectedDistance = ref('');
@@ -302,6 +393,20 @@ const groups = computed<PuzzleCatalogRow[]>(() =>
     };
   })
 );
+
+const stitchingBuckets = computed<QueensAdminStitchingCatalogBucket[]>(
+  () => stitchingStats.value?.buckets ?? []
+);
+
+const stitchingCategoryCounts = computed<Record<string, number>>(() => {
+  return stitchingBuckets.value.reduce<Record<string, number>>(
+    (counts, bucket) => {
+      counts[bucket.pieceCategory] = (counts[bucket.pieceCategory] ?? 0) + 1;
+      return counts;
+    },
+    { STANDARD: 0, LEFT_ONLY: 0, TOP_ONLY: 0, BOTH: 0 }
+  );
+});
 
 const sizeOptions = computed(() => uniqueNumbers(groups.value.map((group) => group.size)));
 const distanceOptions = computed(() =>
@@ -407,6 +512,19 @@ async function refreshCatalog(): Promise<void> {
       error instanceof Error ? error.message : 'Failed to load puzzle catalog groups';
   } finally {
     loading.value = false;
+  }
+}
+
+async function refreshStitchingCatalog(): Promise<void> {
+  stitchingLoading.value = true;
+  stitchingErrorMessage.value = null;
+  try {
+    stitchingStats.value = await queensAdminApi.getStitchingCatalogStats();
+  } catch (error) {
+    stitchingErrorMessage.value =
+      error instanceof Error ? error.message : 'Failed to load stitching catalog.';
+  } finally {
+    stitchingLoading.value = false;
   }
 }
 
@@ -550,5 +668,6 @@ async function confirmDelete(): Promise<void> {
 
 onMounted(() => {
   void refreshCatalog();
+  void refreshStitchingCatalog();
 });
 </script>

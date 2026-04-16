@@ -18,13 +18,31 @@ class StitchingPreviewService(
     private val queensConstraintService: QueensConstraintService,
 ) {
     companion object {
-        private const val BASE_SIZE = 7
-        private const val ORTHOGONAL_MIN_DISTANCE = 5
-        private const val MINIMUM_GROUP_SIZE = 3
-        private const val GENERATION_STRATEGY = "baseline"
-        private const val TOP_LEFT_TARGET_QUEEN_COUNT = 10
-        private const val DEPENDENT_TARGET_QUEEN_COUNT = 9
+        const val BASE_SIZE = 7
+        const val ORTHOGONAL_MIN_DISTANCE = 5
+        const val MINIMUM_GROUP_SIZE = 3
+        const val GENERATION_STRATEGY = "baseline"
+        const val TOP_LEFT_TARGET_QUEEN_COUNT = 10
+        const val DEPENDENT_TARGET_QUEEN_COUNT = 9
     }
+
+    data class GeneratedCatalogPiece(
+        val pieceKind: String,
+        val queenCount: Int,
+        val targetQueenCount: Int,
+        val blackoutCellCount: Int,
+        val leftBlackoutSignature: List<Int>,
+        val topBlackoutSignature: List<Int>,
+        val queenPositions: Set<Position>,
+        val layout: String,
+        val queens: String,
+        val board: StitchingPreviewBoardDto,
+    )
+
+    data class OutgoingFingerprintPair(
+        val rightSignature: List<Int>,
+        val bottomSignature: List<Int>,
+    )
 
     private enum class PreviewCellState {
         ACTIVE,
@@ -110,6 +128,95 @@ class StitchingPreviewService(
         )
     }
 
+    fun generateCatalogPiece(
+        pieceKind: String,
+        leftBlackoutSignature: List<Int>,
+        topBlackoutSignature: List<Int>,
+        targetQueenCount: Int,
+        allowTargetFallbackToMax: Boolean = false,
+        randomSeed: Long? = null,
+    ): GeneratedCatalogPiece {
+        val ruleset =
+            QueensRuleset(
+                orthogonalMinDistance = ORTHOGONAL_MIN_DISTANCE,
+                forbidDiagonalTouch = true,
+                requireRowCoverage = false,
+                requireColumnCoverage = false,
+            )
+
+        val normalizedPieceKind = pieceKind.uppercase()
+        val generated =
+            if (normalizedPieceKind == "TOP_LEFT" && leftBlackoutSignature.all { it == 0 } && topBlackoutSignature.all { it == 0 }) {
+                val boardState = generateTopLeftBoard()
+                buildStandardQuadrant(boardState, pieceKind = normalizedPieceKind, groupPrefix = "ST")
+            } else {
+                buildIrregularQuadrant(
+                    pieceKind = normalizedPieceKind,
+                    groupPrefix = "ST",
+                    leftBlackoutSignature = leftBlackoutSignature,
+                    topBlackoutSignature = topBlackoutSignature,
+                    ruleset = ruleset,
+                    targetQueenCount = targetQueenCount,
+                    allowTargetFallbackToMax = allowTargetFallbackToMax,
+                    randomSeed = randomSeed,
+                )
+            }
+
+        val encoded = encodeQuadrant(generated)
+        return GeneratedCatalogPiece(
+            pieceKind = generated.pieceKind,
+            queenCount = generated.queenCount,
+            targetQueenCount = generated.targetQueenCount,
+            blackoutCellCount = generated.blackoutCellCount,
+            leftBlackoutSignature = generated.leftBlackoutSignature,
+            topBlackoutSignature = generated.topBlackoutSignature,
+            queenPositions = generated.queenPositions,
+            layout = encoded.first,
+            queens = encoded.second,
+            board = generated.board,
+        )
+    }
+
+    fun generateSeedBoard(): GeneratedCatalogPiece {
+        val boardState = generateTopLeftBoard()
+        val quadrant = buildStandardQuadrant(boardState, pieceKind = "TOP_LEFT", groupPrefix = "SEED")
+        val encoded = encodeQuadrant(quadrant)
+        return GeneratedCatalogPiece(
+            pieceKind = quadrant.pieceKind,
+            queenCount = quadrant.queenCount,
+            targetQueenCount = quadrant.targetQueenCount,
+            blackoutCellCount = quadrant.blackoutCellCount,
+            leftBlackoutSignature = quadrant.leftBlackoutSignature,
+            topBlackoutSignature = quadrant.topBlackoutSignature,
+            queenPositions = quadrant.queenPositions,
+            layout = encoded.first,
+            queens = encoded.second,
+            board = quadrant.board,
+        )
+    }
+
+    fun computeOutgoingFingerprints(queenPositions: Collection<Position>): OutgoingFingerprintPair {
+        val ruleset =
+            QueensRuleset(
+                orthogonalMinDistance = ORTHOGONAL_MIN_DISTANCE,
+                forbidDiagonalTouch = true,
+                requireRowCoverage = false,
+                requireColumnCoverage = false,
+            )
+        val queens = queenPositions.toList()
+        return OutgoingFingerprintPair(
+            rightSignature = computeHorizontalBleed(queens, ruleset),
+            bottomSignature = computeVerticalBleed(queens, ruleset),
+        )
+    }
+
+    fun decodeQueenPositions(queens: String, size: Int = BASE_SIZE): Set<Position> {
+        require(queens.length == size * size) { "Queens encoding must match board size." }
+        return queens.mapIndexedNotNull { index, cell ->
+            if (cell == 'Q') Position(index / size, index % size) else null
+        }.toSet()
+    }
+
     private fun generateTopLeftBoard(): BoardState {
         val result =
             generationWorkflowService.generateValidBoard(
@@ -179,8 +286,9 @@ class StitchingPreviewService(
      * is the canonical entry point for blackout-shape-aware generation: callers supply the
      * signatures directly and the generator resolves the best placement within those constraints.
      *
-     * If the best achievable placement cannot meet [targetQueenCount], generation fails loudly
-     * rather than silently lowering the target.
+     * If [allowTargetFallbackToMax] is false, generation fails loudly when the requested target
+     * is above the best achievable placement. Catalog generation can opt in to fallback so the
+     * saved piece records the actual max queen count for that fingerprint.
      */
     private fun buildIrregularQuadrant(
         pieceKind: String,
@@ -189,8 +297,11 @@ class StitchingPreviewService(
         topBlackoutSignature: List<Int>,
         ruleset: QueensRuleset,
         targetQueenCount: Int = DEPENDENT_TARGET_QUEEN_COUNT,
+        allowTargetFallbackToMax: Boolean = false,
+        randomSeed: Long? = null,
     ): QuadrantPiece {
         validateSignatures(leftBlackoutSignature, topBlackoutSignature)
+        val random = randomSeed?.let(::Random)
         val blackoutPositions =
             (0 until BASE_SIZE).flatMap { row ->
                 (0 until BASE_SIZE).mapNotNull { col ->
@@ -209,9 +320,9 @@ class StitchingPreviewService(
                 }
             }
 
-        val placement = resolveMaxPlacement(activePositions, ruleset)
+        val placement = resolveMaxPlacement(activePositions, ruleset, random)
 
-        if (placement.queenCount < targetQueenCount) {
+        if (placement.queenCount < targetQueenCount && !allowTargetFallbackToMax) {
             val quadrantLabel =
                 when (pieceKind) {
                     "TOP_RIGHT" -> "Top-Right"
@@ -226,8 +337,14 @@ class StitchingPreviewService(
                     "Top signature: [${topBlackoutSignature.joinToString()}]",
             )
         }
+        val resolvedTargetQueenCount =
+            if (allowTargetFallbackToMax) {
+                placement.queenCount
+            } else {
+                targetQueenCount
+            }
 
-        val groups = assignGroupsToActiveCells(activePositions, placement.queens, groupPrefix)
+        val groups = assignGroupsToActiveCells(activePositions, placement.queens, groupPrefix, random)
         val groupSlots = slotMapFor(groups.values)
         val queens = placement.queens.toSet()
 
@@ -235,7 +352,7 @@ class StitchingPreviewService(
             pieceKind = pieceKind,
             groupPrefix = groupPrefix,
             queenCount = placement.queenCount,
-            targetQueenCount = targetQueenCount,
+            targetQueenCount = resolvedTargetQueenCount,
             blackoutCellCount = blackoutPositions.size,
             leftBlackoutSignature = leftBlackoutSignature,
             topBlackoutSignature = topBlackoutSignature,
@@ -434,6 +551,7 @@ class StitchingPreviewService(
         activePositions: List<Position>,
         queens: List<Position>,
         groupPrefix: String,
+        random: Random? = null,
     ): Map<Position, String> {
         if (queens.isEmpty()) return emptyMap()
 
@@ -445,16 +563,21 @@ class StitchingPreviewService(
                 }
 
         return activePositions.associateWith { position ->
+            val nearestDistance = queens.minOf { queen -> manhattanDistance(position, queen) }
+            val nearestCandidates = queens.filter { queen -> manhattanDistance(position, queen) == nearestDistance }
             val nearestQueen =
-                queens.minWith(
-                    compareBy<Position>(
-                        { manhattanDistance(position, it) },
-                        { abs(position.row - it.row) },
-                        { abs(position.col - it.col) },
-                        { it.row },
-                        { it.col },
-                    ),
-                )
+                if (random != null && nearestCandidates.size > 1) {
+                    nearestCandidates[random.nextInt(nearestCandidates.size)]
+                } else {
+                    nearestCandidates.minWith(
+                        compareBy<Position>(
+                            { abs(position.row - it.row) },
+                            { abs(position.col - it.col) },
+                            { it.row },
+                            { it.col },
+                        ),
+                    )
+                }
             requireNotNull(groupIds[nearestQueen])
         }
     }
@@ -502,6 +625,39 @@ class StitchingPreviewService(
         require(topBlackoutSignature.all { it in 0..BASE_SIZE }) { "Top blackout signature contains invalid prefix values." }
     }
 
+    private fun encodeQuadrant(quadrant: QuadrantPiece): Pair<String, String> {
+        val groupSymbols = linkedMapOf<String, Char>()
+        var nextSymbolCode = '0'.code
+        val layout = StringBuilder(BASE_SIZE * BASE_SIZE)
+        val queens = StringBuilder(BASE_SIZE * BASE_SIZE)
+        val blackoutPositions = blackoutPositionsFor(quadrant.leftBlackoutSignature, quadrant.topBlackoutSignature)
+
+        for (row in 0 until BASE_SIZE) {
+            for (col in 0 until BASE_SIZE) {
+                val position = Position(row, col)
+                if (position in blackoutPositions) {
+                    layout.append('.')
+                    queens.append('.')
+                    continue
+                }
+
+                val groupId = requireNotNull(quadrant.activeGroups[position]) {
+                    "Missing group assignment for active stitching cell at ($row, $col)."
+                }
+                val symbol =
+                    groupSymbols.getOrPut(groupId) {
+                        val resolved = nextSymbolCode.toChar()
+                        nextSymbolCode += 1
+                        resolved
+                    }
+                layout.append(symbol)
+                queens.append(if (position in quadrant.queenPositions) 'Q' else '.')
+            }
+        }
+
+        return layout.toString() to queens.toString()
+    }
+
     private fun orthogonalNeighbors(position: Position, boardSize: Int): List<Position> =
         listOf(
             Position(position.row - 1, position.col),
@@ -524,7 +680,9 @@ class StitchingPreviewService(
     private fun resolveMaxPlacement(
         activePositions: List<Position>,
         ruleset: QueensRuleset,
+        random: Random? = null,
     ): PlacementResult {
+        val candidateOrder = if (random != null) activePositions.shuffled(random) else activePositions
         val placed = mutableListOf<Position>()
         var best = emptyList<Position>()
 
@@ -535,12 +693,12 @@ class StitchingPreviewService(
             if (startIndex >= activePositions.size) {
                 return
             }
-            if (placed.size + (activePositions.size - startIndex) <= best.size) {
+            if (placed.size + (candidateOrder.size - startIndex) <= best.size) {
                 return
             }
 
-            for (index in startIndex until activePositions.size) {
-                val candidate = activePositions[index]
+            for (index in startIndex until candidateOrder.size) {
+                val candidate = candidateOrder[index]
                 if (!queensConstraintService.isValidPlacement(candidate, placed, ruleset)) continue
                 placed += candidate
                 backtrack(index + 1)
