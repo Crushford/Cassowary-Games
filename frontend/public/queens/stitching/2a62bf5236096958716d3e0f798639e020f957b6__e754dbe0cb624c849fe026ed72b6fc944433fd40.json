@@ -1,0 +1,33 @@
+[ {
+  "id" : "92654a51-36db-4cb6-a7f8-ba6e81fd160a",
+  "layout" : "0....1....2.1..3.2.44....554..665778869777...9977",
+  "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+  "pieceKind" : "BOTTOM_RIGHT",
+  "pieceCategory" : "BOTH",
+  "boardSize" : 7,
+  "orthogonalMinDistance" : 5,
+  "targetQueenCount" : 9,
+  "queenCount" : 10,
+  "leftBlackoutSignature" : [ 0, 3, 1, 4, 2, 0, 3 ],
+  "topBlackoutSignature" : [ 0, 2, 4, 1, 3, 0, 2 ],
+  "leftBlackoutFingerprint" : "2a62bf5236096958716d3e0f798639e020f957b6",
+  "topBlackoutFingerprint" : "e754dbe0cb624c849fe026ed72b6fc944433fd40",
+  "fingerprintKey" : "2a62bf5236096958716d3e0f798639e020f957b6:e754dbe0cb624c849fe026ed72b6fc944433fd40",
+  "generationStrategy" : "baseline"
+}, {
+  "id" : "f652969a-d379-45bd-a748-26e46765e251",
+  "layout" : "0....1....2.1..3.2.44....554..665748869777...9977",
+  "queens" : "Q....Q....Q....Q....Q....Q....Q....Q....Q....Q...",
+  "pieceKind" : "BOTTOM_RIGHT",
+  "pieceCategory" : "BOTH",
+  "boardSize" : 7,
+  "orthogonalMinDistance" : 5,
+  "targetQueenCount" : 9,
+  "queenCount" : 10,
+  "leftBlackoutSignature" : [ 0, 3, 1, 4, 2, 0, 3 ],
+  "topBlackoutSignature" : [ 0, 2, 4, 1, 3, 0, 2 ],
+  "leftBlackoutFingerprint" : "2a62bf5236096958716d3e0f798639e020f957b6",
+  "topBlackoutFingerprint" : "e754dbe0cb624c849fe026ed72b6fc944433fd40",
+  "fingerprintKey" : "2a62bf5236096958716d3e0f798639e020f957b6:e754dbe0cb624c849fe026ed72b6fc944433fd40",
+  "generationStrategy" : "baseline"
+} ]

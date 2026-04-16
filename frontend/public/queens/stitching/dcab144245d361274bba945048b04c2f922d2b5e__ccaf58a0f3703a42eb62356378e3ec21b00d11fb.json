@@ -1,0 +1,17 @@
+[ {
+  "id" : "3657e71c-76fa-43c8-8661-91d1f710886f",
+  "layout" : "00....1.0.2..1...2.334555.334456667..66667....677",
+  "queens" : ".Q....Q...Q........Q...Q....Q..........Q........Q",
+  "pieceKind" : "BOTTOM_RIGHT",
+  "pieceCategory" : "BOTH",
+  "boardSize" : 7,
+  "orthogonalMinDistance" : 5,
+  "targetQueenCount" : 8,
+  "queenCount" : 8,
+  "leftBlackoutSignature" : [ 0, 1, 3, 0, 0, 2, 4 ],
+  "topBlackoutSignature" : [ 0, 0, 3, 1, 4, 2, 0 ],
+  "leftBlackoutFingerprint" : "dcab144245d361274bba945048b04c2f922d2b5e",
+  "topBlackoutFingerprint" : "ccaf58a0f3703a42eb62356378e3ec21b00d11fb",
+  "fingerprintKey" : "dcab144245d361274bba945048b04c2f922d2b5e:ccaf58a0f3703a42eb62356378e3ec21b00d11fb",
+  "generationStrategy" : "baseline"
+} ]
