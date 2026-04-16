@@ -136,7 +136,7 @@
 <script setup lang="ts">
 import { ref, computed, defineAsyncComponent, onMounted, watch } from 'vue';
 const BaseButton = defineAsyncComponent(() => import('./BaseButton.vue'));
-const Accordion = defineAsyncComponent(() => import('./Accordion.vue'));
+const Accordion = defineAsyncComponent(() => import('@/shared/components/Accordion.vue'));
 import { useLevelBuilderStore } from '../../stores/levelBuilderStore';
 
 const levelBuilderStore = useLevelBuilderStore();

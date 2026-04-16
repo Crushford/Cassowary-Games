@@ -1,5 +1,9 @@
 <template>
-  <Modal :is-visible="plantStore.showGameRules">
+  <RulesModalBase
+    :is-visible="plantStore.showGameRules"
+    :analytics-params="{ game_name: 'plant', game_mode: 'builder', grid_size: plantStore.gridSize }"
+    @close="plantStore.closeRulesModal()"
+  >
     <div
       class="bg-semantic-neutral-800 text-white p-4 rounded-xl max-w-md mx-auto space-y-2 text-base"
     >
@@ -30,66 +34,15 @@
           <li>🎨 Use this system to guide players toward solving your puzzle</li>
         </ul>
       </div>
-
-      <!-- <div class="bg-semantic-neutral-700 p-4 rounded-lg space-y-1">
-        <h3 class="font-semibold text-white">Step 3: Test Your Puzzle</h3>
-        <ul class="list-disc list-inside space-y-1">
-          <li>🧠 The game will check if your setup is solvable</li>
-          <li>
-            ✅ A puzzle is valid when there is exactly one honey pot per row, column, and color
-            group
-          </li>
-          <li>🧪 Use the Test button to verify it's a fair and playable challenge</li>
-          <li>🏁 When it passes the test, your puzzle is complete!</li>
-        </ul>
-      </div>
-
-      <div class="bg-semantic-neutral-700 p-4 rounded-lg space-y-1">
-        <h3 class="font-semibold text-white">Controls:</h3>
-        <ul class="list-disc list-inside space-y-1">
-          <li>Select a honey pot or color tile from the toolbar</li>
-          <li>Click a square on the grid to place your item</li>
-          <li>Use Undo to remove your last move</li>
-          <li>Use Reset to clear the board and start again</li>
-          <li>Use Test to validate your puzzle when you're done</li>
-        </ul>
-      </div> -->
     </div>
-    <button
-      class="w-full mt-6 py-3 px-6 bg-semantic-success-500 hover:bg-semantic-success-400 text-semantic-neutral-900 font-semibold rounded-lg transition-colors duration-200"
-      @click="onClose"
-    >
-      Got it!
-    </button>
-  </Modal>
+  </RulesModalBase>
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue';
 import { usePlantStore } from '../../stores/plantStore';
-import Modal from '@/shared/components/Modal.vue';
-import { trackRulesOpened } from '@/shared/utils/analyticsEvents';
+import RulesModalBase from '../shared/RulesModalBase.vue';
 
 const plantStore = usePlantStore();
-
-watch(
-  () => plantStore.showGameRules,
-  (isVisible) => {
-    if (!isVisible) {
-      return;
-    }
-
-    trackRulesOpened({
-      game_name: 'plant',
-      game_mode: 'builder',
-      grid_size: plantStore.gridSize,
-    });
-  }
-);
-
-const onClose = () => {
-  plantStore.closeRulesModal();
-};
 </script>
 
 <script lang="ts">

@@ -9,7 +9,7 @@ import type {
   MarkType,
   ColorName,
 } from '../types/types';
-import { COLOR_SYMBOLS } from '../utils/colorPalette';
+import { SYMBOL_TO_COLOR } from '../utils/colorPalette';
 // Import utility functions
 import {
   createEmptyGrid,
@@ -47,17 +47,6 @@ const CONFIG_KEYS = {
   DIGGING_MODE: 'honey-pot-ant-farming-digging-mode',
   AUTO_FLAGGING: 'honey-pot-ant-farming-auto-flagging',
 } as const;
-
-// Create reverse mapping from symbols to color names
-const SYMBOL_TO_COLOR: Record<string, ColorName> = Object.entries(COLOR_SYMBOLS).reduce(
-  (acc, [color, symbol]) => {
-    if (color !== 'undefined') {
-      acc[symbol] = color as ColorName;
-    }
-    return acc;
-  },
-  {} as Record<string, ColorName>
-);
 
 interface PuzzleRecord {
   id: string | number;
@@ -267,6 +256,10 @@ export const useHarvestStore = defineStore('game', {
 
     resetRulesSeen() {
       rulesStorage.resetRulesSeen('harvest');
+    },
+
+    openRulesModal() {
+      this.showGameRules = true;
     },
 
     closeRulesModal() {
@@ -1089,7 +1082,9 @@ export const useHarvestStore = defineStore('game', {
     async loadPuzzleDatabase() {
       try {
         const sizes = ['4x4', '5x5', '6x6', '7x7', '8x8', '9x9', '10x10', '11x11'];
-        const catalogs = await Promise.all(sizes.map((sizeKey) => loadQueensPuzzleCatalogForSize(sizeKey)));
+        const catalogs = await Promise.all(
+          sizes.map((sizeKey) => loadQueensPuzzleCatalogForSize(sizeKey))
+        );
         const data = Object.assign({}, ...catalogs);
         // The data is an object with keys like "5x5", each containing an array of puzzles
         // Filter each size's puzzles to only include those with id ending in -0
