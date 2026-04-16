@@ -1,73 +1,73 @@
 <template>
-  <Modal :is-visible="globalStore.ui.showRules">
-    <div>
-      <div
-        class="bg-semantic-neutral-800 text-white p-4 rounded-xl max-w-md mx-auto space-y-2 text-base"
-      >
-        <h2 class="text-semantic-warning-400 font-bold text-xl">How this table works</h2>
+  <RulesModalBase
+    :is-visible="globalStore.ui.showRules"
+    :analytics-params="{
+      game_name: 'casino',
+      game_mode: 'table',
+      board_size: roundStore.boardSize ?? undefined,
+      table_max_payout: tableStore.maxPayout,
+    }"
+    close-button-class="bg-semantic-warning-600 hover:bg-semantic-warning-500 text-white"
+    @close="globalStore.setShowRules(false)"
+  >
+    <div
+      class="bg-semantic-neutral-800 text-white p-4 rounded-xl max-w-md mx-auto space-y-2 text-base"
+    >
+      <h2 class="text-semantic-warning-400 font-bold text-xl">How this table works</h2>
 
-        <div class="space-y-1">
-          <p>Use your current bank balance to play.</p>
-          <p>Flip honeypots to earn +{{ tablePayouts.honeypot }} gold each.</p>
-          <p>Flip ants to lose {{ tablePayouts.ant }} gold each.</p>
-          <p>The puzzle logic matches the Harvest (Queens) rules.</p>
-          <p>The round ends when you solve the puzzle or when you run out of gold.</p>
-          <p v-if="tableStore.maxPayout > 0" class="text-semantic-warning-300 font-medium">
-            Max you can win at this table: {{ tableStore.maxPayout }}.
-          </p>
-        </div>
-
-        <div class="bg-semantic-neutral-700 p-4 rounded-lg space-y-1">
-          <h3 class="font-semibold text-white">Key Rules:</h3>
-          <ul class="list-disc list-inside space-y-1">
-            <li>💰 One honeypot per color group</li>
-            <li>💰 One per column</li>
-            <li>💰 One per row</li>
-            <li>🚫 No diagonal touching</li>
-          </ul>
-        </div>
-
-        <div class="bg-semantic-neutral-700 p-4 rounded-lg space-y-1">
-          <h3 class="font-semibold text-white">How to Win:</h3>
-          <ul class="list-disc list-inside space-y-1">
-            <li>
-              Use <strong>flags</strong> (🚧) to mark squares where you know there is no honeypot
-            </li>
-            <li>Once only one space remains, <strong>dig</strong> (⛏️) there</li>
-          </ul>
-        </div>
-
-        <div class="bg-semantic-neutral-700 p-4 rounded-lg space-y-1">
-          <h3 class="font-semibold text-white">Controls:</h3>
-          <ul class="list-disc list-inside space-y-1">
-            <li>Tap once to place a flag (🚧), tap again to dig (⛏️)</li>
-            <li>Once only one space remains, <strong>dig</strong> (⛏️) there</li>
-          </ul>
-        </div>
-
-        <p class="text-semantic-danger-300 font-medium">
-          ⚠️ Dig wrong and you'll lose {{ tablePayouts.ant }} gold. Run out of gold and you're
-          busted!
+      <div class="space-y-1">
+        <p>Use your current bank balance to play.</p>
+        <p>Flip honeypots to earn +{{ tablePayouts.honeypot }} gold each.</p>
+        <p>Flip ants to lose {{ tablePayouts.ant }} gold each.</p>
+        <p>The puzzle logic matches the Harvest (Queens) rules.</p>
+        <p>The round ends when you solve the puzzle or when you run out of gold.</p>
+        <p v-if="tableStore.maxPayout > 0" class="text-semantic-warning-300 font-medium">
+          Max you can win at this table: {{ tableStore.maxPayout }}.
         </p>
       </div>
-      <button
-        class="w-full mt-6 py-3 px-6 bg-semantic-warning-600 hover:bg-semantic-warning-500 text-white font-semibold rounded-lg transition-colors duration-200"
-        @click="onClose"
-      >
-        Got it!
-      </button>
+
+      <div class="bg-semantic-neutral-700 p-4 rounded-lg space-y-1">
+        <h3 class="font-semibold text-white">Key Rules:</h3>
+        <ul class="list-disc list-inside space-y-1">
+          <li>💰 One honeypot per color group</li>
+          <li>💰 One per column</li>
+          <li>💰 One per row</li>
+          <li>🚫 No diagonal touching</li>
+        </ul>
+      </div>
+
+      <div class="bg-semantic-neutral-700 p-4 rounded-lg space-y-1">
+        <h3 class="font-semibold text-white">How to Win:</h3>
+        <ul class="list-disc list-inside space-y-1">
+          <li>
+            Use <strong>flags</strong> (🚧) to mark squares where you know there is no honeypot
+          </li>
+          <li>Once only one space remains, <strong>dig</strong> (⛏️) there</li>
+        </ul>
+      </div>
+
+      <div class="bg-semantic-neutral-700 p-4 rounded-lg space-y-1">
+        <h3 class="font-semibold text-white">Controls:</h3>
+        <ul class="list-disc list-inside space-y-1">
+          <li>Tap once to place a flag (🚧), tap again to dig (⛏️)</li>
+          <li>Once only one space remains, <strong>dig</strong> (⛏️) there</li>
+        </ul>
+      </div>
+
+      <p class="text-semantic-danger-300 font-medium">
+        ⚠️ Dig wrong and you'll lose {{ tablePayouts.ant }} gold. Run out of gold and you're busted!
+      </p>
     </div>
-  </Modal>
+  </RulesModalBase>
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed } from 'vue';
 import { useGlobalStore } from '../../stores/global';
 import { useRoundStore } from '../../stores/round';
 import { useTableStore } from '../../stores/table';
 import { useLevelStore } from '../../stores/level';
-import Modal from '@/shared/components/Modal.vue';
-import { trackRulesOpened } from '@/shared/utils/analyticsEvents';
+import RulesModalBase from '../shared/RulesModalBase.vue';
 
 const globalStore = useGlobalStore();
 const roundStore = useRoundStore();
@@ -88,26 +88,6 @@ const tablePayouts = computed(() => {
     ant: Math.round(globalStore.config.penaltyPerAnt * multiplier),
   };
 });
-
-watch(
-  () => globalStore.ui.showRules,
-  (isVisible) => {
-    if (!isVisible) {
-      return;
-    }
-
-    trackRulesOpened({
-      game_name: 'casino',
-      game_mode: 'table',
-      board_size: roundStore.boardSize ?? undefined,
-      table_max_payout: tableStore.maxPayout,
-    });
-  }
-);
-
-const onClose = () => {
-  globalStore.setShowRules(false);
-};
 
 defineOptions({
   name: 'CasinoRulesModal',

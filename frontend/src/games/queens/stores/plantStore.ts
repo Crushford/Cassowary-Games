@@ -223,7 +223,7 @@ export const usePlantStore = defineStore('plant', {
 
       // Show rules if user hasn't seen them before
       if (!this.hasSeenRules()) {
-        this.showGameRules = true;
+        this.openRulesModal();
       }
     },
 
@@ -245,6 +245,10 @@ export const usePlantStore = defineStore('plant', {
 
     resetRulesSeen() {
       rulesStorage.resetRulesSeen('plant');
+    },
+
+    openRulesModal() {
+      this.showGameRules = true;
     },
 
     closeRulesModal() {

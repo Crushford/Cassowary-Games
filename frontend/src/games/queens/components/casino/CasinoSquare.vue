@@ -29,8 +29,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { COLOR_IMAGE_URLS } from '../../utils/colorPalette';
+import { useCardFlipAnimation } from '../../composables/useCardFlipAnimation';
 
 interface Props {
   rowIndex: number;
@@ -40,9 +41,9 @@ interface Props {
 
 const props = defineProps<Props>();
 
-// Track if this card should flip
-const shouldFlip = ref(false);
-const isFlipping = ref(false);
+const { shouldFlip, isFlipping } = useCardFlipAnimation(
+  () => props.store.grid[props.rowIndex][props.colIndex].playerMark
+);
 
 // Get the cell directly from the grid to ensure reactivity
 const gridCell = computed(() => {
@@ -59,29 +60,6 @@ const cellImageSrc = computed(() => {
   }
   return '/assets/ant-nest-colors/cell-background.png';
 });
-
-// Watch for changes in player marks to trigger flip animation
-watch(
-  () => props.store.grid[props.rowIndex][props.colIndex].playerMark,
-  (newMark, oldMark) => {
-    // Trigger flip when transitioning to queen or invalid
-    if (newMark === 'queen' || newMark === 'invalid') {
-      shouldFlip.value = true;
-      isFlipping.value = true;
-
-      // Change the image mid-flip (at 50% of animation)
-      setTimeout(() => {
-        isFlipping.value = false;
-      }, 300); // Half of the 600ms animation
-
-      // Reset flip state after animation completes
-      setTimeout(() => {
-        shouldFlip.value = false;
-      }, 600); // Match the CSS animation duration
-    }
-  },
-  { immediate: false }
-);
 
 // Computed property for the card image source
 const cardImageSrc = computed(() => {

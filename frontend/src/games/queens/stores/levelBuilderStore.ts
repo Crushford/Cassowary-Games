@@ -10,6 +10,7 @@ import {
   countCellsWithState,
   getColorDistribution,
   clonePlayerMarks,
+  isValidQueenPlacement,
 } from './gridUtils';
 import {
   assignInitialColorsToQueens as assignInitialColorsToQueensUtil,
@@ -510,40 +511,7 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
 
     // Helper to check if a move is valid using a specific marks array
     isValidMoveWithMarks(row: number, col: number, marks: MarkType[][]): boolean {
-      // Check if there's a queen in the same row or column
-      for (let i = 0; i < this.gridSize; i++) {
-        if (marks[row][i] === 'queen' || marks[i][col] === 'queen') {
-          return false;
-        }
-      }
-
-      // Check diagonally adjacent squares (one square away)
-      const diagonalPositions = [
-        { r: row - 1, c: col - 1 }, // top-left
-        { r: row - 1, c: col + 1 }, // top-right
-        { r: row + 1, c: col - 1 }, // bottom-left
-        { r: row + 1, c: col + 1 }, // bottom-right
-      ];
-
-      for (const pos of diagonalPositions) {
-        if (this.isValidPosition(pos.r, pos.c) && marks[pos.r][pos.c] === 'queen') {
-          return false;
-        }
-      }
-
-      // Check color group (if the square has a group color)
-      const square = this.grid[row][col];
-      if (square.groupColor) {
-        for (let r = 0; r < this.gridSize; r++) {
-          for (let c = 0; c < this.gridSize; c++) {
-            if (marks[r][c] === 'queen' && this.grid[r][c].groupColor === square.groupColor) {
-              return false;
-            }
-          }
-        }
-      }
-
-      return true;
+      return isValidQueenPlacement(this.grid, this.gridSize, row, col, marks);
     },
 
     placeQueensAndAssignColors() {

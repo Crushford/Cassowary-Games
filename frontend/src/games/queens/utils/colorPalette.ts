@@ -35,6 +35,17 @@ export const COLOR_SYMBOLS: Record<ColorName | 'undefined', string> = {
   undefined: '.',
 };
 
+// Reverse mapping from single-letter symbol to color name
+export const SYMBOL_TO_COLOR: Record<string, ColorName> = Object.entries(COLOR_SYMBOLS).reduce(
+  (acc, [color, symbol]) => {
+    if (color !== 'undefined') {
+      acc[symbol] = color as ColorName;
+    }
+    return acc;
+  },
+  {} as Record<string, ColorName>
+);
+
 // Mapping colors to their Tailwind color classes
 export const COLOR_CLASSES: Record<ColorName, ColorClasses> = {
   red: {

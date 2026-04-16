@@ -29,11 +29,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 
 import { useHarvestStore } from '../../stores/harvestStore';
 import { COLOR_IMAGE_URLS } from '../../utils/colorPalette';
 import type { ColorName } from '../../types/types';
+import { useCardFlipAnimation } from '../../composables/useCardFlipAnimation';
 
 interface Props {
   rowIndex: number;
@@ -44,9 +45,9 @@ interface Props {
 const props = defineProps<Props>();
 const harvestStore = useHarvestStore();
 
-// Track if this card should flip
-const shouldFlip = ref(false);
-const isFlipping = ref(false);
+const { shouldFlip, isFlipping } = useCardFlipAnimation(
+  () => harvestStore.playerMarks[props.rowIndex][props.colIndex]
+);
 
 const gridCell = computed(() => {
   return props.store.grid[props.rowIndex]?.[props.colIndex];
@@ -82,29 +83,6 @@ const cellImageSrc = computed(() => {
   }
   return '/assets/ant-nest-colors/cell-background.png';
 });
-
-// Watch for changes in player marks to trigger flip animation
-watch(
-  () => harvestStore.playerMarks[props.rowIndex][props.colIndex],
-  (newMark, oldMark) => {
-    // Trigger flip when transitioning to queen or invalid (regardless of previous state)
-    if (newMark === 'queen' || newMark === 'invalid') {
-      shouldFlip.value = true;
-      isFlipping.value = true;
-
-      // Change the image mid-flip (at 50% of animation)
-      setTimeout(() => {
-        isFlipping.value = false;
-      }, 300); // Half of the 600ms animation
-
-      // Reset flip state after animation completes
-      setTimeout(() => {
-        shouldFlip.value = false;
-      }, 600); // Match the CSS animation duration
-    }
-  },
-  { immediate: false }
-);
 
 function handleClick() {
   harvestStore.handleSquareClick(props.rowIndex, props.colIndex);

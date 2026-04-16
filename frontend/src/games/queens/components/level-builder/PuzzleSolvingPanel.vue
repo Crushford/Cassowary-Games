@@ -62,7 +62,7 @@ import { defineAsyncComponent } from 'vue';
 import { useLevelBuilderStore } from '../../stores/levelBuilderStore';
 
 const BaseButton = defineAsyncComponent(() => import('./BaseButton.vue'));
-const Accordion = defineAsyncComponent(() => import('./Accordion.vue'));
+const Accordion = defineAsyncComponent(() => import('@/shared/components/Accordion.vue'));
 
 const levelBuilderStore = useLevelBuilderStore();
 </script>

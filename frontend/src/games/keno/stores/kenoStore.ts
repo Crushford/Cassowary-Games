@@ -1,36 +1,9 @@
 import { defineStore } from 'pinia';
 import { loadQueensPuzzleCatalogForSize } from '@/games/queens/utils/puzzleCatalog';
 import type { GridSquare } from '@/games/queens/types/types';
-import { COLOR_SYMBOLS } from '@/games/queens/utils/colorPalette';
+import { SYMBOL_TO_COLOR } from '@/games/queens/utils/colorPalette';
+import { createEmptyGrid } from '@/games/queens/stores/gridUtils';
 import { buildOddsRowsInteger, fairPayoutsTo1Integer } from '../lib/kenoOdds';
-
-// Create reverse mapping from symbols to color names
-const SYMBOL_TO_COLOR: Record<string, string> = Object.entries(COLOR_SYMBOLS).reduce(
-  (acc, [color, symbol]) => {
-    if (color !== 'undefined') {
-      acc[symbol] = color;
-    }
-    return acc;
-  },
-  {} as Record<string, string>
-);
-
-// Create an empty grid with specified dimensions
-function createEmptyGrid(size: number): GridSquare[][] {
-  return Array(size)
-    .fill(null)
-    .map((_, row) =>
-      Array(size)
-        .fill(null)
-        .map(
-          (_, col) =>
-            ({
-              position: { row, col },
-              groupColor: undefined,
-            }) as GridSquare
-        )
-    );
-}
 
 interface TurnHistory {
   turn: number;

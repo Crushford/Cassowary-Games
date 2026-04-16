@@ -16,7 +16,7 @@
             <div class="flex justify-between mb-2">
               <span>Your progress on this table:</span>
               <span class="font-semibold text-semantic-warning-300"
-                >{{ totalProfit }} / {{ tableStore.maxPayout }}</span
+                >0 / {{ tableStore.maxPayout }}</span
               >
             </div>
           </div>
@@ -33,17 +33,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 import { useTableStore } from '../../stores/table';
 import { useGlobalStore } from '../../stores/global';
 
 const tableStore = useTableStore();
 const globalStore = useGlobalStore();
-
-const totalProfit = computed(() => {
-  // Table progress no longer tracked in new system
-  return 0;
-});
 
 defineOptions({
   name: 'CapReachedModal',

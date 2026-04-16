@@ -22,11 +22,7 @@
             class="flex justify-between"
           >
             <span class="text-lg">Winnings this round:</span>
-            <span
-              class="font-semibold"
-              :class="roundWinnings < 0 ? 'text-semantic-danger-300' : 'text-semantic-success-300'"
-              >{{ roundWinnings > 0 ? '+' : '' }}{{ roundWinnings }} chips</span
-            >
+            <span class="font-semibold text-semantic-success-300">0 chips</span>
           </div>
 
           <div v-if="roundStore.boardSize" class="pt-4 border-t border-semantic-warning-600">
@@ -96,11 +92,6 @@ import { useGlobalStore } from '../../stores/global';
 const roundStore = useRoundStore();
 const tableStore = useTableStore();
 const globalStore = useGlobalStore();
-
-const roundWinnings = computed(() => {
-  // Round winnings no longer tracked separately in new system
-  return 0;
-});
 
 const isWon = computed(() => tableStore.status === 'won');
 
