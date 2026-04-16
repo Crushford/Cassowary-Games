@@ -48,6 +48,7 @@ tsconfig.tsbuildinfo
 vite.config.d.ts
 .gradle-local/
 frontend/vite.config.js
+frontend/.storybook/*.js
 queens-admin-backend/.gradle/
 queens-admin-backend/.gradle-local/
 queens-admin-backend/build/
