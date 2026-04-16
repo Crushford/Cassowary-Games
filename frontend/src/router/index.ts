@@ -74,6 +74,7 @@ const router = createRouter({
         const tab =
           to.query.tab === 'batch' ||
           to.query.tab === 'catalog' ||
+          to.query.tab === 'stitching' ||
           to.query.tab === 'solver' ||
           to.query.tab === 'max-queens'
             ? to.query.tab
@@ -94,6 +95,11 @@ const router = createRouter({
     {
       path: '/queens/admin/catalog',
       name: 'queens-admin-catalog',
+      component: QueensAdmin,
+    },
+    {
+      path: '/queens/admin/stitching',
+      name: 'queens-admin-stitching',
       component: QueensAdmin,
     },
     {

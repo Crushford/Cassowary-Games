@@ -15,6 +15,10 @@ import type {
   QueensAdminPuzzleCatalogStats,
   QueensAdminGenerationStrategy,
   QueensAdminSolverConfig,
+  QueensAdminStitchingBoard,
+  QueensAdminStitchingCell,
+  QueensAdminStitchingPreview,
+  QueensAdminStitchingQuadrant,
   QueensAdminSolverPattern,
   QueensAdminSystemLoad,
   QueensAdminValidationSummary,
@@ -248,6 +252,39 @@ interface SolverConfigDto {
   patterns: SolverPatternDto[];
 }
 
+interface StitchingPreviewCellDto {
+  state: QueensAdminStitchingCell['state'];
+  groupId?: string | null;
+  groupSlot?: number | null;
+}
+
+interface StitchingPreviewBoardDto {
+  width: number;
+  height: number;
+  cells: StitchingPreviewCellDto[][];
+}
+
+interface StitchingPreviewQuadrantDto {
+  pieceKind: string;
+  queenCount: number;
+  targetQueenCount: number;
+  blackoutCellCount: number;
+  leftBlackoutSignature: number[];
+  topBlackoutSignature: number[];
+  board: StitchingPreviewBoardDto;
+}
+
+interface StitchingPreviewDto {
+  size: number;
+  orthogonalMinDistance: number;
+  minimumGroupSize: number;
+  topLeft: StitchingPreviewQuadrantDto;
+  topRight: StitchingPreviewQuadrantDto;
+  bottomLeft: StitchingPreviewQuadrantDto;
+  bottomRight: StitchingPreviewQuadrantDto;
+  stitchedBoard: StitchingPreviewBoardDto;
+}
+
 function toLocalBoardState(boardState: BoardStateDto | null): QueensAdminBoardState | null {
   if (!boardState) return null;
 
@@ -302,6 +339,45 @@ function toOperationResult(data: OperationResultDto): QueensAdminOperationResult
     validation: toLocalValidation(data.validation),
     metadata: null,
     error: data.errors.length > 0 ? data.errors.join(' ') : null,
+  };
+}
+
+function toStitchingBoard(data: StitchingPreviewBoardDto): QueensAdminStitchingBoard {
+  return {
+    width: data.width,
+    height: data.height,
+    cells: data.cells.map((row) =>
+      row.map((cell) => ({
+        state: cell.state,
+        groupId: cell.groupId ?? null,
+        groupSlot: cell.groupSlot ?? null,
+      }))
+    ),
+  };
+}
+
+function toStitchingQuadrant(data: StitchingPreviewQuadrantDto): QueensAdminStitchingQuadrant {
+  return {
+    pieceKind: data.pieceKind,
+    queenCount: data.queenCount,
+    targetQueenCount: data.targetQueenCount,
+    blackoutCellCount: data.blackoutCellCount,
+    leftBlackoutSignature: data.leftBlackoutSignature,
+    topBlackoutSignature: data.topBlackoutSignature,
+    board: toStitchingBoard(data.board),
+  };
+}
+
+function toStitchingPreview(data: StitchingPreviewDto): QueensAdminStitchingPreview {
+  return {
+    size: data.size,
+    orthogonalMinDistance: data.orthogonalMinDistance,
+    minimumGroupSize: data.minimumGroupSize,
+    topLeft: toStitchingQuadrant(data.topLeft),
+    topRight: toStitchingQuadrant(data.topRight),
+    bottomLeft: toStitchingQuadrant(data.bottomLeft),
+    bottomRight: toStitchingQuadrant(data.bottomRight),
+    stitchedBoard: toStitchingBoard(data.stitchedBoard),
   };
 }
 
@@ -669,6 +745,23 @@ export const queensAdminApi = {
     const response = await fetch('/api/queens/admin/generation/system-load');
     const data = (await response.json()) as SystemLoadDto;
     return toSystemLoad(data);
+  },
+
+  async getStitchingPreview(signal?: AbortSignal): Promise<QueensAdminStitchingPreview> {
+    const response = await fetch('/api/queens/admin/generation/stitching-preview', {
+      signal,
+    });
+    if (!response.ok) {
+      let message = 'Failed to load the stitching preview';
+      try {
+        const errorBody = (await response.json()) as { message?: string };
+        if (errorBody.message) message = errorBody.message;
+      } catch (_) {
+        // ignore parse failure, keep default message
+      }
+      throw new Error(message);
+    }
+    return toStitchingPreview((await response.json()) as StitchingPreviewDto);
   },
 
   async resolveMaxQueenCount(

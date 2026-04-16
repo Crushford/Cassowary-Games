@@ -236,3 +236,38 @@ export interface QueensAdminSolverConfig {
   builtInSteps: QueensAdminBuiltInSolverStep[];
   patterns: QueensAdminSolverPattern[];
 }
+
+export type QueensAdminStitchingCellState = 'active' | 'queen' | 'blackout' | 'join-fill';
+
+export interface QueensAdminStitchingCell {
+  state: QueensAdminStitchingCellState;
+  groupId?: string | null;
+  groupSlot?: number | null;
+}
+
+export interface QueensAdminStitchingBoard {
+  width: number;
+  height: number;
+  cells: QueensAdminStitchingCell[][];
+}
+
+export interface QueensAdminStitchingQuadrant {
+  pieceKind: string;
+  queenCount: number;
+  targetQueenCount: number;
+  blackoutCellCount: number;
+  leftBlackoutSignature: number[];
+  topBlackoutSignature: number[];
+  board: QueensAdminStitchingBoard;
+}
+
+export interface QueensAdminStitchingPreview {
+  size: number;
+  orthogonalMinDistance: number;
+  minimumGroupSize: number;
+  topLeft: QueensAdminStitchingQuadrant;
+  topRight: QueensAdminStitchingQuadrant;
+  bottomLeft: QueensAdminStitchingQuadrant;
+  bottomRight: QueensAdminStitchingQuadrant;
+  stitchedBoard: QueensAdminStitchingBoard;
+}

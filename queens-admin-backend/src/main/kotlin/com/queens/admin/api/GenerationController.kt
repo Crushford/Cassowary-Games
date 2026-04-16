@@ -16,12 +16,14 @@ import com.queens.admin.api.dto.PuzzleCatalogGroupDto
 import com.queens.admin.api.dto.PuzzleCatalogStatsDto
 import com.queens.admin.api.dto.ResolveMaxQueensRequestDto
 import com.queens.admin.api.dto.ResolveMaxQueensResultDto
+import com.queens.admin.api.dto.StitchingPreviewDto
 import com.queens.admin.api.dto.SystemLoadDto
 import com.queens.admin.application.BackendLoadService
 import com.queens.admin.application.BatchGenerationService
 import com.queens.admin.application.GenerationJobService
 import com.queens.admin.application.GenerationWorkflowService
 import com.queens.admin.application.PuzzleCatalogService
+import com.queens.admin.application.StitchingPreviewService
 import com.queens.admin.domain.model.Position
 import com.queens.admin.domain.model.PuzzleDifficultyTier
 import com.queens.admin.domain.service.PersistedPuzzleBoardCodecService
@@ -47,6 +49,7 @@ class GenerationController(
     private val backendLoadService: BackendLoadService,
     private val batchGenerationService: BatchGenerationService,
     private val puzzleCatalogService: PuzzleCatalogService,
+    private val stitchingPreviewService: StitchingPreviewService,
     private val persistedPuzzleBoardCodecService: PersistedPuzzleBoardCodecService,
     private val boardStateMapper: BoardStateMapper,
     private val batchGenerationMapper: BatchGenerationMapper,
@@ -180,6 +183,9 @@ class GenerationController(
             sampledAt = snapshot.sampledAt.toString(),
         )
     }
+
+    @GetMapping("/stitching-preview")
+    fun getStitchingPreview(): StitchingPreviewDto = stitchingPreviewService.buildPreview()
 
     @PostMapping("/resolve-max-queens")
     fun resolveMaxQueens(@RequestBody request: ResolveMaxQueensRequestDto): ResolveMaxQueensResultDto {
