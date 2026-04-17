@@ -4,6 +4,7 @@ import com.queens.admin.domain.model.PersistedStitchingPuzzle
 import com.queens.admin.domain.model.PuzzleDifficultyTier
 import com.queens.admin.domain.service.StitchingFingerprintService
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.count
 import org.jetbrains.exposed.sql.max
@@ -11,6 +12,7 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -42,11 +44,12 @@ class StitchingPuzzleRepository(
                 it[minimumGroupSize] = puzzle.minimumGroupSize
                 it[generationStrategy] = puzzle.generationStrategy
                 it[pieceKind] = puzzle.pieceKind
-                it[leftBlackoutSignature] = stitchingFingerprintService.serializeSignature(puzzle.leftBlackoutSignature)
-                it[topBlackoutSignature] = stitchingFingerprintService.serializeSignature(puzzle.topBlackoutSignature)
+                it[leftBlackoutSignature] = stitchingFingerprintService.serializeSignatureToDb(puzzle.leftBlackoutSignature)
+                it[topBlackoutSignature] = stitchingFingerprintService.serializeSignatureToDb(puzzle.topBlackoutSignature)
                 it[leftBlackoutFingerprint] = puzzle.leftBlackoutFingerprint
                 it[topBlackoutFingerprint] = puzzle.topBlackoutFingerprint
                 it[fingerprintKey] = puzzle.fingerprintKey
+                it[isSeed] = puzzle.isSeed
                 it[pieceCategory] = puzzle.pieceCategory
                 it[canonicalSignature] = puzzle.canonicalSignature
                 it[difficultyTier] = puzzle.difficultyTier?.name
@@ -162,6 +165,13 @@ class StitchingPuzzleRepository(
                 }
         }
 
+    fun deleteBlackoutPuzzles(): Int =
+        transaction {
+            StitchingPuzzlesTable.deleteWhere {
+                StitchingPuzzlesTable.pieceCategory.inList(listOf("LEFT_ONLY", "TOP_ONLY", "BOTH"))
+            }
+        }
+
     private fun ResultRow.toPersistedStitchingPuzzle(): PersistedStitchingPuzzle =
         PersistedStitchingPuzzle(
             id = this[StitchingPuzzlesTable.id].value,
@@ -185,6 +195,7 @@ class StitchingPuzzleRepository(
             leftBlackoutFingerprint = this[StitchingPuzzlesTable.leftBlackoutFingerprint],
             topBlackoutFingerprint = this[StitchingPuzzlesTable.topBlackoutFingerprint],
             fingerprintKey = this[StitchingPuzzlesTable.fingerprintKey],
+            isSeed = this[StitchingPuzzlesTable.isSeed],
             pieceCategory = this[StitchingPuzzlesTable.pieceCategory],
             canonicalSignature = this[StitchingPuzzlesTable.canonicalSignature],
             difficultyTier = this[StitchingPuzzlesTable.difficultyTier]?.let(PuzzleDifficultyTier::valueOf),

@@ -55,4 +55,6 @@ class StitchingCatalogService(
 
     fun countByFingerprintKey(): List<StitchingPuzzleRepository.FingerprintBucketCount> =
         stitchingPuzzleRepository.countByFingerprintKey()
+
+    fun deleteBlackoutPuzzles(): Int = stitchingPuzzleRepository.deleteBlackoutPuzzles()
 }

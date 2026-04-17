@@ -371,6 +371,10 @@ interface StitchingCatalogExportDto {
   puzzleCount: number;
 }
 
+interface StitchingCatalogDeleteDto {
+  deletedCount: number;
+}
+
 interface StitchingFingerprintSpaceDto {
   leftOnlyFingerprintCount: number;
   topOnlyFingerprintCount: number;
@@ -1010,6 +1014,17 @@ export const queensAdminApi = {
       throw new Error('Failed to export stitching catalog');
     }
     return (await response.json()) as StitchingCatalogExportDto;
+  },
+
+  async deleteBlackoutStitchingPuzzles(): Promise<number> {
+    const response = await fetch('/api/stitching/catalog/delete-blackout-puzzles', {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete blackout stitching puzzles');
+    }
+    const data = (await response.json()) as StitchingCatalogDeleteDto;
+    return data.deletedCount;
   },
 
   async resolveMaxQueenCount(

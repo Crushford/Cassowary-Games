@@ -19,6 +19,7 @@ data class PersistedStitchingPuzzle(
     val leftBlackoutFingerprint: String,
     val topBlackoutFingerprint: String,
     val fingerprintKey: String,
+    val isSeed: Boolean,
     val pieceCategory: String,
     val canonicalSignature: String,
     val difficultyTier: PuzzleDifficultyTier? = null,

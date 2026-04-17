@@ -20,7 +20,8 @@ fun main(args: Array<String>) {
         println("Stitching catalog export completed.")
         println("  Output directory: ${summary.outputDirectory}")
         println("  Index file: ${summary.indexPath}")
-        println("  Fingerprint buckets: ${summary.bucketCount}")
+        println("  Fingerprint buckets: ${summary.fingerprintBucketCount}")
+        println("  Starting puzzles: ${summary.startingPuzzleCount}")
         println("  Puzzles exported: ${summary.puzzleCount}")
         exitProcess(0)
     } catch (error: Throwable) {

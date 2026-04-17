@@ -15,7 +15,7 @@
     "test:kotlin": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle test'",
     "test:kotlin:tests": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle test \"$@\"' --",
     "db:import-legacy-puzzles": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle importLegacyPuzzles'",
-    "db:export-puzzles-json": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle exportPuzzlesJson'",
+    "db:export-puzzles-json": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle exportPuzzlesJson exportStitchingCatalog'",
     "db:export-shared-solver-config": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle exportSharedSolverConfig'",
     "db:print-export-fingerprint": "sh -c 'cd queens-admin-backend && GRADLE_USER_HOME=\"$PWD/.gradle-local\" gradle -q printExportFingerprint'",
     "db:sync-exported-artifacts": "sh ./scripts/sync-db-exports.sh",

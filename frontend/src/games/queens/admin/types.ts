@@ -334,6 +334,10 @@ export interface QueensAdminStitchingCatalogStats {
   buckets: QueensAdminStitchingCatalogBucket[];
 }
 
+export interface QueensAdminStitchingCatalogDeleteResult {
+  deletedCount: number;
+}
+
 export interface QueensAdminStitchingFingerprintSpace {
   leftOnlyFingerprintCount: number;
   topOnlyFingerprintCount: number;

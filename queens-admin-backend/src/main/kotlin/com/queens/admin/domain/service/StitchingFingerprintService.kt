@@ -1,6 +1,5 @@
 package com.queens.admin.domain.service
 
-import java.security.MessageDigest
 import org.springframework.stereotype.Service
 
 @Service
@@ -12,15 +11,11 @@ class StitchingFingerprintService {
         }
     }
 
-    fun canonicalSignature(signature: List<Int>): List<Int> {
-        val trimmed = signature.toMutableList()
-        while (trimmed.isNotEmpty() && trimmed.last() == 0) {
-            trimmed.removeLast()
-        }
-        return trimmed.toList()
-    }
+    fun canonicalSignature(signature: List<Int>): List<Int> = signature.toList()
 
-    fun serializeSignature(signature: List<Int>): String = signature.joinToString(",")
+    private fun serializeSignature(signature: List<Int>): String = signature.joinToString(separator = "")
+
+    fun serializeSignatureToDb(signature: List<Int>): String = signature.joinToString(",")
 
     fun deserializeSignature(serialized: String, boardSize: Int): List<Int> {
         if (serialized.isBlank()) return List(boardSize) { 0 }
@@ -29,20 +24,21 @@ class StitchingFingerprintService {
         return parsed
     }
 
-    fun fingerprintForSignature(signature: List<Int>): String {
-        val canonical = canonicalSignature(signature)
-        if (canonical.isEmpty()) return ""
-        val digest = MessageDigest.getInstance("SHA-1").digest(serializeSignature(canonical).toByteArray())
-        return digest.joinToString("") { byte -> "%02x".format(byte) }
-    }
+    fun rowFingerprintForSignature(signature: List<Int>): String = "R${serializeSignature(signature)}"
 
-    fun categoryFor(leftFingerprint: String, topFingerprint: String): String =
+    fun columnFingerprintForSignature(signature: List<Int>): String = "C${serializeSignature(signature)}"
+
+    fun fingerprintKey(leftSignature: List<Int>, topSignature: List<Int>): String =
+        "${rowFingerprintForSignature(leftSignature)}${columnFingerprintForSignature(topSignature)}"
+
+    fun combinedFingerprintKey(leftFingerprint: String, topFingerprint: String): String =
+        "$leftFingerprint$topFingerprint"
+
+    fun categoryFor(leftSignature: List<Int>, topSignature: List<Int>): String =
         when {
-            leftFingerprint.isNotBlank() && topFingerprint.isNotBlank() -> "BOTH"
-            leftFingerprint.isNotBlank() -> "LEFT_ONLY"
-            topFingerprint.isNotBlank() -> "TOP_ONLY"
+            leftSignature.any { it > 0 } && topSignature.any { it > 0 } -> "BOTH"
+            leftSignature.any { it > 0 } -> "LEFT_ONLY"
+            topSignature.any { it > 0 } -> "TOP_ONLY"
             else -> "STANDARD"
         }
-
-    fun fingerprintKey(leftFingerprint: String, topFingerprint: String): String = "$leftFingerprint:$topFingerprint"
 }

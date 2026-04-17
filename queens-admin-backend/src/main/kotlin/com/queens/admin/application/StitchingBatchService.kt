@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 enum class StitchingBatchState {
@@ -91,12 +92,23 @@ class StitchingBatchService(
     private val canonicalPuzzleSignatureService: CanonicalPuzzleSignatureService,
     private val stitchingFingerprintSpaceService: StitchingFingerprintSpaceService,
 ) {
+    private val logger = LoggerFactory.getLogger(javaClass)
     private val coordinatorExecutor = Executors.newCachedThreadPool()
     private val workerExecutor = Executors.newCachedThreadPool()
     private val batches = ConcurrentHashMap<String, BatchRuntime>()
     private val recentRunLimit = 100
 
     fun startBatch(request: StitchingBatchRequest): StitchingBatchSnapshot {
+        logger.info(
+            "Batch start request received: size={}, orthogonalMinDistance={}, minimumGroupSize={}, runsPerFingerprint={}, maxConcurrentJobs={}, preset={}, explicitRuns={}",
+            request.size,
+            request.orthogonalMinDistance,
+            request.minimumGroupSize,
+            request.runsPerFingerprint,
+            request.maxConcurrentJobs,
+            request.preset,
+            request.runs.size,
+        )
         require(request.size == StitchingPreviewService.BASE_SIZE) { "Only 7x7 stitched batches are supported in this first pass." }
         require(request.orthogonalMinDistance == StitchingPreviewService.ORTHOGONAL_MIN_DISTANCE) {
             "Only orthogonal min distance 5 is supported in this first pass."
@@ -107,6 +119,11 @@ class StitchingBatchService(
         }
 
         val planner = plannerFor(request)
+        logger.info(
+            "Batch planner resolved: totalJobs={}, note={}",
+            planner.totalJobs,
+            planner.note,
+        )
 
         val batchId = UUID.randomUUID().toString()
         val snapshot =
@@ -151,6 +168,12 @@ class StitchingBatchService(
         batches.values.map { it.snapshot.get() }.sortedByDescending { it.updatedAt }
 
     private fun runBatch(runtime: BatchRuntime) {
+        logger.info(
+            "Batch run starting: batchId={}, totalJobs={}, note={}",
+            runtime.snapshot.get().batchId,
+            runtime.snapshot.get().totalJobs,
+            runtime.snapshot.get().note,
+        )
         updateSnapshot(runtime) { it.copy(state = StitchingBatchState.RUNNING, updatedAt = Instant.now()) }
         val maxConcurrent = runtime.request.maxConcurrentJobs.coerceAtLeast(1)
         val active = mutableMapOf<String, CompletableFuture<Unit>>()
@@ -203,6 +226,16 @@ class StitchingBatchService(
         val request = runtime.request
 
         try {
+            logger.info(
+                "Batch run executing: batchId={}, runId={}, pieceKind={}, fingerprintKey={}, pieceCategory={}, leftFingerprint={}, topFingerprint={}",
+                runtime.snapshot.get().batchId,
+                run.runId,
+                run.pieceKind,
+                run.fingerprintKey,
+                run.pieceCategory,
+                run.leftBlackoutFingerprint,
+                run.topBlackoutFingerprint,
+            )
             val resolvedTargetQueenCount =
                 stitchingCatalogService.knownMaxQueenCountForFingerprintKey(run.fingerprintKey)
                     ?: run.targetQueenCount
@@ -235,6 +268,9 @@ class StitchingBatchService(
                         leftBlackoutFingerprint = run.leftBlackoutFingerprint,
                         topBlackoutFingerprint = run.topBlackoutFingerprint,
                         fingerprintKey = run.fingerprintKey,
+                        isSeed = generated.pieceKind == "TOP_LEFT" &&
+                            generated.leftBlackoutSignature.all { it == 0 } &&
+                            generated.topBlackoutSignature.all { it == 0 },
                         pieceCategory = run.pieceCategory,
                         canonicalSignature = canonicalSignature,
                         createdAt = Instant.now(),
@@ -265,6 +301,15 @@ class StitchingBatchService(
                 )
             updateFinishedRun(runtime, finished)
         } catch (error: Exception) {
+            logger.error(
+                "Batch run failed: batchId={}, runId={}, pieceKind={}, fingerprintKey={}, message={}",
+                runtime.snapshot.get().batchId,
+                run.runId,
+                run.pieceKind,
+                run.fingerprintKey,
+                error.message,
+                error,
+            )
             updateFinishedRun(
                 runtime,
                 run.copy(
@@ -341,6 +386,12 @@ class StitchingBatchService(
                 queue += prepareRunSnapshot(requestedRun, request.size)
             }
         }
+        logger.info(
+            "Batch explicit planner prepared: totalJobs={}, runs={}, uniqueFingerprints={}",
+            queue.size,
+            request.runs.size,
+            request.runs.map { "${it.pieceKind}:${it.leftBlackoutSignature}:${it.topBlackoutSignature}" }.distinct().size,
+        )
         return RunPlanner(
             totalJobs = queue.size,
             note = "Explicit stitching fingerprint batch. Duplicate canonical boards are skipped.",
@@ -362,6 +413,15 @@ class StitchingBatchService(
                     (space.totalFingerprintCount * runsPerFingerprint).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
                 else -> error("Unsupported stitching batch preset: $preset")
             }
+        logger.info(
+            "Batch preset planner prepared: preset={}, totalJobs={}, leftOnly={}, topOnly={}, both={}, totalFingerprints={}",
+            preset,
+            totalJobs,
+            space.leftOnlyFingerprintCount,
+            space.topOnlyFingerprintCount,
+            space.bothFingerprintCount,
+            space.totalFingerprintCount,
+        )
 
         var leftIndex = 0
         var topIndex = 0
@@ -501,11 +561,15 @@ class StitchingBatchService(
             "Top",
         )
         val leftFingerprint =
-            stitchingFingerprintService.fingerprintForSignature(requestedRun.leftBlackoutSignature)
+            stitchingFingerprintService.rowFingerprintForSignature(requestedRun.leftBlackoutSignature)
         val topFingerprint =
-            stitchingFingerprintService.fingerprintForSignature(requestedRun.topBlackoutSignature)
-        val pieceCategory = stitchingFingerprintService.categoryFor(leftFingerprint, topFingerprint)
-        val fingerprintKey = stitchingFingerprintService.fingerprintKey(leftFingerprint, topFingerprint)
+            stitchingFingerprintService.columnFingerprintForSignature(requestedRun.topBlackoutSignature)
+        val pieceCategory =
+            stitchingFingerprintService.categoryFor(
+                requestedRun.leftBlackoutSignature,
+                requestedRun.topBlackoutSignature,
+            )
+        val fingerprintKey = stitchingFingerprintService.combinedFingerprintKey(leftFingerprint, topFingerprint)
         return StitchingBatchRunSnapshot(
             runId = UUID.randomUUID().toString(),
             pieceKind = requestedRun.pieceKind.uppercase(),

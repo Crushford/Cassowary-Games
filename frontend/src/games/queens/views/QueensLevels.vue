@@ -107,6 +107,15 @@
           <div class="text-sm opacity-90">Timed run mode with persistent upgrades</div>
         </button>
 
+        <!-- Infinite Mode Button -->
+        <button
+          class="w-full py-4 px-6 bg-group-green-base hover:bg-group-green-strong text-white font-semibold rounded-lg transition-colors duration-200 text-left"
+          @click="goToInfiniteMode"
+        >
+          <div class="text-xl font-bold mb-1">Infinite Mode ♾️</div>
+          <div class="text-sm opacity-90">Play the stitched world as it expands</div>
+        </button>
+
         <!-- Records Button -->
         <button
           class="w-full py-4 px-6 bg-group-green-base hover:bg-group-green-strong text-white font-semibold rounded-lg transition-colors duration-200 text-left"
@@ -161,6 +170,10 @@ type QueensMenuMode = 'single' | 'speed' | 'rotate' | 'records';
 
 function goToIncrementalMode() {
   router.push('/queens/incremental');
+}
+
+function goToInfiniteMode() {
+  router.push('/queens/infinite');
 }
 
 function goToCampaignSelector() {

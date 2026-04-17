@@ -18,6 +18,7 @@ object StitchingPuzzlesTable : UUIDTable("stitching_puzzles") {
     val leftBlackoutFingerprint = text("left_blackout_fingerprint")
     val topBlackoutFingerprint = text("top_blackout_fingerprint")
     val fingerprintKey = text("fingerprint_key")
+    val isSeed = bool("is_seed").default(false)
     val pieceCategory = text("piece_category")
     val canonicalSignature = text("canonical_signature").uniqueIndex()
     val difficultyTier = text("difficulty_tier").nullable()

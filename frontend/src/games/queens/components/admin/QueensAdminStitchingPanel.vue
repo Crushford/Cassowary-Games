@@ -338,6 +338,14 @@
                   >
                     {{ stitchingExportLoading ? 'Exporting…' : 'Export JSON' }}
                   </button>
+                  <button
+                    type="button"
+                    class="rounded-xl border border-semantic-danger-700 bg-feedback-errorSoft px-3 py-2 text-sm font-semibold text-semantic-error-100 transition hover:opacity-90 disabled:opacity-50"
+                    :disabled="stitchingDeleteLoading"
+                    @click="deleteBlackoutStitchingPuzzles"
+                  >
+                    {{ stitchingDeleteLoading ? 'Deleting…' : 'Delete Blackout Puzzles' }}
+                  </button>
                 </div>
 
                 <div
@@ -1190,6 +1198,7 @@ const stitchingError = ref<string | null>(null);
 const stitchingMessage = ref<string | null>(null);
 const stitchingBatchLoading = ref(false);
 const stitchingExportLoading = ref(false);
+const stitchingDeleteLoading = ref(false);
 const stitchingDiscoveryLoading = ref(false);
 const activeStitchingBatch = ref<QueensAdminStitchingBatchStatus | null>(null);
 const activeDiscoveryRun = ref<QueensAdminStitchingDiscoveryStatus | null>(null);
@@ -1536,6 +1545,30 @@ async function exportCatalog(): Promise<void> {
       error instanceof Error ? error.message : 'Failed to export stitching catalog';
   } finally {
     stitchingExportLoading.value = false;
+  }
+}
+
+async function deleteBlackoutStitchingPuzzles(): Promise<void> {
+  if (
+    !window.confirm(
+      'Delete every stitching puzzle with blackout squares? This will keep starting puzzles and normal Queens puzzles.'
+    )
+  ) {
+    return;
+  }
+
+  stitchingDeleteLoading.value = true;
+  stitchingError.value = null;
+  stitchingMessage.value = null;
+  try {
+    const deletedCount = await queensAdminApi.deleteBlackoutStitchingPuzzles();
+    stitchingMessage.value = `Deleted ${deletedCount} blackout stitching puzzle${deletedCount === 1 ? '' : 's'}.`;
+    await loadStitchingCatalogStats();
+  } catch (error) {
+    stitchingError.value =
+      error instanceof Error ? error.message : 'Failed to delete blackout stitching puzzles';
+  } finally {
+    stitchingDeleteLoading.value = false;
   }
 }
 

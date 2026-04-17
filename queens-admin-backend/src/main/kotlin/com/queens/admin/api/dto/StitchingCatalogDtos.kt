@@ -82,6 +82,10 @@ data class StitchingCatalogExportDto(
     val puzzleCount: Int,
 )
 
+data class StitchingCatalogDeleteDto(
+    val deletedCount: Int,
+)
+
 data class StitchingFingerprintSpaceDto(
     val leftOnlyFingerprintCount: Int,
     val topOnlyFingerprintCount: Int,

@@ -5,6 +5,7 @@ import com.queens.admin.api.dto.StitchingBatchRunDto
 import com.queens.admin.api.dto.StitchingBatchStartedDto
 import com.queens.admin.api.dto.StitchingBatchStatusDto
 import com.queens.admin.api.dto.StitchingCatalogBucketStatsDto
+import com.queens.admin.api.dto.StitchingCatalogDeleteDto
 import com.queens.admin.api.dto.StitchingCatalogExportDto
 import com.queens.admin.api.dto.StitchingDiscoveryBucketDto
 import com.queens.admin.api.dto.StitchingDiscoveryRequestDto
@@ -220,10 +221,16 @@ class StitchingCatalogController(
         val summary = stitchingJsonExportService.exportCatalogs(defaultExportPuzzleDirectory())
         return StitchingCatalogExportDto(
             outputPath = summary.outputDirectory.toString(),
-            bucketCount = summary.bucketCount,
+            bucketCount = summary.fingerprintBucketCount,
             puzzleCount = summary.puzzleCount,
         )
     }
+
+    @PostMapping("/catalog/delete-blackout-puzzles")
+    fun deleteBlackoutPuzzles(): StitchingCatalogDeleteDto =
+        StitchingCatalogDeleteDto(
+            deletedCount = stitchingCatalogService.deleteBlackoutPuzzles(),
+        )
 
     private fun defaultExportPuzzleDirectory(): Path {
         val candidates =

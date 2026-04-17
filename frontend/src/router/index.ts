@@ -58,6 +58,11 @@ const router = createRouter({
       component: IncrementalQueensEntry,
     },
     {
+      path: '/queens/infinite',
+      name: 'queens-infinite',
+      component: () => import('@/games/queens/views/InfiniteQueensGame.vue'),
+    },
+    {
       path: '/queens/campaign',
       name: 'queens-campaign-levels',
       component: () => import('@/games/queens/views/QueensCampaignLevels.vue'),
