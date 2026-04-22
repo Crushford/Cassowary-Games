@@ -24,6 +24,7 @@ class BoardStateMapper {
                         groupColor = cell.groupColor,
                         isSolutionQueen = cell.isSolutionQueen,
                         markType = parseMarkType(cell.markType),
+                        isBlackout = cell.isBlackout,
                     )
                 }
             },
@@ -43,6 +44,7 @@ class BoardStateMapper {
                         groupColor = cell.groupColor,
                         isSolutionQueen = cell.isSolutionQueen,
                         markType = cell.markType.name,
+                        isBlackout = cell.isBlackout,
                     )
                 }
             },

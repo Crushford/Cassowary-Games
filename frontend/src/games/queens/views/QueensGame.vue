@@ -97,7 +97,8 @@
     <!-- Board stack -->
     <div class="flex-1 flex flex-col justify-center px-4 pb-2">
       <QueensPuzzleBoard
-        :store="queensStore"
+        :board="boardAdapter"
+        interactive
         :enable-touch="true"
         :board-style="boardAnimationStyle"
         aria-label="Queens puzzle grid"
@@ -158,6 +159,7 @@ import {
   buildQueensSelectionRoute,
   isQueensSelectionDifficulty,
 } from '../utils/puzzleSelectionRoute';
+import { buildClassicPuzzleBoardAdapter } from '../components/queens/puzzleBoardAdapters';
 
 const QueensGameHeader = defineAsyncComponent(
   () => import('../components/queens/QueensGameHeader.vue')
@@ -189,6 +191,12 @@ const route = useRoute();
 const router = useRouter();
 const queensStore = useQueensStore();
 const speedModeStore = useSpeedModeStore();
+
+const boardAdapter = computed(() =>
+  buildClassicPuzzleBoardAdapter(queensStore, {
+    onCellActivate: queensStore.handleSquareClick.bind(queensStore),
+  })
+);
 
 const shouldShakeErrorToast = ref(false);
 const isRouteLoading = ref(false);

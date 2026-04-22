@@ -28,6 +28,7 @@ class GenerationJobService(
         targetQueenCount: Int = size,
         orthogonalMinDistance: Int = size,
         minimumGroupSize: Int = 3,
+        blackoutPositions: Set<com.queens.admin.domain.model.Position> = emptySet(),
         includeProgressUpdates: Boolean = false,
         generationStrategy: String = "baseline",
         seedTemplateOffsets: List<com.queens.admin.domain.model.Position>? = null,
@@ -50,6 +51,7 @@ class GenerationJobService(
             targetQueenCount = targetQueenCount,
             orthogonalMinDistance = orthogonalMinDistance,
             minimumGroupSize = minimumGroupSize,
+            blackoutPositions = blackoutPositions,
             includeProgressUpdates = includeProgressUpdates,
             generationStrategy = generationStrategy,
             seedTemplateOffsets = seedTemplateOffsets,
@@ -150,6 +152,7 @@ class GenerationJobService(
                 minimumGroupSize = runtime.minimumGroupSize,
                 generationStrategy = runtime.generationStrategy,
                 seedTemplateOffsets = runtime.seedTemplateOffsets,
+                blackoutPositions = runtime.blackoutPositions,
                 progressListener = if (runtime.includeProgressUpdates) {
                     { update ->
                         updateSnapshot(
@@ -320,6 +323,7 @@ class GenerationJobService(
         val targetQueenCount: Int,
         val orthogonalMinDistance: Int,
         val minimumGroupSize: Int,
+        val blackoutPositions: Set<com.queens.admin.domain.model.Position>,
         val includeProgressUpdates: Boolean,
         val generationStrategy: String,
         val seedTemplateOffsets: List<com.queens.admin.domain.model.Position>?,

@@ -1,6 +1,8 @@
 package com.queens.admin.application
 
+import com.queens.admin.domain.model.PersistedPuzzle
 import com.queens.admin.domain.model.PersistedStitchingPuzzle
+import com.queens.admin.domain.model.Position
 import com.queens.admin.domain.service.CanonicalPuzzleSignatureService
 import com.queens.admin.domain.service.StitchingFingerprintService
 import java.time.Instant
@@ -34,6 +36,7 @@ data class StitchingDiscoveryRequest(
     val generationLimit: Int,
     val skipSatisfiedBuckets: Boolean,
     val maxConcurrentJobs: Int,
+    val minRegionSize: Int = 2,
 )
 
 data class StitchingDiscoveryBucketSnapshot(
@@ -79,6 +82,7 @@ data class StitchingDiscoverySnapshot(
 class StitchingDiscoveryService(
     private val stitchingPreviewService: StitchingPreviewService,
     private val stitchingCatalogService: StitchingCatalogService,
+    private val puzzleCatalogService: PuzzleCatalogService,
     private val stitchingFingerprintService: StitchingFingerprintService,
     private val canonicalPuzzleSignatureService: CanonicalPuzzleSignatureService,
 ) {
@@ -143,21 +147,26 @@ class StitchingDiscoveryService(
 
     private fun run(runtime: RunRuntime) {
         try {
-            val seed = stitchingPreviewService.generateSeedBoard()
+            val sourcePuzzle = puzzleCatalogService.findRandomFiltered(
+                size = StitchingPreviewService.BASE_SIZE,
+                orthogonalMinDistance = StitchingPreviewService.ORTHOGONAL_MIN_DISTANCE,
+                pieceKind = "STANDARD",
+            ) ?: error("No eligible seed puzzle found in the normal puzzle catalog (size=${StitchingPreviewService.BASE_SIZE}, orthogonalMinDistance=${StitchingPreviewService.ORTHOGONAL_MIN_DISTANCE}, pieceKind=STANDARD).")
             logger.info(
-                "Discovery seed generated: pieceKind={}, queens={}, targetQueenCount={}, canonicalSignatureLength={}",
-                seed.pieceKind,
-                seed.queenCount,
-                seed.targetQueenCount,
-                seed.queens.length,
+                "Discovery seed selected from catalog: puzzleId={}, targetQueenCount={}, queensLength={}",
+                sourcePuzzle.id,
+                sourcePuzzle.targetQueenCount,
+                sourcePuzzle.queens.length,
             )
-            val seedPuzzle = persistSeedPuzzle(runtime, seed)
+            val seedPuzzle = persistSeedPuzzle(runtime, sourcePuzzle)
+            val seedQueens = stitchingPreviewService.decodeQueenPositions(seedPuzzle.queens, seedPuzzle.size)
+            bootstrapSeedWorld(runtime, seedQueens)
             synchronized(runtime.lock) {
                 expandFromSource(
                     runtime = runtime,
                     sourceId = seedPuzzle.id.toString().let { persistedId -> "seed:$persistedId" },
-                    queenPositions = stitchingPreviewService.decodeQueenPositions(seedPuzzle.queens, seedPuzzle.size),
-                    sourceDescription = "Generated 7x7 seed puzzle",
+                    queenPositions = seedQueens,
+                    sourceDescription = "Seed puzzle from catalog (sourcePuzzleId=${sourcePuzzle.id})",
                 )
             }
 
@@ -222,7 +231,9 @@ class StitchingDiscoveryService(
                     queuedCount = synchronized(runtime.lock) { runtime.queue.size },
                     activeBucket = null,
                     note =
-                        if (runtime.cancelled.get()) {
+                        if (finalState == StitchingDiscoveryRunState.FAILED) {
+                            snapshot.note
+                        } else if (runtime.cancelled.get()) {
                             "Discovery interrupted by user request."
                         } else if (runtime.generatedCount >= runtime.request.generationLimit) {
                             "Generation limit reached. Discovery can be resumed in a later run."
@@ -247,43 +258,48 @@ class StitchingDiscoveryService(
 
     private fun persistSeedPuzzle(
         runtime: RunRuntime,
-        seed: StitchingPreviewService.GeneratedCatalogPiece,
+        source: PersistedPuzzle,
     ): PersistedStitchingPuzzle {
-        val canonicalSignature =
-            canonicalPuzzleSignatureService.computeSignature(seed.layout, seed.queens)
+        val leftSignature = stitchingFingerprintService.deserializeSignature(source.leftBlackoutSignature, source.size)
+        val topSignature = stitchingFingerprintService.deserializeSignature(source.topBlackoutSignature, source.size)
         val saved =
             stitchingCatalogService.savePiece(
                 PersistedStitchingPuzzle(
                     id = UUID.randomUUID(),
-                    size = StitchingPreviewService.BASE_SIZE,
-                    layout = seed.layout,
-                    queens = seed.queens,
-                    targetQueenCount = seed.targetQueenCount,
-                    queenCount = seed.queenCount,
-                    orthogonalMinDistance = StitchingPreviewService.ORTHOGONAL_MIN_DISTANCE,
-                    minimumGroupSize = StitchingPreviewService.MINIMUM_GROUP_SIZE,
-                    generationStrategy = StitchingPreviewService.GENERATION_STRATEGY,
-                    pieceKind = seed.pieceKind,
-                    leftBlackoutSignature = seed.leftBlackoutSignature,
-                    topBlackoutSignature = seed.topBlackoutSignature,
-                    leftBlackoutFingerprint = stitchingFingerprintService.rowFingerprintForSignature(seed.leftBlackoutSignature),
-                    topBlackoutFingerprint = stitchingFingerprintService.columnFingerprintForSignature(seed.topBlackoutSignature),
-                    fingerprintKey = stitchingFingerprintService.fingerprintKey(seed.leftBlackoutSignature, seed.topBlackoutSignature),
+                    size = source.size,
+                    layout = source.layout,
+                    queens = source.queens,
+                    targetQueenCount = source.targetQueenCount,
+                    queenCount = source.queens.count { it == 'Q' },
+                    orthogonalMinDistance = source.orthogonalMinDistance,
+                    minimumGroupSize = source.minimumGroupSize,
+                    generationStrategy = source.generationStrategy,
+                    pieceKind = "TOP_LEFT",
+                    leftBlackoutSignature = leftSignature,
+                    topBlackoutSignature = topSignature,
+                    leftBlackoutFingerprint = stitchingFingerprintService.rowFingerprintForSignature(leftSignature),
+                    topBlackoutFingerprint = stitchingFingerprintService.columnFingerprintForSignature(topSignature),
+                    fingerprintKey = stitchingFingerprintService.fingerprintKey(leftSignature, topSignature),
                     isSeed = true,
+                    sourcePuzzleId = source.id,
                     pieceCategory = "STANDARD",
-                    canonicalSignature = canonicalSignature,
+                    canonicalSignature = source.canonicalSignature,
+                    difficultyTier = source.difficultyTier,
+                    difficultyScore = source.difficultyScore,
+                    difficultySolverVersion = source.difficultySolverVersion,
+                    difficultyAssessedAt = source.difficultyAssessedAt,
                     createdAt = Instant.now(),
                 ),
             )
         logger.info(
-            "Discovery seed save result: state={}, puzzleId={}, isSeed={}, fingerprintKey={}, leftFingerprint={}, topFingerprint={}, pieceKind={}, message={}",
+            "Discovery seed save result: state={}, puzzleId={}, isSeed={}, sourcePuzzleId={}, fingerprintKey={}, leftFingerprint={}, topFingerprint={}, message={}",
             saved.state,
             saved.puzzle?.id,
             saved.puzzle?.isSeed,
+            saved.puzzle?.sourcePuzzleId,
             saved.puzzle?.fingerprintKey,
             saved.puzzle?.leftBlackoutFingerprint,
             saved.puzzle?.topBlackoutFingerprint,
-            saved.puzzle?.pieceKind,
             saved.message,
         )
         saved.puzzle?.fingerprintKey?.let { runtime.satisfiedFingerprintKeys.add(it) }
@@ -292,6 +308,143 @@ class StitchingDiscoveryService(
         }
 
         return saved.puzzle ?: error("Seed puzzle save did not return a persisted puzzle.")
+    }
+
+    private fun bootstrapSeedWorld(runtime: RunRuntime, seedQueens: Collection<Position>) {
+        val seedOutgoing = stitchingPreviewService.computeOutgoingFingerprints(seedQueens)
+        val zeros = List(StitchingPreviewService.BASE_SIZE) { 0 }
+
+        if (seedOutgoing.rightSignature.all { it == 0 } || seedOutgoing.bottomSignature.all { it == 0 }) {
+            logger.warn(
+                "Seed has zero right or bottom bleed; skipping explicit 2x2 bootstrap. rightBleed={} bottomBleed={}",
+                seedOutgoing.rightSignature,
+                seedOutgoing.bottomSignature,
+            )
+            return
+        }
+
+        val bootstrapTR =
+            generateAndPersistBootstrapPiece(
+                runtime = runtime,
+                pieceKind = "TOP_RIGHT",
+                leftSignature = seedOutgoing.rightSignature,
+                topSignature = zeros,
+            )
+        val bootstrapBL =
+            generateAndPersistBootstrapPiece(
+                runtime = runtime,
+                pieceKind = "BOTTOM_LEFT",
+                leftSignature = zeros,
+                topSignature = seedOutgoing.bottomSignature,
+            )
+
+        if (bootstrapTR == null || bootstrapBL == null) {
+            logger.warn(
+                "Bootstrap 2x2 incomplete: TR={} BL={}; cannot derive bottom-right.",
+                bootstrapTR?.id,
+                bootstrapBL?.id,
+            )
+            return
+        }
+
+        val trOutgoing =
+            stitchingPreviewService.computeOutgoingFingerprints(
+                stitchingPreviewService.decodeQueenPositions(bootstrapTR.queens, bootstrapTR.size),
+            )
+        val blOutgoing =
+            stitchingPreviewService.computeOutgoingFingerprints(
+                stitchingPreviewService.decodeQueenPositions(bootstrapBL.queens, bootstrapBL.size),
+            )
+
+        generateAndPersistBootstrapPiece(
+            runtime = runtime,
+            pieceKind = "BOTTOM_RIGHT",
+            leftSignature = blOutgoing.rightSignature,
+            topSignature = trOutgoing.bottomSignature,
+        )
+    }
+
+    private fun generateAndPersistBootstrapPiece(
+        runtime: RunRuntime,
+        pieceKind: String,
+        leftSignature: List<Int>,
+        topSignature: List<Int>,
+    ): PersistedStitchingPuzzle? {
+        val leftFingerprint = stitchingFingerprintService.rowFingerprintForSignature(leftSignature)
+        val topFingerprint = stitchingFingerprintService.columnFingerprintForSignature(topSignature)
+        val fingerprintKey = stitchingFingerprintService.combinedFingerprintKey(leftFingerprint, topFingerprint)
+        val category = stitchingFingerprintService.categoryFor(leftSignature, topSignature)
+
+        if (runtime.request.skipSatisfiedBuckets) {
+            val existing = stitchingCatalogService.getPiecesByFingerprintKey(fingerprintKey).firstOrNull()
+            if (existing != null) {
+                logger.info(
+                    "Bootstrap reuse existing: pieceKind={}, fingerprintKey={}, puzzleId={}",
+                    pieceKind,
+                    fingerprintKey,
+                    existing.id,
+                )
+                synchronized(runtime.lock) {
+                    runtime.satisfiedFingerprintKeys.add(fingerprintKey)
+                    runtime.satisfiedPuzzlesByFingerprintKey[fingerprintKey] = existing
+                }
+                return existing
+            }
+        }
+
+        val targetQueenCount =
+            stitchingCatalogService.knownMaxQueenCountForFingerprintKey(fingerprintKey)
+                ?: StitchingPreviewService.DEPENDENT_TARGET_QUEEN_COUNT
+        val generated =
+            stitchingPreviewService.generateCatalogPiece(
+                pieceKind = pieceKind,
+                leftBlackoutSignature = leftSignature,
+                topBlackoutSignature = topSignature,
+                targetQueenCount = targetQueenCount,
+                allowTargetFallbackToMax = true,
+                randomSeed = fingerprintKey.hashCode().toLong(),
+            )
+        val canonicalSignature = canonicalPuzzleSignatureService.computeSignature(generated.layout, generated.queens)
+        val saved =
+            stitchingCatalogService.savePiece(
+                PersistedStitchingPuzzle(
+                    id = UUID.randomUUID(),
+                    size = StitchingPreviewService.BASE_SIZE,
+                    layout = generated.layout,
+                    queens = generated.queens,
+                    targetQueenCount = generated.targetQueenCount,
+                    queenCount = generated.queenCount,
+                    orthogonalMinDistance = StitchingPreviewService.ORTHOGONAL_MIN_DISTANCE,
+                    minimumGroupSize = StitchingPreviewService.MINIMUM_GROUP_SIZE,
+                    generationStrategy = StitchingPreviewService.GENERATION_STRATEGY,
+                    pieceKind = generated.pieceKind,
+                    leftBlackoutSignature = generated.leftBlackoutSignature,
+                    topBlackoutSignature = generated.topBlackoutSignature,
+                    leftBlackoutFingerprint = leftFingerprint,
+                    topBlackoutFingerprint = topFingerprint,
+                    fingerprintKey = fingerprintKey,
+                    isSeed = false,
+                    pieceCategory = category,
+                    canonicalSignature = canonicalSignature,
+                    createdAt = Instant.now(),
+                ),
+            )
+        logger.info(
+            "Bootstrap piece: state={}, pieceKind={}, fingerprintKey={}, puzzleId={}, message={}",
+            saved.state,
+            pieceKind,
+            fingerprintKey,
+            saved.puzzle?.id,
+            saved.message,
+        )
+        val puzzle = saved.puzzle ?: error("Bootstrap piece save returned null for fingerprintKey=$fingerprintKey")
+        synchronized(runtime.lock) {
+            if (saved.state == "SAVED") runtime.generatedCount += 1
+            runtime.satisfiedFingerprintKeys.add(fingerprintKey)
+            runtime.satisfiedPuzzlesByFingerprintKey[fingerprintKey] = puzzle
+            updateSnapshotLocked(runtime)
+        }
+        return puzzle
     }
 
     private fun processBucket(runtime: RunRuntime, bucketKey: String) {
@@ -336,6 +489,49 @@ class StitchingDiscoveryService(
                     allowTargetFallbackToMax = true,
                     randomSeed = bucket.bucketKey.hashCode().toLong(),
                 )
+
+            val meetsRegionSize = generated.effectiveMinGroupSize >= runtime.request.minRegionSize
+            if (!meetsRegionSize) {
+                val failureReason =
+                    buildString {
+                        append(
+                            "Not viable: smallest region has ${generated.effectiveMinGroupSize} cell(s) after blackout fill overrides " +
+                                "(active-only minimum ${generated.minGroupSize}), minimum is ${runtime.request.minRegionSize}.",
+                        )
+                        generated.minGroupShortfallReason
+                            ?.takeIf { it.isNotBlank() }
+                            ?.let { detail ->
+                                append(" ")
+                                append(detail)
+                            }
+                    }
+                logger.info(
+                    "Bucket {} failed viability: effectiveMinGroupSize={} (activeMinGroupSize={}) < required={}. {}",
+                    bucketKey,
+                    generated.effectiveMinGroupSize,
+                    generated.minGroupSize,
+                    runtime.request.minRegionSize,
+                    generated.minGroupShortfallReason ?: "No additional shortfall detail.",
+                )
+                synchronized(runtime.lock) {
+                    updateBucketLocked(
+                        runtime,
+                        bucket.copy(
+                            state = StitchingDiscoveryBucketState.FAILED,
+                            message = failureReason,
+                        ),
+                    )
+                    runtime.cancelled.set(true)
+                    runtime.snapshot.updateAndGet { snapshot ->
+                        snapshot.copy(
+                            state = StitchingDiscoveryRunState.FAILED,
+                            note = "Discovery halted after viability failure in bucket ${bucket.bucketKey}. $failureReason",
+                            updatedAt = Instant.now(),
+                        )
+                    }
+                }
+                return
+            }
             val canonicalSignature =
                 canonicalPuzzleSignatureService.computeSignature(generated.layout, generated.queens)
             val saved =
@@ -356,9 +552,7 @@ class StitchingDiscoveryService(
                         leftBlackoutFingerprint = stitchingFingerprintService.rowFingerprintForSignature(generated.leftBlackoutSignature),
                         topBlackoutFingerprint = stitchingFingerprintService.columnFingerprintForSignature(generated.topBlackoutSignature),
                         fingerprintKey = bucket.fingerprintKey,
-                        isSeed = generated.pieceKind == "TOP_LEFT" &&
-                            generated.leftBlackoutSignature.all { it == 0 } &&
-                            generated.topBlackoutSignature.all { it == 0 },
+                        isSeed = false,
                         pieceCategory = bucket.pieceCategory,
                         canonicalSignature = canonicalSignature,
                         createdAt = Instant.now(),

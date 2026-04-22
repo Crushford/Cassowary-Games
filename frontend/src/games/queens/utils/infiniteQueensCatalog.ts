@@ -54,6 +54,13 @@ export interface InfiniteQueensCatalogRecord {
   fingerprintKey: string;
   generationStrategy: string;
   isSeed: boolean;
+  blackoutFillOverrides: Array<{
+    row: number;
+    col: number;
+    groupSymbol: string;
+  }>;
+  blackoutFillOverrideByIndex: Record<number, string>;
+  effectiveMinGroupSize?: number;
 }
 
 export interface InfiniteQueensCatalogIndex {
@@ -99,6 +106,8 @@ type RawCatalogRecord = Record<string, unknown> & {
   fingerprintKey: string;
   generationStrategy?: string;
   isSeed?: boolean;
+  blackoutFillOverrides?: Array<{ row?: number; col?: number; groupSymbol?: string }>;
+  effectiveMinGroupSize?: number;
 };
 
 function fetchJson<T>(path: string, cache: RequestCache = 'force-cache'): Promise<T | null> {
@@ -230,6 +239,33 @@ function normalizeRecord(record: RawCatalogRecord): InfiniteQueensCatalogRecord 
       record.leftBlackoutSignature.every((value) => value === 0) &&
       record.topBlackoutSignature.every((value) => value === 0));
 
+  const blackoutFillOverrides = Array.isArray(record.blackoutFillOverrides)
+    ? record.blackoutFillOverrides
+        .map((entry) => ({
+          row: Number(entry?.row),
+          col: Number(entry?.col),
+          groupSymbol: typeof entry?.groupSymbol === 'string' ? entry.groupSymbol : '',
+        }))
+        .filter(
+          (entry) =>
+            Number.isInteger(entry.row) &&
+            Number.isInteger(entry.col) &&
+            entry.row >= 0 &&
+            entry.row < size &&
+            entry.col >= 0 &&
+            entry.col < size &&
+            entry.groupSymbol.length === 1 &&
+            entry.groupSymbol !== '.'
+        )
+    : [];
+  const blackoutFillOverrideByIndex = blackoutFillOverrides.reduce<Record<number, string>>(
+    (accumulator, entry) => {
+      accumulator[entry.row * size + entry.col] = entry.groupSymbol;
+      return accumulator;
+    },
+    {}
+  );
+
   return {
     id: record.id,
     size,
@@ -250,6 +286,10 @@ function normalizeRecord(record: RawCatalogRecord): InfiniteQueensCatalogRecord 
     fingerprintKey: record.fingerprintKey,
     generationStrategy: record.generationStrategy ?? 'baseline',
     isSeed,
+    blackoutFillOverrides,
+    blackoutFillOverrideByIndex,
+    effectiveMinGroupSize:
+      typeof record.effectiveMinGroupSize === 'number' ? record.effectiveMinGroupSize : undefined,
   };
 }
 

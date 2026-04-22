@@ -408,6 +408,17 @@
                     />
                   </label>
 
+                  <label class="block text-sm text-semantic-neutral-300">
+                    Minimum region size
+                    <input
+                      v-model.number="discoveryMinRegionSize"
+                      type="number"
+                      min="1"
+                      max="100"
+                      class="mt-2 w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm text-white"
+                    />
+                  </label>
+
                   <label
                     class="flex items-start justify-between gap-4 rounded-xl border border-semantic-neutral-800 bg-semantic-neutral-950/70 px-3 py-3 text-sm text-semantic-neutral-300"
                   >
@@ -1218,6 +1229,7 @@ const stitchingConcurrency = ref(persistedInputs?.stitchingConcurrency ?? 2);
 const discoveryGenerationLimit = ref(persistedInputs?.discoveryGenerationLimit ?? 50);
 const discoverySkipSatisfiedBuckets = ref(persistedInputs?.discoverySkipSatisfiedBuckets ?? true);
 const discoveryMaxConcurrentJobs = ref(persistedInputs?.discoveryMaxConcurrentJobs ?? 1);
+const discoveryMinRegionSize = ref(persistedInputs?.discoveryMinRegionSize ?? 2);
 const stitchingExportResult = ref<{
   outputPath: string;
   bucketCount: number;
@@ -1551,7 +1563,7 @@ async function exportCatalog(): Promise<void> {
 async function deleteBlackoutStitchingPuzzles(): Promise<void> {
   if (
     !window.confirm(
-      'Delete every stitching puzzle with blackout squares? This will keep starting puzzles and normal Queens puzzles.'
+      'Delete ALL stitching puzzles, including seeds and generated pieces? This will not affect the normal Queens puzzle catalog.'
     )
   ) {
     return;
@@ -1596,6 +1608,7 @@ async function startDiscoveryRun(): Promise<void> {
       generationLimit: discoveryGenerationLimit.value,
       skipSatisfiedBuckets: discoverySkipSatisfiedBuckets.value,
       maxConcurrentJobs: discoveryMaxConcurrentJobs.value,
+      minRegionSize: discoveryMinRegionSize.value,
     });
     stitchingMessage.value = `Started discovery run ${activeDiscoveryRun.value.runId.slice(0, 8)}.`;
     startDiscoveryPolling();
@@ -1666,6 +1679,7 @@ watch(
     discoveryGenerationLimit,
     discoverySkipSatisfiedBuckets,
     discoveryMaxConcurrentJobs,
+    discoveryMinRegionSize,
   ],
   () => {
     saveQueensAdminStitchingInputs({
@@ -1676,6 +1690,7 @@ watch(
       discoveryGenerationLimit: discoveryGenerationLimit.value,
       discoverySkipSatisfiedBuckets: discoverySkipSatisfiedBuckets.value,
       discoveryMaxConcurrentJobs: discoveryMaxConcurrentJobs.value,
+      discoveryMinRegionSize: discoveryMinRegionSize.value,
     });
   },
   { deep: false }

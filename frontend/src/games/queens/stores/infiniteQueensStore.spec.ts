@@ -49,6 +49,8 @@ function makeLinkedRecord(x: number, y: number): InfiniteQueensCatalogRecord {
     fingerprintKey: `${left}${top}`,
     generationStrategy: 'baseline',
     isSeed: x === 0 && y === 0,
+    blackoutFillOverrides: [],
+    blackoutFillOverrideByIndex: {},
   };
 }
 

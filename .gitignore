@@ -52,6 +52,7 @@ frontend/.storybook/*.js
 queens-admin-backend/.gradle/
 queens-admin-backend/.gradle-local/
 queens-admin-backend/build/
+queens-admin-backend/.kotlin/
 
 # Playwright/MCP screenshots
 .playwright-mcp/

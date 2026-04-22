@@ -416,6 +416,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
       queenCountMode?: QueensAdminQueenCountMode;
       targetQueenCount?: number;
       orthogonalMinDistance?: number;
+      blackoutFingerprintKey?: string | null;
     }
   ): Promise<void> {
     boardSize.value = size;
@@ -444,6 +445,7 @@ export const useQueensAdminStore = defineStore('queensAdmin', () => {
         orthogonalMinDistance: orthogonalMinDistance.value,
         generationStrategy: generationStrategy.value,
         seedTemplateOffsets: options?.seedTemplateOffsets,
+        blackoutFingerprintKey: options?.blackoutFingerprintKey ?? null,
       });
       currentGenerationJobId = jobId;
 

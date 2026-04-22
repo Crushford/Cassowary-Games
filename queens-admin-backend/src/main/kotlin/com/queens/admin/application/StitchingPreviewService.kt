@@ -10,17 +10,23 @@ import com.queens.admin.domain.model.QueensRuleset
 import com.queens.admin.domain.service.QueensConstraintService
 import kotlin.math.abs
 import kotlin.random.Random
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+
+class InsufficientRegionSizeException(message: String) : Exception(message)
 
 @Service
 class StitchingPreviewService(
     private val generationWorkflowService: GenerationWorkflowService,
     private val queensConstraintService: QueensConstraintService,
 ) {
+    private val logger = LoggerFactory.getLogger(StitchingPreviewService::class.java)
+
     companion object {
         const val BASE_SIZE = 7
         const val ORTHOGONAL_MIN_DISTANCE = 5
         const val MINIMUM_GROUP_SIZE = 3
+        const val IRREGULAR_GENERATION_MINIMUM_GROUP_SIZE = 1
         const val GENERATION_STRATEGY = "baseline"
         const val TOP_LEFT_TARGET_QUEEN_COUNT = 10
         const val DEPENDENT_TARGET_QUEEN_COUNT = 9
@@ -37,6 +43,16 @@ class StitchingPreviewService(
         val layout: String,
         val queens: String,
         val board: StitchingPreviewBoardDto,
+        val minGroupSize: Int,
+        val effectiveMinGroupSize: Int,
+        val blackoutFillOverrides: List<BlackoutFillOverride>,
+        val minGroupShortfallReason: String? = null,
+    )
+
+    data class BlackoutFillOverride(
+        val row: Int,
+        val col: Int,
+        val groupSymbol: String,
     )
 
     data class OutgoingFingerprintPair(
@@ -159,10 +175,31 @@ class StitchingPreviewService(
                     targetQueenCount = targetQueenCount,
                     allowTargetFallbackToMax = allowTargetFallbackToMax,
                     randomSeed = randomSeed,
+                    minimumGroupSizeForGeneration = IRREGULAR_GENERATION_MINIMUM_GROUP_SIZE,
                 )
             }
 
+        val groupSizes = generated.activeGroups.values.groupingBy { it }.eachCount()
+        val minGroupSize = groupSizes.values.minOrNull() ?: 0
         val encoded = encodeQuadrant(generated)
+        val blackoutFillOverrides = computeBlackoutFillOverrides(
+            layout = encoded.first,
+            boardSize = BASE_SIZE,
+            minimumGroupSize = MINIMUM_GROUP_SIZE,
+        )
+        val effectiveMinGroupSize =
+            computeEffectiveMinGroupSize(
+                layout = encoded.first,
+                boardSize = BASE_SIZE,
+                blackoutFillOverrides = blackoutFillOverrides,
+            )
+        val minGroupShortfallReason =
+            describeMinGroupShortfall(
+                layout = encoded.first,
+                boardSize = BASE_SIZE,
+                minimumGroupSize = MINIMUM_GROUP_SIZE,
+                blackoutFillOverrides = blackoutFillOverrides,
+            )
         return GeneratedCatalogPiece(
             pieceKind = generated.pieceKind,
             queenCount = generated.queenCount,
@@ -174,25 +211,220 @@ class StitchingPreviewService(
             layout = encoded.first,
             queens = encoded.second,
             board = generated.board,
+            minGroupSize = minGroupSize,
+            effectiveMinGroupSize = effectiveMinGroupSize,
+            blackoutFillOverrides = blackoutFillOverrides,
+            minGroupShortfallReason = minGroupShortfallReason,
         )
     }
 
-    fun generateSeedBoard(): GeneratedCatalogPiece {
-        val boardState = generateTopLeftBoard()
-        val quadrant = buildStandardQuadrant(boardState, pieceKind = "TOP_LEFT", groupPrefix = "SEED")
-        val encoded = encodeQuadrant(quadrant)
-        return GeneratedCatalogPiece(
-            pieceKind = quadrant.pieceKind,
-            queenCount = quadrant.queenCount,
-            targetQueenCount = quadrant.targetQueenCount,
-            blackoutCellCount = quadrant.blackoutCellCount,
-            leftBlackoutSignature = quadrant.leftBlackoutSignature,
-            topBlackoutSignature = quadrant.topBlackoutSignature,
-            queenPositions = quadrant.queenPositions,
-            layout = encoded.first,
-            queens = encoded.second,
-            board = quadrant.board,
-        )
+    fun computeBlackoutFillOverrides(
+        layout: String,
+        boardSize: Int,
+        minimumGroupSize: Int,
+    ): List<BlackoutFillOverride> {
+        if (minimumGroupSize <= 1) return emptyList()
+        if (layout.length != boardSize * boardSize) return emptyList()
+
+        val colorCounts = linkedMapOf<Char, Int>()
+        val blackoutCells = mutableListOf<Position>()
+
+        for (index in layout.indices) {
+            val symbol = layout[index]
+            if (symbol == '.') {
+                blackoutCells += Position(index / boardSize, index % boardSize)
+            } else {
+                colorCounts[symbol] = (colorCounts[symbol] ?: 0) + 1
+            }
+        }
+
+        if (colorCounts.isEmpty() || blackoutCells.isEmpty()) return emptyList()
+
+        val blackoutSet = blackoutCells.toSet()
+        val assignments = linkedMapOf<Position, Char>()
+        val orderedBlackouts = blackoutCells.sortedWith(compareBy<Position>({ it.row }, { it.col }))
+        val orderedColors = colorCounts.keys.sorted()
+
+        fun cellBelongsToColor(position: Position, color: Char): Boolean {
+            val index = position.row * boardSize + position.col
+            val symbol = layout[index]
+            if (symbol == color) return true
+            return assignments[position] == color
+        }
+
+        fun candidateForColor(color: Char): Position? {
+            return orderedBlackouts
+                .asSequence()
+                .filter { position -> position !in assignments }
+                .filter { position ->
+                    orthogonalNeighbors(position, boardSize).any { neighbor ->
+                        cellBelongsToColor(neighbor, color)
+                    }
+                }
+                .minWithOrNull(
+                    compareBy<Position>(
+                        { position ->
+                            -orthogonalNeighbors(position, boardSize).count { neighbor ->
+                                cellBelongsToColor(neighbor, color)
+                            }
+                        },
+                        { position -> position.row },
+                        { position -> position.col },
+                    ),
+                )
+        }
+
+        while (true) {
+            val deficits =
+                orderedColors
+                    .map { color ->
+                        color to (minimumGroupSize - (colorCounts[color] ?: 0))
+                    }
+                    .filter { (_, deficit) -> deficit > 0 }
+            if (deficits.isEmpty()) break
+
+            var madeProgress = false
+            val colorsByNeed =
+                deficits
+                    .sortedWith(
+                        compareByDescending<Pair<Char, Int>> { (_, deficit) -> deficit }
+                            .thenBy { (color, _) -> color },
+                    )
+                    .map { (color, _) -> color }
+
+            for (color in colorsByNeed) {
+                val candidate = candidateForColor(color) ?: continue
+                if (candidate !in blackoutSet) continue
+                assignments[candidate] = color
+                colorCounts[color] = (colorCounts[color] ?: 0) + 1
+                madeProgress = true
+            }
+
+            if (!madeProgress) break
+        }
+
+        return assignments
+            .entries
+            .sortedWith(compareBy<Map.Entry<Position, Char>>({ it.key.row }, { it.key.col }))
+            .map { (position, symbol) ->
+                BlackoutFillOverride(
+                    row = position.row,
+                    col = position.col,
+                    groupSymbol = symbol.toString(),
+                )
+            }
+    }
+
+    fun computeEffectiveMinGroupSize(
+        layout: String,
+        boardSize: Int,
+        blackoutFillOverrides: List<BlackoutFillOverride>,
+    ): Int {
+        if (layout.length != boardSize * boardSize) return 0
+        val groupCounts = linkedMapOf<String, Int>()
+        for (symbol in layout) {
+            if (symbol == '.') continue
+            val key = symbol.toString()
+            groupCounts[key] = (groupCounts[key] ?: 0) + 1
+        }
+        for (override in blackoutFillOverrides) {
+            if (override.row !in 0 until boardSize || override.col !in 0 until boardSize) continue
+            val index = override.row * boardSize + override.col
+            if (layout[index] != '.') continue
+            groupCounts[override.groupSymbol] = (groupCounts[override.groupSymbol] ?: 0) + 1
+        }
+        return groupCounts.values.minOrNull() ?: 0
+    }
+
+    fun describeMinGroupShortfall(
+        layout: String,
+        boardSize: Int,
+        minimumGroupSize: Int,
+        blackoutFillOverrides: List<BlackoutFillOverride>,
+    ): String? {
+        if (layout.length != boardSize * boardSize) return "Invalid layout encoding."
+
+        val counts = linkedMapOf<Char, Int>()
+        val blackoutSet = linkedSetOf<Position>()
+        for (index in layout.indices) {
+            val symbol = layout[index]
+            if (symbol == '.') {
+                blackoutSet += Position(index / boardSize, index % boardSize)
+            } else {
+                counts[symbol] = (counts[symbol] ?: 0) + 1
+            }
+        }
+        for (override in blackoutFillOverrides) {
+            if (override.row !in 0 until boardSize || override.col !in 0 until boardSize) continue
+            val index = override.row * boardSize + override.col
+            if (layout[index] != '.') continue
+            val symbol = override.groupSymbol.firstOrNull() ?: continue
+            counts[symbol] = (counts[symbol] ?: 0) + 1
+        }
+
+        val short = counts.filterValues { it < minimumGroupSize }
+        if (short.isEmpty()) return null
+
+        val details =
+            short.entries
+                .sortedBy { it.key }
+                .take(4)
+                .joinToString("; ") { (symbol, sizeNow) ->
+                    val reachableBlackouts =
+                        reachableBlackoutCountForColor(
+                            layout = layout,
+                            boardSize = boardSize,
+                            blackoutSet = blackoutSet,
+                            colorSymbol = symbol,
+                        )
+                    val theoreticalMax = counts.getValue(symbol) + reachableBlackouts
+                    if (theoreticalMax < minimumGroupSize) {
+                        "$symbol: size=$sizeNow, maxReachable=$theoreticalMax (isolated from enough blackout cells)"
+                    } else {
+                        "$symbol: size=$sizeNow, maxReachable=$theoreticalMax (assignment pressure)"
+                    }
+                }
+        return "Short groups below minimum $minimumGroupSize: $details"
+    }
+
+    private fun reachableBlackoutCountForColor(
+        layout: String,
+        boardSize: Int,
+        blackoutSet: Set<Position>,
+        colorSymbol: Char,
+    ): Int {
+        val colorCells =
+            layout.indices
+                .asSequence()
+                .filter { index -> layout[index] == colorSymbol }
+                .map { index -> Position(index / boardSize, index % boardSize) }
+                .toList()
+        if (colorCells.isEmpty()) return 0
+
+        val queue = ArrayDeque<Position>()
+        val visitedBlackouts = linkedSetOf<Position>()
+        val visited = mutableSetOf<Position>()
+        colorCells.forEach { cell ->
+            queue.add(cell)
+            visited += cell
+        }
+
+        while (queue.isNotEmpty()) {
+            val current = queue.removeFirst()
+            for (neighbor in orthogonalNeighbors(current, boardSize)) {
+                if (neighbor in visited) continue
+                val index = neighbor.row * boardSize + neighbor.col
+                if (layout[index] == colorSymbol || neighbor in blackoutSet) {
+                    visited += neighbor
+                    queue.add(neighbor)
+                    if (neighbor in blackoutSet) {
+                        visitedBlackouts += neighbor
+                    }
+                }
+            }
+        }
+
+        return visitedBlackouts.size
     }
 
     fun computeOutgoingFingerprints(queenPositions: Collection<Position>): OutgoingFingerprintPair {
@@ -299,30 +531,37 @@ class StitchingPreviewService(
         targetQueenCount: Int = DEPENDENT_TARGET_QUEEN_COUNT,
         allowTargetFallbackToMax: Boolean = false,
         randomSeed: Long? = null,
+        minimumGroupSizeForGeneration: Int = MINIMUM_GROUP_SIZE,
     ): QuadrantPiece {
         validateSignatures(leftBlackoutSignature, topBlackoutSignature)
-        val random = randomSeed?.let(::Random)
-        val blackoutPositions =
-            (0 until BASE_SIZE).flatMap { row ->
-                (0 until BASE_SIZE).mapNotNull { col ->
-                    if (col < leftBlackoutSignature[row] || row < topBlackoutSignature[col]) {
-                        Position(row, col)
-                    } else {
-                        null
-                    }
-                }
-            }.toSet()
+        val blackoutPositions = blackoutPositionsFor(leftBlackoutSignature, topBlackoutSignature)
         val activePositions =
             (0 until BASE_SIZE).flatMap { row ->
                 (0 until BASE_SIZE).mapNotNull { col ->
-                    val position = Position(row, col)
-                    if (position in blackoutPositions) null else position
+                    val p = Position(row, col)
+                    if (p !in blackoutPositions) p else null
                 }
             }
-
-        val placement = resolveMaxPlacement(activePositions, ruleset, random)
-
-        if (placement.queenCount < targetQueenCount && !allowTargetFallbackToMax) {
+        val maxPlacement = resolveMaxPlacement(activePositions, ruleset)
+        val effectiveTarget = minOf(targetQueenCount, maxPlacement.queenCount)
+        if (effectiveTarget < targetQueenCount) {
+            logger.info(
+                "Capping target for $pieceKind from $targetQueenCount to $effectiveTarget " +
+                    "(blackout reduces active cells to ${activePositions.size}, max achievable queens = ${maxPlacement.queenCount})",
+            )
+        }
+        val generationResult =
+            generationWorkflowService.generateValidBoard(
+                size = BASE_SIZE,
+                queenCountMode = "exact",
+                targetQueenCount = effectiveTarget,
+                orthogonalMinDistance = ORTHOGONAL_MIN_DISTANCE,
+                minimumGroupSize = minimumGroupSizeForGeneration,
+                generationStrategy = GENERATION_STRATEGY,
+                blackoutPositions = blackoutPositions,
+            )
+        val boardState = generationResult.boardState
+        if (boardState == null && !allowTargetFallbackToMax) {
             val quadrantLabel =
                 when (pieceKind) {
                     "TOP_RIGHT" -> "Top-Right"
@@ -331,28 +570,27 @@ class StitchingPreviewService(
                     else -> pieceKind
                 }
             throw IllegalStateException(
-                "$quadrantLabel generation failed: the blackout shape allows only ${placement.queenCount} queens " +
-                    "but the target is $targetQueenCount. The incoming bleed signatures may be too restrictive. " +
+                "$quadrantLabel generation failed: the blackout shape could not produce target $effectiveTarget " +
+                    "(requested $targetQueenCount, capped to max achievable $effectiveTarget). " +
                     "Left signature: [${leftBlackoutSignature.joinToString()}], " +
                     "Top signature: [${topBlackoutSignature.joinToString()}]",
             )
         }
-        val resolvedTargetQueenCount =
-            if (allowTargetFallbackToMax) {
-                placement.queenCount
-            } else {
-                targetQueenCount
-            }
-
-        val groups = assignGroupsToActiveCells(activePositions, placement.queens, groupPrefix, random)
+        val generatedBoard = boardState ?: error("Fallback generation for blackout shape is not implemented yet.")
+        val queens =
+            generatedBoard.cells.flatten()
+                .filter { it.isSolutionQueen }
+                .map { it.position }
+                .toSet()
+        val groups = renameBoardGroups(generatedBoard, groupPrefix)
         val groupSlots = slotMapFor(groups.values)
-        val queens = placement.queens.toSet()
 
         return QuadrantPiece(
             pieceKind = pieceKind,
             groupPrefix = groupPrefix,
-            queenCount = placement.queenCount,
-            targetQueenCount = resolvedTargetQueenCount,
+            queenCount = queens.size,
+            targetQueenCount = generatedBoard.metadata[com.queens.admin.domain.model.QueensBoardMetadata.TARGET_QUEEN_COUNT_KEY]?.toIntOrNull()
+                ?: targetQueenCount,
             blackoutCellCount = blackoutPositions.size,
             leftBlackoutSignature = leftBlackoutSignature,
             topBlackoutSignature = topBlackoutSignature,
@@ -450,6 +688,43 @@ class StitchingPreviewService(
 
             check(progress) {
                 "Unable to resolve stitched blackout cells into adjacent color groups."
+            }
+        }
+
+        val allKnownGroups = cells.values.mapNotNull { it.groupId }.distinct()
+        if (allKnownGroups.isNotEmpty()) {
+            val groupLess = cells.filterValues { it.groupId == null }.keys.toMutableSet()
+            while (groupLess.isNotEmpty()) {
+                var progress = false
+                val toResolve = groupLess.toList()
+                for (position in toResolve) {
+                    val adjacentGroups =
+                        orthogonalNeighbors(position, BASE_SIZE * 2)
+                            .mapNotNull { neighbor -> cells[neighbor]?.groupId }
+                            .distinct()
+                    val resolvedGroup =
+                        if (adjacentGroups.isNotEmpty()) {
+                            adjacentGroups[random.nextInt(adjacentGroups.size)]
+                        } else {
+                            allKnownGroups.minByOrNull { groupId ->
+                                cells.entries
+                                    .asSequence()
+                                    .filter { (_, cell) -> cell.groupId == groupId }
+                                    .minOfOrNull { (candidate, _) ->
+                                        manhattanDistance(position, candidate)
+                                    } ?: Int.MAX_VALUE
+                            }
+                        } ?: continue
+
+                    val existing = requireNotNull(cells[position])
+                    cells[position] = existing.copy(groupId = resolvedGroup)
+                    groupLess.remove(position)
+                    progress = true
+                }
+
+                check(progress) {
+                    "Unable to resolve group-less stitched cells."
+                }
             }
         }
 
@@ -555,31 +830,49 @@ class StitchingPreviewService(
     ): Map<Position, String> {
         if (queens.isEmpty()) return emptyMap()
 
+        val sortedQueens = queens.sortedWith(compareBy<Position>({ it.row }, { it.col }))
         val groupIds =
-            queens.sortedWith(compareBy<Position>({ it.row }, { it.col }))
-                .withIndex()
-                .associate { (index, position) ->
-                    position to "$groupPrefix-g${(index + 1).toString().padStart(2, '0')}"
-                }
+            sortedQueens.withIndex().associate { (index, position) ->
+                position to "$groupPrefix-g${(index + 1).toString().padStart(2, '0')}"
+            }
 
-        return activePositions.associateWith { position ->
-            val nearestDistance = queens.minOf { queen -> manhattanDistance(position, queen) }
-            val nearestCandidates = queens.filter { queen -> manhattanDistance(position, queen) == nearestDistance }
-            val nearestQueen =
-                if (random != null && nearestCandidates.size > 1) {
-                    nearestCandidates[random.nextInt(nearestCandidates.size)]
-                } else {
-                    nearestCandidates.minWith(
-                        compareBy<Position>(
-                            { abs(position.row - it.row) },
-                            { abs(position.col - it.col) },
-                            { it.row },
-                            { it.col },
-                        ),
-                    )
-                }
-            requireNotNull(groupIds[nearestQueen])
+        val activeSet = activePositions.toHashSet()
+        val result = mutableMapOf<Position, String>()
+        val queue = ArrayDeque<Position>()
+
+        // Seed BFS from all queens simultaneously, in random order so no queen gets a
+        // systematic head-start in claiming adjacent territory.
+        val seedOrder = if (random != null) sortedQueens.shuffled(random) else sortedQueens
+        seedOrder.forEach { queen ->
+            result[queen] = groupIds[queen]!!
+            queue.add(queen)
         }
+
+        // BFS flood-fill: all frontiers advance one step at a time, producing roughly
+        // equal-sized regions instead of the large/tiny split that Voronoi gives.
+        val adjacentDeltas = listOf(Position(-1, 0), Position(1, 0), Position(0, -1), Position(0, 1))
+        while (queue.isNotEmpty()) {
+            val current = queue.removeFirst()
+            val groupId = result[current]!!
+            val neighbours = adjacentDeltas.map { d -> Position(current.row + d.row, current.col + d.col) }
+            val candidates = neighbours.filter { it in activeSet && it !in result }
+            val ordered = if (random != null) candidates.shuffled(random) else candidates
+            ordered.forEach { neighbour ->
+                result[neighbour] = groupId
+                queue.add(neighbour)
+            }
+        }
+
+        // Fallback for cells unreachable by BFS (disconnected blackout shapes): assign
+        // to nearest queen by Manhattan distance.
+        activePositions.forEach { position ->
+            if (position !in result) {
+                val nearest = sortedQueens.minByOrNull { manhattanDistance(position, it) }!!
+                result[position] = groupIds[nearest]!!
+            }
+        }
+
+        return result
     }
 
     private fun buildCellDto(

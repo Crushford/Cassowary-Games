@@ -11,7 +11,7 @@ import type {
 } from './types';
 import { isSolverDifficulty } from './solverDifficulty';
 
-const WORKSHOP_INPUTS_KEY = 'queens-admin-workshop-inputs-v2';
+const WORKSHOP_INPUTS_KEY = 'queens-admin-workshop-inputs-v3';
 const BATCH_INPUTS_KEY = 'queens-admin-batch-inputs-v2';
 const MAX_QUEENS_INPUTS_KEY = 'queens-admin-max-queens-inputs-v1';
 const SOLVER_INPUTS_KEY = 'queens-admin-solver-inputs-v1';
@@ -45,6 +45,7 @@ export type QueensAdminWorkshopInputs = {
   targetQueenCount: number;
   orthogonalMinDistance: number;
   minimumGroupSize: number;
+  blackoutFingerprintKey: string;
   showSolutionQueens: boolean;
   generationPreviewIntervalMs: number;
   generationStrategy: QueensAdminGenerationStrategy;
@@ -93,6 +94,7 @@ export type QueensAdminStitchingInputs = {
   discoveryGenerationLimit: number;
   discoverySkipSatisfiedBuckets: boolean;
   discoveryMaxConcurrentJobs: number;
+  discoveryMinRegionSize?: number;
 };
 
 export type QueensAdminMaxQueensInputs = {
@@ -224,6 +226,10 @@ export function loadQueensAdminWorkshopInputs(): Partial<QueensAdminWorkshopInpu
     1,
     20
   );
+  const blackoutFingerprintKey =
+    typeof (parsed as { blackoutFingerprintKey?: unknown }).blackoutFingerprintKey === 'string'
+      ? (parsed as { blackoutFingerprintKey: string }).blackoutFingerprintKey
+      : null;
   const showSolutionQueens =
     typeof (parsed as { showSolutionQueens?: unknown }).showSolutionQueens === 'boolean'
       ? (parsed as { showSolutionQueens: boolean }).showSolutionQueens
@@ -254,6 +260,7 @@ export function loadQueensAdminWorkshopInputs(): Partial<QueensAdminWorkshopInpu
     ...(targetQueenCount != null ? { targetQueenCount } : {}),
     ...(orthogonalMinDistance != null ? { orthogonalMinDistance } : {}),
     ...(minimumGroupSize != null ? { minimumGroupSize } : {}),
+    ...(blackoutFingerprintKey != null ? { blackoutFingerprintKey } : {}),
     ...(showSolutionQueens != null ? { showSolutionQueens } : {}),
     ...(generationPreviewIntervalMs != null ? { generationPreviewIntervalMs } : {}),
     ...(generationStrategy ? { generationStrategy } : {}),
@@ -419,6 +426,11 @@ export function loadQueensAdminStitchingInputs(): Partial<QueensAdminStitchingIn
     1,
     8
   );
+  const discoveryMinRegionSize = clampInteger(
+    (parsed as { discoveryMinRegionSize?: unknown }).discoveryMinRegionSize,
+    1,
+    100
+  );
 
   return {
     ...(showQueens != null ? { showQueens } : {}),
@@ -428,6 +440,7 @@ export function loadQueensAdminStitchingInputs(): Partial<QueensAdminStitchingIn
     ...(discoveryGenerationLimit != null ? { discoveryGenerationLimit } : {}),
     ...(discoverySkipSatisfiedBuckets != null ? { discoverySkipSatisfiedBuckets } : {}),
     ...(discoveryMaxConcurrentJobs != null ? { discoveryMaxConcurrentJobs } : {}),
+    ...(discoveryMinRegionSize != null ? { discoveryMinRegionSize } : {}),
   };
 }
 

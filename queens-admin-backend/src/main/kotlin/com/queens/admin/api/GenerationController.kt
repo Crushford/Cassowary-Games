@@ -56,9 +56,52 @@ class GenerationController(
     private val generationJobMapper: GenerationJobMapper,
     private val operationResultMapper: OperationResultMapper,
 ) {
+    companion object {
+        private val BLACKOUT_FINGERPRINT_PATTERN = Regex("^R(\\d+)C(\\d+)$")
+    }
+
     private fun PuzzleDifficultyTier.toApiValue(): String = name.lowercase().replace('_', '-')
 
     private fun parseDifficultyTier(value: String): PuzzleDifficultyTier = PuzzleDifficultyTier.valueOf(value.uppercase().replace('-', '_'))
+
+    private fun parseBlackoutFingerprintKey(
+        blackoutFingerprintKey: String?,
+        size: Int,
+    ): Set<Position> {
+        val raw = blackoutFingerprintKey?.trim()?.uppercase()
+        if (raw.isNullOrBlank()) return emptySet()
+        val match = BLACKOUT_FINGERPRINT_PATTERN.matchEntire(raw)
+            ?: throw IllegalArgumentException(
+                "Blackout fingerprint must match R...C... format, for example R4130241C2031420."
+            )
+        val leftRaw = match.groupValues[1]
+        val topRaw = match.groupValues[2]
+        require(leftRaw.length == size && topRaw.length == size) {
+            "Blackout fingerprint signatures must each have exactly $size digits for a ${size}x$size board."
+        }
+        val left = leftRaw.map { token ->
+            token.digitToIntOrNull() ?: throw IllegalArgumentException(
+                "Blackout fingerprint contains non-numeric signature values."
+            )
+        }
+        val top = topRaw.map { token ->
+            token.digitToIntOrNull() ?: throw IllegalArgumentException(
+                "Blackout fingerprint contains non-numeric signature values."
+            )
+        }
+        require(left.all { value -> value in 0..size } && top.all { value -> value in 0..size }) {
+            "Blackout fingerprint digits must each be between 0 and $size."
+        }
+        return (0 until size).flatMap { row ->
+            (0 until size).mapNotNull { col ->
+                if (col < left[row] || row < top[col]) {
+                    Position(row, col)
+                } else {
+                    null
+                }
+            }
+        }.toSet()
+    }
 
     @GetMapping("/catalog-stats")
     fun getCatalogStats(): PuzzleCatalogStatsDto {
@@ -236,6 +279,7 @@ class GenerationController(
 
     @PostMapping("/generate-valid-board/jobs")
     fun startGenerateValidBoardJob(@RequestBody request: CreateBoardRequestDto): GenerationJobStartedDto {
+        val blackoutPositions = parseBlackoutFingerprintKey(request.blackoutFingerprintKey, request.size)
         return generationJobMapper.toStartedDto(
             generationJobService.startGenerationJob(
                 size = request.size,
@@ -243,6 +287,7 @@ class GenerationController(
                 targetQueenCount = request.targetQueenCount ?: request.size,
                 orthogonalMinDistance = request.orthogonalMinDistance ?: request.size,
                 minimumGroupSize = request.minimumGroupSize,
+                blackoutPositions = blackoutPositions,
                 includeProgressUpdates = request.includeProgressUpdates,
                 generationStrategy = request.generationStrategy,
                 seedTemplateOffsets = request.seedTemplateOffsets?.map { Position(it.row, it.col) },
@@ -266,6 +311,7 @@ class GenerationController(
 
     @PostMapping("/generate-valid-board")
     fun generateValidBoard(@RequestBody request: CreateBoardRequestDto): OperationResultDto {
+        val blackoutPositions = parseBlackoutFingerprintKey(request.blackoutFingerprintKey, request.size)
         return operationResultMapper.toDto(
             generationWorkflowService.generateValidBoard(
                 size = request.size,
@@ -275,6 +321,7 @@ class GenerationController(
                 minimumGroupSize = request.minimumGroupSize,
                 generationStrategy = request.generationStrategy,
                 seedTemplateOffsets = request.seedTemplateOffsets?.map { Position(it.row, it.col) },
+                blackoutPositions = blackoutPositions,
             ),
         )
     }

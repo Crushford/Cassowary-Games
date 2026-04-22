@@ -59,6 +59,7 @@ class GenerationWorkflowService(
         minimumGroupSize: Int = 3,
         generationStrategy: String = "baseline",
         seedTemplateOffsets: List<Position>? = null,
+        blackoutPositions: Set<Position> = emptySet(),
         targetQueenResolutionListener: ((String) -> Unit)? = null,
     ): OperationResult {
         if (
@@ -105,6 +106,7 @@ class GenerationWorkflowService(
             minimumGroupSize = minimumGroupSize,
             generationStrategy = generationStrategy,
             seedTemplateOffsets = seedTemplateOffsets,
+            blackoutPositions = blackoutPositions,
         )
     }
 
@@ -143,6 +145,7 @@ class GenerationWorkflowService(
         minimumGroupSize: Int,
         generationStrategy: String,
         seedTemplateOffsets: List<Position>? = null,
+        blackoutPositions: Set<Position> = emptySet(),
         progressListener: ((GenerationProgressUpdate) -> Unit)?,
         isCancelled: (() -> Boolean)?,
         targetQueenResolutionListener: ((String) -> Unit)? = null,
@@ -193,6 +196,7 @@ class GenerationWorkflowService(
             minimumGroupSize = minimumGroupSize,
             generationStrategy = generationStrategy,
             seedTemplateOffsets = seedTemplateOffsets,
+            blackoutPositions = blackoutPositions,
             progressListener = progressListener,
             isCancelled = isCancelled,
         )

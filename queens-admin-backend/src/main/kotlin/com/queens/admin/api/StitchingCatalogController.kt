@@ -80,6 +80,7 @@ class StitchingCatalogController(
                 generationLimit = request.generationLimit,
                 skipSatisfiedBuckets = request.skipSatisfiedBuckets,
                 maxConcurrentJobs = request.maxConcurrentJobs,
+                minRegionSize = request.minRegionSize,
             ),
         ).toDto()
 

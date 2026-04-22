@@ -2185,6 +2185,7 @@ export const useQueensStore = defineStore('queens', {
             position: { row: cell.row, col: cell.col },
             groupColor: cell.groupColor ?? undefined,
             isSolutionQueen: cell.isSolutionQueen,
+            isBlackout: cell.isBlackout === true,
           }))
         ),
         this.regionColorMode
@@ -2243,6 +2244,7 @@ export const useQueensStore = defineStore('queens', {
             groupColor: cell.groupColor ?? null,
             isSolutionQueen: cell.isSolutionQueen === true,
             markType: toAdminMarkType(this.playerMarks[rowIndex][colIndex]),
+            isBlackout: cell.isBlackout === true,
           }))
         ),
         generationPhase: this.adminGenerationPhase,

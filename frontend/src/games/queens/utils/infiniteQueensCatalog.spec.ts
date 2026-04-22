@@ -33,6 +33,8 @@ function makeRecord(
     fingerprintKey: 'R0000000C0000000',
     generationStrategy: 'baseline',
     isSeed: false,
+    blackoutFillOverrides: [],
+    blackoutFillOverrideByIndex: {},
     ...overrides,
   };
 }

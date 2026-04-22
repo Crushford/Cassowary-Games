@@ -28,6 +28,7 @@ class ValidatedPuzzleGenerationService(
 ) {
     companion object {
         private val logger = LoggerFactory.getLogger(ValidatedPuzzleGenerationService::class.java)
+        private const val BLACKOUT_ASSISTED_GROUP_SIZE_CAP = 3
     }
 
     private enum class GenerationStrategy {
@@ -101,6 +102,7 @@ class ValidatedPuzzleGenerationService(
         minimumGroupSize: Int = 3,
         generationStrategy: String = "baseline",
         seedTemplateOffsets: List<Position>? = null,
+        blackoutPositions: Set<Position> = emptySet(),
         orthogonalMinDistance: Int = size,
         ruleset: QueensRuleset = QueensRuleset(
             orthogonalMinDistance = orthogonalMinDistance,
@@ -140,8 +142,9 @@ class ValidatedPuzzleGenerationService(
                         boardSize = size,
                         targetQueenCount = targetQueenCount,
                         orthogonalMinDistance = ruleset.orthogonalMinDistance,
+                        containsBlackedOutSquares = blackoutPositions.isNotEmpty(),
                     ),
-                ),
+                ).let { boardFactoryService.applyBlackouts(it, blackoutPositions) },
                 autoTestMarks = createEmptyMarks(size),
                 metrics = GenerationMetrics(),
                 ruleset = ruleset,
@@ -217,21 +220,36 @@ class ValidatedPuzzleGenerationService(
                 }
 
                 for (targetGroupSize in 2..minimumGroupSize) {
-                    if (!expandColorGridSafely(
-                            state = state,
-                            attempt = attemptNumber,
+                    val expansionSucceeded = expandColorGridSafely(
+                        state = state,
+                        attempt = attemptNumber,
+                        targetGroupSize = targetGroupSize,
+                        minimumGroupSize = minimumGroupSize,
+                        stageName = "EXPANSION_TO_$targetGroupSize",
+                        strategy = strategy,
+                        progressListener = progressListener,
+                        isCancelled = isCancelled,
+                    )
+                    val shortGroups = groupsBelowMinimum(state.grid, targetGroupSize)
+                    if (!expansionSucceeded || shortGroups.isNotEmpty()) {
+                        val failureMode =
+                            if (!expansionSucceeded) {
+                                "stalled expansion"
+                            } else {
+                                "post-expansion minimum-size validation"
+                            }
+                        val diagnostics = buildGroupExpansionDiagnostics(
+                            boardState = state.grid,
                             targetGroupSize = targetGroupSize,
-                            stageName = "EXPANSION_TO_$targetGroupSize",
-                            strategy = strategy,
-                            progressListener = progressListener,
-                            isCancelled = isCancelled,
-                        ) || !validateMinimumGroupSizes(state.grid, targetGroupSize)
-                    ) {
+                            failedAttempts = emptySet(),
+                        )
                         emitProgress(
                             state,
                             attemptNumber,
                             "RETRY_RESET",
-                            "Expansion to size $targetGroupSize failed validation. Resetting and retrying.",
+                            "Expansion to size $targetGroupSize failed due to $failureMode. " +
+                                "Short groups=${formatShortGroups(shortGroups)}. " +
+                                "Reachability=${formatGroupDiagnostics(diagnostics)}. Resetting and retrying.",
                             strategy,
                             progressListener,
                         )
@@ -252,6 +270,18 @@ class ValidatedPuzzleGenerationService(
                     progressListener = progressListener,
                     isCancelled = isCancelled,
                 )
+                val derivedBlackouts = applyDerivedStrandedBlackouts(state)
+                if (derivedBlackouts.isNotEmpty()) {
+                    emitProgress(
+                        state,
+                        attemptNumber,
+                        "DERIVED_BLACKOUTS_APPLIED",
+                        "Converted ${derivedBlackouts.size} stranded uncolored active cells into derived blackouts " +
+                            "(fingerprint/signature unchanged): ${formatPositions(derivedBlackouts)}.",
+                        strategy,
+                        progressListener,
+                    )
+                }
                 validateSolvableAndFull(state)
                 emitProgress(
                     state,
@@ -384,6 +414,19 @@ class ValidatedPuzzleGenerationService(
                 "lastRule=${lastRule ?: "none"}"
     }
 
+    private data class GroupExpansionDiagnostics(
+        val color: String,
+        val currentSize: Int,
+        val needed: Int,
+        val nonBlackoutReachable: Int,
+        val blackoutReachable: Int,
+        val blockedByFailedAttempts: Int,
+    ) {
+        fun toLogString(): String =
+            "$color:size=$currentSize,need=$needed,nonBlackoutReachable=$nonBlackoutReachable," +
+                "blackoutReachable=$blackoutReachable,failedAttempts=$blockedByFailedAttempts"
+    }
+
     private fun buildRegionIds(count: Int): List<String> =
         (1..count).map { index -> "g${index.toString().padStart(2, '0')}" }
 
@@ -457,6 +500,7 @@ class ValidatedPuzzleGenerationService(
         boardState: BoardState,
         ruleset: QueensRuleset,
     ): Boolean {
+        if (boardState.cells[row][col].isBlackout) return false
         val placedQueens = mutableListOf<Position>()
         for (candidateRow in marks.indices) {
             for (candidateCol in marks[candidateRow].indices) {
@@ -523,7 +567,11 @@ class ValidatedPuzzleGenerationService(
                 val isQueen = tempQueenMarks[rowIndex][colIndex] == MarkType.QUEEN
                 cell.copy(
                     isSolutionQueen = isQueen,
-                    markType = if (isQueen) MarkType.QUEEN else MarkType.NONE,
+                    markType = when {
+                        isQueen -> MarkType.QUEEN
+                        cell.isBlackout -> MarkType.FLAG
+                        else -> MarkType.NONE
+                    },
                 )
             }
         }
@@ -562,6 +610,7 @@ class ValidatedPuzzleGenerationService(
 
             for (row in 0 until size) {
                 for (col in 0 until size) {
+                    if (boardState.cells[row][col].isBlackout) continue
                     if (tempQueenMarks[row][col] == MarkType.NONE &&
                         isValidMoveWithMarks(row, col, tempQueenMarks, boardState, ruleset)
                     ) {
@@ -801,6 +850,7 @@ class ValidatedPuzzleGenerationService(
         state: GeneratorState,
         attempt: Int,
         targetGroupSize: Int,
+        minimumGroupSize: Int,
         stageName: String,
         strategy: GenerationStrategy,
         progressListener: ((GenerationProgressUpdate) -> Unit)?,
@@ -827,17 +877,55 @@ class ValidatedPuzzleGenerationService(
                 return true
             }
 
-            val candidates = collectTargetGroupExpansionCandidates(
+            val nonBlackoutCandidates = collectTargetGroupExpansionCandidates(
                 boardState = state.grid,
                 incompleteColors = incompleteColors,
                 failedAttempts = failedAttempts,
             )
+            val allowBlackoutFallback = targetGroupSize == minimumGroupSize
+            val blackoutFallbackCandidates =
+                if (allowBlackoutFallback && nonBlackoutCandidates.isEmpty()) {
+                    collectTargetGroupExpansionCandidates(
+                        boardState = state.grid,
+                        incompleteColors = incompleteColors,
+                        failedAttempts = failedAttempts,
+                        countsByColor = countsByColor,
+                        blackoutGrowthCap = targetGroupSize,
+                        allowBlackoutTargets = true,
+                    )
+                } else {
+                    emptyList()
+                }
+            val candidates =
+                if (nonBlackoutCandidates.isNotEmpty()) {
+                    nonBlackoutCandidates
+                } else {
+                    blackoutFallbackCandidates
+                }
+            if (nonBlackoutCandidates.isEmpty() && blackoutFallbackCandidates.isNotEmpty()) {
+                emitProgress(
+                    state,
+                    attempt,
+                    "${stageName}_BLACKOUT_FALLBACK",
+                    "No non-blackout group-expansion candidates remained; trying ${blackoutFallbackCandidates.size} blackout-inclusive candidates " +
+                        "(blackout-assisted growth capped at size $targetGroupSize, only allowed at minimum-group stage) " +
+                        "to reach target size $targetGroupSize.",
+                    strategy,
+                    progressListener,
+                )
+            }
             if (candidates.isEmpty()) {
+                val diagnostics = buildGroupExpansionDiagnostics(
+                    boardState = state.grid,
+                    targetGroupSize = targetGroupSize,
+                    failedAttempts = failedAttempts,
+                )
                 emitProgress(
                     state,
                     attempt,
                     "${stageName}_STALLED",
-                    "No legal group-expansion candidates remained for target size $targetGroupSize.",
+                    "No legal group-expansion candidates remained for target size $targetGroupSize. " +
+                        "Diagnostics=${formatGroupDiagnostics(diagnostics)}.",
                     strategy,
                     progressListener,
                 )
@@ -938,15 +1026,6 @@ class ValidatedPuzzleGenerationService(
         }
     }
 
-    private fun validateMinimumGroupSizes(boardState: BoardState, expectedSize: Int): Boolean {
-        val counts = linkedMapOf<String, Int>()
-        for (cell in boardState.cells.flatten()) {
-            val color = cell.groupColor ?: continue
-            counts[color] = (counts[color] ?: 0) + 1
-        }
-        return counts.values.all { count -> count >= expectedSize }
-    }
-
     private fun isSolvable(state: GeneratorState): Boolean {
         state.metrics.solverChecks += 1
         val analysis = deterministicPuzzleAnalysisService.assessDifficulty(
@@ -991,10 +1070,137 @@ class ValidatedPuzzleGenerationService(
         return counts
     }
 
+    private fun groupsBelowMinimum(boardState: BoardState, expectedSize: Int): Map<String, Int> {
+        val counts = countCellsByColor(boardState)
+        return counts.filterValues { count -> count < expectedSize }
+    }
+
+    private fun buildGroupExpansionDiagnostics(
+        boardState: BoardState,
+        targetGroupSize: Int,
+        failedAttempts: Set<String>,
+    ): List<GroupExpansionDiagnostics> {
+        val countsByColor = countCellsByColor(boardState)
+        val incompleteColors = countsByColor
+            .filterValues { count -> count < targetGroupSize }
+            .keys
+            .sorted()
+        val diagnostics = mutableListOf<GroupExpansionDiagnostics>()
+        for (color in incompleteColors) {
+            val nonBlackoutTargets = linkedSetOf<String>()
+            val blackoutTargets = linkedSetOf<String>()
+            val directions = listOf(0 to -1, 0 to 1, -1 to 0, 1 to 0)
+            for (row in 0 until boardState.size) {
+                for (col in 0 until boardState.size) {
+                    if (boardState.cells[row][col].groupColor != color) continue
+                    for ((deltaRow, deltaCol) in directions) {
+                        val targetRow = row + deltaRow
+                        val targetCol = col + deltaCol
+                        if (targetRow !in 0 until boardState.size || targetCol !in 0 until boardState.size) continue
+                        val targetCell = boardState.cells[targetRow][targetCol]
+                        if (targetCell.groupColor != null) continue
+                        if (targetCell.isBlackout) {
+                            blackoutTargets += "$targetRow,$targetCol"
+                        } else {
+                            nonBlackoutTargets += "$targetRow,$targetCol"
+                        }
+                    }
+                }
+            }
+
+            val blockedByFailedAttempts =
+                (nonBlackoutTargets + blackoutTargets).count { target ->
+                    "$target,$color" in failedAttempts
+                }
+            val size = countsByColor[color] ?: 0
+            diagnostics += GroupExpansionDiagnostics(
+                color = color,
+                currentSize = size,
+                needed = targetGroupSize - size,
+                nonBlackoutReachable = nonBlackoutTargets.size,
+                blackoutReachable = blackoutTargets.size,
+                blockedByFailedAttempts = blockedByFailedAttempts,
+            )
+        }
+        return diagnostics
+    }
+
+    private fun formatShortGroups(shortGroups: Map<String, Int>): String {
+        if (shortGroups.isEmpty()) return "none"
+        return shortGroups.entries
+            .sortedBy { it.key }
+            .joinToString("; ") { (color, size) -> "$color:size=$size" }
+    }
+
+    private fun formatGroupDiagnostics(diagnostics: List<GroupExpansionDiagnostics>): String {
+        if (diagnostics.isEmpty()) return "none"
+        return diagnostics.joinToString("; ") { diagnostic -> diagnostic.toLogString() }
+    }
+
+    private fun applyDerivedStrandedBlackouts(state: GeneratorState): List<Position> {
+        val derived = mutableListOf<Position>()
+        var changed = true
+        val directions = listOf(0 to -1, 0 to 1, -1 to 0, 1 to 0)
+
+        while (changed) {
+            changed = false
+            val toBlackout = mutableListOf<Position>()
+            for (row in 0 until state.grid.size) {
+                for (col in 0 until state.grid.size) {
+                    val cell = state.grid.cells[row][col]
+                    if (cell.isBlackout || cell.groupColor != null) continue
+                    val stranded = directions.all { (deltaRow, deltaCol) ->
+                        val nr = row + deltaRow
+                        val nc = col + deltaCol
+                        if (nr !in 0 until state.grid.size || nc !in 0 until state.grid.size) {
+                            true
+                        } else {
+                            state.grid.cells[nr][nc].isBlackout
+                        }
+                    }
+                    if (stranded) {
+                        toBlackout += Position(row, col)
+                    }
+                }
+            }
+
+            if (toBlackout.isNotEmpty()) {
+                changed = true
+                val blackoutSet = toBlackout.toSet()
+                state.grid = state.grid.copy(
+                    cells = state.grid.cells.map { row ->
+                        row.map { cell ->
+                            if (cell.position in blackoutSet) {
+                                cell.copy(isBlackout = true)
+                            } else {
+                                cell
+                            }
+                        }
+                    },
+                )
+                derived += toBlackout
+            }
+        }
+
+        return derived
+            .distinct()
+            .sortedWith(compareBy<Position>({ it.row }, { it.col }))
+    }
+
+    private fun formatPositions(positions: List<Position>): String {
+        if (positions.isEmpty()) return "none"
+        val shown = positions.take(12)
+        val summary = shown.joinToString(", ") { position -> "(${position.row},${position.col})" }
+        return if (shown.size < positions.size) "$summary, ... (+${positions.size - shown.size} more)" else summary
+    }
+
     private fun collectTargetGroupExpansionCandidates(
         boardState: BoardState,
         incompleteColors: Set<String>,
         failedAttempts: Set<String>,
+        countsByColor: Map<String, Int> = countCellsByColor(boardState),
+        blackoutGrowthCap: Int = BLACKOUT_ASSISTED_GROUP_SIZE_CAP,
+        allowBlackoutTargets: Boolean = false,
     ): List<ExpansionCandidate> {
         val candidates = mutableListOf<ExpansionCandidate>()
         val seen = linkedSetOf<String>()
@@ -1003,12 +1209,19 @@ class ValidatedPuzzleGenerationService(
             for (col in 0 until boardState.size) {
                 val color = boardState.cells[row][col].groupColor
                 if (color == null || color !in incompleteColors) continue
+                if (boardState.cells[row][col].isBlackout) continue
 
                 val directions = listOf(0 to -1, 0 to 1, -1 to 0, 1 to 0)
                 for ((deltaRow, deltaCol) in directions) {
                     val targetRow = row + deltaRow
                     val targetCol = col + deltaCol
                     if (targetRow !in 0 until boardState.size || targetCol !in 0 until boardState.size) continue
+                    val targetCell = boardState.cells[targetRow][targetCol]
+                    if (!allowBlackoutTargets && targetCell.isBlackout) continue
+                    if (allowBlackoutTargets && targetCell.isBlackout) {
+                        val sizeNow = countsByColor[color] ?: 0
+                        if (sizeNow >= blackoutGrowthCap) continue
+                    }
                     if (boardState.cells[targetRow][targetCol].groupColor != null) continue
 
                     val attemptKey = "$targetRow,$targetCol,$color"
@@ -1031,7 +1244,7 @@ class ValidatedPuzzleGenerationService(
         if (!solvable) {
             error(
                 "Board is not fully solvable " +
-                    "(colored=${state.grid.cells.flatten().count { it.groupColor != null }}/${state.grid.size * state.grid.size}, " +
+                    "(colored=${state.grid.cells.flatten().count { it.groupColor != null && !it.isBlackout }}/${state.grid.cells.flatten().count { !it.isBlackout }}, " +
                     "targetQueens=${state.targetQueenCount}, " +
                     "orthogonalMinDistance=${state.ruleset.orthogonalMinDistance}, " +
                     "${lastDeterministicAnalysisSummary(state).toLogString()})",
@@ -1039,12 +1252,12 @@ class ValidatedPuzzleGenerationService(
         }
 
         val validation = boardValidationService.validate(state.grid, state.ruleset, state.targetQueenCount)
-        val allColored = state.grid.cells.all { row -> row.all { cell -> cell.groupColor != null } }
+        val allColored = state.grid.cells.all { row -> row.all { cell -> cell.isBlackout || cell.groupColor != null } }
         if (!validation.isValid || !allColored) {
             val validationErrors = if (validation.errors.isEmpty()) "none" else validation.errors.joinToString(" | ")
             error(
                 "Board is not fully solvable and colored " +
-                    "(allColored=$allColored, " +
+                    "(allActiveColored=$allColored, " +
                     "validationValid=${validation.isValid}, " +
                     "colored=${state.grid.cells.flatten().count { it.groupColor != null }}/${state.grid.size * state.grid.size}, " +
                     "targetQueens=${state.targetQueenCount}, " +
@@ -1124,9 +1337,8 @@ class ValidatedPuzzleGenerationService(
     private fun flagSquaresWithoutColorGroups(state: GeneratorState) {
         for (row in 0 until state.grid.size) {
             for (col in 0 until state.grid.size) {
-                if (state.grid.cells[row][col].groupColor == null &&
-                    state.autoTestMarks[row][col] == MarkType.NONE
-                ) {
+                val cell = state.grid.cells[row][col]
+                if ((cell.groupColor == null || cell.isBlackout) && state.autoTestMarks[row][col] == MarkType.NONE) {
                     placeFlag(state, row, col, "square has no color group")
                 }
             }
@@ -1524,6 +1736,7 @@ class ValidatedPuzzleGenerationService(
 
             for ((position, responsibleColors) in blockedSquares) {
                 if (state.grid.cells[position.row][position.col].groupColor != null) continue
+                if (state.grid.cells[position.row][position.col].isBlackout) continue
                 val directions = listOf(
                     1 to 0,
                     -1 to 0,
@@ -1536,6 +1749,7 @@ class ValidatedPuzzleGenerationService(
                     val neighborCol = position.col + deltaCol
                     if (neighborRow !in 0 until size || neighborCol !in 0 until size) continue
 
+                    if (state.grid.cells[neighborRow][neighborCol].isBlackout) continue
                     val neighborColor = state.grid.cells[neighborRow][neighborCol].groupColor ?: continue
                     if (neighborColor in responsibleColors) continue
 
@@ -1656,6 +1870,7 @@ class ValidatedPuzzleGenerationService(
             for (col in 0 until size) {
                 val cell = state.grid.cells[row][col]
                 if (cell.groupColor != null) continue
+                if (cell.isBlackout) continue
 
                 val position = Position(row, col)
                 val pressuredGroups = pressuredGroupMarkers[position].orEmpty()
@@ -1671,6 +1886,7 @@ class ValidatedPuzzleGenerationService(
                     val neighborRow = row + deltaRow
                     val neighborCol = col + deltaCol
                     if (neighborRow !in 0 until size || neighborCol !in 0 until size) continue
+                    if (state.grid.cells[neighborRow][neighborCol].isBlackout) continue
                     state.grid.cells[neighborRow][neighborCol].groupColor?.let { neighborColors += it }
                 }
 

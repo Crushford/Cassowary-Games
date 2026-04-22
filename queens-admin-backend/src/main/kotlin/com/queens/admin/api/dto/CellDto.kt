@@ -6,4 +6,5 @@ data class CellDto(
     val groupColor: String? = null,
     val isSolutionQueen: Boolean = false,
     val markType: String = "NONE",
+    val isBlackout: Boolean = false,
 )

@@ -41,6 +41,14 @@ class StitchingJsonExportService(
         val fingerprintKey: String,
         val generationStrategy: String,
         val isSeed: Boolean,
+        val blackoutFillOverrides: List<BlackoutFillOverrideExportRecord> = emptyList(),
+        val effectiveMinGroupSize: Int? = null,
+    )
+
+    data class BlackoutFillOverrideExportRecord(
+        val row: Int,
+        val col: Int,
+        val groupSymbol: String,
     )
 
     data class ExportPayload(
@@ -72,7 +80,7 @@ class StitchingJsonExportService(
 
         val puzzles = stitchingCatalogService.findAll()
         val startingPuzzles = puzzles.filter { it.isSeed }
-        val stitchedPuzzles = puzzles.filter { !it.isSeed && it.pieceCategory != "STANDARD" }
+        val stitchedPuzzles = puzzles.filter { !it.isSeed }
 
         logger.info(
             "Export stitching catalog: puzzles={}, startingPuzzles={}, stitchedPuzzles={}, uniqueFingerprintKeys={}",
@@ -120,6 +128,18 @@ class StitchingJsonExportService(
             stitchingPreviewService.computeOutgoingFingerprints(
                 stitchingPreviewService.decodeQueenPositions(queens, size),
             )
+        val blackoutFillOverrides =
+            stitchingPreviewService.computeBlackoutFillOverrides(
+                layout = layout,
+                boardSize = size,
+                minimumGroupSize = minimumGroupSize,
+            )
+        val effectiveMinGroupSize =
+            stitchingPreviewService.computeEffectiveMinGroupSize(
+                layout = layout,
+                boardSize = size,
+                blackoutFillOverrides = blackoutFillOverrides,
+            )
         return PuzzleExportRecord(
             id = id.toString(),
             layout = layout,
@@ -139,6 +159,15 @@ class StitchingJsonExportService(
             fingerprintKey = fingerprintKey,
             generationStrategy = generationStrategy,
             isSeed = isSeed,
+            blackoutFillOverrides =
+                blackoutFillOverrides.map { override ->
+                    BlackoutFillOverrideExportRecord(
+                        row = override.row,
+                        col = override.col,
+                        groupSymbol = override.groupSymbol,
+                    )
+                },
+            effectiveMinGroupSize = effectiveMinGroupSize,
         )
     }
 }

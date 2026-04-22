@@ -34,6 +34,7 @@ interface CellDto {
   groupColor: string | null;
   isSolutionQueen: boolean;
   markType: 'NONE' | 'FLAG' | 'QUEEN' | 'INVALID';
+  isBlackout?: boolean;
 }
 
 interface BoardStateDto {
@@ -432,6 +433,7 @@ function toLocalBoardState(boardState: BoardStateDto | null): QueensAdminBoardSt
         groupColor: cell.groupColor,
         isSolutionQueen: cell.isSolutionQueen,
         markType: cell.markType,
+        isBlackout: cell.isBlackout ?? false,
       }))
     ),
     generationPhase: boardState.generationPhase,
@@ -972,6 +974,7 @@ export const queensAdminApi = {
     generationLimit: number;
     skipSatisfiedBuckets: boolean;
     maxConcurrentJobs: number;
+    minRegionSize: number;
   }): Promise<QueensAdminStitchingDiscoveryStatus> {
     const response = await fetch('/api/stitching/discovery/start', {
       method: 'POST',
@@ -1112,6 +1115,7 @@ export const queensAdminApi = {
       queenCountMode?: QueensAdminQueenCountMode;
       targetQueenCount?: number;
       orthogonalMinDistance?: number;
+      blackoutFingerprintKey?: string | null;
     },
     signal?: AbortSignal
   ): Promise<QueensAdminOperationResult> {
@@ -1123,6 +1127,7 @@ export const queensAdminApi = {
         queenCountMode: options?.queenCountMode ?? 'exact',
         targetQueenCount: options?.targetQueenCount ?? size,
         orthogonalMinDistance: options?.orthogonalMinDistance ?? size,
+        blackoutFingerprintKey: options?.blackoutFingerprintKey ?? null,
       },
       signal
     );
@@ -1138,6 +1143,7 @@ export const queensAdminApi = {
       orthogonalMinDistance?: number;
       generationStrategy?: QueensAdminGenerationStrategy;
       seedTemplateOffsets?: TemplateOffsetDto[];
+      blackoutFingerprintKey?: string | null;
     }
   ): Promise<string> {
     const response = await fetch('/api/queens/admin/generation/generate-valid-board/jobs', {
@@ -1151,6 +1157,7 @@ export const queensAdminApi = {
         queenCountMode: options?.queenCountMode ?? 'exact',
         targetQueenCount: options?.targetQueenCount ?? size,
         orthogonalMinDistance: options?.orthogonalMinDistance ?? size,
+        blackoutFingerprintKey: options?.blackoutFingerprintKey ?? null,
         includeProgressUpdates: options?.includeProgressUpdates ?? false,
         generationStrategy: options?.generationStrategy ?? 'baseline',
         seedTemplateOffsets: options?.seedTemplateOffsets ?? null,

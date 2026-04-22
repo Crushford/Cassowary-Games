@@ -2,30 +2,57 @@
   <div class="relative w-full max-w-full aspect-square" :style="boardStyle">
     <PlayGrid
       class="relative z-10 h-full w-full"
-      :store="store"
+      :store="board"
       :enable-touch="enableTouch"
       :role="role"
       :aria-label="ariaLabel"
-      :aria-rowcount="store.gridSize"
-      :aria-colcount="store.gridSize"
+      :aria-rowcount="board.gridSize"
+      :aria-colcount="board.gridSize"
       :data-game-board="dataGameBoard"
       @swipe-start="$emit('swipe-start')"
       @swipe-end="$emit('swipe-end')"
     >
-      <template #default="{ rowIndex, colIndex, store: playStore }">
+      <template #default="{ rowIndex, colIndex }">
         <div
+          v-if="board.cells[rowIndex as number]?.[colIndex as number]"
           :role="interactive ? 'button' : undefined"
           :tabindex="interactive ? 0 : undefined"
           class="relative h-full w-full"
           :class="{ 'cursor-pointer': interactive }"
-          @click="handleCellActivate(rowIndex as number, colIndex as number)"
-          @keydown.enter.prevent="handleCellActivate(rowIndex as number, colIndex as number)"
-          @keydown.space.prevent="handleCellActivate(rowIndex as number, colIndex as number)"
+          @click="
+            handleCellActivate(
+              board.cells[rowIndex as number][colIndex as number].rowIndex,
+              board.cells[rowIndex as number][colIndex as number].colIndex
+            )
+          "
+          @keydown.enter.prevent="
+            handleCellActivate(
+              board.cells[rowIndex as number][colIndex as number].rowIndex,
+              board.cells[rowIndex as number][colIndex as number].colIndex
+            )
+          "
+          @keydown.space.prevent="
+            handleCellActivate(
+              board.cells[rowIndex as number][colIndex as number].rowIndex,
+              board.cells[rowIndex as number][colIndex as number].colIndex
+            )
+          "
         >
           <QueensSquare
-            :row-index="rowIndex as number"
-            :col-index="colIndex as number"
-            :store="playStore"
+            :cell="board.cells[rowIndex as number][colIndex as number]"
+            :row-index="board.cells[rowIndex as number][colIndex as number].rowIndex"
+            :col-index="board.cells[rowIndex as number][colIndex as number].colIndex"
+            :board-size="board.gridSize"
+            :store="null"
+            :on-activate="
+              interactive && board.onCellActivate
+                ? () =>
+                    board.onCellActivate?.(
+                      board.cells[rowIndex as number][colIndex as number].rowIndex,
+                      board.cells[rowIndex as number][colIndex as number].colIndex
+                    )
+                : null
+            "
             class="h-full w-full"
             :class="{ 'pointer-events-none': interactive }"
           />
@@ -33,8 +60,8 @@
           <span
             v-if="
               showSelectedCell &&
-              selectedCell?.row === (rowIndex as number) &&
-              selectedCell?.col === (colIndex as number)
+              selectedCell?.row === board.cells[rowIndex as number][colIndex as number].rowIndex &&
+              selectedCell?.col === board.cells[rowIndex as number][colIndex as number].colIndex
             "
             class="absolute bottom-2 right-2 z-30 rounded-full bg-semantic-info-500 px-2 py-0.5 text-[10px] font-semibold text-white"
           >
@@ -42,7 +69,11 @@
           </span>
 
           <span
-            v-if="changedCellSet.has(`${rowIndex as number}:${colIndex as number}`)"
+            v-if="
+              changedCellSet.has(
+                `${board.cells[rowIndex as number][colIndex as number].rowIndex}:${board.cells[rowIndex as number][colIndex as number].colIndex}`
+              )
+            "
             class="pointer-events-none absolute inset-0 z-20 ring-2 ring-semantic-info-300 ring-offset-2 ring-offset-semantic-neutral-950"
           />
         </div>
@@ -72,12 +103,11 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent } from 'vue';
 import type { CSSProperties } from 'vue';
-import { useQueensStore } from '../../stores/queensStore';
+import type { PuzzleBoardAdapter } from './puzzleBoardTypes';
 
 const PlayGrid = defineAsyncComponent(() => import('@/shared/components/PlayGrid.vue'));
 const QueensSquare = defineAsyncComponent(() => import('./QueensSquare.vue'));
 
-type QueensStoreInstance = ReturnType<typeof useQueensStore>;
 type BoardCell = {
   row: number;
   col: number;
@@ -95,7 +125,7 @@ type HintOverlayRegion = {
 };
 
 type QueensPuzzleBoardProps = {
-  store: QueensStoreInstance;
+  board: PuzzleBoardAdapter;
   enableTouch?: boolean;
   interactive?: boolean;
   showSelectedCell?: boolean;
@@ -106,7 +136,6 @@ type QueensPuzzleBoardProps = {
   ariaLabel?: string;
   role?: string;
   dataGameBoard?: string;
-  onCellActivate?: ((row: number, col: number) => void) | null;
 };
 
 const props = withDefaults(defineProps<QueensPuzzleBoardProps>(), {
@@ -120,7 +149,6 @@ const props = withDefaults(defineProps<QueensPuzzleBoardProps>(), {
   ariaLabel: 'Queens puzzle grid',
   role: undefined,
   dataGameBoard: undefined,
-  onCellActivate: null,
 });
 
 defineEmits<{
@@ -130,24 +158,28 @@ defineEmits<{
 
 const changedCellSet = computed(() => new Set(props.changedCells));
 const hintCellSize = 100;
-const hintViewBoxSize = computed(() => props.store.gridSize * hintCellSize);
+const hintViewBoxSize = computed(() => props.board.gridSize * hintCellSize);
 
 const hintOverlayRegions = computed<HintOverlayRegion[]>(() => {
-  const evidence = buildOverlayRegions(Array.from(props.store.hintEvidenceCellKeys), 'evidence');
-  const output = buildOverlayRegions(Array.from(props.store.hintOutputCellKeys), 'output');
+  const evidence = buildOverlayRegions(props.board.hintEvidenceCellKeys, 'evidence');
+  const output = buildOverlayRegions(props.board.hintOutputCellKeys, 'output');
   return [...evidence, ...output];
 });
 
 function handleCellActivate(row: number, col: number): void {
-  if (!props.interactive || !props.onCellActivate) {
+  if (!props.interactive || !props.board.onCellActivate) {
     return;
   }
 
-  props.onCellActivate(row, col);
+  props.board.onCellActivate(row, col);
 }
 
-function buildOverlayRegions(cellKeys: string[], kind: HintOverlayKind): HintOverlayRegion[] {
-  const positions = parseCellKeys(cellKeys);
+function buildOverlayRegions(
+  cellKeys: Iterable<string> | null | undefined,
+  kind: HintOverlayKind
+): HintOverlayRegion[] {
+  if (!cellKeys) return [];
+  const positions = parseCellKeys(Array.from(cellKeys));
   if (positions.length === 0) return [];
 
   const regions = getConnectedRegions(positions);
@@ -258,70 +290,68 @@ function addEdge(
   start: [number, number],
   end: [number, number]
 ): void {
-  const forward = edgeKey(start, end);
-  const reverse = edgeKey(end, start);
-
-  if (edgeMap.has(reverse)) {
-    edgeMap.delete(reverse);
+  const key = edgeKey(start, end);
+  const reverseKey = edgeKey(end, start);
+  if (edgeMap.has(reverseKey)) {
+    edgeMap.delete(reverseKey);
     return;
   }
-
-  edgeMap.set(forward, end);
+  edgeMap.set(key, end);
 }
 
 function edgeKey(start: [number, number], end: [number, number]): string {
   return `${start[0]},${start[1]}->${end[0]},${end[1]}`;
 }
 
-function traceClosedLoops(edgeMap: Map<string, [number, number]>): Array<Array<[number, number]>> {
-  const remainingEdges = new Map(edgeMap);
-  const loops: Array<Array<[number, number]>> = [];
+function traceClosedLoops(edgeMap: Map<string, [number, number]>): [number, number][][] {
+  const adjacency = new Map<string, [number, number][]>();
+  for (const [key, end] of edgeMap.entries()) {
+    const [start] = key.split('->') as [string];
+    const startParts = start.split(',').map(Number);
+    const startPoint: [number, number] = [startParts[0]!, startParts[1]!];
+    const list = adjacency.get(start) ?? [];
+    list.push(end);
+    adjacency.set(start, list);
+    const reverseList = adjacency.get(`${end[0]},${end[1]}`) ?? [];
+    reverseList.push(startPoint);
+    adjacency.set(`${end[0]},${end[1]}`, reverseList);
+  }
 
-  while (remainingEdges.size > 0) {
-    const [initialKey, initialEnd] = remainingEdges.entries().next().value as [
-      string,
-      [number, number],
-    ];
-    remainingEdges.delete(initialKey);
+  const loops: [number, number][][] = [];
+  const visited = new Set<string>();
 
-    const start = parseStartPoint(initialKey);
-    const loop: Array<[number, number]> = [start];
-    let current = initialEnd;
+  for (const [startKey, neighbors] of adjacency.entries()) {
+    if (visited.has(startKey) || neighbors.length === 0) continue;
+    const startParts = startKey.split(',').map(Number);
+    const start: [number, number] = [startParts[0]!, startParts[1]!];
+    const path: [number, number][] = [start];
+    let current = start;
+    let previous: [number, number] | null = null;
 
-    while (!(current[0] === start[0] && current[1] === start[1])) {
-      loop.push(current);
-
-      const nextEntry = findOutgoingEdge(remainingEdges, current);
-      if (!nextEntry) {
-        return [];
+    for (let steps = 0; steps <= edgeMap.size + 1; steps++) {
+      const options = adjacency.get(`${current[0]},${current[1]}`) ?? [];
+      const next = options.find(
+        (candidate) => !previous || candidate[0] !== previous[0] || candidate[1] !== previous[1]
+      );
+      if (!next) break;
+      if (next[0] === start[0] && next[1] === start[1]) {
+        loops.push(path);
+        path.forEach((point) => visited.add(`${point[0]},${point[1]}`));
+        break;
       }
-
-      remainingEdges.delete(nextEntry[0]);
-      current = nextEntry[1];
+      previous = current;
+      current = next;
+      path.push(next);
+      if (path.length > edgeMap.size + 1) {
+        break;
+      }
     }
-
-    loops.push(loop);
   }
 
   return loops;
 }
 
-function parseStartPoint(edge: string): [number, number] {
-  const [coords] = edge.split('->');
-  const [x, y] = coords.split(',').map(Number);
-  return [x, y];
-}
-
-function findOutgoingEdge(
-  edges: Map<string, [number, number]>,
-  start: [number, number]
-): [string, [number, number]] | null {
-  const prefix = `${start[0]},${start[1]}->`;
-  for (const entry of edges.entries()) {
-    if (entry[0].startsWith(prefix)) {
-      return entry;
-    }
-  }
-  return null;
-}
+defineOptions({
+  name: 'QueensPuzzleBoard',
+});
 </script>

@@ -215,6 +215,30 @@
             </div>
 
             <div class="mt-4 space-y-3">
+              <label class="block text-sm text-semantic-neutral-300" for="blackout-fingerprint-key"
+                >Blackout fingerprint (optional)</label
+              >
+              <input
+                id="blackout-fingerprint-key"
+                v-model.trim="workshopBlackoutFingerprintKey"
+                type="text"
+                autocomplete="off"
+                placeholder="R4130241C2031420"
+                class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm uppercase"
+              />
+              <p class="text-xs leading-5 text-semantic-neutral-400">
+                Provide a stitching-style fingerprint to pre-blackout cells before generation. Must
+                match this board size ({{ selectedBoardSize }}x{{ selectedBoardSize }}).
+              </p>
+              <p
+                v-if="workshopBlackoutFingerprintError"
+                class="text-xs leading-5 text-semantic-warning-200"
+              >
+                {{ workshopBlackoutFingerprintError }}
+              </p>
+            </div>
+
+            <div class="mt-4 space-y-3">
               <label class="block text-sm text-semantic-neutral-300" for="preview-interval"
                 >Live preview update interval</label
               >
@@ -253,7 +277,12 @@
               </button>
               <button
                 class="rounded-xl bg-semantic-success-600 px-4 py-2.5 font-semibold text-white hover:bg-semantic-success-500 disabled:cursor-not-allowed disabled:opacity-50"
-                :disabled="store.loading || !templateSeedIsValid || !maxGenerationConfigValid"
+                :disabled="
+                  store.loading ||
+                  !templateSeedIsValid ||
+                  !maxGenerationConfigValid ||
+                  !workshopBlackoutFingerprintIsValid
+                "
                 @click="generateBoardFromWorkshop"
               >
                 Generate Full Board
@@ -749,7 +778,7 @@
               >
                 <QueensPuzzleBoard
                   class="h-full w-full max-w-full"
-                  :store="queensStore"
+                  :board="boardAdapter"
                   :enable-touch="false"
                   interactive
                   :show-selected-cell="true"
@@ -1275,6 +1304,7 @@ import QueensAdminSolverPanel from '../components/admin/QueensAdminSolverPanel.v
 import { useQueensAdminStore } from '../stores/queensAdminStore';
 import { useQueensStore } from '../stores/queensStore';
 import type { QueensAdminGenerationStrategy, QueensAdminTool } from '../admin/types';
+import { buildClassicPuzzleBoardAdapter } from '../components/queens/puzzleBoardAdapters';
 
 const QueensPuzzleBoard = defineAsyncComponent(
   () => import('../components/queens/QueensPuzzleBoard.vue')
@@ -1299,6 +1329,11 @@ const route = useRoute();
 const router = useRouter();
 const store = useQueensAdminStore();
 const queensStore = useQueensStore();
+const boardAdapter = computed(() =>
+  buildClassicPuzzleBoardAdapter(queensStore, {
+    onCellActivate: store.applyManualToolToCell.bind(store),
+  })
+);
 const persistedWorkshopInputs = loadQueensAdminWorkshopInputs();
 const boardSizes = Array.from({ length: 17 }, (_, index) => index + 4);
 const palette = COLOR_PALETTE;
@@ -1307,6 +1342,7 @@ const showSolutionQueens = ref(persistedWorkshopInputs?.showSolutionQueens ?? tr
 const generationPreviewIntervalMs = ref(
   persistedWorkshopInputs?.generationPreviewIntervalMs ?? 1000
 );
+const workshopBlackoutFingerprintKey = ref(persistedWorkshopInputs?.blackoutFingerprintKey ?? '');
 const TEMPLATE_EDITOR_SIZE = 7;
 const DEFAULT_TEMPLATE_SEED_CELLS: TemplateSeedCell[] = [
   { row: 3, col: 3, filled: true },
@@ -1453,6 +1489,7 @@ async function generateBoardFromWorkshop(): Promise<void> {
     queenCountMode: store.queenCountMode,
     targetQueenCount: store.targetQueenCount,
     orthogonalMinDistance: store.orthogonalMinDistance,
+    blackoutFingerprintKey: workshopBlackoutFingerprintKeyForRequest.value,
     seedTemplateOffsets:
       store.generationStrategy === 'template-seeded' ? templateSeedOffsets.value : undefined,
     previewIntervalMs: generationPreviewIntervalMs.value,
@@ -1649,6 +1686,43 @@ const templateSeedStats = computed(() => ({
   connected: templateSeedConnected.value,
   variantCount: countTemplateVariants(templateSeedOffsets.value),
 }));
+
+const workshopBlackoutFingerprintKeyNormalized = computed(() =>
+  workshopBlackoutFingerprintKey.value.trim().toUpperCase()
+);
+
+const workshopBlackoutFingerprintError = computed<string | null>(() => {
+  const value = workshopBlackoutFingerprintKeyNormalized.value;
+  if (!value) return null;
+  const match = /^R(\d+)C(\d+)$/u.exec(value);
+  if (!match) {
+    return 'Fingerprint must match R...C... format, for example R4130241C2031420.';
+  }
+  const left = match[1] ?? '';
+  const top = match[2] ?? '';
+  const size = selectedBoardSize.value;
+  if (left.length !== size || top.length !== size) {
+    return `Fingerprint signatures must each have ${size} digits for a ${size}x${size} board.`;
+  }
+  const outOfRange = [...left, ...top].find((token) => {
+    const digit = Number(token);
+    return !Number.isInteger(digit) || digit < 0 || digit > size;
+  });
+  if (outOfRange != null) {
+    return `Fingerprint digits must be between 0 and ${size}.`;
+  }
+  return null;
+});
+
+const workshopBlackoutFingerprintIsValid = computed(
+  () => workshopBlackoutFingerprintError.value == null
+);
+
+const workshopBlackoutFingerprintKeyForRequest = computed<string | null>(() => {
+  if (!workshopBlackoutFingerprintIsValid.value) return null;
+  const value = workshopBlackoutFingerprintKeyNormalized.value;
+  return value.length > 0 ? value : null;
+});
 
 const templateSeedOffsetsDebug = computed(() =>
   templateSeedOffsets.value.map((offset) => `(${offset.row}, ${offset.col})`).join(', ')
@@ -2152,6 +2226,7 @@ watch(
     selectedBoardSize,
     showSolutionQueens,
     generationPreviewIntervalMs,
+    workshopBlackoutFingerprintKey,
     () => store.queenCountMode,
     () => store.targetQueenCount,
     () => store.orthogonalMinDistance,
@@ -2168,6 +2243,7 @@ watch(
       targetQueenCount: store.targetQueenCount,
       orthogonalMinDistance: store.orthogonalMinDistance,
       minimumGroupSize: store.minimumGroupSize,
+      blackoutFingerprintKey: workshopBlackoutFingerprintKey.value,
       showSolutionQueens: showSolutionQueens.value,
       generationPreviewIntervalMs: generationPreviewIntervalMs.value,
       generationStrategy: store.generationStrategy,

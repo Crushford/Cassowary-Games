@@ -97,6 +97,7 @@ data class StitchingDiscoveryRequestDto(
     val generationLimit: Int,
     val skipSatisfiedBuckets: Boolean = true,
     val maxConcurrentJobs: Int = 1,
+    val minRegionSize: Int = 2,
 )
 
 data class StitchingDiscoveryBucketDto(

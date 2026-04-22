@@ -4,7 +4,7 @@ import com.queens.admin.domain.model.PersistedStitchingPuzzle
 import com.queens.admin.domain.model.PuzzleDifficultyTier
 import com.queens.admin.domain.service.StitchingFingerprintService
 import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.count
 import org.jetbrains.exposed.sql.max
@@ -12,7 +12,6 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -50,6 +49,7 @@ class StitchingPuzzleRepository(
                 it[topBlackoutFingerprint] = puzzle.topBlackoutFingerprint
                 it[fingerprintKey] = puzzle.fingerprintKey
                 it[isSeed] = puzzle.isSeed
+                it[sourcePuzzleId] = puzzle.sourcePuzzleId
                 it[pieceCategory] = puzzle.pieceCategory
                 it[canonicalSignature] = puzzle.canonicalSignature
                 it[difficultyTier] = puzzle.difficultyTier?.name
@@ -106,6 +106,16 @@ class StitchingPuzzleRepository(
                 .where { StitchingPuzzlesTable.fingerprintKey eq key }
                 .firstOrNull()
                 ?.get(maxExpression)
+        }
+
+    fun findDistinctQueenCountsByFingerprintKey(key: String): List<Int> =
+        transaction {
+            StitchingPuzzlesTable
+                .select(StitchingPuzzlesTable.queenCount)
+                .where { StitchingPuzzlesTable.fingerprintKey eq key }
+                .map { row -> row[StitchingPuzzlesTable.queenCount] }
+                .distinct()
+                .sorted()
         }
 
     fun findByPieceCategory(category: String): List<PersistedStitchingPuzzle> =
@@ -167,9 +177,7 @@ class StitchingPuzzleRepository(
 
     fun deleteBlackoutPuzzles(): Int =
         transaction {
-            StitchingPuzzlesTable.deleteWhere {
-                StitchingPuzzlesTable.pieceCategory.inList(listOf("LEFT_ONLY", "TOP_ONLY", "BOTH"))
-            }
+            StitchingPuzzlesTable.deleteAll()
         }
 
     private fun ResultRow.toPersistedStitchingPuzzle(): PersistedStitchingPuzzle =
@@ -196,6 +204,7 @@ class StitchingPuzzleRepository(
             topBlackoutFingerprint = this[StitchingPuzzlesTable.topBlackoutFingerprint],
             fingerprintKey = this[StitchingPuzzlesTable.fingerprintKey],
             isSeed = this[StitchingPuzzlesTable.isSeed],
+            sourcePuzzleId = this[StitchingPuzzlesTable.sourcePuzzleId],
             pieceCategory = this[StitchingPuzzlesTable.pieceCategory],
             canonicalSignature = this[StitchingPuzzlesTable.canonicalSignature],
             difficultyTier = this[StitchingPuzzlesTable.difficultyTier]?.let(PuzzleDifficultyTier::valueOf),

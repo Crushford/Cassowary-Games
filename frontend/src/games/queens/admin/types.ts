@@ -28,6 +28,7 @@ export interface QueensAdminCell {
   groupColor: string | null;
   isSolutionQueen: boolean;
   markType: QueensAdminMarkType;
+  isBlackout?: boolean;
 }
 
 export interface QueensAdminBoardState {

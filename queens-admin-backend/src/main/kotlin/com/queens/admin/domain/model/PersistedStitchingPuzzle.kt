@@ -22,6 +22,7 @@ data class PersistedStitchingPuzzle(
     val isSeed: Boolean,
     val pieceCategory: String,
     val canonicalSignature: String,
+    val sourcePuzzleId: UUID? = null,
     val difficultyTier: PuzzleDifficultyTier? = null,
     val difficultyScore: Int? = null,
     val difficultySolverVersion: String? = null,

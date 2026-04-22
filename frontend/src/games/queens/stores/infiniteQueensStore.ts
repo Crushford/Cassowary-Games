@@ -1,7 +1,9 @@
 import { computed, reactive, ref, shallowRef } from 'vue';
 import { defineStore } from 'pinia';
-import type { MarkType, Pos } from '../types/types';
-import { isDiagonalTouch, isOrthogonalConflict } from '../utils/queensRules';
+import type { GridSquare, MarkType, Pos } from '../types/types';
+import { isValidMoveOnBoard } from '../utils/queensMoveValidation';
+import { getAutoFlagPositions } from '../utils/queensAutoFlagging';
+import { detectConstraintViolations, deriveErrorMessage } from '../utils/queensErrorDetection';
 import {
   findByFingerprintKey,
   findByLeftFingerprint,
@@ -53,10 +55,12 @@ export interface InfiniteQueensWorldCell {
   playerMark: MarkType;
 }
 
-type InfiniteQueensTool = 'queen' | 'flag';
+type InfiniteQueensTool = 'auto' | 'queen' | 'flag';
 
 const DEFAULT_VIEWPORT_WIDTH = INFINITE_QUEENS_DEFAULT_VIEWPORT_WIDTH;
 const DEFAULT_VIEWPORT_HEIGHT = INFINITE_QUEENS_DEFAULT_VIEWPORT_HEIGHT;
+const ACTIVE_WINDOW_EXTRA_CELLS = 7;
+const VALIDATION_CONFIRMATION_DELAY_MS = 1000;
 const MAX_RECENT_PUZZLES = 24;
 const INFINITE_QUEENS_DEBUG_PREFIX = '[InfiniteQueens]';
 
@@ -107,11 +111,6 @@ function countMarks(playerMarks: Map<string, MarkType>, markType: MarkType): num
   return count;
 }
 
-function parseWorldKey(key: string): Pos {
-  const [row, col] = key.split(',').map(Number);
-  return { row, col };
-}
-
 function createChunk(
   record: InfiniteQueensCatalogRecord,
   chunkX: number,
@@ -157,7 +156,11 @@ export const useInfiniteQueensStore = defineStore('infiniteQueens', () => {
   const isReady = ref(false);
   const errorMessage = ref<string | null>(null);
   const statusMessage = ref<string | null>(null);
-  const activeTool = ref<InfiniteQueensTool>('queen');
+  const validationMessage = ref<string | null>(null);
+  const validationErrorCellKeys = ref<Set<string>>(new Set());
+  const validationMessageTimeout = ref<number | null>(null);
+  const activeTool = ref<InfiniteQueensTool>('auto');
+  const autoFlagging = ref(true);
 
   const worldBounds = reactive<InfiniteQueensWorldBounds>({
     minX: 0,
@@ -196,6 +199,12 @@ export const useInfiniteQueensStore = defineStore('infiniteQueens', () => {
     isReady.value = false;
     errorMessage.value = null;
     statusMessage.value = null;
+    validationMessage.value = null;
+    validationErrorCellKeys.value = new Set();
+    if (validationMessageTimeout.value !== null) {
+      clearTimeout(validationMessageTimeout.value);
+      validationMessageTimeout.value = null;
+    }
   }
 
   function rememberRecentPuzzle(puzzleId: string): void {
@@ -534,6 +543,21 @@ export const useInfiniteQueensStore = defineStore('infiniteQueens', () => {
       return cell;
     }
 
+    const overrideSymbol = chunk.record.blackoutFillOverrideByIndex[layoutIndex];
+    if (overrideSymbol) {
+      const groupId = `${chunk.key}:${overrideSymbol}`;
+      const cell: InfiniteQueensWorldCell = {
+        ...baseCell,
+        displayGroupId: groupId,
+        displayGroupSlot: hashGroupId(groupId),
+        isSeamFill: true,
+        isBlackout: false,
+      };
+      memo.set(key, cell);
+      visiting.delete(key);
+      return cell;
+    }
+
     const leftBleed = localCol < (chunk.record.leftBlackoutSignature[localRow] ?? 0);
     const topBleed = localRow < (chunk.record.topBlackoutSignature[localCol] ?? 0);
     const directions: Array<[number, number]> = [];
@@ -580,20 +604,26 @@ export const useInfiniteQueensStore = defineStore('infiniteQueens', () => {
   }
 
   function buildVisibleCells(): InfiniteQueensWorldCell[][] {
+    return buildCellMatrix(viewport.row, viewport.col, viewport.width, viewport.height);
+  }
+
+  function buildCellMatrix(
+    startRow: number,
+    startCol: number,
+    width: number,
+    height: number
+  ): InfiniteQueensWorldCell[][] {
     const memo = new Map<string, InfiniteQueensWorldCell>();
     const visiting = new Set<string>();
-    return Array.from({ length: viewport.height }, (_, rowOffset) =>
-      Array.from({ length: viewport.width }, (_, colOffset) => {
-        const cell = resolveVisibleCell(
-          viewport.row + rowOffset,
-          viewport.col + colOffset,
-          memo,
-          visiting
-        );
+    return Array.from({ length: height }, (_, rowOffset) =>
+      Array.from({ length: width }, (_, colOffset) => {
+        const worldRow = startRow + rowOffset;
+        const worldCol = startCol + colOffset;
+        const cell = resolveVisibleCell(worldRow, worldCol, memo, visiting);
         return (
           cell ?? {
-            worldRow: viewport.row + rowOffset,
-            worldCol: viewport.col + colOffset,
+            worldRow,
+            worldCol,
             chunkKey: '',
             chunkX: 0,
             chunkY: 0,
@@ -611,130 +641,160 @@ export const useInfiniteQueensStore = defineStore('infiniteQueens', () => {
     );
   }
 
-  function getQueenPositions(): Pos[] {
-    const positions: Pos[] = [];
-    for (const [key, mark] of playerMarks.entries()) {
-      if (mark === 'queen') {
-        positions.push(parseWorldKey(key));
-      }
-    }
-    return positions;
+  function getActiveWindowBounds(): {
+    startRow: number;
+    startCol: number;
+    width: number;
+    height: number;
+  } {
+    const leadingPadding = Math.floor(ACTIVE_WINDOW_EXTRA_CELLS / 2);
+    const trailingPadding = ACTIVE_WINDOW_EXTRA_CELLS - leadingPadding;
+    const startRow = Math.max(0, viewport.row - leadingPadding);
+    const startCol = Math.max(0, viewport.col - leadingPadding);
+    const endRow = Math.min(
+      loadedWorldHeightCells.value - 1,
+      viewport.row + viewport.height - 1 + trailingPadding
+    );
+    const endCol = Math.min(
+      loadedWorldWidthCells.value - 1,
+      viewport.col + viewport.width - 1 + trailingPadding
+    );
+    return {
+      startRow,
+      startCol,
+      width: Math.max(1, endCol - startCol + 1),
+      height: Math.max(1, endRow - startRow + 1),
+    };
   }
 
-  function getCellDisplayGroupId(worldRow: number, worldCol: number): string | null {
-    const cell = resolveVisibleCell(
-      worldRow,
-      worldCol,
-      new Map<string, InfiniteQueensWorldCell>(),
-      new Set<string>()
+  function buildActiveWindowAnalysisContext(): {
+    bounds: { startRow: number; startCol: number; width: number; height: number };
+    grid: GridSquare[][];
+    playerMarks: MarkType[][];
+    gridSize: number;
+    orthogonalMinDistance: number;
+  } {
+    const bounds = getActiveWindowBounds();
+    const cells = buildCellMatrix(bounds.startRow, bounds.startCol, bounds.width, bounds.height);
+
+    const gridSize = Math.min(bounds.width, bounds.height);
+    const grid = cells.slice(0, gridSize).map((row) =>
+      row.slice(0, gridSize).map((cell) => ({
+        position: {
+          row: cell.worldRow - bounds.startRow,
+          col: cell.worldCol - bounds.startCol,
+        },
+        groupColor: cell.displayGroupId ?? undefined,
+        isSolutionQueen: cell.isSolutionQueen,
+      }))
     );
-    return cell?.displayGroupId ?? null;
+
+    return {
+      bounds,
+      grid,
+      playerMarks: cells
+        .slice(0, gridSize)
+        .map((row) => row.slice(0, gridSize).map((cell) => cell.playerMark)),
+      gridSize,
+      orthogonalMinDistance: INFINITE_QUEENS_DEFAULT_ORTHOGONAL_MIN_DISTANCE,
+    };
   }
 
-  function detectViolations(): { keys: Set<string>; message: string | null } {
-    const queenPositions = getQueenPositions();
-    const keys = new Set<string>();
-    const queenGroups = new Map<string, string[]>();
+  function detectWindowViolations(): { keys: Set<string>; message: string | null } {
+    const analysis = buildActiveWindowAnalysisContext();
+    const validation = detectConstraintViolations({
+      grid: analysis.grid,
+      playerMarks: analysis.playerMarks,
+      gridSize: analysis.gridSize,
+      targetQueenCount: 0,
+      orthogonalMinDistance: analysis.orthogonalMinDistance,
+    });
+    const localErrorSquares = new Set<string>();
+    const worldKeys = new Set<string>();
 
-    for (let index = 0; index < queenPositions.length; index++) {
-      const left = queenPositions[index]!;
-      const leftKey = worldKey(left.row, left.col);
-      const leftGroupId = getCellDisplayGroupId(left.row, left.col);
-      if (leftGroupId) {
-        const existing = queenGroups.get(leftGroupId) ?? [];
-        existing.push(leftKey);
-        queenGroups.set(leftGroupId, existing);
-      }
+    const addPosition = (position: Pos): void => {
+      const localKey = worldKey(position.row, position.col);
+      const worldKeyValue = worldKey(
+        analysis.bounds.startRow + position.row,
+        analysis.bounds.startCol + position.col
+      );
+      localErrorSquares.add(localKey);
+      worldKeys.add(worldKeyValue);
+    };
 
-      for (let nextIndex = index + 1; nextIndex < queenPositions.length; nextIndex++) {
-        const right = queenPositions[nextIndex]!;
-        const rightKey = worldKey(right.row, right.col);
-        if (isDiagonalTouch(left, right)) {
-          keys.add(leftKey);
-          keys.add(rightKey);
-          continue;
-        }
-        if (isOrthogonalConflict(left, right, INFINITE_QUEENS_DEFAULT_ORTHOGONAL_MIN_DISTANCE)) {
-          keys.add(leftKey);
-          keys.add(rightKey);
-        }
-      }
+    for (const violation of validation.timedViolations) {
+      violation.affectedCells.forEach(addPosition);
+    }
+    for (const position of validation.immediateDiagonalErrors) {
+      addPosition(position);
     }
 
-    for (const groupKeys of queenGroups.values()) {
-      if (groupKeys.length > 1) {
-        groupKeys.forEach((key) => keys.add(key));
-      }
-    }
+    const queenPositions = validation.allQueenPositions;
+    const message = deriveErrorMessage({
+      grid: analysis.grid,
+      playerMarks: analysis.playerMarks,
+      gridSize: analysis.gridSize,
+      targetQueenCount: 0,
+      orthogonalMinDistance: analysis.orthogonalMinDistance,
+      errorSquares: localErrorSquares,
+      queenPositions,
+      hasDiagonalConflicts: validation.hasDiagonalConflicts,
+    });
 
-    const sameRowConflict = queenPositions.find((left, index) =>
-      queenPositions
-        .slice(index + 1)
-        .some(
-          (right) =>
-            left.row === right.row &&
-            Math.abs(left.col - right.col) < INFINITE_QUEENS_DEFAULT_ORTHOGONAL_MIN_DISTANCE
-        )
-    );
-    const sameColumnConflict = queenPositions.find((left, index) =>
-      queenPositions
-        .slice(index + 1)
-        .some(
-          (right) =>
-            left.col === right.col &&
-            Math.abs(left.row - right.row) < INFINITE_QUEENS_DEFAULT_ORTHOGONAL_MIN_DISTANCE
-        )
-    );
-    const hasDiagonalConflicts = queenPositions.some((left, index) =>
-      queenPositions.slice(index + 1).some((right) => isDiagonalTouch(left, right))
-    );
-
-    let message: string | null = null;
-    if (hasDiagonalConflicts) {
-      message = 'Queens cannot touch diagonally';
-    } else if (sameRowConflict) {
-      message = `Queens in the same row must be at least ${INFINITE_QUEENS_DEFAULT_ORTHOGONAL_MIN_DISTANCE} apart`;
-    } else if (sameColumnConflict) {
-      message = `Queens in the same column must be at least ${INFINITE_QUEENS_DEFAULT_ORTHOGONAL_MIN_DISTANCE} apart`;
-    } else if (
-      queenGroups.size > 0 &&
-      [...queenGroups.values()].some((entries) => entries.length > 1)
-    ) {
-      message = 'Only one queen is allowed in each colour group';
-    }
-
-    return { keys, message };
+    return { keys: worldKeys, message };
   }
 
   function isValidWorldMove(worldRow: number, worldCol: number): boolean {
-    if (worldRow < 0 || worldCol < 0) return false;
-    const current = getCellDisplayGroupId(worldRow, worldCol);
-    const candidate = { row: worldRow, col: worldCol };
-
-    for (const existing of getQueenPositions()) {
-      if (existing.row === worldRow && existing.col === worldCol) continue;
-      if (isDiagonalTouch(candidate, existing)) return false;
-      if (
-        isOrthogonalConflict(candidate, existing, INFINITE_QUEENS_DEFAULT_ORTHOGONAL_MIN_DISTANCE)
-      )
-        return false;
+    const analysis = buildActiveWindowAnalysisContext();
+    if (
+      worldRow < analysis.bounds.startRow ||
+      worldCol < analysis.bounds.startCol ||
+      worldRow >= analysis.bounds.startRow + analysis.bounds.height ||
+      worldCol >= analysis.bounds.startCol + analysis.bounds.width
+    ) {
+      return true;
     }
 
-    if (current) {
-      for (const queen of getQueenPositions()) {
-        if (queen.row === worldRow && queen.col === worldCol) continue;
-        if (getCellDisplayGroupId(queen.row, queen.col) === current) {
-          return false;
-        }
-      }
+    const localRow = worldRow - analysis.bounds.startRow;
+    const localCol = worldCol - analysis.bounds.startCol;
+    return isValidMoveOnBoard(
+      {
+        grid: analysis.grid,
+        playerMarks: analysis.playerMarks,
+        gridSize: analysis.gridSize,
+        orthogonalMinDistance: analysis.orthogonalMinDistance,
+      },
+      localRow,
+      localCol
+    );
+  }
+
+  function scheduleValidationState(): void {
+    const validation = detectWindowViolations();
+    if (validationMessageTimeout.value !== null) {
+      clearTimeout(validationMessageTimeout.value);
+      validationMessageTimeout.value = null;
     }
 
-    return true;
+    if (validation.keys.size === 0 || validation.message === null) {
+      validationMessage.value = null;
+      validationErrorCellKeys.value = new Set();
+      return;
+    }
+
+    const nextMessage = validation.message;
+    const nextKeys = new Set(validation.keys);
+    validationMessage.value = null;
+    validationErrorCellKeys.value = new Set();
+    validationMessageTimeout.value = window.setTimeout(() => {
+      validationMessage.value = nextMessage;
+      validationErrorCellKeys.value = nextKeys;
+      validationMessageTimeout.value = null;
+    }, VALIDATION_CONFIRMATION_DELAY_MS);
   }
 
   function syncErrorState(): void {
-    const validation = detectViolations();
-    errorMessage.value = validation.message;
+    scheduleValidationState();
   }
 
   function setMark(worldRow: number, worldCol: number, mark: MarkType): void {
@@ -777,27 +837,54 @@ export const useInfiniteQueensStore = defineStore('infiniteQueens', () => {
   }
 
   function handleCellClick(worldRow: number, worldCol: number): void {
+    const key = worldKey(worldRow, worldCol);
+    const currentMark = playerMarks.get(key) ?? null;
+
+    if (activeTool.value === 'flag') {
+      toggleFlag(worldRow, worldCol);
+      return;
+    }
+
     if (activeTool.value === 'queen') {
       toggleQueen(worldRow, worldCol);
-    } else {
+      if (autoFlagging.value) {
+        autoFlagBoard();
+      }
+      return;
+    }
+
+    if (currentMark === null) {
       toggleFlag(worldRow, worldCol);
+      return;
+    }
+
+    if (currentMark === 'flag') {
+      toggleQueen(worldRow, worldCol);
+      if (autoFlagging.value) {
+        autoFlagBoard();
+      }
+    } else {
+      toggleQueen(worldRow, worldCol);
     }
   }
 
   function autoFlagBoard(): number {
-    let flagged = 0;
-    const maxRow = loadedWorldHeightCells.value;
-    const maxCol = loadedWorldWidthCells.value;
+    const analysis = buildActiveWindowAnalysisContext();
+    const positions = getAutoFlagPositions({
+      grid: analysis.grid,
+      playerMarks: analysis.playerMarks,
+      gridSize: analysis.gridSize,
+      orthogonalMinDistance: analysis.orthogonalMinDistance,
+    });
 
-    for (let worldRow = 0; worldRow < maxRow; worldRow++) {
-      for (let worldCol = 0; worldCol < maxCol; worldCol++) {
-        const key = worldKey(worldRow, worldCol);
-        if (playerMarks.get(key) != null) continue;
-        if (!isValidWorldMove(worldRow, worldCol)) {
-          playerMarks.set(key, 'flag');
-          flagged++;
-        }
-      }
+    let flagged = 0;
+    for (const position of positions) {
+      const worldRow = analysis.bounds.startRow + position.row;
+      const worldCol = analysis.bounds.startCol + position.col;
+      const key = worldKey(worldRow, worldCol);
+      if (playerMarks.get(key) != null) continue;
+      playerMarks.set(key, 'flag');
+      flagged++;
     }
 
     if (flagged > 0) {
@@ -852,6 +939,7 @@ export const useInfiniteQueensStore = defineStore('infiniteQueens', () => {
       await ensureViewportCoverage(nextRow, nextCol);
       viewport.row = nextRow;
       viewport.col = nextCol;
+      syncErrorState();
       return true;
     } catch (error) {
       errorMessage.value =
@@ -868,6 +956,7 @@ export const useInfiniteQueensStore = defineStore('infiniteQueens', () => {
       await ensureViewportCoverage(row, col);
       viewport.row = row;
       viewport.col = col;
+      syncErrorState();
       return true;
     } catch (error) {
       errorMessage.value = error instanceof Error ? error.message : 'Failed to move the viewport.';
@@ -883,6 +972,7 @@ export const useInfiniteQueensStore = defineStore('infiniteQueens', () => {
     errorMessage,
     statusMessage,
     activeTool,
+    autoFlagging,
     worldBounds,
     viewport,
     loadedWorldWidthCells,
@@ -890,12 +980,15 @@ export const useInfiniteQueensStore = defineStore('infiniteQueens', () => {
     queenCount,
     flagCount,
     visibleCells: computed(() => buildVisibleCells()),
-    errorCellKeys: computed(() => detectViolations().keys),
-    worldValidationMessage: computed(() => detectViolations().message),
+    errorCellKeys: computed(() => validationErrorCellKeys.value),
+    worldValidationMessage: computed(() => validationMessage.value),
     startGame,
     moveViewport,
     setViewport,
     setActiveTool,
+    setAutoFlagging: (enabled: boolean) => {
+      autoFlagging.value = enabled;
+    },
     handleCellClick,
     toggleQueen,
     toggleFlag,
@@ -903,7 +996,7 @@ export const useInfiniteQueensStore = defineStore('infiniteQueens', () => {
     autoFlagBoard,
     isValidWorldMove,
     syncErrorState,
-    getCellDisplayGroupId,
-    getQueenPositions,
   };
 });
+
+export type InfiniteQueensStore = ReturnType<typeof useInfiniteQueensStore>;
