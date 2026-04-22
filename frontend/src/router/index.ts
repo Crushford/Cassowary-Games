@@ -63,13 +63,13 @@ const router = createRouter({
       component: () => import('@/games/queens/views/InfiniteQueensGame.vue'),
     },
     {
-      path: '/queens/campaign',
-      name: 'queens-campaign-levels',
+      path: '/queens/story',
+      name: 'queens-story-levels',
       component: () => import('@/games/queens/views/QueensCampaignLevels.vue'),
     },
     {
-      path: '/queens/campaign/:sizeKey/:difficulty(tutorial|extra-easy|easy|medium|hard|extra-hard)',
-      name: 'queens-campaign',
+      path: '/queens/level/:levelNumber',
+      name: 'queens-level',
       component: QueensGame,
     },
     {

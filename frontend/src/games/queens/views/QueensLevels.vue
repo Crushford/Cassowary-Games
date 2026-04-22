@@ -57,11 +57,13 @@
                 class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-group-yellow-soft border-t-white"
                 aria-hidden="true"
               ></span>
-              <span>{{ queensStore.storyUnlockedLevelIndex > 0 ? 'Continue Game' : 'Start Game' }}</span>
+              <span>{{
+                queensStore.storyUnlockedLevelIndex > 1 ? 'Continue Game' : 'Start Game'
+              }}</span>
             </div>
             <div class="text-sm opacity-90">
               {{
-                queensStore.storyUnlockedLevelIndex > 0
+                queensStore.storyUnlockedLevelIndex > 1
                   ? 'Keep going where you left off'
                   : 'Start your puzzle solving on the smallest, easiest puzzle'
               }}
@@ -202,7 +204,7 @@ function goToInfiniteMode() {
 }
 
 function goToCampaignSelector() {
-  router.push('/queens/campaign');
+  router.push('/queens/story');
 }
 
 async function startCampaign() {

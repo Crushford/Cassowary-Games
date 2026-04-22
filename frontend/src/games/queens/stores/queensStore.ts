@@ -452,28 +452,8 @@ interface QueensStoryProgress {
   levelBestTimes: Record<string, number>;
 }
 
-function calculateCampaignTargetTime(bucket: QueensCampaignBucket): number {
-  const boardSize = Number.parseInt(bucket.sizeKey, 10);
-  const baseSecondsBySize: Record<number, number> = {
-    4: 30,
-    5: 45,
-    6: 60,
-    7: 90,
-    8: 120,
-    9: 180,
-    10: 240,
-    11: 300,
-  };
-  const difficultyMultiplier: Record<QueensSelectionDifficulty, number> = {
-    tutorial: 1,
-    'extra-easy': 1.15,
-    easy: 1.35,
-    medium: 1.6,
-    hard: 2,
-    'extra-hard': 2.5,
-  };
-  const base = baseSecondsBySize[boardSize] ?? Math.max(30, boardSize * 30);
-  return Math.round(base * difficultyMultiplier[bucket.difficulty]);
+function calculateCampaignTargetTime(_bucket: QueensCampaignBucket): number {
+  return 120;
 }
 
 function buildCampaignBucketStorageKey(bucket: QueensCampaignBucket): string {
@@ -1748,6 +1728,10 @@ export const useQueensStore = defineStore('queens', {
       );
     },
 
+    getCampaignBucketByLevelIndex(levelIndex: number): QueensCampaignBucket | null {
+      return this.getCampaignBuckets().find((bucket) => bucket.levelIndex === levelIndex) ?? null;
+    },
+
     getCampaignBucketKey(bucket: QueensCampaignBucket): string {
       return buildCampaignBucketStorageKey(bucket);
     },
@@ -1887,7 +1871,7 @@ export const useQueensStore = defineStore('queens', {
           currentProgressBucket.sizeKey === bucket.sizeKey &&
           currentProgressBucket.difficulty === bucket.difficulty,
         bestTime: this.getCampaignBucketBestTime(bucket),
-        route: `/queens/campaign/${bucket.sizeKey}/${bucket.difficulty}`,
+        route: `/queens/level/${bucket.levelIndex}`,
         bucket,
       }));
     },
@@ -1985,9 +1969,7 @@ export const useQueensStore = defineStore('queens', {
         if (!fallbackBucket) {
           throw new Error('No campaign buckets are available');
         }
-        await router.replace(
-          `/queens/campaign/${fallbackBucket.sizeKey}/${fallbackBucket.difficulty}`
-        );
+        await router.replace(`/queens/level/${fallbackBucket.levelIndex}`);
         return this.loadCampaignBucket(fallbackBucket, { showIntroModal: true });
       }
       return this.loadCampaignBucket(bucket, { showIntroModal: true });
@@ -2048,7 +2030,7 @@ export const useQueensStore = defineStore('queens', {
       if (!currentBucket) {
         throw new Error('No campaign buckets are available');
       }
-      await router.push(`/queens/campaign/${currentBucket.sizeKey}/${currentBucket.difficulty}`);
+      await router.push(`/queens/level/${currentBucket.levelIndex}`);
     },
 
     async applyHintsUntilSolved(maxHints: number = 512) {
@@ -3459,12 +3441,10 @@ export const useQueensStore = defineStore('queens', {
           return;
         }
         if (!this.nextCampaignBucket) {
-          await router.push('/queens/campaign');
+          await router.push('/queens/story');
           return;
         }
-        await router.push(
-          `/queens/campaign/${this.nextCampaignBucket.sizeKey}/${this.nextCampaignBucket.difficulty}`
-        );
+        await router.push(`/queens/level/${this.nextCampaignBucket.levelIndex}`);
         return;
       }
 

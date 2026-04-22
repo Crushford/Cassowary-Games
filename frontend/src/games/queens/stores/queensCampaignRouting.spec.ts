@@ -78,7 +78,7 @@ describe('Queens campaign routing', () => {
     await store.startNextPuzzle();
 
     expect(pushSpy).toHaveBeenCalledWith(
-      `/queens/campaign/${store.getCampaignBuckets()[1].sizeKey}/${store.getCampaignBuckets()[1].difficulty}`
+      `/queens/level/${store.getCampaignBuckets()[1].levelIndex}`
     );
   }, 30000);
 
@@ -115,6 +115,6 @@ describe('Queens campaign routing', () => {
 
     await store.startNextPuzzle();
 
-    expect(pushSpy).toHaveBeenCalledWith('/queens/campaign/4x4/extra-easy');
+    expect(pushSpy).toHaveBeenCalledWith('/queens/level/7');
   }, 30000);
 });

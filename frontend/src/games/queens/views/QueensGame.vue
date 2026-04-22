@@ -287,7 +287,8 @@ async function loadPuzzleFromRoute() {
   const routeOrthogonalMinDistance = route.params.orthogonalMinDistance as string | undefined;
   const routeDifficultyParam = route.params.difficulty as string | undefined;
   const selectedPuzzleId = route.params.selectedPuzzleId as string | undefined;
-  const isCampaignRoute = route.name === 'queens-campaign';
+  const isCampaignRoute = route.name === 'queens-level';
+  const levelNumber = route.params.levelNumber as string | undefined;
   const routeTargetQueenCount =
     typeof route.query.targetQueenCount === 'string' ? route.query.targetQueenCount : undefined;
   const routeMinimumGroupSize =
@@ -338,23 +339,32 @@ async function loadPuzzleFromRoute() {
       return;
     }
 
-    if (isCampaignRoute && sizeKey && isQueensSelectionDifficulty(routeDifficultyParam)) {
-      logQueensRoute('branch:campaign-route', {
-        sizeKey,
-        difficulty: routeDifficultyParam,
-      });
-      if (queensStore.isTutorialMode) {
-        queensStore.exitTutorialMode();
+    if (isCampaignRoute && levelNumber) {
+      const bucket = await (async () => {
+        if (!queensStore.campaignBucketCache) {
+          await queensStore.loadCampaignCatalog();
+        }
+        return queensStore.getCampaignBucketByLevelIndex(Number(levelNumber));
+      })();
+      if (bucket) {
+        logQueensRoute('branch:campaign-route', {
+          levelNumber,
+          sizeKey: bucket.sizeKey,
+          difficulty: bucket.difficulty,
+        });
+        if (queensStore.isTutorialMode) {
+          queensStore.exitTutorialMode();
+        }
+        await queensStore.loadCampaignPuzzle(bucket.sizeKey, bucket.difficulty);
+        trackGameStart({
+          game_name: 'queens',
+          game_mode: 'campaign',
+          grid_size: queensStore.gridSize,
+          puzzle_id:
+            queensStore.currentPuzzleId === null ? undefined : String(queensStore.currentPuzzleId),
+        });
+        return;
       }
-      await queensStore.loadCampaignPuzzle(sizeKey, routeDifficultyParam);
-      trackGameStart({
-        game_name: 'queens',
-        game_mode: 'campaign',
-        grid_size: queensStore.gridSize,
-        puzzle_id:
-          queensStore.currentPuzzleId === null ? undefined : String(queensStore.currentPuzzleId),
-      });
-      return;
     }
 
     if (sizeKey && routeOrthogonalMinDistance) {

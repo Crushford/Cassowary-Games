@@ -15,6 +15,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
 import { useQueensStore } from '../../stores/queensStore';
 import type { QueensActionMenuAction } from './queensUiContracts';
@@ -30,24 +31,37 @@ const props = withDefaults(
   }
 );
 
+const route = useRoute();
 const queensStore = useQueensStore();
-const defaultActions = computed<QueensActionMenuAction[]>(() => [
+
+const isCustomPuzzleRoute = computed(
+  () =>
+    route.name === 'queens-selection-puzzle-with-difficulty' ||
+    route.name === 'queens-selection-puzzle'
+);
+
+const customPuzzleActions = computed<QueensActionMenuAction[]>(() => [
+  {
+    label: 'Next Puzzle',
+    class:
+      'border-semantic-success-700 bg-feedback-successSubtle text-semantic-success-100 enabled:hover:border-semantic-success-600 enabled:hover:bg-feedback-successSoft',
+    onClick: queensStore.startNextPuzzle,
+  },
+  {
+    label: 'Select New Custom Puzzle',
+    class:
+      'border-semantic-neutral-500 bg-semantic-neutral-700 text-white enabled:hover:border-semantic-neutral-400 enabled:hover:bg-semantic-neutral-600',
+    onClick: queensStore.navigateToPuzzleVariationSelection,
+  },
+]);
+
+const campaignActions = computed<QueensActionMenuAction[]>(() => [
   {
     label: 'Main Menu',
     class:
       'border-semantic-warning-700 bg-feedback-warningSubtle text-semantic-warning-100 enabled:hover:border-semantic-warning-600 enabled:hover:bg-feedback-warningSoft',
     onClick: queensStore.navigateToMainMenu,
   },
-  ...(!queensStore.isCampaignMode
-    ? [
-        {
-          label: 'Select Puzzle Variation',
-          class:
-            'border-semantic-neutral-500 bg-semantic-neutral-700 text-white enabled:hover:border-semantic-neutral-400 enabled:hover:bg-semantic-neutral-600',
-          onClick: queensStore.navigateToPuzzleVariationSelection,
-        },
-      ]
-    : []),
   {
     label: 'Copy Link to Puzzle',
     class:
@@ -62,19 +76,23 @@ const defaultActions = computed<QueensActionMenuAction[]>(() => [
   },
 ]);
 
+const defaultActions = computed<QueensActionMenuAction[]>(() =>
+  isCustomPuzzleRoute.value ? customPuzzleActions.value : campaignActions.value
+);
+
 const containerClass = computed(() => {
+  if (isCustomPuzzleRoute.value) {
+    return props.compact ? 'grid grid-cols-2 gap-2' : 'grid grid-cols-2 gap-2';
+  }
   if (props.compact) {
-    return queensStore.isCampaignMode ? 'grid grid-cols-3 gap-2' : 'grid grid-cols-4 gap-2';
+    return queensStore.isCampaignMode ? 'grid grid-cols-3 gap-2' : 'grid grid-cols-3 gap-2';
   }
   return queensStore.isCampaignMode
     ? 'grid grid-cols-1 gap-2 sm:grid-cols-3'
-    : 'grid grid-cols-2 gap-2 sm:grid-cols-4';
+    : 'grid grid-cols-1 gap-2 sm:grid-cols-3';
 });
 
 const nextActionLabel = computed(() => {
-  if (!queensStore.isCampaignMode) {
-    return 'Next Puzzle';
-  }
   if (queensStore.hasPassedCurrentCampaignLevel && !queensStore.nextCampaignBucket) {
     return 'Story Map';
   }

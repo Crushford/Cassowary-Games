@@ -119,8 +119,7 @@
     </div>
 
     <div class="mt-1 text-xs text-semantic-neutral-500">
-      {{ queensStore.targetQueenCount }} queens, minimum distance of
-      {{ queensStore.orthogonalMinDistance }} between queens in each row or column
+      {{ queensStore.targetQueenCount }} queens, {{ queenDistanceSummary }}
     </div>
   </div>
 
@@ -210,6 +209,11 @@ const props = withDefaults(
 );
 
 const isInfiniteVariant = computed(() => props.variant === 'infinite');
+const queenDistanceSummary = computed(() =>
+  queensStore.orthogonalMinDistance === queensStore.gridSize
+    ? '1 queen per row and 1 per column'
+    : `minimum distance of ${queensStore.orthogonalMinDistance} between queens in each row or column`
+);
 
 // ── Standard mode ─────────────────────────────────────────────────────────────
 
