@@ -237,6 +237,52 @@ function colorGroupLabel(state: MutableSolverState, color: string | null | undef
   return 'this color group';
 }
 
+function groupDisplayName(state: MutableSolverState, color: string): string {
+  for (let row = 0; row < state.gridSize; row++) {
+    for (let col = 0; col < state.gridSize; col++) {
+      if (getGroupColor(state, row, col) !== color) continue;
+      const visualColor = state.grid[row]?.[col]?.groupAppearance?.color;
+      if (visualColor) {
+        return visualColor;
+      }
+    }
+  }
+  return color;
+}
+
+function formatNaturalList(values: string[]): string {
+  if (values.length === 0) return '';
+  if (values.length === 1) return values[0];
+  if (values.length === 2) return `${values[0]} and ${values[1]}`;
+  return `${values.slice(0, -1).join(', ')}, and ${values[values.length - 1]}`;
+}
+
+function formatLineLabel(isColumn: boolean, selectedLines: number[]): string {
+  const axisSingular = isColumn ? 'column' : 'row';
+  const axisPlural = isColumn ? 'columns' : 'rows';
+  const lineNumbers = selectedLines.map((line) => String(line + 1));
+  return `${selectedLines.length === 1 ? axisSingular : axisPlural} ${formatNaturalList(lineNumbers)}`;
+}
+
+function constrainedLineExplanation(args: {
+  state: MutableSolverState;
+  isColumn: boolean;
+  selectedLines: number[];
+  confinedColors: string[];
+}): string {
+  const { state, isColumn, selectedLines, confinedColors } = args;
+  const lineLabel = formatLineLabel(isColumn, selectedLines);
+  const colorNames = formatNaturalList(
+    confinedColors.map((color) => groupDisplayName(state, color))
+  );
+
+  if (state.orthogonalMinDistance >= state.gridSize) {
+    return `Only ${colorNames} can place queens in ${lineLabel}. Therefore, every other color group is blocked in ${lineLabel}.`;
+  }
+
+  return `Only ${colorNames} can place queens in these squares in ${lineLabel}. With a minimum queen distance of ${state.orthogonalMinDistance}, every other color group is blocked within this distance window.`;
+}
+
 function contradictionExplanation(
   state: MutableSolverState,
   contradiction: ContradictionResult
@@ -749,9 +795,12 @@ function runConstrainedLineFamilyStep(
 
           const step = buildStep(
             config,
-            stepId === 'row-column'
-              ? "These lines are already taken by these groups.\nThere's no space left here."
-              : 'These lines already have just enough space.\nNothing else fits here.',
+            constrainedLineExplanation({
+              state,
+              isColumn,
+              selectedLines,
+              confinedColors,
+            }),
             evidence,
             outputs,
             changes
