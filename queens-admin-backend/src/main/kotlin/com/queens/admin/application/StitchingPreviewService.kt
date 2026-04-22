@@ -80,6 +80,7 @@ class StitchingPreviewService(
         val blackoutCellCount: Int,
         val leftBlackoutSignature: List<Int>,
         val topBlackoutSignature: List<Int>,
+        val blackoutPositions: Set<Position>,
         val activeGroups: Map<Position, String>,
         val queenPositions: Set<Position>,
         val groupSlots: Map<String, Int>,
@@ -487,6 +488,7 @@ class StitchingPreviewService(
             blackoutCellCount = 0,
             leftBlackoutSignature = List(BASE_SIZE) { 0 },
             topBlackoutSignature = List(BASE_SIZE) { 0 },
+            blackoutPositions = emptySet(),
             activeGroups = groups,
             queenPositions = queens,
             groupSlots = groupSlots,
@@ -534,12 +536,12 @@ class StitchingPreviewService(
         minimumGroupSizeForGeneration: Int = MINIMUM_GROUP_SIZE,
     ): QuadrantPiece {
         validateSignatures(leftBlackoutSignature, topBlackoutSignature)
-        val blackoutPositions = blackoutPositionsFor(leftBlackoutSignature, topBlackoutSignature)
+        val signatureBlackoutPositions = blackoutPositionsFor(leftBlackoutSignature, topBlackoutSignature)
         val activePositions =
             (0 until BASE_SIZE).flatMap { row ->
                 (0 until BASE_SIZE).mapNotNull { col ->
                     val p = Position(row, col)
-                    if (p !in blackoutPositions) p else null
+                    if (p !in signatureBlackoutPositions) p else null
                 }
             }
         val maxPlacement = resolveMaxPlacement(activePositions, ruleset)
@@ -558,7 +560,7 @@ class StitchingPreviewService(
                 orthogonalMinDistance = ORTHOGONAL_MIN_DISTANCE,
                 minimumGroupSize = minimumGroupSizeForGeneration,
                 generationStrategy = GENERATION_STRATEGY,
-                blackoutPositions = blackoutPositions,
+                blackoutPositions = signatureBlackoutPositions,
             )
         val boardState = generationResult.boardState
         if (boardState == null && !allowTargetFallbackToMax) {
@@ -582,6 +584,11 @@ class StitchingPreviewService(
                 .filter { it.isSolutionQueen }
                 .map { it.position }
                 .toSet()
+        val effectiveBlackoutPositions =
+            generatedBoard.cells.flatten()
+                .filter { it.isBlackout }
+                .map { it.position }
+                .toSet()
         val groups = renameBoardGroups(generatedBoard, groupPrefix)
         val groupSlots = slotMapFor(groups.values)
 
@@ -591,9 +598,10 @@ class StitchingPreviewService(
             queenCount = queens.size,
             targetQueenCount = generatedBoard.metadata[com.queens.admin.domain.model.QueensBoardMetadata.TARGET_QUEEN_COUNT_KEY]?.toIntOrNull()
                 ?: targetQueenCount,
-            blackoutCellCount = blackoutPositions.size,
+            blackoutCellCount = effectiveBlackoutPositions.size,
             leftBlackoutSignature = leftBlackoutSignature,
             topBlackoutSignature = topBlackoutSignature,
+            blackoutPositions = effectiveBlackoutPositions,
             activeGroups = groups,
             queenPositions = queens,
             groupSlots = groupSlots,
@@ -609,7 +617,7 @@ class StitchingPreviewService(
                                     groups = groups,
                                     groupSlots = groupSlots,
                                     queenPositions = queens,
-                                    blackoutPositions = blackoutPositions,
+                                    blackoutPositions = effectiveBlackoutPositions,
                                 )
                             }
                         },
@@ -635,12 +643,11 @@ class StitchingPreviewService(
             rowOffset: Int,
             colOffset: Int,
         ) {
-            val blackoutPositions = blackoutPositionsFor(quadrant.leftBlackoutSignature, quadrant.topBlackoutSignature)
             for (row in 0 until BASE_SIZE) {
                 for (col in 0 until BASE_SIZE) {
                     val local = Position(row, col)
                     val global = Position(row + rowOffset, col + colOffset)
-                    if (local in blackoutPositions) {
+                    if (local in quadrant.blackoutPositions) {
                         cells[global] = FinalCell(wasBlackout = true)
                         continue
                     }
@@ -923,7 +930,7 @@ class StitchingPreviewService(
         var nextSymbolCode = '0'.code
         val layout = StringBuilder(BASE_SIZE * BASE_SIZE)
         val queens = StringBuilder(BASE_SIZE * BASE_SIZE)
-        val blackoutPositions = blackoutPositionsFor(quadrant.leftBlackoutSignature, quadrant.topBlackoutSignature)
+        val blackoutPositions = quadrant.blackoutPositions
 
         for (row in 0 until BASE_SIZE) {
             for (col in 0 until BASE_SIZE) {

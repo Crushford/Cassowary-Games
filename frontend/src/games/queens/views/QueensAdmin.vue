@@ -230,6 +230,10 @@
                 Provide a stitching-style fingerprint to pre-blackout cells before generation. Must
                 match this board size ({{ selectedBoardSize }}x{{ selectedBoardSize }}).
               </p>
+              <p class="text-xs leading-5 text-semantic-neutral-500">
+                Format: <code>R...C...</code> where <code>R</code> is per-row start column and
+                <code>C</code> is per-column start row.
+              </p>
               <p
                 v-if="workshopBlackoutFingerprintError"
                 class="text-xs leading-5 text-semantic-warning-200"

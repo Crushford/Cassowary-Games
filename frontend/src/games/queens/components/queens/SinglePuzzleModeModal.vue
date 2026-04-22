@@ -26,12 +26,24 @@
 
     <template v-else>
       <div class="space-y-5">
-        <div>
-          <h2 class="text-2xl font-bold text-semantic-info-400">Select Puzzle</h2>
-          <p class="mt-2 text-sm leading-6 text-semantic-neutral-200">
-            Choose a board size, the minimum row or column spacing between queens, and a difficulty,
-            then load a random puzzle.
-          </p>
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-semantic-info-400">Play Custom Puzzle</h2>
+            <p class="mt-2 text-sm leading-6 text-semantic-neutral-200">
+              Choose a board size, the minimum row or column spacing between queens, and a difficulty,
+              then load a random puzzle.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="flex-none text-semantic-neutral-400 hover:text-white transition-colors"
+            aria-label="Close"
+            @click="handlePrimaryClose"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         <section class="space-y-2">

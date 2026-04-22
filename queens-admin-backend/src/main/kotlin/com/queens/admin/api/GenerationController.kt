@@ -74,27 +74,30 @@ class GenerationController(
             ?: throw IllegalArgumentException(
                 "Blackout fingerprint must match R...C... format, for example R4130241C2031420."
             )
-        val leftRaw = match.groupValues[1]
-        val topRaw = match.groupValues[2]
-        require(leftRaw.length == size && topRaw.length == size) {
+        val rowRaw = match.groupValues[1]
+        val columnRaw = match.groupValues[2]
+        require(rowRaw.length == size && columnRaw.length == size) {
             "Blackout fingerprint signatures must each have exactly $size digits for a ${size}x$size board."
         }
-        val left = leftRaw.map { token ->
+        val rowStarts = rowRaw.map { token ->
             token.digitToIntOrNull() ?: throw IllegalArgumentException(
                 "Blackout fingerprint contains non-numeric signature values."
             )
         }
-        val top = topRaw.map { token ->
+        val columnStarts = columnRaw.map { token ->
             token.digitToIntOrNull() ?: throw IllegalArgumentException(
                 "Blackout fingerprint contains non-numeric signature values."
             )
         }
-        require(left.all { value -> value in 0..size } && top.all { value -> value in 0..size }) {
+        require(rowStarts.all { value -> value in 0..size } && columnStarts.all { value -> value in 0..size }) {
             "Blackout fingerprint digits must each be between 0 and $size."
         }
         return (0 until size).flatMap { row ->
             (0 until size).mapNotNull { col ->
-                if (col < left[row] || row < top[col]) {
+                // Fingerprint convention:
+                // - Rxxxx... : row starts (start column for each row)
+                // - Cxxxx... : column starts (start row for each column)
+                if (col < rowStarts[row] || row < columnStarts[col]) {
                     Position(row, col)
                 } else {
                     null
