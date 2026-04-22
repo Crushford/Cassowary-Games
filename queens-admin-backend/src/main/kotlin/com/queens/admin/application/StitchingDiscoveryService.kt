@@ -10,8 +10,10 @@ import java.util.ArrayDeque
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import jakarta.annotation.PreDestroy
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -90,6 +92,13 @@ class StitchingDiscoveryService(
     private val coordinatorExecutor = Executors.newSingleThreadExecutor()
     private val workerExecutor = Executors.newCachedThreadPool()
     private val currentRun = AtomicReference<RunRuntime?>(null)
+
+    @PreDestroy
+    fun shutdown() {
+        stopRun()
+        shutdownExecutor("stitching-discovery-coordinator", coordinatorExecutor)
+        shutdownExecutor("stitching-discovery-worker", workerExecutor)
+    }
 
     fun startRun(request: StitchingDiscoveryRequest): StitchingDiscoverySnapshot {
         require(request.generationLimit > 0) { "Generation limit must be greater than zero." }
@@ -253,6 +262,23 @@ class StitchingDiscoveryService(
                     updatedAt = Instant.now(),
                 )
             }
+        }
+    }
+
+    private fun shutdownExecutor(name: String, executor: java.util.concurrent.ExecutorService) {
+        executor.shutdown()
+        try {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                logger.warn("{} did not terminate within timeout; forcing shutdownNow().", name)
+                executor.shutdownNow()
+                if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    logger.warn("{} still running after shutdownNow().", name)
+                }
+            }
+        } catch (interrupted: InterruptedException) {
+            logger.warn("Interrupted while shutting down {}; forcing shutdownNow().", name, interrupted)
+            executor.shutdownNow()
+            Thread.currentThread().interrupt()
         }
     }
 
