@@ -69,10 +69,17 @@ function collectViolations(filePath, source, regex, label) {
   return violations;
 }
 
+// Files allowed to use raw Tailwind color-scale classes (e.g. proof-of-concept
+// admin tooling that needs a large decorative palette not covered by the theme).
+const EXCLUDED_FILES = new Set([
+  path.join(SRC_DIR, 'games/queens/components/admin/QueensAdminStitchingPanel.vue'),
+]);
+
 const targetFiles = walk(SRC_DIR);
 
 const violations = [];
 for (const filePath of targetFiles) {
+  if (EXCLUDED_FILES.has(filePath)) continue;
   const source = fs.readFileSync(filePath, 'utf8');
   violations.push(
     ...collectViolations(

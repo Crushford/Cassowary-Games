@@ -28,6 +28,7 @@ export interface QueensAdminCell {
   groupColor: string | null;
   isSolutionQueen: boolean;
   markType: QueensAdminMarkType;
+  isBlackout?: boolean;
 }
 
 export interface QueensAdminBoardState {
@@ -235,4 +236,150 @@ export interface QueensAdminSolverPattern {
 export interface QueensAdminSolverConfig {
   builtInSteps: QueensAdminBuiltInSolverStep[];
   patterns: QueensAdminSolverPattern[];
+}
+
+export type QueensAdminStitchingCellState = 'active' | 'queen' | 'blackout' | 'join-fill';
+
+export interface QueensAdminStitchingCell {
+  state: QueensAdminStitchingCellState;
+  groupId?: string | null;
+  groupSlot?: number | null;
+}
+
+export interface QueensAdminStitchingBoard {
+  width: number;
+  height: number;
+  cells: QueensAdminStitchingCell[][];
+}
+
+export interface QueensAdminStitchingQuadrant {
+  pieceKind: string;
+  queenCount: number;
+  targetQueenCount: number;
+  blackoutCellCount: number;
+  leftBlackoutSignature: number[];
+  topBlackoutSignature: number[];
+  board: QueensAdminStitchingBoard;
+}
+
+export interface QueensAdminStitchingPreview {
+  size: number;
+  orthogonalMinDistance: number;
+  minimumGroupSize: number;
+  topLeft: QueensAdminStitchingQuadrant;
+  topRight: QueensAdminStitchingQuadrant;
+  bottomLeft: QueensAdminStitchingQuadrant;
+  bottomRight: QueensAdminStitchingQuadrant;
+  stitchedBoard: QueensAdminStitchingBoard;
+}
+
+export interface QueensAdminStitchingBatchRunRequest {
+  pieceKind: string;
+  leftBlackoutSignature: number[];
+  topBlackoutSignature: number[];
+  targetQueenCount: number;
+}
+
+export interface QueensAdminStitchingBatchRun {
+  runId: string;
+  pieceKind: string;
+  leftBlackoutSignature: number[];
+  topBlackoutSignature: number[];
+  leftBlackoutFingerprint: string;
+  topBlackoutFingerprint: string;
+  fingerprintKey: string;
+  pieceCategory: 'STANDARD' | 'LEFT_ONLY' | 'TOP_ONLY' | 'BOTH';
+  targetQueenCount: number;
+  state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  queenCount: number | null;
+  canonicalSignature: string | null;
+  savedPuzzleId: string | null;
+  persistenceState: 'SAVED' | 'DUPLICATE' | null;
+  persistenceMessage: string | null;
+  error: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+}
+
+export interface QueensAdminStitchingBatchStatus {
+  batchId: string;
+  state: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'CANCELLED';
+  totalJobs: number;
+  queuedJobs: number;
+  activeJobs: number;
+  completedJobs: number;
+  failedJobs: number;
+  cancelledJobs: number;
+  savedUniquePuzzles: number;
+  duplicatePuzzles: number;
+  note: string | null;
+  runs: QueensAdminStitchingBatchRun[];
+  updatedAt: string;
+}
+
+export interface QueensAdminStitchingCatalogBucket {
+  boardSize: number;
+  orthogonalMinDistance: number;
+  targetQueenCount: number;
+  pieceCategory: 'STANDARD' | 'LEFT_ONLY' | 'TOP_ONLY' | 'BOTH';
+  leftBlackoutFingerprint: string;
+  topBlackoutFingerprint: string;
+  fingerprintKey: string;
+  puzzleCount: number;
+  countsByPieceKind: Record<string, number>;
+}
+
+export interface QueensAdminStitchingCatalogStats {
+  totalPuzzles: number;
+  bucketCount: number;
+  buckets: QueensAdminStitchingCatalogBucket[];
+}
+
+export interface QueensAdminStitchingCatalogDeleteResult {
+  deletedCount: number;
+}
+
+export interface QueensAdminStitchingFingerprintSpace {
+  leftOnlyFingerprintCount: number;
+  topOnlyFingerprintCount: number;
+  bothFingerprintCount: number;
+  totalFingerprintCount: number;
+}
+
+export interface QueensAdminStitchingDiscoveryBucket {
+  bucketKey: string;
+  pieceCategory: string;
+  pieceKind: string;
+  fingerprintKey: string;
+  leftBlackoutSignature: number[];
+  topBlackoutSignature: number[];
+  targetQueenCount: number;
+  state: 'INFERRED' | 'QUEUED' | 'GENERATED' | 'SKIPPED' | 'FAILED';
+  provenance: string[];
+  message: string | null;
+  puzzleId: string | null;
+  canonicalSignature: string | null;
+}
+
+export interface QueensAdminStitchingDiscoveryStatus {
+  runId: string;
+  state: 'IDLE' | 'RUNNING' | 'STOPPING' | 'COMPLETED' | 'INTERRUPTED' | 'FAILED';
+  generationLimit: number;
+  skipSatisfiedBuckets: boolean;
+  maxConcurrentJobs: number;
+  activeJobs: number;
+  generatedCount: number;
+  skippedCount: number;
+  inferredCount: number;
+  validatedCount: number;
+  failedCount: number;
+  queuedCount: number;
+  activeBucket: QueensAdminStitchingDiscoveryBucket | null;
+  generatedBuckets: QueensAdminStitchingDiscoveryBucket[];
+  skippedBuckets: QueensAdminStitchingDiscoveryBucket[];
+  failedBuckets: QueensAdminStitchingDiscoveryBucket[];
+  queuedBuckets: QueensAdminStitchingDiscoveryBucket[];
+  inferredBuckets: QueensAdminStitchingDiscoveryBucket[];
+  note: string | null;
+  updatedAt: string;
 }

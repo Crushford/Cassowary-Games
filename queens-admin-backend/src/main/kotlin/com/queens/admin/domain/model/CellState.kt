@@ -5,4 +5,5 @@ data class CellState(
     val groupColor: String? = null,
     val isSolutionQueen: Boolean = false,
     val markType: MarkType = MarkType.NONE,
+    val isBlackout: Boolean = false,
 )

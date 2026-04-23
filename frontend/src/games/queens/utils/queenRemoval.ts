@@ -1,6 +1,6 @@
 import type { MarkType, GridSquare } from '../types/types';
 import { clonePlayerMarks } from '../stores/gridUtils';
-import { isValidPosition } from '../stores/gridUtils';
+import { isValidMoveOnBoard } from './queensMoveValidation';
 
 interface RemoveQueenPlacementResult {
   newBoard: MarkType[][];
@@ -31,66 +31,34 @@ function findQueenPlacementIndex(
   return null;
 }
 
-function isValidMoveWithMarks(
+// isValidMoveWithMarks and applyAutoFlagging are provided by the shared engine utilities.
+// queenRemoval uses orthogonalMinDistance = gridSize (standard one-per-row/col rules).
+
+function localIsValidMove(
   row: number,
   col: number,
   playerMarks: MarkType[][],
   grid: GridSquare[][],
   gridSize: number
 ): boolean {
-  const square = grid[row][col];
-
-  // Check if there's a queen in the same row or column
-  for (let i = 0; i < gridSize; i++) {
-    if (playerMarks[row][i] === 'queen' || playerMarks[i][col] === 'queen') {
-      return false;
-    }
-  }
-
-  // Check diagonally adjacent squares (one square away)
-  const diagonalPositions = [
-    { r: row - 1, c: col - 1 },
-    { r: row - 1, c: col + 1 },
-    { r: row + 1, c: col - 1 },
-    { r: row + 1, c: col + 1 },
-  ];
-
-  for (const pos of diagonalPositions) {
-    if (isValidPosition(grid, pos.r, pos.c) && playerMarks[pos.r][pos.c] === 'queen') {
-      return false;
-    }
-  }
-
-  // Check color group (if the square has a group color)
-  if (square.groupColor) {
-    for (let r = 0; r < gridSize; r++) {
-      for (let c = 0; c < gridSize; c++) {
-        if (playerMarks[r][c] === 'queen' && grid[r][c].groupColor === square.groupColor) {
-          return false;
-        }
-      }
-    }
-  }
-
-  return true;
+  return isValidMoveOnBoard(
+    { grid, playerMarks, gridSize, orthogonalMinDistance: gridSize },
+    row,
+    col
+  );
 }
 
 function applyAutoFlagging(
   playerMarks: MarkType[][],
-  queenRow: number,
-  queenCol: number,
+  _queenRow: number,
+  _queenCol: number,
   grid: GridSquare[][],
   gridSize: number
 ): void {
-  // Flag all squares blocked by this queen
   for (let r = 0; r < gridSize; r++) {
     for (let c = 0; c < gridSize; c++) {
-      // Only flag squares that are currently unmarked
-      if (playerMarks[r][c] === null) {
-        // Check if this square is blocked by the queen
-        if (!isValidMoveWithMarks(r, c, playerMarks, grid, gridSize)) {
-          playerMarks[r][c] = 'flag';
-        }
+      if (playerMarks[r][c] === null && !localIsValidMove(r, c, playerMarks, grid, gridSize)) {
+        playerMarks[r][c] = 'flag';
       }
     }
   }

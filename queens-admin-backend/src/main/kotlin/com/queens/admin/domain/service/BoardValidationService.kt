@@ -68,7 +68,7 @@ class BoardValidationService(
                 if (cell.position.row != rowIndex || cell.position.col != colIndex) {
                     errors += "Cell coordinates must match their position in the board matrix."
                 }
-                if (cell.groupColor != null) {
+                if (cell.groupColor != null && !cell.isBlackout) {
                     coloredCellCount += 1
                     distinctColors += cell.groupColor
                 }
@@ -76,7 +76,7 @@ class BoardValidationService(
                     MarkType.FLAG -> flagCount += 1
                     else -> Unit
                 }
-                if (cell.isSolutionQueen || cell.markType == MarkType.QUEEN) {
+                if ((cell.isSolutionQueen || cell.markType == MarkType.QUEEN) && !cell.isBlackout) {
                     queens += Triple(rowIndex, colIndex, cell.groupColor)
                 }
             }

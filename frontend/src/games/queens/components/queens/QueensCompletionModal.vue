@@ -6,8 +6,7 @@
         {{ queensStore.gridSize }}x{{ queensStore.gridSize }}
       </p>
       <p class="mb-4 text-sm leading-6 text-semantic-neutral-200">
-        {{ queensStore.targetQueenCount }} queens, minimum distance of
-        {{ queensStore.orthogonalMinDistance }} between queens in each row or column
+        {{ queensStore.targetQueenCount }} queens, {{ queenDistanceSummary }}
       </p>
 
       <div
@@ -91,6 +90,11 @@ const isCampaignResultVisible = computed(
     queensStore.isCampaignMode &&
     queensStore.currentCampaignBucket !== null &&
     queensStore.puzzleCompletionTime !== null
+);
+const queenDistanceSummary = computed(() =>
+  queensStore.orthogonalMinDistance === queensStore.gridSize
+    ? '1 queen per row and 1 per column'
+    : `minimum distance of ${queensStore.orthogonalMinDistance} between queens in each row or column`
 );
 
 const targetTimeLabel = computed(() => {

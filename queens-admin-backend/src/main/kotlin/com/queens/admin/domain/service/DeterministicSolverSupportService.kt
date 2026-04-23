@@ -15,7 +15,9 @@ class DeterministicSolverSupportService(
     fun clearAllMarks(boardState: BoardState): BoardState =
         boardState.copy(
             cells = boardState.cells.map { row ->
-                row.map { cell -> cell.copy(markType = MarkType.NONE) }
+                row.map { cell ->
+                    cell.copy(markType = if (cell.isBlackout) MarkType.FLAG else MarkType.NONE)
+                }
             },
         )
 
@@ -35,7 +37,8 @@ class DeterministicSolverSupportService(
         val ruleset = ruleset(boardState)
         if (ruleset.requireRowCoverage) {
             for (row in 0 until boardState.size) {
-                if ((0 until boardState.size).count { col -> boardState.cells[row][col].markType == MarkType.QUEEN } != 1) {
+                val playableCells = (0 until boardState.size).filter { col -> !boardState.cells[row][col].isBlackout }
+                if (playableCells.count { col -> boardState.cells[row][col].markType == MarkType.QUEEN } != 1) {
                     return false
                 }
             }
@@ -43,7 +46,8 @@ class DeterministicSolverSupportService(
 
         if (ruleset.requireColumnCoverage) {
             for (col in 0 until boardState.size) {
-                if ((0 until boardState.size).count { row -> boardState.cells[row][col].markType == MarkType.QUEEN } != 1) {
+                val playableCells = (0 until boardState.size).filter { row -> !boardState.cells[row][col].isBlackout }
+                if (playableCells.count { row -> boardState.cells[row][col].markType == MarkType.QUEEN } != 1) {
                     return false
                 }
             }
@@ -74,13 +78,13 @@ class DeterministicSolverSupportService(
 
         if (ruleset.requireRowCoverage) {
             for (row in 0 until boardState.size) {
-                if ((0 until boardState.size).none { col -> isCandidateCell(boardState, row, col) }) return true
+                if ((0 until boardState.size).none { col -> !boardState.cells[row][col].isBlackout && isCandidateCell(boardState, row, col) }) return true
             }
         }
 
         if (ruleset.requireColumnCoverage) {
             for (col in 0 until boardState.size) {
-                if ((0 until boardState.size).none { row -> isCandidateCell(boardState, row, col) }) return true
+                if ((0 until boardState.size).none { row -> !boardState.cells[row][col].isBlackout && isCandidateCell(boardState, row, col) }) return true
             }
         }
 
@@ -97,7 +101,7 @@ class DeterministicSolverSupportService(
 
     fun groupedPositions(boardState: BoardState): Map<String, List<Position>> =
         boardState.cells.flatten()
-            .filter { cell -> cell.groupColor != null }
+            .filter { cell -> cell.groupColor != null && !cell.isBlackout }
             .groupBy({ cell -> cell.groupColor!! }, { cell -> cell.position })
 
     fun candidatePositions(boardState: BoardState, positions: List<Position>): List<Position> =
@@ -105,7 +109,7 @@ class DeterministicSolverSupportService(
 
     fun isCandidateCell(boardState: BoardState, row: Int, col: Int): Boolean {
         val cell = boardState.cells[row][col]
-        if (cell.groupColor == null) return false
+        if (cell.groupColor == null || cell.isBlackout) return false
         return when (cell.markType) {
             MarkType.FLAG, MarkType.INVALID -> false
             MarkType.QUEEN -> true
@@ -165,6 +169,7 @@ class DeterministicSolverSupportService(
     ): Pair<BoardState, List<ChangedCell>> {
         val updatedRows = boardState.cells.map { rowCells -> rowCells.toMutableList() }.toMutableList()
         val changes = mutableListOf<ChangedCell>()
+        if (updatedRows[row][col].isBlackout) return boardState to emptyList()
 
         if (updatedRows[row][col].markType != MarkType.QUEEN) {
             updatedRows[row][col] = updatedRows[row][col].copy(markType = MarkType.QUEEN)

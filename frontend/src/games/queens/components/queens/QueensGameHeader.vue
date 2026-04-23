@@ -1,7 +1,40 @@
 <template>
+  <div
+    v-if="isInfiniteVariant"
+    class="relative rounded-[28px] border border-semantic-neutral-700 bg-surface-overlay px-4 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.28)]"
+  >
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <p class="text-[11px] uppercase tracking-[0.28em] text-semantic-neutral-400">Queens</p>
+        <h1 class="mt-1 text-2xl font-black text-white">{{ props.infiniteTitle }}</h1>
+        <p v-if="props.infiniteSubtitle" class="mt-1 text-sm text-semantic-neutral-300">
+          {{ props.infiniteSubtitle }}
+        </p>
+      </div>
+
+      <div class="flex flex-col items-end gap-2">
+        <button
+          v-if="props.onRestart"
+          class="rounded-2xl border border-semantic-neutral-700 bg-semantic-neutral-900 px-3 py-2 text-xs font-semibold text-semantic-neutral-100 transition-colors hover:bg-semantic-neutral-800"
+          @click="props.onRestart()"
+        >
+          {{ props.restartLabel }}
+        </button>
+        <div
+          class="rounded-2xl border border-semantic-neutral-800 bg-semantic-neutral-950 px-3 py-2 text-right"
+        >
+          <div class="text-[10px] uppercase tracking-[0.2em] text-semantic-neutral-500">Queens</div>
+          <div class="mt-1 text-sm font-semibold text-white">
+            {{ props.infiniteQueenCount }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Standard mode: minimal top bar with optional timer -->
   <div
-    v-if="queensStore.currentMode === 'standard'"
+    v-else-if="queensStore.currentMode === 'standard'"
     class="relative rounded-xl border border-semantic-neutral-700 bg-surface-overlay px-3 py-2 w-full"
   >
     <div class="flex items-center justify-between gap-3">
@@ -86,8 +119,7 @@
     </div>
 
     <div class="mt-1 text-xs text-semantic-neutral-500">
-      {{ queensStore.targetQueenCount }} queens, minimum distance of
-      {{ queensStore.orthogonalMinDistance }} between queens in each row or column
+      {{ queensStore.targetQueenCount }} queens, {{ queenDistanceSummary }}
     </div>
   </div>
 
@@ -156,6 +188,32 @@ const queensStore = useQueensStore();
 const speedModeStore = useSpeedModeStore();
 const route = useRoute();
 const router = useRouter();
+
+const props = withDefaults(
+  defineProps<{
+    variant?: 'classic' | 'infinite';
+    infiniteTitle?: string;
+    infiniteSubtitle?: string;
+    infiniteQueenCount?: number;
+    restartLabel?: string;
+    onRestart?: (() => void) | null;
+  }>(),
+  {
+    variant: 'classic',
+    infiniteTitle: 'Infinite Mode',
+    infiniteSubtitle: '',
+    infiniteQueenCount: 0,
+    restartLabel: 'Restart',
+    onRestart: null,
+  }
+);
+
+const isInfiniteVariant = computed(() => props.variant === 'infinite');
+const queenDistanceSummary = computed(() =>
+  queensStore.orthogonalMinDistance === queensStore.gridSize
+    ? '1 queen per row and 1 per column'
+    : `minimum distance of ${queensStore.orthogonalMinDistance} between queens in each row or column`
+);
 
 // ── Standard mode ─────────────────────────────────────────────────────────────
 

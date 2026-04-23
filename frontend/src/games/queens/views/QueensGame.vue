@@ -97,7 +97,8 @@
     <!-- Board stack -->
     <div class="flex-1 flex flex-col justify-center px-4 pb-2">
       <QueensPuzzleBoard
-        :store="queensStore"
+        :board="boardAdapter"
+        interactive
         :enable-touch="true"
         :board-style="boardAnimationStyle"
         aria-label="Queens puzzle grid"
@@ -158,6 +159,7 @@ import {
   buildQueensSelectionRoute,
   isQueensSelectionDifficulty,
 } from '../utils/puzzleSelectionRoute';
+import { buildClassicPuzzleBoardAdapter } from '../components/queens/puzzleBoardAdapters';
 
 const QueensGameHeader = defineAsyncComponent(
   () => import('../components/queens/QueensGameHeader.vue')
@@ -189,6 +191,12 @@ const route = useRoute();
 const router = useRouter();
 const queensStore = useQueensStore();
 const speedModeStore = useSpeedModeStore();
+
+const boardAdapter = computed(() =>
+  buildClassicPuzzleBoardAdapter(queensStore, {
+    onCellActivate: queensStore.handleSquareClick.bind(queensStore),
+  })
+);
 
 const shouldShakeErrorToast = ref(false);
 const isRouteLoading = ref(false);
@@ -279,7 +287,8 @@ async function loadPuzzleFromRoute() {
   const routeOrthogonalMinDistance = route.params.orthogonalMinDistance as string | undefined;
   const routeDifficultyParam = route.params.difficulty as string | undefined;
   const selectedPuzzleId = route.params.selectedPuzzleId as string | undefined;
-  const isCampaignRoute = route.name === 'queens-campaign';
+  const isCampaignRoute = route.name === 'queens-level';
+  const levelNumber = route.params.levelNumber as string | undefined;
   const routeTargetQueenCount =
     typeof route.query.targetQueenCount === 'string' ? route.query.targetQueenCount : undefined;
   const routeMinimumGroupSize =
@@ -330,23 +339,32 @@ async function loadPuzzleFromRoute() {
       return;
     }
 
-    if (isCampaignRoute && sizeKey && isQueensSelectionDifficulty(routeDifficultyParam)) {
-      logQueensRoute('branch:campaign-route', {
-        sizeKey,
-        difficulty: routeDifficultyParam,
-      });
-      if (queensStore.isTutorialMode) {
-        queensStore.exitTutorialMode();
+    if (isCampaignRoute && levelNumber) {
+      const bucket = await (async () => {
+        if (!queensStore.campaignBucketCache) {
+          await queensStore.loadCampaignCatalog();
+        }
+        return queensStore.getCampaignBucketByLevelIndex(Number(levelNumber));
+      })();
+      if (bucket) {
+        logQueensRoute('branch:campaign-route', {
+          levelNumber,
+          sizeKey: bucket.sizeKey,
+          difficulty: bucket.difficulty,
+        });
+        if (queensStore.isTutorialMode) {
+          queensStore.exitTutorialMode();
+        }
+        await queensStore.loadCampaignPuzzle(bucket.sizeKey, bucket.difficulty);
+        trackGameStart({
+          game_name: 'queens',
+          game_mode: 'campaign',
+          grid_size: queensStore.gridSize,
+          puzzle_id:
+            queensStore.currentPuzzleId === null ? undefined : String(queensStore.currentPuzzleId),
+        });
+        return;
       }
-      await queensStore.loadCampaignPuzzle(sizeKey, routeDifficultyParam);
-      trackGameStart({
-        game_name: 'queens',
-        game_mode: 'campaign',
-        grid_size: queensStore.gridSize,
-        puzzle_id:
-          queensStore.currentPuzzleId === null ? undefined : String(queensStore.currentPuzzleId),
-      });
-      return;
     }
 
     if (sizeKey && routeOrthogonalMinDistance) {

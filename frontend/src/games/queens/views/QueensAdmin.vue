@@ -14,10 +14,9 @@
               >
                 Queens Admin
               </p>
-              <h1 class="mt-2 text-4xl font-bold tracking-tight">Generation Workshop</h1>
+              <h1 class="mt-2 text-4xl font-bold tracking-tight">{{ activeTabHeading }}</h1>
               <p class="mt-3 max-w-3xl text-sm leading-6 text-semantic-neutral-300">
-                Build a puzzle the same way the generator does: create a board, place queens, seed
-                unique colors, expand groups in order, then fill blocked squares.
+                {{ activeTabDescription }}
               </p>
             </div>
           </template>
@@ -72,6 +71,9 @@
             Batch Generate
           </Tab>
           <Tab value="catalog" class="rounded-full px-4 py-2 text-sm font-semibold">Catalog</Tab>
+          <Tab value="stitching" class="rounded-full px-4 py-2 text-sm font-semibold">
+            Puzzle Stitching
+          </Tab>
           <Tab value="max-queens" class="rounded-full px-4 py-2 text-sm font-semibold">
             Max Queens
           </Tab>
@@ -213,6 +215,34 @@
             </div>
 
             <div class="mt-4 space-y-3">
+              <label class="block text-sm text-semantic-neutral-300" for="blackout-fingerprint-key"
+                >Blackout fingerprint (optional)</label
+              >
+              <input
+                id="blackout-fingerprint-key"
+                v-model.trim="workshopBlackoutFingerprintKey"
+                type="text"
+                autocomplete="off"
+                placeholder="R4130241C2031420"
+                class="w-full rounded-xl border border-semantic-neutral-700 bg-semantic-neutral-950 px-3 py-2 text-sm uppercase"
+              />
+              <p class="text-xs leading-5 text-semantic-neutral-400">
+                Provide a stitching-style fingerprint to pre-blackout cells before generation. Must
+                match this board size ({{ selectedBoardSize }}x{{ selectedBoardSize }}).
+              </p>
+              <p class="text-xs leading-5 text-semantic-neutral-500">
+                Format: <code>R...C...</code> where <code>R</code> is per-row start column and
+                <code>C</code> is per-column start row.
+              </p>
+              <p
+                v-if="workshopBlackoutFingerprintError"
+                class="text-xs leading-5 text-semantic-warning-200"
+              >
+                {{ workshopBlackoutFingerprintError }}
+              </p>
+            </div>
+
+            <div class="mt-4 space-y-3">
               <label class="block text-sm text-semantic-neutral-300" for="preview-interval"
                 >Live preview update interval</label
               >
@@ -251,7 +281,12 @@
               </button>
               <button
                 class="rounded-xl bg-semantic-success-600 px-4 py-2.5 font-semibold text-white hover:bg-semantic-success-500 disabled:cursor-not-allowed disabled:opacity-50"
-                :disabled="store.loading || !templateSeedIsValid || !maxGenerationConfigValid"
+                :disabled="
+                  store.loading ||
+                  !templateSeedIsValid ||
+                  !maxGenerationConfigValid ||
+                  !workshopBlackoutFingerprintIsValid
+                "
                 @click="generateBoardFromWorkshop"
               >
                 Generate Full Board
@@ -747,7 +782,7 @@
               >
                 <QueensPuzzleBoard
                   class="h-full w-full max-w-full"
-                  :store="queensStore"
+                  :board="boardAdapter"
                   :enable-touch="false"
                   interactive
                   :show-selected-cell="true"
@@ -1231,6 +1266,7 @@
 
       <QueensAdminBatchPanel v-else-if="activeTab === 'batch'" />
       <QueensAdminCatalogPanel v-else-if="activeTab === 'catalog'" />
+      <QueensAdminStitchingPanel v-else-if="activeTab === 'stitching'" />
       <QueensAdminMaxQueensPanel v-else-if="activeTab === 'max-queens'" />
       <QueensAdminSolverPanel v-else />
     </div>
@@ -1267,10 +1303,12 @@ import AdminStat from '../components/admin/AdminStat.vue';
 import QueensAdminBatchPanel from '../components/admin/QueensAdminBatchPanel.vue';
 import QueensAdminCatalogPanel from '../components/admin/QueensAdminCatalogPanel.vue';
 import QueensAdminMaxQueensPanel from '../components/admin/QueensAdminMaxQueensPanel.vue';
+import QueensAdminStitchingPanel from '../components/admin/QueensAdminStitchingPanel.vue';
 import QueensAdminSolverPanel from '../components/admin/QueensAdminSolverPanel.vue';
 import { useQueensAdminStore } from '../stores/queensAdminStore';
 import { useQueensStore } from '../stores/queensStore';
 import type { QueensAdminGenerationStrategy, QueensAdminTool } from '../admin/types';
+import { buildClassicPuzzleBoardAdapter } from '../components/queens/puzzleBoardAdapters';
 
 const QueensPuzzleBoard = defineAsyncComponent(
   () => import('../components/queens/QueensPuzzleBoard.vue')
@@ -1295,6 +1333,11 @@ const route = useRoute();
 const router = useRouter();
 const store = useQueensAdminStore();
 const queensStore = useQueensStore();
+const boardAdapter = computed(() =>
+  buildClassicPuzzleBoardAdapter(queensStore, {
+    onCellActivate: store.applyManualToolToCell.bind(store),
+  })
+);
 const persistedWorkshopInputs = loadQueensAdminWorkshopInputs();
 const boardSizes = Array.from({ length: 17 }, (_, index) => index + 4);
 const palette = COLOR_PALETTE;
@@ -1303,6 +1346,7 @@ const showSolutionQueens = ref(persistedWorkshopInputs?.showSolutionQueens ?? tr
 const generationPreviewIntervalMs = ref(
   persistedWorkshopInputs?.generationPreviewIntervalMs ?? 1000
 );
+const workshopBlackoutFingerprintKey = ref(persistedWorkshopInputs?.blackoutFingerprintKey ?? '');
 const TEMPLATE_EDITOR_SIZE = 7;
 const DEFAULT_TEMPLATE_SEED_CELLS: TemplateSeedCell[] = [
   { row: 3, col: 3, filled: true },
@@ -1331,38 +1375,80 @@ store.generationStrategy = persistedWorkshopInputs?.generationStrategy ?? store.
 store.selectedTool = persistedWorkshopInputs?.selectedTool ?? store.selectedTool;
 store.selectedColor = persistedWorkshopInputs?.selectedColor ?? store.selectedColor;
 
-const activeTab = computed<'workshop' | 'batch' | 'catalog' | 'max-queens' | 'solver'>(() =>
-  route.name === 'queens-admin-batch'
-    ? 'batch'
-    : route.name === 'queens-admin-catalog'
-      ? 'catalog'
-      : route.name === 'queens-admin-max-queens'
-        ? 'max-queens'
-        : route.name === 'queens-admin-solver'
-          ? 'solver'
-          : 'workshop'
-);
+const activeTab = computed<
+  'workshop' | 'batch' | 'catalog' | 'stitching' | 'max-queens' | 'solver'
+>(() => {
+  if (route.name === 'queens-admin-batch') return 'batch';
+  if (route.name === 'queens-admin-catalog') return 'catalog';
+  if (route.name === 'queens-admin-stitching') return 'stitching';
+  if (route.name === 'queens-admin-max-queens') return 'max-queens';
+  if (route.name === 'queens-admin-solver') return 'solver';
+  return 'workshop';
+});
 
-function setActiveTab(tab: 'workshop' | 'batch' | 'catalog' | 'max-queens' | 'solver'): void {
+function setActiveTab(
+  tab: 'workshop' | 'batch' | 'catalog' | 'stitching' | 'max-queens' | 'solver'
+): void {
   const targetRouteName =
     tab === 'batch'
       ? 'queens-admin-batch'
       : tab === 'catalog'
         ? 'queens-admin-catalog'
-        : tab === 'max-queens'
-          ? 'queens-admin-max-queens'
-          : tab === 'solver'
-            ? 'queens-admin-solver'
-            : 'queens-admin-workshop';
+        : tab === 'stitching'
+          ? 'queens-admin-stitching'
+          : tab === 'max-queens'
+            ? 'queens-admin-max-queens'
+            : tab === 'solver'
+              ? 'queens-admin-solver'
+              : 'queens-admin-workshop';
   if (route.name === targetRouteName) return;
   void router.push({ name: targetRouteName });
 }
+
+const activeTabHeading = computed(() => {
+  switch (activeTab.value) {
+    case 'batch':
+      return 'Batch Generation';
+    case 'catalog':
+      return 'Puzzle Catalog';
+    case 'stitching':
+      return 'Puzzle Stitching';
+    case 'max-queens':
+      return 'Max Queens';
+    case 'solver':
+      return 'Solver Lab';
+    case 'workshop':
+      return 'Generation Workshop';
+    default:
+      return 'Queens Admin';
+  }
+});
+
+const activeTabDescription = computed(() => {
+  switch (activeTab.value) {
+    case 'batch':
+      return 'Submit many generation runs at once, compare strategies, and watch queue progress from one place.';
+    case 'catalog':
+      return 'Review saved puzzle groups, filter exact rulesets, and clean up catalog buckets safely.';
+    case 'stitching':
+      return 'Prototype stitched mega-puzzles by previewing bleed masks, blackout cells, irregular follow-up boards, and the final 14x7 solver layout.';
+    case 'max-queens':
+      return 'Probe the densest legal queen count for a ruleset when the precomputed tables are not enough.';
+    case 'solver':
+      return 'Test staged solver rules and saved patterns against real puzzles and inspect the resulting deductions.';
+    case 'workshop':
+      return 'Build a puzzle the same way the generator does: create a board, place queens, seed unique colors, expand groups in order, then fill blocked squares.';
+    default:
+      return 'Queens admin tools for generation, solver experiments, and catalog maintenance.';
+  }
+});
 
 function handleActiveTabChange(value: string | number | undefined): void {
   if (
     value === 'workshop' ||
     value === 'batch' ||
     value === 'catalog' ||
+    value === 'stitching' ||
     value === 'max-queens' ||
     value === 'solver'
   ) {
@@ -1407,6 +1493,7 @@ async function generateBoardFromWorkshop(): Promise<void> {
     queenCountMode: store.queenCountMode,
     targetQueenCount: store.targetQueenCount,
     orthogonalMinDistance: store.orthogonalMinDistance,
+    blackoutFingerprintKey: workshopBlackoutFingerprintKeyForRequest.value,
     seedTemplateOffsets:
       store.generationStrategy === 'template-seeded' ? templateSeedOffsets.value : undefined,
     previewIntervalMs: generationPreviewIntervalMs.value,
@@ -1603,6 +1690,43 @@ const templateSeedStats = computed(() => ({
   connected: templateSeedConnected.value,
   variantCount: countTemplateVariants(templateSeedOffsets.value),
 }));
+
+const workshopBlackoutFingerprintKeyNormalized = computed(() =>
+  workshopBlackoutFingerprintKey.value.trim().toUpperCase()
+);
+
+const workshopBlackoutFingerprintError = computed<string | null>(() => {
+  const value = workshopBlackoutFingerprintKeyNormalized.value;
+  if (!value) return null;
+  const match = /^R(\d+)C(\d+)$/u.exec(value);
+  if (!match) {
+    return 'Fingerprint must match R...C... format, for example R4130241C2031420.';
+  }
+  const left = match[1] ?? '';
+  const top = match[2] ?? '';
+  const size = selectedBoardSize.value;
+  if (left.length !== size || top.length !== size) {
+    return `Fingerprint signatures must each have ${size} digits for a ${size}x${size} board.`;
+  }
+  const outOfRange = [...left, ...top].find((token) => {
+    const digit = Number(token);
+    return !Number.isInteger(digit) || digit < 0 || digit > size;
+  });
+  if (outOfRange != null) {
+    return `Fingerprint digits must be between 0 and ${size}.`;
+  }
+  return null;
+});
+
+const workshopBlackoutFingerprintIsValid = computed(
+  () => workshopBlackoutFingerprintError.value == null
+);
+
+const workshopBlackoutFingerprintKeyForRequest = computed<string | null>(() => {
+  if (!workshopBlackoutFingerprintIsValid.value) return null;
+  const value = workshopBlackoutFingerprintKeyNormalized.value;
+  return value.length > 0 ? value : null;
+});
 
 const templateSeedOffsetsDebug = computed(() =>
   templateSeedOffsets.value.map((offset) => `(${offset.row}, ${offset.col})`).join(', ')
@@ -2106,6 +2230,7 @@ watch(
     selectedBoardSize,
     showSolutionQueens,
     generationPreviewIntervalMs,
+    workshopBlackoutFingerprintKey,
     () => store.queenCountMode,
     () => store.targetQueenCount,
     () => store.orthogonalMinDistance,
@@ -2122,6 +2247,7 @@ watch(
       targetQueenCount: store.targetQueenCount,
       orthogonalMinDistance: store.orthogonalMinDistance,
       minimumGroupSize: store.minimumGroupSize,
+      blackoutFingerprintKey: workshopBlackoutFingerprintKey.value,
       showSolutionQueens: showSolutionQueens.value,
       generationPreviewIntervalMs: generationPreviewIntervalMs.value,
       generationStrategy: store.generationStrategy,

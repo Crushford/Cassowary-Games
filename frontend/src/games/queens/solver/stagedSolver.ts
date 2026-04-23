@@ -48,9 +48,28 @@ interface MutableSolverState {
   orthogonalMinDistance: number;
 }
 
+type ContradictionReasonCode =
+  | 'queen-count-exceeded'
+  | 'queen-conflict-same-group'
+  | 'queen-conflict-orthogonal'
+  | 'queen-conflict-diagonal'
+  | 'group-no-candidates'
+  | 'row-multiple-queens'
+  | 'row-no-candidates'
+  | 'column-multiple-queens'
+  | 'column-no-candidates';
+
+interface ContradictionReason {
+  code: ContradictionReasonCode;
+  row?: number;
+  col?: number;
+  color?: string | null;
+}
+
 interface ContradictionResult {
   hasContradiction: boolean;
   conflictCells: Pos[];
+  reason: ContradictionReason | null;
 }
 
 interface PatternVariant {
@@ -202,6 +221,119 @@ function candidatePositions(state: MutableSolverState, positions: Pos[]): Pos[] 
   return positions.filter((position) => isCandidateCell(state, position.row, position.col));
 }
 
+function colorGroupLabel(state: MutableSolverState, color: string | null | undefined): string {
+  if (!color) {
+    return 'this color group';
+  }
+  for (let row = 0; row < state.gridSize; row++) {
+    for (let col = 0; col < state.gridSize; col++) {
+      if (getGroupColor(state, row, col) !== color) continue;
+      const visualColor = state.grid[row]?.[col]?.groupAppearance?.color;
+      if (visualColor) {
+        return `the ${visualColor} color group`;
+      }
+    }
+  }
+  return 'this color group';
+}
+
+function groupDisplayName(state: MutableSolverState, color: string): string {
+  for (let row = 0; row < state.gridSize; row++) {
+    for (let col = 0; col < state.gridSize; col++) {
+      if (getGroupColor(state, row, col) !== color) continue;
+      const visualColor = state.grid[row]?.[col]?.groupAppearance?.color;
+      if (visualColor) {
+        return visualColor;
+      }
+    }
+  }
+  return color;
+}
+
+function formatNaturalList(values: string[]): string {
+  if (values.length === 0) return '';
+  if (values.length === 1) return values[0];
+  if (values.length === 2) return `${values[0]} and ${values[1]}`;
+  return `${values.slice(0, -1).join(', ')}, and ${values[values.length - 1]}`;
+}
+
+function formatLineLabel(isColumn: boolean, selectedLines: number[]): string {
+  const axisSingular = isColumn ? 'column' : 'row';
+  const axisPlural = isColumn ? 'columns' : 'rows';
+  const lineNumbers = selectedLines.map((line) => String(line + 1));
+  return `${selectedLines.length === 1 ? axisSingular : axisPlural} ${formatNaturalList(lineNumbers)}`;
+}
+
+function constrainedLineExplanation(args: {
+  state: MutableSolverState;
+  isColumn: boolean;
+  selectedLines: number[];
+  confinedColors: string[];
+}): string {
+  const { state, isColumn, selectedLines, confinedColors } = args;
+  const lineLabel = formatLineLabel(isColumn, selectedLines);
+  const colorNames = formatNaturalList(
+    confinedColors.map((color) => groupDisplayName(state, color))
+  );
+
+  if (state.orthogonalMinDistance >= state.gridSize) {
+    return `Only ${colorNames} can place queens in ${lineLabel}. Therefore, every other color group is blocked in ${lineLabel}.`;
+  }
+
+  return `Only ${colorNames} can place queens in these squares in ${lineLabel}. With a minimum queen distance of ${state.orthogonalMinDistance}, every other color group is blocked within this distance window.`;
+}
+
+function contradictionExplanation(
+  state: MutableSolverState,
+  contradiction: ContradictionResult
+): string {
+  const reason = contradiction.reason;
+  if (!reason) {
+    return 'Placing a queen here causes a contradiction.';
+  }
+
+  switch (reason.code) {
+    case 'queen-count-exceeded':
+      return 'Placing a queen here would exceed the required queen count.';
+    case 'queen-conflict-same-group':
+      return `Placing a queen here would force two queens into ${colorGroupLabel(state, reason.color)}.`;
+    case 'queen-conflict-orthogonal':
+      if (typeof reason.row === 'number') {
+        return `Placing a queen here would put queens too close in row ${reason.row + 1}.`;
+      }
+      if (typeof reason.col === 'number') {
+        return `Placing a queen here would put queens too close in column ${reason.col + 1}.`;
+      }
+      return 'Placing a queen here would put two queens too close in the same row or column.';
+    case 'queen-conflict-diagonal':
+      return 'Placing a queen here would make two queens touch diagonally.';
+    case 'group-no-candidates':
+      return `Placing a queen here blocks all remaining squares in ${colorGroupLabel(state, reason.color)}.`;
+    case 'row-multiple-queens':
+      if (typeof reason.row === 'number') {
+        return `Placing a queen here would force more than one queen in row ${reason.row + 1}.`;
+      }
+      return 'Placing a queen here would force more than one queen in a row.';
+    case 'row-no-candidates':
+      if (typeof reason.row === 'number') {
+        return `Placing a queen here blocks all available squares in row ${reason.row + 1}.`;
+      }
+      return 'Placing a queen here blocks all available squares in a row.';
+    case 'column-multiple-queens':
+      if (typeof reason.col === 'number') {
+        return `Placing a queen here would force more than one queen in column ${reason.col + 1}.`;
+      }
+      return 'Placing a queen here would force more than one queen in a column.';
+    case 'column-no-candidates':
+      if (typeof reason.col === 'number') {
+        return `Placing a queen here blocks all available squares in column ${reason.col + 1}.`;
+      }
+      return 'Placing a queen here blocks all available squares in a column.';
+    default:
+      return 'Placing a queen here causes a contradiction.';
+  }
+}
+
 function placeFlag(
   state: MutableSolverState,
   row: number,
@@ -260,7 +392,11 @@ function findContradiction(state: MutableSolverState): ContradictionResult {
   const conflictCells: Pos[] = [];
   const queens = getPlacedQueens(state);
   if (queens.length > state.targetQueenCount) {
-    return { hasContradiction: true, conflictCells: queens };
+    return {
+      hasContradiction: true,
+      conflictCells: queens,
+      reason: { code: 'queen-count-exceeded' },
+    };
   }
 
   for (let index = 0; index < queens.length; index++) {
@@ -275,21 +411,54 @@ function findContradiction(state: MutableSolverState): ContradictionResult {
         isOrthogonalConflict(left, right, state.orthogonalMinDistance) ||
         isDiagonalTouch(left, right)
       ) {
-        return { hasContradiction: true, conflictCells: [left, right] };
+        if (sameGroup) {
+          return {
+            hasContradiction: true,
+            conflictCells: [left, right],
+            reason: {
+              code: 'queen-conflict-same-group',
+              color: getGroupColor(state, left.row, left.col),
+            },
+          };
+        }
+        if (isOrthogonalConflict(left, right, state.orthogonalMinDistance)) {
+          return {
+            hasContradiction: true,
+            conflictCells: [left, right],
+            reason: {
+              code: 'queen-conflict-orthogonal',
+              row: left.row === right.row ? left.row : undefined,
+              col: left.col === right.col ? left.col : undefined,
+            },
+          };
+        }
+        return {
+          hasContradiction: true,
+          conflictCells: [left, right],
+          reason: { code: 'queen-conflict-diagonal' },
+        };
       }
     }
   }
 
   const grouped = getGroupedPositions(state);
-  for (const positions of grouped.values()) {
+  for (const [color, positions] of grouped.entries()) {
     const queensInGroup = positions.filter(
       (position) => state.playerMarks[position.row][position.col] === 'queen'
     );
     if (queensInGroup.length > 1) {
-      return { hasContradiction: true, conflictCells: queensInGroup };
+      return {
+        hasContradiction: true,
+        conflictCells: queensInGroup,
+        reason: { code: 'queen-conflict-same-group', color },
+      };
     }
     if (queensInGroup.length === 0 && candidatePositions(state, positions).length === 0) {
-      return { hasContradiction: true, conflictCells: positions };
+      return {
+        hasContradiction: true,
+        conflictCells: positions,
+        reason: { code: 'group-no-candidates', color },
+      };
     }
   }
 
@@ -300,13 +469,21 @@ function findContradiction(state: MutableSolverState): ContradictionResult {
         (position) => state.playerMarks[position.row][position.col] === 'queen'
       );
       if (queensInRow.length > 1) {
-        return { hasContradiction: true, conflictCells: queensInRow };
+        return {
+          hasContradiction: true,
+          conflictCells: queensInRow,
+          reason: { code: 'row-multiple-queens', row },
+        };
       }
       if (
         queensInRow.length === 0 &&
         rowCells.every((position) => !isCandidateCell(state, position.row, position.col))
       ) {
-        return { hasContradiction: true, conflictCells: rowCells };
+        return {
+          hasContradiction: true,
+          conflictCells: rowCells,
+          reason: { code: 'row-no-candidates', row },
+        };
       }
     }
 
@@ -316,18 +493,26 @@ function findContradiction(state: MutableSolverState): ContradictionResult {
         (position) => state.playerMarks[position.row][position.col] === 'queen'
       );
       if (queensInCol.length > 1) {
-        return { hasContradiction: true, conflictCells: queensInCol };
+        return {
+          hasContradiction: true,
+          conflictCells: queensInCol,
+          reason: { code: 'column-multiple-queens', col },
+        };
       }
       if (
         queensInCol.length === 0 &&
         colCells.every((position) => !isCandidateCell(state, position.row, position.col))
       ) {
-        return { hasContradiction: true, conflictCells: colCells };
+        return {
+          hasContradiction: true,
+          conflictCells: colCells,
+          reason: { code: 'column-no-candidates', col },
+        };
       }
     }
   }
 
-  return { hasContradiction: false, conflictCells };
+  return { hasContradiction: false, conflictCells, reason: null };
 }
 
 function buildStep(
@@ -407,9 +592,9 @@ function runSingleColorStep(initialState: QueensSolverState): QueensSolverStep |
     );
     return buildStep(
       config,
-      "This group only has one spot left.\nThat's where the queen goes.",
+      'There is only one unflagged square left in this color group, so we should place a queen here.',
       positions,
-      changes.map(({ row, col }) => ({ row, col })),
+      [{ row: target.row, col: target.col }],
       changes
     );
   }
@@ -493,9 +678,13 @@ function runGroupConfinedToLineStep(initialState: QueensSolverState): QueensSolv
       }
     }
 
+    const lineType = sameRow ? 'row' : 'column';
+    const lineNumber = sameRow ? candidates[0].row + 1 : candidates[0].col + 1;
+    const visualColor = state.grid[candidates[0].row]?.[candidates[0].col]?.groupAppearance?.color;
+    const colorLabel = visualColor ?? color;
     const step = buildStep(
       config,
-      "All the spots for this group are in one line.\nSo these nearby squares can't work.",
+      `The ${colorLabel} color group's squares are all in ${lineType} ${lineNumber}.\nSo there can't be a queen anywhere else in ${lineType} ${lineNumber}.`,
       candidates,
       outputs,
       changes
@@ -606,9 +795,12 @@ function runConstrainedLineFamilyStep(
 
           const step = buildStep(
             config,
-            stepId === 'row-column'
-              ? "These lines are already taken by these groups.\nThere's no space left here."
-              : 'These lines already have just enough space.\nNothing else fits here.',
+            constrainedLineExplanation({
+              state,
+              isColumn,
+              selectedLines,
+              confinedColors,
+            }),
             evidence,
             outputs,
             changes
@@ -646,7 +838,7 @@ function runSingleQueenContradictionStep(initialState: QueensSolverState): Queen
       );
       return buildStep(
         config,
-        "If a queen went here, something would break.\nSo this square can't be right.",
+        contradictionExplanation(state, contradiction),
         [{ row, col }, ...contradiction.conflictCells],
         [{ row, col }],
         changes
@@ -669,7 +861,6 @@ function runAssumeProgressStep(initialState: QueensSolverState): QueensSolverSte
     stepId: config.id,
     label: config.label,
     difficultyTier: config.difficultyTier,
-    explanation: "Try imagining a queen here.\nIt doesn't work, so we can rule it out.",
   };
 }
 
@@ -683,10 +874,14 @@ function runAssumeExhaustiveStep(initialState: QueensSolverState): QueensSolverS
   const combinedChanges: QueensSolverCellChange[] = [];
   const evidenceCells: Pos[] = [];
   const outputCells: Pos[] = [];
+  let firstExplanation: string | null = null;
 
   let nextStep = runSingleQueenContradictionStep(currentState);
 
   while (nextStep) {
+    if (firstExplanation == null) {
+      firstExplanation = nextStep.explanation;
+    }
     evidenceCells.push(...nextStep.evidenceCells);
     outputCells.push(...nextStep.outputCells);
     combinedChanges.push(...nextStep.changes);
@@ -700,7 +895,7 @@ function runAssumeExhaustiveStep(initialState: QueensSolverState): QueensSolverS
 
   return buildStep(
     config,
-    "Try imagining a queen here.\nIt doesn't work, so we can rule it out.",
+    firstExplanation ?? 'Placing a queen here causes a contradiction.',
     evidenceCells,
     outputCells,
     combinedChanges

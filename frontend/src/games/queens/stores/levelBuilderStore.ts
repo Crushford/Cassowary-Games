@@ -10,8 +10,8 @@ import {
   countCellsWithState,
   getColorDistribution,
   clonePlayerMarks,
-  isValidQueenPlacement,
 } from './gridUtils';
+import { isValidMoveOnBoard } from '../utils/queensMoveValidation';
 import {
   assignInitialColorsToQueens as assignInitialColorsToQueensUtil,
   expandColorGroups as expandColorGroupsUtil,
@@ -511,7 +511,16 @@ export const useLevelBuilderStore = defineStore('levelBuilder', {
 
     // Helper to check if a move is valid using a specific marks array
     isValidMoveWithMarks(row: number, col: number, marks: MarkType[][]): boolean {
-      return isValidQueenPlacement(this.grid, this.gridSize, row, col, marks);
+      return isValidMoveOnBoard(
+        {
+          grid: this.grid,
+          playerMarks: marks,
+          gridSize: this.gridSize,
+          orthogonalMinDistance: this.gridSize,
+        },
+        row,
+        col
+      );
     },
 
     placeQueensAndAssignColors() {

@@ -8,7 +8,7 @@
         : 'rounded-xl border border-semantic-neutral-700 bg-surface-overlay',
       isDisabled ? 'opacity-50 grayscale pointer-events-none z-30' : 'z-50',
       {
-        'z-50': queensStore.isTutorialMode && queensStore.highlightToolSelector,
+        'z-50': controller.isTutorialMode && controller.highlightToolSelector,
       },
     ]"
   >
@@ -27,7 +27,7 @@
         type="button"
         class="h-12 rounded-md border"
         :class="[
-          queensStore.uiState.placementMode === mode.value
+          controller.placementMode === mode.value
             ? '!border-semantic-info-600 !bg-semantic-info-700 !text-semantic-info-100'
             : '!border-semantic-neutral-700 !bg-semantic-neutral-800 !text-semantic-neutral-300 hover:!border-semantic-neutral-600 hover:!bg-semantic-neutral-700',
           {
@@ -36,12 +36,12 @@
           },
         ]"
         :disabled="isDisabled"
-        :aria-pressed="queensStore.uiState.placementMode === mode.value"
+        :aria-pressed="controller.placementMode === mode.value"
         :aria-label="`${mode.label} mode: ${mode.description}`"
         :aria-describedby="
-          queensStore.isTutorialMode &&
+          controller.isTutorialMode &&
           mode.value === 'queen' &&
-          queensStore.uiState.placementMode !== 'queen'
+          controller.placementMode !== 'queen'
             ? 'tutorial-instruction'
             : undefined
         "
@@ -74,6 +74,7 @@ import { computed } from 'vue';
 import Button from 'primevue/button';
 import ToggleSwitch from 'primevue/toggleswitch';
 import { useQueensStore } from '../../stores/queensStore';
+import type { QueensPlacementMode, QueensToolSelectorController } from './queensUiContracts';
 
 const props = withDefaults(
   defineProps<{
@@ -81,20 +82,25 @@ const props = withDefaults(
     hideAutoMode?: boolean;
     showAutoFlagToggle?: boolean;
     embedded?: boolean;
+    controller?: QueensToolSelectorController | null;
   }>(),
   {
     isDisabled: false,
     hideAutoMode: false,
     showAutoFlagToggle: true,
     embedded: false,
+    controller: null,
   }
 );
 
 const queensStore = useQueensStore();
+const controller = computed<QueensToolSelectorController>(
+  () => props.controller ?? (queensStore as unknown as QueensToolSelectorController)
+);
 
 const isDisabled = computed(() => {
   // Don't disable during tutorial when highlighting tool selector
-  if (queensStore.isTutorialMode && queensStore.highlightToolSelector) {
+  if (controller.value.isTutorialMode && controller.value.highlightToolSelector) {
     return false;
   }
   return props.isDisabled;
@@ -129,21 +135,21 @@ const modes = computed(() => {
 });
 
 function isTutorialTarget(modeValue: string): boolean {
-  if (!queensStore.isTutorialMode) return false;
-  if (!queensStore.highlightToolSelector) return false;
+  if (!controller.value.isTutorialMode) return false;
+  if (!controller.value.highlightToolSelector) return false;
   return modeValue === 'queen';
 }
 
-function selectMode(modeValue: 'auto' | 'flag' | 'queen') {
+function selectMode(modeValue: QueensPlacementMode) {
   if (isDisabled.value) return;
-  queensStore.setPlacementMode(modeValue);
+  controller.value.setPlacementMode(modeValue);
 }
 
 const autoFlagging = computed({
-  get: () => queensStore.uiState.autoFlagging,
+  get: () => controller.value.autoFlagging,
   set: (value) => {
     if (isDisabled.value) return;
-    queensStore.setAutoFlagging(Boolean(value));
+    controller.value.setAutoFlagging(Boolean(value));
   },
 });
 </script>

@@ -126,6 +126,28 @@ class GenerationWorkflowServiceTest {
     }
 
     @Test
+    fun `generateValidBoard in max mode caps target for blackout boards`() {
+        val blackoutPositions = (0 until 4).map { col -> Position(0, col) }.toSet()
+        val result =
+            generationWorkflowService.generateValidBoard(
+                size = 4,
+                queenCountMode = "max",
+                targetQueenCount = 9,
+                orthogonalMinDistance = 4,
+                minimumGroupSize = 1,
+                generationStrategy = "baseline",
+                blackoutPositions = blackoutPositions,
+            )
+
+        assertTrue(result.success, "expected max-mode generation with blackout board to succeed")
+        val boardState = requireNotNull(result.boardState)
+        val queenCount = boardState.cells.flatten().count { it.isSolutionQueen }
+        assertEquals(3, queenCount, "expected blackout-aware max queen cap to be applied")
+        assertEquals("3", boardState.metadata[QueensBoardMetadata.TARGET_QUEEN_COUNT_KEY])
+        assertTrue(boardValidationService.validate(boardState).isValid, "expected generated board to validate")
+    }
+
+    @Test
     fun `placeQueens places one queen per row and column without diagonal touching`() {
         val emptyBoard = boardFactoryService.createEmptyBoard(6)
 

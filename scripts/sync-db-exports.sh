@@ -36,6 +36,7 @@ printf '%s\n' "$CURRENT_FINGERPRINT" > "$FINGERPRINT_PATH"
 
 git add \
   frontend/public/queens \
+  frontend/public/queens/stitching \
   shared/queens-solver-config.json \
   shared/queens-export-fingerprint.json
 

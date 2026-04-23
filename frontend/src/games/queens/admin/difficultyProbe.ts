@@ -1,5 +1,7 @@
 import type { QueensAdminBoardState } from './types';
 import type { GridSquare, MarkType } from '../types/types';
+import { isValidMoveOnBoard } from '../utils/queensMoveValidation';
+import { getAutoFlagPositions } from '../utils/queensAutoFlagging';
 
 export type QueensDifficultyTier =
   | 'Tutorial'
@@ -129,62 +131,18 @@ function contradictionMessage(summary: ContradictionSummary): string | null {
   return pieces.length > 0 ? pieces.join(' | ') : null;
 }
 
-function isValidPosition(grid: GridSquare[][], row: number, col: number): boolean {
-  return row >= 0 && row < grid.length && col >= 0 && col < grid.length;
-}
-
-function isValidMoveWithMarks(
-  grid: GridSquare[][],
-  marks: MarkType[][],
-  row: number,
-  col: number
-): boolean {
-  for (let i = 0; i < grid.length; i++) {
-    if (marks[row][i] === 'queen' || marks[i][col] === 'queen') {
-      return false;
-    }
-  }
-
-  const diagonalPositions = [
-    { row: row - 1, col: col - 1 },
-    { row: row - 1, col: col + 1 },
-    { row: row + 1, col: col - 1 },
-    { row: row + 1, col: col + 1 },
-  ];
-
-  for (const pos of diagonalPositions) {
-    if (isValidPosition(grid, pos.row, pos.col) && marks[pos.row][pos.col] === 'queen') {
-      return false;
-    }
-  }
-
-  const squareColor = grid[row][col].groupColor;
-  if (squareColor) {
-    for (let r = 0; r < grid.length; r++) {
-      for (let c = 0; c < grid.length; c++) {
-        if (marks[r][c] === 'queen' && grid[r][c].groupColor === squareColor) {
-          return false;
-        }
-      }
-    }
-  }
-
-  return true;
-}
-
 function autoFlagBlockedMoves(grid: GridSquare[][], marks: MarkType[][]): number {
-  let flagsPlaced = 0;
-
-  for (let row = 0; row < grid.length; row++) {
-    for (let col = 0; col < grid.length; col++) {
-      if (marks[row][col] === null && !isValidMoveWithMarks(grid, marks, row, col)) {
-        marks[row][col] = 'flag';
-        flagsPlaced += 1;
-      }
-    }
+  const gridSize = grid.length;
+  const positions = getAutoFlagPositions({
+    grid,
+    playerMarks: marks,
+    gridSize,
+    orthogonalMinDistance: gridSize,
+  });
+  for (const pos of positions) {
+    marks[pos.row][pos.col] = 'flag';
   }
-
-  return flagsPlaced;
+  return positions.length;
 }
 
 function placeKnownQueen(
@@ -290,7 +248,13 @@ function flagBlockingSquares(grid: GridSquare[][], marks: MarkType[][]): number 
       for (let r = 0; r < size; r++) {
         for (let c = 0; c < size; c++) {
           if (simulated[r][c] !== null) continue;
-          if (!isValidMoveWithMarks(grid, simulated, r, c)) {
+          if (
+            !isValidMoveOnBoard(
+              { grid, playerMarks: simulated, gridSize: size, orthogonalMinDistance: size },
+              r,
+              c
+            )
+          ) {
             simulated[r][c] = 'flag';
           }
         }

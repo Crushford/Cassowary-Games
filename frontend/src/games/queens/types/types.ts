@@ -48,6 +48,7 @@ export interface GridSquare {
   groupColor?: string;
   groupAppearance?: RegionAppearance;
   isSolutionQueen?: boolean;
+  isBlackout?: boolean;
   playerMark?: MarkType;
   hasFruit?: boolean; // Whether this square has fruit (adjacent to honeypot)
 }

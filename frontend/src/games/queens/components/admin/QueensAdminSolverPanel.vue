@@ -294,7 +294,7 @@
       >
         <QueensPuzzleBoard
           class="w-full max-w-full"
-          :store="queensStore"
+          :board="boardAdapter"
           :enable-touch="false"
           :changed-cells="highlightedChangedCells"
           aria-label="Queens solver puzzle grid"
@@ -673,6 +673,7 @@ import AdminPanel from './AdminPanel.vue';
 import SharedPatternDesigner from '../queens/SharedPatternDesigner.vue';
 import SharedPatternPreview from '../queens/SharedPatternPreview.vue';
 import { useQueensStore } from '../../stores/queensStore';
+import { buildClassicPuzzleBoardAdapter } from '../queens/puzzleBoardAdapters';
 import { assignRegionPaletteColors } from '../../utils/regionDisplay';
 import { queensAdminApi } from '../../admin/api';
 import type {
@@ -1027,6 +1028,12 @@ const difficultyOverviewClipboardText = computed(() =>
 );
 
 const logEntriesForDisplay = computed(() => solverLogEntries.value.slice(-50).reverse());
+
+const boardAdapter = computed(() =>
+  buildClassicPuzzleBoardAdapter(queensStore, {
+    onCellActivate: null,
+  })
+);
 
 const currentSolverBoard = computed<QueensAdminBoardState | null>(() =>
   solverSelection.value ? queensStore.exportAdminBoardState() : null

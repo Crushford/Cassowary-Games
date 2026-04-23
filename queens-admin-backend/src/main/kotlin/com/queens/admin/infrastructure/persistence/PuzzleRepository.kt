@@ -75,6 +75,9 @@ class PuzzleRepository {
                 it[canonicalSignature] = puzzle.canonicalSignature
                 it[minimumGroupSize] = puzzle.minimumGroupSize
                 it[generationStrategy] = puzzle.generationStrategy
+                it[pieceKind] = puzzle.pieceKind
+                it[leftBlackoutSignature] = puzzle.leftBlackoutSignature
+                it[topBlackoutSignature] = puzzle.topBlackoutSignature
                 it[createdAt] = puzzle.createdAt
                 it[difficultyTier] = puzzle.difficultyTier?.name
                 it[difficultyScore] = puzzle.difficultyScore
@@ -106,6 +109,9 @@ class PuzzleRepository {
         orthogonalMinDistance: Int? = null,
         targetQueenCount: Int? = null,
         minimumGroupSize: Int? = null,
+        pieceKind: String? = null,
+        leftBlackoutSignature: String? = null,
+        topBlackoutSignature: String? = null,
         difficultyTier: PuzzleDifficultyTier? = null,
     ): List<PersistedPuzzle> =
         transaction {
@@ -118,6 +124,9 @@ class PuzzleRepository {
                             orthogonalMinDistance?.let { PuzzlesTable.orthogonalMinDistance eq it },
                             targetQueenCount?.let { PuzzlesTable.targetQueenCount eq it },
                             minimumGroupSize?.let { PuzzlesTable.minimumGroupSize eq it },
+                            pieceKind?.let { PuzzlesTable.pieceKind eq it },
+                            leftBlackoutSignature?.let { PuzzlesTable.leftBlackoutSignature eq it },
+                            topBlackoutSignature?.let { PuzzlesTable.topBlackoutSignature eq it },
                             difficultyTier?.let { PuzzlesTable.difficultyTier eq it.name },
                         )
 
@@ -287,6 +296,9 @@ class PuzzleRepository {
             canonicalSignature = this[PuzzlesTable.canonicalSignature],
             minimumGroupSize = this[PuzzlesTable.minimumGroupSize],
             generationStrategy = this[PuzzlesTable.generationStrategy],
+            pieceKind = this[PuzzlesTable.pieceKind],
+            leftBlackoutSignature = this[PuzzlesTable.leftBlackoutSignature],
+            topBlackoutSignature = this[PuzzlesTable.topBlackoutSignature],
             createdAt = this[PuzzlesTable.createdAt],
             difficultyTier = this[PuzzlesTable.difficultyTier]?.let(PuzzleDifficultyTier::valueOf),
             difficultyScore = this[PuzzlesTable.difficultyScore],

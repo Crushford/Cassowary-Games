@@ -62,6 +62,13 @@ tasks.register<JavaExec>("exportPuzzlesJson") {
     mainClass.set("com.queens.admin.tools.ExportPuzzlesJsonKt")
 }
 
+tasks.register<JavaExec>("exportStitchingCatalog") {
+    group = "application"
+    description = "Export stitched Queens puzzles from PostgreSQL into frontend/public/queens/stitching."
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.queens.admin.tools.ExportStitchingCatalogKt")
+}
+
 tasks.register<JavaExec>("assessPuzzleDifficulties") {
     group = "application"
     description = "Assess and persist difficulty labels for all puzzles in PostgreSQL."

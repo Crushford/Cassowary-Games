@@ -36,6 +36,9 @@ class PuzzleCatalogService(
         orthogonalMinDistance: Int? = null,
         targetQueenCount: Int? = null,
         minimumGroupSize: Int? = null,
+        pieceKind: String? = null,
+        leftBlackoutSignature: String? = null,
+        topBlackoutSignature: String? = null,
         difficultyTier: PuzzleDifficultyTier? = null,
     ): PersistedPuzzle? {
         val puzzles =
@@ -44,6 +47,9 @@ class PuzzleCatalogService(
                 orthogonalMinDistance = orthogonalMinDistance,
                 targetQueenCount = targetQueenCount,
                 minimumGroupSize = minimumGroupSize,
+                pieceKind = pieceKind,
+                leftBlackoutSignature = leftBlackoutSignature,
+                topBlackoutSignature = topBlackoutSignature,
                 difficultyTier = difficultyTier,
             )
         if (puzzles.isEmpty()) return null
@@ -97,6 +103,9 @@ class PuzzleCatalogService(
         boardState: BoardState,
         minimumGroupSize: Int,
         generationStrategy: String,
+        pieceKind: String = "STANDARD",
+        leftBlackoutSignature: String = "",
+        topBlackoutSignature: String = "",
     ): SaveGeneratedPuzzleResult {
         val encodedPuzzle = canonicalPuzzleSignatureService.encodeBoardState(boardState)
         val canonicalSignature =
@@ -116,6 +125,9 @@ class PuzzleCatalogService(
             boardState = boardState,
             minimumGroupSize = minimumGroupSize,
             generationStrategy = generationStrategy,
+            pieceKind = pieceKind,
+            leftBlackoutSignature = leftBlackoutSignature,
+            topBlackoutSignature = topBlackoutSignature,
             canonicalSignature = canonicalSignature,
         )
         val assessment = puzzleDifficultyAssessmentService.assess(persistedPuzzle)
@@ -154,6 +166,9 @@ class PuzzleCatalogService(
         boardState: BoardState,
         minimumGroupSize: Int,
         generationStrategy: String,
+        pieceKind: String = "STANDARD",
+        leftBlackoutSignature: String = "",
+        topBlackoutSignature: String = "",
         canonicalSignature: String? = null,
     ): PersistedPuzzle {
         val encodedPuzzle = canonicalPuzzleSignatureService.encodeBoardState(boardState)
@@ -172,6 +187,9 @@ class PuzzleCatalogService(
             canonicalSignature = resolvedCanonicalSignature,
             minimumGroupSize = minimumGroupSize,
             generationStrategy = generationStrategy,
+            pieceKind = pieceKind,
+            leftBlackoutSignature = leftBlackoutSignature,
+            topBlackoutSignature = topBlackoutSignature,
             createdAt = Instant.now(),
         )
     }

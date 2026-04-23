@@ -162,50 +162,5 @@ export function clonePlayerMarks(playerMarks: MarkType[][]): MarkType[][] {
   return playerMarks.map((row) => [...row]);
 }
 
-/**
- * Returns true if placing a queen at (row, col) is valid given the current marks.
- * Uses standard queens rules: one per row, one per column, no diagonal adjacency,
- * and one per color group.
- * This is the level-builder variant (no orthogonal-distance parameter).
- */
-export function isValidQueenPlacement(
-  grid: GridSquare[][],
-  gridSize: number,
-  row: number,
-  col: number,
-  marks: MarkType[][]
-): boolean {
-  // Check same row and same column
-  for (let i = 0; i < gridSize; i++) {
-    if (marks[row][i] === 'queen' || marks[i][col] === 'queen') {
-      return false;
-    }
-  }
-
-  // Check diagonal adjacency
-  const diagonals = [
-    { r: row - 1, c: col - 1 },
-    { r: row - 1, c: col + 1 },
-    { r: row + 1, c: col - 1 },
-    { r: row + 1, c: col + 1 },
-  ];
-  for (const pos of diagonals) {
-    if (isValidPosition(grid, pos.r, pos.c) && marks[pos.r][pos.c] === 'queen') {
-      return false;
-    }
-  }
-
-  // Check color group
-  const groupColor = grid[row][col].groupColor;
-  if (groupColor) {
-    for (let r = 0; r < gridSize; r++) {
-      for (let c = 0; c < gridSize; c++) {
-        if (marks[r][c] === 'queen' && grid[r][c].groupColor === groupColor) {
-          return false;
-        }
-      }
-    }
-  }
-
-  return true;
-}
+// isValidQueenPlacement removed — use isValidMoveOnBoard from utils/queensMoveValidation.ts
+// (pass orthogonalMinDistance = gridSize for standard level-builder behaviour).

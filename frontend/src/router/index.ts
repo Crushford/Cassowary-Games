@@ -58,13 +58,18 @@ const router = createRouter({
       component: IncrementalQueensEntry,
     },
     {
-      path: '/queens/campaign',
-      name: 'queens-campaign-levels',
+      path: '/queens/infinite',
+      name: 'queens-infinite',
+      component: () => import('@/games/queens/views/InfiniteQueensGame.vue'),
+    },
+    {
+      path: '/queens/story',
+      name: 'queens-story-levels',
       component: () => import('@/games/queens/views/QueensCampaignLevels.vue'),
     },
     {
-      path: '/queens/campaign/:sizeKey/:difficulty(tutorial|extra-easy|easy|medium|hard|extra-hard)',
-      name: 'queens-campaign',
+      path: '/queens/level/:levelNumber',
+      name: 'queens-level',
       component: QueensGame,
     },
     {
@@ -74,6 +79,7 @@ const router = createRouter({
         const tab =
           to.query.tab === 'batch' ||
           to.query.tab === 'catalog' ||
+          to.query.tab === 'stitching' ||
           to.query.tab === 'solver' ||
           to.query.tab === 'max-queens'
             ? to.query.tab
@@ -94,6 +100,11 @@ const router = createRouter({
     {
       path: '/queens/admin/catalog',
       name: 'queens-admin-catalog',
+      component: QueensAdmin,
+    },
+    {
+      path: '/queens/admin/stitching',
+      name: 'queens-admin-stitching',
       component: QueensAdmin,
     },
     {
