@@ -562,8 +562,7 @@ class StitchingPreviewService(
                 generationStrategy = GENERATION_STRATEGY,
                 blackoutPositions = signatureBlackoutPositions,
             )
-        val boardState = generationResult.boardState
-        if (boardState == null && !allowTargetFallbackToMax) {
+        if (!generationResult.success) {
             val quadrantLabel =
                 when (pieceKind) {
                     "TOP_RIGHT" -> "Top-Right"
@@ -578,7 +577,9 @@ class StitchingPreviewService(
                     "Top signature: [${topBlackoutSignature.joinToString()}]",
             )
         }
-        val generatedBoard = boardState ?: error("Fallback generation for blackout shape is not implemented yet.")
+        val generatedBoard = requireNotNull(generationResult.boardState) {
+            "$pieceKind generation returned success=true but null boardState."
+        }
         val queens =
             generatedBoard.cells.flatten()
                 .filter { it.isSolutionQueen }
@@ -596,8 +597,7 @@ class StitchingPreviewService(
             pieceKind = pieceKind,
             groupPrefix = groupPrefix,
             queenCount = queens.size,
-            targetQueenCount = generatedBoard.metadata[com.queens.admin.domain.model.QueensBoardMetadata.TARGET_QUEEN_COUNT_KEY]?.toIntOrNull()
-                ?: targetQueenCount,
+            targetQueenCount = effectiveTarget,
             blackoutCellCount = effectiveBlackoutPositions.size,
             leftBlackoutSignature = leftBlackoutSignature,
             topBlackoutSignature = topBlackoutSignature,
