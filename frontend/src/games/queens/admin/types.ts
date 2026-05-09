@@ -252,7 +252,7 @@ export interface QueensAdminStitchingBoard {
   cells: QueensAdminStitchingCell[][];
 }
 
-export interface QueensAdminStitchingQuadrant {
+export interface QueensAdminVerticalStitchingChunk {
   pieceKind: string;
   queenCount: number;
   targetQueenCount: number;
@@ -262,14 +262,19 @@ export interface QueensAdminStitchingQuadrant {
   board: QueensAdminStitchingBoard;
 }
 
+export interface QueensAdminVerticalStitchingSeam {
+  fromChunkIndex: number;
+  toChunkIndex: number;
+  bottomSignature: number[];
+  topSignature: number[];
+}
+
 export interface QueensAdminStitchingPreview {
   size: number;
   orthogonalMinDistance: number;
   minimumGroupSize: number;
-  topLeft: QueensAdminStitchingQuadrant;
-  topRight: QueensAdminStitchingQuadrant;
-  bottomLeft: QueensAdminStitchingQuadrant;
-  bottomRight: QueensAdminStitchingQuadrant;
+  chunks: QueensAdminVerticalStitchingChunk[];
+  seams: QueensAdminVerticalStitchingSeam[];
   stitchedBoard: QueensAdminStitchingBoard;
 }
 

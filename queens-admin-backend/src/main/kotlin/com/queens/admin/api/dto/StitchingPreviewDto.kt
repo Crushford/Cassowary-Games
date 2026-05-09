@@ -12,7 +12,7 @@ data class StitchingPreviewBoardDto(
     val cells: List<List<StitchingPreviewCellDto>>,
 )
 
-data class StitchingPreviewQuadrantDto(
+data class StitchingPreviewChunkDto(
     val pieceKind: String,
     val queenCount: Int,
     val targetQueenCount: Int,
@@ -22,13 +22,18 @@ data class StitchingPreviewQuadrantDto(
     val board: StitchingPreviewBoardDto,
 )
 
+data class StitchingPreviewSeamDto(
+    val fromChunkIndex: Int,
+    val toChunkIndex: Int,
+    val bottomSignature: List<Int>,
+    val topSignature: List<Int>,
+)
+
 data class StitchingPreviewDto(
     val size: Int,
     val orthogonalMinDistance: Int,
     val minimumGroupSize: Int,
-    val topLeft: StitchingPreviewQuadrantDto,
-    val topRight: StitchingPreviewQuadrantDto,
-    val bottomLeft: StitchingPreviewQuadrantDto,
-    val bottomRight: StitchingPreviewQuadrantDto,
+    val chunks: List<StitchingPreviewChunkDto>,
+    val seams: List<StitchingPreviewSeamDto>,
     val stitchedBoard: StitchingPreviewBoardDto,
 )

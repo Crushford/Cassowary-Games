@@ -3,6 +3,7 @@ import type {
   InfiniteQueensStore,
   InfiniteQueensWorldCell,
 } from '../../stores/infiniteQueensStore';
+import type { ScrollingQueensStore } from '../../stores/scrollingQueensStore';
 import type { useQueensStore } from '../../stores/queensStore';
 import {
   getRegionAppearanceBackgroundClass,
@@ -217,5 +218,70 @@ export function buildInfinitePuzzleBoardAdapter(
     hintOutputCellKeys: [],
     onCellActivate: options?.onCellActivate ?? store.handleCellClick.bind(store),
     placeFlag: null,
+  };
+}
+
+function buildScrollingCellView(
+  store: ScrollingQueensStore,
+  rowIndex: number,
+  colIndex: number
+): PuzzleBoardCellViewModel {
+  const gridCell = store.grid[rowIndex]?.[colIndex] as GridSquare | undefined;
+  const playerMark = store.playerMarks[rowIndex]?.[colIndex] ?? null;
+  const appearance = gridCell?.groupAppearance;
+  const isBlackout = gridCell?.isBlackout === true;
+  const color = gridCell?.groupColor ?? 'unknown';
+
+  let ariaLabel = `Row ${rowIndex + 1}, column ${colIndex + 1}, color ${color}`;
+  if (isBlackout) {
+    ariaLabel = `Row ${rowIndex + 1}, column ${colIndex + 1}, blacked out`;
+  }
+  if (playerMark === 'queen') {
+    ariaLabel += ', contains queen';
+  } else if (playerMark === 'flag') {
+    ariaLabel += ', flagged';
+  } else {
+    ariaLabel += ', empty';
+  }
+
+  return {
+    rowIndex,
+    colIndex,
+    boardSize: store.colCount,
+    backgroundClass: isBlackout
+      ? 'bg-semantic-neutral-900'
+      : appearance
+        ? getRegionAppearanceBackgroundClass(appearance)
+        : 'bg-semantic-neutral-700',
+    frameClass: 'border border-queens-gridLine',
+    overlayClass: overlayClassForAppearance(appearance),
+    blackoutColorInsetClass: null,
+    backgroundStyle: undefined,
+    playerMark,
+    showSolutionQueen: store.showSolution && gridCell?.isSolutionQueen === true,
+    showSeamFill: false,
+    seamFillLabel: null,
+    showErrorFeedback: false,
+    isInError: store.isSquareInError(rowIndex, colIndex),
+    isAutoFlagAnimating: store.isAutoFlagAnimating(rowIndex, colIndex),
+    autoFlagAnimationSource: store.getAutoFlagAnimationSource(rowIndex, colIndex),
+    isTutorialTarget: store.hintOutputCellKeys.has(toCellKey(rowIndex, colIndex)),
+    ariaLabel,
+  };
+}
+
+export function buildScrollingPuzzleBoardAdapter(store: ScrollingQueensStore): {
+  rowCount: number;
+  colCount: number;
+  cells: PuzzleBoardCellViewModel[][];
+  onCellActivate: (row: number, col: number) => void;
+} {
+  return {
+    rowCount: store.rowCount,
+    colCount: store.colCount,
+    cells: store.grid.map((row, rowIndex) =>
+      row.map((_, colIndex) => buildScrollingCellView(store, rowIndex, colIndex))
+    ),
+    onCellActivate: store.handleSquareClick,
   };
 }

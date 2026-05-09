@@ -22,7 +22,7 @@ import type {
   QueensAdminStitchingFingerprintSpace,
   QueensAdminStitchingCell,
   QueensAdminStitchingPreview,
-  QueensAdminStitchingQuadrant,
+  QueensAdminVerticalStitchingChunk,
   QueensAdminSolverPattern,
   QueensAdminSystemLoad,
   QueensAdminValidationSummary,
@@ -269,7 +269,7 @@ interface StitchingPreviewBoardDto {
   cells: StitchingPreviewCellDto[][];
 }
 
-interface StitchingPreviewQuadrantDto {
+interface StitchingPreviewChunkDto {
   pieceKind: string;
   queenCount: number;
   targetQueenCount: number;
@@ -279,14 +279,19 @@ interface StitchingPreviewQuadrantDto {
   board: StitchingPreviewBoardDto;
 }
 
+interface StitchingPreviewSeamDto {
+  fromChunkIndex: number;
+  toChunkIndex: number;
+  bottomSignature: number[];
+  topSignature: number[];
+}
+
 interface StitchingPreviewDto {
   size: number;
   orthogonalMinDistance: number;
   minimumGroupSize: number;
-  topLeft: StitchingPreviewQuadrantDto;
-  topRight: StitchingPreviewQuadrantDto;
-  bottomLeft: StitchingPreviewQuadrantDto;
-  bottomRight: StitchingPreviewQuadrantDto;
+  chunks: StitchingPreviewChunkDto[];
+  seams: StitchingPreviewSeamDto[];
   stitchedBoard: StitchingPreviewBoardDto;
 }
 
@@ -493,7 +498,7 @@ function toStitchingBoard(data: StitchingPreviewBoardDto): QueensAdminStitchingB
   };
 }
 
-function toStitchingQuadrant(data: StitchingPreviewQuadrantDto): QueensAdminStitchingQuadrant {
+function toStitchingChunk(data: StitchingPreviewChunkDto): QueensAdminVerticalStitchingChunk {
   return {
     pieceKind: data.pieceKind,
     queenCount: data.queenCount,
@@ -510,10 +515,8 @@ function toStitchingPreview(data: StitchingPreviewDto): QueensAdminStitchingPrev
     size: data.size,
     orthogonalMinDistance: data.orthogonalMinDistance,
     minimumGroupSize: data.minimumGroupSize,
-    topLeft: toStitchingQuadrant(data.topLeft),
-    topRight: toStitchingQuadrant(data.topRight),
-    bottomLeft: toStitchingQuadrant(data.bottomLeft),
-    bottomRight: toStitchingQuadrant(data.bottomRight),
+    chunks: data.chunks.map(toStitchingChunk),
+    seams: data.seams.map((seam) => ({ ...seam })),
     stitchedBoard: toStitchingBoard(data.stitchedBoard),
   };
 }

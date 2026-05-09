@@ -2,8 +2,9 @@ package com.queens.admin.application
 
 import com.queens.admin.api.dto.StitchingPreviewBoardDto
 import com.queens.admin.api.dto.StitchingPreviewCellDto
+import com.queens.admin.api.dto.StitchingPreviewChunkDto
 import com.queens.admin.api.dto.StitchingPreviewDto
-import com.queens.admin.api.dto.StitchingPreviewQuadrantDto
+import com.queens.admin.api.dto.StitchingPreviewSeamDto
 import com.queens.admin.domain.model.BoardState
 import com.queens.admin.domain.model.Position
 import com.queens.admin.domain.model.QueensRuleset
@@ -103,45 +104,54 @@ class StitchingPreviewService(
                 requireColumnCoverage = false,
             )
 
-        val topLeftBoard = generateTopLeftBoard()
-        val topLeft = buildStandardQuadrant(topLeftBoard, pieceKind = "TOP_LEFT", groupPrefix = "TL")
-
-        val topRight =
+        val zeroLeftSignature = List(BASE_SIZE) { 0 }
+        val chunkOne =
+            buildStandardQuadrant(
+                generateTopLeftBoard(),
+                pieceKind = "VERTICAL_1",
+                groupPrefix = "V1",
+            )
+        val seamOneSignature = computeVerticalBleed(chunkOne.queenPositions.toList(), ruleset)
+        val chunkTwo =
             buildIrregularQuadrant(
-                pieceKind = "TOP_RIGHT",
-                groupPrefix = "TR",
-                leftBlackoutSignature = computeHorizontalBleed(topLeft.queenPositions.toList(), ruleset),
-                topBlackoutSignature = List(BASE_SIZE) { 0 },
+                pieceKind = "VERTICAL_2",
+                groupPrefix = "V2",
+                leftBlackoutSignature = zeroLeftSignature,
+                topBlackoutSignature = seamOneSignature,
                 ruleset = ruleset,
             )
-
-        val bottomLeft =
+        val seamTwoSignature = computeVerticalBleed(chunkTwo.queenPositions.toList(), ruleset)
+        val chunkThree =
             buildIrregularQuadrant(
-                pieceKind = "BOTTOM_LEFT",
-                groupPrefix = "BL",
-                leftBlackoutSignature = List(BASE_SIZE) { 0 },
-                topBlackoutSignature = computeVerticalBleed(topLeft.queenPositions.toList(), ruleset),
+                pieceKind = "VERTICAL_3",
+                groupPrefix = "V3",
+                leftBlackoutSignature = zeroLeftSignature,
+                topBlackoutSignature = seamTwoSignature,
                 ruleset = ruleset,
             )
-
-        val bottomRight =
-            buildIrregularQuadrant(
-                pieceKind = "BOTTOM_RIGHT",
-                groupPrefix = "BR",
-                leftBlackoutSignature = computeHorizontalBleed(bottomLeft.queenPositions.toList(), ruleset),
-                topBlackoutSignature = computeVerticalBleed(topRight.queenPositions.toList(), ruleset),
-                ruleset = ruleset,
-            )
+        val chunks = listOf(chunkOne, chunkTwo, chunkThree)
 
         return StitchingPreviewDto(
             size = BASE_SIZE,
             orthogonalMinDistance = ORTHOGONAL_MIN_DISTANCE,
             minimumGroupSize = MINIMUM_GROUP_SIZE,
-            topLeft = topLeft.toDto(),
-            topRight = topRight.toDto(),
-            bottomLeft = bottomLeft.toDto(),
-            bottomRight = bottomRight.toDto(),
-            stitchedBoard = buildStitchedBoard(topLeft, topRight, bottomLeft, bottomRight),
+            chunks = chunks.map { it.toDto() },
+            seams =
+                listOf(
+                    StitchingPreviewSeamDto(
+                        fromChunkIndex = 0,
+                        toChunkIndex = 1,
+                        bottomSignature = seamOneSignature,
+                        topSignature = chunkTwo.topBlackoutSignature,
+                    ),
+                    StitchingPreviewSeamDto(
+                        fromChunkIndex = 1,
+                        toChunkIndex = 2,
+                        bottomSignature = seamTwoSignature,
+                        topSignature = chunkThree.topBlackoutSignature,
+                    ),
+                ),
+            stitchedBoard = buildVerticalStitchedBoard(chunks),
         )
     }
 
@@ -625,58 +635,44 @@ class StitchingPreviewService(
         )
     }
 
-    private fun buildStitchedBoard(
-        topLeft: QuadrantPiece,
-        topRight: QuadrantPiece,
-        bottomLeft: QuadrantPiece,
-        bottomRight: QuadrantPiece,
-    ): StitchingPreviewBoardDto {
+    private fun buildVerticalStitchedBoard(chunks: List<QuadrantPiece>): StitchingPreviewBoardDto {
+        require(chunks.isNotEmpty()) { "At least one vertical stitching chunk is required." }
         val cells = mutableMapOf<Position, FinalCell>()
+        val boardWidth = BASE_SIZE
+        val boardHeight = BASE_SIZE * chunks.size
         val randomSeed =
-            listOf(topRight, bottomLeft, bottomRight)
+            chunks
                 .flatMap { it.leftBlackoutSignature + it.topBlackoutSignature }
-                .sum() + topLeft.queenCount + topRight.queenCount + bottomLeft.queenCount + bottomRight.queenCount
+                .sum() + chunks.sumOf { it.queenCount }
         val random = Random(randomSeed)
 
-        fun placeQuadrant(
-            quadrant: QuadrantPiece,
-            rowOffset: Int,
-            colOffset: Int,
-        ) {
+        chunks.forEachIndexed { chunkIndex, chunk ->
+            val rowOffset = chunkIndex * BASE_SIZE
             for (row in 0 until BASE_SIZE) {
                 for (col in 0 until BASE_SIZE) {
                     val local = Position(row, col)
-                    val global = Position(row + rowOffset, col + colOffset)
-                    if (local in quadrant.blackoutPositions) {
+                    val global = Position(row + rowOffset, col)
+                    if (local in chunk.blackoutPositions) {
                         cells[global] = FinalCell(wasBlackout = true)
                         continue
                     }
 
                     cells[global] =
                         FinalCell(
-                            groupId = quadrant.activeGroups[local],
-                            queen = local in quadrant.queenPositions,
+                            groupId = chunk.activeGroups[local],
+                            queen = local in chunk.queenPositions,
                         )
                 }
             }
         }
 
-        placeQuadrant(topLeft, rowOffset = 0, colOffset = 0)
-        placeQuadrant(topRight, rowOffset = 0, colOffset = BASE_SIZE)
-        placeQuadrant(bottomLeft, rowOffset = BASE_SIZE, colOffset = 0)
-        placeQuadrant(bottomRight, rowOffset = BASE_SIZE, colOffset = BASE_SIZE)
-
-        val unresolved =
-            cells.filterValues { it.wasBlackout }
-                .keys
-                .toMutableSet()
-
+        val unresolved = cells.filterValues { it.wasBlackout }.keys.toMutableSet()
         while (unresolved.isNotEmpty()) {
             var progress = false
             val toResolve = unresolved.toList()
             for (position in toResolve) {
                 val adjacentGroups =
-                    orthogonalNeighbors(position, BASE_SIZE * 2)
+                    orthogonalNeighbors(position, boardHeight, boardWidth)
                         .mapNotNull { neighbor -> cells[neighbor]?.groupId }
                         .distinct()
                 if (adjacentGroups.isEmpty()) continue
@@ -694,55 +690,17 @@ class StitchingPreviewService(
             }
 
             check(progress) {
-                "Unable to resolve stitched blackout cells into adjacent color groups."
-            }
-        }
-
-        val allKnownGroups = cells.values.mapNotNull { it.groupId }.distinct()
-        if (allKnownGroups.isNotEmpty()) {
-            val groupLess = cells.filterValues { it.groupId == null }.keys.toMutableSet()
-            while (groupLess.isNotEmpty()) {
-                var progress = false
-                val toResolve = groupLess.toList()
-                for (position in toResolve) {
-                    val adjacentGroups =
-                        orthogonalNeighbors(position, BASE_SIZE * 2)
-                            .mapNotNull { neighbor -> cells[neighbor]?.groupId }
-                            .distinct()
-                    val resolvedGroup =
-                        if (adjacentGroups.isNotEmpty()) {
-                            adjacentGroups[random.nextInt(adjacentGroups.size)]
-                        } else {
-                            allKnownGroups.minByOrNull { groupId ->
-                                cells.entries
-                                    .asSequence()
-                                    .filter { (_, cell) -> cell.groupId == groupId }
-                                    .minOfOrNull { (candidate, _) ->
-                                        manhattanDistance(position, candidate)
-                                    } ?: Int.MAX_VALUE
-                            }
-                        } ?: continue
-
-                    val existing = requireNotNull(cells[position])
-                    cells[position] = existing.copy(groupId = resolvedGroup)
-                    groupLess.remove(position)
-                    progress = true
-                }
-
-                check(progress) {
-                    "Unable to resolve group-less stitched cells."
-                }
+                "Unable to resolve vertical stitched blackout cells into adjacent color groups."
             }
         }
 
         val groupSlots = slotMapFor(cells.values.mapNotNull { it.groupId })
-
         return StitchingPreviewBoardDto(
-            width = BASE_SIZE * 2,
-            height = BASE_SIZE * 2,
+            width = boardWidth,
+            height = boardHeight,
             cells =
-                (0 until BASE_SIZE * 2).map { row ->
-                    (0 until BASE_SIZE * 2).map { col ->
+                (0 until boardHeight).map { row ->
+                    (0 until boardWidth).map { col ->
                         val cell = requireNotNull(cells[Position(row, col)])
                         val state =
                             when {
@@ -959,13 +917,20 @@ class StitchingPreviewService(
     }
 
     private fun orthogonalNeighbors(position: Position, boardSize: Int): List<Position> =
+        orthogonalNeighbors(position, boardHeight = boardSize, boardWidth = boardSize)
+
+    private fun orthogonalNeighbors(
+        position: Position,
+        boardHeight: Int,
+        boardWidth: Int,
+    ): List<Position> =
         listOf(
             Position(position.row - 1, position.col),
             Position(position.row + 1, position.col),
             Position(position.row, position.col - 1),
             Position(position.row, position.col + 1),
         ).filter { candidate ->
-            candidate.row in 0 until boardSize && candidate.col in 0 until boardSize
+            candidate.row in 0 until boardHeight && candidate.col in 0 until boardWidth
         }
 
     private fun slotMapFor(groupIds: Collection<String>): Map<String, Int> =
@@ -1013,8 +978,8 @@ class StitchingPreviewService(
         )
     }
 
-    private fun QuadrantPiece.toDto(): StitchingPreviewQuadrantDto =
-        StitchingPreviewQuadrantDto(
+    private fun QuadrantPiece.toDto(): StitchingPreviewChunkDto =
+        StitchingPreviewChunkDto(
             pieceKind = pieceKind,
             queenCount = queenCount,
             targetQueenCount = targetQueenCount,
