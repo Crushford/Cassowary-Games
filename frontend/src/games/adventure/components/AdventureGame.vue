@@ -42,15 +42,14 @@
         <!-- Scene -->
         <AdventureScene
           v-if="store.currentScene"
-          :scene="store.currentScene"
-          :collected-item-ids="store.collectedItemIds"
+          :visible-hotspots="store.visibleHotspots"
           :active-action="store.activeAction"
           :selected-item="store.selectedItem"
-          :background-css="backgroundCss"
+          :background-css="currentBackgroundCss"
           @hotspot-click="store.interact($event)"
         >
           <template #background>
-            <slot name="scene-background" />
+            <slot name="scene-background" :scene-id="store.currentSceneId" />
           </template>
         </AdventureScene>
 
@@ -85,52 +84,84 @@
             class="text-xs"
             style="color: rgba(196,160,80,0.6);"
           >
-            Using:
-            <strong style="color: rgba(196,160,80,0.9);">{{ store.selectedItem.label }}</strong>
+            Using: <strong style="color: rgba(196,160,80,0.9);">{{ store.selectedItem.label }}</strong>
             — click a hotspot to use it, or click the item again to deselect.
           </div>
 
           <!-- Debug panel -->
-          <div
-            v-if="showDebug"
-            class="text-xs rounded p-2 border mt-1"
-            style="color: rgba(150,200,150,0.7); border-color: rgba(80,140,80,0.2); background: rgba(0,20,0,0.3);"
-          >
-            <div><strong>Scene:</strong> {{ store.currentSceneId }}</div>
-            <div><strong>Flags:</strong> {{ Object.keys(store.flags).join(', ') || 'none' }}</div>
-            <div><strong>Collected:</strong> {{ store.collectedItemIds.join(', ') || 'none' }}</div>
-            <div><strong>Quests:</strong> {{ JSON.stringify(store.questStates) }}</div>
-            <div><strong>Action:</strong> {{ store.activeAction }}</div>
-            <button
-              class="mt-1 underline"
-              style="color: rgba(200,100,100,0.6);"
-              @click="store.resetGame()"
-            >Reset game</button>
-          </div>
+          <template v-if="showDebug">
+            <!-- Available actions — text-only play helper -->
+            <AdventureAvailableActions
+              :actions="store.availableActions"
+              @trigger="store.triggerAvailableAction($event)"
+            />
+
+            <!-- State inspector -->
+            <div
+              class="text-xs rounded p-2 border font-mono"
+              style="color: rgba(150,200,150,0.7); border-color: rgba(80,140,80,0.2); background: rgba(0,20,0,0.3);"
+            >
+              <div class="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                <div><span class="opacity-50">scene</span> {{ store.currentSceneId }}</div>
+                <div><span class="opacity-50">action</span> {{ store.activeAction }}{{ store.selectedInventoryItemId ? ` → ${store.selectedInventoryItemId}` : '' }}</div>
+                <div class="col-span-2">
+                  <span class="opacity-50">inventory</span>
+                  {{ store.inventoryItemIds.join(', ') || '—' }}
+                </div>
+                <div class="col-span-2">
+                  <span class="opacity-50">flags</span>
+                  {{ Object.keys(store.flags).join(', ') || '—' }}
+                </div>
+                <div class="col-span-2">
+                  <span class="opacity-50">quests</span>
+                  {{ questSummary || '—' }}
+                </div>
+              </div>
+              <button
+                class="mt-1.5 underline"
+                style="color: rgba(200,100,100,0.6);"
+                @click="store.resetGame()"
+              >reset game</button>
+            </div>
+          </template>
         </div>
+
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import AdventureScene from './AdventureScene.vue'
 import AdventureDialoguePanel from './AdventureDialoguePanel.vue'
 import AdventureActionBar from './AdventureActionBar.vue'
 import AdventureInventory from './AdventureInventory.vue'
+import AdventureAvailableActions from './AdventureAvailableActions.vue'
 
-// The store instance is provided by the shell (e.g. TinamouGame.vue).
-// Using a typed prop keeps AdventureGame.vue engine-agnostic.
 const props = defineProps<{
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   store: any
-  /** Optional CSS background shorthand for the scene canvas */
-  backgroundCss?: string
+  /**
+   * Per-scene CSS background strings, keyed by scene id.
+   * Falls back to a default dark background when a scene has no entry.
+   */
+  backgrounds?: Record<string, string>
 }>()
 
 const store = props.store
 const showDebug = ref(false)
+
+const currentBackgroundCss = computed(
+  () => props.backgrounds?.[store.currentSceneId] ?? '#1a1209',
+)
+
+const questSummary = computed(() => {
+  const qs = store.questStates as Record<string, string>
+  return Object.entries(qs)
+    .map(([k, v]) => `${k}:${v}`)
+    .join(', ')
+})
 
 defineOptions({ name: 'AdventureGame' })
 </script>

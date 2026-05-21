@@ -4,10 +4,10 @@
     style="aspect-ratio: 16 / 9;"
     :style="backgroundStyle"
   >
-    <!-- Scene layer: slot for game-specific background decoration -->
+    <!-- Game-specific background decoration provided by the shell -->
     <slot name="background" />
 
-    <!-- Hotspots -->
+    <!-- Hotspots (pre-filtered by the store's visibleHotspots getter) -->
     <AdventureHotspot
       v-for="hotspot in visibleHotspots"
       :key="hotspot.id"
@@ -21,12 +21,16 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { SceneDefinition, ActionType, InventoryItemDefinition } from '../types/adventureTypes'
+import type {
+  HotspotDefinition,
+  ActionType,
+  InventoryItemDefinition,
+} from '../types/adventureTypes'
 import AdventureHotspot from './AdventureHotspot.vue'
 
 const props = defineProps<{
-  scene: SceneDefinition
-  collectedItemIds: string[]
+  /** Already-filtered list from the store's visibleHotspots getter */
+  visibleHotspots: HotspotDefinition[]
   activeAction: ActionType
   selectedItem: InventoryItemDefinition | null
   /** CSS background shorthand applied to the scene container */
@@ -36,12 +40,6 @@ const props = defineProps<{
 defineEmits<{
   'hotspot-click': [id: string]
 }>()
-
-const visibleHotspots = computed(() =>
-  props.scene.hotspots.filter(
-    (h) => !h.collectibleItemId || !props.collectedItemIds.includes(h.collectibleItemId),
-  ),
-)
 
 const backgroundStyle = computed(() =>
   props.backgroundCss ? { background: props.backgroundCss } : {},

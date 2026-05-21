@@ -4,16 +4,33 @@ import type {
   ActionType,
   Effect,
   AdventureRuntimeState,
+  HotspotDefinition,
 } from '../types/adventureTypes'
 import { resolveInteraction } from '../runtime/resolveInteraction'
 import { applyEffects } from '../runtime/applyEffects'
+import { evaluateConditions } from '../runtime/evaluateConditions'
+
+export interface AvailableAction {
+  key: string
+  displayText: string
+  hotspotId: string
+  action: ActionType
+  /** Only set for 'use' actions */
+  itemId?: string
+}
+
+function isHotspotVisible(h: HotspotDefinition, state: AdventureRuntimeState): boolean {
+  if (h.collectibleItemId && state.collectedItemIds.includes(h.collectibleItemId)) return false
+  if (h.visibleWhen && !evaluateConditions(h.visibleWhen, state)) return false
+  return true
+}
 
 /**
  * Creates a Pinia store for an adventure game.
- * Call this once at module level (not inside component setup) with a stable game definition.
+ * Call once at module level with a stable game definition.
  *
- * @param game   - The complete game definition (static data).
- * @param storeId - A unique Pinia store ID (e.g. 'tinamou-adventure').
+ * @param game    The complete game definition (static content data).
+ * @param storeId A unique Pinia store ID (e.g. 'tinamou-adventure').
  */
 export function createAdventureStore(game: AdventureGameDefinition, storeId: string) {
   return defineStore(storeId, {
@@ -42,8 +59,7 @@ export function createAdventureStore(game: AdventureGameDefinition, storeId: str
         currentSceneId: state.currentSceneId,
       }),
 
-      inventory: (state) =>
-        state.inventoryItemIds.map((id) => game.items[id]).filter(Boolean),
+      inventory: (state) => state.inventoryItemIds.map((id) => game.items[id]).filter(Boolean),
 
       selectedItem: (state) =>
         state.selectedInventoryItemId
@@ -53,9 +69,66 @@ export function createAdventureStore(game: AdventureGameDefinition, storeId: str
       visibleHotspots: (state) => {
         const scene = game.scenes[state.currentSceneId]
         if (!scene) return []
-        return scene.hotspots.filter(
-          (h) => !h.collectibleItemId || !state.collectedItemIds.includes(h.collectibleItemId),
-        )
+        const runtime: AdventureRuntimeState = {
+          flags: state.flags,
+          inventoryItemIds: state.inventoryItemIds,
+          collectedItemIds: state.collectedItemIds,
+          questStates: state.questStates,
+          currentSceneId: state.currentSceneId,
+        }
+        return scene.hotspots.filter((h) => isHotspotVisible(h, runtime))
+      },
+
+      /**
+       * All actions the player can meaningfully attempt in the current scene.
+       * Intended for the dev/debug "what can I do?" panel.
+       * Does not filter by conditions — shows what's structurally possible.
+       */
+      availableActions: (state): AvailableAction[] => {
+        const scene = game.scenes[state.currentSceneId]
+        if (!scene) return []
+
+        const runtime: AdventureRuntimeState = {
+          flags: state.flags,
+          inventoryItemIds: state.inventoryItemIds,
+          collectedItemIds: state.collectedItemIds,
+          questStates: state.questStates,
+          currentSceneId: state.currentSceneId,
+        }
+
+        const actions: AvailableAction[] = []
+
+        for (const hotspot of scene.hotspots) {
+          if (!isHotspotVisible(hotspot, runtime)) continue
+
+          for (const verb of ['look', 'take', 'talk'] as ActionType[]) {
+            if (hotspot.interactions[verb]) {
+              const label = verb === 'look' ? 'Look at' : verb === 'take' ? 'Pick up' : 'Talk to'
+              actions.push({
+                key: `${verb}-${hotspot.id}`,
+                displayText: `${label} ${hotspot.label}`,
+                hotspotId: hotspot.id,
+                action: verb,
+              })
+            }
+          }
+
+          // 'use' entries: one per inventory item that has a useInteraction on this hotspot
+          for (const itemId of state.inventoryItemIds) {
+            if (hotspot.useInteractions?.[itemId]) {
+              const itemLabel = game.items[itemId]?.label ?? itemId
+              actions.push({
+                key: `use-${itemId}-${hotspot.id}`,
+                displayText: `Use ${itemLabel} on ${hotspot.label}`,
+                hotspotId: hotspot.id,
+                action: 'use',
+                itemId,
+              })
+            }
+          }
+        }
+
+        return actions
       },
     },
 
@@ -83,8 +156,6 @@ export function createAdventureStore(game: AdventureGameDefinition, storeId: str
       },
 
       applyEffectsToStore(effects: Effect[]) {
-        // Build a plain snapshot, apply pure effects, then patch Pinia state back.
-        // This keeps applyEffects testable without Pinia.
         const snapshot: AdventureRuntimeState = {
           flags: { ...this.flags },
           inventoryItemIds: [...this.inventoryItemIds],
@@ -109,8 +180,19 @@ export function createAdventureStore(game: AdventureGameDefinition, storeId: str
         const hotspot = scene.hotspots.find((h) => h.id === hotspotId)
         if (!hotspot) return
 
-        // Collected items are hidden from the scene, so this is a safety guard
-        if (hotspot.collectibleItemId && this.collectedItemIds.includes(hotspot.collectibleItemId)) {
+        if (!isHotspotVisible(hotspot, this.runtimeState)) return
+
+        // Exits always use their 'look' interaction regardless of active action.
+        // Clicking an exit = moving through it.
+        if (hotspot.kind === 'exit') {
+          const lookInteractions = hotspot.interactions.look
+          if (lookInteractions) {
+            const resolved = resolveInteraction(lookInteractions, this.runtimeState)
+            if (resolved) {
+              this.narrate(resolved.text)
+              this.applyEffectsToStore(resolved.effects)
+            }
+          }
           return
         }
 
@@ -143,8 +225,7 @@ export function createAdventureStore(game: AdventureGameDefinition, storeId: str
 
         if (!interactions) {
           this.narrate(
-            hotspot.interactionFallbacks?.[action] ??
-              this.defaultFallback(action, hotspot.label),
+            hotspot.interactionFallbacks?.[action] ?? this.defaultFallback(action, hotspot.label),
           )
           return
         }
@@ -152,14 +233,25 @@ export function createAdventureStore(game: AdventureGameDefinition, storeId: str
         const resolved = resolveInteraction(interactions, this.runtimeState)
         if (!resolved) {
           this.narrate(
-            hotspot.interactionFallbacks?.[action] ??
-              this.defaultFallback(action, hotspot.label),
+            hotspot.interactionFallbacks?.[action] ?? this.defaultFallback(action, hotspot.label),
           )
           return
         }
 
         this.narrate(resolved.text)
         this.applyEffectsToStore(resolved.effects)
+      },
+
+      /** Convenience for the available-actions panel: set verb + item then interact. */
+      triggerAvailableAction(entry: AvailableAction) {
+        if (entry.action === 'use' && entry.itemId) {
+          this.selectedInventoryItemId = entry.itemId
+          this.activeAction = 'use'
+        } else {
+          this.activeAction = entry.action
+          this.selectedInventoryItemId = null
+        }
+        this.interact(entry.hotspotId)
       },
 
       defaultFallback(action: ActionType, label: string): string {

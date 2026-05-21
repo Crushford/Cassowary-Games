@@ -72,6 +72,11 @@ export interface HotspotDefinition {
    * Used for physical items the player can pick up.
    */
   collectibleItemId?: string
+  /**
+   * All conditions must pass for this hotspot to appear in the scene.
+   * Used to reveal exits, objects, or characters based on game progress.
+   */
+  visibleWhen?: Condition[]
   /** Interactions keyed by action verb */
   interactions: Partial<Record<ActionType, Interaction[]>>
   /** Interactions for using a specific inventory item on this hotspot */
