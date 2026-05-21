@@ -188,6 +188,11 @@ const router = createRouter({
       component: () => import('@/games/pompeii/views/PompeiiGame.vue'),
     },
     {
+      path: '/games/tinamou-mystery',
+      name: 'tinamou-mystery',
+      component: () => import('@/games/tinamou/views/TinamouGame.vue'),
+    },
+    {
       path: '/storybook',
       redirect: '/storybook-static/index.html',
     },
