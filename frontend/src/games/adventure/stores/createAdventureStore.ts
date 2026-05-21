@@ -5,6 +5,8 @@ import type {
   Effect,
   AdventureRuntimeState,
   HotspotDefinition,
+  InventoryItemDefinition,
+  SceneDefinition,
 } from '../types/adventureTypes'
 import { resolveInteraction } from '../runtime/resolveInteraction'
 import { applyEffects } from '../runtime/applyEffects'
@@ -17,6 +19,36 @@ export interface AvailableAction {
   action: ActionType
   /** Only set for 'use' actions */
   itemId?: string
+}
+
+export type InteractionMode = 'scene' | 'text' | 'both'
+
+/**
+ * The contract that AdventureGame.vue (and any other engine UI) depends on.
+ * Use this type for props instead of `any`.
+ */
+export interface AdventureStoreLike {
+  // ── State / getters ──────────────────────────────────────────────────────
+  gameDefinition: AdventureGameDefinition
+  currentScene: SceneDefinition | null
+  currentSceneId: string
+  currentNarration: string | null
+  activeAction: ActionType
+  selectedInventoryItemId: string | null
+  selectedItem: InventoryItemDefinition | null
+  inventory: InventoryItemDefinition[]
+  inventoryItemIds: string[]
+  flags: Record<string, boolean>
+  questStates: Record<string, string>
+  visibleHotspots: HotspotDefinition[]
+  availableActions: AvailableAction[]
+  // ── Actions ───────────────────────────────────────────────────────────────
+  setActiveAction(action: ActionType): void
+  selectInventoryItem(id: string): void
+  interact(hotspotId: string): void
+  triggerAvailableAction(action: AvailableAction): void
+  applyEffectsToStore(effects: Effect[]): void
+  resetGame(): void
 }
 
 function isHotspotVisible(h: HotspotDefinition, state: AdventureRuntimeState): boolean {

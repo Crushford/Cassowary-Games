@@ -1,14 +1,10 @@
 <template>
-  <div
-    class="rounded border p-2"
-    style="background: rgba(0,10,0,0.35); border-color: rgba(80,160,80,0.2);"
-  >
-    <div
-      class="text-xs uppercase tracking-wide mb-1.5"
-      style="color: rgba(120,200,120,0.6);"
-    >What can I do?</div>
+  <div class="rounded border border-green-800/20 bg-green-950/30 p-2">
+    <div class="text-xs uppercase tracking-wide mb-1.5 text-green-400/60">
+      What can I do?
+    </div>
 
-    <div v-if="actions.length === 0" class="text-xs italic" style="color: rgba(100,150,100,0.5);">
+    <div v-if="actions.length === 0" class="text-xs italic text-green-400/30">
       Nothing available.
     </div>
 
@@ -16,10 +12,7 @@
       <button
         v-for="action in actions"
         :key="action.key"
-        class="text-xs px-2 py-1 rounded transition-colors border"
-        style="background: rgba(10,30,10,0.6); border-color: rgba(80,160,80,0.25); color: rgba(160,220,160,0.8);"
-        onmouseover="this.style.background='rgba(20,50,20,0.8)'; this.style.color='rgba(200,255,200,0.9)'"
-        onmouseout="this.style.background='rgba(10,30,10,0.6)'; this.style.color='rgba(160,220,160,0.8)'"
+        class="text-xs px-2 py-1 rounded border border-green-800/25 bg-green-950/60 text-green-300/80 hover:bg-green-900/80 hover:text-green-200 transition-colors"
         @click="$emit('trigger', action)"
       >
         {{ action.displayText }}
