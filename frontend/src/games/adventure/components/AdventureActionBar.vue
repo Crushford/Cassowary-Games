@@ -1,5 +1,5 @@
 <template>
-  <div class="flex gap-1.5 flex-wrap">
+  <div class="flex gap-1.5 flex-wrap" role="toolbar" aria-label="Action verbs">
     <button
       v-for="action in actions"
       :key="action.id"
@@ -9,6 +9,7 @@
           ? 'bg-amber-600 text-white border-amber-500 shadow-md shadow-amber-900/30'
           : 'bg-stone-700/60 text-amber-300 border-stone-600/40 hover:bg-stone-600/60 hover:text-amber-200',
       ]"
+      :aria-pressed="activeAction === action.id"
       @click="$emit('select-action', action.id)"
     >
       {{ action.label }}
@@ -17,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ActionType } from '../types/types'
+import type { ActionType } from '../types/adventureTypes'
 
 defineProps<{
   activeAction: ActionType

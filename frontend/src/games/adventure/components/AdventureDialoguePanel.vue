@@ -1,17 +1,24 @@
 <template>
-  <div class="relative min-h-[5.5rem] bg-black/30 rounded border border-amber-900/25 p-3 overflow-y-auto" style="max-height: 10rem;">
-    <p v-if="displayedText" class="text-amber-100 text-sm leading-relaxed whitespace-pre-wrap">{{ displayedText }}</p>
-    <p v-else class="text-amber-700/50 text-sm italic">Click on objects to examine them...</p>
+  <div
+    class="relative min-h-[5.5rem] bg-black/30 rounded border border-amber-900/25 p-3 overflow-y-auto"
+    style="max-height: 10rem;"
+    aria-live="polite"
+    aria-label="Narration"
+  >
+    <p
+      v-if="displayedText"
+      class="text-amber-100 text-sm leading-relaxed whitespace-pre-wrap"
+    >{{ displayedText }}</p>
+    <p v-else class="text-amber-700/50 text-sm italic">
+      Click on objects to examine them...
+    </p>
 
-    <!-- Skip / done indicator -->
     <button
       v-if="isAnimating"
       class="absolute bottom-2 right-2 text-amber-600/60 hover:text-amber-400 text-xs transition-colors"
-      aria-label="Skip typewriter animation"
-      @click="skipAnimation"
-    >
-      ▶▶
-    </button>
+      aria-label="Skip animation"
+      @click="skip"
+    >▶▶</button>
   </div>
 </template>
 
@@ -27,7 +34,7 @@ const isAnimating = ref(false)
 let interval: number | null = null
 let fullText = ''
 
-function skipAnimation() {
+function skip() {
   if (interval) {
     clearInterval(interval)
     interval = null
