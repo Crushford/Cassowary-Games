@@ -117,6 +117,17 @@
               Build and debug Queens boards step by step in the admin generator UI
             </p>
           </router-link>
+
+          <router-link
+            to="/games/tinamou-mystery"
+            class="block p-4 bg-amber-900 hover:bg-amber-800 rounded-lg transition-colors"
+            @click="showWorksInProgressModal = false"
+          >
+            <h4 class="text-lg font-bold mb-1">Point &amp; Click — Tinamou Mystery</h4>
+            <p class="text-sm text-semantic-neutral-200">
+              A point-and-click adventure prototype set in the Cassowary World museum
+            </p>
+          </router-link>
         </div>
       </div>
     </Modal>
