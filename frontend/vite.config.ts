@@ -8,7 +8,7 @@ const dirname =
   typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  base: '/',
+  base: '/games/',
   server: {
     proxy: {
       '/api/queens/admin': {
