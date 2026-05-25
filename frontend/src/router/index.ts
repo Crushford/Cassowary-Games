@@ -197,6 +197,11 @@ const router = createRouter({
       component: () => import('@/games/queens/views/PatternCardDesigner.vue'),
     },
     {
+      path: '/pointandclick/admin',
+      name: 'pointandclick-admin',
+      component: () => import('@/games/pointandclick/views/PointAndClickAdmin.vue'),
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: '/',
     },

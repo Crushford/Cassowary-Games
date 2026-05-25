@@ -117,6 +117,18 @@
               Build and debug Queens boards step by step in the admin generator UI
             </p>
           </router-link>
+
+          <router-link
+            to="/pointandclick/admin"
+            class="block p-4 bg-semantic-warning-800 hover:bg-semantic-warning-700 rounded-lg transition-colors"
+            @click="showWorksInProgressModal = false"
+          >
+            <h4 class="text-lg font-bold mb-1">Point &amp; Click Scene Workshop</h4>
+            <p class="text-sm text-semantic-neutral-200">
+              Build point-and-click scenes from Cassowary World lore — assign backgrounds, characters,
+              and objects, then preview interactions
+            </p>
+          </router-link>
         </div>
       </div>
     </Modal>
