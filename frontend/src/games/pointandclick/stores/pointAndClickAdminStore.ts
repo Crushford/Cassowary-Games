@@ -4,8 +4,16 @@ import type { Scene, AssetCandidate, SceneLayout, ActiveInteraction } from '../t
 import { sampleScenes } from '../data/sampleScenes';
 import { generateCandidatesForScene, generateLayoutForScene } from '../data/sampleAssets';
 import * as api from '../admin/api';
+import type { PromptType, ServerConfig } from '../admin/api';
 
 export type GenerationStatus = 'idle' | 'pending' | 'running' | 'complete' | 'failed';
+
+// Per-type generation tracking
+export interface TypeStatus {
+  backgrounds: GenerationStatus;
+  characters: GenerationStatus;
+  objects: GenerationStatus;
+}
 
 export const usePointAndClickAdminStore = defineStore('pointAndClickAdmin', () => {
   const scenes = ref<Scene[]>(sampleScenes);
@@ -14,15 +22,15 @@ export const usePointAndClickAdminStore = defineStore('pointAndClickAdmin', () =
   const layout = ref<SceneLayout | null>(null);
   const activeEntityId = ref<string | null>(null);
   const loading = ref(false);
-  const generationStatus = ref<GenerationStatus>('idle');
-  const generationMessage = ref<string>('');
+  const serverConfig = ref<ServerConfig | null>(null);
+  const typeStatus = ref<TypeStatus>({ backgrounds: 'idle', characters: 'idle', objects: 'idle' });
+  const typeMessage = ref<Partial<Record<PromptType, string>>>({});
 
   // ── Derived state ───────────────────────────────────────────────────────────
 
   const selectedScene = computed(() => scenes.value.find((s) => s.id === selectedSceneId.value) ?? null);
 
   const backgroundCandidates = computed(() => candidates.value.filter((c) => c.kind === 'background'));
-
   const characterCandidates = computed(() => candidates.value.filter((c) => c.kind === 'character'));
 
   const selectedBackground = computed(() => backgroundCandidates.value.find((c) => c.selected) ?? null);
@@ -63,25 +71,139 @@ export const usePointAndClickAdminStore = defineStore('pointAndClickAdmin', () =
     return null;
   });
 
-  const isGenerating = computed(() => generationStatus.value === 'pending' || generationStatus.value === 'running');
+  const isAnyGenerating = computed(() =>
+    Object.values(typeStatus.value).some((s) => s === 'pending' || s === 'running'),
+  );
 
-  // ── Actions ─────────────────────────────────────────────────────────────────
+  const hasPrompts = computed(() => candidates.value.some((c) => c.prompt));
+
+  const hasImages = computed(() => candidates.value.some((c) => c.imageUrl || c.imageData));
+
+  const generationMode = computed(() => serverConfig.value?.generationMode ?? 'mock');
+
+  // ── Scene loading ───────────────────────────────────────────────────────────
 
   async function selectScene(id: string) {
     selectedSceneId.value = id;
     activeEntityId.value = null;
+    typeStatus.value = { backgrounds: 'idle', characters: 'idle', objects: 'idle' };
     loading.value = true;
     try {
-      const [fetchedCandidates, fetchedLayout] = await Promise.all([
+      const [manifest, fetchedCandidates, fetchedLayout] = await Promise.all([
+        api.fetchManifest(id),
         api.fetchCandidates(id),
         api.fetchLayout(id),
       ]);
+      // If backend returns the scene manifest, update the scene list
+      if (manifest) {
+        const idx = scenes.value.findIndex((s) => s.id === id);
+        if (idx >= 0) scenes.value[idx] = manifest;
+      }
       candidates.value = fetchedCandidates;
       layout.value = fetchedLayout;
     } finally {
       loading.value = false;
     }
   }
+
+  // ── Config ──────────────────────────────────────────────────────────────────
+
+  async function loadConfig() {
+    serverConfig.value = await api.fetchConfig();
+  }
+
+  // ── Prompt building ─────────────────────────────────────────────────────────
+
+  async function buildPrompts(type?: PromptType) {
+    if (!selectedSceneId.value) return;
+    const types: PromptType[] = type ? [type] : ['backgrounds', 'characters', 'objects'];
+    await Promise.all(types.map((t) => buildPromptType(t)));
+  }
+
+  async function buildPromptType(type: PromptType) {
+    typeStatus.value[type] = 'pending';
+    typeMessage.value[type] = 'Building prompts…';
+    try {
+      const built = await api.buildPrompts(selectedSceneId.value, type);
+      // Merge into candidates: add new, update existing
+      mergeCandidates(built);
+      typeStatus.value[type] = 'idle'; // prompts built but not generated yet
+      typeMessage.value[type] = `${built.length} prompt${built.length !== 1 ? 's' : ''} ready`;
+    } catch (err) {
+      typeStatus.value[type] = 'failed';
+      typeMessage.value[type] = err instanceof Error ? err.message : 'Failed';
+    }
+  }
+
+  // ── Image generation ────────────────────────────────────────────────────────
+
+  async function generateType(type: PromptType) {
+    if (!selectedSceneId.value) return;
+    typeStatus.value[type] = 'pending';
+    typeMessage.value[type] = 'Generating…';
+    try {
+      const result = await api.generateAssets(selectedSceneId.value, type);
+
+      // v1: synchronous result — backend returns candidates directly
+      if (result.candidates?.length) {
+        mergeCandidates(result.candidates);
+        typeStatus.value[type] = 'complete';
+        typeMessage.value[type] = `${result.candidates.length} image${result.candidates.length !== 1 ? 's' : ''} ready`;
+        return;
+      }
+
+      // v2 compatibility: backend returned a jobId, poll until complete
+      if (result.jobId) {
+        typeStatus.value[type] = 'running';
+        let attempts = 0;
+        while (attempts < 60) {
+          await sleep(2000);
+          const poll = await api.pollJob(result.jobId);
+          if (poll.candidates?.length) mergeCandidates(poll.candidates);
+          if (poll.status === 'complete') {
+            typeStatus.value[type] = 'complete';
+            typeMessage.value[type] = 'Done';
+            return;
+          }
+          if (poll.status === 'failed') {
+            typeStatus.value[type] = 'failed';
+            typeMessage.value[type] = poll.error ?? 'Generation failed';
+            return;
+          }
+          attempts++;
+        }
+        typeStatus.value[type] = 'failed';
+        typeMessage.value[type] = 'Timed out';
+      }
+    } catch (err) {
+      typeStatus.value[type] = 'failed';
+      typeMessage.value[type] = err instanceof Error ? err.message : 'Unavailable';
+    }
+  }
+
+  async function generateAll() {
+    await Promise.allSettled(
+      (['backgrounds', 'characters', 'objects'] as PromptType[]).map((t) => generateType(t)),
+    );
+  }
+
+  // ── Export ──────────────────────────────────────────────────────────────────
+
+  async function exportScene(): Promise<api.PlayableScene | null> {
+    if (!selectedSceneId.value || !layout.value) return null;
+    const selectedIds = candidates.value.filter((c) => c.selected).map((c) => c.id);
+    try {
+      return await api.exportScene(selectedSceneId.value, {
+        selectedCandidateIds: selectedIds,
+        layout: layout.value,
+      });
+    } catch (err) {
+      console.error('Export failed:', err);
+      return null;
+    }
+  }
+
+  // ── Candidate selection (local only in v1) ──────────────────────────────────
 
   function selectCandidate(candidateId: string) {
     const target = candidates.value.find((c) => c.id === candidateId);
@@ -90,11 +212,9 @@ export const usePointAndClickAdminStore = defineStore('pointAndClickAdmin', () =
       if (c.kind === target.kind && c.entityId === target.entityId) c.selected = false;
     });
     target.selected = true;
-    // Best-effort persist to backend; errors are non-fatal
-    if (selectedSceneId.value) {
-      api.selectCandidate(selectedSceneId.value, candidateId).catch(() => {});
-    }
   }
+
+  // ── Preview interaction ─────────────────────────────────────────────────────
 
   function toggleEntity(entityId: string) {
     activeEntityId.value = activeEntityId.value === entityId ? null : entityId;
@@ -104,43 +224,7 @@ export const usePointAndClickAdminStore = defineStore('pointAndClickAdmin', () =
     activeEntityId.value = null;
   }
 
-  async function generateAssets(entityId?: string) {
-    if (!selectedSceneId.value || isGenerating.value) return;
-    generationStatus.value = 'pending';
-    generationMessage.value = 'Starting generation…';
-    try {
-      const job = await api.startGeneration(selectedSceneId.value, entityId);
-      generationStatus.value = job.status;
-
-      // Poll until complete
-      let attempts = 0;
-      while (
-        (generationStatus.value === 'pending' || generationStatus.value === 'running') &&
-        attempts < 60
-      ) {
-        await sleep(2000);
-        const updated = await api.pollJob(job.jobId);
-        generationStatus.value = updated.status;
-        generationMessage.value =
-          updated.status === 'running' ? 'Generating images…' : updated.status;
-        if (updated.candidates?.length) {
-          // Merge new candidates in, keeping existing selection state
-          mergeCandidates(updated.candidates);
-        }
-        if (updated.status === 'complete' || updated.status === 'failed') break;
-        attempts++;
-      }
-
-      if (generationStatus.value === 'complete') {
-        generationMessage.value = 'Generation complete';
-      } else if (generationStatus.value === 'failed') {
-        generationMessage.value = 'Generation failed';
-      }
-    } catch (err) {
-      generationStatus.value = 'failed';
-      generationMessage.value = err instanceof Error ? err.message : 'Generation unavailable';
-    }
-  }
+  // ── Helpers ─────────────────────────────────────────────────────────────────
 
   function mergeCandidates(incoming: AssetCandidate[]) {
     for (const c of incoming) {
@@ -153,12 +237,18 @@ export const usePointAndClickAdminStore = defineStore('pointAndClickAdmin', () =
     }
   }
 
-  function resetGenerationStatus() {
-    generationStatus.value = 'idle';
-    generationMessage.value = '';
+  function resetTypeStatus(type?: PromptType) {
+    if (type) {
+      typeStatus.value[type] = 'idle';
+      delete typeMessage.value[type];
+    } else {
+      typeStatus.value = { backgrounds: 'idle', characters: 'idle', objects: 'idle' };
+      typeMessage.value = {};
+    }
   }
 
-  // Initialise with the first scene
+  // Initialise
+  loadConfig();
   selectScene(selectedSceneId.value);
 
   return {
@@ -168,9 +258,13 @@ export const usePointAndClickAdminStore = defineStore('pointAndClickAdmin', () =
     layout,
     activeEntityId,
     loading,
-    generationStatus,
-    generationMessage,
-    isGenerating,
+    serverConfig,
+    typeStatus,
+    typeMessage,
+    isAnyGenerating,
+    hasPrompts,
+    hasImages,
+    generationMode,
     selectedScene,
     backgroundCandidates,
     characterCandidates,
@@ -178,11 +272,15 @@ export const usePointAndClickAdminStore = defineStore('pointAndClickAdmin', () =
     selectedCharacterById,
     activeInteraction,
     selectScene,
+    loadConfig,
+    buildPrompts,
+    generateType,
+    generateAll,
+    exportScene,
     selectCandidate,
     toggleEntity,
     dismissInteraction,
-    generateAssets,
-    resetGenerationStatus,
+    resetTypeStatus,
   };
 });
 

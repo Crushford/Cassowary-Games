@@ -23,24 +23,17 @@
             <div class="flex flex-wrap items-center justify-end gap-3">
               <Tag severity="warn" value="Prototype" rounded />
               <Tag
-                :severity="store.generationStatus === 'complete' ? 'success' : store.generationStatus === 'failed' ? 'danger' : 'contrast'"
-                :value="store.generationStatus === 'idle' ? 'Images: Mocked' : store.generationMessage"
+                :severity="store.generationMode === 'openai' ? 'success' : 'contrast'"
+                :value="store.generationMode === 'openai' ? 'Mode: OpenAI' : 'Mode: Mock'"
                 rounded
               />
               <Button
-                v-if="store.isGenerating"
-                label="Generating…"
-                severity="info"
+                label="Export Scene"
+                severity="secondary"
                 outlined
-                disabled
-              />
-              <Button
-                v-else
-                label="Generate Assets"
-                severity="info"
-                outlined
-                icon="pi pi-sparkles"
-                @click="store.generateAssets()"
+                icon="pi pi-download"
+                :disabled="!store.layout || store.isAnyGenerating"
+                @click="handleExport"
               />
               <Button
                 v-if="store.selectedScene"
@@ -77,6 +70,86 @@
             detail="scripted"
           />
         </div>
+
+        <!-- ── Asset Pipeline ─────────────────────────────────────────────────── -->
+        <section class="rounded-[30px] border border-semantic-neutral-800 bg-surface-darkFirm p-5">
+          <div class="mb-4 flex items-center justify-between">
+            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-semantic-neutral-400">
+              Asset Pipeline
+            </p>
+            <div class="flex gap-2">
+              <Button
+                label="Build All Prompts"
+                size="small"
+                severity="secondary"
+                outlined
+                icon="pi pi-file-edit"
+                :disabled="store.isAnyGenerating || store.loading"
+                @click="store.buildPrompts()"
+              />
+              <Button
+                label="Generate All"
+                size="small"
+                severity="info"
+                outlined
+                icon="pi pi-sparkles"
+                :disabled="!store.hasPrompts || store.isAnyGenerating"
+                @click="store.generateAll()"
+              />
+            </div>
+          </div>
+
+          <div class="grid gap-3 sm:grid-cols-3">
+            <div
+              v-for="type in pipelineTypes"
+              :key="type"
+              class="flex flex-col gap-3 rounded-2xl border border-semantic-neutral-700 bg-surface-darkSoft p-4"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-semibold capitalize text-semantic-neutral-200">
+                  {{ type }}
+                </span>
+                <Tag
+                  :severity="statusSeverity(store.typeStatus[type])"
+                  :value="store.typeStatus[type]"
+                  rounded
+                />
+              </div>
+
+              <p
+                v-if="store.typeMessage[type]"
+                class="text-[11px] leading-snug text-semantic-neutral-400"
+              >
+                {{ store.typeMessage[type] }}
+              </p>
+              <p v-else class="text-[11px] text-semantic-neutral-600 italic">
+                No prompts built yet.
+              </p>
+
+              <div class="mt-auto flex gap-2">
+                <Button
+                  label="Build"
+                  size="small"
+                  severity="secondary"
+                  outlined
+                  class="flex-1"
+                  :loading="store.typeStatus[type] === 'pending' && !store.typeMessage[type]?.includes('image')"
+                  :disabled="store.typeStatus[type] === 'pending' || store.typeStatus[type] === 'running'"
+                  @click="store.buildPrompts(type)"
+                />
+                <Button
+                  label="Generate"
+                  size="small"
+                  severity="info"
+                  class="flex-1"
+                  :loading="store.typeStatus[type] === 'running'"
+                  :disabled="store.typeStatus[type] === 'pending' || store.typeStatus[type] === 'running'"
+                  @click="store.generateType(type)"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
       </header>
 
       <!-- ── Main 3-column layout ────────────────────────────────────────────── -->
@@ -91,12 +164,12 @@
         <!-- Center: Preview -->
         <ScenePreview />
 
-        <!-- Right: Asset Candidates + Layers/Dialogue tabs -->
+        <!-- Right: Asset Candidates + Layers/Dialogue/Prompts tabs -->
         <div class="flex flex-col gap-5">
           <AssetCandidateGrid kind="background" title="Background Candidates" />
           <AssetCandidateGrid kind="character" title="Character Candidates" />
 
-          <!-- Layers / Dialogue tab panel -->
+          <!-- Layers / Dialogue / Prompts tab panel -->
           <section class="rounded-[30px] border border-semantic-neutral-800 bg-surface-darkFirm p-5">
             <Tabs v-model:value="rightTab">
               <TabList class="gap-2 mb-4">
@@ -106,6 +179,9 @@
                 <Tab value="dialogue" class="rounded-full px-3 py-1.5 text-xs font-semibold">
                   Dialogue Script
                 </Tab>
+                <Tab value="prompts" class="rounded-full px-3 py-1.5 text-xs font-semibold">
+                  Prompts
+                </Tab>
               </TabList>
               <TabPanels>
                 <TabPanel value="layers">
@@ -114,23 +190,11 @@
                 <TabPanel value="dialogue">
                   <DialogueScriptPanel />
                 </TabPanel>
+                <TabPanel value="prompts">
+                  <PromptPreviewPanel />
+                </TabPanel>
               </TabPanels>
             </Tabs>
-          </section>
-
-          <!-- Future pipeline note -->
-          <section class="rounded-[30px] border border-semantic-neutral-700 bg-surface-darkSoft px-5 py-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-semantic-neutral-500 mb-2">
-              Future Pipeline
-            </p>
-            <ol class="space-y-1 text-xs text-semantic-neutral-500 list-decimal list-inside">
-              <li>Parse scene manifest from <code class="text-semantic-neutral-400">cassowary-world-lore/scenes/</code></li>
-              <li>Generate asset candidates via OpenAI image API</li>
-              <li>Select background, characters, items</li>
-              <li>Compose scene layout (drag-and-drop)</li>
-              <li>Export as playable point-and-click scene</li>
-              <li>Write selected assets back to lore repo via GitHub API</li>
-            </ol>
           </section>
         </div>
       </div>
@@ -156,8 +220,27 @@ import AssetCandidateGrid from '../components/AssetCandidateGrid.vue';
 import SceneLayerList from '../components/SceneLayerList.vue';
 import DialogueScriptPanel from '../components/DialogueScriptPanel.vue';
 import ScenePreview from '../components/ScenePreview.vue';
+import PromptPreviewPanel from '../components/PromptPreviewPanel.vue';
 import { usePointAndClickAdminStore } from '../stores/pointAndClickAdminStore';
+import type { GenerationStatus } from '../stores/pointAndClickAdminStore';
+import type { PromptType } from '../admin/api';
 
 const store = usePointAndClickAdminStore();
 const rightTab = ref<string>('layers');
+
+const pipelineTypes: PromptType[] = ['backgrounds', 'characters', 'objects'];
+
+function statusSeverity(status: GenerationStatus): 'success' | 'danger' | 'info' | 'secondary' {
+  if (status === 'complete') return 'success';
+  if (status === 'failed') return 'danger';
+  if (status === 'pending' || status === 'running') return 'info';
+  return 'secondary';
+}
+
+async function handleExport() {
+  const result = await store.exportScene();
+  if (result) {
+    console.log('Scene exported:', result.sceneId);
+  }
+}
 </script>
