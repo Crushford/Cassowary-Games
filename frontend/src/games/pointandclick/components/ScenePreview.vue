@@ -65,8 +65,17 @@
           :class="store.activeEntityId === layer.entityId ? 'scale-105 z-20' : 'hover:scale-102 z-10'"
           @click="store.toggleEntity(layer.entityId)"
         >
-          <!-- Character silhouette using selected candidate gradient -->
+          <!-- Character: real image when available, gradient silhouette otherwise -->
+          <img
+            v-if="store.selectedCharacterById[layer.entityId]?.imageUrl"
+            :src="store.selectedCharacterById[layer.entityId]!.imageUrl"
+            :alt="layer.label"
+            class="w-full object-contain object-bottom transition-all duration-300"
+            style="height: 85%"
+            :style="{ opacity: store.activeEntityId === layer.entityId ? 1 : 0.88 }"
+          />
           <div
+            v-else
             class="w-full rounded-t-[40%] rounded-b-none transition-all duration-300"
             style="height: 85%"
             :style="{

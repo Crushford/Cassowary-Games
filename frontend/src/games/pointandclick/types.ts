@@ -47,8 +47,10 @@ export interface AssetCandidate {
   entityId?: string; // links to SceneCharacter.id or SceneInteractable.id
   title: string;
   prompt: string; // the prompt that would be sent to the image generator
-  previewGradient: string; // CSS gradient used as placeholder image
+  previewGradient: string; // CSS gradient used as placeholder when imageUrl is absent
+  imageUrl?: string; // real image from backend; takes precedence over gradient
   selected: boolean;
+  generatedAt?: string; // ISO timestamp set by backend after generation
 }
 
 // ── Scene layout ──────────────────────────────────────────────────────────────

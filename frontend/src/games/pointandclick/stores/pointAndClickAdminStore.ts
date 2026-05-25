@@ -3,6 +3,9 @@ import { ref, computed } from 'vue';
 import type { Scene, AssetCandidate, SceneLayout, ActiveInteraction } from '../types';
 import { sampleScenes } from '../data/sampleScenes';
 import { generateCandidatesForScene, generateLayoutForScene } from '../data/sampleAssets';
+import * as api from '../admin/api';
+
+export type GenerationStatus = 'idle' | 'pending' | 'running' | 'complete' | 'failed';
 
 export const usePointAndClickAdminStore = defineStore('pointAndClickAdmin', () => {
   const scenes = ref<Scene[]>(sampleScenes);
@@ -10,6 +13,9 @@ export const usePointAndClickAdminStore = defineStore('pointAndClickAdmin', () =
   const candidates = ref<AssetCandidate[]>([]);
   const layout = ref<SceneLayout | null>(null);
   const activeEntityId = ref<string | null>(null);
+  const loading = ref(false);
+  const generationStatus = ref<GenerationStatus>('idle');
+  const generationMessage = ref<string>('');
 
   // ── Derived state ───────────────────────────────────────────────────────────
 
@@ -21,7 +27,6 @@ export const usePointAndClickAdminStore = defineStore('pointAndClickAdmin', () =
 
   const selectedBackground = computed(() => backgroundCandidates.value.find((c) => c.selected) ?? null);
 
-  // Returns selected candidate per character id
   const selectedCharacterById = computed(() => {
     const map: Record<string, AssetCandidate> = {};
     for (const c of characterCandidates.value) {
@@ -58,26 +63,37 @@ export const usePointAndClickAdminStore = defineStore('pointAndClickAdmin', () =
     return null;
   });
 
+  const isGenerating = computed(() => generationStatus.value === 'pending' || generationStatus.value === 'running');
+
   // ── Actions ─────────────────────────────────────────────────────────────────
 
-  function selectScene(id: string) {
+  async function selectScene(id: string) {
     selectedSceneId.value = id;
     activeEntityId.value = null;
-    const scene = scenes.value.find((s) => s.id === id);
-    if (scene) {
-      candidates.value = generateCandidatesForScene(scene);
-      layout.value = generateLayoutForScene(scene);
+    loading.value = true;
+    try {
+      const [fetchedCandidates, fetchedLayout] = await Promise.all([
+        api.fetchCandidates(id),
+        api.fetchLayout(id),
+      ]);
+      candidates.value = fetchedCandidates;
+      layout.value = fetchedLayout;
+    } finally {
+      loading.value = false;
     }
   }
 
   function selectCandidate(candidateId: string) {
     const target = candidates.value.find((c) => c.id === candidateId);
     if (!target) return;
-    // Deselect all candidates with the same kind + entityId, then select the target
     candidates.value.forEach((c) => {
       if (c.kind === target.kind && c.entityId === target.entityId) c.selected = false;
     });
     target.selected = true;
+    // Best-effort persist to backend; errors are non-fatal
+    if (selectedSceneId.value) {
+      api.selectCandidate(selectedSceneId.value, candidateId).catch(() => {});
+    }
   }
 
   function toggleEntity(entityId: string) {
@@ -86,6 +102,60 @@ export const usePointAndClickAdminStore = defineStore('pointAndClickAdmin', () =
 
   function dismissInteraction() {
     activeEntityId.value = null;
+  }
+
+  async function generateAssets(entityId?: string) {
+    if (!selectedSceneId.value || isGenerating.value) return;
+    generationStatus.value = 'pending';
+    generationMessage.value = 'Starting generation…';
+    try {
+      const job = await api.startGeneration(selectedSceneId.value, entityId);
+      generationStatus.value = job.status;
+
+      // Poll until complete
+      let attempts = 0;
+      while (
+        (generationStatus.value === 'pending' || generationStatus.value === 'running') &&
+        attempts < 60
+      ) {
+        await sleep(2000);
+        const updated = await api.pollJob(job.jobId);
+        generationStatus.value = updated.status;
+        generationMessage.value =
+          updated.status === 'running' ? 'Generating images…' : updated.status;
+        if (updated.candidates?.length) {
+          // Merge new candidates in, keeping existing selection state
+          mergeCandidates(updated.candidates);
+        }
+        if (updated.status === 'complete' || updated.status === 'failed') break;
+        attempts++;
+      }
+
+      if (generationStatus.value === 'complete') {
+        generationMessage.value = 'Generation complete';
+      } else if (generationStatus.value === 'failed') {
+        generationMessage.value = 'Generation failed';
+      }
+    } catch (err) {
+      generationStatus.value = 'failed';
+      generationMessage.value = err instanceof Error ? err.message : 'Generation unavailable';
+    }
+  }
+
+  function mergeCandidates(incoming: AssetCandidate[]) {
+    for (const c of incoming) {
+      const existing = candidates.value.find((x) => x.id === c.id);
+      if (existing) {
+        Object.assign(existing, c);
+      } else {
+        candidates.value.push(c);
+      }
+    }
+  }
+
+  function resetGenerationStatus() {
+    generationStatus.value = 'idle';
+    generationMessage.value = '';
   }
 
   // Initialise with the first scene
@@ -97,6 +167,10 @@ export const usePointAndClickAdminStore = defineStore('pointAndClickAdmin', () =
     candidates,
     layout,
     activeEntityId,
+    loading,
+    generationStatus,
+    generationMessage,
+    isGenerating,
     selectedScene,
     backgroundCandidates,
     characterCandidates,
@@ -107,5 +181,11 @@ export const usePointAndClickAdminStore = defineStore('pointAndClickAdmin', () =
     selectCandidate,
     toggleEntity,
     dismissInteraction,
+    generateAssets,
+    resetGenerationStatus,
   };
 });
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

@@ -21,9 +21,35 @@
           </template>
           <template #end>
             <div class="flex flex-wrap items-center justify-end gap-3">
-              <Tag severity="warn" value="Prototype — Static Data" rounded />
-              <Tag severity="contrast" value="Image Gen: Mocked" rounded />
-              <Tag severity="contrast" value="Saves: Not Implemented" rounded />
+              <Tag severity="warn" value="Prototype" rounded />
+              <Tag
+                :severity="store.generationStatus === 'complete' ? 'success' : store.generationStatus === 'failed' ? 'danger' : 'contrast'"
+                :value="store.generationStatus === 'idle' ? 'Images: Mocked' : store.generationMessage"
+                rounded
+              />
+              <Button
+                v-if="store.isGenerating"
+                label="Generating…"
+                severity="info"
+                outlined
+                disabled
+              />
+              <Button
+                v-else
+                label="Generate Assets"
+                severity="info"
+                outlined
+                icon="pi pi-sparkles"
+                @click="store.generateAssets()"
+              />
+              <Button
+                v-if="store.selectedScene"
+                label="Play Scene"
+                severity="success"
+                icon="pi pi-play"
+                :as="RouterLink"
+                :to="`/pointandclick/play/${store.selectedScene.id}`"
+              />
             </div>
           </template>
         </Toolbar>
@@ -114,8 +140,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { RouterLink } from 'vue-router';
 import Toolbar from 'primevue/toolbar';
 import Tag from 'primevue/tag';
+import Button from 'primevue/button';
 import Tabs from 'primevue/tabs';
 import TabList from 'primevue/tablist';
 import Tab from 'primevue/tab';

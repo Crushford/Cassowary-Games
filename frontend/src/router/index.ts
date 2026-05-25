@@ -202,6 +202,11 @@ const router = createRouter({
       component: () => import('@/games/pointandclick/views/PointAndClickAdmin.vue'),
     },
     {
+      path: '/pointandclick/play/:sceneId',
+      name: 'pointandclick-play',
+      component: () => import('@/games/pointandclick/views/PointAndClickGame.vue'),
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: '/',
     },

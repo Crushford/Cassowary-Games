@@ -8,8 +8,15 @@
     "
     @click="emit('select')"
   >
-    <!-- Gradient preview -->
+    <!-- Image preview: real image when available, gradient placeholder otherwise -->
+    <img
+      v-if="candidate.imageUrl"
+      :src="candidate.imageUrl"
+      :alt="candidate.title"
+      class="h-16 w-full object-cover"
+    />
     <div
+      v-else
       class="h-16 w-full"
       :style="{ background: candidate.previewGradient }"
     />
